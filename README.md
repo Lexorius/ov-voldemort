@@ -11,13 +11,90 @@ Beschaffungsplanung eines Ortsverbands:
 
 > Die Zahlen sind eine interne Planungshilfe – bewusst „pseudo“, keine offizielle Haushaltsstelle.
 
-## Anforderungen
+Drei Betriebsarten: als **Home-Assistant-Add-on**, als **Docker-Container** oder
+klassisch auf einem **Webserver**.
+
+## Home-Assistant-Add-on
+
+Voraussetzung: Home Assistant OS oder Supervised und das offizielle **MariaDB-Add-on**.
+
+1. Im MariaDB-Add-on unter *Konfiguration* die Datenbank ergänzen:
+
+```yaml
+databases:
+  - homeassistant
+  - ovbudget
+```
+
+MariaDB neu starten.
+
+2. Dieses Verzeichnis nach `/addons/ov-budget` kopieren – etwa per Samba- oder
+   Terminal-Add-on:
+
+```bash
+git clone https://github.com/Lexorius/ov-voldemort.git /addons/ov-budget
+```
+
+3. **Einstellungen → Add-ons → Add-on Store → ⋮ → Neu laden.** Unter „Lokale Add-ons"
+   erscheint *OV-Budget*. Installieren (der erste Build dauert ein paar Minuten).
+4. Unter *Konfiguration* mindestens `ov_name` setzen, optional `admin_password`.
+   Bleibt das Passwort leer, erzeugt der erste Start eines und schreibt es ins
+   Protokoll des Add-ons.
+5. Starten, dann **Protokoll** öffnen und das Startpasswort notieren.
+6. „In Seitenleiste anzeigen" einschalten – die Anwendung läuft über Ingress, es
+   muss also kein Port nach außen geöffnet werden.
+
+Die Zugangsdaten zur Datenbank holt sich das Add-on über den Supervisor-Dienst
+`mysql` selbst. Nur für eine **externe** Datenbank sind `db_host`, `db_user` und
+`db_password` auszufüllen.
+
+Persistent unter `/data` liegen die hochgeladenen Angebote und die Sitzungen; die
+eigentlichen Daten stehen in der MariaDB und gehören in deren Sicherung.
+
+### Optionen
+
+| Option | Bedeutung |
+|---|---|
+| `db_name` | Name der Datenbank (Vorgabe `ovbudget`) |
+| `admin_username` / `admin_password` | erster Zugang, nur beim allerersten Start angelegt |
+| `ov_name` | Name des Ortsverbands, später in der Anwendung änderbar |
+| `db_host`, `db_port`, `db_user`, `db_password` | nur für eine externe Datenbank |
+| `debug` | PHP-Meldungen im Browser, nur zur Fehlersuche |
+
+### Zugriff ohne Ingress
+
+Für den direkten Aufruf im Heimnetz in der Add-on-Konfiguration unter *Netzwerk*
+einen Port für `8099/tcp` vergeben, dann `http://homeassistant.local:8099`.
+
+## Docker ohne Home Assistant
+
+```bash
+cp .env.example .env      # Passwörter anpassen
+docker compose up -d
+docker compose logs app   # Startpasswort ablesen
+```
+
+Danach auf `http://<host>:8099`. Läuft die App hinter einem Reverse Proxy in einem
+Unterverzeichnis, zusätzlich `OVB_BASE_PATH=/budget` setzen.
+
+Unterstützte Umgebungsvariablen: `OVB_DB_HOST`, `OVB_DB_PORT`, `OVB_DB_NAME`,
+`OVB_DB_USER`, `OVB_DB_PASS`, `OVB_BASE_PATH`, `OVB_UPLOAD_DIR`, `OVB_INGRESS`,
+`OVB_DEBUG`, `OVB_ADMIN_USER`, `OVB_ADMIN_PASS`, `OVB_OV_NAME`, `TZ`.
+
+Beim Start richtet `src/cli/setup.php` alles ein: Konfiguration schreiben, auf die
+Datenbank warten, Schema und Grunddaten einspielen (wiederholbar, ohne bestehende
+Daten zu überschreiben) und beim ersten Mal den Administrator anlegen. Der
+Einrichtungsassistent `install.php` wird im Container nicht mitgeliefert.
+
+## Klassische Installation
+
+### Anforderungen
 
 * PHP 8.1 oder neuer (`pdo_mysql`, `mbstring`; empfohlen `curl` und `fileinfo`)
 * MySQL 5.7+ / MariaDB 10.3+
 * Webserver mit Document-Root auf `public/`
 
-## Installation
+### Einrichtung
 
 1. Dateien auf den Server legen, Document-Root auf `public/` zeigen lassen.
 2. Leere Datenbank samt Benutzer anlegen.
@@ -76,9 +153,15 @@ public/           Webroot: index.php (Front-Controller), install.php, cron.php, 
 src/bootstrap.php Laufzeitumgebung
 src/lib/          Datenbank, Auth, Einstellungen, Listen, Wünsche, Aufgaben, Uploads, Divera
 src/pages/        eine Datei je Route (admin/ für den Verwaltungsbereich)
+src/cli/setup.php Einrichtung beim Containerstart
 views/            HTML-Templates, views/layout.php als Rahmen
 sql/              schema.sql (Tabellen) und seed.sql (Grunddaten)
 storage/uploads/  hochgeladene Angebote – liegt bewusst außerhalb des Webroots
+                  (im Container stattdessen /data/uploads)
+
+Dockerfile, config.yaml, build.yaml, translations/  Home-Assistant-Add-on
+docker/rootfs/    nginx, php-fpm und Startskript des Containers
+docker-compose.yml  Betrieb ohne Home Assistant
 ```
 
 Ausgeliefert werden Uploads ausschließlich über `index.php?p=download&id=…` – also nur
@@ -167,3 +250,7 @@ Auf der Konsole geht es auch ohne Token: `php public/cron.php`.
 mysqldump -u ov_budget -p ov_budget > backup-$(date +%F).sql
 tar czf uploads-$(date +%F).tar.gz storage/uploads
 ```
+
+Als Home-Assistant-Add-on erfasst das normale HA-Backup den Ordner `/data` des
+Add-ons (Angebote und Sitzungen) mit. **Die Datenbank liegt im MariaDB-Add-on** –
+also darauf achten, dass auch dieses im Backup enthalten ist.

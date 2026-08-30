@@ -13,7 +13,8 @@
  */
 declare(strict_types=1);
 
-const APP_ROOT = '/app';
+// Wurzel der Anwendung aus der Lage dieser Datei ableiten (/app im Container)
+define('APP_ROOT', dirname(__DIR__, 2));
 
 function say(string $msg): void
 {
