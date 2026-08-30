@@ -1,6 +1,7 @@
-# Basisimages je Architektur. Bewusst die offiziellen PHP-Images:
-# sie bringen PHP 8.3 samt Erweiterungen für alle drei Architekturen mit.
+# Basisimages je Architektur.
+# Bewusst die Home-Assistant-Basisimages: der Supervisor setzt sie ohnehin
+# ein, und PHP kommt bei uns aus den Alpine-Paketen.
 build_from:
-  aarch64: "php:8.3-fpm-alpine"
-  amd64: "php:8.3-fpm-alpine"
-  armv7: "php:8.3-fpm-alpine"
+  aarch64: "ghcr.io/home-assistant/aarch64-base:latest"
+  amd64: "ghcr.io/home-assistant/amd64-base:latest"
+  armv7: "ghcr.io/home-assistant/armv7-base:latest"

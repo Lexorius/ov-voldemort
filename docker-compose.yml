@@ -6,7 +6,7 @@ services:
     build:
       context: ./ov-budget
       args:
-        BUILD_FROM: php:8.3-fpm-alpine
+        BUILD_FROM: ghcr.io/home-assistant/amd64-base:latest
     restart: unless-stopped
     environment:
       TZ: ${TZ:-Europe/Berlin}

@@ -32,7 +32,7 @@ INSTALL_DB=$(tool mariadb-install-db mysql_install_db) || true
 stop_all() {
     log "Herunterfahren ..."
     [ -n "${NGINX_PID:-}" ] && kill "$NGINX_PID" 2>/dev/null || true
-    pkill -QUIT php-fpm 2>/dev/null || true
+    [ -n "${FPM_PID:-}" ] && kill "$FPM_PID" 2>/dev/null || true
     if [ "$DB_LOCAL" = "1" ]; then
         # Sauber schließen, damit InnoDB keine Reste hinterlässt
         "$MARIADB_ADMIN" --protocol=socket --socket="$SOCKET" -uroot shutdown 2>/dev/null || true
@@ -50,14 +50,14 @@ trap stop_all TERM INT
 log "OV-Budget startet ..."
 
 mkdir -p /data/uploads /data/sessions /run/nginx
-chown -R www-data:www-data /data/uploads /data/sessions
+chown -R nginx:nginx /data/uploads /data/sessions
 chmod 750 /data/uploads /data/sessions
 
 # Zeitzone übernehmen, falls Home Assistant sie mitgibt
 if [ -n "${TZ:-}" ] && [ -f "/usr/share/zoneinfo/${TZ}" ]; then
     cp "/usr/share/zoneinfo/${TZ}" /etc/localtime
     echo "${TZ}" > /etc/timezone
-    echo "date.timezone=${TZ}" > /usr/local/etc/php/conf.d/zz-timezone.ini
+    echo "date.timezone=${TZ}" > /etc/php-current/conf.d/zz-timezone.ini
     log "Zeitzone: ${TZ}"
 fi
 
@@ -142,7 +142,9 @@ fi
 # ------------------------------------------------------------------
 php /app/src/cli/setup.php
 
-php-fpm --daemonize
+php-fpm -F &
+FPM_PID=$!
+
 log "nginx auf Port 8099"
 
 nginx -g 'daemon off;' &

@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 1.2.1
+
+- Build repariert: Das Image baut jetzt auf dem Home-Assistant-Basisimage auf
+  und installiert PHP aus den Alpine-Paketen. Zuvor wurde ein Helfer des
+  offiziellen PHP-Images vorausgesetzt, den der Supervisor nicht bereitstellt
+  (`docker-php-ext-install: not found`).
+- Die PHP-Version wird beim Bauen ermittelt, weil Alpine sie im Paketnamen
+  führt und sie je Alpine-Fassung wechselt.
+
 ## 1.2.0
 
 - Umbau zu einem regulären Add-on-Repository: das Add-on liegt jetzt im
