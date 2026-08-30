@@ -88,6 +88,12 @@ function app_config(string $key, mixed $default = null): mixed
     static $cfg = null;
     if ($cfg === null) {
         $file = dirname(__DIR__, 2) . '/config/config.php';
+        if (is_file($file) && !is_readable($file)) {
+            throw new RuntimeException(
+                'config/config.php ist vorhanden, aber für den Webserver-Benutzer nicht lesbar. '
+                . 'Bitte Eigentümer und Rechte der Datei prüfen.'
+            );
+        }
         $cfg = is_file($file) ? require $file : [];
         $env = env_config();
         $cfg = $env ? array_replace_recursive($cfg, $env) : $cfg;

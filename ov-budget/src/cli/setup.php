@@ -116,11 +116,26 @@ $cfg = "<?php\n"
     . "    'debug'        => " . (opt('debug', 'OVB_DEBUG', '0') === '1' ? 'true' : 'false') . ",\n"
     . "];\n";
 
-if (file_put_contents(APP_ROOT . '/config/config.php', $cfg) === false) {
+$cfgFile = APP_ROOT . '/config/config.php';
+if (file_put_contents($cfgFile, $cfg) === false) {
     fail('config/config.php konnte nicht geschrieben werden.');
 }
-@chmod(APP_ROOT . '/config/config.php', 0640);
-say('Konfiguration geschrieben.');
+
+/*
+ * Dieses Skript läuft als root, PHP-FPM dagegen als Webserver-Benutzer.
+ * Ohne Übereignung könnte der die Datei nicht lesen ("Permission denied").
+ * Klappt das Übereignen nicht, wird die Datei stattdessen allgemein lesbar
+ * gemacht – lieber lauffähig als unlesbar.
+ */
+$webUser = opt('web_user', 'OVB_WEB_USER', 'nginx');
+$owned = @chown($cfgFile, $webUser) && @chgrp($cfgFile, $webUser);
+@chmod($cfgFile, $owned ? 0640 : 0644);
+
+// Auch das Verzeichnis muss für den Webserver-Benutzer betretbar sein
+$ownedDir = @chown(APP_ROOT . '/config', $webUser) && @chgrp(APP_ROOT . '/config', $webUser);
+@chmod(APP_ROOT . '/config', $ownedDir ? 0750 : 0755);
+
+say('Konfiguration geschrieben' . ($owned ? ' (Eigentümer: ' . $webUser . ').' : '.'));
 
 /* ------------------------------------------------------------------ */
 /* Auf die Datenbank warten                                             */

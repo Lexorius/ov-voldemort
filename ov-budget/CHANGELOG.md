@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 1.2.2
+
+- Rechte repariert: Die beim Start erzeugte `config/config.php` gehörte root
+  und war mit 0640 für den Webserver-Benutzer nicht lesbar – jede Seite endete
+  mit "Permission denied". Die Datei wird jetzt dem Webserver-Benutzer
+  übereignet; schlägt das fehl, wird sie allgemein lesbar gemacht.
+- Eindeutige Fehlermeldung im Protokoll, falls die Konfiguration einmal nicht
+  lesbar sein sollte.
+
 ## 1.2.1
 
 - Build repariert: Das Image baut jetzt auf dem Home-Assistant-Basisimage auf
