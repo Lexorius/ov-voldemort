@@ -11,10 +11,12 @@ ARG BUILD_ARCH=amd64
 ENV OVB_UPLOAD_DIR=/data/uploads \
     PHP_INI_DIR=/usr/local/etc/php
 
+# nginx als Webserver, MariaDB als mitgelieferte Datenbank – damit ist das
+# Add-on ohne weitere Installationen lauffähig.
 RUN set -eux; \
-    apk add --no-cache nginx tzdata; \
+    apk add --no-cache nginx tzdata mariadb mariadb-client; \
     docker-php-ext-install -j"$(nproc)" pdo_mysql opcache; \
-    rm -rf /var/cache/apk/*
+    rm -rf /var/cache/apk/* /var/lib/mysql
 
 # Anwendung
 WORKDIR /app
@@ -28,8 +30,9 @@ COPY docker/rootfs/ /
 RUN set -eux; \
     chmod +x /run.sh; \
     rm -f /app/public/install.php; \
-    mkdir -p /app/config /data/uploads /data/sessions /run/nginx; \
-    chown -R www-data:www-data /app/config /data; \
+    mkdir -p /app/config /data/uploads /data/sessions /data/mysql /run/nginx /run/mysqld; \
+    chown -R www-data:www-data /app/config /data/uploads /data/sessions; \
+    chown -R mysql:mysql /data/mysql /run/mysqld; \
     rm -f /etc/nginx/http.d/default.conf
 
 EXPOSE 8099

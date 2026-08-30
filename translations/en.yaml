@@ -1,28 +1,30 @@
 configuration:
-  db_name:
-    name: Database name
-    description: Must be listed in the MariaDB add-on "databases" option, or the add-on will try to create it.
+  ov_name:
+    name: Name of the local unit
+    description: Used as the heading on first start; can be changed inside the application later.
   admin_username:
     name: Administrator
     description: Username of the first account. Only created on the very first start.
   admin_password:
     name: Administrator password
     description: At least 10 characters. If left empty, a random password is generated and written to the log.
-  ov_name:
-    name: Name of the local unit
-    description: Used as the heading on first start; can be changed inside the application later.
+  db_name:
+    name: Database name
+    description: Created automatically inside the bundled database.
   db_host:
-    name: Database host
-    description: Only needed when not using the MariaDB add-on.
+    name: External database host
+    description: >-
+      Leave empty to use the bundled MariaDB. Only fill in to use an existing
+      database (e.g. core-mariadb); user and password are then required as well.
   db_port:
-    name: Database port
-    description: Defaults to 3306.
+    name: External database port
+    description: Defaults to 3306. Only used together with a host.
   db_user:
-    name: Database user
-    description: Only needed for an external database.
+    name: External database user
+    description: Only used together with a host.
   db_password:
-    name: Database password
-    description: Only needed for an external database.
+    name: External database password
+    description: Only used together with a host.
   debug:
     name: Show PHP errors
     description: For troubleshooting only.

@@ -1,11 +1,14 @@
 # Home-Assistant-Add-on: OV-Budget
 # Kopiere dieses Verzeichnis nach /addons/ov-budget und lade den Add-on-Store neu.
+#
+# Das Add-on ist eigenständig: Datenbank, Webserver und Anwendung stecken im
+# Container, es sind keine weiteren Add-ons nötig.
 name: OV-Budget
 slug: ov_budget
-version: "1.0.0"
+version: "1.1.0"
 description: >-
   Pseudo-Budgetverwaltung, Wunschliste ("Wünsch dir was") und Aufgaben
-  für einen THW-Ortsverband. Mit Divera-24/7-Anbindung.
+  für einen THW-Ortsverband. Mit eigener Datenbank und Divera-24/7-Anbindung.
 url: https://github.com/Lexorius/ov-voldemort
 arch:
   - aarch64
@@ -17,6 +20,9 @@ init: false
 
 boot: auto
 startup: services
+
+# Vor dem Backup anhalten, damit die Datenbankdateien in sich stimmig sind
+backup: cold
 
 # Ingress: erscheint in der Seitenleiste, ohne Port nach außen zu öffnen
 ingress: true
@@ -34,16 +40,11 @@ ports_description:
 
 watchdog: "tcp://[HOST]:[PORT:8099]"
 
-# Zugriff auf die Supervisor-API, um die Zugangsdaten des MariaDB-Add-ons zu holen
-hassio_api: true
-services:
-  - mysql:want
-
 options:
-  db_name: ovbudget
+  ov_name: THW Ortsverband
   admin_username: admin
   admin_password: ""
-  ov_name: THW Ortsverband
+  db_name: ovbudget
   db_host: ""
   db_port: 3306
   db_user: ""
@@ -51,10 +52,10 @@ options:
   debug: false
 
 schema:
-  db_name: str
+  ov_name: str?
   admin_username: str
   admin_password: password?
-  ov_name: str?
+  db_name: str
   db_host: str?
   db_port: port?
   db_user: str?

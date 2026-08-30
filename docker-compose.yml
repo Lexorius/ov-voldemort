@@ -1,49 +1,35 @@
 # Betrieb als normaler Docker-Container (ohne Home Assistant).
-# Auf einem Home Assistant OS / Supervised nimmst du stattdessen das Add-on –
-# siehe README, Abschnitt "Home-Assistant-Add-on".
+# Der Container bringt seine eigene MariaDB mit – ein zweiter Dienst ist nicht
+# nötig. Alle Daten liegen im Volume "data" unter /data.
 services:
-  db:
-    image: mariadb:11
-    restart: unless-stopped
-    environment:
-      MARIADB_DATABASE: ovbudget
-      MARIADB_USER: ovbudget
-      MARIADB_PASSWORD: ${DB_PASSWORD:-bitte-aendern}
-      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-bitte-auch-aendern}
-    volumes:
-      - db:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
   app:
     build:
       context: .
       args:
         BUILD_FROM: php:8.3-fpm-alpine
     restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
     environment:
       TZ: ${TZ:-Europe/Berlin}
-      OVB_DB_HOST: db
-      OVB_DB_PORT: "3306"
       OVB_DB_NAME: ovbudget
-      OVB_DB_USER: ovbudget
-      OVB_DB_PASS: ${DB_PASSWORD:-bitte-aendern}
       OVB_ADMIN_USER: ${ADMIN_USER:-admin}
       # Leer lassen: dann erzeugt der erste Start ein Passwort und
       # schreibt es in das Containerprotokoll (docker compose logs app)
       OVB_ADMIN_PASS: ${ADMIN_PASSWORD:-}
       OVB_OV_NAME: ${OV_NAME:-THW Ortsverband}
+      # Eine bereits vorhandene Datenbank nutzen? Dann diese drei setzen:
+      # OVB_DB_HOST: mariadb.example
+      # OVB_DB_USER: ovbudget
+      # OVB_DB_PASS: geheim
     volumes:
       - data:/data
     ports:
       - "${HTTP_PORT:-8099}:8099"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8099/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
 
 volumes:
-  db:
   data:

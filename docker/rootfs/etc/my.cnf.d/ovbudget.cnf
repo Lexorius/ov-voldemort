@@ -1,0 +1,25 @@
+# Sparsame Einstellungen – das Add-on läuft oft auf einem Raspberry Pi.
+[mariadb]
+datadir                 = /data/mysql
+socket                  = /run/mysqld/mysqld.sock
+bind-address            = 127.0.0.1
+port                    = 3306
+skip-name-resolve
+
+character-set-server     = utf8mb4
+collation-server         = utf8mb4_unicode_ci
+
+max_connections          = 32
+innodb_buffer_pool_size  = 64M
+innodb_log_file_size     = 32M
+innodb_flush_method      = O_DIRECT
+key_buffer_size          = 8M
+tmp_table_size           = 16M
+max_heap_table_size      = 16M
+performance_schema       = OFF
+
+log_error                = /dev/stderr
+expire_logs_days         = 3
+
+[client]
+socket = /run/mysqld/mysqld.sock

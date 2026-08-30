@@ -1,0 +1,17 @@
+# Alles mit LF auschecken. Wichtig fuer den Container: ein run.sh mit CRLF
+# scheitert unter Linux mit "bad interpreter".
+* text=auto eol=lf
+
+*.sh    text eol=lf
+*.php   text eol=lf
+*.sql   text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.cnf   text eol=lf
+*.conf  text eol=lf
+*.ini   text eol=lf
+*.css   text eol=lf
+*.js    text eol=lf
+*.md    text eol=lf
+Dockerfile   text eol=lf
+.htaccess    text eol=lf

@@ -16,50 +16,58 @@ klassisch auf einem **Webserver**.
 
 ## Home-Assistant-Add-on
 
-Voraussetzung: Home Assistant OS oder Supervised und das offizielle **MariaDB-Add-on**.
+Das Add-on ist eigenständig: **Datenbank, Webserver und Anwendung stecken im
+Container.** Es sind keine weiteren Add-ons und keine Vorarbeiten nötig.
 
-1. Im MariaDB-Add-on unter *Konfiguration* die Datenbank ergänzen:
-
-```yaml
-databases:
-  - homeassistant
-  - ovbudget
-```
-
-MariaDB neu starten.
-
-2. Dieses Verzeichnis nach `/addons/ov-budget` kopieren – etwa per Samba- oder
-   Terminal-Add-on:
+1. Verzeichnis nach `/addons/ov-budget` kopieren – etwa per Samba-, Terminal-
+   oder Advanced-SSH-Add-on:
 
 ```bash
 git clone https://github.com/Lexorius/ov-voldemort.git /addons/ov-budget
 ```
 
-3. **Einstellungen → Add-ons → Add-on Store → ⋮ → Neu laden.** Unter „Lokale Add-ons"
-   erscheint *OV-Budget*. Installieren (der erste Build dauert ein paar Minuten).
-4. Unter *Konfiguration* mindestens `ov_name` setzen, optional `admin_password`.
-   Bleibt das Passwort leer, erzeugt der erste Start eines und schreibt es ins
-   Protokoll des Add-ons.
-5. Starten, dann **Protokoll** öffnen und das Startpasswort notieren.
-6. „In Seitenleiste anzeigen" einschalten – die Anwendung läuft über Ingress, es
-   muss also kein Port nach außen geöffnet werden.
+2. **Einstellungen → Add-ons → Add-on Store → ⋮ → Neu laden.** Unter „Lokale
+   Add-ons" erscheint *OV-Budget*. Installieren – der erste Build dauert je nach
+   Hardware einige Minuten.
+3. Optional unter *Konfiguration* den Namen des Ortsverbands und ein
+   Wunschpasswort setzen. Man kann aber auch einfach starten.
+4. **Starten**, dann **Protokoll** öffnen: dort steht das Startpasswort, sofern
+   keines vergeben wurde.
+5. „In Seitenleiste anzeigen" einschalten – fertig.
 
-Die Zugangsdaten zur Datenbank holt sich das Add-on über den Supervisor-Dienst
-`mysql` selbst. Nur für eine **externe** Datenbank sind `db_host`, `db_user` und
-`db_password` auszufüllen.
+Beim ersten Start richtet sich alles selbst ein: MariaDB wird initialisiert, ein
+zufälliges Datenbankpasswort erzeugt, Datenbank und Benutzer angelegt, Schema und
+Grunddaten eingespielt und der Administrator erstellt. Spätere Starts erkennen den
+Bestand und ändern nichts daran.
 
-Persistent unter `/data` liegen die hochgeladenen Angebote und die Sitzungen; die
-eigentlichen Daten stehen in der MariaDB und gehören in deren Sicherung.
+Alles Dauerhafte liegt unter `/data`:
+
+```
+/data/mysql      Datenbank
+/data/uploads    hochgeladene Angebote
+/data/sessions   Anmeldesitzungen
+/data/dbpass     erzeugtes Datenbankpasswort
+```
+
+Das HA-Backup erfasst diesen Ordner vollständig. Wegen `backup: cold` hält der
+Supervisor das Add-on währenddessen an, damit die Datenbankdateien in sich
+stimmig sind.
 
 ### Optionen
 
 | Option | Bedeutung |
 |---|---|
-| `db_name` | Name der Datenbank (Vorgabe `ovbudget`) |
-| `admin_username` / `admin_password` | erster Zugang, nur beim allerersten Start angelegt |
 | `ov_name` | Name des Ortsverbands, später in der Anwendung änderbar |
-| `db_host`, `db_port`, `db_user`, `db_password` | nur für eine externe Datenbank |
+| `admin_username` / `admin_password` | erster Zugang, nur beim allerersten Start angelegt. Passwort leer = Zufallspasswort im Protokoll |
+| `db_name` | Name der Datenbank (Vorgabe `ovbudget`) |
+| `db_host`, `db_port`, `db_user`, `db_password` | **leer lassen.** Nur ausfüllen, wenn statt der mitgelieferten Datenbank eine vorhandene genutzt werden soll |
 | `debug` | PHP-Meldungen im Browser, nur zur Fehlersuche |
+
+### Lieber das MariaDB-Add-on verwenden?
+
+Geht auch: im MariaDB-Add-on eine Datenbank `ovbudget` samt Login anlegen und
+hier `db_host: core-mariadb`, `db_user` und `db_password` eintragen. Dann startet
+der Container seine eigene Datenbank nicht.
 
 ### Zugriff ohne Ingress
 
@@ -68,8 +76,10 @@ einen Port für `8099/tcp` vergeben, dann `http://homeassistant.local:8099`.
 
 ## Docker ohne Home Assistant
 
+Ein Container, keine weiteren Dienste – die Datenbank ist eingebaut:
+
 ```bash
-cp .env.example .env      # Passwörter anpassen
+cp .env.example .env      # optional anpassen
 docker compose up -d
 docker compose logs app   # Startpasswort ablesen
 ```
@@ -80,11 +90,13 @@ Unterverzeichnis, zusätzlich `OVB_BASE_PATH=/budget` setzen.
 Unterstützte Umgebungsvariablen: `OVB_DB_HOST`, `OVB_DB_PORT`, `OVB_DB_NAME`,
 `OVB_DB_USER`, `OVB_DB_PASS`, `OVB_BASE_PATH`, `OVB_UPLOAD_DIR`, `OVB_INGRESS`,
 `OVB_DEBUG`, `OVB_ADMIN_USER`, `OVB_ADMIN_PASS`, `OVB_OV_NAME`, `TZ`.
+Ohne `OVB_DB_HOST` startet der Container seine eigene MariaDB.
 
-Beim Start richtet `src/cli/setup.php` alles ein: Konfiguration schreiben, auf die
-Datenbank warten, Schema und Grunddaten einspielen (wiederholbar, ohne bestehende
-Daten zu überschreiben) und beim ersten Mal den Administrator anlegen. Der
-Einrichtungsassistent `install.php` wird im Container nicht mitgeliefert.
+Sicherung ohne Home Assistant:
+
+```bash
+docker compose exec app mariadb-dump -uovbudget -p"$(docker compose exec -T app cat /data/dbpass)" ovbudget > backup.sql
+```
 
 ## Klassische Installation
 
@@ -160,7 +172,7 @@ storage/uploads/  hochgeladene Angebote – liegt bewusst außerhalb des Webroot
                   (im Container stattdessen /data/uploads)
 
 Dockerfile, config.yaml, build.yaml, translations/  Home-Assistant-Add-on
-docker/rootfs/    nginx, php-fpm und Startskript des Containers
+docker/rootfs/    nginx, php-fpm, MariaDB und Startskript des Containers
 docker-compose.yml  Betrieb ohne Home Assistant
 ```
 
@@ -251,6 +263,7 @@ mysqldump -u ov_budget -p ov_budget > backup-$(date +%F).sql
 tar czf uploads-$(date +%F).tar.gz storage/uploads
 ```
 
-Als Home-Assistant-Add-on erfasst das normale HA-Backup den Ordner `/data` des
-Add-ons (Angebote und Sitzungen) mit. **Die Datenbank liegt im MariaDB-Add-on** –
-also darauf achten, dass auch dieses im Backup enthalten ist.
+Als Home-Assistant-Add-on genügt das normale HA-Backup: Datenbank, Angebote und
+Sitzungen liegen alle unter `/data` und werden mitgesichert. Das Add-on wird für
+die Dauer der Sicherung angehalten (`backup: cold`), damit die Datenbankdateien
+konsistent sind.

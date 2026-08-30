@@ -1,9 +1,7 @@
 configuration:
-  db_name:
-    name: Name der Datenbank
-    description: >-
-      Muss im MariaDB-Add-on unter "databases" eingetragen sein.
-      Sonst wird sie beim Start angelegt, sofern der Benutzer das darf.
+  ov_name:
+    name: Name des Ortsverbands
+    description: Wird beim ersten Start als Überschrift übernommen, später in der Anwendung änderbar.
   admin_username:
     name: Administrator
     description: Benutzername des ersten Zugangs. Wird nur beim allerersten Start angelegt.
@@ -12,21 +10,24 @@ configuration:
     description: >-
       Mindestens 10 Zeichen. Bleibt das Feld leer, erzeugt das Add-on beim ersten
       Start ein Zufallspasswort und schreibt es ins Protokoll.
-  ov_name:
-    name: Name des Ortsverbands
-    description: Wird beim ersten Start als Überschrift übernommen, später in der Anwendung änderbar.
+  db_name:
+    name: Name der Datenbank
+    description: Wird in der mitgelieferten Datenbank automatisch angelegt.
   db_host:
-    name: Datenbank-Host
-    description: Nur ausfüllen, wenn nicht das MariaDB-Add-on genutzt wird.
+    name: Externer Datenbank-Host
+    description: >-
+      Leer lassen! Dann nutzt das Add-on seine eigene, mitgelieferte MariaDB.
+      Nur ausfüllen, wenn eine bereits vorhandene Datenbank verwendet werden soll
+      (z.B. core-mariadb) – dann sind auch Benutzer und Passwort nötig.
   db_port:
-    name: Datenbank-Port
-    description: Standard ist 3306.
+    name: Port der externen Datenbank
+    description: Standard ist 3306. Nur zusammen mit einem Host wirksam.
   db_user:
-    name: Datenbank-Benutzer
-    description: Nur bei einer externen Datenbank nötig.
+    name: Benutzer der externen Datenbank
+    description: Nur zusammen mit einem Host wirksam.
   db_password:
-    name: Passwort der Datenbank
-    description: Nur bei einer externen Datenbank nötig.
+    name: Passwort der externen Datenbank
+    description: Nur zusammen mit einem Host wirksam.
   debug:
     name: Fehlermeldungen anzeigen
     description: Nur zur Fehlersuche einschalten – zeigt PHP-Meldungen im Browser.

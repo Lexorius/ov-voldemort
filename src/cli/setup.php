@@ -7,9 +7,9 @@
  * in der Konfiguration hier klar gemeldet wird und nicht erst im Browser.
  *
  * Quellen der Einstellungen, in dieser Reihenfolge:
- *   1. /data/options.json      (Optionen des Home-Assistant-Add-ons)
- *   2. Umgebungsvariablen      (OVB_* – für "docker run" / docker compose)
- *   3. Dienst "mysql" des Supervisors (MariaDB-Add-on), falls kein Host gesetzt
+ *   1. /data/options.json  (Optionen des Home-Assistant-Add-ons)
+ *   2. Umgebungsvariablen  (OVB_* – auch das Startskript reicht so die
+ *                           Zugangsdaten der mitgelieferten MariaDB herein)
  */
 declare(strict_types=1);
 
@@ -65,72 +65,27 @@ $db = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* Zugangsdaten notfalls beim Supervisor erfragen (MariaDB-Add-on)      */
+/* Lokale oder externe Datenbank?                                       */
 /* ------------------------------------------------------------------ */
 
-function supervisor_mysql(): ?array
-{
-    $token = (string)(getenv('SUPERVISOR_TOKEN') ?: getenv('HASSIO_TOKEN') ?: '');
-    if ($token === '') {
-        return null;
-    }
-
-    $url = 'http://supervisor/services/mysql';
-    $headers = ['Authorization: Bearer ' . $token, 'Accept: application/json'];
-    $body = false;
-
-    if (function_exists('curl_init')) {
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => 10,
-            CURLOPT_HTTPHEADER     => $headers,
-        ]);
-        $body = curl_exec($ch);
-        curl_close($ch);
-    } else {
-        $ctx = stream_context_create(['http' => [
-            'method' => 'GET', 'header' => implode("\r\n", $headers),
-            'timeout' => 10, 'ignore_errors' => true,
-        ]]);
-        $body = @file_get_contents($url, false, $ctx);
-    }
-
-    if (!is_string($body)) {
-        return null;
-    }
-    $data = json_decode($body, true);
-    $d = $data['data'] ?? null;
-    if (!is_array($d) || empty($d['host'])) {
-        return null;
-    }
-    return [
-        'host' => (string)$d['host'],
-        'port' => (int)($d['port'] ?? 3306),
-        'user' => (string)($d['username'] ?? ''),
-        'pass' => (string)($d['password'] ?? ''),
-    ];
+/*
+ * Ohne gesetzten Host bringt der Container seine eigene MariaDB mit.
+ * Das Startskript fragt diese Entscheidung mit --db-target ab, startet
+ * gegebenenfalls den Server und reicht die Zugangsdaten als OVB_DB_*
+ * wieder herein.
+ */
+if (($argv[1] ?? '') === '--db-target') {
+    echo $db['host'] === '' ? 'local:' . $db['name'] : 'external';
+    echo PHP_EOL;
+    exit(0);
 }
 
 if ($db['host'] === '') {
-    $svc = supervisor_mysql();
-    if ($svc) {
-        $db['host'] = $svc['host'];
-        $db['port'] = $svc['port'];
-        if ($db['user'] === '') {
-            $db['user'] = $svc['user'];
-            $db['pass'] = $svc['pass'];
-        }
-        say('Datenbank über den Supervisor-Dienst "mysql" gefunden: ' . $db['host'] . ':' . $db['port']);
-    }
-}
-
-if ($db['host'] === '') {
-    fail('Kein Datenbank-Host bekannt. Bitte das MariaDB-Add-on installieren '
-        . 'oder db_host/db_user/db_password in den Optionen setzen.');
+    fail('Kein Datenbank-Host bekannt – die mitgelieferte Datenbank wurde nicht gestartet.');
 }
 if ($db['user'] === '') {
-    fail('Kein Datenbank-Benutzer angegeben (Option db_user).');
+    fail('Kein Datenbank-Benutzer angegeben. Bei einer externen Datenbank gehören '
+        . 'db_host, db_user und db_password zusammen.');
 }
 
 /* ------------------------------------------------------------------ */
