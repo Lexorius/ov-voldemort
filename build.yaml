@@ -1,0 +1,6 @@
+# Basisimages je Architektur. Bewusst die offiziellen PHP-Images:
+# sie bringen PHP 8.3 samt Erweiterungen für alle drei Architekturen mit.
+build_from:
+  aarch64: "php:8.3-fpm-alpine"
+  amd64: "php:8.3-fpm-alpine"
+  armv7: "php:8.3-fpm-alpine"

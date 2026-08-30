@@ -1,0 +1,8 @@
+.git
+.gitignore
+config/config.php
+storage/
+*.md
+docker-compose.yml
+.env
+.env.example
