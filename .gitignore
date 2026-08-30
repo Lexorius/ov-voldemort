@@ -1,6 +1,6 @@
-config/config.php
-storage/uploads/*
-!storage/uploads/.gitkeep
+ov-budget/config/config.php
+ov-budget/storage/uploads/*
+!ov-budget/storage/uploads/.gitkeep
 *.log
 .DS_Store
 

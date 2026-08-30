@@ -1,0 +1,6 @@
+# Add-on-Repository fuer Home Assistant.
+# In Home Assistant: Einstellungen -> Add-ons -> Add-on Store -> Menue (drei Punkte)
+# -> Repositories -> https://github.com/Lexorius/ov-voldemort hinzufuegen.
+name: OV-Budget
+url: https://github.com/Lexorius/ov-voldemort
+maintainer: Thomas Kloppholz (@Lexorius)

@@ -19,16 +19,15 @@ klassisch auf einem **Webserver**.
 Das Add-on ist eigenständig: **Datenbank, Webserver und Anwendung stecken im
 Container.** Es sind keine weiteren Add-ons und keine Vorarbeiten nötig.
 
-1. Verzeichnis nach `/addons/ov-budget` kopieren – etwa per Samba-, Terminal-
-   oder Advanced-SSH-Add-on:
+1. **Einstellungen → Add-ons → Add-on Store → ⋮ → Repositories** öffnen und
+   diese Adresse hinzufügen:
 
-```bash
-git clone https://github.com/Lexorius/ov-voldemort.git /addons/ov-budget
+```
+https://github.com/Lexorius/ov-voldemort
 ```
 
-2. **Einstellungen → Add-ons → Add-on Store → ⋮ → Neu laden.** Unter „Lokale
-   Add-ons" erscheint *OV-Budget*. Installieren – der erste Build dauert je nach
-   Hardware einige Minuten.
+2. In der Liste erscheint *OV-Budget*. Installieren – der erste Build dauert je
+   nach Hardware einige Minuten.
 3. Optional unter *Konfiguration* den Namen des Ortsverbands und ein
    Wunschpasswort setzen. Man kann aber auch einfach starten.
 4. **Starten**, dann **Protokoll** öffnen: dort steht das Startpasswort, sofern
@@ -108,7 +107,8 @@ docker compose exec app mariadb-dump -uovbudget -p"$(docker compose exec -T app 
 
 ### Einrichtung
 
-1. Dateien auf den Server legen, Document-Root auf `public/` zeigen lassen.
+1. Inhalt von `ov-budget/` auf den Server legen, Document-Root auf dessen
+   `public/` zeigen lassen.
 2. Leere Datenbank samt Benutzer anlegen.
 3. Schreibrechte setzen:
 
@@ -159,21 +159,25 @@ location ~ \.php$ {
 
 ## Verzeichnisse
 
-```
-config/           Konfiguration (config.php wird nicht versioniert)
-public/           Webroot: index.php (Front-Controller), install.php, cron.php, assets/
-src/bootstrap.php Laufzeitumgebung
-src/lib/          Datenbank, Auth, Einstellungen, Listen, Wünsche, Aufgaben, Uploads, Divera
-src/pages/        eine Datei je Route (admin/ für den Verwaltungsbereich)
-src/cli/setup.php Einrichtung beim Containerstart
-views/            HTML-Templates, views/layout.php als Rahmen
-sql/              schema.sql (Tabellen) und seed.sql (Grunddaten)
-storage/uploads/  hochgeladene Angebote – liegt bewusst außerhalb des Webroots
-                  (im Container stattdessen /data/uploads)
+Das Repository ist ein Home-Assistant-Add-on-Repository: oben liegt nur
+`repository.yaml`, die Anwendung steckt im Add-on-Ordner.
 
-Dockerfile, config.yaml, build.yaml, translations/  Home-Assistant-Add-on
-docker/rootfs/    nginx, php-fpm, MariaDB und Startskript des Containers
+```
+repository.yaml     macht das Repository im Add-on Store nutzbar
 docker-compose.yml  Betrieb ohne Home Assistant
+ov-budget/          das Add-on – zugleich die vollstaendige Anwendung
+  config.yaml, build.yaml, Dockerfile, DOCS.md, CHANGELOG.md, translations/
+  docker/rootfs/    nginx, php-fpm, MariaDB und Startskript des Containers
+  public/           Webroot: index.php (Front-Controller), install.php, cron.php, assets/
+  src/bootstrap.php Laufzeitumgebung
+  src/lib/          Datenbank, Auth, Einstellungen, Listen, Wuensche, Aufgaben, Uploads, Divera
+  src/pages/        eine Datei je Route (admin/ fuer den Verwaltungsbereich)
+  src/cli/setup.php Einrichtung beim Containerstart
+  views/            HTML-Templates, views/layout.php als Rahmen
+  sql/              schema.sql (Tabellen) und seed.sql (Grunddaten)
+  config/           Konfiguration fuer die klassische Installation
+  storage/uploads/  hochgeladene Angebote, ausserhalb des Webroots
+                    (im Container stattdessen /data/uploads)
 ```
 
 Ausgeliefert werden Uploads ausschließlich über `index.php?p=download&id=…` – also nur
