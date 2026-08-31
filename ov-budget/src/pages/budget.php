@@ -1,16 +1,14 @@
 <?php
 declare(strict_types=1);
 
-$jahre = array_map(
-    static fn($r) => (int)$r['jahr'],
-    db_all('SELECT DISTINCT jahr FROM budgets ORDER BY jahr DESC')
-);
+$jahre = budget_years_known();
 $jahr = get_int('jahr') ?: ($jahre[0] ?? setting_int('haushaltsjahr', (int)date('Y')));
 if (!in_array($jahr, $jahre, true)) {
     $jahre[] = $jahr;
     rsort($jahre);
 }
 
+// Budgettöpfe samt Verplanung aus Wünschen und tatsächlichen Ausgaben
 $budgets = db_all(
     'SELECT b.*, k.label AS kategorie_label, f.label AS fachgruppe_label,
             (SELECT COALESCE(SUM(w.netto_gesamt),0) FROM wishes w
@@ -41,9 +39,16 @@ $ohneTopf = db_all(
 );
 
 render('budget', [
-    'title'    => 'Budget',
-    'jahr'     => $jahr,
-    'jahre'    => $jahre,
-    'budgets'  => $budgets,
-    'ohneTopf' => $ohneTopf,
+    'title'          => (string)setting('budget_modul_name', 'Budget'),
+    'jahr'           => $jahr,
+    'jahre'          => $jahre,
+    'budgets'        => $budgets,
+    'ohneTopf'       => $ohneTopf,
+    'jahresbudget'   => budget_year($jahr),
+    'ausgabenBrutto' => expense_total($jahr),
+    'ausgabenNetto'  => expense_total($jahr, 'betrag_netto'),
+    'kategorien'     => expense_by_category($jahr),
+    'monate'         => expense_by_month($jahr),
+    'jeTopf'         => expense_by_budget($jahr),
+    'letzte'         => expense_query(['jahr' => $jahr, 'limit' => 5]),
 ]);

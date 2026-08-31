@@ -81,7 +81,10 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
 * **Aufgaben** – für den Ortsverband, einzelne Fachgruppen, Funktionen oder
   Personen. Wer angemeldet ist, sieht unter „Für mich" alles aus dem eigenen
   Zuständigkeitsbereich.
-* **Budget** – Töpfe je Haushaltsjahr mit Auslastung gegen die offenen Wünsche.
+* **Budget** – Gesamtbudget je Haushaltsjahr, laufende Ausgaben (Haus,
+  Nebenkosten, Getränke, Tanken ...) und eine Übersicht: verbraucht gegen
+  Budget, Aufschlüsselung nach Kategorie, Verlauf über die Monate. Optional
+  unterteilen Budgettöpfe das Jahr nach Zweck.
 * **Divera 24/7** – Formulare abrufen, Felder frei zuordnen und Einträge als
   Wünsche übernehmen. Mit Vorschau, Dubletten-Erkennung und optionalem
   automatischem Abruf.
@@ -108,3 +111,7 @@ Startskript (Datenbank), Zeilen mit `[setup]` von der Einrichtung der Anwendung.
   Fall über einen anderen Administrator-Zugang zurücksetzen.
 * **Nach einem Neustart fehlen Daten**: prüfen, ob das Add-on wirklich die
   eigene Datenbank nutzt (Protokollzeile „Eigene Datenbank wird verwendet").
+* **Auswahllisten enthielten jeden Eintrag mehrfach**: Das war ein Fehler in
+  Fassungen vor 1.3.0. Beim Start ab 1.3.0 wird das einmalig bereinigt; die
+  Protokollzeilen mit `Wanderung 001` zeigen, was zusammengeführt wurde. Der
+  Stand davor liegt als Tabelle `list_items_backup_dedupe` in der Datenbank.

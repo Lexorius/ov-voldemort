@@ -30,6 +30,7 @@ require __DIR__ . '/lib/auth.php';
 require __DIR__ . '/lib/view.php';
 require __DIR__ . '/lib/wishes.php';
 require __DIR__ . '/lib/todos.php';
+require __DIR__ . '/lib/expenses.php';
 require __DIR__ . '/lib/uploads.php';
 require __DIR__ . '/lib/divera.php';
 

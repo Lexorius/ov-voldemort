@@ -214,6 +214,15 @@ try {
 }
 
 run_sql_file($pdo, APP_ROOT . '/sql/schema.sql');
+
+/*
+ * Wanderungen laufen zwischen Schema und Grunddaten: sie raeumen unter
+ * anderem doppelte Listeneintraege auf und legen den eindeutigen Schluessel
+ * an, ohne den das INSERT IGNORE in seed.sql wirkungslos waere.
+ */
+require APP_ROOT . '/src/cli/migrate.php';
+ovb_migrate($pdo, 'say');
+
 run_sql_file($pdo, APP_ROOT . '/sql/seed.sql');
 say($frischeInstallation ? 'Schema und Grunddaten eingespielt.' : 'Schema geprüft, Grunddaten vorhanden.');
 

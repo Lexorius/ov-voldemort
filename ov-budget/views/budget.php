@@ -1,20 +1,34 @@
 <?php
-/** @var int $jahr @var array $jahre @var array $budgets @var array $ohneTopf */
+/** @var int $jahr @var array $jahre @var array $budgets @var array $ohneTopf
+ *  @var ?array $jahresbudget @var float $ausgabenBrutto @var float $ausgabenNetto
+ *  @var array $kategorien @var array $monate @var array $jeTopf @var array $letzte */
 $warn = setting_int('budget_warn_prozent', 90);
-$summe = array_sum(array_map(static fn($b) => (float)$b['betrag_netto'], $budgets));
+$gesamt = (float)($jahresbudget['betrag'] ?? 0);
+$rest = $gesamt - $ausgabenBrutto;
+$quote = $gesamt > 0 ? min(100, $ausgabenBrutto / $gesamt * 100) : 0;
+$quoteCls = ($gesamt > 0 && $ausgabenBrutto > $gesamt) ? 'is-over' : ($quote >= $warn ? 'is-warn' : '');
+
+$summeToepfe = array_sum(array_map(static fn($b) => (float)$b['betrag_netto'], $budgets));
 $verplant = array_sum(array_map(static fn($b) => (float)$b['verplant'], $budgets));
-$abgeschlossen = array_sum(array_map(static fn($b) => (float)$b['abgeschlossen'], $budgets));
 $offenOhne = array_sum(array_map(static fn($w) => (float)$w['netto_gesamt'], $ohneTopf));
+$maxMonat = max(array_merge([0.0], array_values($monate)));
+$monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 ?>
 <div class="pagehead">
   <div>
-    <h1>Budget <?= (int)$jahr ?></h1>
-    <p>Pseudo-Budget zur internen Planung – die Zahlen bilden keine offizielle Haushaltsstelle ab.</p>
+    <h1><?= e((string)setting('budget_modul_name', 'Budget')) ?> <?= (int)$jahr ?></h1>
+    <p><?= nl2br(e((string)setting('budget_intro', ''))) ?></p>
   </div>
-  <?php if (can('manage_budget')): ?>
-    <a class="btn" href="<?= e(url('budget_edit', ['jahr' => $jahr])) ?>">+ Topf anlegen</a>
-  <?php endif; ?>
+  <div class="btnrow">
+    <?php if (can('manage_budget')): ?>
+      <a class="btn" href="<?= e(url('expense_edit', ['jahr' => $jahr])) ?>">+ Ausgabe</a>
+      <a class="btn btn--sec" href="<?= e(url('budget_year_edit', ['jahr' => $jahr])) ?>">Jahresbudget</a>
+      <a class="btn btn--sec" href="<?= e(url('budget_edit', ['jahr' => $jahr])) ?>">+ Topf</a>
+    <?php endif; ?>
+  </div>
 </div>
+
+<?= render_partial('partials/budget_tabs', ['jahr' => $jahr]) ?>
 
 <div class="tabs">
   <?php foreach ($jahre as $j): ?>
@@ -22,60 +36,168 @@ $offenOhne = array_sum(array_map(static fn($w) => (float)$w['netto_gesamt'], $oh
   <?php endforeach; ?>
 </div>
 
-<div class="stats">
-  <div class="stat"><div class="stat__label">Budget gesamt</div><div class="stat__value"><?= e(money($summe, false)) ?></div><div class="stat__hint">netto</div></div>
-  <div class="stat"><div class="stat__label">Verplant (offen)</div><div class="stat__value"><?= e(money($verplant, false)) ?></div>
-    <div class="stat__hint"><?= $summe > 0 ? number_format($verplant / $summe * 100, 0) : 0 ?>&nbsp;% des Budgets</div></div>
-  <div class="stat"><div class="stat__label">Abgeschlossen</div><div class="stat__value"><?= e(money($abgeschlossen, false)) ?></div><div class="stat__hint">beschafft oder abgelehnt</div></div>
-  <div class="stat"><div class="stat__label">Ohne Topf</div><div class="stat__value"><?= e(money($offenOhne, false)) ?></div><div class="stat__hint"><?= count($ohneTopf) ?> offene Wünsche</div></div>
-</div>
-
-<?php if (!$budgets): ?>
-  <div class="card"><div class="empty">Für <?= (int)$jahr ?> ist noch kein Budgettopf angelegt.</div></div>
-<?php else: ?>
-  <div class="itemlist">
-    <?php foreach ($budgets as $b):
-        $soll = (float)$b['betrag_netto'];
-        $ist = (float)$b['verplant'];
-        $pct = $soll > 0 ? min(100, $ist / $soll * 100) : 0;
-        $cls = ($soll > 0 && $ist > $soll) ? 'is-over' : ($pct >= $warn ? 'is-warn' : '');
-        $rest = $soll - $ist;
-    ?>
-      <div class="card" style="margin-bottom:0">
-        <div class="card__head">
-          <div>
-            <h2 style="margin:0"><?= e($b['name']) ?><?php if (!(int)$b['is_active']): ?>
-              <span class="badge badge--muted">inaktiv</span><?php endif; ?></h2>
-            <div class="muted small">
-              <?= e($b['kategorie_label'] ?: 'alle Kategorien') ?> ·
-              <?= e($b['fachgruppe_label'] ?: 'ortsverbandsweit') ?> ·
-              <?= (int)$b['wuensche'] ?> Wünsche
-            </div>
-          </div>
-          <div class="btnrow">
-            <a class="btn btn--sec btn--sm" href="<?= e(url('wishes', ['budget_id' => $b['id'], 'alle' => '1'])) ?>">Wünsche</a>
-            <?php if (can('manage_budget')): ?>
-              <a class="btn btn--sec btn--sm" href="<?= e(url('budget_edit', ['id' => $b['id']])) ?>">Bearbeiten</a>
-            <?php endif; ?>
-          </div>
-        </div>
-
-        <div style="display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap" class="small">
-          <span><strong><?= e(money($ist, false)) ?></strong> verplant von <?= e(money($soll)) ?></span>
-          <span style="<?= $rest < 0 ? 'color:var(--bad);font-weight:700' : '' ?>">
-            <?= $rest >= 0 ? 'noch frei: ' : 'Überzeichnung: ' ?><?= e(money(abs($rest))) ?>
-          </span>
-        </div>
-        <div class="bar"><div class="bar__fill <?= $cls ?>" style="width:<?= number_format($pct, 1, '.', '') ?>%"></div></div>
-        <?php if ($b['beschreibung']): ?>
-          <p class="small muted" style="margin:.6rem 0 0"><?= nl2br(e($b['beschreibung'])) ?></p>
-        <?php endif; ?>
-      </div>
-    <?php endforeach; ?>
+<?php if ($gesamt <= 0): ?>
+  <div class="alert alert--info">
+    Für <?= (int)$jahr ?> ist noch kein Gesamtbudget hinterlegt.
+    <?php if (can('manage_budget')): ?>
+      <a href="<?= e(url('budget_year_edit', ['jahr' => $jahr])) ?>">Jetzt eintragen</a>
+    <?php endif; ?>
   </div>
 <?php endif; ?>
 
-<section class="card mt">
+<div class="stats">
+  <div class="stat">
+    <div class="stat__label">Jahresbudget</div>
+    <div class="stat__value"><?= e(money($gesamt, false)) ?></div>
+    <div class="stat__hint">für <?= (int)$jahr ?></div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Ausgegeben</div>
+    <div class="stat__value"><?= e(money($ausgabenBrutto, false)) ?></div>
+    <div class="stat__hint"><?= e(money($ausgabenNetto, false)) ?> netto</div>
+  </div>
+  <div class="stat">
+    <div class="stat__label"><?= $rest >= 0 ? 'Noch frei' : 'Überzogen um' ?></div>
+    <div class="stat__value" style="<?= $rest < 0 ? 'color:var(--bad)' : '' ?>"><?= e(money(abs($rest), false)) ?></div>
+    <div class="stat__hint"><?= $gesamt > 0 ? number_format($quote, 0) . '&nbsp;% verbraucht' : 'ohne Budgetvorgabe' ?></div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Offene Wünsche</div>
+    <div class="stat__value"><?= e(money($verplant + $offenOhne, false)) ?></div>
+    <div class="stat__hint">netto, noch nicht ausgegeben</div>
+  </div>
+</div>
+
+<?php if ($gesamt > 0): ?>
+  <section class="card">
+    <div class="card__head">
+      <h2>Verbrauch <?= (int)$jahr ?></h2>
+      <span class="small"><?= e(money($ausgabenBrutto, false)) ?> von <?= e(money($gesamt)) ?></span>
+    </div>
+    <div class="bar" style="height:14px"><div class="bar__fill <?= $quoteCls ?>" style="width:<?= number_format($quote, 1, '.', '') ?>%"></div></div>
+    <p class="small muted" style="margin:.5rem 0 0">
+      Wenn zusätzlich alle offenen Wünsche beschafft würden, kämen
+      <strong><?= e(money($verplant + $offenOhne)) ?></strong> netto hinzu.
+    </p>
+  </section>
+<?php endif; ?>
+
+<div class="grid2">
+  <section class="card">
+    <div class="card__head">
+      <h2>Ausgaben nach Kategorie</h2>
+      <?php if (can('view_expenses')): ?>
+        <a class="btn btn--sec btn--sm" href="<?= e(url('expenses', ['jahr' => $jahr])) ?>">Alle Ausgaben</a>
+      <?php endif; ?>
+    </div>
+    <?php if (!$kategorien): ?>
+      <div class="empty">Für <?= (int)$jahr ?> sind noch keine Ausgaben erfasst.</div>
+    <?php else: ?>
+      <?php $maxKat = max(array_map(static fn($k) => (float)$k['brutto'], $kategorien)); ?>
+      <?php foreach ($kategorien as $k):
+          $b = (float)$k['brutto'];
+          $breite = $maxKat > 0 ? $b / $maxKat * 100 : 0;
+          $anteil = $ausgabenBrutto > 0 ? $b / $ausgabenBrutto * 100 : 0;
+      ?>
+        <div style="margin-bottom:.8rem">
+          <div style="display:flex;justify-content:space-between;gap:.6rem;flex-wrap:wrap">
+            <span>
+              <?php if ($k['id']): ?>
+                <a href="<?= e(url('expenses', ['jahr' => $jahr, 'kategorie_id' => $k['id']])) ?>"><?= e($k['label']) ?></a>
+              <?php else: ?>
+                <span class="muted">ohne Kategorie</span>
+              <?php endif; ?>
+              <span class="muted small">(<?= (int)$k['anzahl'] ?>)</span>
+            </span>
+            <span class="small nowrap"><strong><?= e(money($b, false)) ?></strong>
+              <span class="muted"><?= number_format($anteil, 0) ?>&nbsp;%</span></span>
+          </div>
+          <div class="bar">
+            <div class="bar__fill" style="width:<?= number_format($breite, 1, '.', '') ?>%;background:<?= e($k['color'] ?: '#94a3b8') ?>"></div>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    <?php endif; ?>
+  </section>
+
+  <section class="card">
+    <h2>Verlauf über das Jahr</h2>
+    <?php if ($maxMonat <= 0): ?>
+      <div class="empty">Noch keine Ausgaben erfasst.</div>
+    <?php else: ?>
+      <div class="months">
+        <?php foreach ($monate as $m => $betrag):
+            $h = $maxMonat > 0 ? max(2, $betrag / $maxMonat * 100) : 2; ?>
+          <div class="months__col" title="<?= e($monatsnamen[$m] . ': ' . money($betrag)) ?>">
+            <div class="months__bar" style="height:<?= number_format($h, 1, '.', '') ?>%"></div>
+            <div class="months__label"><?= e($monatsnamen[$m]) ?></div>
+          </div>
+        <?php endforeach; ?>
+      </div>
+      <p class="small muted" style="margin:.6rem 0 0">Höchster Monat: <?= e(money($maxMonat)) ?></p>
+    <?php endif; ?>
+
+    <?php if ($letzte): ?>
+      <h3 class="mt">Zuletzt erfasst</h3>
+      <div class="tablewrap">
+        <table class="data">
+          <tbody>
+          <?php foreach ($letzte as $e): ?>
+            <tr>
+              <td class="nowrap small"><?= e(de_date($e['datum'])) ?></td>
+              <td>
+                <?php if (can('manage_budget')): ?>
+                  <a href="<?= e(url('expense_edit', ['id' => $e['id']])) ?>"><?= e($e['bezeichnung']) ?></a>
+                <?php else: ?><?= e($e['bezeichnung']) ?><?php endif; ?>
+              </td>
+              <td class="num nowrap"><?= e(money((float)$e['betrag_brutto'], false)) ?></td>
+            </tr>
+          <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
+  </section>
+</div>
+
+<section class="card">
+  <div class="card__head">
+    <h2>Budgettöpfe</h2>
+    <span class="muted small"><?= e(money($summeToepfe)) ?> geplant</span>
+  </div>
+  <?php if (!$budgets): ?>
+    <div class="empty">Für <?= (int)$jahr ?> ist noch kein Budgettopf angelegt.
+      Töpfe sind optional – sie unterteilen das Jahresbudget nach Zweck.</div>
+  <?php else: ?>
+    <?php foreach ($budgets as $b):
+        $soll = (float)$b['betrag_netto'];
+        $ist = (float)$b['verplant'];
+        $ausgegeben = (float)($jeTopf[(int)$b['id']]['netto'] ?? 0);
+        $pct = $soll > 0 ? min(100, ($ist + $ausgegeben) / $soll * 100) : 0;
+        $cls = ($soll > 0 && ($ist + $ausgegeben) > $soll) ? 'is-over' : ($pct >= $warn ? 'is-warn' : '');
+    ?>
+      <div style="margin-bottom:1rem">
+        <div style="display:flex;justify-content:space-between;gap:.6rem;flex-wrap:wrap">
+          <span>
+            <strong><?= e($b['name']) ?></strong>
+            <?php if (!(int)$b['is_active']): ?><span class="badge badge--muted">inaktiv</span><?php endif; ?>
+            <span class="muted small"><?= e($b['kategorie_label'] ?: 'alle Kategorien') ?></span>
+          </span>
+          <span class="small nowrap">
+            <?= e(money($ausgegeben, false)) ?> ausgegeben ·
+            <?= e(money($ist, false)) ?> geplant / <?= e(money($soll)) ?>
+            <?php if (can('manage_budget')): ?>
+              · <a href="<?= e(url('budget_edit', ['id' => $b['id']])) ?>">bearbeiten</a>
+            <?php endif; ?>
+          </span>
+        </div>
+        <div class="bar"><div class="bar__fill <?= $cls ?>" style="width:<?= number_format($pct, 1, '.', '') ?>%"></div></div>
+      </div>
+    <?php endforeach; ?>
+  <?php endif; ?>
+</section>
+
+<section class="card">
   <div class="card__head">
     <h2>Offene Wünsche ohne Budgettopf</h2>
     <span class="badge badge--outline"><?= e(money($offenOhne)) ?></span>

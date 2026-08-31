@@ -48,7 +48,7 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
       <span class="mainnav__icon">★</span><span><?= e(setting('wunsch_modul_name', 'Wünsch dir was')) ?></span></a>
     <a class="mainnav__item<?= nav_active('todos', 'todo', 'todo_edit') ?>" href="<?= e(url('todos')) ?>">
       <span class="mainnav__icon">☑</span><span><?= e(setting('todo_modul_name', 'Aufgaben')) ?></span></a>
-    <a class="mainnav__item<?= nav_active('budget', 'budget_edit') ?>" href="<?= e(url('budget')) ?>">
+    <a class="mainnav__item<?= nav_active('budget', 'budget_edit', 'budget_year_edit', 'expenses', 'expense_edit') ?>" href="<?= e(url('budget')) ?>">
       <span class="mainnav__icon">€</span><span>Budget</span></a>
     <?php if (can('admin')): ?>
       <a class="mainnav__item<?= nav_active('admin', 'admin_users', 'admin_user_edit', 'admin_lists', 'admin_list_edit', 'admin_settings', 'admin_divera', 'admin_divera_form', 'admin_log') ?>" href="<?= e(url('admin')) ?>">

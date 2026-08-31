@@ -107,6 +107,7 @@ function can(string $what, mixed $ctx = null): bool
         'admin'          => $admin,
         'manage_users'   => $admin,
         'manage_budget'  => $leitung,
+        'view_expenses'  => $leitung || setting_bool('ausgaben_user_darf_sehen', true),
         'manage_wishes'  => $leitung,   // Status, Priorisierung, fremde Wünsche bearbeiten
         'manage_todos'   => $leitung,
         'create_wish'    => true,

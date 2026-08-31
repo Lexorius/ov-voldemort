@@ -22,8 +22,8 @@ CREATE TABLE IF NOT EXISTS list_items (
   is_final      TINYINT(1)   NOT NULL DEFAULT 0,
   created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  KEY idx_list (list_key, sort_order),
-  KEY idx_slug (list_key, slug)
+  UNIQUE KEY uq_list_slug (list_key, slug),
+  KEY idx_list (list_key, sort_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
@@ -241,6 +241,54 @@ CREATE TABLE IF NOT EXISTS divera_log (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- Gesamtbudget je Haushaltsjahr
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS budget_years (
+  jahr          SMALLINT      NOT NULL,
+  betrag        DECIMAL(12,2) NOT NULL DEFAULT 0,
+  beschreibung  TEXT          NULL,
+  is_active     TINYINT(1)    NOT NULL DEFAULT 1,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (jahr)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- Ausgaben (Haus, Nebenkosten, Getraenke, Tanken ...)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS expenses (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  jahr          SMALLINT      NOT NULL,
+  datum         DATE          NOT NULL,
+  bezeichnung   VARCHAR(200)  NOT NULL,
+  beschreibung  TEXT          NULL,
+  kategorie_id  INT UNSIGNED  NULL,
+  fachgruppe_id INT UNSIGNED  NULL,
+  budget_id     INT UNSIGNED  NULL,
+  wish_id       INT UNSIGNED  NULL,
+  betrag_brutto DECIMAL(12,2) NOT NULL DEFAULT 0,
+  mwst_satz     DECIMAL(5,2)  NOT NULL DEFAULT 19.00,
+  betrag_netto  DECIMAL(12,2) NOT NULL DEFAULT 0,
+  lieferant     VARCHAR(150)  NOT NULL DEFAULT '',
+  beleg_nr      VARCHAR(100)  NOT NULL DEFAULT '',
+  bezahlt_am    DATE          NULL,
+  notiz         TEXT          NULL,
+  created_by    INT UNSIGNED  NULL,
+  updated_by    INT UNSIGNED  NULL,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_jahr (jahr, datum),
+  KEY idx_kat (kategorie_id),
+  CONSTRAINT fk_exp_kat  FOREIGN KEY (kategorie_id)  REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_exp_fg   FOREIGN KEY (fachgruppe_id) REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_exp_bud  FOREIGN KEY (budget_id)     REFERENCES budgets(id)    ON DELETE SET NULL,
+  CONSTRAINT fk_exp_wish FOREIGN KEY (wish_id)       REFERENCES wishes(id)     ON DELETE SET NULL,
+  CONSTRAINT fk_exp_cb   FOREIGN KEY (created_by)    REFERENCES users(id)      ON DELETE SET NULL,
+  CONSTRAINT fk_exp_ub   FOREIGN KEY (updated_by)    REFERENCES users(id)      ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

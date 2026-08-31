@@ -343,3 +343,19 @@ pre.raw {
   background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
   padding: .7rem; overflow-x: auto; font-size: .8rem;
 }
+
+/* ---------- Monatsverlauf im Budget ---------- */
+.months {
+  display: flex; align-items: flex-end; gap: .3rem;
+  height: 120px; margin-top: .5rem;
+}
+.months__col {
+  flex: 1 1 0; min-width: 0; height: 100%;
+  display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: .25rem;
+}
+.months__bar {
+  width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px;
+}
+@media (prefers-color-scheme: dark) { .months__bar { background: #6f9dff; } }
+.months__label { font-size: .62rem; color: var(--ink-mute); }
+@media (min-width: 620px) { .months__label { font-size: .7rem; } }

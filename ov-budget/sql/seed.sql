@@ -94,6 +94,26 @@ INSERT IGNORE INTO list_items (list_key, label, slug, color, weight, sort_order,
 ('todo_prioritaet','Normal','normal','#0284c7',40,30,1),
 ('todo_prioritaet','Niedrig','niedrig','#16a34a',10,40,0);
 
+-- ---------- Ausgabenkategorien (Budgetmodul) ----------
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order) VALUES
+('ausgabe_kategorie','Liegenschaft / Haus',        'haus',        '#b45309',10),
+('ausgabe_kategorie','Nebenkosten (Strom, Wasser, Heizung)','nebenkosten','#a16207',20),
+('ausgabe_kategorie','Reparatur / Instandhaltung', 'reparatur',   '#92400e',30),
+('ausgabe_kategorie','Kraftstoff / Tanken',        'tanken',      '#1d4ed8',40),
+('ausgabe_kategorie','Fahrzeugunterhalt',          'fahrzeug',    '#1e40af',50),
+('ausgabe_kategorie','Getraenke',                  'getraenke',   '#0891b2',60),
+('ausgabe_kategorie','Verpflegung',                'verpflegung', '#0e7490',70),
+('ausgabe_kategorie','Ausstattung / Geraet',       'ausstattung', '#7c3aed',80),
+('ausgabe_kategorie','Werkzeug',                   'werkzeug',    '#6d28d9',90),
+('ausgabe_kategorie','PSA / Bekleidung',           'psa',         '#be123c',100),
+('ausgabe_kategorie','IT / Kommunikation',         'it',          '#0369a1',110),
+('ausgabe_kategorie','Buero / Porto',              'buero',       '#475569',120),
+('ausgabe_kategorie','Ausbildung',                 'ausbildung',  '#15803d',130),
+('ausgabe_kategorie','Jugendarbeit',               'jugend',      '#16a34a',140),
+('ausgabe_kategorie','Oeffentlichkeitsarbeit',     'oea',         '#c2410c',150),
+('ausgabe_kategorie','Gebuehren / Versicherungen', 'gebuehren',   '#64748b',160),
+('ausgabe_kategorie','Sonstiges',                  'sonstiges',   '#94a3b8',170);
+
 -- ---------- Anlage-Typen ----------
 INSERT IGNORE INTO list_items (list_key, label, slug, sort_order, is_default) VALUES
 ('anlage_typ','Angebot','angebot',10,1),
@@ -142,6 +162,10 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('divera_import_status','neu','Status für importierte Wünsche','slug aus der Liste wunsch_status','text','Divera 24/7',80),
 ('divera_cron_token','','Token für den automatischen Abruf','Aufruf: /cron.php?token=... (leer = deaktiviert)','text','Divera 24/7',90),
 
+('budget_modul_name','Budget','Bezeichnung des Budget-Moduls','','text','Budget',5),
+('budget_intro','Gesamtbudget des Haushaltsjahres, laufende Ausgaben und die daraus entstehende Uebersicht.','Einleitungstext im Budget-Modul','','textarea','Budget',6),
+('ausgaben_betragsart','brutto','Ausgaben werden erfasst als','brutto oder netto - steuert nur die Beschriftung','text','Budget',40),
+('ausgaben_user_darf_sehen','1','Alle Mitglieder duerfen Ausgaben sehen','Sonst nur Leitung und Administration','bool','Budget',50),
 ('session_lifetime','43200','Session-Laufzeit in Sekunden','Standard: 12 Stunden','number','Sicherheit',10),
 ('login_max_versuche','8','Fehlversuche bis Sperre','Sperre gilt pro Benutzername für die Sperrdauer','number','Sicherheit',20),
 ('login_sperre_minuten','15','Sperrdauer in Minuten','','number','Sicherheit',30),

@@ -5,7 +5,7 @@ Beschaffungsplanung eines Ortsverbands:
 
 * **Wünsch dir was** – Fachgruppen und Zugführer tragen Bedarfe ein, alle priorisieren gemeinsam
 * **Aufgaben** – ToDos für den OV, einzelne Fachgruppen, Funktionen oder Personen
-* **Budget** – Töpfe je Haushaltsjahr, Auslastung gegen die offenen Wünsche
+* **Budget** – Jahresbudget, Ausgaben nachpflegen (Haus, Nebenkosten, Tanken ...), Übersicht nach Kategorie und Monat
 * **Divera 24/7** – Formulare abrufen und deren Einträge als Wünsche übernehmen
 * **Verwaltung** – Benutzer, Rollen sowie *alle* Auswahllisten und Texte frei konfigurierbar
 

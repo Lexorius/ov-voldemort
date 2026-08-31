@@ -11,6 +11,7 @@ const LIST_KEYS = [
     'fachgruppe'      => 'Fachgruppen / Einheiten',
     'funktion'        => 'Funktionen im OV',
     'kategorie'       => 'Kategorien',
+    'ausgabe_kategorie' => 'Ausgabenkategorien',
     'dringlichkeit'   => 'Dringlichkeiten',
     'wunsch_status'   => 'Status (Wünsche)',
     'einheit'         => 'Mengeneinheiten',

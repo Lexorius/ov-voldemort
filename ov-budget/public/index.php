@@ -32,6 +32,10 @@ $routes = [
 
     'budget'             => 'budget',
     'budget_edit'        => 'budget_edit',
+    'budget_year_edit'   => 'budget_year_edit',
+    'expenses'           => 'expenses',
+    'expense_edit'       => 'expense_edit',
+    'expenses_export'    => 'expenses_export',
 
     'download'           => 'download',
 
