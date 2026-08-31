@@ -62,10 +62,25 @@ function url(string $route = '', array $params = []): string
     return $params ? $base . '?' . http_build_query($params) : $base;
 }
 
-/** Asset-URL */
+/**
+ * Asset-URL mit Versionsstempel.
+ *
+ * Der Webserver lässt CSS und JavaScript eine Woche zwischenspeichern. Ohne
+ * den angehängten Stempel würde der Browser nach einer Aktualisierung weiter
+ * die alte Datei verwenden – neue Regeln blieben schlicht wirkungslos.
+ */
 function asset(string $path): string
 {
-    return base_path() . '/assets/' . ltrim($path, '/');
+    static $stempel = [];
+    $path = ltrim($path, '/');
+
+    if (!array_key_exists($path, $stempel)) {
+        $datei = dirname(__DIR__, 2) . '/public/assets/' . $path;
+        $zeit = is_file($datei) ? filemtime($datei) : false;
+        $stempel[$path] = $zeit === false ? '' : '?v=' . $zeit;
+    }
+
+    return base_path() . '/assets/' . $path . $stempel[$path];
 }
 
 function redirect(string $to): never

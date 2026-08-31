@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 1.4.1
+
+- CSS und JavaScript bekommen einen Versionsstempel in der Adresse. Der
+  Webserver lässt beide eine Woche zwischenspeichern; ohne Stempel benutzte
+  der Browser nach einer Aktualisierung weiter die alte Datei – neue Regeln
+  blieben wirkungslos, etwa beim Monatsdiagramm im Budget, das dadurch als
+  blosse Liste von Monatsnamen erschien.
+
 ## 1.4.0
 
 ### Einnahmen im Budget
