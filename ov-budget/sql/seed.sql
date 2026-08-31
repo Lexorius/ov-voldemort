@@ -114,6 +114,20 @@ INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order) VALUES
 ('ausgabe_kategorie','Gebuehren / Versicherungen', 'gebuehren',   '#64748b',160),
 ('ausgabe_kategorie','Sonstiges',                  'sonstiges',   '#94a3b8',170);
 
+-- ---------- Einnahmekategorien (Budgetmodul) ----------
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order) VALUES
+('einnahme_kategorie','Einsatzkostenerstattung',        'einsatz',      '#15803d',10),
+('einnahme_kategorie','Technische Hilfeleistung (THG)', 'thg',          '#166534',20),
+('einnahme_kategorie','Amtshilfe / Anforderung',        'amtshilfe',    '#047857',30),
+('einnahme_kategorie','Absicherung / Sanitaetsdienst',  'absicherung',  '#0d9488',40),
+('einnahme_kategorie','Ausbildung / Lehrgangserstattung','ausbildung',  '#0891b2',50),
+('einnahme_kategorie','Spenden',                        'spenden',      '#7c3aed',60),
+('einnahme_kategorie','Zuwendung / Foerderung',         'foerderung',   '#6d28d9',70),
+('einnahme_kategorie','Helfervereinigung',              'hv',           '#a16207',80),
+('einnahme_kategorie','Verkauf / Erloese',              'verkauf',      '#ca8a04',90),
+('einnahme_kategorie','Erstattung Nebenkosten',         'erstattung',   '#0369a1',100),
+('einnahme_kategorie','Sonstiges',                      'sonstiges',    '#64748b',110);
+
 -- ---------- Anlage-Typen ----------
 INSERT IGNORE INTO list_items (list_key, label, slug, sort_order, is_default) VALUES
 ('anlage_typ','Angebot','angebot',10,1),
@@ -164,8 +178,8 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 
 ('budget_modul_name','Budget','Bezeichnung des Budget-Moduls','','text','Budget',5),
 ('budget_intro','Gesamtbudget des Haushaltsjahres, laufende Ausgaben und die daraus entstehende Uebersicht.','Einleitungstext im Budget-Modul','','textarea','Budget',6),
-('ausgaben_betragsart','brutto','Ausgaben werden erfasst als','brutto oder netto - steuert nur die Beschriftung','text','Budget',40),
-('ausgaben_user_darf_sehen','1','Alle Mitglieder duerfen Ausgaben sehen','Sonst nur Leitung und Administration','bool','Budget',50),
+('ausgaben_betragsart','brutto','Betraege werden erfasst als','brutto oder netto - gilt fuer Ausgaben und Einnahmen','text','Budget',40),
+('ausgaben_user_darf_sehen','1','Alle Mitglieder duerfen Buchungen sehen','Ausgaben und Einnahmen. Sonst nur Leitung und Administration','bool','Budget',50),
 ('session_lifetime','43200','Session-Laufzeit in Sekunden','Standard: 12 Stunden','number','Sicherheit',10),
 ('login_max_versuche','8','Fehlversuche bis Sperre','Sperre gilt pro Benutzername für die Sperrdauer','number','Sicherheit',20),
 ('login_sperre_minuten','15','Sperrdauer in Minuten','','number','Sicherheit',30),

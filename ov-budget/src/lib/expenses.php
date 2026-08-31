@@ -2,9 +2,29 @@
 declare(strict_types=1);
 
 /**
- * Gesamtbudget je Haushaltsjahr und die laufenden Ausgaben.
- * Die Wunschliste plant, dieses Modul bucht das tatsächlich Ausgegebene.
+ * Gesamtbudget je Haushaltsjahr und die laufenden Buchungen.
+ *
+ * Eine Buchung ist entweder eine Ausgabe oder eine Einnahme – etwa die
+ * Kostenerstattung für einen Einsatz oder eine technische Hilfeleistung.
+ * Beides steckt in derselben Tabelle und unterscheidet sich nur in der
+ * Spalte "art"; so gelten Filter, Liste und Ausgabe für beide Richtungen.
+ *
+ * Die Wunschliste plant, dieses Modul bucht das tatsächlich Geflossene.
  */
+
+const BUCHUNGSARTEN = ['ausgabe' => 'Ausgaben', 'einnahme' => 'Einnahmen'];
+
+/** Nur bekannte Richtungen zulassen */
+function buchungsart(string $art): string
+{
+    return array_key_exists($art, BUCHUNGSARTEN) ? $art : 'ausgabe';
+}
+
+/** Liste, aus der die Kategorien der jeweiligen Richtung stammen */
+function buchung_list_key(string $art): string
+{
+    return buchungsart($art) === 'einnahme' ? 'einnahme_kategorie' : 'ausgabe_kategorie';
+}
 
 /* ---------------- Jahresbudget ---------------- */
 
@@ -55,7 +75,7 @@ function expense_find(int $id): ?array
 }
 
 /**
- * $f: jahr, q, kategorie_id, fachgruppe_id, budget_id, von, bis, sort, limit
+ * $f: jahr, art, q, kategorie_id, fachgruppe_id, budget_id, von, bis, sort, limit
  */
 function expense_query(array $f = []): array
 {
@@ -66,10 +86,15 @@ function expense_query(array $f = []): array
         $w[] = 'e.jahr = ?';
         $p[] = (int)$f['jahr'];
     }
+    if (!empty($f['art'])) {
+        $w[] = 'e.art = ?';
+        $p[] = buchungsart((string)$f['art']);
+    }
     if (!empty($f['q'])) {
-        $w[] = '(e.bezeichnung LIKE ? OR e.beschreibung LIKE ? OR e.lieferant LIKE ? OR e.beleg_nr LIKE ?)';
+        $w[] = '(e.bezeichnung LIKE ? OR e.beschreibung LIKE ? OR e.lieferant LIKE ?'
+            . ' OR e.beleg_nr LIKE ? OR e.referenz LIKE ?)';
         $like = '%' . $f['q'] . '%';
-        array_push($p, $like, $like, $like, $like);
+        array_push($p, $like, $like, $like, $like, $like);
     }
     foreach (['kategorie_id', 'fachgruppe_id', 'budget_id'] as $col) {
         if (!empty($f[$col])) {
@@ -126,7 +151,7 @@ function expense_stats(array $rows): array
 }
 
 /** Ausgaben eines Jahres je Kategorie */
-function expense_by_category(int $jahr): array
+function expense_by_category(int $jahr, string $art = 'ausgabe'): array
 {
     // Ohne Kategorie erfasste Ausgaben kommen als NULL zurück und werden
     // in der Anzeige beschriftet – kein SQL-Literal, das je nach sql_mode
@@ -138,21 +163,21 @@ function expense_by_category(int $jahr): array
                 SUM(e.betrag_netto) AS netto
          FROM expenses e
          LEFT JOIN list_items ka ON ka.id = e.kategorie_id
-         WHERE e.jahr = ?
+         WHERE e.jahr = ? AND e.art = ?
          GROUP BY ka.id, ka.label, ka.color
          ORDER BY brutto DESC',
-        [$jahr]
+        [$jahr, buchungsart($art)]
     );
 }
 
 /** Ausgaben eines Jahres je Monat, immer zwölf Werte */
-function expense_by_month(int $jahr): array
+function expense_by_month(int $jahr, string $art = 'ausgabe'): array
 {
     $out = array_fill(1, 12, 0.0);
     foreach (db_all(
         'SELECT MONTH(datum) AS m, SUM(betrag_brutto) AS brutto
-         FROM expenses WHERE jahr = ? GROUP BY MONTH(datum)',
-        [$jahr]
+         FROM expenses WHERE jahr = ? AND art = ? GROUP BY MONTH(datum)',
+        [$jahr, buchungsart($art)]
     ) as $r) {
         $out[(int)$r['m']] = (float)$r['brutto'];
     }
@@ -160,10 +185,20 @@ function expense_by_month(int $jahr): array
 }
 
 /** Summe der Ausgaben eines Jahres */
-function expense_total(int $jahr, string $feld = 'betrag_brutto'): float
+function expense_total(int $jahr, string $feld = 'betrag_brutto', string $art = 'ausgabe'): float
 {
     $feld = $feld === 'betrag_netto' ? 'betrag_netto' : 'betrag_brutto';
-    return (float)db_val('SELECT COALESCE(SUM(' . $feld . '),0) FROM expenses WHERE jahr = ?', [$jahr], 0);
+    return (float)db_val(
+        'SELECT COALESCE(SUM(' . $feld . '),0) FROM expenses WHERE jahr = ? AND art = ?',
+        [$jahr, buchungsart($art)],
+        0
+    );
+}
+
+/** Einnahmen eines Jahres */
+function income_total(int $jahr, string $feld = 'betrag_brutto'): float
+{
+    return expense_total($jahr, $feld, 'einnahme');
 }
 
 /** Bereits verbuchte Ausgaben je Budgettopf */
@@ -172,8 +207,8 @@ function expense_by_budget(int $jahr): array
     $out = [];
     foreach (db_all(
         'SELECT budget_id, SUM(betrag_brutto) AS brutto, SUM(betrag_netto) AS netto
-         FROM expenses WHERE jahr = ? AND budget_id IS NOT NULL GROUP BY budget_id',
-        [$jahr]
+         FROM expenses WHERE jahr = ? AND art = ? AND budget_id IS NOT NULL GROUP BY budget_id',
+        [$jahr, 'ausgabe']
     ) as $r) {
         $out[(int)$r['budget_id']] = ['brutto' => (float)$r['brutto'], 'netto' => (float)$r['netto']];
     }
@@ -181,11 +216,12 @@ function expense_by_budget(int $jahr): array
 }
 
 /**
- * Ausgabe aus dem Formular speichern. Gibt [id, fehler[]] zurück.
+ * Buchung aus dem Formular speichern. Gibt [id, fehler[]] zurück.
  */
 function expense_save_from_post(?array $existing, array $user): array
 {
     $errors = [];
+    $art = buchungsart(post_str('art', (string)($existing['art'] ?? 'ausgabe')));
 
     $bezeichnung = post_str('bezeichnung');
     if ($bezeichnung === '') {
@@ -220,6 +256,7 @@ function expense_save_from_post(?array $existing, array $user): array
     }
 
     $data = [
+        'art'           => $art,
         'jahr'          => post_int('jahr') ?: (int)substr((string)$datum, 0, 4),
         'datum'         => $datum,
         'bezeichnung'   => mb_substr($bezeichnung, 0, 200),
@@ -233,6 +270,7 @@ function expense_save_from_post(?array $existing, array $user): array
         'betrag_netto'  => $netto,
         'lieferant'     => mb_substr(post_str('lieferant'), 0, 150),
         'beleg_nr'      => mb_substr(post_str('beleg_nr'), 0, 100),
+        'referenz'      => mb_substr(post_str('referenz'), 0, 100),
         'bezahlt_am'    => post_date('bezahlt_am'),
         'notiz'         => post_str('notiz'),
         'updated_by'    => (int)$user['id'],
@@ -241,11 +279,11 @@ function expense_save_from_post(?array $existing, array $user): array
     if ($existing) {
         db_update('expenses', $data, 'id = ?', [$existing['id']]);
         $id = (int)$existing['id'];
-        audit('ausgabe.bearbeitet', 'expense', $id, $data['bezeichnung'] . ' / ' . money($brutto));
+        audit($art . '.bearbeitet', 'expense', $id, $data['bezeichnung'] . ' / ' . money($brutto));
     } else {
         $data['created_by'] = (int)$user['id'];
         $id = db_insert('expenses', $data);
-        audit('ausgabe.erfasst', 'expense', $id, $data['bezeichnung'] . ' / ' . money($brutto));
+        audit($art . '.erfasst', 'expense', $id, $data['bezeichnung'] . ' / ' . money($brutto));
     }
 
     return [$id, []];

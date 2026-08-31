@@ -1,15 +1,18 @@
 <?php
-/** @var array $expense @var array $errors @var array $budgets @var array $wishes */
+/** @var string $art @var array $expense @var array $errors @var array $budgets @var array $wishes */
 $isNew = empty($expense['id']);
-$art = (string)setting('ausgaben_betragsart', 'brutto');
+$istEinnahme = $art === 'einnahme';
+$wort = $istEinnahme ? 'Einnahme' : 'Ausgabe';
+
+$betragsart = (string)setting('ausgaben_betragsart', 'brutto');
 // Angezeigt wird der Betrag in der Erfassungsart aus den Einstellungen
-$betragWert = $art === 'netto' ? ($expense['betrag_netto'] ?? '') : ($expense['betrag_brutto'] ?? '');
-$zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y'))]);
+$betragWert = $betragsart === 'netto' ? ($expense['betrag_netto'] ?? '') : ($expense['betrag_brutto'] ?? '');
+$zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art' => $art]);
 ?>
 <div class="pagehead">
   <div>
-    <h1><?= $isNew ? 'Ausgabe erfassen' : 'Ausgabe bearbeiten' ?></h1>
-    <p class="muted small">Beträge werden <strong><?= e($art) ?></strong> erfasst –
+    <h1><?= e($wort) ?> <?= $isNew ? 'erfassen' : 'bearbeiten' ?></h1>
+    <p class="muted small">Beträge werden <strong><?= e($betragsart) ?></strong> erfasst –
       umstellbar unter Verwaltung → Einstellungen → Budget.</p>
   </div>
   <a class="btn btn--sec" href="<?= e($zurueck) ?>">Abbrechen</a>
@@ -21,6 +24,7 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y'))]);
 
 <form method="post" class="form" action="<?= e(url('expense_edit', $isNew ? [] : ['id' => $expense['id']])) ?>">
   <?= csrf_field() ?>
+  <input type="hidden" name="art" value="<?= e($art) ?>">
 
   <section class="card">
     <div class="grid3">
@@ -34,7 +38,7 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y'))]);
         <small>Weicht nur selten vom Datum ab.</small>
       </div>
       <div class="field">
-        <label for="betrag">Betrag <?= e($art) ?> *</label>
+        <label for="betrag">Betrag <?= e($betragsart) ?> *</label>
         <input type="text" inputmode="decimal" id="betrag" name="betrag" required placeholder="0,00"
                value="<?= e(num_input($betragWert)) ?>">
       </div>
@@ -49,7 +53,8 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y'))]);
     <div class="field">
       <label for="bezeichnung">Bezeichnung *</label>
       <input type="text" id="bezeichnung" name="bezeichnung" required maxlength="200"
-             value="<?= e((string)$expense['bezeichnung']) ?>" placeholder="z.B. Stromabschlag Februar">
+             value="<?= e((string)$expense['bezeichnung']) ?>"
+             placeholder="<?= $istEinnahme ? 'z.B. Kostenerstattung Einsatz Hochwasser' : 'z.B. Stromabschlag Februar' ?>">
     </div>
     <div class="field">
       <label for="beschreibung">Beschreibung</label>
@@ -62,7 +67,7 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y'))]);
     <div class="grid3">
       <div class="field">
         <label for="kategorie_id">Kategorie</label>
-        <select id="kategorie_id" name="kategorie_id"><?= list_options('ausgabe_kategorie', (int)($expense['kategorie_id'] ?? 0)) ?></select>
+        <select id="kategorie_id" name="kategorie_id"><?= list_options(buchung_list_key($art), (int)($expense['kategorie_id'] ?? 0)) ?></select>
       </div>
       <div class="field">
         <label for="fachgruppe_id">Fachgruppe</label>
@@ -92,18 +97,24 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y'))]);
   </section>
 
   <section class="card">
-    <h2>Beleg</h2>
+    <h2><?= $istEinnahme ? 'Abrechnung' : 'Beleg' ?></h2>
     <div class="grid3">
       <div class="field">
-        <label for="lieferant">Lieferant / Empfänger</label>
-        <input type="text" id="lieferant" name="lieferant" value="<?= e((string)($expense['lieferant'] ?? '')) ?>">
+        <label for="lieferant"><?= $istEinnahme ? 'Auftraggeber / Kostenträger' : 'Lieferant / Empfänger' ?></label>
+        <input type="text" id="lieferant" name="lieferant" value="<?= e((string)($expense['lieferant'] ?? '')) ?>"
+               placeholder="<?= $istEinnahme ? 'z.B. Landkreis, Feuerwehr, Firma' : '' ?>">
       </div>
       <div class="field">
-        <label for="beleg_nr">Belegnummer</label>
+        <label for="beleg_nr"><?= $istEinnahme ? 'Rechnungsnummer' : 'Belegnummer' ?></label>
         <input type="text" id="beleg_nr" name="beleg_nr" value="<?= e((string)($expense['beleg_nr'] ?? '')) ?>">
       </div>
       <div class="field">
-        <label for="bezahlt_am">Bezahlt am</label>
+        <label for="referenz"><?= $istEinnahme ? 'Einsatz- / Auftragsnummer' : 'Referenz' ?></label>
+        <input type="text" id="referenz" name="referenz" value="<?= e((string)($expense['referenz'] ?? '')) ?>"
+               placeholder="<?= $istEinnahme ? 'z.B. Einsatz 2026-014' : '' ?>">
+      </div>
+      <div class="field">
+        <label for="bezahlt_am"><?= $istEinnahme ? 'Eingegangen am' : 'Bezahlt am' ?></label>
         <input type="date" id="bezahlt_am" name="bezahlt_am" value="<?= e((string)($expense['bezahlt_am'] ?? '')) ?>">
       </div>
     </div>
@@ -114,7 +125,7 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y'))]);
   </section>
 
   <div class="btnrow">
-    <button class="btn" type="submit"><?= $isNew ? 'Ausgabe eintragen' : 'Speichern' ?></button>
+    <button class="btn" type="submit"><?= $isNew ? e($wort) . ' eintragen' : 'Speichern' ?></button>
     <?php if ($isNew): ?>
       <button class="btn btn--sec" type="submit" name="weiter" value="1">Eintragen und nächste</button>
     <?php endif; ?>
@@ -126,6 +137,7 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y'))]);
   <form method="post" class="card" action="<?= e(url('expense_edit', ['id' => $expense['id']])) ?>">
     <?= csrf_field() ?>
     <input type="hidden" name="action" value="delete">
-    <button class="btn btn--danger" type="submit" data-confirm="Diese Ausgabe endgültig löschen?">Ausgabe löschen</button>
+    <button class="btn btn--danger" type="submit"
+            data-confirm="Diese Buchung endgültig löschen?"><?= e($wort) ?> löschen</button>
   </form>
 <?php endif; ?>

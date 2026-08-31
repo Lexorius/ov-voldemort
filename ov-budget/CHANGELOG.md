@@ -1,5 +1,25 @@
 # Änderungsverlauf
 
+## 1.4.0
+
+### Einnahmen im Budget
+
+Neben den Ausgaben lassen sich jetzt auch **Einnahmen** erfassen – vor allem
+Kostenerstattungen für Einsätze und technische Hilfeleistung.
+
+- eigene Kategorienliste: Einsatzkostenerstattung, technische Hilfeleistung,
+  Amtshilfe, Absicherung, Ausbildung, Spenden, Förderung, Verkauf und mehr,
+  frei pflegbar unter Verwaltung → Auswahllisten
+- Feld für die **Einsatz- oder Auftragsnummer**, dazu Auftraggeber und
+  Rechnungsnummer; die Beschriftungen wechseln je nach Richtung
+- die Übersicht rechnet **Jahresbudget + Einnahmen − Ausgaben**: verfügbare
+  Mittel, Verbrauch, freier Rest
+- Aufschlüsselung nach Kategorie für beide Richtungen nebeneinander
+- Monatsverlauf zeigt Einnahmen und Ausgaben als zwei Balken je Monat
+- getrennte Listen und CSV-Ausgaben unter Budget → Ausgaben / Einnahmen
+
+Bestehende Buchungen gelten unverändert als Ausgabe.
+
 ## 1.3.0
 
 ### Doppelte Grunddaten bereinigt

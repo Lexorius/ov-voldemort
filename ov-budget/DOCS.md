@@ -81,10 +81,11 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
 * **Aufgaben** – für den Ortsverband, einzelne Fachgruppen, Funktionen oder
   Personen. Wer angemeldet ist, sieht unter „Für mich" alles aus dem eigenen
   Zuständigkeitsbereich.
-* **Budget** – Gesamtbudget je Haushaltsjahr, laufende Ausgaben (Haus,
-  Nebenkosten, Getränke, Tanken ...) und eine Übersicht: verbraucht gegen
-  Budget, Aufschlüsselung nach Kategorie, Verlauf über die Monate. Optional
-  unterteilen Budgettöpfe das Jahr nach Zweck.
+* **Budget** – Gesamtbudget je Haushaltsjahr, **Ausgaben** (Haus, Nebenkosten,
+  Getränke, Tanken ...) und **Einnahmen** (Kostenerstattung für Einsätze,
+  technische Hilfeleistung, Spenden ...) mit Einsatz- oder Auftragsnummer.
+  Die Übersicht rechnet Budget plus Einnahmen minus Ausgaben und schlüsselt
+  nach Kategorie und Monat auf. Optional unterteilen Budgettöpfe das Jahr.
 * **Divera 24/7** – Formulare abrufen, Felder frei zuordnen und Einträge als
   Wünsche übernehmen. Mit Vorschau, Dubletten-Erkennung und optionalem
   automatischem Abruf.

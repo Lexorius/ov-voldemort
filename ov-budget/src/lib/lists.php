@@ -12,6 +12,7 @@ const LIST_KEYS = [
     'funktion'        => 'Funktionen im OV',
     'kategorie'       => 'Kategorien',
     'ausgabe_kategorie' => 'Ausgabenkategorien',
+    'einnahme_kategorie' => 'Einnahmekategorien',
     'dringlichkeit'   => 'Dringlichkeiten',
     'wunsch_status'   => 'Status (Wünsche)',
     'einheit'         => 'Mengeneinheiten',

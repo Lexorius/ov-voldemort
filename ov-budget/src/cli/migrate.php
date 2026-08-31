@@ -33,6 +33,16 @@ function ovb_index_exists(PDO $pdo, string $table, string $index): bool
     return (int)$st->fetchColumn() > 0;
 }
 
+function ovb_column_exists(PDO $pdo, string $table, string $column): bool
+{
+    $st = $pdo->prepare(
+        'SELECT COUNT(*) FROM information_schema.columns
+         WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?'
+    );
+    $st->execute([$table, $column]);
+    return (int)$st->fetchColumn() > 0;
+}
+
 /** Spalten, die auf list_items zeigen: [Tabelle, Spalte, zusätzliche Bedingung] */
 function ovb_list_item_refs(): array
 {
@@ -330,4 +340,29 @@ function ovb_migrate(PDO $pdo, callable $say): void
         }
     }
     $merken('002_unique_list_slug');
+
+    /* ---- 003: Buchungen kennen Einnahmen ---- */
+    if (ovb_table_exists($pdo, 'expenses') && !ovb_column_exists($pdo, 'expenses', 'art')) {
+        try {
+            $pdo->exec(
+                "ALTER TABLE expenses
+                 ADD COLUMN art ENUM('ausgabe','einnahme') NOT NULL DEFAULT 'ausgabe' AFTER id"
+            );
+            $say('Buchungen um die Richtung erweitert – Bestand gilt als Ausgabe.');
+        } catch (PDOException $ex) {
+            $say('Hinweis: Spalte "art" konnte nicht ergänzt werden (' . $ex->getMessage() . ').');
+        }
+    }
+    if (ovb_table_exists($pdo, 'expenses') && !ovb_column_exists($pdo, 'expenses', 'referenz')) {
+        try {
+            $pdo->exec(
+                "ALTER TABLE expenses
+                 ADD COLUMN referenz VARCHAR(100) NOT NULL DEFAULT '' AFTER beleg_nr"
+            );
+            $say('Buchungen um das Feld für Einsatz- und Auftragsnummern erweitert.');
+        } catch (PDOException $ex) {
+            $say('Hinweis: Spalte "referenz" konnte nicht ergänzt werden (' . $ex->getMessage() . ').');
+        }
+    }
+    $merken('003_expenses_einnahmen');
 }

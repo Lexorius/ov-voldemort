@@ -257,10 +257,12 @@ CREATE TABLE IF NOT EXISTS budget_years (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
--- Ausgaben (Haus, Nebenkosten, Getraenke, Tanken ...)
+-- Buchungen: Ausgaben (Haus, Nebenkosten, Tanken ...) und Einnahmen
+-- (Einsatzkostenerstattung, technische Hilfeleistung ...)
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS expenses (
   id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  art           ENUM('ausgabe','einnahme') NOT NULL DEFAULT 'ausgabe',
   jahr          SMALLINT      NOT NULL,
   datum         DATE          NOT NULL,
   bezeichnung   VARCHAR(200)  NOT NULL,
@@ -274,6 +276,7 @@ CREATE TABLE IF NOT EXISTS expenses (
   betrag_netto  DECIMAL(12,2) NOT NULL DEFAULT 0,
   lieferant     VARCHAR(150)  NOT NULL DEFAULT '',
   beleg_nr      VARCHAR(100)  NOT NULL DEFAULT '',
+  referenz      VARCHAR(100)  NOT NULL DEFAULT '',
   bezahlt_am    DATE          NULL,
   notiz         TEXT          NULL,
   created_by    INT UNSIGNED  NULL,
@@ -281,7 +284,7 @@ CREATE TABLE IF NOT EXISTS expenses (
   created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  KEY idx_jahr (jahr, datum),
+  KEY idx_jahr (jahr, art, datum),
   KEY idx_kat (kategorie_id),
   CONSTRAINT fk_exp_kat  FOREIGN KEY (kategorie_id)  REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_exp_fg   FOREIGN KEY (fachgruppe_id) REFERENCES list_items(id) ON DELETE SET NULL,

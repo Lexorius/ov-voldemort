@@ -3,15 +3,17 @@ declare(strict_types=1);
 
 if (!can('view_expenses')) {
     http_response_code(403);
-    render('error', ['title' => 'Kein Zugriff', 'message' => 'Die Ausgaben sind nur für die Leitung sichtbar.']);
+    render('error', ['title' => 'Kein Zugriff', 'message' => 'Die Buchungen sind nur für die Leitung sichtbar.']);
     return;
 }
 
+$art = buchungsart(get_str('art', 'ausgabe'));
 $jahre = budget_years_known();
 $jahr = get_int('jahr') ?: ($jahre[0] ?? setting_int('haushaltsjahr', (int)date('Y')));
 
 $filters = [
     'jahr'          => $jahr,
+    'art'           => $art,
     'q'             => get_str('q'),
     'kategorie_id'  => get_int('kategorie_id'),
     'fachgruppe_id' => get_int('fachgruppe_id'),
@@ -24,13 +26,15 @@ $filters = [
 $rows = expense_query($filters);
 
 render('expenses', [
-    'title'        => 'Ausgaben',
+    'title'        => BUCHUNGSARTEN[$art],
+    'art'          => $art,
     'rows'         => $rows,
     'stats'        => expense_stats($rows),
     'filters'      => $filters,
     'jahr'         => $jahr,
     'jahre'        => $jahre,
     'jahresbudget' => budget_year_betrag($jahr),
-    'jahresSumme'  => expense_total($jahr),
+    'jahresSumme'  => expense_total($jahr, 'betrag_brutto', $art),
+    'gegenSumme'   => expense_total($jahr, 'betrag_brutto', $art === 'einnahme' ? 'ausgabe' : 'einnahme'),
     'budgets'      => db_all('SELECT id, jahr, name FROM budgets WHERE jahr = ? ORDER BY name', [$jahr]),
 ]);
