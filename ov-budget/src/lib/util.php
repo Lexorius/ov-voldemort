@@ -256,15 +256,56 @@ function get_str(string $key, string $default = ''): string
 
 /* ---------------- Formatierung ---------------- */
 
-function money(float|string|null $v, bool $withSymbol = true): string
+function currency_symbol(): string
 {
-    $s = number_format((float)$v, 2, ',', '.');
-    if (!$withSymbol) {
-        return $s;
+    $cur = (string)setting('waehrung', 'EUR');
+    return ['EUR' => '€', 'CHF' => 'CHF', 'USD' => '$'][$cur] ?? $cur;
+}
+
+function money(float|string|null $v, bool $withSymbol = true, int $decimals = 2): string
+{
+    $s = number_format((float)$v, $decimals, ',', '.');
+    return $withSymbol ? $s . ' ' . currency_symbol() : $s;
+}
+
+/**
+ * Rundungsstufe der Budgetübersicht: 0 = exakt, sonst 10, 100 oder 1000.
+ *
+ * Gedacht für Aushänge und Vorträge, wo die Größenordnung zählt und der
+ * Cent-genaue Stand nichts zur Sache tut.
+ */
+function budget_rounding(): int
+{
+    $stufe = (int)setting('budget_rundung', 0);
+    return in_array($stufe, [10, 100, 1000], true) ? $stufe : 0;
+}
+
+/** Betrag auf die eingestellte Stufe runden (kaufmännisch, zur nächsten Stufe) */
+function budget_round(float $v): float
+{
+    $stufe = budget_rounding();
+    return $stufe > 0 ? round($v / $stufe) * $stufe : $v;
+}
+
+/**
+ * Betrag für die Übersicht. Ist eine Rundung eingestellt, entfallen die
+ * Nachkommastellen – bei gerundeten Werten wären sie irreführend.
+ */
+function money_rounded(float $v, bool $withSymbol = true): string
+{
+    return budget_rounding() > 0
+        ? money(budget_round($v), $withSymbol, 0)
+        : money($v, $withSymbol);
+}
+
+/** Hinweistext, solange gerundet dargestellt wird */
+function rounding_note(): string
+{
+    $stufe = budget_rounding();
+    if ($stufe <= 0) {
+        return '';
     }
-    $cur = setting('waehrung', 'EUR');
-    $sym = ['EUR' => '€', 'CHF' => 'CHF', 'USD' => '$'][$cur] ?? $cur;
-    return $s . ' ' . $sym;
+    return sprintf('Beträge auf %s %s gerundet', number_format($stufe, 0, ',', '.'), currency_symbol());
 }
 
 /**

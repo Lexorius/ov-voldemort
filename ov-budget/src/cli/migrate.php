@@ -63,6 +63,8 @@ function ovb_list_item_refs(): array
         ['divera_forms',  'default_fachgruppe_id', ''],
         ['expenses',      'kategorie_id',          ''],
         ['expenses',      'fachgruppe_id',         ''],
+        ['contacts',      'kategorie_id',          ''],
+        ['contact_group_members', 'status_id',     ''],
     ];
 }
 

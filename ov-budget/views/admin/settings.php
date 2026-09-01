@@ -42,6 +42,18 @@
         <?php elseif ($s['stype'] === 'password'): ?>
           <input type="password" id="<?= e($id) ?>" name="<?= e($id) ?>" value="" autocomplete="new-password"
                  placeholder="<?= $val !== '' ? 'gespeichert – leer lassen, um ihn beizubehalten' : 'noch nicht hinterlegt' ?>">
+        <?php elseif ($s['stype'] === 'select' && $s['skey'] === 'budget_rundung'): ?>
+          <select id="<?= e($id) ?>" name="<?= e($id) ?>">
+            <?php foreach ([
+                '0'    => 'nicht runden (centgenau)',
+                '10'   => 'auf 10 runden',
+                '100'  => 'auf 100 runden',
+                '1000' => 'auf 1.000 runden',
+            ] as $wert => $text): ?>
+              <option value="<?= e((string)$wert) ?>"<?= (string)$val === (string)$wert ? ' selected' : '' ?>>
+                <?= e($text) ?></option>
+            <?php endforeach; ?>
+          </select>
         <?php elseif ($s['stype'] === 'select' && $s['skey'] === 'divera_auth_mode'): ?>
           <select id="<?= e($id) ?>" name="<?= e($id) ?>">
             <option value="query"<?= $val === 'query' ? ' selected' : '' ?>>Als Parameter (?accesskey=...)</option>

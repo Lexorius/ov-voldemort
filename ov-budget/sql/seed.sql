@@ -128,6 +128,32 @@ INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order) VALUES
 ('einnahme_kategorie','Erstattung Nebenkosten',         'erstattung',   '#0369a1',100),
 ('einnahme_kategorie','Sonstiges',                      'sonstiges',    '#64748b',110);
 
+-- ---------- Kontaktkategorien ----------
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order) VALUES
+('kontakt_kategorie','Kommune / Verwaltung',   'kommune',    '#1d4ed8',10),
+('kontakt_kategorie','Politik',                'politik',    '#1e40af',20),
+('kontakt_kategorie','Behoerde',               'behoerde',   '#0369a1',30),
+('kontakt_kategorie','Feuerwehr',              'feuerwehr',  '#b91c1c',40),
+('kontakt_kategorie','Rettungsdienst',         'rettung',    '#be123c',50),
+('kontakt_kategorie','Polizei',                'polizei',    '#0f766e',60),
+('kontakt_kategorie','THW (andere Dienststelle)','thw',      '#003399',70),
+('kontakt_kategorie','Hilfsorganisation',      'hilfsorg',   '#0891b2',80),
+('kontakt_kategorie','Presse / Medien',        'presse',     '#c2410c',90),
+('kontakt_kategorie','Firma / Lieferant',      'firma',      '#7c3aed',100),
+('kontakt_kategorie','Foerderer / Spender',    'foerderer',  '#15803d',110),
+('kontakt_kategorie','Helfervereinigung',      'hv',         '#a16207',120),
+('kontakt_kategorie','Verein',                 'verein',     '#0d9488',130),
+('kontakt_kategorie','Privatperson',           'privat',     '#64748b',140),
+('kontakt_kategorie','Sonstiges',              'sonstiges',  '#94a3b8',150);
+
+-- ---------- Einladungsstatus ----------
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default, is_final) VALUES
+('einladung_status','Offen',          'offen',      '#64748b',10,1,0),
+('einladung_status','Eingeladen',     'eingeladen', '#0284c7',20,0,0),
+('einladung_status','Zugesagt',       'zugesagt',   '#15803d',30,0,1),
+('einladung_status','Abgesagt',       'abgesagt',   '#b91c1c',40,0,1),
+('einladung_status','Keine Rueckmeldung','keine',   '#a16207',50,0,0);
+
 -- ---------- Anlage-Typen ----------
 INSERT IGNORE INTO list_items (list_key, label, slug, sort_order, is_default) VALUES
 ('anlage_typ','Angebot','angebot',10,1),
@@ -178,8 +204,14 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 
 ('budget_modul_name','Budget','Bezeichnung des Budget-Moduls','','text','Budget',5),
 ('budget_intro','Gesamtbudget des Haushaltsjahres, laufende Ausgaben und die daraus entstehende Uebersicht.','Einleitungstext im Budget-Modul','','textarea','Budget',6),
+('budget_rundung','0','Betraege in der Uebersicht runden','0 = centgenau, sonst auf 10, 100 oder 1000 runden. Betrifft nur die Budgetuebersicht, nicht die Listen.','select','Budget',35),
 ('ausgaben_betragsart','brutto','Betraege werden erfasst als','brutto oder netto - gilt fuer Ausgaben und Einnahmen','text','Budget',40),
 ('ausgaben_user_darf_sehen','1','Alle Mitglieder duerfen Buchungen sehen','Ausgaben und Einnahmen. Sonst nur Leitung und Administration','bool','Budget',50),
+('kontakte_modul_name','Kontakte','Bezeichnung des Kontakt-Moduls','','text','Kontakte',10),
+('kontakte_intro','Ansprechpartner des Ortsverbands und Verteiler fuer Einladungen.','Einleitungstext im Kontakt-Modul','','textarea','Kontakte',20),
+('kontakte_user_darf_sehen','0','Alle Mitglieder duerfen Kontakte sehen','Kontakte enthalten personenbezogene Daten. Standard: nur Leitung und Administration.','bool','Kontakte',30),
+('kontakte_anrede_vorgabe','Sehr geehrte Damen und Herren','Vorgabe fuer die Briefanrede','Wird verwendet, wenn beim Kontakt keine eigene Anrede hinterlegt ist','text','Kontakte',40),
+('kontakte_extra_felder','','Zusaetzliche Felder fuer Kontakte','Ein Feld pro Zeile, Format: schluessel|Beschriftung|typ (text,textarea,number,bool,date)','textarea','Kontakte',50),
 ('session_lifetime','43200','Session-Laufzeit in Sekunden','Standard: 12 Stunden','number','Sicherheit',10),
 ('login_max_versuche','8','Fehlversuche bis Sperre','Sperre gilt pro Benutzername für die Sperrdauer','number','Sicherheit',20),
 ('login_sperre_minuten','15','Sperrdauer in Minuten','','number','Sicherheit',30),

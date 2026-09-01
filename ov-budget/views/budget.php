@@ -38,7 +38,7 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
         $html .= '<div style="margin-bottom:.8rem">'
             . '<div style="display:flex;justify-content:space-between;gap:.6rem;flex-wrap:wrap">'
             . '<span>' . $name . ' <span class="muted small">(' . (int)$k['anzahl'] . ')</span></span>'
-            . '<span class="small nowrap"><strong>' . e(money($b, false)) . '</strong> '
+            . '<span class="small nowrap"><strong>' . e(money_rounded($b, false)) . '</strong> '
             . '<span class="muted">' . number_format($anteil, 0) . '&nbsp;%</span></span>'
             . '</div><div class="bar"><div class="bar__fill" style="width:'
             . number_format($breite, 1, '.', '') . '%;background:' . e($k['color'] ?: '#94a3b8') . '"></div></div></div>';
@@ -50,6 +50,11 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
   <div>
     <h1><?= e((string)setting('budget_modul_name', 'Budget')) ?> <?= (int)$jahr ?></h1>
     <p><?= nl2br(e((string)setting('budget_intro', ''))) ?></p>
+    <?php if (($hinweis = rounding_note()) !== ''): ?>
+      <p class="muted small" style="margin:.35rem 0 0">
+        <span class="badge badge--outline">~ <?= e($hinweis) ?></span>
+      </p>
+    <?php endif; ?>
   </div>
   <div class="btnrow">
     <?php if (can('manage_budget')): ?>
@@ -80,23 +85,23 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
 <div class="stats">
   <div class="stat">
     <div class="stat__label">Jahresbudget</div>
-    <div class="stat__value"><?= e(money($gesamt, false)) ?></div>
+    <div class="stat__value"><?= e(money_rounded($gesamt, false)) ?></div>
     <div class="stat__hint">Zuweisung für <?= (int)$jahr ?></div>
   </div>
   <div class="stat">
     <div class="stat__label">Einnahmen</div>
-    <div class="stat__value" style="color:var(--ok)">+<?= e(money($einnahmenBrutto, false)) ?></div>
+    <div class="stat__value" style="color:var(--ok)">+<?= e(money_rounded($einnahmenBrutto, false)) ?></div>
     <div class="stat__hint">Einsätze, THG und Übriges</div>
   </div>
   <div class="stat">
     <div class="stat__label">Ausgaben</div>
-    <div class="stat__value">−<?= e(money($ausgabenBrutto, false)) ?></div>
-    <div class="stat__hint"><?= e(money($ausgabenNetto, false)) ?> netto</div>
+    <div class="stat__value">−<?= e(money_rounded($ausgabenBrutto, false)) ?></div>
+    <div class="stat__hint"><?= e(money_rounded($ausgabenNetto, false)) ?> netto</div>
   </div>
   <div class="stat">
     <div class="stat__label"><?= $rest >= 0 ? 'Noch frei' : 'Überzogen um' ?></div>
-    <div class="stat__value" style="<?= $rest < 0 ? 'color:var(--bad)' : '' ?>"><?= e(money(abs($rest), false)) ?></div>
-    <div class="stat__hint">von <?= e(money($verfuegbar, false)) ?> verfügbar</div>
+    <div class="stat__value" style="<?= $rest < 0 ? 'color:var(--bad)' : '' ?>"><?= e(money_rounded(abs($rest), false)) ?></div>
+    <div class="stat__hint">von <?= e(money_rounded($verfuegbar, false)) ?> verfügbar</div>
   </div>
 </div>
 
@@ -104,9 +109,9 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
   <div class="card__head">
     <h2>Mittel <?= (int)$jahr ?></h2>
     <span class="small">
-      <?= e(money($gesamt, false)) ?> Budget
-      <?php if ($einnahmenBrutto > 0): ?>+ <?= e(money($einnahmenBrutto, false)) ?> Einnahmen<?php endif; ?>
-      = <strong><?= e(money($verfuegbar)) ?></strong>
+      <?= e(money_rounded($gesamt, false)) ?> Budget
+      <?php if ($einnahmenBrutto > 0): ?>+ <?= e(money_rounded($einnahmenBrutto, false)) ?> Einnahmen<?php endif; ?>
+      = <strong><?= e(money_rounded($verfuegbar)) ?></strong>
     </span>
   </div>
   <?php if ($verfuegbar > 0): ?>
@@ -114,9 +119,9 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
       <div class="bar__fill <?= $quoteCls ?>" style="width:<?= number_format($quote, 1, '.', '') ?>%"></div>
     </div>
     <p class="small muted" style="margin:.5rem 0 0">
-      <?= e(money($ausgabenBrutto, false)) ?> ausgegeben (<?= number_format($quote, 0) ?>&nbsp;%).
+      <?= e(money_rounded($ausgabenBrutto, false)) ?> ausgegeben (<?= number_format($quote, 0) ?>&nbsp;%).
       Wenn zusätzlich alle offenen Wünsche beschafft würden, kämen
-      <strong><?= e(money($verplant + $offenOhne)) ?></strong> netto hinzu.
+      <strong><?= e(money_rounded($verplant + $offenOhne)) ?></strong> netto hinzu.
     </p>
   <?php else: ?>
     <div class="empty">Weder Budget noch Einnahmen erfasst.</div>
@@ -165,15 +170,15 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
         <div class="months__col">
           <div class="months__pair">
             <div class="months__bar months__bar--ein" style="height:<?= number_format($hEin, 1, '.', '') ?>%"
-                 title="<?= e($monatsnamen[$m] . ' Einnahmen: ' . money($ein)) ?>"></div>
+                 title="<?= e($monatsnamen[$m] . ' Einnahmen: ' . money_rounded($ein)) ?>"></div>
             <div class="months__bar months__bar--aus" style="height:<?= number_format($hAus, 1, '.', '') ?>%"
-                 title="<?= e($monatsnamen[$m] . ' Ausgaben: ' . money($aus)) ?>"></div>
+                 title="<?= e($monatsnamen[$m] . ' Ausgaben: ' . money_rounded($aus)) ?>"></div>
           </div>
           <div class="months__label"><?= e($monatsnamen[$m]) ?></div>
         </div>
       <?php endforeach; ?>
     </div>
-    <p class="small muted" style="margin:.6rem 0 0">Höchster Monatswert: <?= e(money($maxMonat)) ?></p>
+    <p class="small muted" style="margin:.6rem 0 0">Höchster Monatswert: <?= e(money_rounded($maxMonat)) ?></p>
   <?php endif; ?>
 
   <?php if ($letzte): ?>
@@ -191,7 +196,7 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
             </td>
             <td class="small"><?= e($b['kategorie_label'] ?: '–') ?></td>
             <td class="num nowrap" style="<?= $ein ? 'color:var(--ok)' : '' ?>">
-              <?= $ein ? '+' : '−' ?><?= e(money((float)$b['betrag_brutto'], false)) ?></td>
+              <?= $ein ? '+' : '−' ?><?= e(money_rounded((float)$b['betrag_brutto'], false)) ?></td>
           </tr>
         <?php endforeach; ?>
         </tbody>
@@ -203,7 +208,7 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
 <section class="card">
   <div class="card__head">
     <h2>Budgettöpfe</h2>
-    <span class="muted small"><?= e(money($summeToepfe)) ?> geplant</span>
+    <span class="muted small"><?= e(money_rounded($summeToepfe)) ?> geplant</span>
   </div>
   <?php if (!$budgets): ?>
     <div class="empty">Für <?= (int)$jahr ?> ist noch kein Budgettopf angelegt.
@@ -228,8 +233,8 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
             <span class="muted small"><?= e($b['kategorie_label'] ?: 'alle Kategorien') ?></span>
           </span>
           <span class="small nowrap">
-            <?= e(money($ausgegeben, false)) ?> ausgegeben ·
-            <?= e(money($ist, false)) ?> geplant / <?= e(money($soll)) ?>
+            <?= e(money_rounded($ausgegeben, false)) ?> ausgegeben ·
+            <?= e(money_rounded($ist, false)) ?> geplant / <?= e(money_rounded($soll)) ?>
             <?php if (can('manage_budget')): ?>
               · <a href="<?= e(url('budget_edit', ['id' => $b['id']])) ?>">bearbeiten</a>
             <?php endif; ?>
@@ -244,7 +249,7 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
 <section class="card">
   <div class="card__head">
     <h2>Offene Wünsche ohne Budgettopf</h2>
-    <span class="badge badge--outline"><?= e(money($offenOhne)) ?></span>
+    <span class="badge badge--outline"><?= e(money_rounded($offenOhne)) ?></span>
   </div>
   <?php if (!$ohneTopf): ?>
     <div class="empty">Alle offenen Wünsche sind einem Topf zugeordnet.</div>
@@ -258,7 +263,7 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
             <td><a href="<?= e(url('wish', ['id' => $w['id']])) ?>"><?= e($w['bezeichnung']) ?></a></td>
             <td><?= e($w['fachgruppe_label'] ?: '–') ?></td>
             <td><?= badge($w['dring_label'] ? ['label' => $w['dring_label'], 'color' => $w['dring_color']] : null) ?></td>
-            <td class="num"><?= e(money((float)$w['netto_gesamt'], false)) ?></td>
+            <td class="num"><?= e(money_rounded((float)$w['netto_gesamt'], false)) ?></td>
           </tr>
         <?php endforeach; ?>
         </tbody>

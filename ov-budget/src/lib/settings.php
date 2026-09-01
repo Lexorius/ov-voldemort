@@ -59,12 +59,15 @@ function settings_grouped(): array
 }
 
 /**
- * Zusätzliche Freifelder für Wünsche, im Admin als Text gepflegt:
- *   schluessel|Beschriftung|typ
+ * Frei definierbare Zusatzfelder, im Admin als Text gepflegt – eine Zeile
+ * je Feld im Format:  schluessel|Beschriftung|typ
+ *
+ * Genutzt von Wünschen und Kontakten. Die Werte landen als JSON in der
+ * Spalte "extra" des jeweiligen Datensatzes.
  */
-function wish_extra_fields(): array
+function extra_fields(string $settingKey): array
 {
-    $raw = (string)setting('wunsch_extra_felder', '');
+    $raw = (string)setting($settingKey, '');
     $out = [];
     foreach (preg_split('/\r?\n/', $raw) ?: [] as $line) {
         $line = trim($line);
@@ -84,4 +87,34 @@ function wish_extra_fields(): array
         ];
     }
     return $out;
+}
+
+function wish_extra_fields(): array
+{
+    return extra_fields('wunsch_extra_felder');
+}
+
+function contact_extra_fields(): array
+{
+    return extra_fields('kontakte_extra_felder');
+}
+
+/** Gespeicherte Werte der Zusatzfelder eines Datensatzes lesen */
+function extra_values(array $row): array
+{
+    $v = json_decode((string)($row['extra'] ?? ''), true);
+    return is_array($v) ? $v : [];
+}
+
+/** Werte der Zusatzfelder aus dem Formular einsammeln */
+function extra_from_post(array $felder): ?string
+{
+    if (!$felder) {
+        return null;
+    }
+    $werte = [];
+    foreach ($felder as $key => $def) {
+        $werte[$key] = $def['type'] === 'bool' ? post_bool('extra_' . $key) : post_str('extra_' . $key);
+    }
+    return json_encode($werte, JSON_UNESCAPED_UNICODE);
 }

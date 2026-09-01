@@ -86,6 +86,10 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   technische Hilfeleistung, Spenden ...) mit Einsatz- oder Auftragsnummer.
   Die Übersicht rechnet Budget plus Einnahmen minus Ausgaben und schlüsselt
   nach Kategorie und Monat auf. Optional unterteilen Budgettöpfe das Jahr.
+* **Kontakte** – Ansprechpartner bei Kommune, Feuerwehr, Presse, Firmen und
+  Förderern, dazu Verteiler für Einladungen mit Rückmeldungen und einer
+  CSV-Ausgabe für den Serienbrief. Neben den Standardfeldern lassen sich
+  eigene Felder definieren.
 * **Divera 24/7** – Formulare abrufen, Felder frei zuordnen und Einträge als
   Wünsche übernehmen. Mit Vorschau, Dubletten-Erkennung und optionalem
   automatischem Abruf.

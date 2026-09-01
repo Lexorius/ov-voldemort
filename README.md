@@ -6,6 +6,7 @@ Beschaffungsplanung eines Ortsverbands:
 * **Wünsch dir was** – Fachgruppen und Zugführer tragen Bedarfe ein, alle priorisieren gemeinsam
 * **Aufgaben** – ToDos für den OV, einzelne Fachgruppen, Funktionen oder Personen
 * **Budget** – Jahresbudget, Ausgaben und Einnahmen (Einsätze, technische Hilfeleistung), Übersicht nach Kategorie und Monat
+* **Kontakte** – Ansprechpartner und Verteiler für Einladungen, mit CSV für den Serienbrief
 * **Divera 24/7** – Formulare abrufen und deren Einträge als Wünsche übernehmen
 * **Verwaltung** – Benutzer, Rollen sowie *alle* Auswahllisten und Texte frei konfigurierbar
 
@@ -207,8 +208,12 @@ Haushaltsjahr, MwSt-Satz, Warnschwelle der Budgetauslastung, Pflichtfelder, ab w
 Betrag ein Angebot verpflichtend ist, Upload-Grenzen und erlaubte Dateitypen, Abstimmung
 und Stimmenzahl, Session-Laufzeit und Sperre nach Fehlversuchen.
 
-**Eigene Zusatzfelder für Wünsche** – in den Einstellungen unter `wunsch_extra_felder`,
-eine Zeile je Feld:
+**Unscharfe Budgetübersicht** – `budget_rundung` stellt die Übersichtsseite auf
+gerundete Beträge um (10, 100 oder 1.000). Praktisch für Aushänge und Vorträge,
+wo die Größenordnung zählt. Listen und CSV bleiben centgenau.
+
+**Eigene Zusatzfelder für Wünsche und Kontakte** – in den Einstellungen unter
+`wunsch_extra_felder` beziehungsweise `kontakte_extra_felder`, eine Zeile je Feld:
 
 ```
 inventarnummer|Inventarnummer|text

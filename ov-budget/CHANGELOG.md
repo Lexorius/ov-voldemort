@@ -1,5 +1,34 @@
 # Änderungsverlauf
 
+## 1.5.0
+
+### Budgetübersicht kann unscharf
+
+Unter *Verwaltung → Einstellungen → Budget* lässt sich einstellen, ob die
+Übersicht centgenau rechnet oder auf **10, 100 oder 1.000** gerundet anzeigt.
+Gerundet entfallen die Nachkommastellen, und ein Hinweis nennt die Stufe.
+Betroffen ist nur die Übersichtsseite – die Listen und die CSV-Ausgaben
+bleiben immer centgenau, ebenso die Rechnung im Hintergrund.
+
+### Kontaktverwaltung
+
+Neuer Bereich für die Ansprechpartner ausserhalb des Ortsverbands.
+
+- **Kontakte** mit Anrede, Titel, Name, Organisation, Funktion, Kategorie,
+  E-Mail, Telefon, Anschrift, Briefanrede und Notiz
+- **frei definierbare Zusatzfelder**, wie schon bei den Wünschen: eine Zeile
+  je Feld unter *Einstellungen → Kontakte*, Typen text, textarea, number,
+  bool und date. Sie erscheinen im Formular und in der CSV-Ausgabe.
+- **Verteiler** für Einladungen: Kontakte einzeln oder gleich kategorieweise
+  übernehmen, je Kontakt Status (offen, eingeladen, zugesagt, abgesagt),
+  Personenzahl und Bemerkung festhalten
+- **CSV für den Serienbrief** inklusive fertiger Briefanrede, die aus Anrede
+  und Nachname gebildet wird, wenn keine eigene hinterlegt ist
+- **E-Mail-Adressen zum Kopieren** für das Blindkopie-Feld
+- Kategorien und Einladungsstatus sind wie alles andere im Admin pflegbar
+- Kontakte enthalten personenbezogene Daten: standardmässig sehen sie nur
+  Leitung und Administration, freigebbar per Einstellung
+
 ## 1.4.1
 
 - CSS und JavaScript bekommen einen Versionsstempel in der Adresse. Der

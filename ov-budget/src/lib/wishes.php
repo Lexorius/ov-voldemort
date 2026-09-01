@@ -120,8 +120,7 @@ function wish_comments(int $wishId): array
 /** Zusatzfelder (JSON-Spalte extra) lesen */
 function wish_extra(array $wish): array
 {
-    $v = json_decode((string)($wish['extra'] ?? ''), true);
-    return is_array($v) ? $v : [];
+    return extra_values($wish);
 }
 
 /**
@@ -155,10 +154,6 @@ function wish_save_from_post(?array $existing, array $user): array
         $errors[] = 'Bitte eine Begründung angeben – sie hilft bei der gemeinsamen Priorisierung.';
     }
 
-    $extra = [];
-    foreach (wish_extra_fields() as $key => $def) {
-        $extra[$key] = $def['type'] === 'bool' ? post_bool('extra_' . $key) : post_str('extra_' . $key);
-    }
 
     $data = [
         'bezeichnung'      => mb_substr($bezeichnung, 0, 200),
@@ -178,7 +173,7 @@ function wish_save_from_post(?array $existing, array $user): array
         'artikelnummer'    => mb_substr(post_str('artikelnummer'), 0, 100),
         'link'             => mb_substr(post_str('link'), 0, 500),
         'antragsteller'    => mb_substr(post_str('antragsteller') ?: (string)$user['display_name'], 0, 150),
-        'extra'            => $extra ? json_encode($extra, JSON_UNESCAPED_UNICODE) : null,
+        'extra'            => extra_from_post(wish_extra_fields()),
         'updated_by'       => (int)$user['id'],
     ];
 

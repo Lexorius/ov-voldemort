@@ -37,6 +37,12 @@ $routes = [
     'expense_edit'       => 'expense_edit',
     'expenses_export'    => 'expenses_export',
 
+    'contacts'           => 'contacts',
+    'contact_edit'       => 'contact_edit',
+    'contact_groups'     => 'contact_groups',
+    'contact_group'      => 'contact_group',
+    'contacts_export'    => 'contacts_export',
+
     'download'           => 'download',
 
     // Administration

@@ -295,6 +295,70 @@ CREATE TABLE IF NOT EXISTS expenses (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- Kontakte (Behoerden, Feuerwehr, Firmen, Foerderer ...)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS contacts (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  anrede        VARCHAR(30)  NOT NULL DEFAULT '',
+  titel         VARCHAR(40)  NOT NULL DEFAULT '',
+  vorname       VARCHAR(80)  NOT NULL DEFAULT '',
+  nachname      VARCHAR(80)  NOT NULL DEFAULT '',
+  organisation  VARCHAR(150) NOT NULL DEFAULT '',
+  position      VARCHAR(150) NOT NULL DEFAULT '',
+  kategorie_id  INT UNSIGNED NULL,
+  email         VARCHAR(150) NOT NULL DEFAULT '',
+  telefon       VARCHAR(60)  NOT NULL DEFAULT '',
+  mobil         VARCHAR(60)  NOT NULL DEFAULT '',
+  strasse       VARCHAR(150) NOT NULL DEFAULT '',
+  plz           VARCHAR(15)  NOT NULL DEFAULT '',
+  ort           VARCHAR(100) NOT NULL DEFAULT '',
+  land          VARCHAR(60)  NOT NULL DEFAULT '',
+  anschreiben   VARCHAR(150) NOT NULL DEFAULT '',
+  notiz         TEXT         NULL,
+  extra         TEXT         NULL,
+  is_active     TINYINT(1)   NOT NULL DEFAULT 1,
+  created_by    INT UNSIGNED NULL,
+  updated_by    INT UNSIGNED NULL,
+  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_name (nachname, vorname),
+  KEY idx_org (organisation),
+  CONSTRAINT fk_kontakt_kat FOREIGN KEY (kategorie_id) REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_kontakt_cb  FOREIGN KEY (created_by)   REFERENCES users(id)      ON DELETE SET NULL,
+  CONSTRAINT fk_kontakt_ub  FOREIGN KEY (updated_by)   REFERENCES users(id)      ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Verteiler, etwa "Einladung Jubilaeum 2027"
+CREATE TABLE IF NOT EXISTS contact_groups (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  name          VARCHAR(150) NOT NULL,
+  beschreibung  TEXT         NULL,
+  anlass_am     DATE         NULL,
+  ort           VARCHAR(150) NOT NULL DEFAULT '',
+  is_active     TINYINT(1)   NOT NULL DEFAULT 1,
+  created_by    INT UNSIGNED NULL,
+  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_vt_cb FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS contact_group_members (
+  group_id      INT UNSIGNED NOT NULL,
+  contact_id    INT UNSIGNED NOT NULL,
+  status_id     INT UNSIGNED NULL,
+  personen      SMALLINT     NOT NULL DEFAULT 1,
+  notiz         VARCHAR(255) NOT NULL DEFAULT '',
+  updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (group_id, contact_id),
+  KEY idx_contact (contact_id),
+  CONSTRAINT fk_vtm_group   FOREIGN KEY (group_id)   REFERENCES contact_groups(id) ON DELETE CASCADE,
+  CONSTRAINT fk_vtm_contact FOREIGN KEY (contact_id) REFERENCES contacts(id)       ON DELETE CASCADE,
+  CONSTRAINT fk_vtm_status  FOREIGN KEY (status_id)  REFERENCES list_items(id)     ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- Audit
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS audit_log (
