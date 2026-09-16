@@ -4,6 +4,14 @@
 
   var euro = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+  /* Wischbare Navigation am Handy: den aktiven Eintrag in die Mitte holen.
+     Bewusst über scrollLeft statt scrollIntoView – das würde die Seite mitverschieben. */
+  var leiste = document.querySelector('.mainnav__inner');
+  var aktiv = leiste && leiste.querySelector('.mainnav__item.is-active');
+  if (aktiv && leiste.scrollWidth > leiste.clientWidth) {
+    leiste.scrollLeft = aktiv.offsetLeft - (leiste.clientWidth - aktiv.offsetWidth) / 2;
+  }
+
   function num(el) {
     if (!el) return 0;
     var v = String(el.value || '').replace(/\s|€/g, '');

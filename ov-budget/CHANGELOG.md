@@ -1,5 +1,60 @@
 # Änderungsverlauf
 
+## 1.6.0
+
+### Kontakt-Import
+
+Unter *Kontakte → Importieren* lassen sich Kontakte in drei Schritten übernehmen:
+Datei hochladen, Zuordnung prüfen, importieren.
+
+- **CSV** aus Excel, LibreOffice, Outlook (deutsch und englisch) und Google
+  Kontakte. Trennzeichen und Zeichensatz werden erkannt – auch der
+  Windows-Zeichensatz, den Excel auf deutschen Rechnern schreibt, und die
+  UTF-16-Dateien aus Outlooks „Unicode"-Export.
+- **vCard** (.vcf) in den Versionen 2.1, 3.0 und 4.0, etwa vom Handy, aus iCloud
+  oder Thunderbird; mehrere Kontakte je Datei. Bei mehreren Adressen oder
+  Nummern gewinnt die dienstliche.
+- Die **Spaltenzuordnung** wird anhand der Spaltennamen geschätzt und lässt sich
+  je Spalte ändern – auch auf die frei definierten Zusatzfelder.
+- **Vorschau** vor dem Speichern: je Zeile, ob neu angelegt, ergänzt,
+  überschrieben oder übersprungen wird, und warum.
+- **Dubletten** werden über die E-Mail-Adresse erkannt, ohne E-Mail über Name
+  und Organisation. Wahlweise überspringen, nur leere Felder ergänzen,
+  überschreiben oder trotzdem neu anlegen. Doppelte Einträge innerhalb der
+  Datei werden immer nur einmal übernommen.
+- Kategorien aus der Datei werden streng zugeordnet und auf Wunsch neu angelegt.
+- Importierte Kontakte lassen sich gleich auf einen Verteiler setzen.
+- Der Import läuft in einer Transaktion: bricht er ab, bleibt der Bestand
+  unverändert.
+- Vorlage zum Ausfüllen als CSV.
+
+### Besprechungen und Talking Points
+
+Neues Modul, um Themen für Besprechungen zu sammeln und Ergebnisse festzuhalten.
+
+- **Themenspeicher**: Jedes Mitglied kann Themen einbringen (abschaltbar), mit
+  Hintergrund, Dringlichkeit, betroffener Fachgruppe und Zeitbedarf.
+- **Besprechungen** mit Art, Datum, Uhrzeit, Ort, Leitung und Protokollführung;
+  Ort, Leitung und Uhrzeit werden von der letzten Besprechung derselben Art
+  übernommen.
+- Themen auf die **Tagesordnung** setzen, einzeln oder mehrere auf einmal, und
+  die Reihenfolge verschieben. Aus dem Zeitbedarf ergeben sich geplante
+  Uhrzeiten und das voraussichtliche Ende.
+- Während der Sitzung je Thema **Status, Verantwortliche und Ergebnis**
+  festhalten und mit einem Klick **eine Aufgabe daraus machen**.
+- **Vertagte Themen** landen wieder im Themenspeicher. Übernommen wird eine
+  Kopie, damit das Protokoll der ersten Besprechung unverändert bleibt. Beim
+  Abschließen einer Besprechung gelten noch offene Themen als vertagt.
+- **Druckansicht** als Tagesordnung (mit Platz für Notizen) oder als Protokoll.
+- Besprechungsarten und Themenstatus sind im Admin pflegbar, die Bezeichnung
+  „Talking Points" ist umbenennbar.
+
+### Sonstiges
+
+- Die Navigation am Handy lässt sich seitlich wischen, statt bei vielen
+  Modulen die Beschriftungen abzuschneiden; der aktive Eintrag rückt beim
+  Laden ins Bild.
+
 ## 1.5.0
 
 ### Budgetübersicht kann unscharf

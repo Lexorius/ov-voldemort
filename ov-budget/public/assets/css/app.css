@@ -89,9 +89,19 @@ h3 { font-size: 1rem; }
   border-top: 1px solid var(--border);
   padding-bottom: env(safe-area-inset-bottom);
 }
-.mainnav__inner { display: flex; }
+/*
+ * Bei vielen Modulen reicht die Breite am Handy nicht für gleich breite
+ * Knöpfe. Jeder Eintrag behält daher eine Mindestbreite, und die Leiste
+ * lässt sich seitlich wischen, statt Beschriftungen abzuschneiden.
+ */
+.mainnav__inner {
+  display: flex;
+  overflow-x: auto; overscroll-behavior-x: contain;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.mainnav__inner::-webkit-scrollbar { display: none; }
 .mainnav__item {
-  flex: 1 1 0; min-width: 0;
+  flex: 1 0 auto; min-width: 4.4rem;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
   height: var(--nav-h); padding: .3rem .2rem;
   color: var(--ink-soft); text-decoration: none;

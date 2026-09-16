@@ -359,6 +359,62 @@ CREATE TABLE IF NOT EXISTS contact_group_members (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- Besprechungen und Talking Points
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS meetings (
+  id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  titel          VARCHAR(200) NOT NULL,
+  typ_id         INT UNSIGNED NULL,
+  datum          DATE         NOT NULL,
+  beginn         TIME         NULL,
+  ende           TIME         NULL,
+  ort            VARCHAR(150) NOT NULL DEFAULT '',
+  leitung        VARCHAR(150) NOT NULL DEFAULT '',
+  protokoll_von  VARCHAR(150) NOT NULL DEFAULT '',
+  teilnehmer     TEXT         NULL,
+  beschreibung   TEXT         NULL,
+  notizen        TEXT         NULL,
+  status         ENUM('geplant','abgeschlossen') NOT NULL DEFAULT 'geplant',
+  created_by     INT UNSIGNED NULL,
+  created_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_datum (datum),
+  CONSTRAINT fk_meet_typ FOREIGN KEY (typ_id)     REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_meet_cb  FOREIGN KEY (created_by) REFERENCES users(id)      ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- meeting_id NULL = Themenspeicher
+CREATE TABLE IF NOT EXISTS talking_points (
+  id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  meeting_id      INT UNSIGNED NULL,
+  vorgaenger_id   INT UNSIGNED NULL,
+  titel           VARCHAR(200) NOT NULL,
+  beschreibung    TEXT         NULL,
+  fachgruppe_id   INT UNSIGNED NULL,
+  prioritaet_id   INT UNSIGNED NULL,
+  status_id       INT UNSIGNED NULL,
+  dauer_min       SMALLINT     NULL,
+  verantwortlich  VARCHAR(150) NOT NULL DEFAULT '',
+  ergebnis        TEXT         NULL,
+  sort_order      INT          NOT NULL DEFAULT 0,
+  todo_id         INT UNSIGNED NULL,
+  eingebracht_von INT UNSIGNED NULL,
+  created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_meeting (meeting_id, sort_order),
+  KEY idx_vorgaenger (vorgaenger_id),
+  CONSTRAINT fk_tp_meeting FOREIGN KEY (meeting_id)      REFERENCES meetings(id)       ON DELETE SET NULL,
+  CONSTRAINT fk_tp_vorg    FOREIGN KEY (vorgaenger_id)   REFERENCES talking_points(id) ON DELETE SET NULL,
+  CONSTRAINT fk_tp_fg      FOREIGN KEY (fachgruppe_id)   REFERENCES list_items(id)     ON DELETE SET NULL,
+  CONSTRAINT fk_tp_prio    FOREIGN KEY (prioritaet_id)   REFERENCES list_items(id)     ON DELETE SET NULL,
+  CONSTRAINT fk_tp_status  FOREIGN KEY (status_id)       REFERENCES list_items(id)     ON DELETE SET NULL,
+  CONSTRAINT fk_tp_todo    FOREIGN KEY (todo_id)         REFERENCES todos(id)          ON DELETE SET NULL,
+  CONSTRAINT fk_tp_user    FOREIGN KEY (eingebracht_von) REFERENCES users(id)          ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- Audit
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS audit_log (

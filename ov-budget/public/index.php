@@ -42,6 +42,15 @@ $routes = [
     'contact_groups'     => 'contact_groups',
     'contact_group'      => 'contact_group',
     'contacts_export'    => 'contacts_export',
+    'contacts_import'    => 'contacts_import',
+
+    'meetings'           => 'meetings',
+    'meeting'            => 'meeting',
+    'meeting_edit'       => 'meeting_edit',
+    'meeting_action'     => 'meeting_action',
+    'meeting_print'      => 'meeting_print',
+    'talking_points'     => 'talking_points',
+    'talking_point_edit' => 'talking_point_edit',
 
     'download'           => 'download',
 

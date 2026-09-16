@@ -154,6 +154,24 @@ INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_defa
 ('einladung_status','Abgesagt',       'abgesagt',   '#b91c1c',40,0,1),
 ('einladung_status','Keine Rueckmeldung','keine',   '#a16207',50,0,0);
 
+-- ---------- Besprechungsarten ----------
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default) VALUES
+('besprechung_typ','OV-Stab / Leitungsrunde',   'ov-stab',        '#003399',10,0),
+('besprechung_typ','Zugfuehrerbesprechung',     'zugfuehrer',     '#1d4ed8',20,0),
+('besprechung_typ','Gruppenfuehrerbesprechung', 'gruppenfuehrer', '#0369a1',30,0),
+('besprechung_typ','Dienstbesprechung',         'dienst',         '#0f766e',40,1),
+('besprechung_typ','Helferversammlung',         'helferversammlung','#15803d',50,0),
+('besprechung_typ','Jugendgruppe',              'jugend',         '#16a34a',60,0),
+('besprechung_typ','Sonstiges',                 'sonstiges',      '#64748b',70,0);
+
+-- ---------- Status der Talking Points ----------
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default, is_final) VALUES
+('tp_status','Offen',         'offen',         '#0284c7',10,1,0),
+('tp_status','Besprochen',    'besprochen',    '#15803d',20,0,1),
+('tp_status','Beschlossen',   'beschlossen',   '#166534',30,0,1),
+('tp_status','Vertagt',       'vertagt',       '#b45309',40,0,0),
+('tp_status','Zurueckgezogen','zurueckgezogen','#64748b',50,0,1);
+
 -- ---------- Anlage-Typen ----------
 INSERT IGNORE INTO list_items (list_key, label, slug, sort_order, is_default) VALUES
 ('anlage_typ','Angebot','angebot',10,1),
@@ -212,6 +230,12 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('kontakte_user_darf_sehen','0','Alle Mitglieder duerfen Kontakte sehen','Kontakte enthalten personenbezogene Daten. Standard: nur Leitung und Administration.','bool','Kontakte',30),
 ('kontakte_anrede_vorgabe','Sehr geehrte Damen und Herren','Vorgabe fuer die Briefanrede','Wird verwendet, wenn beim Kontakt keine eigene Anrede hinterlegt ist','text','Kontakte',40),
 ('kontakte_extra_felder','','Zusaetzliche Felder fuer Kontakte','Ein Feld pro Zeile, Format: schluessel|Beschriftung|typ (text,textarea,number,bool,date)','textarea','Kontakte',50),
+('besprechung_modul_name','Besprechungen','Bezeichnung des Besprechungs-Moduls','','text','Besprechungen',10),
+('tp_bezeichnung','Talking Points','Bezeichnung fuer die Themen','z.B. Talking Points, Themen oder Tagesordnungspunkte','text','Besprechungen',20),
+('besprechung_intro','Themen sammeln, auf Besprechungen setzen und Ergebnisse festhalten.','Einleitungstext','','textarea','Besprechungen',30),
+('besprechung_user_darf_sehen','1','Alle Mitglieder duerfen Besprechungen sehen','Sonst nur Leitung und Administration','bool','Besprechungen',40),
+('tp_user_darf_anlegen','1','Alle Mitglieder duerfen Themen einbringen','Eigene Themen bleiben bearbeitbar, bis sie besprochen sind','bool','Besprechungen',50),
+('tp_dauer_vorgabe','10','Vorgabedauer je Thema (Minuten)','Fuer die geplanten Uhrzeiten in der Tagesordnung','number','Besprechungen',60),
 ('session_lifetime','43200','Session-Laufzeit in Sekunden','Standard: 12 Stunden','number','Sicherheit',10),
 ('login_max_versuche','8','Fehlversuche bis Sperre','Sperre gilt pro Benutzername für die Sperrdauer','number','Sicherheit',20),
 ('login_sperre_minuten','15','Sperrdauer in Minuten','','number','Sicherheit',30),

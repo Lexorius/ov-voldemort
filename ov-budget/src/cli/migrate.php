@@ -65,6 +65,10 @@ function ovb_list_item_refs(): array
         ['expenses',      'fachgruppe_id',         ''],
         ['contacts',      'kategorie_id',          ''],
         ['contact_group_members', 'status_id',     ''],
+        ['meetings',      'typ_id',                ''],
+        ['talking_points', 'fachgruppe_id',        ''],
+        ['talking_points', 'prioritaet_id',        ''],
+        ['talking_points', 'status_id',            ''],
     ];
 }
 

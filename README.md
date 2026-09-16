@@ -6,7 +6,8 @@ Beschaffungsplanung eines Ortsverbands:
 * **Wünsch dir was** – Fachgruppen und Zugführer tragen Bedarfe ein, alle priorisieren gemeinsam
 * **Aufgaben** – ToDos für den OV, einzelne Fachgruppen, Funktionen oder Personen
 * **Budget** – Jahresbudget, Ausgaben und Einnahmen (Einsätze, technische Hilfeleistung), Übersicht nach Kategorie und Monat
-* **Kontakte** – Ansprechpartner und Verteiler für Einladungen, mit CSV für den Serienbrief
+* **Kontakte** – Ansprechpartner und Verteiler für Einladungen, Import aus Excel, Outlook, Google und vCard
+* **Besprechungen** – Talking Points sammeln, Tagesordnung, Ergebnisse und Protokoll
 * **Divera 24/7** – Formulare abrufen und deren Einträge als Wünsche übernehmen
 * **Verwaltung** – Benutzer, Rollen sowie *alle* Auswahllisten und Texte frei konfigurierbar
 

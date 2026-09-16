@@ -19,6 +19,7 @@ foreach ($rows as $r) {
   <div class="btnrow">
     <?php if (can('manage_contacts')): ?>
       <a class="btn" href="<?= e(url('contact_edit')) ?>">+ Kontakt</a>
+      <a class="btn btn--sec" href="<?= e(url('contacts_import')) ?>">Importieren</a>
     <?php endif; ?>
     <a class="btn btn--sec" href="<?= e(url('contact_groups')) ?>">Verteiler</a>
     <a class="btn btn--sec" href="<?= e(url('contacts_export', array_diff_key($_GET, ['p' => 1]))) ?>">CSV</a>

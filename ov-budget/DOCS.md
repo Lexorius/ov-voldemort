@@ -89,7 +89,11 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
 * **Kontakte** – Ansprechpartner bei Kommune, Feuerwehr, Presse, Firmen und
   Förderern, dazu Verteiler für Einladungen mit Rückmeldungen und einer
   CSV-Ausgabe für den Serienbrief. Neben den Standardfeldern lassen sich
-  eigene Felder definieren.
+  eigene Felder definieren. Import aus Excel, Outlook, Google Kontakte und vCard
+  mit Vorschau und Dublettenerkennung.
+* **Besprechungen** – Talking Points im Themenspeicher sammeln, auf die
+  Tagesordnung setzen, während der Sitzung Ergebnisse festhalten und daraus
+  Aufgaben machen. Tagesordnung und Protokoll zum Drucken.
 * **Divera 24/7** – Formulare abrufen, Felder frei zuordnen und Einträge als
   Wünsche übernehmen. Mit Vorschau, Dubletten-Erkennung und optionalem
   automatischem Abruf.

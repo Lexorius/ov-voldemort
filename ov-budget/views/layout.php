@@ -51,8 +51,12 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
     <a class="mainnav__item<?= nav_active('budget', 'budget_edit', 'budget_year_edit', 'expenses', 'expense_edit') ?>" href="<?= e(url('budget')) ?>">
       <span class="mainnav__icon">€</span><span>Budget</span></a>
     <?php if (can('view_contacts')): ?>
-      <a class="mainnav__item<?= nav_active('contacts', 'contact_edit', 'contact_groups', 'contact_group') ?>" href="<?= e(url('contacts')) ?>">
+      <a class="mainnav__item<?= nav_active('contacts', 'contact_edit', 'contact_groups', 'contact_group', 'contacts_import') ?>" href="<?= e(url('contacts')) ?>">
         <span class="mainnav__icon">✉</span><span><?= e(setting('kontakte_modul_name', 'Kontakte')) ?></span></a>
+    <?php endif; ?>
+    <?php if (can('view_meetings')): ?>
+      <a class="mainnav__item<?= nav_active('meetings', 'meeting', 'meeting_edit', 'talking_points', 'talking_point_edit') ?>" href="<?= e(url('meetings')) ?>">
+        <span class="mainnav__icon">☰</span><span><?= e(setting('besprechung_modul_name', 'Besprechungen')) ?></span></a>
     <?php endif; ?>
     <?php if (can('admin')): ?>
       <a class="mainnav__item<?= nav_active('admin', 'admin_users', 'admin_user_edit', 'admin_lists', 'admin_list_edit', 'admin_settings', 'admin_divera', 'admin_divera_form', 'admin_log') ?>" href="<?= e(url('admin')) ?>">
