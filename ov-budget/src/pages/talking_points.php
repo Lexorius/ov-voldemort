@@ -7,11 +7,13 @@ if (!can('view_meetings')) {
     return;
 }
 
+series_materialize();
+
 $filters = ['q' => get_str('q'), 'fachgruppe_id' => get_int('fachgruppe_id')];
 
 render('talking_points', [
     'title'    => 'Themenspeicher',
     'rows'     => tp_backlog($filters),
     'filters'  => $filters,
-    'geplant'  => can('manage_meetings') ? meeting_query(['zeit' => 'kommend']) : [],
+    'geplant'  => can('manage_meetings') ? meeting_query(['zeit' => 'kommend', 'nur_geplant' => 1]) : [],
 ]);

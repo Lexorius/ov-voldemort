@@ -57,6 +57,20 @@
     toggleTarget();
   }
 
+  /* Serien: nur die Felder zeigen, die zum gewählten Rhythmus gehören */
+  var regel = document.getElementById('f-regel');
+  if (regel) {
+    var einheit = document.getElementById('f-intervall-einheit');
+    var zeigeRegel = function () {
+      document.querySelectorAll('[data-regel]').forEach(function (feld) {
+        feld.hidden = feld.getAttribute('data-regel').split(' ').indexOf(regel.value) === -1;
+      });
+      if (einheit) einheit.textContent = regel.value === 'woche' ? 'Woche(n)' : 'Monat(e)';
+    };
+    regel.addEventListener('change', zeigeRegel);
+    zeigeRegel();
+  }
+
   /* Filter beim Ändern direkt anwenden */
   document.querySelectorAll('form[data-autosubmit] select').forEach(function (sel) {
     sel.addEventListener('change', function () { sel.form.submit(); });

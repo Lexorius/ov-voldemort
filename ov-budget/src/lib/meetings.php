@@ -84,11 +84,26 @@ function tp_reorder(array $ids, int $id, string $richtung): array
 function meeting_find(int $id): ?array
 {
     return db_row(
-        'SELECT m.*, t.label AS typ_label, t.color AS typ_color
-         FROM meetings m LEFT JOIN list_items t ON t.id = m.typ_id
+        'SELECT m.*, t.label AS typ_label, t.color AS typ_color,
+                s.titel AS serie_titel, s.regel AS serie_regel, s.intervall AS serie_intervall,
+                s.wochentag AS serie_wochentag, s.nte AS serie_nte, s.monatstag AS serie_monatstag,
+                s.beginn AS serie_beginn
+         FROM meetings m
+         LEFT JOIN list_items t ON t.id = m.typ_id
+         LEFT JOIN meeting_series s ON s.id = m.series_id
          WHERE m.id = ?',
         [$id]
     );
+}
+
+/** Serienregel eines Termins für series_describe() */
+function meeting_series_rule(array $m): array
+{
+    return [
+        'regel' => $m['serie_regel'] ?? '', 'intervall' => $m['serie_intervall'] ?? 1,
+        'wochentag' => $m['serie_wochentag'] ?? 1, 'nte' => $m['serie_nte'] ?? 1,
+        'monatstag' => $m['serie_monatstag'] ?? 1, 'beginn' => $m['serie_beginn'] ?? null,
+    ];
 }
 
 /**
@@ -108,6 +123,10 @@ function meeting_query(array $f = []): array
     if (!empty($f['typ_id'])) {
         $w[] = 'm.typ_id = ?';
         $p[] = (int)$f['typ_id'];
+    }
+    // Für Auswahllisten: nur Besprechungen, auf die man noch Themen setzen kann
+    if (!empty($f['nur_geplant'])) {
+        $w[] = "m.status = 'geplant'";
     }
 
     $order = $zeit === 'kommend' ? 'm.datum ASC, m.beginn ASC' : 'm.datum DESC, m.beginn DESC';

@@ -93,6 +93,31 @@ switch (post_str('action')) {
         }
         break;
 
+    case 'cancel':
+        if ($meeting && $meeting['status'] === 'geplant') {
+            // Offene Themen nicht auf einem ausfallenden Termin liegen lassen
+            $zurueck_gelegt = db_exec(
+                'UPDATE talking_points tp
+                 LEFT JOIN list_items s ON s.id = tp.status_id
+                 SET tp.meeting_id = NULL, tp.sort_order = 0
+                 WHERE tp.meeting_id = ? AND COALESCE(s.is_final, 0) = 0',
+                [$meetingId]
+            );
+            db_update('meetings', ['status' => 'abgesagt'], 'id = ?', [$meetingId]);
+            audit('besprechung.abgesagt', 'meeting', $meetingId, $meeting['titel'] . ' ' . $meeting['datum']);
+            flash('success', 'Termin abgesagt.'
+                . ($zurueck_gelegt > 0 ? sprintf(' %d offene(s) Thema/Themen liegen wieder im Themenspeicher.', $zurueck_gelegt) : ''));
+        }
+        break;
+
+    case 'reinstate':
+        if ($meeting && $meeting['status'] === 'abgesagt') {
+            db_update('meetings', ['status' => 'geplant'], 'id = ?', [$meetingId]);
+            audit('besprechung.wieder_angesetzt', 'meeting', $meetingId, $meeting['titel']);
+            flash('success', 'Termin findet wieder statt.');
+        }
+        break;
+
     case 'reopen':
         if ($meeting) {
             db_update('meetings', ['status' => 'geplant'], 'id = ?', [$meetingId]);

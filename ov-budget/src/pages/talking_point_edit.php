@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 $user = current_user();
+series_materialize();
 $id = get_int('id');
 $tp = $id ? tp_find($id) : null;
 
@@ -59,5 +60,5 @@ render('talking_point_edit', [
     'title'    => $tp['id'] ? 'Thema bearbeiten' : 'Thema einbringen',
     'tp'       => $tp,
     'errors'   => $errors,
-    'geplant'  => meeting_query(['zeit' => 'kommend']),
+    'geplant'  => meeting_query(['zeit' => 'kommend', 'nur_geplant' => 1]),
 ]);

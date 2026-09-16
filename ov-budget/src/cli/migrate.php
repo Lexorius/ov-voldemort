@@ -66,6 +66,7 @@ function ovb_list_item_refs(): array
         ['contacts',      'kategorie_id',          ''],
         ['contact_group_members', 'status_id',     ''],
         ['meetings',      'typ_id',                ''],
+        ['meeting_series', 'typ_id',               ''],
         ['talking_points', 'fachgruppe_id',        ''],
         ['talking_points', 'prioritaet_id',        ''],
         ['talking_points', 'status_id',            ''],
@@ -371,4 +372,56 @@ function ovb_migrate(PDO $pdo, callable $say): void
         }
     }
     $merken('003_expenses_einnahmen');
+
+    /* ---- 004: wiederkehrende Besprechungen ---- */
+    // meeting_series selbst legt schema.sql an; hier nur die Ergänzungen an meetings
+    if (ovb_table_exists($pdo, 'meetings')) {
+        $schritte = [];
+
+        if (!ovb_column_exists($pdo, 'meetings', 'series_id')) {
+            $pdo->exec(
+                'ALTER TABLE meetings
+                 ADD COLUMN series_id INT UNSIGNED NULL AFTER id,
+                 ADD COLUMN serien_datum DATE NULL AFTER series_id'
+            );
+            $schritte[] = 'Spalten';
+        }
+        if (!ovb_index_exists($pdo, 'meetings', 'uq_serie_termin')) {
+            $pdo->exec('ALTER TABLE meetings ADD UNIQUE KEY uq_serie_termin (series_id, serien_datum)');
+            $schritte[] = 'Schlüssel';
+        }
+        if (ovb_table_exists($pdo, 'meeting_series') && !ovb_constraint_exists($pdo, 'meetings', 'fk_meet_serie')) {
+            $pdo->exec(
+                'ALTER TABLE meetings ADD CONSTRAINT fk_meet_serie
+                 FOREIGN KEY (series_id) REFERENCES meeting_series(id) ON DELETE SET NULL'
+            );
+            $schritte[] = 'Fremdschlüssel';
+        }
+        $typ = (string)$pdo->query(
+            "SELECT COLUMN_TYPE FROM information_schema.columns
+             WHERE table_schema = DATABASE() AND table_name = 'meetings' AND column_name = 'status'"
+        )->fetchColumn();
+        if ($typ !== '' && !str_contains($typ, 'abgesagt')) {
+            $pdo->exec(
+                "ALTER TABLE meetings
+                 MODIFY status ENUM('geplant','abgeschlossen','abgesagt') NOT NULL DEFAULT 'geplant'"
+            );
+            $schritte[] = 'Status "abgesagt"';
+        }
+
+        if ($schritte) {
+            $say('Besprechungen für Serien erweitert: ' . implode(', ', $schritte) . '.');
+        }
+    }
+    $merken('004_meeting_series');
+}
+
+function ovb_constraint_exists(PDO $pdo, string $table, string $name): bool
+{
+    $st = $pdo->prepare(
+        'SELECT COUNT(*) FROM information_schema.table_constraints
+         WHERE constraint_schema = DATABASE() AND table_name = ? AND constraint_name = ?'
+    );
+    $st->execute([$table, $name]);
+    return (int)$st->fetchColumn() > 0;
 }

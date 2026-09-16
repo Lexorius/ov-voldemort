@@ -24,10 +24,18 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
       <?php if ($meeting['typ_label']): ?>
         <?= badge(['label' => $meeting['typ_label'], 'color' => $meeting['typ_color']]) ?>
       <?php endif; ?>
-      <?= $geplant
-          ? '<span class="badge" style="background:#0284c7">geplant</span>'
-          : '<span class="badge" style="background:#15803d">abgeschlossen</span>' ?>
+      <?= match ($meeting['status']) {
+          'geplant'  => '<span class="badge" style="background:#0284c7">geplant</span>',
+          'abgesagt' => '<span class="badge" style="background:#b91c1c">abgesagt</span>',
+          default    => '<span class="badge" style="background:#15803d">abgeschlossen</span>',
+      } ?>
+      <?php if (!empty($meeting['series_id'])): ?>
+        <span class="badge badge--outline" title="Wiederkehrende Besprechung">↻ <?= e(series_describe(meeting_series_rule($meeting))) ?></span>
+      <?php endif; ?>
     </p>
+    <?php if (!empty($meeting['serien_datum']) && $meeting['serien_datum'] !== $meeting['datum']): ?>
+      <p class="small muted">Verschoben vom regulären Termin am <?= e(de_date($meeting['serien_datum'])) ?>.</p>
+    <?php endif; ?>
     <p class="muted">
       <?= e(de_date($meeting['datum'])) ?>
       <?php if ($meeting['beginn']): ?>, <?= e(substr((string)$meeting['beginn'], 0, 5)) ?> Uhr<?php endif; ?>
@@ -44,6 +52,20 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
     <?php endif; ?>
   </div>
 </div>
+
+<?php if ($meeting['status'] === 'abgesagt'): ?>
+  <div class="alert alert--warn" style="display:flex;justify-content:space-between;gap:.8rem;align-items:center;flex-wrap:wrap">
+    <span><strong>Dieser Termin fällt aus.</strong></span>
+    <?php if ($verwalten): ?>
+      <form method="post" action="<?= e(url('meeting_action')) ?>" class="inline-form">
+        <?= csrf_field() ?>
+        <input type="hidden" name="action" value="reinstate">
+        <input type="hidden" name="meeting_id" value="<?= (int)$meeting['id'] ?>">
+        <button class="btn btn--sec btn--sm" type="submit">Findet doch statt</button>
+      </form>
+    <?php endif; ?>
+  </div>
+<?php endif; ?>
 
 <div class="stats">
   <div class="stat"><div class="stat__label"><?= e($label) ?></div><div class="stat__value"><?= count($punkte) ?></div></div>
@@ -243,11 +265,23 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
           <input type="hidden" name="action" value="close">
           <button class="btn btn--ok" type="submit"
                   data-confirm="Besprechung abschließen? Noch offene Themen werden als vertagt markiert.">Besprechung abschließen</button>
+        <?php elseif ($meeting['status'] === 'abgesagt'): ?>
+          <input type="hidden" name="action" value="reinstate">
+          <button class="btn btn--sec" type="submit">Findet doch statt</button>
         <?php else: ?>
           <input type="hidden" name="action" value="reopen">
           <button class="btn btn--sec" type="submit">Wieder öffnen</button>
         <?php endif; ?>
       </form>
+      <?php if ($geplant): ?>
+        <form method="post" action="<?= e(url('meeting_action')) ?>" class="inline-form">
+          <?= csrf_field() ?>
+          <input type="hidden" name="action" value="cancel">
+          <input type="hidden" name="meeting_id" value="<?= (int)$meeting['id'] ?>">
+          <button class="btn btn--sec" type="submit"
+                  data-confirm="Termin absagen? Offene Themen wandern zurück in den Themenspeicher.">Termin absagen</button>
+        </form>
+      <?php endif; ?>
     </div>
   <?php else: ?>
     <dl class="dl">

@@ -361,8 +361,37 @@ CREATE TABLE IF NOT EXISTS contact_group_members (
 -- ------------------------------------------------------------
 -- Besprechungen und Talking Points
 -- ------------------------------------------------------------
+-- Wiederkehrende Besprechungen: nur die Regel, die Termine stehen in meetings
+CREATE TABLE IF NOT EXISTS meeting_series (
+  id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  titel          VARCHAR(200) NOT NULL,
+  typ_id         INT UNSIGNED NULL,
+  regel          ENUM('woche','monat_wochentag','monat_tag') NOT NULL DEFAULT 'woche',
+  intervall      TINYINT      NOT NULL DEFAULT 1,
+  wochentag      TINYINT      NOT NULL DEFAULT 1,
+  nte            TINYINT      NOT NULL DEFAULT 1,
+  monatstag      TINYINT      NOT NULL DEFAULT 1,
+  beginn         TIME         NULL,
+  ende           TIME         NULL,
+  ort            VARCHAR(150) NOT NULL DEFAULT '',
+  leitung        VARCHAR(150) NOT NULL DEFAULT '',
+  teilnehmer     TEXT         NULL,
+  beschreibung   TEXT         NULL,
+  start_datum    DATE         NOT NULL,
+  end_datum      DATE         NULL,
+  is_active      TINYINT(1)   NOT NULL DEFAULT 1,
+  created_by     INT UNSIGNED NULL,
+  created_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_serie_typ FOREIGN KEY (typ_id)     REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_serie_cb  FOREIGN KEY (created_by) REFERENCES users(id)      ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS meetings (
   id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  series_id      INT UNSIGNED NULL,
+  serien_datum   DATE         NULL,
   titel          VARCHAR(200) NOT NULL,
   typ_id         INT UNSIGNED NULL,
   datum          DATE         NOT NULL,
@@ -374,12 +403,14 @@ CREATE TABLE IF NOT EXISTS meetings (
   teilnehmer     TEXT         NULL,
   beschreibung   TEXT         NULL,
   notizen        TEXT         NULL,
-  status         ENUM('geplant','abgeschlossen') NOT NULL DEFAULT 'geplant',
+  status         ENUM('geplant','abgeschlossen','abgesagt') NOT NULL DEFAULT 'geplant',
   created_by     INT UNSIGNED NULL,
   created_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_datum (datum),
+  UNIQUE KEY uq_serie_termin (series_id, serien_datum),
+  CONSTRAINT fk_meet_serie FOREIGN KEY (series_id) REFERENCES meeting_series(id) ON DELETE SET NULL,
   CONSTRAINT fk_meet_typ FOREIGN KEY (typ_id)     REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_meet_cb  FOREIGN KEY (created_by) REFERENCES users(id)      ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

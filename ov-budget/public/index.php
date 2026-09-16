@@ -47,6 +47,7 @@ $routes = [
     'meetings'           => 'meetings',
     'meeting'            => 'meeting',
     'meeting_edit'       => 'meeting_edit',
+    'meeting_series_edit' => 'meeting_series_edit',
     'meeting_action'     => 'meeting_action',
     'meeting_print'      => 'meeting_print',
     'talking_points'     => 'talking_points',

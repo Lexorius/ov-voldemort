@@ -15,6 +15,10 @@ if ($id && !$meeting) {
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (post_str('action') === 'delete' && $meeting && !empty($meeting['series_id'])) {
+        flash('warn', 'Termine einer Serie werden abgesagt statt gelöscht – sonst legt die Serie sie erneut an.');
+        redirect_route('meeting', ['id' => $meeting['id']]);
+    }
     if (post_str('action') === 'delete' && $meeting) {
         // Punkte wandern per ON DELETE SET NULL zurück in den Themenspeicher
         db_exec('DELETE FROM meetings WHERE id = ?', [$meeting['id']]);

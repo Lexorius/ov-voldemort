@@ -1,10 +1,11 @@
 <?php
-/** @var array $kommend @var array $vergangen @var int $speicher @var ?int $typ */
+/** @var array $kommend @var array $vergangen @var int $speicher @var ?int $typ @var array $serien */
 $label = tp_label();
 
 $karte = static function (array $m): string {
     $zeit = $m['beginn'] ? ', ' . substr((string)$m['beginn'], 0, 5) . ' Uhr' : '';
-    $html = '<a class="item" href="' . e(url('meeting', ['id' => $m['id']])) . '" style="border-left-color:'
+    $abgesagt = $m['status'] === 'abgesagt';
+    $html = '<a class="item' . ($abgesagt ? ' item--done' : '') . '" href="' . e(url('meeting', ['id' => $m['id']])) . '" style="border-left-color:'
         . e($m['typ_color'] ?: '#94a3b8') . '">'
         . '<div class="item__top"><div style="min-width:0">'
         . '<div class="item__title">' . e($m['titel']) . '</div>'
@@ -21,6 +22,12 @@ $karte = static function (array $m): string {
     if ($m['status'] === 'abgeschlossen') {
         $html .= '<span class="badge" style="background:#15803d">abgeschlossen</span>';
     }
+    if ($abgesagt) {
+        $html .= '<span class="badge" style="background:#b91c1c">abgesagt</span>';
+    }
+    if (!empty($m['series_id'])) {
+        $html .= '<span class="badge badge--outline" title="Teil einer Serie">↻ Serie</span>';
+    }
     return $html . '</div></a>';
 };
 ?>
@@ -32,6 +39,7 @@ $karte = static function (array $m): string {
   <div class="btnrow">
     <?php if (can('manage_meetings')): ?>
       <a class="btn" href="<?= e(url('meeting_edit')) ?>">+ Besprechung</a>
+      <a class="btn btn--sec" href="<?= e(url('meeting_series_edit')) ?>">+ Serie</a>
     <?php endif; ?>
     <?php if (can('create_talking_point')): ?>
       <a class="btn btn--sec" href="<?= e(url('talking_point_edit')) ?>">+ <?= e($label) ?></a>
@@ -56,6 +64,35 @@ $karte = static function (array $m): string {
     <select id="typ_id" name="typ_id"><?= list_options('besprechung_typ', $typ, 'alle') ?></select>
   </div>
 </form>
+
+<?php if ($serien): ?>
+  <section class="card">
+    <h2>Wiederkehrend</h2>
+    <div class="tablewrap">
+      <table class="data">
+        <tbody>
+        <?php foreach ($serien as $s): ?>
+          <tr>
+            <td>
+              <strong><?= e($s['titel']) ?></strong>
+              <?php if (!(int)$s['is_active']): ?> <span class="badge badge--muted">pausiert</span><?php endif; ?>
+              <div class="small muted"><?= e(series_describe($s)) ?><?= $s['ort'] ? ' · ' . e($s['ort']) : '' ?></div>
+            </td>
+            <td class="small nowrap">
+              <?= $s['naechster'] ? 'nächster: ' . e(de_date($s['naechster'])) : '<span class="muted">kein Termin</span>' ?>
+            </td>
+            <td>
+              <?php if (can('manage_meetings')): ?>
+                <a class="btn btn--sec btn--sm" href="<?= e(url('meeting_series_edit', ['id' => $s['id']])) ?>">Bearbeiten</a>
+              <?php endif; ?>
+            </td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<?php endif; ?>
 
 <section class="card">
   <h2>Anstehend</h2>

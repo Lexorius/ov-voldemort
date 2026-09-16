@@ -93,7 +93,8 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   mit Vorschau und Dublettenerkennung.
 * **Besprechungen** – Talking Points im Themenspeicher sammeln, auf die
   Tagesordnung setzen, während der Sitzung Ergebnisse festhalten und daraus
-  Aufgaben machen. Tagesordnung und Protokoll zum Drucken.
+  Aufgaben machen. Tagesordnung und Protokoll zum Drucken. Regelmäßige
+  Termine wie „alle 2 Wochen montags" oder „jeden 2. Montag im Monat" als Serie.
 * **Divera 24/7** – Formulare abrufen, Felder frei zuordnen und Einträge als
   Wünsche übernehmen. Mit Vorschau, Dubletten-Erkennung und optionalem
   automatischem Abruf.

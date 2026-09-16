@@ -67,7 +67,14 @@ $uhr = static fn($v) => $v ? substr((string)$v, 0, 5) : '';
   </div>
 </form>
 
-<?php if (!$isNew): ?>
+<?php if (!$isNew && !empty($meeting['series_id'])): ?>
+  <div class="card">
+    <p class="small mb0">Dieser Termin gehört zur Serie
+      <a href="<?= e(url('meeting_series_edit', ['id' => $meeting['series_id']])) ?>"><?= e((string)($meeting['serie_titel'] ?? 'Serie')) ?></a>.
+      Datum und Uhrzeit lassen sich hier für diesen einen Termin ändern, ohne die Serie anzufassen.
+      Fällt er aus, bitte in der Besprechung „Termin absagen" wählen.</p>
+  </div>
+<?php elseif (!$isNew): ?>
   <form method="post" class="card" action="<?= e(url('meeting_edit', ['id' => $meeting['id']])) ?>">
     <?= csrf_field() ?>
     <input type="hidden" name="action" value="delete">

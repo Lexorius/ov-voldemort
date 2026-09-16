@@ -7,6 +7,9 @@ if (!can('view_meetings')) {
     return;
 }
 
+// Termine wiederkehrender Besprechungen nachziehen
+series_materialize();
+
 $typ = get_int('typ_id');
 
 render('meetings', [
@@ -14,5 +17,6 @@ render('meetings', [
     'kommend'   => meeting_query(['zeit' => 'kommend', 'typ_id' => $typ]),
     'vergangen' => meeting_query(['zeit' => 'vergangen', 'typ_id' => $typ, 'limit' => 50]),
     'speicher'  => count(tp_backlog()),
+    'serien'    => series_all(),
     'typ'       => $typ,
 ]);

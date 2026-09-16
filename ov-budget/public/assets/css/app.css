@@ -35,6 +35,13 @@
 
 * { box-sizing: border-box; }
 
+/*
+ * Das hidden-Attribut muss immer gewinnen. Ohne diese Regel überstimmt etwa
+ * ".field { display: flex }" die Browser-Vorgabe, und per Skript
+ * ausgeblendete Formularfelder bleiben sichtbar.
+ */
+[hidden] { display: none !important; }
+
 html { -webkit-text-size-adjust: 100%; }
 
 body {

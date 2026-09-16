@@ -7,7 +7,7 @@ Beschaffungsplanung eines Ortsverbands:
 * **Aufgaben** – ToDos für den OV, einzelne Fachgruppen, Funktionen oder Personen
 * **Budget** – Jahresbudget, Ausgaben und Einnahmen (Einsätze, technische Hilfeleistung), Übersicht nach Kategorie und Monat
 * **Kontakte** – Ansprechpartner und Verteiler für Einladungen, Import aus Excel, Outlook, Google und vCard
-* **Besprechungen** – Talking Points sammeln, Tagesordnung, Ergebnisse und Protokoll
+* **Besprechungen** – Talking Points sammeln, Tagesordnung, Ergebnisse und Protokoll, wiederkehrende Termine
 * **Divera 24/7** – Formulare abrufen und deren Einträge als Wünsche übernehmen
 * **Verwaltung** – Benutzer, Rollen sowie *alle* Auswahllisten und Texte frei konfigurierbar
 

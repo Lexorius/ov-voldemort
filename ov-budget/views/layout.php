@@ -55,7 +55,7 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
         <span class="mainnav__icon">✉</span><span><?= e(setting('kontakte_modul_name', 'Kontakte')) ?></span></a>
     <?php endif; ?>
     <?php if (can('view_meetings')): ?>
-      <a class="mainnav__item<?= nav_active('meetings', 'meeting', 'meeting_edit', 'talking_points', 'talking_point_edit') ?>" href="<?= e(url('meetings')) ?>">
+      <a class="mainnav__item<?= nav_active('meetings', 'meeting', 'meeting_edit', 'meeting_series_edit', 'talking_points', 'talking_point_edit') ?>" href="<?= e(url('meetings')) ?>">
         <span class="mainnav__icon">☰</span><span><?= e(setting('besprechung_modul_name', 'Besprechungen')) ?></span></a>
     <?php endif; ?>
     <?php if (can('admin')): ?>

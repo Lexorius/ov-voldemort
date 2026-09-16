@@ -1,5 +1,36 @@
 # Änderungsverlauf
 
+## 1.7.0
+
+### Wiederkehrende Besprechungen
+
+Unter *Besprechungen → + Serie* lassen sich regelmäßige Termine anlegen.
+
+- **Rhythmen:** wöchentlich oder alle n Wochen („alle 2 Wochen montags"),
+  monatlich an einem Wochentag („jeden 2. Montag im Monat", „jeden letzten
+  Freitag"), monatlich an einem Kalendertag („am 15."), jeweils auch nur jeden
+  n-ten Monat.
+- Der Rhythmus richtet sich am Startdatum aus – es legt fest, in welcher Woche
+  „alle 2 Wochen" beginnt. Gibt es einen Monatstag nicht, gilt der Monatsletzte.
+- Vor dem Speichern zeigt eine **Vorschau** die nächsten Termine.
+- Aus der Serie entstehen die Termine der nächsten Wochen als echte
+  Besprechungen (Vorlauf einstellbar, Vorgabe 60 Tage). Dadurch lassen sich
+  Themen schon auf die nächste Dienstbesprechung setzen und je Termin ein
+  Protokoll führen. Neue Termine rücken automatisch nach.
+- **Einzelne Termine** lassen sich verschieben oder absagen, ohne die Serie zu
+  ändern; die Serie legt sie nicht erneut an. Offene Themen eines abgesagten
+  Termins wandern zurück in den Themenspeicher.
+- Wird eine Serie geändert, pausiert oder gelöscht, werden nur künftige Termine
+  neu erzeugt oder entfernt, die noch niemand angefasst hat. Termine mit
+  Themen, Notizen oder eigenen Änderungen bleiben unverändert.
+
+### Behoben
+
+- Per Skript ausgeblendete Formularfelder blieben sichtbar, weil eine
+  CSS-Regel das hidden-Attribut überstimmte. Betroffen war auch das
+  Aufgabenformular: dort standen die Auswahlfelder für Fachgruppe, Funktion und
+  Person immer alle gleichzeitig da.
+
 ## 1.6.0
 
 ### Kontakt-Import
