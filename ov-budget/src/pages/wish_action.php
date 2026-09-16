@@ -53,6 +53,15 @@ switch (post_str('action')) {
             break;
         }
         $data = ['status_id' => post_int('status_id'), 'updated_by' => (int)$user['id']];
+        $frei = list_id_by_slug('wunsch_status', 'freigegeben');
+        if ($frei && $data['status_id'] === $frei && (int)$wish['status_id'] !== $frei) {
+            // Freigabe über die Statusauswahl: dieselben Regeln wie am Knopf
+            $voll = wish_find_full($id) ?? $wish;
+            $fehler = wish_release_denied($voll, $user) ?? wish_release($voll, $user);
+            flash($fehler === null ? 'success' : 'error',
+                $fehler === null ? 'Zur Bestellung freigegeben.' : e($fehler));
+            break;
+        }
         if (can('manage_wishes') && isset($_POST['prioritaet'])) {
             $data['prioritaet'] = post_int('prioritaet', 0);
         }
@@ -62,17 +71,24 @@ switch (post_str('action')) {
         break;
 
     case 'freigeben':
+        $voll = wish_find_full($id) ?? $wish;
+        $grund = wish_release_denied($voll, $user);
+        $fehler = $grund ?? wish_release($voll, $user);
+        if ($fehler !== null) {
+            flash('error', e($fehler));
+        } else {
+            flash('success', 'Freigegeben: „' . e($wish['bezeichnung']) . '“ kann bestellt werden.');
+        }
+        break;
+
     case 'bestellt':
-        if (!can('manage_budget')) {
-            flash('error', 'Freigeben und Bestellen darf nur Leitung oder Administration.');
+        if (!can('order_wish')) {
+            flash('error', 'Du hast keine Berechtigung, Wünsche als bestellt zu markieren.');
             break;
         }
-        $voll = wish_find_full($id) ?? $wish;
-        $fehler = post_str('action') === 'freigeben' ? wish_release($voll, $user) : wish_mark_ordered($voll, $user);
+        $fehler = wish_mark_ordered(wish_find_full($id) ?? $wish, $user);
         if ($fehler !== null) {
-            flash('error', $fehler);
-        } elseif (post_str('action') === 'freigeben') {
-            flash('success', 'Freigegeben: „' . e($wish['bezeichnung']) . '“ kann bestellt werden.');
+            flash('error', e($fehler));
         } else {
             flash('success', '„' . e($wish['bezeichnung']) . '“ als bestellt markiert.');
         }

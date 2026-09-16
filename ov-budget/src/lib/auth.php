@@ -107,6 +107,9 @@ function can(string $what, mixed $ctx = null): bool
         'admin'          => $admin,
         'manage_users'   => $admin,
         'manage_budget'  => $leitung,
+        // Bestellrechte hängen an Rolle und Funktionen, siehe order_rights.php
+        'release_wish'   => is_array($ctx) ? wish_release_denied($ctx, $u) === null : order_rights_for_user($u)['freigeben'],
+        'order_wish'     => order_rights_for_user($u)['bestellen'],
         'view_expenses'  => $leitung || setting_bool('ausgaben_user_darf_sehen', true),
         'manage_contacts' => $leitung,
         'view_contacts'  => $leitung || setting_bool('kontakte_user_darf_sehen', false),

@@ -1,5 +1,6 @@
 <?php
-/** @var array $wish @var array $anlagen @var array $kommentare @var bool $meinVote @var array $todos */
+/** @var array $wish @var array $anlagen @var array $kommentare @var bool $meinVote @var array $todos
+ *  @var array $freigabeDurch */
 $extra = wish_extra($wish);
 $extraFields = wish_extra_fields();
 $brutto = (float)$wish['netto_gesamt'] * (1 + ((float)$wish['mwst_satz'] / 100));
@@ -96,29 +97,41 @@ $brutto = (float)$wish['netto_gesamt'] * (1 + ((float)$wish['mwst_satz'] / 100))
   <?php endif; ?>
 </div>
 
-<?php if (($wish['status_slug'] ?? '') === 'freigegeben' || $wish['freigegeben_am'] || (can('manage_budget') && wish_releasable($wish))): ?>
-  <div class="card<?= ($wish['status_slug'] ?? '') === 'freigegeben' ? ' card--highlight' : '' ?>">
+<?php
+$istFrei = ($wish['status_slug'] ?? '') === 'freigegeben';
+$freigebbar = wish_releasable($wish);
+$verweigert = $freigebbar ? wish_release_denied($wish) : null;
+?>
+<?php if ($istFrei || $wish['freigegeben_am'] || $freigebbar): ?>
+  <div class="card<?= $istFrei ? ' card--highlight' : '' ?>" id="bestellung">
     <div class="card__head" style="margin:0">
       <div>
         <h2 style="margin:0">Bestellung</h2>
         <div class="small muted">
           <?php if ($wish['freigegeben_am']): ?>
-            Freigegeben am <?= e(de_datetime($wish['freigegeben_am'])) ?><?= $wish['freigeber'] ? ' von ' . e($wish['freigeber']) : '' ?>
-            <?php if (($wish['status_slug'] ?? '') === 'freigegeben'): ?> – bitte bestellen.<?php endif; ?>
+            Freigegeben am <?= e(de_datetime($wish['freigegeben_am'])) ?><?= $wish['freigeber'] ? ' von ' . e($wish['freigeber']) : '' ?><?= $istFrei ? ' – bitte bestellen.' : '.' ?>
           <?php else: ?>
             Noch nicht zur Bestellung freigegeben.
           <?php endif; ?>
+          <?php if ($freigebbar && $verweigert !== null): ?>
+            <?php if (order_rights_for_user()['freigeben']): ?><br><?= e($verweigert) ?><?php endif; ?>
+            <?php if ($freigabeDurch): ?>
+              <br>Freigeben können: <?= e(implode(', ', $freigabeDurch)) ?>
+            <?php else: ?>
+              <br>Für diesen Betrag ist niemand zur Freigabe berechtigt<?= can('admin') ? ' – siehe <a href="' . e(url('admin_order_rights')) . '">Bestellberechtigungen</a>' : '' ?>.
+            <?php endif; ?>
+          <?php endif; ?>
         </div>
       </div>
-      <?php if (can('manage_budget')): ?>
+      <?php if (($freigebbar && $verweigert === null) || ($istFrei && can('order_wish'))): ?>
         <form method="post" action="<?= e(url('wish_action')) ?>" class="inline-form">
           <?= csrf_field() ?>
           <input type="hidden" name="id" value="<?= (int)$wish['id'] ?>">
-          <?php if (wish_releasable($wish)): ?>
+          <?php if ($freigebbar): ?>
             <button class="btn btn--ok" type="submit" name="action" value="freigeben"
                     data-confirm="<?= e('„' . $wish['bezeichnung'] . '“ für ' . money((float)$wish['netto_gesamt']) . ' netto zur Bestellung freigeben?') ?>">
               Freigegeben, bitte bestellen</button>
-          <?php elseif (($wish['status_slug'] ?? '') === 'freigegeben'): ?>
+          <?php else: ?>
             <button class="btn" type="submit" name="action" value="bestellt">Ist bestellt</button>
           <?php endif; ?>
         </form>

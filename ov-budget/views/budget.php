@@ -39,19 +39,30 @@ $freigabeZeile = static function (array $w, string $aktion): string {
             : badge($w['dring_label'] ? ['label' => $w['dring_label'], 'color' => $w['dring_color']] : null)) . '</td>'
         . '<td class="num nowrap">' . e(money((float)$w['netto_gesamt'], false)) . '</td>';
 
-    if (can('manage_budget')) {
+    $knopf = '';
+    if ($aktion === 'freigeben') {
+        $grund = wish_release_denied($w);
+        if ($grund === null) {
+            $knopf = '<button class="btn btn--ok btn--sm" type="submit" name="action" value="freigeben" data-confirm="'
+                . e('„' . $w['bezeichnung'] . '“ für ' . money((float)$w['netto_gesamt']) . ' netto zur Bestellung freigeben?')
+                . '">Freigegeben, bitte bestellen</button>';
+        } elseif (order_rights_for_user()['freigeben']) {
+            // Grundsätzlich berechtigt, aber nicht für diesen Wunsch – kurz sagen, warum
+            $knopf = '<span class="small muted" title="' . e($grund) . '">'
+                . (str_contains($grund, 'Freigabegrenze') ? 'über deiner Grenze' : 'nicht durch dich') . '</span>';
+        }
+    } elseif (can('order_wish')) {
+        $knopf = '<button class="btn btn--sec btn--sm" type="submit" name="action" value="bestellt">Ist bestellt</button>';
+    }
+
+    if ($knopf !== '' && str_starts_with($knopf, '<button')) {
         $html .= '<td class="nowrap"><form method="post" action="' . e(url('wish_action')) . '" class="inline-form">'
             . csrf_field()
             . '<input type="hidden" name="id" value="' . (int)$w['id'] . '">'
-            . '<input type="hidden" name="back" value="' . e(current_url() . '#bestellung') . '">';
-        if ($aktion === 'freigeben') {
-            $html .= '<button class="btn btn--ok btn--sm" type="submit" name="action" value="freigeben" data-confirm="'
-                . e('„' . $w['bezeichnung'] . '“ für ' . money((float)$w['netto_gesamt']) . ' netto zur Bestellung freigeben?')
-                . '">Freigegeben, bitte bestellen</button>';
-        } else {
-            $html .= '<button class="btn btn--sec btn--sm" type="submit" name="action" value="bestellt">Ist bestellt</button>';
-        }
-        $html .= '</form></td>';
+            . '<input type="hidden" name="back" value="' . e(current_url() . '#bestellung') . '">'
+            . $knopf . '</form></td>';
+    } elseif ($knopf !== '') {
+        $html .= '<td class="nowrap">' . $knopf . '</td>';
     }
     return $html . '</tr>';
 };

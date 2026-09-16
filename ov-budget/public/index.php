@@ -62,6 +62,7 @@ $routes = [
     'admin_lists'        => 'admin/lists',
     'admin_list_edit'    => 'admin/list_edit',
     'admin_settings'     => 'admin/settings',
+    'admin_order_rights' => 'admin/order_rights',
     'admin_divera'       => 'admin/divera',
     'admin_divera_form'  => 'admin/divera_form',
     'admin_log'          => 'admin/log',

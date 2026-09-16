@@ -225,6 +225,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('budget_intro','Gesamtbudget des Haushaltsjahres, laufende Ausgaben und die daraus entstehende Uebersicht.','Einleitungstext im Budget-Modul','','textarea','Budget',6),
 ('budget_rundung','0','Betraege in der Uebersicht runden','0 = centgenau, sonst auf 10, 100 oder 1000 runden. Betrifft nur die Budgetuebersicht, nicht die Listen.','select','Budget',35),
 ('ausgaben_betragsart','brutto','Betraege werden erfasst als','brutto oder netto - gilt fuer Ausgaben und Einnahmen','text','Budget',40),
+('bestell_eigene_freigeben','1','Eigene Wünsche selbst freigeben erlaubt','Aus = Vier-Augen-Prinzip: Wer einen Wunsch angelegt hat, darf ihn nicht selbst zur Bestellung freigeben','bool','Budget',60),
 ('ausgaben_user_darf_sehen','1','Alle Mitglieder duerfen Buchungen sehen','Ausgaben und Einnahmen. Sonst nur Leitung und Administration','bool','Budget',50),
 ('kontakte_modul_name','Kontakte','Bezeichnung des Kontakt-Moduls','','text','Kontakte',10),
 ('kontakte_intro','Ansprechpartner des Ortsverbands und Verteiler fuer Einladungen.','Einleitungstext im Kontakt-Modul','','textarea','Kontakte',20),
@@ -242,3 +243,17 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('login_max_versuche','8','Fehlversuche bis Sperre','Sperre gilt pro Benutzername für die Sperrdauer','number','Sicherheit',20),
 ('login_sperre_minuten','15','Sperrdauer in Minuten','','number','Sicherheit',30),
 ('passwort_min_laenge','10','Mindestlänge Passwort','','number','Sicherheit',40);
+
+-- ---------- Bestellberechtigungen ----------
+-- Nur Vorgaben: vorhandene Zeilen bleiben unberührt, Änderungen in der
+-- Verwaltung werden also nicht überschrieben.
+INSERT IGNORE INTO bestell_rechte (rolle, darf_freigeben, darf_bestellen) VALUES
+('admin',1,1),
+('leitung',1,1),
+('user',0,0);
+
+INSERT IGNORE INTO bestell_rechte (funktion_id, darf_freigeben, darf_bestellen)
+SELECT id, 1, 0 FROM list_items WHERE list_key = 'funktion' AND slug IN ('ob','stellv-ob');
+
+INSERT IGNORE INTO bestell_rechte (funktion_id, darf_freigeben, darf_bestellen)
+SELECT id, 0, 1 FROM list_items WHERE list_key = 'funktion' AND slug = 'verwaltungsbeauftragter';

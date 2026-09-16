@@ -1,5 +1,28 @@
 # Änderungsverlauf
 
+## 1.9.0
+
+### Bestellberechtigungen nach Rolle und Funktion
+
+- Neue Seite *Verwaltung → Bestellberechtigungen*: Für jede Rolle
+  (Administration, Leitung, Mitglied) und jede Funktion im OV lässt sich
+  festlegen, ob sie Wünsche **freigeben** darf, **bis zu welchem Nettobetrag**
+  (leer = unbegrenzt) und ob sie Wünsche **als bestellt markieren** darf.
+- Hat jemand mehrere Rollen oder Funktionen, reicht eine Berechtigung, und die
+  höchste Grenze gilt. Unten auf der Seite steht, was das für jeden aktiven
+  Benutzer bedeutet.
+- **Vier-Augen-Prinzip** zuschaltbar: Eigene Wünsche muss dann eine andere
+  Person freigeben.
+- Beim Wunsch steht, wer ihn freigeben kann. Wer grundsätzlich berechtigt ist,
+  aber nicht für diesen Betrag, sieht den Grund statt des Knopfes.
+- Die Freigabe lässt sich nicht mehr über die Statusauswahl oder das
+  Bearbeitungsformular umgehen. Wird ein freigegebener Wunsch nachträglich
+  teurer, braucht das eine Freigabeberechtigung für den neuen Betrag.
+- Vorgaben: Administration und Leitung behalten ihre bisherigen Rechte
+  (freigeben unbegrenzt, bestellen). Neu dürfen Ortsbeauftragte:r und
+  stellv. Ortsbeauftragte:r freigeben, Verwaltungsbeauftragte:r als bestellt
+  markieren. Vorhandene Einstellungen werden bei Updates nicht überschrieben.
+
 ## 1.8.0
 
 ### „Freigegeben, bitte bestellen"

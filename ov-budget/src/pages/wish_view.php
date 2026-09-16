@@ -16,6 +16,10 @@ render('wish_view', [
     'wish'     => $wish,
     'anlagen'  => wish_attachments($id),
     'kommentare' => wish_comments($id),
+    'freigabeDurch' => wish_releasable($wish)
+        ? order_release_people((float)$wish['netto_gesamt'],
+            setting_bool('bestell_eigene_freigeben', true) ? null : (int)$wish['created_by'])
+        : [],
     'meinVote' => isset(wish_votes_of_user((int)$user['id'])[$id]),
     'todos'    => db_all(
         'SELECT t.*, st.label AS status_label, st.color AS status_color, st.is_final AS status_final,

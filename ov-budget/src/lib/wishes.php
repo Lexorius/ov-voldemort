@@ -251,6 +251,19 @@ function wish_save_from_post(?array $existing, array $user): array
     } elseif (!$existing) {
         $data['status_id'] = list_default_id('wunsch_status');
     }
+    // Auch ohne Statusrecht prüfen: sonst ließe sich ein freigegebener Wunsch
+    // über das Formular nachträglich verteuern
+    $pruefStatus = $data['status_id'] ?? ($existing ? (int)$existing['status_id'] : null);
+    if ($pruefStatus !== null) {
+        $grund = wish_status_change_denied($existing, $pruefStatus, $gesamt, $user);
+        if ($grund !== null) {
+            $errors[] = $grund;
+        } elseif ($pruefStatus === list_id_by_slug('wunsch_status', 'freigegeben')
+            && (int)($existing['status_id'] ?? 0) !== $pruefStatus) {
+            $data['freigegeben_von'] = (int)$user['id'];
+            $data['freigegeben_am'] = date('Y-m-d H:i:s');
+        }
+    }
     if (can('manage_wishes')) {
         $data['prioritaet'] = post_int('prioritaet', 0);
         $data['budget_id']  = post_int('budget_id');

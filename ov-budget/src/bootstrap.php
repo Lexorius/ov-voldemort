@@ -29,6 +29,7 @@ require __DIR__ . '/lib/lists.php';
 require __DIR__ . '/lib/auth.php';
 require __DIR__ . '/lib/view.php';
 require __DIR__ . '/lib/wishes.php';
+require __DIR__ . '/lib/order_rights.php';
 require __DIR__ . '/lib/todos.php';
 require __DIR__ . '/lib/expenses.php';
 require __DIR__ . '/lib/import.php';

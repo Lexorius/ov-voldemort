@@ -49,6 +49,7 @@ function ovb_list_item_refs(): array
     return [
         ['users',         'fachgruppe_id',         ''],
         ['user_functions', 'function_id',          ''],
+        ['bestell_rechte', 'funktion_id',          ''],
         ['wishes',        'fachgruppe_id',         ''],
         ['wishes',        'kategorie_id',          ''],
         ['wishes',        'dringlichkeit_id',      ''],
@@ -100,10 +101,11 @@ function ovb_repoint(PDO $pdo, int $from, int $to): int
         if (!ovb_table_exists($pdo, $table)) {
             continue;
         }
-        // user_functions hat einen zusammengesetzten Primärschlüssel: dort kann
+        // user_functions und bestell_rechte haben eindeutige Schlüssel: dort kann
         // das Umbiegen auf einen bereits vorhandenen Eintrag treffen. IGNORE
         // überspringt diese Fälle, die Reste räumt das anschliessende DELETE weg.
-        $ignore = $table === 'user_functions' ? 'IGNORE ' : '';
+        $eindeutig = in_array($table, ['user_functions', 'bestell_rechte'], true);
+        $ignore = $eindeutig ? 'IGNORE ' : '';
         $sql = sprintf('UPDATE %s`%s` SET `%s` = ? WHERE `%s` = ?', $ignore, $table, $column, $column);
         if ($extra !== '') {
             $sql .= ' AND ' . $extra;
@@ -112,8 +114,8 @@ function ovb_repoint(PDO $pdo, int $from, int $to): int
         $st->execute([$to, $from]);
         $moved += $st->rowCount();
 
-        if ($table === 'user_functions') {
-            $pdo->prepare('DELETE FROM user_functions WHERE function_id = ?')->execute([$from]);
+        if ($eindeutig) {
+            $pdo->prepare(sprintf('DELETE FROM `%s` WHERE `%s` = ?', $table, $column))->execute([$from]);
         }
     }
     return $moved;

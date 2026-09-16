@@ -449,6 +449,26 @@ CREATE TABLE IF NOT EXISTS talking_points (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- Bestellberechtigungen: je Rolle oder Funktion, wer Wünsche zur
+-- Bestellung freigeben (optional bis zu einem Nettobetrag) und wer sie
+-- als bestellt markieren darf. Genau eine der Spalten rolle/funktion_id
+-- ist gesetzt.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS bestell_rechte (
+  id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  rolle           VARCHAR(20)  NULL,
+  funktion_id     INT UNSIGNED NULL,
+  darf_freigeben  TINYINT(1)   NOT NULL DEFAULT 0,
+  freigabe_grenze DECIMAL(12,2) NULL,
+  darf_bestellen  TINYINT(1)   NOT NULL DEFAULT 0,
+  updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_br_rolle (rolle),
+  UNIQUE KEY uq_br_funktion (funktion_id),
+  CONSTRAINT fk_br_funktion FOREIGN KEY (funktion_id) REFERENCES list_items(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- Audit
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS audit_log (
