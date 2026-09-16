@@ -38,12 +38,18 @@ $ohneTopf = db_all(
      ORDER BY d.weight DESC, w.netto_gesamt DESC'
 );
 
+// Freigabe und Bestellung
+$zuBestellen = wish_query(['status_slug' => 'freigegeben', 'sort' => 'prio']);
+$zurFreigabe = wish_query(['freigabe_offen' => 1, 'sort' => 'prio']);
+
 render('budget', [
     'title'          => (string)setting('budget_modul_name', 'Budget'),
     'jahr'           => $jahr,
     'jahre'          => $jahre,
     'budgets'        => $budgets,
     'ohneTopf'       => $ohneTopf,
+    'zuBestellen'    => $zuBestellen,
+    'zurFreigabe'    => $zurFreigabe,
     'jahresbudget'    => budget_year($jahr),
     'ausgabenBrutto'  => expense_total($jahr),
     'ausgabenNetto'   => expense_total($jahr, 'betrag_netto'),

@@ -119,6 +119,8 @@ CREATE TABLE IF NOT EXISTS wishes (
   source          VARCHAR(30)  NOT NULL DEFAULT 'manuell',
   divera_form_id  VARCHAR(60)  NOT NULL DEFAULT '',
   divera_entry_id VARCHAR(60)  NOT NULL DEFAULT '',
+  freigegeben_von INT UNSIGNED NULL,
+  freigegeben_am  DATETIME     NULL,
   created_by      INT UNSIGNED NULL,
   updated_by      INT UNSIGNED NULL,
   created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -134,7 +136,8 @@ CREATE TABLE IF NOT EXISTS wishes (
   CONSTRAINT fk_w_ein  FOREIGN KEY (einheit_id)       REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_w_bud  FOREIGN KEY (budget_id)        REFERENCES budgets(id)    ON DELETE SET NULL,
   CONSTRAINT fk_w_cb   FOREIGN KEY (created_by)       REFERENCES users(id)      ON DELETE SET NULL,
-  CONSTRAINT fk_w_ub   FOREIGN KEY (updated_by)       REFERENCES users(id)      ON DELETE SET NULL
+  CONSTRAINT fk_w_ub   FOREIGN KEY (updated_by)       REFERENCES users(id)      ON DELETE SET NULL,
+  CONSTRAINT fk_w_frei FOREIGN KEY (freigegeben_von)  REFERENCES users(id)      ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS wish_attachments (

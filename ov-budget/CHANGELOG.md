@@ -1,5 +1,22 @@
 # Änderungsverlauf
 
+## 1.8.0
+
+### „Freigegeben, bitte bestellen"
+
+- Neuer Knopf **„Freigegeben, bitte bestellen"** in der Budgetübersicht und
+  beim Wunsch. Er setzt den neuen Status *Freigegeben – bitte bestellen* und
+  vermerkt, wer wann freigegeben hat. Vor dem Freigeben fragt die Anwendung mit
+  Bezeichnung und Nettobetrag nach.
+- Die Budgetübersicht zeigt oben **„Freigegeben – bitte bestellen"** mit Anzahl
+  und Summe und darunter die Wünsche, die noch auf Freigabe warten (die 15
+  wichtigsten). **„Ist bestellt"** setzt den Status *Bestellt*; der
+  Freigabevermerk bleibt am Wunsch erhalten.
+- Die Startseite weist auf freigegebene, noch nicht bestellte Wünsche hin.
+- Freigeben und Bestellt-Markieren dürfen Leitung und Administration.
+- Bestehende Installationen erhalten den Status und zwei Spalten
+  (`freigegeben_von`, `freigegeben_am`) beim nächsten Start automatisch.
+
 ## 1.7.0
 
 ### Wiederkehrende Besprechungen

@@ -152,6 +152,7 @@ h3 { font-size: 1rem; }
   padding: 1rem; margin-bottom: 1rem;
 }
 .card--tight { padding: .75rem; }
+.card--highlight { border-left: 4px solid #ea580c; }
 .card__head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .75rem; flex-wrap: wrap; }
 .card__head h2, .card__head h1 { margin: 0; }
 

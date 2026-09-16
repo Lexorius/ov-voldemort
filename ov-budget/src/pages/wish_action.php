@@ -61,6 +61,23 @@ switch (post_str('action')) {
         flash('success', 'Status aktualisiert.');
         break;
 
+    case 'freigeben':
+    case 'bestellt':
+        if (!can('manage_budget')) {
+            flash('error', 'Freigeben und Bestellen darf nur Leitung oder Administration.');
+            break;
+        }
+        $voll = wish_find_full($id) ?? $wish;
+        $fehler = post_str('action') === 'freigeben' ? wish_release($voll, $user) : wish_mark_ordered($voll, $user);
+        if ($fehler !== null) {
+            flash('error', $fehler);
+        } elseif (post_str('action') === 'freigeben') {
+            flash('success', 'Freigegeben: „' . e($wish['bezeichnung']) . '“ kann bestellt werden.');
+        } else {
+            flash('success', '„' . e($wish['bezeichnung']) . '“ als bestellt markiert.');
+        }
+        break;
+
     case 'attachment_delete':
         if (!can('edit_wish', $wish)) {
             flash('error', 'Dafür fehlen dir die Rechte.');

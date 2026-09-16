@@ -1,7 +1,7 @@
 <?php
 /** @var array $user @var int $jahr @var array $wuensche @var array $statsW
  *  @var array $budgets @var float $budgetSumme @var float $budgetVerplant
- *  @var array $todos @var int $todosGesamt @var int $ueberfaellig */
+ *  @var array $todos @var int $todosGesamt @var int $ueberfaellig @var array $zuBestellen */
 $warnProzent = setting_int('budget_warn_prozent', 90);
 $auslastung = $budgetSumme > 0 ? ($budgetVerplant / $budgetSumme) * 100 : 0;
 ?>
@@ -17,6 +17,14 @@ $auslastung = $budgetSumme > 0 ? ($budgetVerplant / $budgetSumme) * 100 : 0;
     <?php endif; ?>
   </div>
 </div>
+
+<?php if ($zuBestellen): ?>
+  <div class="alert alert--info">
+    <strong><?= count($zuBestellen) ?> <?= count($zuBestellen) === 1 ? 'Wunsch ist' : 'Wünsche sind' ?> freigegeben – bitte bestellen</strong>
+    (<?= e(money(array_sum(array_map(static fn($w) => (float)$w['netto_gesamt'], $zuBestellen)))) ?> netto).
+    <a href="<?= e(url('budget')) ?>#bestellung">Zur Liste</a>
+  </div>
+<?php endif; ?>
 
 <div class="stats">
   <div class="stat">

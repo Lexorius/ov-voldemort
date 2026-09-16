@@ -16,6 +16,10 @@ function wish_query(array $f = []): array
     $w = [];
     $p = [];
 
+    if (!empty($f['id'])) {
+        $w[] = 'w.id = ?';
+        $p[] = (int)$f['id'];
+    }
     if (!empty($f['q'])) {
         $w[] = '(w.bezeichnung LIKE ? OR w.beschreibung LIKE ? OR w.lieferant LIKE ? OR w.artikelnummer LIKE ?)';
         $like = '%' . $f['q'] . '%';
@@ -38,6 +42,14 @@ function wish_query(array $f = []): array
     if (!empty($f['offen'])) {
         $w[] = 'COALESCE(st.is_final, 0) = 0';
     }
+    if (!empty($f['status_slug'])) {
+        $w[] = 'st.slug = ?';
+        $p[] = (string)$f['status_slug'];
+    }
+    if (!empty($f['freigabe_offen'])) {
+        // Noch nicht freigegeben, nicht bestellt und nicht zurückgestellt
+        $w[] = "COALESCE(st.is_final, 0) = 0 AND COALESCE(st.slug, '') NOT IN ('freigegeben','bestellt','zurueckgestellt')";
+    }
     if (!empty($f['jahr'])) {
         $w[] = 'b.jahr = ?';
         $p[] = (int)$f['jahr'];
@@ -55,6 +67,7 @@ function wish_query(array $f = []): array
 
     $sql = 'SELECT w.*,
                    st.label AS status_label, st.color AS status_color, st.is_final AS status_final,
+                   st.slug AS status_slug, fu.display_name AS freigeber,
                    dr.label AS dring_label, dr.color AS dring_color, dr.weight AS dring_weight,
                    fg.label AS fachgruppe_label,
                    ka.label AS kategorie_label,
@@ -70,7 +83,8 @@ function wish_query(array $f = []): array
             LEFT JOIN list_items ka ON ka.id = w.kategorie_id
             LEFT JOIN list_items ei ON ei.id = w.einheit_id
             LEFT JOIN budgets   b  ON b.id  = w.budget_id
-            LEFT JOIN users     u  ON u.id  = w.created_by'
+            LEFT JOIN users     u  ON u.id  = w.created_by
+            LEFT JOIN users     fu ON fu.id = w.freigegeben_von'
         . ($w ? ' WHERE ' . implode(' AND ', $w) : '')
         . ' ORDER BY ' . $order;
 
@@ -90,6 +104,60 @@ function wish_stats(array $rows): array
         }
     }
     return $s;
+}
+
+/** Kann der Wunsch zur Bestellung freigegeben werden? */
+function wish_releasable(array $wish): bool
+{
+    return !(int)($wish['status_final'] ?? 0)
+        && !in_array((string)($wish['status_slug'] ?? ''), ['freigegeben', 'bestellt'], true);
+}
+
+/**
+ * „Freigegeben, bitte bestellen“: Status setzen und festhalten, wer wann
+ * freigegeben hat. Gibt eine Fehlermeldung zurück oder null.
+ */
+function wish_release(array $wish, array $user): ?string
+{
+    if (!wish_releasable($wish)) {
+        return 'Dieser Wunsch ist bereits freigegeben, bestellt oder abgeschlossen.';
+    }
+    $status = list_id_by_slug('wunsch_status', 'freigegeben');
+    if (!$status) {
+        return 'Der Status „freigegeben“ fehlt in der Liste Wunsch-Status (Schlüssel: freigegeben).';
+    }
+    db_update('wishes', [
+        'status_id'       => $status,
+        'freigegeben_von' => (int)$user['id'],
+        'freigegeben_am'  => date('Y-m-d H:i:s'),
+        'updated_by'      => (int)$user['id'],
+    ], 'id = ?', [(int)$wish['id']]);
+    audit('wunsch.freigegeben', 'wish', (int)$wish['id'], $wish['bezeichnung']);
+    return null;
+}
+
+/** Freigegebenen Wunsch als bestellt markieren */
+function wish_mark_ordered(array $wish, array $user): ?string
+{
+    if (($wish['status_slug'] ?? '') !== 'freigegeben') {
+        return 'Nur freigegebene Wünsche können als bestellt markiert werden.';
+    }
+    $status = list_id_by_slug('wunsch_status', 'bestellt');
+    if (!$status) {
+        return 'Der Status „bestellt“ fehlt in der Liste Wunsch-Status (Schlüssel: bestellt).';
+    }
+    db_update('wishes', ['status_id' => $status, 'updated_by' => (int)$user['id']], 'id = ?', [(int)$wish['id']]);
+    audit('wunsch.bestellt', 'wish', (int)$wish['id'], $wish['bezeichnung']);
+    return null;
+}
+
+/** Einzelnen Wunsch mit allen Angaben aus wish_query */
+function wish_find_full(int $id): ?array
+{
+    foreach (wish_query(['id' => $id]) as $r) {
+        return $r;
+    }
+    return null;
 }
 
 function wish_votes_of_user(int $userId): array

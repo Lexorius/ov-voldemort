@@ -414,6 +414,23 @@ function ovb_migrate(PDO $pdo, callable $say): void
         }
     }
     $merken('004_meeting_series');
+
+    /* ---- 005: Freigabe von Wünschen zur Bestellung ---- */
+    if (ovb_table_exists($pdo, 'wishes') && !ovb_column_exists($pdo, 'wishes', 'freigegeben_von')) {
+        $pdo->exec(
+            'ALTER TABLE wishes
+             ADD COLUMN freigegeben_von INT UNSIGNED NULL AFTER divera_entry_id,
+             ADD COLUMN freigegeben_am DATETIME NULL AFTER freigegeben_von'
+        );
+        if (!ovb_constraint_exists($pdo, 'wishes', 'fk_w_frei')) {
+            $pdo->exec(
+                'ALTER TABLE wishes ADD CONSTRAINT fk_w_frei
+                 FOREIGN KEY (freigegeben_von) REFERENCES users(id) ON DELETE SET NULL'
+            );
+        }
+        $say('Wünsche um die Freigabe zur Bestellung erweitert.');
+    }
+    $merken('005_wish_freigabe');
 }
 
 function ovb_constraint_exists(PDO $pdo, string $table, string $name): bool

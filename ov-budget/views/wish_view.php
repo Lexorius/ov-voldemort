@@ -96,6 +96,37 @@ $brutto = (float)$wish['netto_gesamt'] * (1 + ((float)$wish['mwst_satz'] / 100))
   <?php endif; ?>
 </div>
 
+<?php if (($wish['status_slug'] ?? '') === 'freigegeben' || $wish['freigegeben_am'] || (can('manage_budget') && wish_releasable($wish))): ?>
+  <div class="card<?= ($wish['status_slug'] ?? '') === 'freigegeben' ? ' card--highlight' : '' ?>">
+    <div class="card__head" style="margin:0">
+      <div>
+        <h2 style="margin:0">Bestellung</h2>
+        <div class="small muted">
+          <?php if ($wish['freigegeben_am']): ?>
+            Freigegeben am <?= e(de_datetime($wish['freigegeben_am'])) ?><?= $wish['freigeber'] ? ' von ' . e($wish['freigeber']) : '' ?>
+            <?php if (($wish['status_slug'] ?? '') === 'freigegeben'): ?> – bitte bestellen.<?php endif; ?>
+          <?php else: ?>
+            Noch nicht zur Bestellung freigegeben.
+          <?php endif; ?>
+        </div>
+      </div>
+      <?php if (can('manage_budget')): ?>
+        <form method="post" action="<?= e(url('wish_action')) ?>" class="inline-form">
+          <?= csrf_field() ?>
+          <input type="hidden" name="id" value="<?= (int)$wish['id'] ?>">
+          <?php if (wish_releasable($wish)): ?>
+            <button class="btn btn--ok" type="submit" name="action" value="freigeben"
+                    data-confirm="<?= e('„' . $wish['bezeichnung'] . '“ für ' . money((float)$wish['netto_gesamt']) . ' netto zur Bestellung freigeben?') ?>">
+              Freigegeben, bitte bestellen</button>
+          <?php elseif (($wish['status_slug'] ?? '') === 'freigegeben'): ?>
+            <button class="btn" type="submit" name="action" value="bestellt">Ist bestellt</button>
+          <?php endif; ?>
+        </form>
+      <?php endif; ?>
+    </div>
+  </div>
+<?php endif; ?>
+
 <?php if (can('change_status') || can('manage_wishes')): ?>
   <div class="card">
     <h2>Schnellaktionen</h2>

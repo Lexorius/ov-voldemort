@@ -51,6 +51,7 @@ INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_defa
 ('wunsch_status','Angebot fehlt','angebot-fehlt','#a16207',30,0,0),
 ('wunsch_status','Priorisiert','priorisiert','#0d9488',40,0,0),
 ('wunsch_status','Für Haushalt eingeplant','eingeplant','#1d4ed8',50,0,0),
+('wunsch_status','Freigegeben – bitte bestellen','freigegeben','#ea580c',55,0,0),
 ('wunsch_status','Bestellt','bestellt','#0891b2',60,0,0),
 ('wunsch_status','Beschafft','beschafft','#15803d',70,0,1),
 ('wunsch_status','Zurückgestellt','zurueckgestellt','#64748b',80,0,0),

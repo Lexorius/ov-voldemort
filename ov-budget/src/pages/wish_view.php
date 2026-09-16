@@ -3,15 +3,7 @@ declare(strict_types=1);
 
 $user = current_user();
 $id = (int)get_int('id', 0);
-$rows = $id ? wish_query([]) : [];
-
-$wish = null;
-foreach ($rows as $r) {
-    if ((int)$r['id'] === $id) {
-        $wish = $r;
-        break;
-    }
-}
+$wish = $id ? wish_find_full($id) : null;
 
 if (!$wish) {
     http_response_code(404);

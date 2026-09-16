@@ -86,6 +86,9 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   technische Hilfeleistung, Spenden ...) mit Einsatz- oder Auftragsnummer.
   Die Übersicht rechnet Budget plus Einnahmen minus Ausgaben und schlüsselt
   nach Kategorie und Monat auf. Optional unterteilen Budgettöpfe das Jahr.
+  Mit **„Freigegeben, bitte bestellen"** gibt die Leitung einen Wunsch zur
+  Bestellung frei; die Übersicht listet alles Freigegebene, bis es als bestellt
+  markiert ist.
 * **Kontakte** – Ansprechpartner bei Kommune, Feuerwehr, Presse, Firmen und
   Förderern, dazu Verteiler für Einladungen mit Rückmeldungen und einer
   CSV-Ausgabe für den Serienbrief. Neben den Standardfeldern lassen sich

@@ -3,7 +3,8 @@
  *  @var ?array $jahresbudget @var float $ausgabenBrutto @var float $ausgabenNetto
  *  @var float $einnahmenBrutto @var float $einnahmenNetto
  *  @var array $kategorien @var array $einnahmeKategorien
- *  @var array $monate @var array $monateEin @var array $jeTopf @var array $letzte */
+ *  @var array $monate @var array $monateEin @var array $jeTopf @var array $letzte
+ *  @var array $zuBestellen @var array $zurFreigabe */
 $warn = setting_int('budget_warn_prozent', 90);
 $gesamt = (float)($jahresbudget['betrag'] ?? 0);
 
@@ -16,6 +17,44 @@ $quoteCls = ($verfuegbar > 0 && $ausgabenBrutto > $verfuegbar) ? 'is-over' : ($q
 $summeToepfe = array_sum(array_map(static fn($b) => (float)$b['betrag_netto'], $budgets));
 $verplant = array_sum(array_map(static fn($b) => (float)$b['verplant'], $budgets));
 $offenOhne = array_sum(array_map(static fn($w) => (float)$w['netto_gesamt'], $ohneTopf));
+
+$summeBestellen = array_sum(array_map(static fn($w) => (float)$w['netto_gesamt'], $zuBestellen));
+$zurFreigabeMax = 15;
+
+/** Zeile der Freigabeliste mit passendem Knopf */
+$freigabeZeile = static function (array $w, string $aktion): string {
+    $html = '<tr><td><a href="' . e(url('wish', ['id' => $w['id']])) . '">' . e($w['bezeichnung']) . '</a>'
+        . '<div class="small muted">'
+        . e(implode(' · ', array_filter([
+            $w['fachgruppe_label'],
+            $w['budget_name'] ? 'Topf: ' . $w['budget_name'] : '',
+            $aktion === 'bestellt' && $w['freigegeben_am']
+                ? 'freigegeben ' . de_date(substr((string)$w['freigegeben_am'], 0, 10)) . ($w['freigeber'] ? ' von ' . $w['freigeber'] : '')
+                : '',
+            $w['lieferant'] ? 'bei ' . $w['lieferant'] : '',
+        ])))
+        . '</div></td>'
+        . '<td>' . ($aktion === 'freigeben'
+            ? badge($w['status_label'] ? ['label' => $w['status_label'], 'color' => $w['status_color']] : null)
+            : badge($w['dring_label'] ? ['label' => $w['dring_label'], 'color' => $w['dring_color']] : null)) . '</td>'
+        . '<td class="num nowrap">' . e(money((float)$w['netto_gesamt'], false)) . '</td>';
+
+    if (can('manage_budget')) {
+        $html .= '<td class="nowrap"><form method="post" action="' . e(url('wish_action')) . '" class="inline-form">'
+            . csrf_field()
+            . '<input type="hidden" name="id" value="' . (int)$w['id'] . '">'
+            . '<input type="hidden" name="back" value="' . e(current_url() . '#bestellung') . '">';
+        if ($aktion === 'freigeben') {
+            $html .= '<button class="btn btn--ok btn--sm" type="submit" name="action" value="freigeben" data-confirm="'
+                . e('„' . $w['bezeichnung'] . '“ für ' . money((float)$w['netto_gesamt']) . ' netto zur Bestellung freigeben?')
+                . '">Freigegeben, bitte bestellen</button>';
+        } else {
+            $html .= '<button class="btn btn--sec btn--sm" type="submit" name="action" value="bestellt">Ist bestellt</button>';
+        }
+        $html .= '</form></td>';
+    }
+    return $html . '</tr>';
+};
 
 $maxMonat = max(array_merge([0.0], array_values($monate), array_values($monateEin)));
 $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
@@ -125,6 +164,39 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
     </p>
   <?php else: ?>
     <div class="empty">Weder Budget noch Einnahmen erfasst.</div>
+  <?php endif; ?>
+</section>
+
+<section class="card" id="bestellung">
+  <div class="card__head">
+    <h2>Freigegeben – bitte bestellen</h2>
+    <?php if ($zuBestellen): ?>
+      <span class="badge" style="background:#ea580c"><?= count($zuBestellen) ?> · <?= e(money($summeBestellen)) ?> netto</span>
+    <?php endif; ?>
+  </div>
+  <?php if (!$zuBestellen): ?>
+    <div class="empty">Nichts offen – alle freigegebenen Wünsche sind bestellt.</div>
+  <?php else: ?>
+    <div class="tablewrap">
+      <table class="data">
+        <tbody><?php foreach ($zuBestellen as $w): ?><?= $freigabeZeile($w, 'bestellt') ?><?php endforeach; ?></tbody>
+      </table>
+    </div>
+  <?php endif; ?>
+
+  <?php if ($zurFreigabe): ?>
+    <h3 class="mt">Warten auf Freigabe</h3>
+    <div class="tablewrap">
+      <table class="data">
+        <tbody>
+        <?php foreach (array_slice($zurFreigabe, 0, $zurFreigabeMax) as $w): ?><?= $freigabeZeile($w, 'freigeben') ?><?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+    <?php if (count($zurFreigabe) > $zurFreigabeMax): ?>
+      <p class="small muted">Die <?= $zurFreigabeMax ?> wichtigsten von <?= count($zurFreigabe) ?> –
+        <a href="<?= e(url('wishes')) ?>">alle Wünsche</a></p>
+    <?php endif; ?>
   <?php endif; ?>
 </section>
 

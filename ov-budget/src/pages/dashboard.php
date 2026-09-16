@@ -46,4 +46,5 @@ render('dashboard', [
     'todos'          => array_slice($meineTodos, 0, 8),
     'todosGesamt'    => count($meineTodos),
     'ueberfaellig'   => count($ueberfaellig),
+    'zuBestellen'    => wish_query(['status_slug' => 'freigegeben']),
 ]);
