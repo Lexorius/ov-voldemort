@@ -1,7 +1,7 @@
 <?php
 /** @var bool $aktiv @var int $letzter @var int $intervall @var ?string $wartet
  *  @var array $offen @var array $fahrzeuge @var array $verknuepft @var array $protokoll
- *  @var bool $webhook */
+ *  @var bool $webhook @var bool $debug @var array $mitschnitte */
 ?>
 <div class="pagehead">
   <div>
@@ -167,6 +167,52 @@
     </div>
   </section>
 <?php endif; ?>
+
+<section class="card" id="mitschnitt">
+  <div class="card__head">
+    <h2>Antworten mitschneiden</h2>
+    <span class="badge<?= $debug ? '' : ' badge--muted' ?>"<?= $debug ? ' style="background:#a16207"' : '' ?>>
+      <?= $debug ? 'eingeschaltet' : 'aus' ?></span>
+  </div>
+  <p class="small muted">
+    Zur Fehlersuche: Ist der Mitschnitt eingeschaltet, wird jede Antwort der Stein.APP als Datei
+    abgelegt und lässt sich hier herunterladen – auch Fehlerantworten. Der API-Schlüssel steht nicht
+    darin, und Felder, die nach einem Geheimnis aussehen (etwa das Webhook-Secret), sind geschwärzt.
+    Aufbewahrt werden die letzten 20 Dateien.
+    Ein- und ausschalten unter
+    <a href="<?= e(url('admin_settings', ['group' => 'Stein.APP'])) ?>">Einstellungen → Stein.APP</a>
+    („Antworten der Stein.APP mitschneiden").
+  </p>
+
+  <?php if (!$mitschnitte): ?>
+    <div class="empty">
+      <?= $debug ? 'Noch nichts mitgeschnitten – beim nächsten Abruf entsteht die erste Datei.'
+                 : 'Der Mitschnitt ist ausgeschaltet.' ?>
+    </div>
+  <?php else: ?>
+    <div class="tablewrap">
+      <table class="data">
+        <thead><tr><th>Datei</th><th>Wann</th><th class="num">Größe</th><th></th></tr></thead>
+        <tbody>
+        <?php foreach ($mitschnitte as $m): ?>
+          <tr>
+            <td class="mono small"><?= e($m['name']) ?></td>
+            <td class="small nowrap"><?= e(de_datetime(date('Y-m-d H:i:s', $m['zeit']))) ?></td>
+            <td class="num small nowrap"><?= e(bytes_human($m['groesse'])) ?></td>
+            <td><a class="btn btn--sec btn--sm" href="<?= e(url('stein_debug', ['datei' => $m['name']])) ?>">Herunterladen</a></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+    <form method="post" action="<?= e(url('vehicle_action')) ?>" class="btnrow" style="margin-top:.8rem">
+      <?= csrf_field() ?>
+      <input type="hidden" name="action" value="stein_debug_clear">
+      <button class="btn btn--sec btn--sm" type="submit"
+              data-confirm="Alle Mitschnitte löschen?">Mitschnitte löschen</button>
+    </form>
+  <?php endif; ?>
+</section>
 
 <section class="card">
   <h2>Protokoll der Abrufe</h2>

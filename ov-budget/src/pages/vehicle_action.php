@@ -82,6 +82,17 @@ switch (post_str('action')) {
         }
         break;
 
+    case 'stein_debug_clear':
+        if (!can('admin')) {
+            flash('error', 'Das darf nur die Administration.');
+            break;
+        }
+        $zurueck = url('admin_stein') . '#mitschnitt';
+        $weg = stein_debug_delete_all();
+        audit('stein.mitschnitte_geloescht', '', null, (string)$weg);
+        flash('success', sprintf('%d Mitschnitt(e) gelöscht.', $weg));
+        break;
+
     case 'stein_assign':
         if (!can('admin')) {
             flash('error', 'Das darf nur die Administration.');

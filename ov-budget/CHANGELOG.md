@@ -1,5 +1,25 @@
 # Änderungsverlauf
 
+## 1.13.0
+
+### Antworten der Stein.APP mitschneiden
+
+Zur Fehlersuche gibt es einen Schalter *Antworten der Stein.APP mitschneiden*
+(*Einstellungen → Stein.APP*, standardmäßig aus).
+
+- Ist er an, wird jede Antwort der Schnittstelle als Datei abgelegt – auch
+  Fehlerantworten wie „404" oder „429".
+- Unter *Verwaltung → Stein.APP* stehen die Mitschnitte zum **Herunterladen**,
+  mit Zeitpunkt und Größe, und lassen sich dort auch alle löschen.
+- **Der API-Schlüssel steht nicht darin.** Zusätzlich werden Felder, deren Name
+  nach einem Geheimnis klingt (`secret`, `token`, `password`, `webhookSecret`
+  und ähnliche), durch `***` ersetzt – auch tief verschachtelt.
+- Jede Datei enthält Zeitpunkt, angefragte Adresse, HTTP-Status und die
+  Antwort als gültiges JSON. Antworten, die kein JSON sind, stehen als Text
+  darin.
+- Aufbewahrt werden die letzten 20 Dateien, ältere räumt die Anwendung selbst
+  weg. Herunterladen darf nur die Administration.
+
 ## 1.12.1
 
 ### Kennzeichen aus dem Feld der Stein.APP

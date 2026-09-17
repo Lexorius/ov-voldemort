@@ -20,4 +20,6 @@ render('admin/stein', [
     ),
     'protokoll'  => db_all('SELECT * FROM stein_log ORDER BY id DESC LIMIT 20'),
     'webhook'    => trim((string)setting('stein_webhook_secret', '')) !== '',
+    'debug'      => stein_debug_on(),
+    'mitschnitte' => stein_debug_on() || stein_debug_files() ? stein_debug_files() : [],
 ]);

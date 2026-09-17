@@ -193,6 +193,15 @@ Stein.APP*.
 Mit **Verbindung testen** in *Verwaltung → Stein.APP* lässt sich der Schlüssel
 prüfen, ohne die Fahrzeuge abzurufen.
 
+**Wenn etwas nicht stimmt:** Unter *Einstellungen → Stein.APP* lässt sich
+*Antworten der Stein.APP mitschneiden* einschalten. Dann wird jede Antwort –
+auch eine Fehlerantwort – als Datei abgelegt und kann unter *Verwaltung →
+Stein.APP* heruntergeladen werden. Der API-Schlüssel steht nicht darin, und
+Felder, deren Name nach einem Geheimnis klingt (etwa `webhookSecret`), sind
+durch `***` ersetzt. Aufbewahrt werden die letzten 20 Dateien; sie lassen sich
+dort auch alle löschen. Der Mitschnitt ist für den Dauerbetrieb nicht gedacht –
+die Dateien enthalten alle Fahrzeugdaten im Klartext.
+
 ## Rollen
 
 | Rolle | Darf |

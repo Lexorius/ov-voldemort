@@ -32,6 +32,13 @@ declare(strict_types=1);
 
 class SteinException extends RuntimeException {}
 
+/** Höchstens so viele Mitschnitte werden aufbewahrt */
+const STEIN_DEBUG_MAX = 20;
+
+/** Feldnamen, deren Inhalt in einem Mitschnitt geschwärzt wird */
+const STEIN_GEHEIM = ['secret', 'token', 'apikey', 'key', 'password', 'passwort', 'authorization',
+                      'credentials', 'auth'];
+
 /** Kürzester Abstand zwischen zwei Abrufen, die ein Webhook auslöst (Sekunden) */
 const STEIN_WEBHOOK_MINDESTABSTAND = 30;
 
@@ -151,6 +158,9 @@ function stein_request(string $pfad, array $query = []): array
             throw new SteinException('Verbindung zur Stein.APP fehlgeschlagen.');
         }
     }
+
+    // Mitschnitt vor der Auswertung: gerade Fehlerantworten sind interessant
+    stein_debug_save($pfad, $query, $code, (string)$body);
 
     if ($code === 429) {
         // Laut Dokumentation sperrt die Stein.APP die IP dann für eine Stunde
@@ -556,6 +566,160 @@ function stein_sync(bool $erzwingen = false): array
     ];
     stein_log($res, $start);
     return $res;
+}
+
+/* ==================================================================== *
+ * Mitschnitt der Antworten (zum Nachsehen, standardmäßig aus)
+ * ==================================================================== */
+
+function stein_debug_on(): bool
+{
+    return setting_bool('stein_debug', false);
+}
+
+/** Ordner für die Mitschnitte; liegt neben den Anlagen unter /data */
+function stein_debug_dir(): string
+{
+    $dir = upload_dir() . DIRECTORY_SEPARATOR . 'stein-debug';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0770, true);
+    }
+    return $dir;
+}
+
+/**
+ * Geheimnisse aus einer Antwort entfernen.
+ *
+ * Zweierlei wird geschwärzt: Felder, deren Name nach einem Geheimnis klingt
+ * (etwa "webhookSecret"), und der eigene API-Schlüssel, falls er doch einmal
+ * irgendwo auftaucht. Lässt sich die Antwort als JSON lesen, kommt sie
+ * aufgeräumt zurück – sonst unverändert (bis auf den Schlüssel).
+ */
+function stein_redact(string $text, string $schluessel = ''): string
+{
+    $schluessel = trim($schluessel);
+    // Sehr kurze Zeichenfolgen nicht ersetzen, die träfen auch harmlose Stellen
+    if ($schluessel !== '' && mb_strlen($schluessel) >= 6) {
+        $text = str_replace($schluessel, '***', $text);
+    }
+
+    $daten = json_decode($text, true);
+    if (!is_array($daten)) {
+        return $text;
+    }
+    return (string)json_encode(
+        stein_redact_data($daten),
+        JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+    );
+}
+
+/** Felder mit geheimem Inhalt ersetzen, so tief wie nötig */
+function stein_redact_data(mixed $wert): mixed
+{
+    if (!is_array($wert)) {
+        return $wert;
+    }
+    $out = [];
+    foreach ($wert as $name => $inhalt) {
+        $out[$name] = stein_is_secret_key((string)$name) ? '***' : stein_redact_data($inhalt);
+    }
+    return $out;
+}
+
+/** Klingt der Feldname nach einem Geheimnis? */
+function stein_is_secret_key(string $name): bool
+{
+    $n = strtolower(str_replace(['_', '-', ' '], '', $name));
+    if (in_array($n, STEIN_GEHEIM, true)) {
+        return true;
+    }
+    foreach (['secret', 'token', 'apikey', 'password', 'passwort'] as $endung) {
+        if (str_ends_with($n, $endung)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/** Dateiname eines Mitschnitts – nur harmlose Zeichen */
+function stein_debug_name(string $pfad, ?int $zeit = null): string
+{
+    $teil = trim((string)preg_replace('/[^a-z0-9]+/i', '-', $pfad), '-');
+    return sprintf('%s_%s.json', date('Ymd-His', $zeit ?? time()), $teil !== '' ? $teil : 'antwort');
+}
+
+/** Antwort mitschneiden, ohne Geheimnisse */
+function stein_debug_save(string $pfad, array $query, int $code, string $body): ?string
+{
+    if (!stein_debug_on()) {
+        return null;
+    }
+    $datei = stein_debug_dir() . DIRECTORY_SEPARATOR . stein_debug_name($pfad);
+
+    $sauber = stein_redact($body, (string)setting('stein_api_key', ''));
+    $antwort = json_decode($sauber, true);
+
+    $inhalt = json_encode([
+        'zeitpunkt' => date('c'),
+        'anfrage'   => $pfad . ($query ? '?' . http_build_query($query) : ''),
+        'http'      => $code,
+        'hinweis'   => 'Der API-Schlüssel steht nicht in dieser Datei; Felder mit Geheimnissen sind geschwärzt.',
+        // Lässt sich die Antwort nicht als JSON lesen (Fehlerseite), steht sie als Text darin
+        'antwort'   => is_array($antwort) ? $antwort : $sauber,
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+    if (@file_put_contents($datei, $inhalt) === false) {
+        return null;
+    }
+    stein_debug_cleanup();
+    return basename($datei);
+}
+
+/** Alte Mitschnitte wegräumen */
+function stein_debug_cleanup(): int
+{
+    $dateien = stein_debug_files();
+    $weg = 0;
+    foreach (array_slice($dateien, STEIN_DEBUG_MAX) as $d) {
+        if (@unlink(stein_debug_dir() . DIRECTORY_SEPARATOR . $d['name'])) {
+            $weg++;
+        }
+    }
+    return $weg;
+}
+
+/** Vorhandene Mitschnitte, neueste zuerst */
+function stein_debug_files(): array
+{
+    $dir = stein_debug_dir();
+    $out = [];
+    foreach (glob($dir . DIRECTORY_SEPARATOR . '*.json') ?: [] as $pfad) {
+        $out[] = ['name' => basename($pfad), 'groesse' => (int)filesize($pfad), 'zeit' => (int)filemtime($pfad)];
+    }
+    usort($out, static fn($a, $b) => $b['zeit'] <=> $a['zeit'] ?: strcmp($b['name'], $a['name']));
+    return $out;
+}
+
+/** Vollständiger Pfad eines Mitschnitts – oder null, wenn es ihn nicht gibt */
+function stein_debug_path(string $name): ?string
+{
+    $name = basename(trim($name));
+    if ($name === '' || !preg_match('/^[0-9]{8}-[0-9]{6}_[A-Za-z0-9\-]+\.json$/', $name)) {
+        return null;
+    }
+    $pfad = stein_debug_dir() . DIRECTORY_SEPARATOR . $name;
+    return is_file($pfad) ? $pfad : null;
+}
+
+function stein_debug_delete_all(): int
+{
+    $weg = 0;
+    foreach (stein_debug_files() as $d) {
+        if (@unlink(stein_debug_dir() . DIRECTORY_SEPARATOR . $d['name'])) {
+            $weg++;
+        }
+    }
+    return $weg;
 }
 
 function stein_log(array $res, float $start): void

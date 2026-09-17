@@ -72,6 +72,7 @@ $routes = [
     'admin_settings'     => 'admin/settings',
     'admin_order_rights' => 'admin/order_rights',
     'admin_stein'        => 'admin/stein',
+    'stein_debug'        => 'stein_debug',
     'admin_divera'       => 'admin/divera',
     'admin_divera_form'  => 'admin/divera_form',
     'admin_log'          => 'admin/log',
