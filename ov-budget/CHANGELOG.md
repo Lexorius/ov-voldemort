@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 1.11.2
+
+- Beschriftungen und Hinweistexte der Einstellungen werden beim Start
+  aufgefrischt. Bisher wurden sie nur beim allerersten Start angelegt – wer
+  schon eine Installation hatte, sah neben einer Option weiterhin den alten
+  Erklärtext. Betrifft nur die Texte; die eingestellten Werte bleiben
+  unverändert.
+
 ## 1.11.1
 
 ### Zeitzone

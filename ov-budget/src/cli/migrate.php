@@ -440,6 +440,70 @@ function ovb_migrate(PDO $pdo, callable $say): void
         $say('Wünsche um die Freigabe zur Bestellung erweitert.');
     }
     $merken('005_wish_freigabe');
+
+    /* ---- 006: Beschriftungen von Einstellungen auffrischen ---- */
+    // seed.sql legt Einstellungen nur an (INSERT IGNORE). Aendert sich spaeter
+    // die Beschriftung oder der Hinweistext, bekaeme eine bestehende
+    // Installation ihn nie zu sehen. Die Werte selbst bleiben unberuehrt.
+    if (ovb_table_exists($pdo, 'settings')) {
+        $n = ovb_refresh_setting_texts($pdo, APP_ROOT . '/sql/seed.sql');
+        if ($n > 0) {
+            $say(sprintf('%d Beschriftung(en) von Einstellungen aufgefrischt.', $n));
+        }
+    }
+    $merken('006_setting_texte');
+}
+
+/**
+ * Beschriftung, Hinweis, Typ und Gruppe der Einstellungen aus seed.sql
+ * uebernehmen. Der gespeicherte Wert (svalue) bleibt, wie er ist.
+ */
+function ovb_refresh_setting_texts(PDO $pdo, string $seedFile): int
+{
+    if (!is_file($seedFile)) {
+        return 0;
+    }
+    $n = 0;
+    $st = $pdo->prepare(
+        'UPDATE settings SET label = ?, hint = ?, stype = ?, sgroup = ?, sort_order = ?
+         WHERE skey = ? AND (label <> ? OR hint <> ? OR stype <> ? OR sgroup <> ? OR sort_order <> ?)'
+    );
+    foreach (ovb_seed_settings((string)file_get_contents($seedFile)) as $r) {
+        $st->execute([
+            $r['label'], $r['hint'], $r['stype'], $r['sgroup'], $r['sort'],
+            $r['skey'],
+            $r['label'], $r['hint'], $r['stype'], $r['sgroup'], $r['sort'],
+        ]);
+        $n += $st->rowCount();
+    }
+    return $n;
+}
+
+/**
+ * Die Einstellungszeilen aus seed.sql lesen. Reine Funktion, damit sie sich
+ * ohne Datenbank pruefen laesst.
+ * Format je Zeile: ('skey','svalue','label','hint','stype','sgroup',sort),
+ */
+function ovb_seed_settings(string $sql): array
+{
+    $out = [];
+    $muster = "/^\('([a-z0-9_]+)','((?:[^']|'')*)','((?:[^']|'')*)','((?:[^']|'')*)',"
+        . "'([a-z]+)','((?:[^']|'')*)',(\d+)\)[,;]\s*$/mi";
+    if (!preg_match_all($muster, $sql, $treffer, PREG_SET_ORDER)) {
+        return $out;
+    }
+    $entf = static fn(string $v): string => str_replace("''", "'", $v);
+    foreach ($treffer as $m) {
+        $out[] = [
+            'skey'   => $m[1],
+            'label'  => $entf($m[3]),
+            'hint'   => $entf($m[4]),
+            'stype'  => $m[5],
+            'sgroup' => $entf($m[6]),
+            'sort'   => (int)$m[7],
+        ];
+    }
+    return $out;
 }
 
 function ovb_constraint_exists(PDO $pdo, string $table, string $name): bool
