@@ -151,6 +151,12 @@ $arten = [
         <?php endif; ?>
         Änderungen stehen unten im Journal.
       </p>
+      <?php if (can('admin') && $stein): ?>
+        <details>
+          <summary class="small">Rohdaten aus der Stein.APP</summary>
+          <pre class="small" style="overflow-x:auto"><?= e(json_encode($stein, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?></pre>
+        </details>
+      <?php endif; ?>
       <?php if (can('manage_vehicles')): ?>
         <form method="post" action="<?= e(url('vehicle_action')) ?>" class="inline-form">
           <?= csrf_field() ?>

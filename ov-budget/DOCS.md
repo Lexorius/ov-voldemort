@@ -173,10 +173,17 @@ prüft den Header `X-Secret` und gleicht dann ab, höchstens alle 30 Sekunden.
 Die Adresse muss von außen erreichbar sein – über Ingress allein ist sie das
 nicht.
 
-**Kennzeichen:** Ein eigenes Feld dafür hat die Schnittstelle nicht. Die
-Anwendung liest das Kennzeichen deshalb aus Bezeichnung, Name, Funkrufname und
-Bemerkung (THW-84321 oder HB-XY 456) und trägt es ein, solange im Fahrzeug
-keines steht. Ein selbst eingetragenes Kennzeichen bleibt unangetastet.
+**Kennzeichen:** In der Oberfläche der Stein.APP gibt es das Feld
+*THW-Kennzeichen*; in der Schnittstelle taucht es unter keinem eigenen Namen
+auf – es steckt im Feld `name` (`label` ist „Fahrzeug / Bez.", `radioName` der
+Funkrufname). Die Anwendung nimmt deshalb den Inhalt von `name` unverändert,
+wenn dort nur ein Kennzeichen steht (also auch „THW 99020" mit Leerzeichen),
+und sucht sonst in Bezeichnung, Funkrufname und Bemerkung danach.
+
+Ein von Hand eingetragenes Kennzeichen bleibt stehen. Kam es dagegen aus der
+Stein.APP und ändert sich dort, zieht es nach – der Wechsel steht in der
+Fahrzeugakte. Welches Feld bei euch was enthält, zeigt in der Akte der
+aufklappbare Punkt *Rohdaten aus der Stein.APP* (nur für die Administration).
 
 **Was der Abgleich sonst führt:** Status, Bemerkung, HU, SP, Einsatzvorbehalt,
 Funkrufname, Kategorie, ISSI sowie die Löschung eines Fahrzeugs in der

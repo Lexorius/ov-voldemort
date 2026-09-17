@@ -52,7 +52,7 @@ const STEIN_FELDER = [
     'spValidUntil'         => 'SP gültig bis',
     'operationReservation' => 'Einsatzvorbehalt',
     'label'                => 'Bezeichnung',
-    'name'                 => 'Name',
+    'name'                 => 'Name / THW-Kennzeichen',
     'radioName'            => 'Funkrufname',
     'category'             => 'Kategorie',
     'issi'                 => 'ISSI (Funkrufkennung)',
@@ -221,13 +221,22 @@ function stein_asset_name(array $a): string
     return $teile ? implode(' · ', array_unique($teile)) : 'Fahrzeug ' . (string)($a['id'] ?? '?');
 }
 
-/** Felder, in denen die Stein.APP ein Kennzeichen fuehren kann */
+/**
+ * Felder, die ein Kennzeichen enthalten können.
+ *
+ * Die Spezifikation kennt kein Feld dafür. In der Oberfläche der Stein.APP
+ * gibt es aber ein Feld "THW-Kennzeichen"; nach Lage der Dinge steckt es in
+ * "name" ("label" ist "Fahrzeug / Bez.", "radioName" der Funkrufname). Deshalb
+ * werden erst mögliche eigene Felder gelesen, dann "name" und "label" als
+ * Ganzes – steht dort genau ein Kennzeichen, wird es unverändert übernommen.
+ */
 const STEIN_KENNZEICHEN_FELDER = ['licensePlate', 'numberPlate', 'plate', 'kennzeichen', 'registration'];
 
+/** Felder, die ein Kennzeichen als ganzen Wert führen können */
+const STEIN_KENNZEICHEN_TEXTE = ['name', 'label'];
+
 /**
- * Kennzeichen eines Assets: erst die eigenen Felder, sonst aus den Texten.
- * Erkannt werden THW-Kennzeichen (THW-84321) und gewöhnliche deutsche
- * Kennzeichen (HH-AB 123). Gibt null zurück, wenn keines zu finden ist.
+ * Kennzeichen eines Assets. Gibt null zurück, wenn keines zu finden ist.
  */
 function stein_plate(array $asset): ?string
 {
@@ -237,11 +246,36 @@ function stein_plate(array $asset): ?string
             return mb_substr($wert, 0, 20);
         }
     }
+    // Steht in einem Feld nur das Kennzeichen, so wie es dort geschrieben ist
+    foreach (STEIN_KENNZEICHEN_TEXTE as $feld) {
+        $treffer = stein_plate_exact((string)($asset[$feld] ?? ''));
+        if ($treffer !== null) {
+            return $treffer;
+        }
+    }
+    // Sonst aus den Texten heraussuchen
     foreach (['label', 'name', 'radioName', 'comment'] as $feld) {
         $treffer = stein_plate_in_text((string)($asset[$feld] ?? ''));
         if ($treffer !== null) {
             return $treffer;
         }
+    }
+    return null;
+}
+
+/**
+ * Enthält das Feld nur ein Kennzeichen? Dann kommt es unverändert zurück –
+ * bis auf doppelte Leerzeichen. So bleibt "THW 99020" auch "THW 99020".
+ */
+function stein_plate_exact(string $text): ?string
+{
+    $text = trim((string)preg_replace('/\s+/u', ' ', $text));
+    if ($text === '') {
+        return null;
+    }
+    if (preg_match('/^THW[ -]?\d{3,6}$/iu', $text)
+        || preg_match('/^[A-ZÄÖÜ]{1,3}-[A-ZÄÖÜ]{1,2} ?\d{1,4}[EH]?$/u', $text)) {
+        return mb_substr($text, 0, 20);
     }
     return null;
 }
@@ -317,6 +351,13 @@ function stein_diff(array $alt, array $neu): array
     return $out;
 }
 
+/** Der zuletzt gespeicherte Stand eines Fahrzeugs aus der Stein.APP */
+function stein_stored_asset(array $vehicle): array
+{
+    $alt = json_decode((string)($vehicle['stein_daten'] ?? ''), true);
+    return is_array($alt) ? $alt : [];
+}
+
 /** Datum aus der Stein.APP auf unser Format kürzen */
 function stein_date(mixed $wert): ?string
 {
@@ -352,10 +393,12 @@ function stein_vehicle_data(array $asset, array $vehicle): array
         $data['funkrufname'] = mb_substr($funk, 0, 80);
     }
 
-    // Kennzeichen: die Schnittstelle hat kein eigenes Feld dafür, es steckt
-    // in den Texten. Ein selbst eingetragenes Kennzeichen bleibt stehen.
+    // Kennzeichen. Ein selbst eingetragenes bleibt stehen; eines, das beim
+    // letzten Mal von hier kam, zieht nach, wenn es sich dort geändert hat.
     $kennzeichen = stein_plate($asset);
-    if ($kennzeichen !== null && trim((string)($vehicle['kennzeichen'] ?? '')) === '') {
+    $jetzt = trim((string)($vehicle['kennzeichen'] ?? ''));
+    $vorher = stein_plate(stein_stored_asset($vehicle));
+    if ($kennzeichen !== null && $kennzeichen !== $jetzt && ($jetzt === '' || $jetzt === $vorher)) {
         $data['kennzeichen'] = $kennzeichen;
     }
     return $data;
@@ -453,8 +496,7 @@ function stein_sync(bool $erzwingen = false): array
             }
         }
 
-        $alt = json_decode((string)($vehicle['stein_daten'] ?? ''), true);
-        $alt = is_array($alt) ? $alt : [];
+        $alt = stein_stored_asset($vehicle);
         $erstkontakt = $alt === [];
 
         foreach (stein_diff($alt, $asset) as $d) {
@@ -492,6 +534,7 @@ function stein_sync(bool $erzwingen = false): array
                 'art'      => 'stein',
                 'titel'    => 'Kennzeichen aus der Stein.APP übernommen',
                 'feld'     => 'kennzeichen',
+                'alt_wert' => (string)($vehicle['kennzeichen'] ?? ''),
                 'neu_wert' => $daten['kennzeichen'],
                 'quelle'   => 'stein',
                 'autor'    => 'Stein.APP',

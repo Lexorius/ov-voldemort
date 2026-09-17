@@ -1,5 +1,19 @@
 # Änderungsverlauf
 
+## 1.12.1
+
+### Kennzeichen aus dem Feld der Stein.APP
+
+- Das Feld *THW-Kennzeichen* der Stein.APP wird jetzt direkt genommen. In der
+  Schnittstelle heißt es nicht so – es steckt im Feld `name`. Steht dort nur
+  ein Kennzeichen, wird es **unverändert** übernommen, also auch „THW 99020"
+  mit Leerzeichen statt Bindestrich.
+- Ändert sich das Kennzeichen in der Stein.APP, zieht es nach – aber nur, wenn
+  es von dort stammt. Ein von Hand eingetragenes bleibt stehen.
+- In der Fahrzeugakte gibt es für die Administration den aufklappbaren Punkt
+  **Rohdaten aus der Stein.APP**. Dort steht, was die Schnittstelle je Fahrzeug
+  wirklich liefert.
+
 ## 1.12.0
 
 ### Stein.APP: Abgleich an die Spezifikation angepasst
