@@ -173,12 +173,13 @@ prüft den Header `X-Secret` und gleicht dann ab, höchstens alle 30 Sekunden.
 Die Adresse muss von außen erreichbar sein – über Ingress allein ist sie das
 nicht.
 
-**Kennzeichen:** In der Oberfläche der Stein.APP gibt es das Feld
-*THW-Kennzeichen*; in der Schnittstelle taucht es unter keinem eigenen Namen
-auf – es steckt im Feld `name` (`label` ist „Fahrzeug / Bez.", `radioName` der
-Funkrufname). Die Anwendung nimmt deshalb den Inhalt von `name` unverändert,
-wenn dort nur ein Kennzeichen steht (also auch „THW 99020" mit Leerzeichen),
-und sucht sonst in Bezeichnung, Funkrufname und Bemerkung danach.
+**Kennzeichen:** Das Feld *THW-Kennzeichen* der Oberfläche heißt in der
+Schnittstelle `name` (`label` ist „Fahrzeug / Bez.", `radioName` der
+Funkrufname). Die Anwendung nimmt den Inhalt von `name` unverändert, wenn dort
+nur ein Kennzeichen steht – auch „THW 99020" mit Leerzeichen –, und sucht sonst
+in Bezeichnung, Funkrufname und Bemerkung danach. Bei allem, was kein Fahrzeug
+ist (Fachgruppen, Anbaugeräte, Zelte), ist `name` leer; solche Einträge werden
+daher nicht automatisch angelegt.
 
 Ein von Hand eingetragenes Kennzeichen bleibt stehen. Kam es dagegen aus der
 Stein.APP und ändert sich dort, zieht es nach – der Wechsel steht in der

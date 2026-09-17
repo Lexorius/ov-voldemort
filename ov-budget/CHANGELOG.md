@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 1.13.1
+
+- An echten Daten eines Ortsverbands geprüft: Das THW-Kennzeichen steht in der
+  Schnittstelle im Feld `name`. Auch die Schreibweise mit zwei Leerzeichen
+  („THW  99020") wird sauber übernommen.
+- Beim automatischen Anlegen ist die **Bezeichnung** jetzt das Feld
+  „Fahrzeug / Bez." der Stein.APP (`label`) – vorher wurden Bezeichnung,
+  Funkrufname und Kennzeichen aneinandergehängt.
+
 ## 1.13.0
 
 ### Antworten der Stein.APP mitschneiden

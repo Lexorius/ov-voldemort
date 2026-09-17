@@ -220,6 +220,17 @@ function stein_userinfo(): array
     return stein_request('/userinfo');
 }
 
+/**
+ * Bezeichnung für die Fahrzeugakte: das Feld "label" der Stein.APP
+ * ("Fahrzeug / Bez." in der Oberfläche). Nur wenn es leer ist, wird
+ * ersatzweise etwas zusammengesetzt.
+ */
+function stein_vehicle_label(array $asset): string
+{
+    $label = trim((string)($asset['label'] ?? ''));
+    return $label !== '' ? $label : stein_asset_name($asset);
+}
+
 /** Anzeigename eines Assets, wie in der Stein.APP zusammengesetzt */
 function stein_asset_name(array $a): string
 {
@@ -473,7 +484,7 @@ function stein_sync(bool $erzwingen = false): array
                 // Für die Zuordnung in der Verwaltung merken – ohne neuen Aufruf
                 $offen[] = [
                     'id'          => $assetId,
-                    'name'        => stein_asset_name($asset),
+                    'name'        => stein_vehicle_label($asset),
                     'status'      => stein_value_text('status', $asset['status'] ?? ''),
                     'funk'        => trim((string)($asset['radioName'] ?? '')),
                     'kennzeichen' => (string)($kennzeichen ?? ''),
@@ -486,7 +497,7 @@ function stein_sync(bool $erzwingen = false): array
                 continue;
             }
             $id = db_insert('vehicles', [
-                'bezeichnung'    => mb_substr(stein_asset_name($asset), 0, 150),
+                'bezeichnung'    => mb_substr(stein_vehicle_label($asset), 0, 150),
                 'funkrufname'    => mb_substr(trim((string)($asset['radioName'] ?? '')), 0, 80),
                 'kennzeichen'    => $kennzeichen,
                 'stein_asset_id' => $assetId,
@@ -495,7 +506,7 @@ function stein_sync(bool $erzwingen = false): array
             journal_add($id, [
                 'art'    => 'anlage',
                 'titel'  => 'Fahrzeugakte aus der Stein.APP angelegt',
-                'text'   => stein_asset_name($asset) . ' · Kennzeichen ' . $kennzeichen,
+                'text'   => stein_vehicle_label($asset) . ' · Kennzeichen ' . $kennzeichen,
                 'quelle' => 'stein',
                 'autor'  => 'Stein.APP',
             ], null);
