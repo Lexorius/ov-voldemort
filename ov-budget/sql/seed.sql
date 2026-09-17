@@ -284,6 +284,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('stein_auto_anlegen','0','Unbekannte Fahrzeuge selbst anlegen','Nur mit erkennbarem Kennzeichen; alles andere wird in der Verwaltung zum Zuordnen angeboten','bool','Stein.APP',60),
 ('stein_base_url','https://stein.app/api/api/ext','Basis-URL der Schnittstelle','Nur aendern, wenn die Stein.APP umzieht','text','Stein.APP',70),
 ('stein_timeout','15','Zeitlimit je Abruf (Sekunden)','','number','Stein.APP',80),
+('stein_webhook_secret','','Webhook-Secret der Stein.APP','Aus den OV-Einstellungen der Stein.APP. Damit meldet die Stein.APP Aenderungen sofort an /webhook.php - das ist schonender als regelmaessiges Abfragen. Die Adresse muss dafuer von aussen erreichbar sein.','password','Stein.APP',85),
 ('cron_token','','Token fuer den automatischen Abruf','Aufruf: /cron.php?token=... (leer = nur ueber die Kommandozeile)','text','Stein.APP',90),
 ('budget_modul_name','Budget','Bezeichnung des Budget-Moduls','','text','Budget',5),
 ('budget_intro','Gesamtbudget des Haushaltsjahres, laufende Ausgaben und die daraus entstehende Uebersicht.','Einleitungstext im Budget-Modul','','textarea','Budget',6),

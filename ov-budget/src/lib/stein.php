@@ -4,19 +4,36 @@ declare(strict_types=1);
 /*
  * Anbindung an die Stein.APP
  *
- * Die Schnittstelle hat ein striktes Rate Limit. Deshalb:
+ * Grenzen laut Dokumentation (https://stein.app/api/api/doc/intro):
+ *   - höchstens 20 Anfragen je Minute und IP; wer darüber liegt, wird für
+ *     eine Stunde gesperrt
+ *   - der Zugriff ist auf IP-Adressen aus Deutschland beschränkt; von
+ *     außerhalb antwortet die Schnittstelle mit 404
+ *   - regelmäßiges Abfragen im Minutentakt ist unerwünscht, empfohlen
+ *     werden Webhooks (siehe stein_webhook_handle)
+ *
+ * Deshalb:
  *   - je Abgleich genau EIN Aufruf (die Liste aller Fahrzeuge der BU-ID)
  *   - zwischen zwei Abgleichen liegt mindestens das eingestellte Intervall
  *     (Vorgabe 10 Minuten); der Abstand wird serverseitig erzwungen
- *   - antwortet die Schnittstelle mit 429, wird eine Pause eingelegt
+ *   - antwortet die Schnittstelle mit 429, wird eine Stunde pausiert
  *
  * Aus dem Vollbild wird der Unterschied zum letzten Stand berechnet; jede
  * Änderung landet als Eintrag in der Fahrzeugakte.
  *
- * Endpunkt: GET <base>/assets/?buIds=<BU-ID>, Bearer-Token im Header.
+ * Endpunkte (siehe https://stein.app/api/api/doc/api-doc.yaml):
+ *   GET <base>/assets/?buIds=<BU-ID>   Liste aller Fahrzeuge einer Einheit
+ *   GET <base>/userinfo                wer der Schlüssel ist (für den Test)
+ *
+ * Ein Feld für das Kennzeichen kennt die Schnittstelle nicht. Es wird
+ * deshalb aus Bezeichnung, Name, Funkrufname und Bemerkung gelesen; die
+ * Namen möglicher künftiger Felder stehen in STEIN_KENNZEICHEN_FELDER.
  */
 
 class SteinException extends RuntimeException {}
+
+/** Kürzester Abstand zwischen zwei Abrufen, die ein Webhook auslöst (Sekunden) */
+const STEIN_WEBHOOK_MINDESTABSTAND = 30;
 
 /** Status der Stein.APP → Schlüssel unserer Liste fahrzeug_status */
 const STEIN_STATUS = [
@@ -38,8 +55,12 @@ const STEIN_FELDER = [
     'name'                 => 'Name',
     'radioName'            => 'Funkrufname',
     'category'             => 'Kategorie',
-    'issi'                 => 'ISSI',
+    'issi'                 => 'ISSI (Funkrufkennung)',
+    'deleted'              => 'In der Stein.APP gelöscht',
 ];
+
+/** Felder, die als Ja/Nein gelesen werden */
+const STEIN_JANEIN = ['operationReservation', 'deleted'];
 
 function stein_enabled(): bool
 {
@@ -78,17 +99,22 @@ function stein_wait_reason(int $letzter, int $intervallMinuten, int $pauseBis, i
     return null;
 }
 
-/** Ein Aufruf gegen die Schnittstelle. Gibt die Liste der Assets zurück. */
-function stein_fetch_assets(): array
+/**
+ * Ein Aufruf gegen die Schnittstelle. $pfad beginnt mit einem Schrägstrich.
+ * Gibt die entpackte Antwort als Feld zurück.
+ */
+function stein_request(string $pfad, array $query = []): array
 {
     $base = rtrim((string)setting('stein_base_url', 'https://stein.app/api/api/ext'), '/');
     $key  = trim((string)setting('stein_api_key', ''));
-    $bu   = trim((string)setting('stein_bu_id', ''));
-    if ($base === '' || $key === '' || $bu === '') {
+    if ($base === '' || $key === '') {
         throw new SteinException('Die Stein.APP ist nicht vollständig eingerichtet (Schlüssel und BU-ID).');
     }
 
-    $url = $base . '/assets/?buIds=' . rawurlencode($bu);
+    $url = $base . $pfad;
+    if ($query) {
+        $url .= (str_contains($url, '?') ? '&' : '?') . http_build_query($query);
+    }
     $timeout = max(3, setting_int('stein_timeout', 15));
     $headers = ['Accept: application/json', 'Authorization: Bearer ' . $key];
 
@@ -127,12 +153,23 @@ function stein_fetch_assets(): array
     }
 
     if ($code === 429) {
-        $pause = max(2, stein_interval_minutes() * 3);
+        // Laut Dokumentation sperrt die Stein.APP die IP dann für eine Stunde
+        $pause = max(60, stein_interval_minutes());
         setting_save('stein_pause_bis', (string)(time() + $pause * 60));
-        throw new SteinException(sprintf('Rate Limit erreicht (HTTP 429). Der Abruf pausiert %d Minuten.', $pause));
+        throw new SteinException(sprintf(
+            'Rate Limit erreicht (HTTP 429). Die Stein.APP sperrt die IP dafür bis zu einer Stunde; '
+            . 'der Abruf pausiert %d Minuten.',
+            $pause
+        ));
     }
     if ($code === 401 || $code === 403) {
         throw new SteinException('Die Stein.APP hat den Schlüssel abgelehnt (HTTP ' . $code . ').');
+    }
+    if ($code === 404) {
+        throw new SteinException(
+            'Die Stein.APP antwortete mit HTTP 404. Entweder stimmt die Adresse nicht, '
+            . 'oder der Zugriff kommt von einer IP-Adresse außerhalb Deutschlands – die ist dort gesperrt.'
+        );
     }
     if ($code < 200 || $code >= 300) {
         throw new SteinException('Die Stein.APP antwortete mit HTTP ' . $code . '.');
@@ -142,7 +179,19 @@ function stein_fetch_assets(): array
     if (!is_array($daten)) {
         throw new SteinException('Die Antwort der Stein.APP war kein gültiges JSON.');
     }
-    // Je nach Endpunkt steckt die Liste in einem Umschlag
+    return $daten;
+}
+
+/** Die Fahrzeuge der eingestellten BU-ID holen – ein Aufruf je Abgleich */
+function stein_fetch_assets(): array
+{
+    $bu = trim((string)setting('stein_bu_id', ''));
+    if ($bu === '') {
+        throw new SteinException('Die Stein.APP ist nicht vollständig eingerichtet (Schlüssel und BU-ID).');
+    }
+    $daten = stein_request('/assets/', ['buIds' => $bu]);
+
+    // Je nach Fassung steckt die Liste in einem Umschlag
     foreach (['data', 'items', 'assets', 'content'] as $schluessel) {
         if (isset($daten[$schluessel]) && is_array($daten[$schluessel])) {
             $daten = $daten[$schluessel];
@@ -150,6 +199,15 @@ function stein_fetch_assets(): array
         }
     }
     return array_values(array_filter($daten, 'is_array'));
+}
+
+/**
+ * Verbindungstest: fragt, wem der Schlüssel gehört. Ein eigener, sehr
+ * kleiner Endpunkt – er belastet den Abruf der Fahrzeuge nicht.
+ */
+function stein_userinfo(): array
+{
+    return stein_request('/userinfo');
 }
 
 /** Anzeigename eines Assets, wie in der Stein.APP zusammengesetzt */
@@ -220,13 +278,16 @@ function stein_plate_in_text(string $text): ?string
 /** Wert eines Stein-Feldes lesbar machen */
 function stein_value_text(string $feld, mixed $wert): string
 {
+    if (in_array($feld, STEIN_JANEIN, true)) {
+        return $wert ? 'ja' : 'nein';
+    }
     if ($wert === null || $wert === '') {
         return '';
     }
     if ($feld === 'status') {
         return STEIN_STATUS[(string)$wert][1] ?? (string)$wert;
     }
-    if ($feld === 'operationReservation') {
+    if (in_array($feld, STEIN_JANEIN, true)) {
         return $wert ? 'ja' : 'nein';
     }
     if (in_array($feld, ['huValidUntil', 'spValidUntil'], true)) {
@@ -290,6 +351,13 @@ function stein_vehicle_data(array $asset, array $vehicle): array
     if ($funk !== '' && trim((string)($vehicle['funkrufname'] ?? '')) === '') {
         $data['funkrufname'] = mb_substr($funk, 0, 80);
     }
+
+    // Kennzeichen: die Schnittstelle hat kein eigenes Feld dafür, es steckt
+    // in den Texten. Ein selbst eingetragenes Kennzeichen bleibt stehen.
+    $kennzeichen = stein_plate($asset);
+    if ($kennzeichen !== null && trim((string)($vehicle['kennzeichen'] ?? '')) === '') {
+        $data['kennzeichen'] = $kennzeichen;
+    }
     return $data;
 }
 
@@ -347,7 +415,8 @@ function stein_sync(bool $erzwingen = false): array
             // Automatisch anlegen nur mit erkennbarem Kennzeichen – sonst
             // entstehen Akten für Anhänger, Aggregate und Geräte
             $kennzeichen = stein_plate($asset);
-            if (!setting_bool('stein_auto_anlegen', false) || $kennzeichen === null) {
+            $geloescht = !empty($asset['deleted']);
+            if (!setting_bool('stein_auto_anlegen', false) || $kennzeichen === null || $geloescht) {
                 // Für die Zuordnung in der Verwaltung merken – ohne neuen Aufruf
                 $offen[] = [
                     'id'          => $assetId,
@@ -355,8 +424,11 @@ function stein_sync(bool $erzwingen = false): array
                     'status'      => stein_value_text('status', $asset['status'] ?? ''),
                     'funk'        => trim((string)($asset['radioName'] ?? '')),
                     'kennzeichen' => (string)($kennzeichen ?? ''),
-                    'grund'       => $kennzeichen === null && setting_bool('stein_auto_anlegen', false)
-                        ? 'kein Kennzeichen erkannt' : '',
+                    'grund'       => $geloescht
+                        ? 'in der Stein.APP gelöscht'
+                        : ($kennzeichen === null && setting_bool('stein_auto_anlegen', false)
+                            ? 'kein Kennzeichen erkannt' : ''),
+                    'geloescht'   => $geloescht,
                 ];
                 continue;
             }
@@ -414,7 +486,19 @@ function stein_sync(bool $erzwingen = false): array
             ], null);
         }
 
-        db_update('vehicles', stein_vehicle_data($asset, $vehicle), 'id = ?', [(int)$vehicle['id']]);
+        $daten = stein_vehicle_data($asset, $vehicle);
+        if (isset($daten['kennzeichen']) && !$erstkontakt) {
+            journal_add((int)$vehicle['id'], [
+                'art'      => 'stein',
+                'titel'    => 'Kennzeichen aus der Stein.APP übernommen',
+                'feld'     => 'kennzeichen',
+                'neu_wert' => $daten['kennzeichen'],
+                'quelle'   => 'stein',
+                'autor'    => 'Stein.APP',
+            ], null);
+            $aenderungen++;
+        }
+        db_update('vehicles', $daten, 'id = ?', [(int)$vehicle['id']]);
     }
 
     setting_save('stein_offene_assets', json_encode($offen));
@@ -462,6 +546,50 @@ function stein_sync_if_due(): void
     }
 }
 
+/**
+ * Webhook der Stein.APP entgegennehmen.
+ *
+ * Die Stein.APP meldet nur, WAS sich geändert hat, nicht die Daten selbst.
+ * Wir holen daraufhin den gewohnten Vollstand – das ist ein Aufruf und
+ * bleibt weit unter dem Limit von 20 Anfragen je Minute.
+ *
+ * Rückgabe: [HTTP-Code, Meldung]
+ */
+function stein_webhook_handle(string $secret, string $body): array
+{
+    $erwartet = trim((string)setting('stein_webhook_secret', ''));
+    if ($erwartet === '') {
+        return [403, 'Der Webhook ist nicht eingerichtet (kein Secret hinterlegt).'];
+    }
+    if (!hash_equals($erwartet, trim($secret))) {
+        return [403, 'Falsches Secret.'];
+    }
+    if (!stein_enabled()) {
+        return [200, 'Der Abgleich mit der Stein.APP ist ausgeschaltet – nichts zu tun.'];
+    }
+
+    $daten = json_decode($body, true);
+    $posten = is_array($daten) && isset($daten['items']) && is_array($daten['items']) ? $daten['items'] : [];
+    $fahrzeuge = 0;
+    foreach ($posten as $i) {
+        if (is_array($i) && ($i['type'] ?? '') === 'asset') {
+            $fahrzeuge++;
+        }
+    }
+    if ($posten && $fahrzeuge === 0) {
+        return [200, 'Keine Fahrzeugänderung enthalten – kein Abruf nötig.'];
+    }
+
+    // Auch bei vielen Meldungen kurz hintereinander nur selten abrufen
+    $abstand = time() - stein_last_sync();
+    if ($abstand < STEIN_WEBHOOK_MINDESTABSTAND) {
+        return [200, sprintf('Erst vor %d Sekunden abgerufen – der Stand ist aktuell.', $abstand)];
+    }
+
+    $res = stein_sync(true);
+    return [$res['status'] === 'fehler' ? 502 : 200, $res['message']];
+}
+
 /** Assets, die noch keinem Fahrzeug zugeordnet sind (aus dem letzten Abruf) */
 function stein_pending_assets(): array
 {
@@ -472,7 +600,7 @@ function stein_pending_assets(): array
     $out = [];
     foreach ($liste as $a) {
         if (is_array($a) && ($a['id'] ?? '') !== '' && !vehicle_by_stein((string)$a['id'])) {
-            $out[] = $a + ['name' => '', 'status' => '', 'funk' => '', 'kennzeichen' => '', 'grund' => ''];
+            $out[] = $a + ['name' => '', 'status' => '', 'funk' => '', 'kennzeichen' => '', 'grund' => '', 'geloescht' => false];
         }
     }
     return $out;

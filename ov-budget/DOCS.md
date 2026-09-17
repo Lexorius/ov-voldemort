@@ -148,14 +148,43 @@ eigenen Feld der Stein.APP oder im Text (z. B. „GKW 1 (THW-84321)" oder
 stattdessen in der Liste zum Zuordnen. Typbezeichnungen wie „MLW-IV 2" gelten
 nicht als Kennzeichen.
 
-**Rate Limit:** Die Schnittstelle bremst bei zu vielen Abrufen. Deshalb macht
-der Abgleich je Durchgang genau **einen** Aufruf (die Liste aller Fahrzeuge der
-BU-ID) und hält den eingestellten Abstand ein (Vorgabe 10 Minuten). Antwortet
-die Schnittstelle mit HTTP 429, pausiert der Abruf automatisch. Im Add-on ruft
-der Container `cron.php` jede Minute auf; ob wirklich abgerufen wird,
-entscheidet das Intervall. Außerhalb des Add-ons: `cron.php` per Cron aufrufen
-(Token unter *Einstellungen → Stein.APP*) oder den Abgleich beim Öffnen des
-Fahrzeugmoduls laufen lassen.
+**Grenzen der Schnittstelle** (laut <https://stein.app/api/api/doc/intro>):
+
+* höchstens **20 Anfragen je Minute und IP-Adresse**; wer darüber liegt, wird
+  **eine Stunde gesperrt**
+* der Zugriff ist auf **IP-Adressen aus Deutschland** beschränkt, von außerhalb
+  antwortet die Stein.APP mit 404
+* regelmäßiges Abfragen im Minutentakt ist unerwünscht, empfohlen werden
+  Webhooks
+
+Der Abgleich macht deshalb je Durchgang genau **einen** Aufruf (die Liste aller
+Fahrzeuge der BU-ID) und hält den eingestellten Abstand ein (Vorgabe 10
+Minuten). Bei HTTP 429 pausiert er eine Stunde. Im Add-on ruft der Container
+`cron.php` jede Minute auf; ob wirklich abgerufen wird, entscheidet das
+Intervall. Außerhalb des Add-ons: `cron.php` per Cron aufrufen (Token unter
+*Einstellungen → Stein.APP*) oder den Abgleich beim Öffnen des Fahrzeugmoduls
+laufen lassen.
+
+**Webhook statt Abfragen:** Die Stein.APP kann Änderungen selbst melden. Dazu in
+der Stein.APP bei den Einstellungen des Ortsverbands die Adresse dieser
+Anwendung mit dem Pfad `/webhook.php` eintragen und das dort angezeigte
+**Webhook-Secret** unter *Einstellungen → Stein.APP* hinterlegen. Die Anwendung
+prüft den Header `X-Secret` und gleicht dann ab, höchstens alle 30 Sekunden.
+Die Adresse muss von außen erreichbar sein – über Ingress allein ist sie das
+nicht.
+
+**Kennzeichen:** Ein eigenes Feld dafür hat die Schnittstelle nicht. Die
+Anwendung liest das Kennzeichen deshalb aus Bezeichnung, Name, Funkrufname und
+Bemerkung (THW-84321 oder HB-XY 456) und trägt es ein, solange im Fahrzeug
+keines steht. Ein selbst eingetragenes Kennzeichen bleibt unangetastet.
+
+**Was der Abgleich sonst führt:** Status, Bemerkung, HU, SP, Einsatzvorbehalt,
+Funkrufname, Kategorie, ISSI sowie die Löschung eines Fahrzeugs in der
+Stein.APP. Der volle Stand steht in der Fahrzeugakte unter *Stand in der
+Stein.APP*.
+
+Mit **Verbindung testen** in *Verwaltung → Stein.APP* lässt sich der Schlüssel
+prüfen, ohne die Fahrzeuge abzurufen.
 
 ## Rollen
 

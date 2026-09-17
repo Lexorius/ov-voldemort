@@ -61,6 +61,27 @@ switch (post_str('action')) {
         }, e($res['message']));
         break;
 
+    case 'stein_test':
+        if (!can('admin')) {
+            flash('error', 'Das darf nur die Administration.');
+            break;
+        }
+        $zurueck = url('admin_stein');
+        try {
+            $info = stein_userinfo();
+            $wer = trim((string)($info['name'] ?? '')) ?: 'unbekannt';
+            $mail = trim((string)($info['email'] ?? ''));
+            flash('success', sprintf(
+                'Verbindung steht. Der Schlüssel gehört zu %s%s%s.',
+                e($wer),
+                $mail !== '' ? ' (' . e($mail) . ')' : '',
+                isset($info['scope']) ? ', Bereich ' . e((string)$info['scope']) : ''
+            ));
+        } catch (SteinException $ex) {
+            flash('error', e($ex->getMessage()));
+        }
+        break;
+
     case 'stein_assign':
         if (!can('admin')) {
             flash('error', 'Das darf nur die Administration.');

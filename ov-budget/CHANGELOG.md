@@ -1,5 +1,42 @@
 # Änderungsverlauf
 
+## 1.12.0
+
+### Stein.APP: Abgleich an die Spezifikation angepasst
+
+Grundlage sind jetzt die offizielle Spezifikation
+(<https://stein.app/api/api/doc/api-doc.yaml>) und die Hinweise unter
+<https://stein.app/api/api/doc/intro>.
+
+- **Kennzeichen** werden übernommen. Ein eigenes Feld dafür kennt die
+  Schnittstelle nicht, deshalb liest die Anwendung es aus Bezeichnung, Name,
+  Funkrufname und Bemerkung – und trägt es ein, solange im Fahrzeug keines
+  steht. Das gilt nicht mehr nur beim Anlegen, sondern bei jedem Abgleich; der
+  Fund steht in der Fahrzeugakte.
+- Neu mitgeführt wird, ob ein Fahrzeug **in der Stein.APP gelöscht** wurde.
+  Gelöschte Fahrzeuge werden nicht mehr automatisch angelegt.
+- Fehlende Ja/Nein-Angaben gelten als „nein". Der erste Abgleich meldet dadurch
+  keinen Wechsel des Einsatzvorbehalts mehr, den es nie gab.
+- Die Fahrzeugakte zeigt unter **Stand in der Stein.APP** Status, Kategorie,
+  ISSI, Einsatzvorbehalt, Bemerkung, HU und SP sowie wer dort zuletzt etwas
+  geändert hat. Die Verknüpfung lässt sich dort auch lösen.
+- **Verbindung testen** in *Verwaltung → Stein.APP* prüft den Schlüssel über
+  einen eigenen, sehr kleinen Endpunkt, ohne die Fahrzeuge abzurufen.
+
+### Rate Limit und Webhook
+
+- Die Grenzen sind jetzt bekannt: **20 Anfragen je Minute und IP**, sonst
+  **eine Stunde Sperre**. Nach HTTP 429 pausiert der Abruf deshalb eine Stunde
+  statt wie bisher 30 Minuten.
+- Antwortet die Stein.APP mit 404, weist die Meldung auf die Sperre für
+  IP-Adressen außerhalb Deutschlands hin.
+- **Webhook**: Neue Adresse `/webhook.php`. Trägt man sie in der Stein.APP ein
+  und hinterlegt das Webhook-Secret in den Einstellungen, meldet die Stein.APP
+  Änderungen von selbst – das ist schonender als regelmäßiges Abfragen. Der
+  Aufruf wird über den Header `X-Secret` geprüft; abgeglichen wird höchstens
+  alle 30 Sekunden. Die Adresse muss von außen erreichbar sein.
+- *Verwaltung → Stein.APP* nennt die Grenzen und den Zustand des Webhooks.
+
 ## 1.11.2
 
 - Beschriftungen und Hinweistexte der Einstellungen werden beim Start

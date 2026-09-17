@@ -116,12 +116,51 @@ $arten = [
     <?php endif; ?>
 
     <?php if ($vehicle['stein_asset_id']): ?>
-      <h3 class="mt">Stein.APP</h3>
+      <h3 class="mt">Stand in der Stein.APP</h3>
+      <?php
+      $stein = json_decode((string)($vehicle['stein_daten'] ?? ''), true);
+      $stein = is_array($stein) ? $stein : [];
+      $steinZeilen = [
+          'Status'           => stein_value_text('status', $stein['status'] ?? null),
+          'Kategorie'        => (string)($stein['category'] ?? ''),
+          'ISSI'             => (string)($stein['issi'] ?? ''),
+          'Einsatzvorbehalt' => isset($stein['operationReservation']) ? stein_value_text('operationReservation', $stein['operationReservation']) : '',
+          'Bemerkung'        => (string)($stein['comment'] ?? ''),
+          'HU gültig bis'    => stein_value_text('huValidUntil', $stein['huValidUntil'] ?? null),
+          'SP gültig bis'    => stein_value_text('spValidUntil', $stein['spValidUntil'] ?? null),
+      ];
+      if (!empty($stein['deleted'])) {
+          $steinZeilen['Hinweis'] = 'In der Stein.APP gelöscht';
+      }
+      $steinZeilen = array_filter($steinZeilen, static fn($v) => trim((string)$v) !== '');
+      ?>
+      <?php if ($steinZeilen): ?>
+        <dl class="dl">
+          <?php foreach ($steinZeilen as $label => $wert): ?>
+            <div class="dl__item"><div class="dl__label"><?= e((string)$label) ?></div>
+              <div class="dl__value"><?= e((string)$wert) ?></div></div>
+          <?php endforeach; ?>
+        </dl>
+      <?php endif; ?>
       <p class="small muted">
         Verknüpft mit <span class="mono"><?= e((string)$vehicle['stein_asset_id']) ?></span>.
         <?php if ($vehicle['stein_sync_at']): ?>Zuletzt abgeglichen am <?= e(de_datetime($vehicle['stein_sync_at'])) ?>.<?php endif; ?>
-        Änderungen dort stehen unten im Journal.
+        <?php if (!empty($stein['lastModifiedBy'])): ?>
+          Zuletzt geändert dort von <?= e((string)$stein['lastModifiedBy']) ?><?php if (!empty($stein['lastModified'])): ?>
+          am <?= e(de_datetime(str_replace('T', ' ', substr((string)$stein['lastModified'], 0, 19)))) ?><?php endif; ?>.
+        <?php endif; ?>
+        Änderungen stehen unten im Journal.
       </p>
+      <?php if (can('manage_vehicles')): ?>
+        <form method="post" action="<?= e(url('vehicle_action')) ?>" class="inline-form">
+          <?= csrf_field() ?>
+          <input type="hidden" name="action" value="stein_unassign">
+          <input type="hidden" name="vehicle_id" value="<?= (int)$vehicle['id'] ?>">
+          <button class="btn btn--sec btn--sm" type="submit"
+                  data-confirm="Verknüpfung mit der Stein.APP lösen? Der Abgleich fasst dieses Fahrzeug dann nicht mehr an.">
+            Verknüpfung lösen</button>
+        </form>
+      <?php endif; ?>
     <?php endif; ?>
   </section>
 </div>

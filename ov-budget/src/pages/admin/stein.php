@@ -19,4 +19,5 @@ render('admin/stein', [
          FROM vehicles WHERE stein_asset_id IS NOT NULL AND stein_asset_id <> '' ORDER BY bezeichnung"
     ),
     'protokoll'  => db_all('SELECT * FROM stein_log ORDER BY id DESC LIMIT 20'),
+    'webhook'    => trim((string)setting('stein_webhook_secret', '')) !== '',
 ]);
