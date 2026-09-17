@@ -495,6 +495,7 @@ CREATE TABLE IF NOT EXISTS vehicles (
   id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
   bezeichnung       VARCHAR(150) NOT NULL,
   funkrufname       VARCHAR(80)  NOT NULL DEFAULT '',
+  issi              VARCHAR(80)  NOT NULL DEFAULT '',
   kennzeichen       VARCHAR(20)  NOT NULL DEFAULT '',
   kennung           VARCHAR(40)  NOT NULL DEFAULT '',
   typ_id            INT UNSIGNED NULL,

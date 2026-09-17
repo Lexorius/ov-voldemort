@@ -452,6 +452,13 @@ function ovb_migrate(PDO $pdo, callable $say): void
         }
     }
     $merken('006_setting_texte');
+
+    /* ---- 007: ISSI am Fahrzeug ---- */
+    if (ovb_table_exists($pdo, 'vehicles') && !ovb_column_exists($pdo, 'vehicles', 'issi')) {
+        $pdo->exec("ALTER TABLE vehicles ADD COLUMN issi VARCHAR(80) NOT NULL DEFAULT '' AFTER funkrufname");
+        $say('Fahrzeuge um die ISSI erweitert.');
+    }
+    $merken('007_vehicle_issi');
 }
 
 /**

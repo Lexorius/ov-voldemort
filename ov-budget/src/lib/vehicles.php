@@ -14,6 +14,7 @@ declare(strict_types=1);
 const FZ_JOURNAL_FELDER = [
     'bezeichnung'       => 'Bezeichnung',
     'funkrufname'       => 'Funkrufname',
+    'issi'              => 'ISSI',
     'kennzeichen'       => 'Kennzeichen',
     'kennung'           => 'Kennung',
     'typ_id'            => 'Art',
@@ -54,9 +55,10 @@ function vehicle_query(array $f = []): array
     $w = [];
     $p = [];
     if (!empty($f['q'])) {
-        $w[] = '(v.bezeichnung LIKE ? OR v.funkrufname LIKE ? OR v.kennzeichen LIKE ? OR v.kennung LIKE ?)';
+        $w[] = '(v.bezeichnung LIKE ? OR v.funkrufname LIKE ? OR v.kennzeichen LIKE ?'
+            . ' OR v.kennung LIKE ? OR v.issi LIKE ?)';
         $like = '%' . $f['q'] . '%';
-        array_push($p, $like, $like, $like, $like);
+        array_push($p, $like, $like, $like, $like, $like);
     }
     foreach (['status_id', 'typ_id', 'fachgruppe_id'] as $col) {
         if (!empty($f[$col])) {
@@ -294,6 +296,7 @@ function vehicle_save_from_post(?array $existing, array $user): array
     $data = [
         'bezeichnung'       => mb_substr($bezeichnung, 0, 150),
         'funkrufname'       => mb_substr(post_str('funkrufname'), 0, 80),
+        'issi'              => mb_substr(post_str('issi'), 0, 80),
         'kennzeichen'       => mb_substr(post_str('kennzeichen'), 0, 20),
         'kennung'           => mb_substr(post_str('kennung'), 0, 40),
         'typ_id'            => post_int('typ_id'),

@@ -62,7 +62,8 @@ $fristBadges = static function (array $liste): string {
   <div class="grid3">
     <div class="field">
       <label for="q">Suche</label>
-      <input type="search" id="q" name="q" value="<?= e((string)$filter['q']) ?>" placeholder="Bezeichnung, Kennzeichen, Funkrufname">
+      <input type="search" id="q" name="q" value="<?= e((string)$filter['q']) ?>"
+             placeholder="Bezeichnung, Kennzeichen, Funkrufname, ISSI">
     </div>
     <div class="field">
       <label for="status_id">Status</label>
@@ -101,6 +102,9 @@ $fristBadges = static function (array $liste): string {
                     $v['funkrufname'], $v['kennzeichen'], $v['typ_label'], $v['fachgruppe_label'],
                 ]))) ?>
               </div>
+              <?php if (trim((string)$v['issi']) !== ''): ?>
+                <div class="item__sub small">ISSI <?= e((string)$v['issi']) ?></div>
+              <?php endif; ?>
             </div>
             <?php if ((int)$v['offene_auftraege'] > 0): ?>
               <div class="item__amount"><?= (int)$v['offene_auftraege'] ?></div>

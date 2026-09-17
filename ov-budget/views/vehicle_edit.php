@@ -33,6 +33,14 @@ $isNew = empty($vehicle['id']);
                placeholder="Heros Musterstadt 24/51">
       </div>
       <div class="field">
+        <label for="issi">ISSI (Funkrufkennung)</label>
+        <input type="text" id="issi" name="issi" value="<?= e((string)($vehicle['issi'] ?? '')) ?>"
+               placeholder="7120087">
+        <?php if (!empty($vehicle['stein_asset_id'])): ?>
+          <small class="muted">Kommt aus der Stein.APP, solange hier nichts Eigenes steht.</small>
+        <?php endif; ?>
+      </div>
+      <div class="field">
         <label for="kennzeichen">Kennzeichen</label>
         <input type="text" id="kennzeichen" name="kennzeichen" value="<?= e((string)$vehicle['kennzeichen']) ?>"
                placeholder="THW-12345">

@@ -1,5 +1,19 @@
 # Änderungsverlauf
 
+## 1.14.0
+
+### ISSI am Fahrzeug
+
+- Fahrzeuge haben jetzt ein eigenes Feld für die **ISSI** (Funkrufkennung).
+  Sie steht in der Fahrzeugliste unter Bezeichnung und Funkrufname, in den
+  Stammdaten der Akte und lässt sich im Formular pflegen. Mehrere Kennungen
+  in einem Feld („7120028, 7120029, 7140977") sind möglich.
+- Die **Suche** in der Fahrzeugliste findet Fahrzeuge auch über die ISSI.
+- Der Abgleich mit der Stein.APP übernimmt die ISSI, solange im Fahrzeug nichts
+  Eigenes steht; ändert sie sich dort, zieht sie nach. Jede Änderung steht im
+  Journal.
+- Bestehende Installationen bekommen die Spalte beim nächsten Start.
+
 ## 1.13.1
 
 - An echten Daten eines Ortsverbands geprüft: Das THW-Kennzeichen steht in der

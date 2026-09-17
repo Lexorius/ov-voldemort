@@ -409,17 +409,24 @@ function stein_vehicle_data(array $asset, array $vehicle): array
             $data[$nach] = $d;
         }
     }
-    $funk = trim((string)($asset['radioName'] ?? ''));
-    if ($funk !== '' && trim((string)($vehicle['funkrufname'] ?? '')) === '') {
-        $data['funkrufname'] = mb_substr($funk, 0, 80);
+    // Funkrufname und ISSI führt die Stein.APP; Eigenes bleibt stehen, von
+    // dort Übernommenes zieht nach
+    $vorher = stein_stored_asset($vehicle);
+    foreach (['radioName' => 'funkrufname', 'issi' => 'issi'] as $von => $nach) {
+        $wert = trim((string)($asset[$von] ?? ''));
+        $jetzt = trim((string)($vehicle[$nach] ?? ''));
+        $alt = trim((string)($vorher[$von] ?? ''));
+        if ($wert !== '' && $wert !== $jetzt && ($jetzt === '' || $jetzt === $alt)) {
+            $data[$nach] = mb_substr($wert, 0, 80);
+        }
     }
 
     // Kennzeichen. Ein selbst eingetragenes bleibt stehen; eines, das beim
     // letzten Mal von hier kam, zieht nach, wenn es sich dort geändert hat.
     $kennzeichen = stein_plate($asset);
     $jetzt = trim((string)($vehicle['kennzeichen'] ?? ''));
-    $vorher = stein_plate(stein_stored_asset($vehicle));
-    if ($kennzeichen !== null && $kennzeichen !== $jetzt && ($jetzt === '' || $jetzt === $vorher)) {
+    $frueher = stein_plate($vorher);
+    if ($kennzeichen !== null && $kennzeichen !== $jetzt && ($jetzt === '' || $jetzt === $frueher)) {
         $data['kennzeichen'] = $kennzeichen;
     }
     return $data;
@@ -499,6 +506,7 @@ function stein_sync(bool $erzwingen = false): array
             $id = db_insert('vehicles', [
                 'bezeichnung'    => mb_substr(stein_vehicle_label($asset), 0, 150),
                 'funkrufname'    => mb_substr(trim((string)($asset['radioName'] ?? '')), 0, 80),
+                'issi'           => mb_substr(trim((string)($asset['issi'] ?? '')), 0, 80),
                 'kennzeichen'    => $kennzeichen,
                 'stein_asset_id' => $assetId,
                 'status_id'      => list_default_id('fahrzeug_status'),

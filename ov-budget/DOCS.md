@@ -92,7 +92,8 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   bestellen darf, wird unter *Verwaltung → Bestellberechtigungen* je Rolle und
   je Funktion festgelegt – etwa Ortsbeauftragte:r unbegrenzt, Zugführer:in bis
   500 €, Verwaltungsbeauftragte:r bestellt.
-* **Fahrzeuge** – Fahrzeugstamm mit Fristen (HU, SP, UVV) und je Fahrzeug eine
+* **Fahrzeuge** – Fahrzeugstamm mit Funkrufname, **ISSI**, Kennzeichen und
+  Fristen (HU, SP, UVV) und je Fahrzeug eine
   **Fahrzeugakte**. Ihr **Journal** wird nur ergänzt: Einträge lassen sich weder
   ändern noch löschen, jeder trägt die Prüfsumme des vorherigen, und
   „Journal auf Veränderungen prüfen" rechnet die Kette nach. Schadensmeldungen
@@ -187,8 +188,9 @@ Fahrzeugakte. Welches Feld bei euch was enthält, zeigt in der Akte der
 aufklappbare Punkt *Rohdaten aus der Stein.APP* (nur für die Administration).
 
 **Was der Abgleich sonst führt:** Status, Bemerkung, HU, SP, Einsatzvorbehalt,
-Funkrufname, Kategorie, ISSI sowie die Löschung eines Fahrzeugs in der
-Stein.APP. Der volle Stand steht in der Fahrzeugakte unter *Stand in der
+Funkrufname, **ISSI**, Kategorie sowie die Löschung eines Fahrzeugs in der
+Stein.APP. Funkrufname und ISSI landen im Fahrzeug, solange dort nichts Eigenes
+steht; ändern sie sich in der Stein.APP, ziehen sie nach. Der volle Stand steht in der Fahrzeugakte unter *Stand in der
 Stein.APP*.
 
 Mit **Verbindung testen** in *Verwaltung → Stein.APP* lässt sich der Schlüssel

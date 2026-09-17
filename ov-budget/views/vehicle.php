@@ -56,6 +56,7 @@ $arten = [
       $zeilen = [
           'Bezeichnung'       => $vehicle['bezeichnung'],
           'Funkrufname'       => $vehicle['funkrufname'],
+          'ISSI'              => $vehicle['issi'],
           'Kennzeichen'       => $vehicle['kennzeichen'],
           'Kennung'           => $vehicle['kennung'],
           'Art'               => $vehicle['typ_label'],

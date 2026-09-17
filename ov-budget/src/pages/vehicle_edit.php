@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 render('vehicle_edit', [
     'title'   => $vehicle && !empty($vehicle['id']) ? 'Fahrzeug bearbeiten' : 'Fahrzeug anlegen',
     'vehicle' => $vehicle ?? [
-        'id' => null, 'bezeichnung' => '', 'funkrufname' => '', 'kennzeichen' => '', 'kennung' => '',
+        'id' => null, 'bezeichnung' => '', 'funkrufname' => '', 'issi' => '', 'kennzeichen' => '', 'kennung' => '',
         'typ_id' => null, 'fachgruppe_id' => null, 'status_id' => list_default_id('fahrzeug_status'),
         'hersteller' => '', 'modell' => '', 'baujahr' => null, 'fahrgestellnummer' => '',
         'erstzulassung' => null, 'km_stand' => null, 'betriebsstunden' => null,
