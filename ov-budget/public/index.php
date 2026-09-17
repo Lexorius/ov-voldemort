@@ -53,6 +53,14 @@ $routes = [
     'talking_points'     => 'talking_points',
     'talking_point_edit' => 'talking_point_edit',
 
+    // Fahrzeuge
+    'vehicles'           => 'vehicles',
+    'vehicle'            => 'vehicle',
+    'vehicle_edit'       => 'vehicle_edit',
+    'vehicle_action'     => 'vehicle_action',
+    'vehicle_order'      => 'vehicle_order',
+    'vehicle_order_edit' => 'vehicle_order_edit',
+
     'download'           => 'download',
 
     // Administration
@@ -63,6 +71,7 @@ $routes = [
     'admin_list_edit'    => 'admin/list_edit',
     'admin_settings'     => 'admin/settings',
     'admin_order_rights' => 'admin/order_rights',
+    'admin_stein'        => 'admin/stein',
     'admin_divera'       => 'admin/divera',
     'admin_divera_form'  => 'admin/divera_form',
     'admin_log'          => 'admin/log',

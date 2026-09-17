@@ -23,6 +23,11 @@ const LIST_KEYS = [
     'einheit'         => 'Mengeneinheiten',
     'todo_status'     => 'Status (Aufgaben)',
     'todo_prioritaet' => 'Prioritäten (Aufgaben)',
+    'fahrzeug_typ'    => 'Fahrzeugarten',
+    'fahrzeug_status' => 'Status (Fahrzeuge)',
+    'auftrag_art'     => 'Auftragsarten (Fahrzeuge)',
+    'auftrag_status'  => 'Status (Auftraege)',
+    'auftrag_prioritaet' => 'Prioritaeten (Auftraege)',
     'anlage_typ'      => 'Anlagen-Typen',
 ];
 

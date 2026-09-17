@@ -489,6 +489,126 @@ CREATE TABLE IF NOT EXISTS bestell_rechte (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- Fahrzeuge und Fahrzeugakte
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS vehicles (
+  id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  bezeichnung       VARCHAR(150) NOT NULL,
+  funkrufname       VARCHAR(80)  NOT NULL DEFAULT '',
+  kennzeichen       VARCHAR(20)  NOT NULL DEFAULT '',
+  kennung           VARCHAR(40)  NOT NULL DEFAULT '',
+  typ_id            INT UNSIGNED NULL,
+  fachgruppe_id     INT UNSIGNED NULL,
+  status_id         INT UNSIGNED NULL,
+  hersteller        VARCHAR(80)  NOT NULL DEFAULT '',
+  modell            VARCHAR(80)  NOT NULL DEFAULT '',
+  baujahr           SMALLINT     NULL,
+  fahrgestellnummer VARCHAR(40)  NOT NULL DEFAULT '',
+  erstzulassung     DATE         NULL,
+  km_stand          INT UNSIGNED NULL,
+  betriebsstunden   INT UNSIGNED NULL,
+  hu_bis            DATE         NULL,
+  sp_bis            DATE         NULL,
+  uvv_bis           DATE         NULL,
+  standort          VARCHAR(150) NOT NULL DEFAULT '',
+  notiz             TEXT         NULL,
+  extra             TEXT         NULL,
+  stein_asset_id    VARCHAR(60)  NULL,
+  stein_status      VARCHAR(30)  NOT NULL DEFAULT '',
+  stein_daten       MEDIUMTEXT   NULL,
+  stein_sync_at     DATETIME     NULL,
+  is_active         TINYINT(1)   NOT NULL DEFAULT 1,
+  ausgemustert_am   DATE         NULL,
+  created_by        INT UNSIGNED NULL,
+  created_at        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_stein_asset (stein_asset_id),
+  KEY idx_fz_status (status_id),
+  CONSTRAINT fk_fz_typ FOREIGN KEY (typ_id)         REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_fz_fg  FOREIGN KEY (fachgruppe_id)  REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_fz_sta FOREIGN KEY (status_id)      REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_fz_cb  FOREIGN KEY (created_by)     REFERENCES users(id)      ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Journal der Fahrzeugakte: wird nur angehaengt, nie geaendert oder geloescht.
+-- Jede Zeile traegt den Hash der vorigen Zeile, dadurch faellt jede nachtraegliche
+-- Aenderung beim Pruefen auf (siehe journal_verify in src/lib/vehicles.php).
+CREATE TABLE IF NOT EXISTS vehicle_journal (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  vehicle_id  INT UNSIGNED NOT NULL,
+  created_at  DATETIME     NOT NULL,
+  user_id     INT UNSIGNED NULL,
+  autor       VARCHAR(150) NOT NULL DEFAULT '',
+  quelle      ENUM('mensch','stein','system') NOT NULL DEFAULT 'mensch',
+  art         VARCHAR(40)  NOT NULL DEFAULT 'notiz',
+  titel       VARCHAR(200) NOT NULL DEFAULT '',
+  text        TEXT         NULL,
+  feld        VARCHAR(60)  NOT NULL DEFAULT '',
+  alt_wert    VARCHAR(255) NOT NULL DEFAULT '',
+  neu_wert    VARCHAR(255) NOT NULL DEFAULT '',
+  ref_typ     VARCHAR(20)  NOT NULL DEFAULT '',
+  ref_id      INT UNSIGNED NULL,
+  prev_hash   CHAR(64)     NOT NULL DEFAULT '',
+  hash        CHAR(64)     NOT NULL DEFAULT '',
+  PRIMARY KEY (id),
+  KEY idx_vj (vehicle_id, id),
+  CONSTRAINT fk_vj_fz   FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE,
+  CONSTRAINT fk_vj_user FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Instandsetzungsauftraege und Schadensmeldungen
+CREATE TABLE IF NOT EXISTS vehicle_orders (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  vehicle_id    INT UNSIGNED NOT NULL,
+  nummer        VARCHAR(20)  NOT NULL DEFAULT '',
+  titel         VARCHAR(200) NOT NULL,
+  beschreibung  TEXT         NULL,
+  art_id        INT UNSIGNED NULL,
+  prioritaet_id INT UNSIGNED NULL,
+  status_id     INT UNSIGNED NULL,
+  werkstatt     VARCHAR(150) NOT NULL DEFAULT '',
+  auftragsnummer VARCHAR(60) NOT NULL DEFAULT '',
+  gemeldet_von  VARCHAR(150) NOT NULL DEFAULT '',
+  gemeldet_am   DATE         NULL,
+  faellig_am    DATE         NULL,
+  erledigt_am   DATE         NULL,
+  km_stand      INT UNSIGNED NULL,
+  kosten_geschaetzt DECIMAL(12,2) NULL,
+  kosten_netto  DECIMAL(12,2) NULL,
+  ausfall       TINYINT(1)   NOT NULL DEFAULT 0,
+  todo_id       INT UNSIGNED NULL,
+  wish_id       INT UNSIGNED NULL,
+  created_by    INT UNSIGNED NULL,
+  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_vo_fz (vehicle_id),
+  KEY idx_vo_status (status_id),
+  CONSTRAINT fk_vo_fz   FOREIGN KEY (vehicle_id)    REFERENCES vehicles(id)   ON DELETE CASCADE,
+  CONSTRAINT fk_vo_art  FOREIGN KEY (art_id)        REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_vo_prio FOREIGN KEY (prioritaet_id) REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_vo_sta  FOREIGN KEY (status_id)     REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_vo_todo FOREIGN KEY (todo_id)       REFERENCES todos(id)      ON DELETE SET NULL,
+  CONSTRAINT fk_vo_wish FOREIGN KEY (wish_id)       REFERENCES wishes(id)     ON DELETE SET NULL,
+  CONSTRAINT fk_vo_cb   FOREIGN KEY (created_by)    REFERENCES users(id)      ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Protokoll der Stein.app-Abrufe (das Rate Limit macht Nachvollziehbarkeit wichtig)
+CREATE TABLE IF NOT EXISTS stein_log (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  status      VARCHAR(20)  NOT NULL DEFAULT 'ok',
+  assets      INT UNSIGNED NOT NULL DEFAULT 0,
+  zuordnungen INT UNSIGNED NOT NULL DEFAULT 0,
+  aenderungen INT UNSIGNED NOT NULL DEFAULT 0,
+  dauer_ms    INT UNSIGNED NOT NULL DEFAULT 0,
+  message     VARCHAR(500) NOT NULL DEFAULT '',
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_stein_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- Audit
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS audit_log (

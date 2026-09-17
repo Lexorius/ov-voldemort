@@ -156,6 +156,46 @@ INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_defa
 ('einladung_status','Keine Rueckmeldung','keine',   '#a16207',50,0,0);
 
 -- ---------- Besprechungsarten ----------
+-- ---------- Fahrzeuge ----------
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default, is_final) VALUES
+('fahrzeug_typ','Mannschaftstransportwagen (MTW)','mtw','#0369a1',10,0,0),
+('fahrzeug_typ','Gerätekraftwagen (GKW)',        'gkw','#b45309',20,0,0),
+('fahrzeug_typ','Lastkraftwagen',                'lkw','#7c3aed',30,0,0),
+('fahrzeug_typ','Anhänger',                      'anhaenger','#0d9488',40,0,0),
+('fahrzeug_typ','Gerät / Aggregat',              'geraet','#64748b',50,0,0),
+('fahrzeug_typ','Sonstiges Fahrzeug',            'sonstiges','#94a3b8',60,0,0);
+
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default, is_final) VALUES
+('fahrzeug_status','Einsatzbereit',          'einsatzbereit','#15803d',10,1,0),
+('fahrzeug_status','Bedingt einsatzbereit',  'bedingt','#a16207',20,0,0),
+('fahrzeug_status','Im Einsatz',             'im-einsatz','#0284c7',30,0,0),
+('fahrzeug_status','In Wartung / Werkstatt', 'wartung','#7c3aed',40,0,0),
+('fahrzeug_status','Nicht einsatzbereit',    'nicht-einsatzbereit','#b91c1c',50,0,0),
+('fahrzeug_status','Ausgemustert',           'ausgemustert','#64748b',60,0,1);
+
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default, is_final) VALUES
+('auftrag_art','Schadensmeldung',   'schaden','#b91c1c',10,1,0),
+('auftrag_art','Instandsetzung',    'instandsetzung','#c2410c',20,0,0),
+('auftrag_art','Wartung / Inspektion','wartung','#0284c7',30,0,0),
+('auftrag_art','Hauptuntersuchung / SP','hu','#7c3aed',40,0,0),
+('auftrag_art','UVV-Prüfung',       'uvv','#0d9488',50,0,0),
+('auftrag_art','Unfallschaden',     'unfall','#991b1b',60,0,0),
+('auftrag_art','Beschaffung / Umbau','umbau','#a16207',70,0,0);
+
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default, is_final) VALUES
+('auftrag_status','Gemeldet',       'gemeldet','#0284c7',10,1,0),
+('auftrag_status','Angenommen',     'angenommen','#1d4ed8',20,0,0),
+('auftrag_status','In der Werkstatt','werkstatt','#7c3aed',30,0,0),
+('auftrag_status','Teile bestellt', 'teile','#a16207',40,0,0),
+('auftrag_status','Erledigt',       'erledigt','#15803d',50,0,1),
+('auftrag_status','Verworfen',      'verworfen','#64748b',60,0,1);
+
+INSERT IGNORE INTO list_items (list_key, label, slug, color, weight, sort_order, is_default, is_final) VALUES
+('auftrag_prioritaet','Fahrzeug steht still','still','#b91c1c',30,10,0,0),
+('auftrag_prioritaet','Hoch',                'hoch','#c2410c',20,20,0,0),
+('auftrag_prioritaet','Normal',              'normal','#0284c7',10,30,1,0),
+('auftrag_prioritaet','Bei Gelegenheit',     'gelegenheit','#64748b',0,40,0,0);
+
 -- ---------- Teilnahme an Besprechungen ----------
 INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default, is_final) VALUES
 ('teilnahme_status','Eingeladen',       'eingeladen',   '#64748b',10,1,0),
@@ -229,6 +269,22 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('divera_import_status','neu','Status für importierte Wünsche','slug aus der Liste wunsch_status','text','Divera 24/7',80),
 ('divera_cron_token','','Token für den automatischen Abruf','Aufruf: /cron.php?token=... (leer = deaktiviert)','text','Divera 24/7',90),
 
+('fahrzeug_modul_name','Fahrzeuge','Bezeichnung des Fahrzeugmoduls','','text','Fahrzeuge',10),
+('fahrzeug_intro','Fahrzeuge des Ortsverbands mit Fahrzeugakte, Journal und Instandsetzungsauftraegen.','Einleitungstext im Fahrzeugmodul','','textarea','Fahrzeuge',20),
+('fahrzeug_user_darf_sehen','1','Alle Mitglieder duerfen Fahrzeuge sehen','Sonst nur Leitung und Administration','bool','Fahrzeuge',30),
+('fahrzeug_user_darf_melden','1','Alle Mitglieder duerfen Schaeden melden','Legt einen Auftrag an und schreibt ins Journal','bool','Fahrzeuge',40),
+('fahrzeug_frist_warnung_tage','30','Vorwarnung fuer HU, SP und UVV (Tage)','Ab wann eine Frist als bald faellig gilt','number','Fahrzeuge',50),
+('fahrzeug_extra_felder','','Zusaetzliche Felder fuer Fahrzeuge','Ein Feld pro Zeile, Format: schluessel|Beschriftung|typ (text,textarea,number,bool,date)','textarea','Fahrzeuge',60),
+
+('stein_aktiv','0','Stein.APP-Abgleich aktiv','Holt regelmaessig den Stand aller Fahrzeuge und schreibt Aenderungen ins Journal','bool','Stein.APP',10),
+('stein_api_key','','API-Schluessel (Bearer-Token)','Aus der Stein.APP, gleicher Schluessel wie fuer die Home-Assistant-Integration','password','Stein.APP',20),
+('stein_bu_id','','BU-ID des Ortsverbands','Nummer der Organisationseinheit in der Stein.APP','text','Stein.APP',30),
+('stein_intervall_minuten','10','Abstand zwischen zwei Abrufen (Minuten)','Die Schnittstelle hat ein striktes Rate Limit. Weniger als 10 Minuten sind nicht zu empfehlen.','number','Stein.APP',40),
+('stein_sync_beim_aufruf','1','Abgleich beim Oeffnen des Moduls','Nur, wenn der letzte Abruf laenger als das Intervall zurueckliegt','bool','Stein.APP',50),
+('stein_auto_anlegen','0','Unbekannte Fahrzeuge selbst anlegen','Sonst werden sie in der Verwaltung zum Zuordnen angeboten','bool','Stein.APP',60),
+('stein_base_url','https://stein.app/api/api/ext','Basis-URL der Schnittstelle','Nur aendern, wenn die Stein.APP umzieht','text','Stein.APP',70),
+('stein_timeout','15','Zeitlimit je Abruf (Sekunden)','','number','Stein.APP',80),
+('cron_token','','Token fuer den automatischen Abruf','Aufruf: /cron.php?token=... (leer = nur ueber die Kommandozeile)','text','Stein.APP',90),
 ('budget_modul_name','Budget','Bezeichnung des Budget-Moduls','','text','Budget',5),
 ('budget_intro','Gesamtbudget des Haushaltsjahres, laufende Ausgaben und die daraus entstehende Uebersicht.','Einleitungstext im Budget-Modul','','textarea','Budget',6),
 ('budget_rundung','0','Betraege in der Uebersicht runden','0 = centgenau, sonst auf 10, 100 oder 1000 runden. Betrifft nur die Budgetuebersicht, nicht die Listen.','select','Budget',35),

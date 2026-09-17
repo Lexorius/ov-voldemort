@@ -1,0 +1,149 @@
+<?php
+/** @var array $fahrzeuge @var array $fristen @var int $auffaellig @var array $filter
+ *  @var bool $alle @var array $auftraege @var bool $steinAktiv @var int $steinStand */
+$offen = 0;
+foreach ($fahrzeuge as $v) {
+    $offen += (int)$v['offene_auftraege'];
+}
+
+/** Fristen als Plaketten */
+$fristBadges = static function (array $liste): string {
+    $html = '';
+    foreach ($liste as $f) {
+        if ($f['status'] === 'ok') {
+            continue;
+        }
+        $farbe = $f['status'] === 'abgelaufen' ? '#b91c1c' : '#a16207';
+        $text = $f['label'] . ' ' . ($f['status'] === 'abgelaufen' ? 'abgelaufen' : 'bis ' . de_date($f['datum']));
+        $html .= '<span class="badge" style="background:' . $farbe . '">' . e($text) . '</span>';
+    }
+    return $html;
+};
+?>
+<div class="pagehead">
+  <div>
+    <h1><?= e((string)setting('fahrzeug_modul_name', 'Fahrzeuge')) ?></h1>
+    <p><?= nl2br(e((string)setting('fahrzeug_intro', ''))) ?></p>
+  </div>
+  <div class="btnrow">
+    <?php if (can('manage_vehicles')): ?>
+      <a class="btn" href="<?= e(url('vehicle_edit')) ?>">+ Fahrzeug</a>
+    <?php endif; ?>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat">
+    <div class="stat__label">Fahrzeuge</div>
+    <div class="stat__value"><?= count($fahrzeuge) ?></div>
+    <div class="stat__hint"><?= $alle ? 'mit ausgemusterten' : 'im Dienst' ?></div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Offene Aufträge</div>
+    <div class="stat__value"<?= $offen > 0 ? ' style="color:var(--warn)"' : '' ?>><?= $offen ?></div>
+    <div class="stat__hint">Instandsetzung und Meldungen</div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Fristen</div>
+    <div class="stat__value"<?= $auffaellig > 0 ? ' style="color:var(--bad)"' : '' ?>><?= $auffaellig ?></div>
+    <div class="stat__hint">HU, SP oder UVV fällig</div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Stein.APP</div>
+    <div class="stat__value" style="font-size:1.05rem">
+      <?= $steinAktiv ? ($steinStand > 0 ? e(date('H:i', $steinStand)) . ' Uhr' : 'wartet') : 'aus' ?>
+    </div>
+    <div class="stat__hint"><?= $steinAktiv ? 'letzter Abgleich' : 'nicht eingerichtet' ?></div>
+  </div>
+</div>
+
+<form class="card card--tight" method="get" data-autosubmit>
+  <input type="hidden" name="p" value="vehicles">
+  <div class="grid3">
+    <div class="field">
+      <label for="q">Suche</label>
+      <input type="search" id="q" name="q" value="<?= e((string)$filter['q']) ?>" placeholder="Bezeichnung, Kennzeichen, Funkrufname">
+    </div>
+    <div class="field">
+      <label for="status_id">Status</label>
+      <select id="status_id" name="status_id"><?= list_options('fahrzeug_status', $filter['status_id'], 'alle') ?></select>
+    </div>
+    <div class="field">
+      <label for="typ_id">Art</label>
+      <select id="typ_id" name="typ_id"><?= list_options('fahrzeug_typ', $filter['typ_id'], 'alle') ?></select>
+    </div>
+  </div>
+  <div class="field field--check">
+    <input type="checkbox" id="alle" name="alle" value="1"<?= $alle ? ' checked' : '' ?>>
+    <label for="alle">Ausgemusterte Fahrzeuge mit anzeigen</label>
+  </div>
+</form>
+
+<section class="card">
+  <div class="card__head">
+    <h2>Fahrzeuge</h2>
+    <span class="muted small"><?= count($fahrzeuge) ?></span>
+  </div>
+  <?php if (!$fahrzeuge): ?>
+    <div class="empty">Kein Fahrzeug gefunden.
+      <?php if (can('manage_vehicles')): ?><br><a href="<?= e(url('vehicle_edit')) ?>">Erstes Fahrzeug anlegen</a><?php endif; ?>
+    </div>
+  <?php else: ?>
+    <div class="itemlist">
+      <?php foreach ($fahrzeuge as $v): ?>
+        <a class="item<?= (int)$v['is_active'] ? '' : ' item--done' ?>" href="<?= e(url('vehicle', ['id' => $v['id']])) ?>"
+           style="border-left-color:<?= e($v['status_color'] ?: '#94a3b8') ?>">
+          <div class="item__top">
+            <div style="min-width:0">
+              <div class="item__title"><?= e($v['bezeichnung']) ?></div>
+              <div class="item__sub">
+                <?= e(implode(' · ', array_filter([
+                    $v['funkrufname'], $v['kennzeichen'], $v['typ_label'], $v['fachgruppe_label'],
+                ]))) ?>
+              </div>
+            </div>
+            <?php if ((int)$v['offene_auftraege'] > 0): ?>
+              <div class="item__amount"><?= (int)$v['offene_auftraege'] ?></div>
+            <?php endif; ?>
+          </div>
+          <div class="item__meta">
+            <?= badge($v['status_label'] ? ['label' => $v['status_label'], 'color' => $v['status_color']] : null, 'ohne Status') ?>
+            <?= $fristBadges($fristen[(int)$v['id']] ?? []) ?>
+            <?php if ((int)$v['offene_auftraege'] > 0): ?>
+              <span class="badge badge--outline"><?= (int)$v['offene_auftraege'] ?> offene(r) Auftrag/Aufträge</span>
+            <?php endif; ?>
+            <?php if ($v['stein_asset_id']): ?>
+              <span class="badge badge--outline" title="Mit der Stein.APP verbunden">Stein.APP</span>
+            <?php endif; ?>
+            <?php if (!(int)$v['is_active']): ?><span class="badge badge--muted">ausgemustert</span><?php endif; ?>
+          </div>
+        </a>
+      <?php endforeach; ?>
+    </div>
+  <?php endif; ?>
+</section>
+
+<?php if ($auftraege): ?>
+  <section class="card">
+    <h2>Offene Aufträge</h2>
+    <div class="tablewrap">
+      <table class="data">
+        <thead><tr><th>Nr.</th><th>Fahrzeug</th><th>Vorgang</th><th>Priorität</th><th>Status</th></tr></thead>
+        <tbody>
+        <?php foreach ($auftraege as $o): ?>
+          <tr>
+            <td class="mono small nowrap"><a href="<?= e(url('vehicle_order', ['id' => $o['id']])) ?>"><?= e($o['nummer']) ?></a></td>
+            <td class="small"><?= e($o['fahrzeug']) ?></td>
+            <td>
+              <a href="<?= e(url('vehicle_order', ['id' => $o['id']])) ?>"><?= e($o['titel']) ?></a>
+              <?php if ((int)$o['ausfall']): ?> <span class="badge" style="background:#b91c1c">Ausfall</span><?php endif; ?>
+            </td>
+            <td><?= badge($o['prio_label'] ? ['label' => $o['prio_label'], 'color' => $o['prio_color']] : null) ?></td>
+            <td><?= badge($o['status_label'] ? ['label' => $o['status_label'], 'color' => $o['status_color']] : null) ?></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<?php endif; ?>

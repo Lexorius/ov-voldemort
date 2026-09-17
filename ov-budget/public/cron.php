@@ -1,8 +1,11 @@
 <?php
 /**
- * Automatischer Divera-Abruf.
+ * Automatische Abrufe: Stein.APP und Divera 24/7.
  * Aufruf: /cron.php?token=...   (Token in den Einstellungen hinterlegen)
  * Alternativ per CLI: php public/cron.php
+ *
+ * Der Aufruf darf oft kommen (im Add-on jede Minute) – jeder Abruf prüft
+ * selbst, ob er an der Reihe ist.
  */
 declare(strict_types=1);
 
@@ -13,17 +16,34 @@ if (!$cli) {
     header('Content-Type: text/plain; charset=UTF-8');
 }
 
-$token = (string)setting('divera_cron_token', '');
+// Beide Anbindungen teilen sich den Token; der alte Divera-Token gilt weiter
+$tokens = array_values(array_filter([
+    (string)setting('cron_token', ''),
+    (string)setting('divera_cron_token', ''),
+]));
 
 if (!$cli) {
-    if ($token === '') {
+    if (!$tokens) {
         http_response_code(403);
         exit("Der automatische Abruf ist nicht aktiviert (kein Token hinterlegt).\n");
     }
-    if (!hash_equals($token, (string)($_GET['token'] ?? ''))) {
+    $gegeben = (string)($_GET['token'] ?? '');
+    $passt = false;
+    foreach ($tokens as $t) {
+        $passt = hash_equals($t, $gegeben) || $passt;
+    }
+    if (!$passt) {
         http_response_code(403);
         exit("Ungültiges Token.\n");
     }
+}
+
+/* ---- Stein.APP: Vollbild abziehen, Änderungen in die Fahrzeugakten ---- */
+if (stein_enabled()) {
+    $res = stein_sync();
+    printf("Stein.APP: %s – %s\n", $res['status'], $res['message']);
+} else {
+    echo "Stein.APP: nicht eingerichtet.\n";
 }
 
 if (!divera_enabled()) {

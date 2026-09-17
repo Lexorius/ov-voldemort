@@ -50,6 +50,10 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
       <span class="mainnav__icon">☑</span><span><?= e(setting('todo_modul_name', 'Aufgaben')) ?></span></a>
     <a class="mainnav__item<?= nav_active('budget', 'budget_edit', 'budget_year_edit', 'expenses', 'expense_edit') ?>" href="<?= e(url('budget')) ?>">
       <span class="mainnav__icon">€</span><span>Budget</span></a>
+    <?php if (can('view_vehicles')): ?>
+      <a class="mainnav__item<?= nav_active('vehicles', 'vehicle', 'vehicle_edit', 'vehicle_order', 'vehicle_order_edit') ?>" href="<?= e(url('vehicles')) ?>">
+        <span class="mainnav__icon">⛟</span><span><?= e(setting('fahrzeug_modul_name', 'Fahrzeuge')) ?></span></a>
+    <?php endif; ?>
     <?php if (can('view_contacts')): ?>
       <a class="mainnav__item<?= nav_active('contacts', 'contact_edit', 'contact_groups', 'contact_group', 'contacts_import') ?>" href="<?= e(url('contacts')) ?>">
         <span class="mainnav__icon">✉</span><span><?= e(setting('kontakte_modul_name', 'Kontakte')) ?></span></a>
@@ -59,7 +63,7 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
         <span class="mainnav__icon">☰</span><span><?= e(setting('besprechung_modul_name', 'Besprechungen')) ?></span></a>
     <?php endif; ?>
     <?php if (can('admin')): ?>
-      <a class="mainnav__item<?= nav_active('admin', 'admin_users', 'admin_user_edit', 'admin_lists', 'admin_list_edit', 'admin_settings', 'admin_divera', 'admin_divera_form', 'admin_log') ?>" href="<?= e(url('admin')) ?>">
+      <a class="mainnav__item<?= nav_active('admin', 'admin_users', 'admin_user_edit', 'admin_lists', 'admin_list_edit', 'admin_settings', 'admin_divera', 'admin_divera_form', 'admin_order_rights', 'admin_stein', 'admin_log') ?>" href="<?= e(url('admin')) ?>">
         <span class="mainnav__icon">⚙</span><span>Verwaltung</span></a>
     <?php endif; ?>
   </div>

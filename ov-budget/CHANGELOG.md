@@ -1,5 +1,39 @@
 # Änderungsverlauf
 
+## 1.11.0
+
+### Neues Modul: Fahrzeuge mit Fahrzeugakte
+
+- **Fahrzeugstamm** mit Bezeichnung, Funkrufname, Kennzeichen, Art, Fachgruppe,
+  Technik, Standort und den Fristen **HU, SP und UVV**. Abgelaufene und bald
+  fällige Fristen stehen in der Liste, in der Akte und auf der Startseite.
+- **Fahrzeugakte mit Journal:** Jede Änderung an den Stammdaten, jeder
+  Auftragsschritt, jede Notiz und jede Meldung aus der Stein.APP landet als
+  Eintrag im Journal. Einträge lassen sich **nicht ändern und nicht löschen** –
+  es gibt dafür keine Funktion. Zusätzlich trägt jeder Eintrag die Prüfsumme
+  des vorherigen; „Journal auf Veränderungen prüfen" rechnet die Kette nach und
+  meldet, wenn jemand an der Datenbank vorbei etwas verändert oder gelöscht hat.
+- **Instandsetzungsaufträge** mit fortlaufender Nummer (z. B. 2026-0007), Art,
+  Priorität, Werkstatt, Auftragsnummer der Werkstatt, geschätzten und
+  tatsächlichen Kosten sowie einem Bearbeitungsstand von *Gemeldet* bis
+  *Erledigt*. Ein Auftrag kann als „Fahrzeug steht still" markiert werden.
+- Mitglieder dürfen **Schäden melden** und ins Journal schreiben (abschaltbar);
+  Stammdaten und Auftragsstand pflegt die Leitung.
+
+### Schnittstelle zur Stein.APP
+
+- Regelmäßiger Abgleich über `GET /assets/?buIds=<BU-ID>` mit Bearer-Token –
+  derselbe Schlüssel wie für die Home-Assistant-Integration *THW Stein*.
+- **Rate Limit ernst genommen:** je Durchgang genau ein Aufruf, dazwischen
+  mindestens das eingestellte Intervall (Vorgabe 10 Minuten). Bei HTTP 429
+  legt der Abruf von selbst eine Pause ein. Im Add-on ruft der Container
+  `cron.php` jede Minute auf; abgerufen wird nur, wenn das Intervall um ist.
+- Aus dem kompletten Stand wird der Unterschied zum letzten Abruf berechnet.
+  Änderungen an Status, Bemerkung, HU, SP, Einsatzvorbehalt, Funkrufname und
+  Kategorie stehen danach in der Fahrzeugakte.
+- *Verwaltung → Stein.APP*: Fahrzeuge zuordnen oder als neue Akte übernehmen,
+  Abgleich von Hand starten, Protokoll der Abrufe ansehen.
+
 ## 1.10.0
 
 ### Anwesenheit bei Besprechungen

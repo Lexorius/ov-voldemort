@@ -92,6 +92,16 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   bestellen darf, wird unter *Verwaltung → Bestellberechtigungen* je Rolle und
   je Funktion festgelegt – etwa Ortsbeauftragte:r unbegrenzt, Zugführer:in bis
   500 €, Verwaltungsbeauftragte:r bestellt.
+* **Fahrzeuge** – Fahrzeugstamm mit Fristen (HU, SP, UVV) und je Fahrzeug eine
+  **Fahrzeugakte**. Ihr **Journal** wird nur ergänzt: Einträge lassen sich weder
+  ändern noch löschen, jeder trägt die Prüfsumme des vorherigen, und
+  „Journal auf Veränderungen prüfen" rechnet die Kette nach. Schadensmeldungen
+  und **Instandsetzungsaufträge** mit fortlaufender Nummer, Werkstatt, Kosten
+  und Bearbeitungsstand – jeder Schritt landet in der Akte.
+* **Stein.APP** – Abgleich der Fahrzeuge über die Schnittstelle der Stein.APP
+  (gleicher API-Schlüssel wie für die Home-Assistant-Integration). Alle zehn
+  Minuten wird der komplette Stand geholt und jede Änderung an Status, HU, SP,
+  Bemerkung oder Einsatzvorbehalt in die Fahrzeugakte geschrieben.
 * **Kontakte** – Ansprechpartner bei Kommune, Feuerwehr, Presse, Firmen und
   Förderern, dazu Verteiler für Einladungen mit Rückmeldungen und einer
   CSV-Ausgabe für den Serienbrief. Neben den Standardfeldern lassen sich
@@ -109,6 +119,25 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   automatischem Abruf.
 * **Verwaltung** – Benutzer und Rollen (Mitglied, Leitung, Administration) sowie
   *alle* Auswahllisten, Texte und Regeln frei konfigurierbar.
+
+## Stein.APP einrichten
+
+1. In der Stein.APP einen API-Schlüssel erzeugen und die **BU-ID** des
+   Ortsverbands notieren – dieselben Angaben wie für die
+   Home-Assistant-Integration *THW Stein*.
+2. In der Anwendung unter *Verwaltung → Einstellungen → Stein.APP* Schlüssel
+   und BU-ID eintragen und den Abgleich einschalten.
+3. Unter *Verwaltung → Stein.APP* die Fahrzeuge zuordnen: entweder einer
+   bestehenden Fahrzeugakte oder als neue Akte.
+
+**Rate Limit:** Die Schnittstelle bremst bei zu vielen Abrufen. Deshalb macht
+der Abgleich je Durchgang genau **einen** Aufruf (die Liste aller Fahrzeuge der
+BU-ID) und hält den eingestellten Abstand ein (Vorgabe 10 Minuten). Antwortet
+die Schnittstelle mit HTTP 429, pausiert der Abruf automatisch. Im Add-on ruft
+der Container `cron.php` jede Minute auf; ob wirklich abgerufen wird,
+entscheidet das Intervall. Außerhalb des Add-ons: `cron.php` per Cron aufrufen
+(Token unter *Einstellungen → Stein.APP*) oder den Abgleich beim Öffnen des
+Fahrzeugmoduls laufen lassen.
 
 ## Rollen
 

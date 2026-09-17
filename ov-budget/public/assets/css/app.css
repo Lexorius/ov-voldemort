@@ -179,6 +179,19 @@ h3 { font-size: 1rem; }
   .attend__name { flex-basis: 100%; }
   .chip { padding: .28rem .5rem; font-size: .8rem; }
 }
+/* Journal der Fahrzeugakte */
+.journal__row {
+  display: flex; gap: .9rem; padding: .7rem 0; border-bottom: 1px solid var(--border);
+}
+.journal__row:last-child { border-bottom: 0; }
+.journal__when { flex: 0 0 9.5rem; font-size: .85rem; color: var(--ink-soft); }
+.journal__what { flex: 1 1 auto; min-width: 0; }
+.journal__row--stein { border-left: 3px solid var(--accent); padding-left: .7rem; }
+.journal__row--system { border-left: 3px solid var(--ink-mute); padding-left: .7rem; }
+@media (max-width: 640px) {
+  .journal__row { flex-direction: column; gap: .2rem; }
+  .journal__when { flex: none; }
+}
 .checkgrid { display: grid; gap: .4rem; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); }
 details > summary { cursor: pointer; font-weight: 600; padding: .3rem 0; }
 .card__head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .75rem; flex-wrap: wrap; }

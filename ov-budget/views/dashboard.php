@@ -1,7 +1,7 @@
 <?php
 /** @var array $user @var int $jahr @var array $wuensche @var array $statsW
  *  @var array $budgets @var float $budgetSumme @var float $budgetVerplant
- *  @var array $todos @var int $todosGesamt @var int $ueberfaellig @var array $zuBestellen */
+ *  @var array $todos @var int $todosGesamt @var int $ueberfaellig @var array $zuBestellen @var array $fahrzeuge */
 $warnProzent = setting_int('budget_warn_prozent', 90);
 $auslastung = $budgetSumme > 0 ? ($budgetVerplant / $budgetSumme) * 100 : 0;
 ?>
@@ -88,6 +88,36 @@ $auslastung = $budgetSumme > 0 ? ($budgetVerplant / $budgetSumme) * 100 : 0;
     <?php endif; ?>
   </section>
 </div>
+
+<?php if ($fahrzeuge): ?>
+  <section class="card">
+    <div class="card__head">
+      <h2>Fahrzeuge im Blick</h2>
+      <a class="btn btn--sec btn--sm" href="<?= e(url('vehicles')) ?>">Alle</a>
+    </div>
+    <div class="itemlist">
+      <?php foreach ($fahrzeuge as $w): $v = $w['fahrzeug']; ?>
+        <a class="item" href="<?= e(url('vehicle', ['id' => $v['id']])) ?>"
+           style="border-left-color:<?= $w['ausfall'] > 0 ? '#b91c1c' : '#a16207' ?>">
+          <div class="item__top"><div style="min-width:0">
+            <div class="item__title"><?= e($v['bezeichnung']) ?></div>
+            <div class="item__sub"><?= e(implode(' · ', array_filter([$v['funkrufname'], $v['kennzeichen']]))) ?></div>
+          </div></div>
+          <div class="item__meta">
+            <?php if ($w['ausfall'] > 0): ?>
+              <span class="badge" style="background:#b91c1c">steht still</span>
+            <?php endif; ?>
+            <?php foreach ($w['fristen'] as $f): ?>
+              <span class="badge" style="background:<?= $f['status'] === 'abgelaufen' ? '#b91c1c' : '#a16207' ?>">
+                <?= e($f['label']) ?> <?= $f['status'] === 'abgelaufen' ? 'abgelaufen' : 'bis ' . e(de_date($f['datum'])) ?>
+              </span>
+            <?php endforeach; ?>
+          </div>
+        </a>
+      <?php endforeach; ?>
+    </div>
+  </section>
+<?php endif; ?>
 
 <section class="card">
   <div class="card__head">

@@ -34,6 +34,24 @@ $ueberfaellig = array_filter(
     static fn($t) => $t['faellig_am'] && $t['faellig_am'] < date('Y-m-d')
 );
 
+// Fahrzeuge mit Handlungsbedarf: Frist abgelaufen oder bald fällig, oder Ausfall
+$fahrzeugWarnungen = [];
+if (can('view_vehicles')) {
+    $warnTage = setting_int('fahrzeug_frist_warnung_tage', 30);
+    foreach (vehicle_query(['nur_aktive' => 1]) as $v) {
+        $offen = array_values(array_filter(vehicle_deadlines($v, $warnTage), static fn($f) => $f['status'] !== 'ok'));
+        $ausfall = (int)db_val(
+            'SELECT COUNT(*) FROM vehicle_orders o LEFT JOIN list_items s ON s.id = o.status_id
+             WHERE o.vehicle_id = ? AND o.ausfall = 1 AND COALESCE(s.is_final,0) = 0',
+            [(int)$v['id']],
+            0
+        );
+        if ($offen || $ausfall > 0) {
+            $fahrzeugWarnungen[] = ['fahrzeug' => $v, 'fristen' => $offen, 'ausfall' => $ausfall];
+        }
+    }
+}
+
 render('dashboard', [
     'title'          => 'Übersicht',
     'user'           => $user,
@@ -47,4 +65,5 @@ render('dashboard', [
     'todosGesamt'    => count($meineTodos),
     'ueberfaellig'   => count($ueberfaellig),
     'zuBestellen'    => wish_query(['status_slug' => 'freigegeben']),
+    'fahrzeuge'      => $fahrzeugWarnungen,
 ]);

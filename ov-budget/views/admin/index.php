@@ -22,6 +22,8 @@
     <p>Bezeichnungen, Einleitungstexte, Pflichtfelder, Upload-Grenzen, Haushaltsjahr und Sicherheit.</p></div></a>
   <a href="<?= e(url('admin_order_rights')) ?>"><div class="card"><h3>Bestellberechtigungen</h3>
     <p>Wer Wünsche zur Bestellung freigeben darf – etwa Ortsbeauftragte:r, auch mit Betragsgrenze – und wer bestellt.</p></div></a>
+  <a href="<?= e(url('admin_stein')) ?>"><div class="card"><h3>Stein.APP</h3>
+    <p>Fahrzeuge aus der Stein.APP abgleichen, zuordnen und das Protokoll der Abrufe ansehen.</p></div></a>
   <a href="<?= e(url('admin_divera')) ?>"><div class="card"><h3>Divera 24/7</h3>
     <p>Zugang einrichten, Formulare abrufen, Felder zuordnen und Einträge als Wünsche übernehmen.</p></div></a>
   <a href="<?= e(url('budget')) ?>"><div class="card"><h3>Budget</h3>

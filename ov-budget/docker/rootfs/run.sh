@@ -145,6 +145,16 @@ php /app/src/cli/setup.php
 php-fpm -F &
 FPM_PID=$!
 
+# Regelmaessige Abrufe (Stein.APP, Divera). Der Aufruf kommt jede Minute,
+# ob wirklich abgerufen wird, entscheidet das jeweils eingestellte Intervall.
+(
+    while true; do
+        sleep 60
+        php /app/public/cron.php >/dev/null 2>&1 || true
+    done
+) &
+CRON_PID=$!
+
 log "nginx auf Port 8099"
 
 nginx -g 'daemon off;' &
