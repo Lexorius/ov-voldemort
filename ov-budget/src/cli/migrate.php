@@ -67,6 +67,7 @@ function ovb_list_item_refs(): array
         ['contacts',      'kategorie_id',          ''],
         ['contact_group_members', 'status_id',     ''],
         ['meetings',      'typ_id',                ''],
+        ['meeting_attendees', 'status_id',         ''],
         ['meeting_series', 'typ_id',               ''],
         ['talking_points', 'fachgruppe_id',        ''],
         ['talking_points', 'prioritaet_id',        ''],

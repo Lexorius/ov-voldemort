@@ -96,4 +96,14 @@
       }
     });
   });
+
+  // Statusauswahl der Anwesenheit sofort sichtbar machen
+  document.querySelectorAll('.chips').forEach(function (gruppe) {
+    gruppe.addEventListener('change', function (ev) {
+      if (!ev.target.matches('input[type=radio]')) return;
+      gruppe.querySelectorAll('.chip--radio').forEach(function (chip) {
+        chip.classList.toggle('is-on', chip.contains(ev.target));
+      });
+    });
+  });
 })();

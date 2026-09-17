@@ -156,6 +156,14 @@ INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_defa
 ('einladung_status','Keine Rueckmeldung','keine',   '#a16207',50,0,0);
 
 -- ---------- Besprechungsarten ----------
+-- ---------- Teilnahme an Besprechungen ----------
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default, is_final) VALUES
+('teilnahme_status','Eingeladen',       'eingeladen',   '#64748b',10,1,0),
+('teilnahme_status','Zugesagt',         'zugesagt',     '#0284c7',20,0,0),
+('teilnahme_status','Teilgenommen',     'teilgenommen', '#15803d',30,0,1),
+('teilnahme_status','Entschuldigt',     'entschuldigt', '#a16207',40,0,1),
+('teilnahme_status','Nicht erschienen', 'fehlt',        '#b91c1c',50,0,1);
+
 INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default) VALUES
 ('besprechung_typ','OV-Stab / Leitungsrunde',   'ov-stab',        '#003399',10,0),
 ('besprechung_typ','Zugfuehrerbesprechung',     'zugfuehrer',     '#1d4ed8',20,0),

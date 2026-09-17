@@ -1,5 +1,27 @@
 # Änderungsverlauf
 
+## 1.10.0
+
+### Anwesenheit bei Besprechungen
+
+- Jede Besprechung hat einen Abschnitt **Anwesenheit**. Je Person lässt sich
+  *Eingeladen*, *Zugesagt*, *Teilgenommen*, *Entschuldigt* oder *Nicht
+  erschienen* setzen, dazu eine kurze Bemerkung. Die Bezeichnungen und Farben
+  sind wie überall über die Auswahlliste *Status (Teilnahme)* änderbar.
+- **Eingeladene** kommen aus drei Quellen: Benutzer des Ortsverbands, Kontakte
+  (einzeln oder als ganzer Verteiler) und frei eingetippte Namen.
+- **Liste übernehmen:** Bei einem Termin ohne Teilnehmerliste bietet die
+  Anwendung die Liste des letzten Termins derselben Serie oder Besprechungsart
+  zum Übernehmen an; der Status beginnt dann wieder bei *eingeladen*.
+- Sammelknöpfe setzen alle noch offenen Einträge auf einmal, etwa „Alle offenen:
+  waren da". Über der Liste stehen die Zahlen: wie viele da waren, entschuldigt
+  oder nicht erschienen.
+- Im **Protokoll-Ausdruck** stehen Anwesende, Entschuldigte und Nicht
+  Erschienene mit Namen, in der **Tagesordnung** die Eingeladenen. Das bisherige
+  Freitextfeld bleibt als Ergänzung erhalten.
+- Mitglieder ohne Verwaltungsrecht sehen die Liste, ändern können sie nur
+  Leitung und Administration.
+
 ## 1.9.0
 
 ### Bestellberechtigungen nach Rolle und Funktion

@@ -17,6 +17,7 @@ const LIST_KEYS = [
     'einladung_status' => 'Status (Einladungen)',
     'besprechung_typ' => 'Besprechungsarten',
     'tp_status'       => 'Status (Talking Points)',
+    'teilnahme_status' => 'Status (Teilnahme)',
     'dringlichkeit'   => 'Dringlichkeiten',
     'wunsch_status'   => 'Status (Wünsche)',
     'einheit'         => 'Mengeneinheiten',

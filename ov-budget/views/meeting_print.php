@@ -1,5 +1,6 @@
 <?php
-/** @var array $meeting @var array $punkte @var array $zeiten @var int $gesamt @var string $art */
+/** @var array $meeting @var array $punkte @var array $zeiten @var int $gesamt @var string $art
+ *  @var array $teilnehmer */
 $protokoll = $art === 'protokoll';
 $label = tp_label();
 $ovName = (string)setting('ov_name', '');
@@ -70,11 +71,29 @@ $ovName = (string)setting('ov_name', '');
   <?php if ($meeting['leitung']): ?><tr><td>Leitung</td><td><?= e($meeting['leitung']) ?></td></tr><?php endif; ?>
   <?php if ($protokoll): ?>
     <tr><td>Protokoll</td><td><?= e((string)$meeting['protokoll_von'] ?: '–') ?></td></tr>
-    <?php if ($meeting['teilnehmer']): ?>
-      <tr><td>Anwesend</td><td><?= nl2br(e((string)$meeting['teilnehmer'])) ?></td></tr>
+    <?php
+    $anwesend = attendance_by_status($teilnehmer, ANWESEND_SLUG);
+    $entschuldigt = attendance_by_status($teilnehmer, ENTSCHULDIGT_SLUG);
+    $fehlten = attendance_by_status($teilnehmer, FEHLT_SLUG);
+    $freitext = trim((string)$meeting['teilnehmer']);
+    ?>
+    <?php if ($anwesend || $freitext !== ''): ?>
+      <tr><td>Anwesend</td><td>
+        <?= $anwesend ? e(implode(', ', $anwesend)) : '' ?>
+        <?php if ($freitext !== ''): ?><?= $anwesend ? '<br>' : '' ?><?= nl2br(e($freitext)) ?><?php endif; ?>
+      </td></tr>
+    <?php endif; ?>
+    <?php if ($entschuldigt): ?>
+      <tr><td>Entschuldigt</td><td><?= e(implode(', ', $entschuldigt)) ?></td></tr>
+    <?php endif; ?>
+    <?php if ($fehlten): ?>
+      <tr><td>Nicht erschienen</td><td><?= e(implode(', ', $fehlten)) ?></td></tr>
     <?php endif; ?>
   <?php else: ?>
     <tr><td>Dauer</td><td>etwa <?= e(minutes_human($gesamt)) ?></td></tr>
+    <?php if ($teilnehmer): ?>
+      <tr><td>Eingeladen</td><td><?= e(implode(', ', array_map('attendance_name', $teilnehmer))) ?></td></tr>
+    <?php endif; ?>
   <?php endif; ?>
 </table>
 

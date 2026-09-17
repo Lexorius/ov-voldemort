@@ -101,6 +101,9 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   Tagesordnung setzen, während der Sitzung Ergebnisse festhalten und daraus
   Aufgaben machen. Tagesordnung und Protokoll zum Drucken. Regelmäßige
   Termine wie „alle 2 Wochen montags" oder „jeden 2. Montag im Monat" als Serie.
+  **Anwesenheit:** Eingeladene aus dem Ortsverband, aus den Kontakten (auch ganze
+  Verteiler) oder als freier Name; je Person teilgenommen, entschuldigt oder
+  nicht erschienen. Die Zählung steht über der Liste, die Namen im Protokoll.
 * **Divera 24/7** – Formulare abrufen, Felder frei zuordnen und Einträge als
   Wünsche übernehmen. Mit Vorschau, Dubletten-Erkennung und optionalem
   automatischem Abruf.

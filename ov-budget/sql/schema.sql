@@ -418,6 +418,26 @@ CREATE TABLE IF NOT EXISTS meetings (
   CONSTRAINT fk_meet_cb  FOREIGN KEY (created_by) REFERENCES users(id)      ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Anwesenheit: wer war eingeladen, wer da, wer entschuldigt
+CREATE TABLE IF NOT EXISTS meeting_attendees (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  meeting_id    INT UNSIGNED NOT NULL,
+  user_id       INT UNSIGNED NULL,
+  contact_id    INT UNSIGNED NULL,
+  name          VARCHAR(150) NOT NULL DEFAULT '',
+  status_id     INT UNSIGNED NULL,
+  notiz         VARCHAR(255) NOT NULL DEFAULT '',
+  updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_ma_user (meeting_id, user_id),
+  UNIQUE KEY uq_ma_contact (meeting_id, contact_id),
+  KEY idx_ma_meeting (meeting_id),
+  CONSTRAINT fk_ma_meeting FOREIGN KEY (meeting_id) REFERENCES meetings(id)   ON DELETE CASCADE,
+  CONSTRAINT fk_ma_user    FOREIGN KEY (user_id)    REFERENCES users(id)      ON DELETE CASCADE,
+  CONSTRAINT fk_ma_contact FOREIGN KEY (contact_id) REFERENCES contacts(id)   ON DELETE CASCADE,
+  CONSTRAINT fk_ma_status  FOREIGN KEY (status_id)  REFERENCES list_items(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- meeting_id NULL = Themenspeicher
 CREATE TABLE IF NOT EXISTS talking_points (
   id              INT UNSIGNED NOT NULL AUTO_INCREMENT,

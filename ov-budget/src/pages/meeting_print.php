@@ -25,4 +25,5 @@ echo render_partial('meeting_print', [
     'zeiten'  => meeting_agenda_times($meeting['beginn'], $dauern, $vorgabe),
     'gesamt'  => meeting_total_minutes($dauern, $vorgabe),
     'art'     => $art,
+    'teilnehmer' => attendance_list((int)$meeting['id']),
 ]);

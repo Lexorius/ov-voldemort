@@ -36,6 +36,7 @@ require __DIR__ . '/lib/import.php';
 require __DIR__ . '/lib/contacts.php';
 require __DIR__ . '/lib/meetings.php';
 require __DIR__ . '/lib/series.php';
+require __DIR__ . '/lib/attendance.php';
 require __DIR__ . '/lib/uploads.php';
 require __DIR__ . '/lib/divera.php';
 

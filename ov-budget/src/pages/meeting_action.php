@@ -64,6 +64,69 @@ switch (post_str('action')) {
         }
         break;
 
+    /* ---- Anwesenheit ---- */
+    case 'attend_add':
+        if ($meeting) {
+            $n = 0;
+            foreach ((array)post('user_ids', []) as $uid) {
+                $n += attendance_add($meetingId, 'user', (int)$uid) ? 1 : 0;
+            }
+            foreach ((array)post('contact_ids', []) as $cid) {
+                $n += attendance_add($meetingId, 'contact', (int)$cid) ? 1 : 0;
+            }
+            foreach (preg_split('/
+?
+/', post_str('namen')) ?: [] as $name) {
+                $n += attendance_add($meetingId, 'name', $name) ? 1 : 0;
+            }
+            if ($gid = post_int('group_id', 0)) {
+                $n += attendance_add_group($meetingId, $gid);
+            }
+            flash($n > 0 ? 'success' : 'info', sprintf('%d Person(en) zur Teilnehmerliste hinzugefügt.', $n));
+            $zurueck .= '#anwesenheit';
+        }
+        break;
+
+    case 'attend_copy':
+        if ($meeting && ($von = post_int('von_meeting_id', 0))) {
+            $n = attendance_copy($von, $meetingId);
+            flash('success', sprintf('%d Person(en) vom anderen Termin übernommen.', $n));
+            $zurueck .= '#anwesenheit';
+        }
+        break;
+
+    case 'attend_status':
+        if ($meeting) {
+            $n = attendance_save_status($meetingId, (array)post('status', []), (array)post('notiz', []));
+            $weg = 0;
+            foreach ((array)post('remove', []) as $rid) {
+                $weg += attendance_remove($meetingId, (int)$rid);
+            }
+            flash('success', sprintf('Anwesenheit gespeichert (%d Änderung(en)).', $n)
+                . ($weg > 0 ? sprintf(' %d Person(en) von der Liste genommen.', $weg) : ''));
+            audit('besprechung.anwesenheit', 'meeting', $meetingId, $meeting['titel']);
+            $zurueck .= '#anwesenheit';
+        }
+        break;
+
+    case 'attend_all':
+        if ($meeting) {
+            $slug = in_array(post_str('slug'), [ANWESEND_SLUG, ENTSCHULDIGT_SLUG, FEHLT_SLUG], true)
+                ? post_str('slug') : ANWESEND_SLUG;
+            $n = attendance_set_all($meetingId, $slug);
+            flash('success', sprintf('%d offene(r) Eintrag/Einträge gesetzt.', $n));
+            $zurueck .= '#anwesenheit';
+        }
+        break;
+
+    case 'attend_remove':
+        if ($meeting) {
+            attendance_remove($meetingId, post_int('attendee_id', 0) ?? 0);
+            flash('success', 'Von der Teilnehmerliste genommen.');
+            $zurueck .= '#anwesenheit';
+        }
+        break;
+
     case 'notes':
         if ($meeting) {
             db_update('meetings', [

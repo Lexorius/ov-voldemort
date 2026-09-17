@@ -1,5 +1,7 @@
 <?php
-/** @var array $meeting @var array $punkte @var array $zeiten @var int $gesamt @var array $speicher */
+/** @var array $meeting @var array $punkte @var array $zeiten @var int $gesamt @var array $speicher
+ *  @var array $teilnehmer @var array $anwesenheit @var array $kandidaten @var array $kontakte
+ *  @var string $kontaktSuche @var array $verteiler @var ?array $quelle */
 $verwalten = can('manage_meetings');
 $geplant = $meeting['status'] === 'geplant';
 $label = tp_label();
@@ -231,6 +233,12 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
   </section>
 <?php endif; ?>
 
+<?= render_partial('partials/attendance', [
+    'meeting' => $meeting, 'teilnehmer' => $teilnehmer, 'anwesenheit' => $anwesenheit,
+    'verwalten' => $verwalten, 'kandidaten' => $kandidaten, 'kontakte' => $kontakte,
+    'kontaktSuche' => $kontaktSuche, 'verteiler' => $verteiler, 'quelle' => $quelle,
+]) ?>
+
 <section class="card" id="protokoll">
   <h2>Protokoll</h2>
   <?php if ($verwalten): ?>
@@ -240,7 +248,7 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
       <input type="hidden" name="meeting_id" value="<?= (int)$meeting['id'] ?>">
       <div class="grid2">
         <div class="field">
-          <label for="teilnehmer">Teilnehmende</label>
+          <label for="teilnehmer">Teilnehmende als Freitext (Ergänzung zur Liste oben)</label>
           <textarea id="teilnehmer" name="teilnehmer" rows="3"
                     placeholder="Eine Person je Zeile oder durch Komma getrennt"><?= e((string)$meeting['teilnehmer']) ?></textarea>
         </div>
