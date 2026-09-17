@@ -1,4 +1,4 @@
-<?php /** @var array $zahlen */ ?>
+<?php /** @var array $zahlen @var array $zeit */ ?>
 <div class="pagehead">
   <div>
     <h1>Verwaltung</h1>
@@ -12,6 +12,17 @@
   <div class="stat"><div class="stat__label">Aufgaben</div><div class="stat__value"><?= $zahlen['aufgaben'] ?></div></div>
   <div class="stat"><div class="stat__label">Listeneinträge</div><div class="stat__value"><?= $zahlen['listen'] ?></div></div>
 </div>
+
+<?php if ($zeit['versatz'] > 120): ?>
+  <div class="alert alert--warn">
+    <strong>Anwendung und Datenbank zeigen unterschiedliche Zeiten.</strong>
+    Anwendung: <?= e(de_datetime($zeit['app'])) ?> (<?= e($zeit['zone']) ?>),
+    Datenbank: <?= e(de_datetime($zeit['db'])) ?>.
+    Dadurch stehen in Protokollen Zeiten, die daneben liegen. Im Home-Assistant-Add-on
+    lässt sich die Zeitzone in der Add-on-Konfiguration setzen (<span class="mono">zeitzone</span>),
+    sonst über die Umgebungsvariable <span class="mono">TZ</span> des Containers.
+  </div>
+<?php endif; ?>
 
 <div class="adminmenu">
   <a href="<?= e(url('admin_users')) ?>"><div class="card"><h3>Benutzer</h3>

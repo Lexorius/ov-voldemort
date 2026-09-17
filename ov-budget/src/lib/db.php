@@ -27,6 +27,17 @@ function db(): PDO
         PDO::ATTR_EMULATE_PREPARES   => false,
     ]);
 
+    // Die Datenbank soll dieselbe Uhrzeit verwenden wie PHP. Sonst stehen in
+    // Spalten mit CURRENT_TIMESTAMP (Protokolle, angelegt am ...) Zeiten aus
+    // einer anderen Zeitzone – typisch bei einer Datenbank, die in UTC läuft.
+    // Der Versatz wird bei jeder Verbindung neu bestimmt, damit auch die
+    // Sommerzeit stimmt.
+    try {
+        $pdo->exec("SET time_zone = '" . (new DateTime('now'))->format('P') . "'");
+    } catch (PDOException) {
+        // Ältere oder sehr sparsame Server lehnen das ab – dann bleibt es beim Serverstand
+    }
+
     return $pdo;
 }
 

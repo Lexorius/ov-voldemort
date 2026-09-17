@@ -76,6 +76,7 @@ switch (post_str('action')) {
             $vehicleId = db_insert('vehicles', [
                 'bezeichnung'    => mb_substr($name, 0, 150),
                 'funkrufname'    => mb_substr(post_str('funk'), 0, 80),
+                'kennzeichen'    => mb_substr(post_str('kennzeichen'), 0, 20),
                 'status_id'      => list_default_id('fahrzeug_status'),
                 'created_by'     => (int)$user['id'],
             ]);

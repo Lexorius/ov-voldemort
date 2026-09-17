@@ -84,9 +84,15 @@
               <input type="hidden" name="asset_id" value="<?= e((string)$a['id']) ?>">
               <input type="hidden" name="name" value="<?= e((string)$a['name']) ?>">
               <input type="hidden" name="funk" value="<?= e((string)$a['funk']) ?>">
+              <input type="hidden" name="kennzeichen" value="<?= e((string)$a['kennzeichen']) ?>">
               <td>
                 <strong><?= e((string)$a['name']) ?></strong>
                 <div class="small muted mono"><?= e((string)$a['id']) ?></div>
+                <?php if ((string)$a['kennzeichen'] !== ''): ?>
+                  <div class="small">Kennzeichen: <?= e((string)$a['kennzeichen']) ?></div>
+                <?php elseif ((string)$a['grund'] !== ''): ?>
+                  <div class="small muted"><?= e((string)$a['grund']) ?></div>
+                <?php endif; ?>
               </td>
               <td class="small"><?= e((string)$a['status']) ?></td>
               <td>

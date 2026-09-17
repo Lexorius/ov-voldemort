@@ -1,5 +1,29 @@
 # Änderungsverlauf
 
+## 1.11.1
+
+### Zeitzone
+
+- Der Container stellt die Zeitzone jetzt immer ein – für die Anwendung **und**
+  die mitgelieferte MariaDB. Vorher lief die Datenbank in UTC, weshalb im
+  Protokoll der Stein.APP-Abrufe Zeiten zwei Stunden daneben standen.
+- Neue Add-on-Option **`zeitzone`** (Vorgabe `Europe/Berlin`). Ohne Angabe gilt
+  die von Home Assistant übergebene `TZ`, sonst Europe/Berlin.
+- Bei einer externen Datenbank setzt die Anwendung die Zeitzone der Verbindung
+  passend zu PHP – auch über den Wechsel auf Sommerzeit hinweg.
+- Die Startseite der Verwaltung warnt, wenn die Zeit der Anwendung und die der
+  Datenbank um mehr als zwei Minuten auseinandergehen.
+
+### Automatisch angelegte Fahrzeuge
+
+- Die Einstellung *Unbekannte Fahrzeuge selbst anlegen* legt eine Akte nur noch
+  dann an, wenn ein **Kennzeichen** erkennbar ist: in einem Kennzeichenfeld der
+  Stein.APP oder im Text (THW-84321, HB-XY 456). Anhänger, Aggregate und Geräte
+  ohne Kennzeichen erscheinen weiterhin in der Verwaltung zum Zuordnen, dort mit
+  dem Hinweis „kein Kennzeichen erkannt".
+- Das erkannte Kennzeichen wird in die neue Akte übernommen – auch beim
+  Zuordnen von Hand.
+
 ## 1.11.0
 
 ### Neues Modul: Fahrzeuge mit Fahrzeugakte

@@ -163,6 +163,60 @@ function stein_asset_name(array $a): string
     return $teile ? implode(' · ', array_unique($teile)) : 'Fahrzeug ' . (string)($a['id'] ?? '?');
 }
 
+/** Felder, in denen die Stein.APP ein Kennzeichen fuehren kann */
+const STEIN_KENNZEICHEN_FELDER = ['licensePlate', 'numberPlate', 'plate', 'kennzeichen', 'registration'];
+
+/**
+ * Kennzeichen eines Assets: erst die eigenen Felder, sonst aus den Texten.
+ * Erkannt werden THW-Kennzeichen (THW-84321) und gewöhnliche deutsche
+ * Kennzeichen (HH-AB 123). Gibt null zurück, wenn keines zu finden ist.
+ */
+function stein_plate(array $asset): ?string
+{
+    foreach (STEIN_KENNZEICHEN_FELDER as $feld) {
+        $wert = trim((string)($asset[$feld] ?? ''));
+        if ($wert !== '') {
+            return mb_substr($wert, 0, 20);
+        }
+    }
+    foreach (['label', 'name', 'radioName', 'comment'] as $feld) {
+        $treffer = stein_plate_in_text((string)($asset[$feld] ?? ''));
+        if ($treffer !== null) {
+            return $treffer;
+        }
+    }
+    return null;
+}
+
+/**
+ * Abkürzungen von Fahrzeugtypen, die wie ein Unterscheidungszeichen aussehen.
+ * "MLW-IV 2" ist kein Kennzeichen, sondern eine Typbezeichnung.
+ */
+const STEIN_KEIN_KREIS = ['GKW', 'MLW', 'MTW', 'LKW', 'PKW', 'WLF', 'MZB', 'BKF', 'FGR', 'ZTR', 'ANH'];
+
+/**
+ * Kennzeichen in einem Text suchen – ohne Datenbank, damit leicht prüfbar.
+ * Der Bindestrich ist Pflicht: sonst gilt schon "GKW 1" als Kennzeichen.
+ */
+function stein_plate_in_text(string $text): ?string
+{
+    $text = trim($text);
+    if ($text === '') {
+        return null;
+    }
+    if (preg_match('/\bTHW[\s-]?(\d{3,6})\b/iu', $text, $m)) {
+        return 'THW-' . $m[1];
+    }
+    if (preg_match_all('/\b([A-ZÄÖÜ]{1,3})-([A-ZÄÖÜ]{1,2})[ ]?(\d{1,4}[EH]?)\b/u', $text, $treffer, PREG_SET_ORDER)) {
+        foreach ($treffer as $m) {
+            if (!in_array(mb_strtoupper($m[1]), STEIN_KEIN_KREIS, true)) {
+                return $m[1] . '-' . $m[2] . ' ' . $m[3];
+            }
+        }
+    }
+    return null;
+}
+
 /** Wert eines Stein-Feldes lesbar machen */
 function stein_value_text(string $feld, mixed $wert): string
 {
@@ -290,26 +344,33 @@ function stein_sync(bool $erzwingen = false): array
         $vehicle = vehicle_by_stein($assetId);
 
         if (!$vehicle) {
-            if (!setting_bool('stein_auto_anlegen', false)) {
+            // Automatisch anlegen nur mit erkennbarem Kennzeichen – sonst
+            // entstehen Akten für Anhänger, Aggregate und Geräte
+            $kennzeichen = stein_plate($asset);
+            if (!setting_bool('stein_auto_anlegen', false) || $kennzeichen === null) {
                 // Für die Zuordnung in der Verwaltung merken – ohne neuen Aufruf
                 $offen[] = [
-                    'id'     => $assetId,
-                    'name'   => stein_asset_name($asset),
-                    'status' => stein_value_text('status', $asset['status'] ?? ''),
-                    'funk'   => trim((string)($asset['radioName'] ?? '')),
+                    'id'          => $assetId,
+                    'name'        => stein_asset_name($asset),
+                    'status'      => stein_value_text('status', $asset['status'] ?? ''),
+                    'funk'        => trim((string)($asset['radioName'] ?? '')),
+                    'kennzeichen' => (string)($kennzeichen ?? ''),
+                    'grund'       => $kennzeichen === null && setting_bool('stein_auto_anlegen', false)
+                        ? 'kein Kennzeichen erkannt' : '',
                 ];
                 continue;
             }
             $id = db_insert('vehicles', [
                 'bezeichnung'    => mb_substr(stein_asset_name($asset), 0, 150),
                 'funkrufname'    => mb_substr(trim((string)($asset['radioName'] ?? '')), 0, 80),
+                'kennzeichen'    => $kennzeichen,
                 'stein_asset_id' => $assetId,
                 'status_id'      => list_default_id('fahrzeug_status'),
             ]);
             journal_add($id, [
                 'art'    => 'anlage',
                 'titel'  => 'Fahrzeugakte aus der Stein.APP angelegt',
-                'text'   => stein_asset_name($asset),
+                'text'   => stein_asset_name($asset) . ' · Kennzeichen ' . $kennzeichen,
                 'quelle' => 'stein',
                 'autor'  => 'Stein.APP',
             ], null);
@@ -411,7 +472,7 @@ function stein_pending_assets(): array
     $out = [];
     foreach ($liste as $a) {
         if (is_array($a) && ($a['id'] ?? '') !== '' && !vehicle_by_stein((string)$a['id'])) {
-            $out[] = $a + ['name' => '', 'status' => '', 'funk' => ''];
+            $out[] = $a + ['name' => '', 'status' => '', 'funk' => '', 'kennzeichen' => '', 'grund' => ''];
         }
     }
     return $out;

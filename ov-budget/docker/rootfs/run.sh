@@ -53,13 +53,33 @@ mkdir -p /data/uploads /data/sessions /run/nginx
 chown -R nginx:nginx /data/uploads /data/sessions
 chmod 750 /data/uploads /data/sessions
 
-# Zeitzone übernehmen, falls Home Assistant sie mitgibt
-if [ -n "${TZ:-}" ] && [ -f "/usr/share/zoneinfo/${TZ}" ]; then
-    cp "/usr/share/zoneinfo/${TZ}" /etc/localtime
-    echo "${TZ}" > /etc/timezone
-    echo "date.timezone=${TZ}" > /etc/php-current/conf.d/zz-timezone.ini
-    log "Zeitzone: ${TZ}"
+# ------------------------------------------------------------------
+# Zeitzone
+# ------------------------------------------------------------------
+# Sie muss für den ganzen Container gelten: PHP schreibt Zeitstempel selbst,
+# MariaDB setzt daneben eigene (CURRENT_TIMESTAMP). Laufen beide auseinander,
+# stehen im Protokoll Zeiten, die zwei Stunden danebenliegen.
+#
+# Reihenfolge: Add-on-Option, dann TZ von Home Assistant, sonst Europe/Berlin.
+TZ_STANDARD=Europe/Berlin
+TZ_OPTION=""
+if [ -f /data/options.json ]; then
+    TZ_OPTION=$(php -r '$o = json_decode((string)@file_get_contents("/data/options.json"), true); echo is_array($o) ? trim((string)($o["zeitzone"] ?? "")) : "";' 2>/dev/null) || TZ_OPTION=""
 fi
+
+TZ_WUNSCH="${TZ_OPTION:-${TZ:-$TZ_STANDARD}}"
+if [ ! -f "/usr/share/zoneinfo/${TZ_WUNSCH}" ]; then
+    log "Zeitzone '${TZ_WUNSCH}' ist unbekannt – es gilt ${TZ_STANDARD}."
+    TZ_WUNSCH="$TZ_STANDARD"
+fi
+
+cp "/usr/share/zoneinfo/${TZ_WUNSCH}" /etc/localtime
+echo "${TZ_WUNSCH}" > /etc/timezone
+mkdir -p /etc/php-current/conf.d
+echo "date.timezone=${TZ_WUNSCH}" > /etc/php-current/conf.d/zz-timezone.ini
+TZ="$TZ_WUNSCH"
+export TZ
+log "Zeitzone: ${TZ} – es ist jetzt $(date '+%d.%m.%Y %H:%M')"
 
 # ------------------------------------------------------------------
 # Braucht es die mitgelieferte Datenbank?

@@ -120,6 +120,17 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
 * **Verwaltung** – Benutzer und Rollen (Mitglied, Leitung, Administration) sowie
   *alle* Auswahllisten, Texte und Regeln frei konfigurierbar.
 
+## Zeitzone
+
+Das Add-on stellt die Zeitzone selbst ein: zuerst die Option `zeitzone` der
+Add-on-Konfiguration, sonst die von Home Assistant übergebene `TZ`, sonst
+`Europe/Berlin`. Sie gilt für die Anwendung **und** die Datenbank – sonst
+stehen in den Protokollen Zeiten aus einer anderen Zeitzone.
+
+Bei einer externen Datenbank stellt die Anwendung die Zeitzone zusätzlich je
+Verbindung passend ein. Ob beides zusammenpasst, zeigt die Startseite der
+Verwaltung: Gehen Anwendung und Datenbank auseinander, steht dort ein Hinweis.
+
 ## Stein.APP einrichten
 
 1. In der Stein.APP einen API-Schlüssel erzeugen und die **BU-ID** des
@@ -129,6 +140,13 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
    und BU-ID eintragen und den Abgleich einschalten.
 3. Unter *Verwaltung → Stein.APP* die Fahrzeuge zuordnen: entweder einer
    bestehenden Fahrzeugakte oder als neue Akte.
+
+**Automatisch anlegen** (Einstellung *Unbekannte Fahrzeuge selbst anlegen*)
+gilt nur für Einträge mit erkennbarem **Kennzeichen** – entweder in einem
+eigenen Feld der Stein.APP oder im Text (z. B. „GKW 1 (THW-84321)" oder
+„HB-XY 456"). Anhänger, Aggregate und Geräte ohne Kennzeichen landen
+stattdessen in der Liste zum Zuordnen. Typbezeichnungen wie „MLW-IV 2" gelten
+nicht als Kennzeichen.
 
 **Rate Limit:** Die Schnittstelle bremst bei zu vielen Abrufen. Deshalb macht
 der Abgleich je Durchgang genau **einen** Aufruf (die Liste aller Fahrzeuge der

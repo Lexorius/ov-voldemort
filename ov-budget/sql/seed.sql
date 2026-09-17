@@ -281,7 +281,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('stein_bu_id','','BU-ID des Ortsverbands','Nummer der Organisationseinheit in der Stein.APP','text','Stein.APP',30),
 ('stein_intervall_minuten','10','Abstand zwischen zwei Abrufen (Minuten)','Die Schnittstelle hat ein striktes Rate Limit. Weniger als 10 Minuten sind nicht zu empfehlen.','number','Stein.APP',40),
 ('stein_sync_beim_aufruf','1','Abgleich beim Oeffnen des Moduls','Nur, wenn der letzte Abruf laenger als das Intervall zurueckliegt','bool','Stein.APP',50),
-('stein_auto_anlegen','0','Unbekannte Fahrzeuge selbst anlegen','Sonst werden sie in der Verwaltung zum Zuordnen angeboten','bool','Stein.APP',60),
+('stein_auto_anlegen','0','Unbekannte Fahrzeuge selbst anlegen','Nur mit erkennbarem Kennzeichen; alles andere wird in der Verwaltung zum Zuordnen angeboten','bool','Stein.APP',60),
 ('stein_base_url','https://stein.app/api/api/ext','Basis-URL der Schnittstelle','Nur aendern, wenn die Stein.APP umzieht','text','Stein.APP',70),
 ('stein_timeout','15','Zeitlimit je Abruf (Sekunden)','','number','Stein.APP',80),
 ('cron_token','','Token fuer den automatischen Abruf','Aufruf: /cron.php?token=... (leer = nur ueber die Kommandozeile)','text','Stein.APP',90),
