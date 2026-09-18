@@ -1,5 +1,18 @@
 # Änderungsverlauf
 
+## 1.20.1
+
+### Cron-Token nicht mehr im Klartext
+
+- Unter *Verwaltung → Divera 24/7* steht der Cron-Aufruf jetzt mit verdecktem
+  Token. **Token anzeigen** blendet ihn bei Bedarf ein, **Befehl kopieren**
+  legt den vollständigen Aufruf in die Zwischenablage, ohne ihn zu zeigen.
+- Der Aufruf nutzt das allgemeine Cron-Token, falls gesetzt, sonst das
+  Divera-Token – genau wie `cron.php` selbst.
+- In den Einstellungen sind beide Cron-Tokens jetzt Passwortfelder: Ein leeres
+  Feld behält den gespeicherten Wert. Mit dem neuen Haken *gespeicherten Wert
+  löschen* lässt sich ein Token (und jedes andere Passwortfeld) entfernen.
+
 ## 1.20.0
 
 ### Themenspeicher: Themen über ein Divera-Formular einreichen

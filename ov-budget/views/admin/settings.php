@@ -42,6 +42,9 @@
         <?php elseif ($s['stype'] === 'password'): ?>
           <input type="password" id="<?= e($id) ?>" name="<?= e($id) ?>" value="" autocomplete="new-password"
                  placeholder="<?= $val !== '' ? 'gespeichert – leer lassen, um ihn beizubehalten' : 'noch nicht hinterlegt' ?>">
+          <?php if ($val !== ''): ?>
+            <label class="small muted"><input type="checkbox" name="<?= e($id) ?>__leeren" value="1"> gespeicherten Wert löschen</label>
+          <?php endif; ?>
         <?php elseif ($s['stype'] === 'select' && $s['skey'] === 'budget_rundung'): ?>
           <select id="<?= e($id) ?>" name="<?= e($id) ?>">
             <?php foreach ([

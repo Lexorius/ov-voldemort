@@ -275,7 +275,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('divera_status_journal','1','Funkstatus ins Journal schreiben','Jeder Statuswechsel steht dann als Fahrtenbuch in der Fahrzeugakte','bool','Divera 24/7',140),
 ('divera_position_speichern','1','Position der Fahrzeuge speichern','Letzte bekannte Position mit Link auf die Karte','bool','Divera 24/7',150),
 ('divera_besatzung_anzeigen','1','Besatzung laut Divera anzeigen','Namen der zugeordneten Personen in der Fahrzeugakte','bool','Divera 24/7',160),
-('divera_cron_token','','Token für den automatischen Abruf','Aufruf: /cron.php?token=... (leer = deaktiviert)','text','Divera 24/7',90),
+('divera_cron_token','','Token für den automatischen Abruf','Aufruf: /cron.php?token=... (leer = deaktiviert). Der fertige Aufruf steht verdeckt unter Verwaltung → Divera 24/7.','password','Divera 24/7',90),
 
 ('fahrzeug_modul_name','Fahrzeuge','Bezeichnung des Fahrzeugmoduls','','text','Fahrzeuge',10),
 ('fahrzeug_intro','Fahrzeuge des Ortsverbands mit Fahrzeugakte, Journal und Instandsetzungsauftraegen.','Einleitungstext im Fahrzeugmodul','','textarea','Fahrzeuge',20),
@@ -295,7 +295,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('stein_timeout','15','Zeitlimit je Abruf (Sekunden)','','number','Stein.APP',80),
 ('stein_webhook_secret','','Webhook-Secret der Stein.APP','Aus den OV-Einstellungen der Stein.APP. Damit meldet die Stein.APP Aenderungen sofort an /webhook.php - das ist schonender als regelmaessiges Abfragen. Die Adresse muss dafuer von aussen erreichbar sein.','password','Stein.APP',85),
 ('stein_debug','0','Antworten der Stein.APP mitschneiden','Nur zur Fehlersuche: legt die Antworten als Datei zum Herunterladen ab (Verwaltung - Stein.APP). Der API-Schluessel steht nicht darin. Hoechstens 20 Dateien, danach werden die aeltesten geloescht.','bool','Stein.APP',95),
-('cron_token','','Token fuer den automatischen Abruf','Aufruf: /cron.php?token=... (leer = nur ueber die Kommandozeile)','text','Stein.APP',90),
+('cron_token','','Token fuer den automatischen Abruf','Aufruf: /cron.php?token=... (leer = nur ueber die Kommandozeile)','password','Stein.APP',90),
 ('budget_modul_name','Budget','Bezeichnung des Budget-Moduls','','text','Budget',5),
 ('budget_intro','Gesamtbudget des Haushaltsjahres, laufende Ausgaben und die daraus entstehende Uebersicht.','Einleitungstext im Budget-Modul','','textarea','Budget',6),
 ('budget_rundung','0','Betraege in der Uebersicht runden','0 = centgenau, sonst auf 10, 100 oder 1000 runden. Betrifft nur die Budgetuebersicht, nicht die Listen.','select','Budget',35),

@@ -2,7 +2,9 @@
 /** @var array $forms @var array $remoteForms @var ?array $verbindung @var array $log */
 $aktiv = setting_bool('divera_aktiv', false);
 $keySet = (string)setting('divera_accesskey', '') !== '';
-$cronToken = (string)setting('divera_cron_token', '');
+// cron.php akzeptiert beide Tokens; das allgemeine hat Vorrang
+$cronToken = (string)setting('cron_token', '') ?: (string)setting('divera_cron_token', '');
+$cronBasis = 'curl -s "https://DEINE-DOMAIN' . rtrim((string)app_config('base_path', ''), '/') . '/cron.php?token=';
 ?>
 <div class="pagehead">
   <div>
@@ -138,7 +140,11 @@ $cronToken = (string)setting('divera_cron_token', '');
       ein Token unter <span class="mono">divera_cron_token</span> hinterlegen.</p>
   <?php else: ?>
     <p class="small">Cron-Aufruf (z.B. stündlich):</p>
-    <pre class="raw">curl -s "https://DEINE-DOMAIN<?= e(rtrim((string)app_config('base_path', ''), '/')) ?>/cron.php?token=<?= e($cronToken) ?>"</pre>
+    <pre class="raw" data-geheim="<?= e($cronBasis . $cronToken . '"') ?>"><?= e($cronBasis . str_repeat('•', 12) . '"') ?></pre>
+    <div class="btnrow">
+      <button type="button" class="btn btn--sec btn--sm" data-geheim-zeigen>Token anzeigen</button>
+      <button type="button" class="btn btn--sec btn--sm" data-geheim-kopieren>Befehl kopieren</button>
+    </div>
     <p class="small muted">Importiert werden dabei alle Formulare, bei denen "automatisch importieren" gesetzt ist.</p>
   <?php endif; ?>
 </div>

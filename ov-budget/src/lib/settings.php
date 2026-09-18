@@ -106,6 +106,10 @@ function settings_from_post(array $gruppe, array $post): array
             $out[$skey] = isset($post[$feld]) ? '1' : '0';
             continue;
         }
+        if ($def['stype'] === 'password' && !empty($post[$feld . '__leeren'])) {
+            $out[$skey] = '';
+            continue;
+        }
         if (!array_key_exists($feld, $post)) {
             continue;
         }

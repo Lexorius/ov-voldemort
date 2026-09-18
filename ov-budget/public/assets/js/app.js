@@ -76,6 +76,33 @@
     sel.addEventListener('change', function () { sel.form.submit(); });
   });
 
+  /* Verdeckte Werte (z. B. Cron-Aufruf mit Token): anzeigen und kopieren */
+  document.querySelectorAll('[data-geheim]').forEach(function (el) {
+    var verdeckt = el.textContent;
+    var box = el.nextElementSibling;
+    if (!box) return;
+    var zeigen = box.querySelector('[data-geheim-zeigen]');
+    var kopieren = box.querySelector('[data-geheim-kopieren]');
+    if (zeigen) {
+      zeigen.addEventListener('click', function () {
+        var offen = el.textContent !== verdeckt;
+        el.textContent = offen ? verdeckt : el.getAttribute('data-geheim');
+        zeigen.textContent = offen ? 'Token anzeigen' : 'Token verbergen';
+      });
+    }
+    if (kopieren && navigator.clipboard) {
+      kopieren.addEventListener('click', function () {
+        navigator.clipboard.writeText(el.getAttribute('data-geheim')).then(function () {
+          var alt = kopieren.textContent;
+          kopieren.textContent = 'Kopiert';
+          setTimeout(function () { kopieren.textContent = alt; }, 1500);
+        });
+      });
+    } else if (kopieren) {
+      kopieren.hidden = true;
+    }
+  });
+
   /* Rückfrage vor dem Löschen */
   document.querySelectorAll('[data-confirm]').forEach(function (el) {
     el.addEventListener('click', function (ev) {
