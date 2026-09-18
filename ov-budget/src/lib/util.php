@@ -407,3 +407,117 @@ function audit(string $action, string $entity = '', ?int $entityId = null, strin
         // Audit darf den Ablauf nie stören
     }
 }
+
+/**
+ * Laufende Version der Anwendung.
+ * Quelle ist config.yaml des Add-ons (die einzige Stelle, an der die Version
+ * gepflegt wird); der Container bekommt die Datei beim Bauen mit. Gibt der
+ * Supervisor BUILD_VERSION mit, steht sie zusätzlich in OVB_VERSION.
+ */
+function app_version(): string
+{
+    static $version = null;
+    if ($version !== null) {
+        return $version;
+    }
+    $datei = dirname(__DIR__, 2) . '/config.yaml';
+    if (is_file($datei) && preg_match('/^version:\s*"?([0-9][0-9A-Za-z.\-+]*)"?\s*$/m', (string)file_get_contents($datei), $m)) {
+        return $version = $m[1];
+    }
+    $env = getenv('OVB_VERSION');
+    return $version = ($env !== false && trim($env) !== '' ? trim($env) : 'unbekannt');
+}
+
+/**
+ * Die letzten Abschnitte aus CHANGELOG.md – für "Was ist neu".
+ * Rückgabe: [['version' => '1.16.1', 'text' => Markdown], ...]
+ */
+function changelog_sections(int $anzahl = 5, ?string $datei = null): array
+{
+    $datei ??= dirname(__DIR__, 2) . '/CHANGELOG.md';
+    if (!is_file($datei)) {
+        return [];
+    }
+    $teile = preg_split('/^## +/m', (string)file_get_contents($datei)) ?: [];
+    array_shift($teile); // Überschrift der Datei
+    $out = [];
+    foreach (array_slice($teile, 0, $anzahl) as $teil) {
+        [$kopf, $rest] = array_pad(explode("\n", $teil, 2), 2, '');
+        $out[] = ['version' => trim($kopf), 'text' => trim($rest)];
+    }
+    return $out;
+}
+
+/**
+ * Sehr kleines Markdown für den Änderungsverlauf: Überschriften (###),
+ * Aufzählungen mit Fortsetzungszeilen, **fett**, `Code` und Absätze.
+ * Alles wird vorher maskiert – die Datei kann kein HTML einschleusen.
+ */
+function markdown_simple(string $text): string
+{
+    $html = '';
+    $liste = false;
+    $absatz = [];
+    $punkt = null;
+
+    $inline = static function (string $t): string {
+        $t = e($t);
+        $t = (string)preg_replace('/\*\*(.+?)\*\*/u', '<strong>$1</strong>', $t);
+        $t = (string)preg_replace('/`([^`]+)`/u', '<code>$1</code>', $t);
+        $t = (string)preg_replace('/(?<![*\w])\*([^*\n]+)\*(?![*\w])/u', '<em>$1</em>', $t);
+        $t = (string)preg_replace('/&lt;(https?:\/\/[^\s&]+)&gt;/u', '<a href="$1" target="_blank" rel="noopener">$1</a>', $t);
+        return $t;
+    };
+    $absatzAus = static function () use (&$absatz, &$html, $inline): void {
+        if ($absatz) {
+            $html .= '<p>' . $inline(implode(' ', $absatz)) . '</p>';
+            $absatz = [];
+        }
+    };
+    $punktAus = static function () use (&$punkt, &$html, $inline): void {
+        if ($punkt !== null) {
+            $html .= '<li>' . $inline($punkt) . '</li>';
+            $punkt = null;
+        }
+    };
+    $listeAus = static function () use (&$liste, &$html, $punktAus): void {
+        $punktAus();
+        if ($liste) {
+            $html .= '</ul>';
+            $liste = false;
+        }
+    };
+
+    foreach (preg_split('/\r?\n/', $text) ?: [] as $zeile) {
+        if (trim($zeile) === '') {
+            $absatzAus();
+            $listeAus();
+            continue;
+        }
+        if (preg_match('/^#{3,6}\s+(.*)$/', $zeile, $m)) {
+            $absatzAus();
+            $listeAus();
+            $html .= '<h3>' . $inline($m[1]) . '</h3>';
+            continue;
+        }
+        if (preg_match('/^[-*]\s+(.*)$/', $zeile, $m)) {
+            $absatzAus();
+            $punktAus();
+            if (!$liste) {
+                $html .= '<ul>';
+                $liste = true;
+            }
+            $punkt = $m[1];
+            continue;
+        }
+        if ($liste && $punkt !== null && preg_match('/^\s+(.*)$/', $zeile, $m)) {
+            $punkt .= ' ' . $m[1];
+            continue;
+        }
+        $listeAus();
+        $absatz[] = trim($zeile);
+    }
+    $absatzAus();
+    $listeAus();
+    return $html;
+}

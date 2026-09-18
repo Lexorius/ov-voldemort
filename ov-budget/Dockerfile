@@ -10,6 +10,8 @@ ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:latest
 FROM ${BUILD_FROM}
 
 ARG BUILD_ARCH=amd64
+ARG BUILD_VERSION=
+ENV OVB_VERSION=${BUILD_VERSION}
 
 ENV OVB_UPLOAD_DIR=/data/uploads
 
@@ -44,6 +46,8 @@ COPY public/ /app/public/
 COPY src/    /app/src/
 COPY views/  /app/views/
 COPY sql/    /app/sql/
+# Version und Änderungsverlauf für die Anzeige in der Anwendung
+COPY config.yaml CHANGELOG.md /app/
 
 # Laufzeitdateien (nginx, MariaDB, Startskript, PHP-Vorlagen)
 COPY docker/rootfs/ /

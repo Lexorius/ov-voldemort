@@ -144,6 +144,11 @@ h3 { font-size: 1rem; }
   color: var(--ink-mute); font-size: .8rem;
 }
 .footer__meta { margin-top: .25rem; }
+.footer__meta a { color: inherit; }
+.changelog h3 { font-size: 1rem; margin: 1rem 0 .3rem; }
+.changelog ul { margin: .3rem 0 .6rem; padding-left: 1.2rem; }
+.changelog li { margin: .25rem 0; }
+.changelog code { font-size: .85em; background: var(--surface-2); padding: 0 .25rem; border-radius: 4px; }
 
 /* ---------- Karten ---------- */
 .card {

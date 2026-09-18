@@ -79,7 +79,10 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
 
 <footer class="footer">
   <div><?= nl2br(e((string)setting('footer_text', ''))) ?></div>
-  <div class="footer__meta"><?= e($ovName) ?></div>
+  <div class="footer__meta">
+    <?= e($ovName) ?>
+    <?= $ovName !== '' ? ' · ' : '' ?><a href="<?= e(url('neu')) ?>" title="Was ist neu?">OV-Budget <?= e(app_version()) ?></a>
+  </div>
 </footer>
 
 <script src="<?= e(asset('js/app.js')) ?>" defer></script>

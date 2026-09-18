@@ -1,8 +1,12 @@
 # OV-Budget
 
-Pseudo-Budgetverwaltung, Wunschliste („Wünsch dir was") und Aufgaben für einen
-THW-Ortsverband. Das Add-on bringt **alles mit** – Datenbank, Webserver und
-Anwendung stecken im Container. Weitere Add-ons sind nicht nötig.
+Verwaltung für einen THW-Ortsverband: Wünsche und Budget, Aufgaben, Kontakte,
+Besprechungen und Fahrzeugakten – mit Anbindung an Stein.APP und Divera 24/7.
+Das Add-on bringt **alles mit** – Datenbank, Webserver und Anwendung stecken im
+Container. Weitere Add-ons sind nicht nötig.
+
+Unten auf jeder Seite steht die laufende Version; ein Klick darauf zeigt, was
+sich zuletzt geändert hat.
 
 ## Installation
 
@@ -26,6 +30,7 @@ den Bestand und ändern nichts daran.
 | Option | Bedeutung |
 |---|---|
 | `ov_name` | Name des Ortsverbands. Wird beim ersten Start als Überschrift übernommen, später in der Anwendung änderbar. |
+| `zeitzone` | Zeitzone für Anwendung und Datenbank, Vorgabe `Europe/Berlin`. Leer = die von Home Assistant. |
 | `admin_username` | Benutzername des ersten Zugangs. Nur beim allerersten Start angelegt. |
 | `admin_password` | Mindestens 10 Zeichen. Leer lassen: dann erzeugt der erste Start ein Zufallspasswort und schreibt es ins Protokoll. |
 | `db_name` | Name der Datenbank, Vorgabe `ovbudget`. |
@@ -36,6 +41,7 @@ den Bestand und ändern nichts daran.
 
 ```yaml
 ov_name: THW Ortsverband Musterstadt
+zeitzone: Europe/Berlin
 admin_username: obmann
 admin_password: ""
 db_name: ovbudget
@@ -106,7 +112,10 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
 * **Stein.APP** – Abgleich der Fahrzeuge über die Schnittstelle der Stein.APP
   (gleicher API-Schlüssel wie für die Home-Assistant-Integration). Alle zehn
   Minuten wird der komplette Stand geholt und jede Änderung an Status, HU, SP,
-  Bemerkung oder Einsatzvorbehalt in die Fahrzeugakte geschrieben.
+  Kennzeichen, Bemerkung oder Einsatzvorbehalt in die Fahrzeugakte geschrieben.
+  Auf Wunsch sofort per Webhook; Mitschnitt der Antworten zur Fehlersuche.
+* **Divera 24/7 – Fahrzeuge** – Funkstatus (FMS) als Fahrtenbuch im Journal,
+  letzte Position mit Kartenlink, Besatzung sowie OPTA und RIC.
 * **Kontakte** – Ansprechpartner bei Kommune, Feuerwehr, Presse, Firmen und
   Förderern, dazu Verteiler für Einladungen mit Rückmeldungen und einer
   CSV-Ausgabe für den Serienbrief. Neben den Standardfeldern lassen sich
@@ -119,7 +128,7 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   **Anwesenheit:** Eingeladene aus dem Ortsverband, aus den Kontakten (auch ganze
   Verteiler) oder als freier Name; je Person teilgenommen, entschuldigt oder
   nicht erschienen. Die Zählung steht über der Liste, die Namen im Protokoll.
-* **Divera 24/7** – Formulare abrufen, Felder frei zuordnen und Einträge als
+* **Divera 24/7 – Formulare** – Formulare abrufen, Felder frei zuordnen und Einträge als
   Wünsche übernehmen. Mit Vorschau, Dubletten-Erkennung und optionalem
   automatischem Abruf.
 * **Verwaltung** – Benutzer und Rollen (Mitglied, Leitung, Administration) sowie

@@ -2,6 +2,11 @@ configuration:
   ov_name:
     name: Name des Ortsverbands
     description: Wird beim ersten Start als Überschrift übernommen, später in der Anwendung änderbar.
+  zeitzone:
+    name: Zeitzone
+    description: >-
+      Gilt für Anwendung und Datenbank, z.B. Europe/Berlin. Leer = die Zeitzone
+      von Home Assistant, sonst Europe/Berlin.
   admin_username:
     name: Administrator
     description: Benutzername des ersten Zugangs. Wird nur beim allerersten Start angelegt.

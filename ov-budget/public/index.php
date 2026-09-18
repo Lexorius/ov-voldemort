@@ -63,6 +63,7 @@ $routes = [
     'vehicle_file'       => 'vehicle_file',
 
     'download'           => 'download',
+    'neu'                => 'changelog',
 
     // Administration
     'admin'              => 'admin/index',

@@ -1,5 +1,16 @@
 # Änderungsverlauf
 
+## 1.17.0
+
+- **Versionsanzeige:** Unten auf jeder Seite steht jetzt, welche Version läuft.
+  Ein Klick darauf öffnet **„Was ist neu"** mit den letzten Änderungen aus
+  diesem Verlauf.
+- **Beschreibung im Add-on-Store:** Das Info-Fenster von Home Assistant zeigt
+  jetzt eine Übersicht aller Funktionen (neue Datei `README.md` im Add-on),
+  die Kurzbeschreibung nennt alle Module.
+- Die Add-on-Option `zeitzone` hat eine Beschriftung und Erklärung und steht
+  in der Dokumentation.
+
 ## 1.16.1
 
 ### Einstellungen: Schalter gingen beim Speichern anderer Gruppen aus
