@@ -5,12 +5,14 @@
 $verwalten = can('manage_vehicles');
 $melden = can('report_vehicle');
 
-$quellen = ['mensch' => '', 'stein' => 'Stein.APP', 'system' => 'System'];
+$quellen = ['mensch' => '', 'stein' => 'Stein.APP', 'divera' => 'Divera', 'system' => 'System'];
 $arten = [
     '' => 'alles',
     'notiz' => 'Notizen',
     'auftrag' => 'Aufträge',
+    'fms' => 'Funkstatus',
     'stein' => 'Stein.APP',
+    'divera' => 'Divera',
     'stammdaten' => 'Stammdaten',
     'datei' => 'Dateien',
 ];
@@ -25,6 +27,9 @@ $arten = [
     </p>
     <p class="item__meta" style="margin-top:.3rem">
       <?= badge($vehicle['status_label'] ? ['label' => $vehicle['status_label'], 'color' => $vehicle['status_color']] : null, 'ohne Status') ?>
+      <?php if (($vehicle['fms_status'] ?? null) !== null && $vehicle['fms_status'] !== ''): ?>
+        <span class="badge" style="background:<?= e(fms_color((int)$vehicle['fms_status'])) ?>"><?= e(fms_label((int)$vehicle['fms_status'])) ?></span>
+      <?php endif; ?>
       <?php foreach ($fristen as $f): ?>
         <?php if ($f['status'] !== 'ok'): ?>
           <span class="badge" style="background:<?= $f['status'] === 'abgelaufen' ? '#b91c1c' : '#a16207' ?>">
@@ -64,6 +69,8 @@ $arten = [
           'Bezeichnung'       => $vehicle['bezeichnung'],
           'Funkrufname'       => $vehicle['funkrufname'],
           'ISSI'              => $vehicle['issi'],
+          'OPTA'              => $vehicle['opta'] ?? '',
+          'RIC'               => $vehicle['ric'] ?? '',
           'Kennzeichen'       => $vehicle['kennzeichen'],
           'Kennung'           => $vehicle['kennung'],
           'Art'               => $vehicle['typ_label'],
@@ -121,6 +128,47 @@ $arten = [
           </tbody>
         </table>
       </div>
+    <?php endif; ?>
+
+    <?php if (!empty($vehicle['divera_vehicle_id'])): ?>
+      <h3 class="mt">Divera</h3>
+      <dl class="dl">
+        <?php if ($vehicle['fms_status'] !== null && $vehicle['fms_status'] !== ''): ?>
+          <div class="dl__item"><div class="dl__label">Funkstatus</div>
+            <div class="dl__value">
+              <span class="badge" style="background:<?= e(fms_color((int)$vehicle['fms_status'])) ?>"><?= e(fms_label((int)$vehicle['fms_status'])) ?></span>
+              <?php if ($vehicle['fms_at']): ?><span class="small muted">seit <?= e(de_datetime($vehicle['fms_at'])) ?></span><?php endif; ?>
+              <?php if (trim((string)$vehicle['fms_note']) !== ''): ?><div class="small"><?= e((string)$vehicle['fms_note']) ?></div><?php endif; ?>
+            </div></div>
+        <?php endif; ?>
+        <?php if (setting_bool('divera_besatzung_anzeigen', true) && ($crew = dv_crew_of($vehicle))): ?>
+          <div class="dl__item"><div class="dl__label">Besatzung</div>
+            <div class="dl__value"><?= e(implode(', ', $crew)) ?></div></div>
+        <?php endif; ?>
+        <?php if ($vehicle['geo_lat'] !== null && $vehicle['geo_lng'] !== null): ?>
+          <div class="dl__item"><div class="dl__label">Letzte Position</div>
+            <div class="dl__value">
+              <a href="<?= e(dv_map_url((float)$vehicle['geo_lat'], (float)$vehicle['geo_lng'])) ?>" target="_blank" rel="noopener">
+                <?= e(number_format((float)$vehicle['geo_lat'], 5, ',', '') . ' / ' . number_format((float)$vehicle['geo_lng'], 5, ',', '')) ?></a>
+              <?php if ($vehicle['geo_at']): ?><span class="small muted">abgerufen <?= e(de_datetime($vehicle['geo_at'])) ?></span><?php endif; ?>
+            </div></div>
+        <?php endif; ?>
+      </dl>
+      <p class="small muted">
+        Verknüpft mit Divera-Fahrzeug <span class="mono"><?= (int)$vehicle['divera_vehicle_id'] ?></span>.
+        <?php if ($vehicle['divera_sync_at']): ?>Zuletzt abgerufen am <?= e(de_datetime($vehicle['divera_sync_at'])) ?>.<?php endif; ?>
+        Jeder Statuswechsel steht im Journal unter „Funkstatus".
+      </p>
+      <?php if (can('manage_vehicles')): ?>
+        <form method="post" action="<?= e(url('vehicle_action')) ?>" class="inline-form">
+          <?= csrf_field() ?>
+          <input type="hidden" name="action" value="dv_unassign">
+          <input type="hidden" name="vehicle_id" value="<?= (int)$vehicle['id'] ?>">
+          <button class="btn btn--sec btn--sm" type="submit"
+                  data-confirm="Verknüpfung mit Divera lösen? Funkstatus, Position und Besatzung werden dann nicht mehr abgerufen.">
+            Divera-Verknüpfung lösen</button>
+        </form>
+      <?php endif; ?>
     <?php endif; ?>
 
     <?php if ($vehicle['stein_asset_id']): ?>

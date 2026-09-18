@@ -46,6 +46,15 @@ if (stein_enabled()) {
     echo "Stein.APP: nicht eingerichtet.\n";
 }
 
+/* ---- Divera: Funkstatus, Position, Besatzung und Stammdaten der Fahrzeuge ---- */
+if (divera_vehicles_enabled()) {
+    foreach ([divera_vehicles_sync_master(), divera_vehicles_sync_status()] as $res) {
+        if ($res['status'] !== 'wartet') {
+            printf("Divera-Fahrzeuge: %s – %s\n", $res['status'], $res['message']);
+        }
+    }
+}
+
 if (!divera_enabled()) {
     exit("Divera-Anbindung ist deaktiviert oder unvollständig konfiguriert.\n");
 }

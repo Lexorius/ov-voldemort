@@ -42,6 +42,7 @@ require __DIR__ . '/lib/vehicles.php';
 require __DIR__ . '/lib/vehicle_files.php';
 require __DIR__ . '/lib/stein.php';
 require __DIR__ . '/lib/divera.php';
+require __DIR__ . '/lib/divera_vehicles.php';
 
 /** Ist die Anwendung eingerichtet? */
 function app_installed(): bool

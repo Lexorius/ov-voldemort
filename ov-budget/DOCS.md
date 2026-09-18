@@ -136,6 +136,28 @@ Bei einer externen Datenbank stellt die Anwendung die Zeitzone zusätzlich je
 Verbindung passend ein. Ob beides zusammenpasst, zeigt die Startseite der
 Verwaltung: Gehen Anwendung und Datenbank auseinander, steht dort ein Hinweis.
 
+## Fahrzeugdaten aus Divera
+
+Unter *Einstellungen → Divera 24/7* lässt sich *Fahrzeugdaten aus Divera
+abgleichen* einschalten (die Divera-Anbindung selbst muss dafür aktiv sein).
+Dann holt die Anwendung:
+
+* **Funkstatus** (FMS) mit Zeitpunkt und Freitext – jeder Wechsel steht als
+  Fahrtenbuch im Journal der Fahrzeugakte (Rubrik *Funkstatus*), etwa
+  „Status 3 – Einsatz übernommen um 14:32 Uhr". Abruf alle 2 Minuten,
+  einstellbar. Wechsel zwischen zwei Abrufen sieht die Anwendung nicht.
+* **Letzte Position** mit Link auf die Karte (OpenStreetMap), abschaltbar.
+* **Besatzung**, die in Divera dem Fahrzeug zugeordnet ist, abschaltbar.
+* **OPTA, RIC**, dazu Kennzeichen und ISSI, falls bei uns noch nichts steht –
+  aus der v3-Schnittstelle, die Divera noch als Beta führt. Sie braucht einen
+  **persönlichen Accesskey** mit Verwaltungsrechten
+  (*Persönlicher Accesskey für /api/v3*); Funkstatus, Position und Besatzung
+  kommen mit dem normalen Accesskey.
+
+Divera-Fahrzeuge werden über ISSI, Kennzeichen oder Funkrufname erkannt – nur
+wenn genau eines passt. Was offen bleibt, steht unter *Verwaltung →
+Divera-Fahrzeuge* zum Zuordnen.
+
 ## Stein.APP einrichten
 
 1. In der Stein.APP einen API-Schlüssel erzeugen und die **BU-ID** des

@@ -459,6 +459,50 @@ function ovb_migrate(PDO $pdo, callable $say): void
         $say('Fahrzeuge um die ISSI erweitert.');
     }
     $merken('007_vehicle_issi');
+
+    /* ---- 008: Divera-Fahrzeugdaten ---- */
+    if (ovb_table_exists($pdo, 'vehicles')) {
+        $spalten = [
+            'opta'              => "VARCHAR(60) NOT NULL DEFAULT '' AFTER issi",
+            'ric'               => "VARCHAR(30) NOT NULL DEFAULT '' AFTER opta",
+            'divera_vehicle_id' => 'INT UNSIGNED NULL AFTER ric',
+            'fms_status'        => 'TINYINT NULL AFTER divera_vehicle_id',
+            'fms_note'          => "VARCHAR(255) NOT NULL DEFAULT '' AFTER fms_status",
+            'fms_at'            => 'DATETIME NULL AFTER fms_note',
+            'geo_lat'           => 'DECIMAL(9,6) NULL AFTER fms_at',
+            'geo_lng'           => 'DECIMAL(9,6) NULL AFTER geo_lat',
+            'geo_at'            => 'DATETIME NULL AFTER geo_lng',
+            'divera_besatzung'  => 'TEXT NULL AFTER geo_at',
+            'divera_daten'      => 'MEDIUMTEXT NULL AFTER divera_besatzung',
+            'divera_sync_at'    => 'DATETIME NULL AFTER divera_daten',
+        ];
+        $neu = [];
+        foreach ($spalten as $name => $definition) {
+            if (!ovb_column_exists($pdo, 'vehicles', $name)) {
+                $pdo->exec("ALTER TABLE vehicles ADD COLUMN $name $definition");
+                $neu[] = $name;
+            }
+        }
+        if (!ovb_index_exists($pdo, 'vehicles', 'uq_divera_fz')) {
+            $pdo->exec('ALTER TABLE vehicles ADD UNIQUE KEY uq_divera_fz (divera_vehicle_id)');
+        }
+        if ($neu) {
+            $say('Fahrzeuge um Divera-Daten erweitert (' . count($neu) . ' Spalten).');
+        }
+    }
+    if (ovb_table_exists($pdo, 'vehicle_journal')) {
+        $typ = (string)$pdo->query(
+            "SELECT COLUMN_TYPE FROM information_schema.columns
+             WHERE table_schema = DATABASE() AND table_name = 'vehicle_journal' AND column_name = 'quelle'"
+        )->fetchColumn();
+        if ($typ !== '' && !str_contains($typ, 'divera')) {
+            $pdo->exec(
+                "ALTER TABLE vehicle_journal
+                 MODIFY quelle ENUM('mensch','stein','divera','system') NOT NULL DEFAULT 'mensch'"
+            );
+        }
+    }
+    $merken('008_divera_fahrzeuge');
 }
 
 /**

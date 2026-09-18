@@ -19,11 +19,14 @@ function divera_enabled(): bool
     return setting_bool('divera_aktiv', false) && setting('divera_accesskey', '') !== '';
 }
 
-/** Roh-Request gegen die Divera-API */
-function divera_request(string $path, array $query = []): array
+/**
+ * Roh-Request gegen die Divera-API.
+ * $key: abweichender Schlüssel, etwa der persönliche für /api/v3
+ */
+function divera_request(string $path, array $query = [], ?string $key = null): array
 {
     $base = rtrim((string)setting('divera_base_url', 'https://app.divera247.com/api'), '/');
-    $key  = (string)setting('divera_accesskey', '');
+    $key  = trim((string)($key ?? setting('divera_accesskey', '')));
     if ($base === '' || $key === '') {
         throw new DiveraException('Divera ist nicht vollständig konfiguriert (Basis-URL / Accesskey).');
     }

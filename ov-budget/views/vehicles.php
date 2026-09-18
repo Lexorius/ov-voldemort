@@ -118,6 +118,11 @@ $fristBadges = static function (array $liste): string {
           </div>
           <div class="item__meta">
             <?= badge($v['status_label'] ? ['label' => $v['status_label'], 'color' => $v['status_color']] : null, 'ohne Status') ?>
+            <?php if (($v['fms_status'] ?? null) !== null && $v['fms_status'] !== ''): ?>
+              <span class="badge" style="background:<?= e(fms_color((int)$v['fms_status'])) ?>"
+                    title="<?= e(fms_label((int)$v['fms_status']) . ($v['fms_at'] ? ' seit ' . de_datetime($v['fms_at']) : '')) ?>">
+                S<?= (int)$v['fms_status'] ?> <?= e(FMS_STATUS[(int)$v['fms_status']] ?? '') ?></span>
+            <?php endif; ?>
             <?= $fristBadges($fristen[(int)$v['id']] ?? []) ?>
             <?php if ((int)$v['offene_auftraege'] > 0): ?>
               <span class="badge badge--outline"><?= (int)$v['offene_auftraege'] ?> offene(r) Auftrag/Aufträge</span>

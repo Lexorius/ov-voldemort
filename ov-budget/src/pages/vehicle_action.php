@@ -146,6 +146,55 @@ switch (post_str('action')) {
         flash('success', sprintf('%d Mitschnitt(e) gelöscht.', $weg));
         break;
 
+    case 'dv_sync':
+        if (!can('admin')) {
+            flash('error', 'Das darf nur die Administration.');
+            break;
+        }
+        $zurueck = url('admin_divera_fahrzeuge');
+        foreach ([divera_vehicles_sync_master(true), divera_vehicles_sync_status(true)] as $res) {
+            flash($res['status'] === 'ok' ? 'success' : ($res['status'] === 'fehler' ? 'error' : 'warn'), e($res['message']));
+        }
+        break;
+
+    case 'dv_assign':
+        if (!can('admin')) {
+            flash('error', 'Das darf nur die Administration.');
+            break;
+        }
+        $zurueck = url('admin_divera_fahrzeuge');
+        $diveraId = post_int('divera_id', 0) ?? 0;
+        $vehicle = vehicle_find(post_int('vehicle_id', 0) ?? 0);
+        if (!$vehicle || $diveraId <= 0) {
+            flash('error', 'Bitte ein Fahrzeug auswählen.');
+            break;
+        }
+        if (db_val('SELECT id FROM vehicles WHERE divera_vehicle_id = ?', [$diveraId])) {
+            flash('error', 'Dieses Divera-Fahrzeug ist schon zugeordnet.');
+            break;
+        }
+        dv_link((int)$vehicle['id'], $diveraId, 'Von Hand zugeordnet.', $user);
+        flash('success', 'Zugeordnet. Der nächste Abruf holt den Funkstatus.');
+        break;
+
+    case 'dv_unassign':
+        $vehicle = vehicle_find(post_int('vehicle_id', 0) ?? 0);
+        if (!$vehicle || !can('manage_vehicles')) {
+            flash('error', 'Dafür fehlen dir die Rechte.');
+            break;
+        }
+        $zurueck = url('vehicle', ['id' => $vehicle['id']]);
+        db_update('vehicles', ['divera_vehicle_id' => null, 'fms_status' => null, 'fms_at' => null,
+            'fms_note' => '', 'geo_lat' => null, 'geo_lng' => null, 'geo_at' => null, 'divera_besatzung' => null],
+            'id = ?', [(int)$vehicle['id']]);
+        journal_add((int)$vehicle['id'], [
+            'art'      => 'divera',
+            'titel'    => 'Verknüpfung mit Divera gelöst',
+            'alt_wert' => (string)$vehicle['divera_vehicle_id'],
+        ], $user);
+        flash('success', 'Verknüpfung mit Divera gelöst.');
+        break;
+
     case 'stein_assign':
         if (!can('admin')) {
             flash('error', 'Das darf nur die Administration.');

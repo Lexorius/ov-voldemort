@@ -41,6 +41,15 @@ $isNew = empty($vehicle['id']);
         <?php endif; ?>
       </div>
       <div class="field">
+        <label for="opta">OPTA</label>
+        <input type="text" id="opta" name="opta" value="<?= e((string)($vehicle['opta'] ?? '')) ?>"
+               placeholder="THW HB 21/10">
+      </div>
+      <div class="field">
+        <label for="ric">RIC</label>
+        <input type="text" id="ric" name="ric" value="<?= e((string)($vehicle['ric'] ?? '')) ?>">
+      </div>
+      <div class="field">
         <label for="kennzeichen">Kennzeichen</label>
         <input type="text" id="kennzeichen" name="kennzeichen" value="<?= e((string)$vehicle['kennzeichen']) ?>"
                placeholder="THW-12345">

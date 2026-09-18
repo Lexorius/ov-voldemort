@@ -7,8 +7,9 @@ if (!can('view_vehicles')) {
     return;
 }
 
-// Der Abgleich mit der Stein.APP läuft höchstens einmal je Intervall
+// Die Abgleiche laufen höchstens einmal je Intervall
 stein_sync_if_due();
+divera_vehicles_sync_if_due();
 
 $filter = [
     'q'             => get_str('q'),

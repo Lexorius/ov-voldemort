@@ -267,6 +267,13 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('divera_auth_mode','query','Übergabe des Accesskeys','query = ?accesskey=... , header = Authorization: Bearer ...','select','Divera 24/7',60),
 ('divera_timeout','15','Timeout in Sekunden','','number','Divera 24/7',70),
 ('divera_import_status','neu','Status für importierte Wünsche','slug aus der Liste wunsch_status','text','Divera 24/7',80),
+('divera_fahrzeuge_aktiv','0','Fahrzeugdaten aus Divera abgleichen','Funkstatus, Position und Besatzung (v2) sowie OPTA, RIC, Kennzeichen und ISSI (v3)','bool','Divera 24/7',100),
+('divera_status_intervall_minuten','2','Funkstatus abrufen alle (Minuten)','Ein Aufruf je Abruf. Wechsel dazwischen gehen verloren – kurze Abstände geben ein genaueres Fahrtenbuch.','number','Divera 24/7',110),
+('divera_stamm_intervall_minuten','60','Stammdaten abrufen alle (Minuten)','OPTA, RIC, Kennzeichen, ISSI ändern sich selten','number','Divera 24/7',120),
+('divera_personal_key','','Persönlicher Accesskey für /api/v3','Für die Stammdaten der Fahrzeuge (Beta-Schnittstelle, braucht Verwaltungsrechte). Leer = der Accesskey oben.','password','Divera 24/7',130),
+('divera_status_journal','1','Funkstatus ins Journal schreiben','Jeder Statuswechsel steht dann als Fahrtenbuch in der Fahrzeugakte','bool','Divera 24/7',140),
+('divera_position_speichern','1','Position der Fahrzeuge speichern','Letzte bekannte Position mit Link auf die Karte','bool','Divera 24/7',150),
+('divera_besatzung_anzeigen','1','Besatzung laut Divera anzeigen','Namen der zugeordneten Personen in der Fahrzeugakte','bool','Divera 24/7',160),
 ('divera_cron_token','','Token für den automatischen Abruf','Aufruf: /cron.php?token=... (leer = deaktiviert)','text','Divera 24/7',90),
 
 ('fahrzeug_modul_name','Fahrzeuge','Bezeichnung des Fahrzeugmoduls','','text','Fahrzeuge',10),

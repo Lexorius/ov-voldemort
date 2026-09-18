@@ -1,5 +1,28 @@
 # Änderungsverlauf
 
+## 1.16.0
+
+### Fahrzeugdaten aus Divera 24/7
+
+- **Funkstatus als Fahrtenbuch:** Die Anwendung ruft den FMS-Status der
+  Fahrzeuge ab (`/api/v2/pull/vehicle-status`, Vorgabe alle 2 Minuten) und
+  schreibt jeden Wechsel mit Uhrzeit und Freitext ins Journal der
+  Fahrzeugakte – Rubrik *Funkstatus*. Der aktuelle Status steht farbig in der
+  Fahrzeugliste und in der Akte.
+- **Letzte Position** mit Link auf OpenStreetMap und die **Besatzung**, die in
+  Divera zugeordnet ist. Beides lässt sich abschalten.
+- **Stammdaten:** OPTA und RIC als neue Felder am Fahrzeug, dazu Kennzeichen
+  und ISSI, wenn bei uns noch nichts steht (`/api/v3/vehicles`, Vorgabe
+  stündlich). Die v3-Schnittstelle ist bei Divera noch Beta und braucht einen
+  persönlichen Accesskey mit Verwaltungsrechten.
+- **Zuordnung:** Divera-Fahrzeuge werden über ISSI (auch eine von mehreren),
+  Kennzeichen (egal ob mit Leerzeichen oder Bindestrich) oder Funkrufname
+  erkannt – nur wenn genau eines passt. Der Rest steht unter
+  *Verwaltung → Divera-Fahrzeuge* zum Zuordnen, mit Protokoll der Abrufe.
+- Das Journal kennt jetzt die Quelle *Divera*; Suche in der Fahrzeugliste auch
+  nach OPTA.
+- Bestehende Installationen bekommen die neuen Spalten beim nächsten Start.
+
 ## 1.15.0
 
 ### Bilder und Dokumente an Fahrzeugen und Aufträgen
