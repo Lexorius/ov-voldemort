@@ -123,7 +123,10 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   mit Vorschau und Dublettenerkennung.
 * **Besprechungen** – Talking Points im Themenspeicher sammeln, auf die
   Tagesordnung setzen, während der Sitzung Ergebnisse festhalten und daraus
-  Aufgaben machen. Tagesordnung und Protokoll zum Drucken. Regelmäßige
+  Aufgaben machen – einzeln über das vorausgefüllte Aufgabenformular, mehrere
+  Punkte auf einmal mit gemeinsamer Zuständigkeit und Frist oder als freie
+  Aufgabe der Besprechung. Die Besprechung listet alle ihre Aufgaben, die
+  Aufgabe verweist zurück. Tagesordnung und Protokoll (mit Aufgabenliste) zum Drucken. Regelmäßige
   Termine wie „alle 2 Wochen montags" oder „jeden 2. Montag im Monat" als Serie.
   **Anwesenheit:** Eingeladene aus dem Ortsverband, aus den Kontakten (auch ganze
   Verteiler) oder als freier Name; je Person teilgenommen, entschuldigt oder

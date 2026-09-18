@@ -34,8 +34,9 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
   Dublettenerkennung
 
 ### Besprechungen
-- Talking Points im Themenspeicher, Tagesordnung mit Zeitplan, Ergebnisse
-  direkt als Aufgabe
+- Talking Points im Themenspeicher, Tagesordnung mit Zeitplan
+- **Aufgaben aus der Besprechung**: je Punkt vorausgefüllt, mehrere Punkte auf
+  einmal übernehmen oder frei anlegen; Übersicht in Besprechung und Protokoll
 - **Wiederkehrende Termine** („alle 2 Wochen montags", „jeden 2. Montag im Monat")
 - **Anwesenheit**: teilgenommen, entschuldigt, nicht erschienen
 - Tagesordnung und Protokoll zum Drucken

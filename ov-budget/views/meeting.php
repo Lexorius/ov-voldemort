@@ -1,8 +1,17 @@
 <?php
 /** @var array $meeting @var array $punkte @var array $zeiten @var int $gesamt @var array $speicher
  *  @var array $teilnehmer @var array $anwesenheit @var array $kandidaten @var array $kontakte
- *  @var string $kontaktSuche @var array $verteiler @var ?array $quelle */
+ *  @var string $kontaktSuche @var array $verteiler @var ?array $quelle
+ *  @var array $aufgaben @var array $personen */
 $verwalten = can('manage_meetings');
+$aufgabenAnlegen = $verwalten && can('create_todo');
+$aufgaben ??= [];
+$personen ??= [];
+// Aufgaben je Talking Point, dazu die freien
+$aufgabenJeTp = [];
+foreach ($aufgaben as $a) {
+    $aufgabenJeTp[(int)($a['talking_point_id'] ?? 0)][] = $a;
+}
 $geplant = $meeting['status'] === 'geplant';
 $label = tp_label();
 
@@ -156,22 +165,25 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
               </div>
               <div class="btnrow">
                 <button class="btn btn--sm" type="submit">Festhalten</button>
-                <?php if ($p['todo_id']): ?>
-                  <a class="btn btn--sec btn--sm" href="<?= e(url('todo', ['id' => $p['todo_id']])) ?>">→ Aufgabe: <?= e(mb_substr((string)$p['todo_titel'], 0, 40)) ?></a>
-                <?php endif; ?>
               </div>
             </form>
 
+            <?= render_partial('partials/tp_todos', ['liste' => $aufgabenJeTp[(int)$p['id']] ?? []]) ?>
+
             <div class="btnrow mt">
-              <?php if (!$p['todo_id']): ?>
-                <form method="post" action="<?= e(url('meeting_action')) ?>" class="inline-form">
-                  <?= csrf_field() ?>
-                  <input type="hidden" name="action" value="todo">
-                  <input type="hidden" name="meeting_id" value="<?= (int)$meeting['id'] ?>">
-                  <input type="hidden" name="tp_id" value="<?= (int)$p['id'] ?>">
-                  <button class="btn btn--sec btn--sm" type="submit"
-                          title="Das festgehaltene Ergebnis wird zur Beschreibung der Aufgabe">Aufgabe daraus machen</button>
-                </form>
+              <?php if ($aufgabenAnlegen): ?>
+                <a class="btn btn--sec btn--sm" href="<?= e(url('todo_edit', ['tp_id' => $p['id']])) ?>"
+                   title="Aufgabenformular mit Titel, Ergebnis und Fachgruppe vorausgefüllt – Zuständigkeit und Frist selbst wählen">+ Aufgabe</a>
+                <?php if (empty($aufgabenJeTp[(int)$p['id']])): ?>
+                  <form method="post" action="<?= e(url('meeting_action')) ?>" class="inline-form">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="action" value="todo">
+                    <input type="hidden" name="meeting_id" value="<?= (int)$meeting['id'] ?>">
+                    <input type="hidden" name="tp_id" value="<?= (int)$p['id'] ?>">
+                    <button class="btn btn--sec btn--sm" type="submit"
+                            title="Sofort anlegen: das festgehaltene Ergebnis wird zur Beschreibung, zuständig ist die Fachgruppe des Punkts">Direkt als Aufgabe übernehmen</button>
+                  </form>
+                <?php endif; ?>
               <?php endif; ?>
               <?php if ($geplant): ?>
                 <form method="post" action="<?= e(url('meeting_action')) ?>" class="inline-form">
@@ -191,6 +203,7 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
               <div class="mt"><div class="dl__label">Ergebnis</div>
                 <div class="comment__body"><?= e((string)$p['ergebnis']) ?></div></div>
             <?php endif; ?>
+            <?= render_partial('partials/tp_todos', ['liste' => $aufgabenJeTp[(int)$p['id']] ?? []]) ?>
             <?php if ($bearbeitbar): ?>
               <div class="btnrow mt"><a class="btn btn--sec btn--sm" href="<?= e(url('talking_point_edit', ['id' => $p['id']])) ?>">Bearbeiten</a></div>
             <?php endif; ?>
@@ -198,6 +211,91 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
         </div>
       <?php endforeach; ?>
     </div>
+  <?php endif; ?>
+</section>
+
+<section class="card" id="aufgaben">
+  <div class="card__head">
+    <h2>Aufgaben aus dieser Besprechung <?php if ($aufgaben): ?><span class="muted small">(<?= count($aufgaben) ?>)</span><?php endif; ?></h2>
+    <?php if ($aufgabenAnlegen): ?>
+      <a class="btn btn--sm" href="<?= e(url('todo_edit', ['meeting_id' => $meeting['id']])) ?>">+ Aufgabe</a>
+    <?php endif; ?>
+  </div>
+
+  <?php if (!$aufgaben): ?>
+    <div class="empty">Noch keine Aufgaben aus dieser Besprechung.</div>
+  <?php else: ?>
+    <div class="tablewrap">
+      <table class="data">
+        <thead><tr><th>Aufgabe</th><th>Punkt</th><th>Zuständig</th><th>Fällig</th><th>Status</th></tr></thead>
+        <tbody>
+        <?php foreach ($aufgaben as $a): ?>
+          <tr>
+            <td><a href="<?= e(url('todo', ['id' => $a['id']])) ?>"><?= e((string)$a['titel']) ?></a></td>
+            <td class="small"><?= e((string)($a['tp_titel'] ?? '')) ?: '<span class="muted">–</span>' ?></td>
+            <td class="small"><?= e(todo_target_name($a)) ?></td>
+            <td class="small"><?= $a['faellig_am'] ? e(de_date($a['faellig_am'])) : '<span class="muted">–</span>' ?></td>
+            <td><?= $a['status_label'] ? badge(['label' => $a['status_label'], 'color' => $a['status_color']]) : '' ?></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  <?php endif; ?>
+
+  <?php if ($aufgabenAnlegen && $punkte): ?>
+    <details class="mt"<?= $aufgaben ? '' : ' open' ?>>
+      <summary><strong><?= e(tp_label()) ?> als Aufgaben übernehmen</strong></summary>
+      <form method="post" action="<?= e(url('meeting_action')) ?>" class="form mt">
+        <?= csrf_field() ?>
+        <input type="hidden" name="action" value="todos_bulk">
+        <input type="hidden" name="meeting_id" value="<?= (int)$meeting['id'] ?>">
+        <p class="small muted">Jeder ausgewählte Punkt wird eine eigene Aufgabe: Titel wie der Punkt,
+          das festgehaltene Ergebnis als Beschreibung, Priorität vom Punkt.
+          Vorausgewählt sind Punkte mit Ergebnis, aus denen noch keine Aufgabe entstanden ist.</p>
+        <div class="tablewrap">
+          <table class="data">
+            <tbody>
+            <?php foreach ($punkte as $p):
+                $schon = count($aufgabenJeTp[(int)$p['id']] ?? []);
+                $vorschlagen = !$schon && trim((string)$p['ergebnis']) !== '' && $p['status_slug'] !== 'vertagt'; ?>
+              <tr>
+                <td style="width:2.5rem"><input type="checkbox" name="tp_ids[]" value="<?= (int)$p['id'] ?>" id="ta<?= (int)$p['id'] ?>"<?= $vorschlagen ? ' checked' : '' ?>></td>
+                <td>
+                  <label for="ta<?= (int)$p['id'] ?>"><strong><?= e($p['titel']) ?></strong></label>
+                  <?php if ($p['ergebnis']): ?><div class="small muted"><?= e(mb_strimwidth((string)$p['ergebnis'], 0, 120, '…')) ?></div><?php endif; ?>
+                </td>
+                <td class="small"><?= e($p['fachgruppe_label'] ?: '') ?></td>
+                <td class="small"><?= $p['status_label'] ? badge(['label' => $p['status_label'], 'color' => $p['status_color']]) : '' ?></td>
+                <td class="small muted"><?= $schon ? e($schon . ' Aufgabe(n) vorhanden') : '' ?></td>
+              </tr>
+            <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid2 mt">
+          <div class="field">
+            <label for="ta-ziel">Zuständig</label>
+            <select id="ta-ziel" name="ziel">
+              <option value="tp">wie der Punkt (Fachgruppe, sonst OV)</option>
+              <option value="ov">ganzer OV</option>
+              <optgroup label="Fachgruppe"><?= todo_target_options('fachgruppe') ?></optgroup>
+              <optgroup label="Funktion"><?= todo_target_options('funktion') ?></optgroup>
+              <optgroup label="Person">
+                <?php foreach ($personen as $pe): ?>
+                  <option value="user:<?= (int)$pe['id'] ?>"><?= e($pe['display_name']) ?></option>
+                <?php endforeach; ?>
+              </optgroup>
+            </select>
+          </div>
+          <div class="field">
+            <label for="ta-frist">Fällig am <span class="muted small">(optional)</span></label>
+            <input type="date" id="ta-frist" name="faellig_am">
+          </div>
+        </div>
+        <div class="btnrow"><button class="btn" type="submit">Ausgewählte als Aufgaben anlegen</button></div>
+      </form>
+    </details>
   <?php endif; ?>
 </section>
 

@@ -35,4 +35,7 @@ render('meeting', [
     'verteiler'   => can('manage_meetings') && can('view_contacts')
         ? db_all('SELECT id, name FROM contact_groups WHERE is_active = 1 ORDER BY name') : [],
     'quelle'      => can('manage_meetings') && !$teilnehmer ? attendance_source_meeting($meeting) : null,
+    'aufgaben'    => meeting_todos((int)$meeting['id']),
+    'personen'    => can('manage_meetings') && can('create_todo')
+        ? db_all('SELECT id, display_name FROM users WHERE is_active = 1 ORDER BY display_name') : [],
 ]);

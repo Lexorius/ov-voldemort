@@ -56,7 +56,7 @@ switch (post_str('action')) {
 
     case 'todo':
         $tp = tp_find(post_int('tp_id', 0) ?? 0);
-        if ($tp && !$tp['todo_id']) {
+        if ($tp && (int)$tp['meeting_id'] === $meetingId && can('create_todo')) {
             $todoId = tp_create_todo($tp, $user);
             flash('success', 'Aufgabe angelegt: <a href="' . e(url('todo', ['id' => $todoId])) . '">'
                 . e((string)$tp['titel']) . '</a>');
@@ -125,6 +125,30 @@ switch (post_str('action')) {
             flash('success', 'Von der Teilnehmerliste genommen.');
             $zurueck .= '#anwesenheit';
         }
+        break;
+
+    case 'todos_bulk':
+        // Mehrere Talking Points auf einmal als Aufgaben übernehmen
+        if (!$meeting || !can('create_todo')) {
+            flash('error', 'Dafür fehlen dir die Rechte.');
+            break;
+        }
+        $opt = ['faellig_am' => post_date('faellig_am')];
+        if ($ziel = todo_target_from_value(post_str('ziel'))) {
+            $opt['target'] = $ziel;
+        }
+        $n = 0;
+        foreach ((array)post('tp_ids', []) as $tpId) {
+            $tp = tp_find((int)$tpId);
+            if ($tp && (int)$tp['meeting_id'] === $meetingId) {
+                tp_create_todo($tp, $user, $opt);
+                $n++;
+            }
+        }
+        flash($n > 0 ? 'success' : 'warn', $n > 0
+            ? sprintf('%d Aufgabe(n) angelegt.', $n)
+            : 'Keinen Talking Point ausgewählt.');
+        $zurueck .= '#aufgaben';
         break;
 
     case 'notes':

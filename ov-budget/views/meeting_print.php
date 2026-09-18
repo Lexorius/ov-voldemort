@@ -133,7 +133,7 @@ $ovName = (string)setting('ov_name', '');
           <div class="ergebnis__kopf">
             <?= e((string)$p['status_label']) ?>
             <?php if ($p['verantwortlich']): ?> · verantwortlich: <?= e($p['verantwortlich']) ?><?php endif; ?>
-            <?php if ($p['todo_id']): ?> · Aufgabe #<?= (int)$p['todo_id'] ?><?php endif; ?>
+            <?php foreach ($aufgaben ?? [] as $a): if ((int)$a['talking_point_id'] === (int)$p['id']): ?> · Aufgabe #<?= (int)$a['id'] ?><?php endif; endforeach; ?>
           </div>
           <?php if ($p['ergebnis']): ?><div class="ergebnis__text"><?= e((string)$p['ergebnis']) ?></div><?php endif; ?>
         </div>
@@ -143,6 +143,23 @@ $ovName = (string)setting('ov_name', '');
     <?php endif; ?>
   </div>
 <?php endforeach; ?>
+
+<?php if ($protokoll && !empty($aufgaben)): ?>
+  <div class="notizen">
+    <strong>Aufgaben</strong>
+    <table class="eck" style="margin-top:.4rem">
+      <?php foreach ($aufgaben as $a): ?>
+        <tr>
+          <td>#<?= (int)$a['id'] ?></td>
+          <td><?= e((string)$a['titel']) ?>
+            <?php if (!empty($a['tp_titel'])): ?><div style="color:#475569;font-size:9pt">zu: <?= e((string)$a['tp_titel']) ?></div><?php endif; ?></td>
+          <td><?= e(todo_target_name($a)) ?></td>
+          <td><?= $a['faellig_am'] ? 'bis ' . e(de_date($a['faellig_am'])) : '' ?></td>
+        </tr>
+      <?php endforeach; ?>
+    </table>
+  </div>
+<?php endif; ?>
 
 <?php if ($protokoll && $meeting['notizen']): ?>
   <div class="notizen">

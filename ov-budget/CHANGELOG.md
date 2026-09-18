@@ -1,5 +1,30 @@
 # Änderungsverlauf
 
+## 1.19.0
+
+### Besprechungen: Aufgaben direkt aus der Sitzung
+
+- **Aufgaben wissen, woher sie kommen:** Jede Aufgabe kann auf ihre
+  Besprechung und ihren Talking Point verweisen. In der Aufgabe steht
+  „Aus Besprechung …" mit Link zurück.
+- **+ Aufgabe je Punkt:** Öffnet das normale Aufgabenformular, vorausgefüllt
+  mit Titel, festgehaltenem Ergebnis, Hintergrund, Fachgruppe und Priorität.
+  Zuständigkeit (auch einzelne Personen) und Frist wählt man selbst. Aus einem
+  Punkt dürfen mehrere Aufgaben entstehen; nach dem Speichern geht es zurück in
+  die Besprechung.
+- **Freie Aufgaben:** „+ Aufgabe" im neuen Abschnitt „Aufgaben aus dieser
+  Besprechung" legt eine Aufgabe ohne Talking Point an, die trotzdem zur
+  Besprechung gehört.
+- **Talking Points als Aufgaben übernehmen:** Mehrere Punkte auf einmal, mit
+  gemeinsamer Zuständigkeit (wie der Punkt, ganzer OV, Fachgruppe, Funktion
+  oder Person) und optionaler Frist. Vorausgewählt sind Punkte mit Ergebnis,
+  aus denen noch keine Aufgabe entstanden ist.
+- **Überblick:** Die Besprechung listet alle ihre Aufgaben mit Zuständigkeit,
+  Frist und Status, jeder Punkt zeigt seine eigenen. Das gedruckte Protokoll
+  enthält eine Aufgabenliste.
+- Bereits früher aus Talking Points angelegte Aufgaben werden beim Start ihrer
+  Besprechung zugeordnet.
+
 ## 1.18.0
 
 ### Wünsch dir was: Divera-Import an die echte Schnittstelle angepasst

@@ -41,6 +41,10 @@ function todo_query(array $f = []): array
     if (!empty($f['offen'])) {
         $w[] = 'COALESCE(st.is_final, 0) = 0';
     }
+    if (!empty($f['meeting_id'])) {
+        $w[] = 't.meeting_id = ?';
+        $p[] = (int)$f['meeting_id'];
+    }
     if (!empty($f['ueberfaellig'])) {
         $w[] = 't.faellig_am IS NOT NULL AND t.faellig_am < CURDATE() AND COALESCE(st.is_final,0) = 0';
     }
@@ -79,8 +83,12 @@ function todo_query(array $f = []): array
                    u.display_name AS ersteller,
                    li.label AS target_label,
                    pu.display_name AS target_user,
+                   mt.titel AS meeting_titel, mt.datum AS meeting_datum,
+                   tpx.titel AS tp_titel,
                    (SELECT COUNT(*) FROM todo_comments c WHERE c.todo_id = t.id) AS kommentare
             FROM todos t
+            LEFT JOIN meetings  mt  ON mt.id  = t.meeting_id
+            LEFT JOIN talking_points tpx ON tpx.id = t.talking_point_id
             LEFT JOIN list_items st ON st.id = t.status_id
             LEFT JOIN list_items pr ON pr.id = t.prioritaet_id
             LEFT JOIN list_items li ON li.id = t.target_id AND t.target_type IN (\'fachgruppe\',\'funktion\')
@@ -102,6 +110,16 @@ function todo_target_name(array $t): string
         'user'       => (string)($t['target_user'] ?? 'Person'),
         default      => '–',
     };
+}
+
+/** <option>-Liste für die Sammelauswahl, Werte wie "fachgruppe:12" */
+function todo_target_options(string $listKey): string
+{
+    $html = '';
+    foreach (list_items($listKey) as $i) {
+        $html .= '<option value="' . e($listKey . ':' . (int)$i['id']) . '">' . e((string)$i['label']) . '</option>';
+    }
+    return $html;
 }
 
 function todo_comments(int $todoId): array
@@ -150,6 +168,13 @@ function todo_save_from_post(?array $existing, array $user): array
         'wish_id'       => post_int('wish_id'),
     ];
 
+    // Herkunft aus einer Besprechung – nur beim Anlegen und nur, wenn es sie gibt
+    if (!$existing) {
+        [$meetingId, $tpId] = todo_origin_from_post();
+        $data['meeting_id'] = $meetingId;
+        $data['talking_point_id'] = $tpId;
+    }
+
     if ($errors) {
         return [null, $errors];
     }
@@ -161,7 +186,73 @@ function todo_save_from_post(?array $existing, array $user): array
     } else {
         $data['created_by'] = (int)$user['id'];
         $id = db_insert('todos', $data);
+        if (!empty($data['talking_point_id'])) {
+            // Die erste Aufgabe steht auch am Talking Point (für ältere Ansichten)
+            db_exec('UPDATE talking_points SET todo_id = ? WHERE id = ? AND todo_id IS NULL', [$id, $data['talking_point_id']]);
+        }
         audit('aufgabe.angelegt', 'todo', $id, $data['titel']);
     }
     return [$id, []];
+}
+
+/** Besprechung und Talking Point aus dem Formular – geprüft */
+function todo_origin_from_post(): array
+{
+    $meetingId = post_int('meeting_id') ?: null;
+    $tpId = post_int('talking_point_id') ?: null;
+    if ($meetingId !== null && !db_val('SELECT id FROM meetings WHERE id = ?', [$meetingId])) {
+        $meetingId = null;
+    }
+    if ($tpId !== null) {
+        $tp = db_row('SELECT id, meeting_id FROM talking_points WHERE id = ?', [$tpId]);
+        if (!$tp) {
+            $tpId = null;
+        } else {
+            $meetingId ??= $tp['meeting_id'] ? (int)$tp['meeting_id'] : null;
+        }
+    }
+    return [$meetingId, $tpId];
+}
+
+/**
+ * Zuständigkeit aus einem Auswahlwert wie "fachgruppe:12", "user:5" oder "ov".
+ * Rückgabe [typ, id] oder null bei "tp" (= wie der Talking Point). Reine Funktion.
+ */
+function todo_target_from_value(string $wert): ?array
+{
+    if ($wert === '' || $wert === 'tp') {
+        return null;
+    }
+    if ($wert === 'ov') {
+        return ['ov', null];
+    }
+    if (preg_match('/^(fachgruppe|funktion|user):(\d+)$/', $wert, $m)) {
+        return [$m[1], (int)$m[2]];
+    }
+    return null;
+}
+
+/**
+ * Vorbelegung einer Aufgabe aus einem Talking Point. Reine Funktion
+ * (bis auf die Vorgabewerte der Listen).
+ */
+function todo_prefill_from_tp(array $tp, ?array $meeting): array
+{
+    $beschreibung = trim((string)($tp['ergebnis'] ?? ''));
+    if (trim((string)($tp['beschreibung'] ?? '')) !== '') {
+        $beschreibung = trim($beschreibung . "\n\n— Hintergrund —\n" . $tp['beschreibung']);
+    }
+    if ($meeting) {
+        $beschreibung = trim($beschreibung . "\n\nAus: " . $meeting['titel'] . ' am ' . de_date($meeting['datum']));
+    }
+    if (trim((string)($tp['verantwortlich'] ?? '')) !== '') {
+        $beschreibung = trim($beschreibung . "\nVerantwortlich laut Besprechung: " . $tp['verantwortlich']);
+    }
+    return [
+        'titel'         => mb_substr((string)$tp['titel'], 0, 200),
+        'beschreibung'  => $beschreibung,
+        'target_type'   => !empty($tp['fachgruppe_id']) ? 'fachgruppe' : 'ov',
+        'target_id'     => !empty($tp['fachgruppe_id']) ? (int)$tp['fachgruppe_id'] : null,
+        'prioritaet_id' => !empty($tp['prioritaet_id']) ? (int)$tp['prioritaet_id'] : list_default_id('todo_prioritaet'),
+    ];
 }

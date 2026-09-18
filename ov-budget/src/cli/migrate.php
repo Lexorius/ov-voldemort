@@ -536,6 +536,36 @@ function ovb_migrate(PDO $pdo, callable $say): void
         }
     }
     $merken('010_divera_reporttypes');
+
+    /* ---- 011: Aufgaben kennen ihre Besprechung ---- */
+    if (ovb_table_exists($pdo, 'todos')) {
+        if (!ovb_column_exists($pdo, 'todos', 'meeting_id')) {
+            $pdo->exec('ALTER TABLE todos ADD COLUMN meeting_id INT UNSIGNED NULL AFTER wish_id,
+                        ADD KEY idx_todo_meeting (meeting_id)');
+        }
+        if (!ovb_column_exists($pdo, 'todos', 'talking_point_id')) {
+            $pdo->exec('ALTER TABLE todos ADD COLUMN talking_point_id INT UNSIGNED NULL AFTER meeting_id,
+                        ADD KEY idx_todo_tp (talking_point_id)');
+        }
+        if (ovb_table_exists($pdo, 'meetings') && !ovb_constraint_exists($pdo, 'todos', 'fk_todo_meeting')) {
+            $pdo->exec('ALTER TABLE todos ADD CONSTRAINT fk_todo_meeting
+                        FOREIGN KEY (meeting_id) REFERENCES meetings(id) ON DELETE SET NULL');
+        }
+        if (ovb_table_exists($pdo, 'talking_points') && !ovb_constraint_exists($pdo, 'todos', 'fk_todo_tp')) {
+            $pdo->exec('ALTER TABLE todos ADD CONSTRAINT fk_todo_tp
+                        FOREIGN KEY (talking_point_id) REFERENCES talking_points(id) ON DELETE SET NULL');
+        }
+        // Bisher angelegte Aufgaben aus Talking Points nachtragen
+        if (ovb_table_exists($pdo, 'talking_points')) {
+            $n = $pdo->exec('UPDATE todos t JOIN talking_points tp ON tp.todo_id = t.id
+                             SET t.talking_point_id = tp.id, t.meeting_id = tp.meeting_id
+                             WHERE t.talking_point_id IS NULL');
+            if ($n > 0) {
+                $say(sprintf('%d Aufgabe(n) ihrer Besprechung zugeordnet.', $n));
+            }
+        }
+    }
+    $merken('011_todo_herkunft');
 }
 
 /**

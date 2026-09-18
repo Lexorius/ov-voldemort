@@ -36,6 +36,13 @@ $overdue = !$done && $todo['faellig_am'] && $todo['faellig_am'] < date('Y-m-d');
       <div class="dl__item"><div class="dl__label">Erledigt am</div>
         <div class="dl__value"><?= e(de_datetime($todo['erledigt_am'])) ?></div></div>
     <?php endif; ?>
+    <?php if (!empty($todo['meeting_id'])): ?>
+      <div class="dl__item"><div class="dl__label">Aus Besprechung</div>
+        <div class="dl__value"><a href="<?= e(url('meeting', ['id' => $todo['meeting_id']])) ?>#aufgaben"><?= e((string)$todo['meeting_titel']) ?></a>
+          am <?= e(de_date($todo['meeting_datum'])) ?>
+          <?php if (!empty($todo['tp_titel'])): ?><div class="small muted">Talking Point: <?= e((string)$todo['tp_titel']) ?></div><?php endif; ?>
+        </div></div>
+    <?php endif; ?>
     <?php if ($wish): ?>
       <div class="dl__item"><div class="dl__label">Gehört zu Wunsch</div>
         <div class="dl__value"><a href="<?= e(url('wish', ['id' => $wish['id']])) ?>">#<?= (int)$wish['id'] ?> · <?= e($wish['bezeichnung']) ?></a></div></div>

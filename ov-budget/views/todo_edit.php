@@ -1,12 +1,23 @@
 <?php
-/** @var array $todo @var array $errors @var array $users @var array $wishes */
+/** @var array $todo @var array $errors @var array $users @var array $wishes
+ *  @var ?array $herkunftMeeting @var ?array $herkunftTp */
+$herkunftMeeting ??= null;
+$herkunftTp ??= null;
 $isNew = empty($todo['id']);
 $tt = (string)($todo['target_type'] ?? 'ov');
 $tid = (int)($todo['target_id'] ?? 0);
 ?>
+<?php $abbrechen = $herkunftMeeting ? url('meeting', ['id' => $herkunftMeeting['id']]) . '#aufgaben'
+    : ($isNew ? url('todos') : url('todo', ['id' => $todo['id']])); ?>
 <div class="pagehead">
-  <h1><?= $isNew ? 'Neue Aufgabe' : 'Aufgabe bearbeiten' ?></h1>
-  <a class="btn btn--sec" href="<?= $isNew ? e(url('todos')) : e(url('todo', ['id' => $todo['id']])) ?>">Abbrechen</a>
+  <div>
+    <h1><?= $isNew ? 'Neue Aufgabe' : 'Aufgabe bearbeiten' ?></h1>
+    <?php if ($herkunftMeeting): ?>
+      <p class="muted small">Aus der Besprechung „<?= e($herkunftMeeting['titel']) ?>" am <?= e(de_date($herkunftMeeting['datum'])) ?>
+        <?php if ($herkunftTp): ?> · Talking Point „<?= e($herkunftTp['titel']) ?>"<?php endif; ?></p>
+    <?php endif; ?>
+  </div>
+  <a class="btn btn--sec" href="<?= e($abbrechen) ?>">Abbrechen</a>
 </div>
 
 <?php if ($errors): ?>
@@ -17,6 +28,13 @@ $tid = (int)($todo['target_id'] ?? 0);
 
 <form method="post" class="form" action="<?= e(url('todo_edit', $isNew ? [] : ['id' => $todo['id']])) ?>">
   <?= csrf_field() ?>
+  <?php if ($isNew && $herkunftMeeting): ?>
+    <input type="hidden" name="meeting_id" value="<?= (int)$herkunftMeeting['id'] ?>">
+    <input type="hidden" name="zurueck" value="besprechung">
+  <?php endif; ?>
+  <?php if ($isNew && $herkunftTp): ?>
+    <input type="hidden" name="talking_point_id" value="<?= (int)$herkunftTp['id'] ?>">
+  <?php endif; ?>
 
   <section class="card">
     <div class="form">
@@ -97,6 +115,6 @@ $tid = (int)($todo['target_id'] ?? 0);
 
   <div class="btnrow">
     <button class="btn" type="submit"><?= $isNew ? 'Aufgabe anlegen' : 'Speichern' ?></button>
-    <a class="btn btn--sec" href="<?= $isNew ? e(url('todos')) : e(url('todo', ['id' => $todo['id']])) ?>">Abbrechen</a>
+    <a class="btn btn--sec" href="<?= e($abbrechen) ?>">Abbrechen</a>
   </div>
 </form>

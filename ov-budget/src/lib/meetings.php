@@ -403,30 +403,35 @@ function tp_move(int $tpId, string $richtung): void
 }
 
 /** Aus dem Ergebnis eines Punktes eine Aufgabe machen */
-function tp_create_todo(array $tp, array $user): int
+/**
+ * Aufgabe aus einem Talking Point anlegen.
+ * $opt: target => [typ, id] (sonst Fachgruppe des Punkts oder OV), faellig_am
+ */
+function tp_create_todo(array $tp, array $user, array $opt = []): int
 {
-    $beschreibung = trim((string)$tp['ergebnis']);
-    if (trim((string)$tp['beschreibung']) !== '') {
-        $beschreibung = trim($beschreibung . "\n\n— Hintergrund —\n" . $tp['beschreibung']);
-    }
     $meeting = $tp['meeting_id'] ? meeting_find((int)$tp['meeting_id']) : null;
-    if ($meeting) {
-        $beschreibung = trim($beschreibung . "\n\nAus: " . $meeting['titel'] . ' am ' . de_date($meeting['datum']));
-    }
-    if (trim((string)$tp['verantwortlich']) !== '') {
-        $beschreibung = trim($beschreibung . "\nVerantwortlich laut Besprechung: " . $tp['verantwortlich']);
-    }
+    $vor = todo_prefill_from_tp($tp, $meeting);
+    [$typ, $zielId] = $opt['target'] ?? [$vor['target_type'], $vor['target_id']];
 
     $id = db_insert('todos', [
-        'titel'         => mb_substr((string)$tp['titel'], 0, 200),
-        'beschreibung'  => $beschreibung,
-        'target_type'   => $tp['fachgruppe_id'] ? 'fachgruppe' : 'ov',
-        'target_id'     => $tp['fachgruppe_id'] ?: null,
-        'status_id'     => list_default_id('todo_status'),
-        'prioritaet_id' => $tp['prioritaet_id'] ?: list_default_id('todo_prioritaet'),
-        'created_by'    => (int)$user['id'],
+        'titel'            => $vor['titel'],
+        'beschreibung'     => $vor['beschreibung'],
+        'target_type'      => $typ,
+        'target_id'        => $typ === 'ov' ? null : $zielId,
+        'status_id'        => list_default_id('todo_status'),
+        'prioritaet_id'    => $vor['prioritaet_id'],
+        'faellig_am'       => $opt['faellig_am'] ?? null,
+        'meeting_id'       => $tp['meeting_id'] ?: null,
+        'talking_point_id' => (int)$tp['id'],
+        'created_by'       => (int)$user['id'],
     ]);
-    db_update('talking_points', ['todo_id' => $id], 'id = ?', [(int)$tp['id']]);
+    db_exec('UPDATE talking_points SET todo_id = ? WHERE id = ? AND todo_id IS NULL', [$id, (int)$tp['id']]);
     audit('tp.aufgabe', 'talking_point', (int)$tp['id'], 'Aufgabe #' . $id);
     return $id;
+}
+
+/** Aufgaben, die in einer Besprechung entstanden sind */
+function meeting_todos(int $meetingId): array
+{
+    return todo_query(['meeting_id' => $meetingId, 'sort' => 'standard']);
 }
