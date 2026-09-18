@@ -35,6 +35,8 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 
 ### Besprechungen
 - Talking Points im Themenspeicher, Tagesordnung mit Zeitplan
+- **Themenarchiv**: besprochene, beschlossene, abgelehnte und vertagte Themen
+  mit Ergebnis und Aufgaben, durchsuchbar
 - **Themen über Divera einreichen**: ein Divera-Formular füllt den Themenspeicher
 - **Status-Rückmeldung an Divera**: Weitergeleitet → In Bearbeitung → Abgeschlossen
 - **Aufgaben aus der Besprechung**: je Punkt vorausgefüllt, mehrere Punkte auf

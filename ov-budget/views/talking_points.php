@@ -32,6 +32,8 @@ $diveraThemen ??= [];
     if ($zuletzt !== ''): ?> (zuletzt abgerufen <?= e(de_datetime($zuletzt)) ?>)<?php endif; ?>.</p>
 <?php endif; ?>
 
+<?= render_partial('partials/tp_tabs', ['tab' => 'offen']) ?>
+
 <form class="card card--tight" method="get" data-autosubmit>
   <input type="hidden" name="p" value="talking_points">
   <div class="filters">

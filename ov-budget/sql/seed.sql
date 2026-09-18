@@ -219,6 +219,7 @@ INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_defa
 ('tp_status','Besprochen',    'besprochen',    '#15803d',20,0,1),
 ('tp_status','Beschlossen',   'beschlossen',   '#166534',30,0,1),
 ('tp_status','Vertagt',       'vertagt',       '#b45309',40,0,0),
+('tp_status','Abgelehnt',     'abgelehnt',     '#b91c1c',45,0,1),
 ('tp_status','Zurueckgezogen','zurueckgezogen','#64748b',50,0,1);
 
 -- ---------- Anlage-Typen ----------

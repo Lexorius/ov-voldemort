@@ -266,6 +266,75 @@ function tp_backlog(array $f = []): array
     );
 }
 
+/** Höchstzahl Themen, die das Archiv auf einmal zeigt */
+const TP_ARCHIV_LIMIT = 300;
+
+/**
+ * Archiv: alles, was nicht (mehr) im Themenspeicher liegt – Themen auf einer
+ * Besprechung und abgeschlossene Themen ohne Besprechung (z. B. abgelehnt).
+ * $f: q (auch im Ergebnis), fachgruppe_id, status_id, von, bis (Datum der Besprechung,
+ * sonst Anlagedatum)
+ */
+function tp_archive(array $f = []): array
+{
+    $w = ["(tp.meeting_id IS NOT NULL OR COALESCE(st.is_final, 0) = 1)"];
+    $p = [];
+    if (!empty($f['q'])) {
+        $w[] = '(tp.titel LIKE ? OR tp.beschreibung LIKE ? OR tp.ergebnis LIKE ?)';
+        $like = '%' . $f['q'] . '%';
+        array_push($p, $like, $like, $like);
+    }
+    if (!empty($f['fachgruppe_id'])) {
+        $w[] = 'tp.fachgruppe_id = ?';
+        $p[] = (int)$f['fachgruppe_id'];
+    }
+    if (!empty($f['status_id'])) {
+        $w[] = 'tp.status_id = ?';
+        $p[] = (int)$f['status_id'];
+    }
+    if (!empty($f['von'])) {
+        $w[] = 'COALESCE(m.datum, DATE(tp.created_at)) >= ?';
+        $p[] = $f['von'];
+    }
+    if (!empty($f['bis'])) {
+        $w[] = 'COALESCE(m.datum, DATE(tp.created_at)) <= ?';
+        $p[] = $f['bis'];
+    }
+
+    $sql = str_replace(
+        'FROM talking_points tp',
+        ', vg.meeting_id AS vorgaenger_meeting_id, vm.titel AS vorgaenger_meeting_titel, vm.datum AS vorgaenger_meeting_datum,
+           (SELECT nf.meeting_id FROM talking_points nf WHERE nf.vorgaenger_id = tp.id ORDER BY nf.id DESC LIMIT 1) AS nachfolger_meeting_id
+         FROM talking_points tp
+         LEFT JOIN talking_points vg ON vg.id = tp.vorgaenger_id
+         LEFT JOIN meetings vm ON vm.id = vg.meeting_id',
+        tp_select()
+    );
+    $rows = db_all(
+        $sql . ' WHERE ' . implode(' AND ', $w)
+        . ' ORDER BY COALESCE(m.datum, DATE(tp.updated_at)) DESC, tp.sort_order, tp.id DESC'
+        . ' LIMIT ' . (TP_ARCHIV_LIMIT + 1),
+        $p
+    );
+
+    // Aufgaben je Thema dazuholen
+    $ids = array_map(static fn($r) => (int)$r['id'], $rows);
+    $aufgaben = [];
+    if ($ids) {
+        $in = implode(',', array_fill(0, count($ids), '?'));
+        foreach (db_all("SELECT t.id, t.titel, t.talking_point_id, COALESCE(st.is_final, 0) AS erledigt
+                         FROM todos t LEFT JOIN list_items st ON st.id = t.status_id
+                         WHERE t.talking_point_id IN ($in) ORDER BY t.id", $ids) as $a) {
+            $aufgaben[(int)$a['talking_point_id']][] = $a;
+        }
+    }
+    foreach ($rows as &$r) {
+        $r['aufgaben'] = $aufgaben[(int)$r['id']] ?? [];
+    }
+    unset($r);
+    return $rows;
+}
+
 /** Darf der Benutzer diesen Punkt bearbeiten? */
 function tp_editable(array $tp, ?array $user = null): bool
 {

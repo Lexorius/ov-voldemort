@@ -1,5 +1,20 @@
 # Änderungsverlauf
 
+## 1.22.0
+
+### Themenspeicher: Archiv und Status „Abgelehnt“
+
+- Neuer Reiter **Archiv** im Themenspeicher: alle Themen, die auf einer
+  Besprechung standen, und abgeschlossene Themen ohne Besprechung. Mit
+  Besprechung und Datum, Status, Ergebnis, Verantwortlichen und den daraus
+  entstandenen Aufgaben (erledigte durchgestrichen). Vertagte Themen zeigen,
+  woher sie kamen und wo sie weitergingen.
+- Filter nach Suchbegriff (auch im Ergebnis), Status, Fachgruppe und Zeitraum.
+  Gezeigt werden die neuesten 300 Themen.
+- Neuer Status **Abgelehnt** für Talking Points. Er gilt als abschließend:
+  Das Thema verlässt die offenen Themen und steht im Archiv. Mit
+  Status-Rückmeldung wird der Divera-Eintrag „Abgeschlossen“.
+
 ## 1.21.0
 
 ### Divera-Formulare: Bearbeitungsstand zurückmelden

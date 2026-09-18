@@ -138,6 +138,20 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   Themenspeicher (Titel, Beschreibung, Fachgruppe, Priorität, Zeitbedarf,
   Einreicher). So lassen sich Themen direkt in Divera einreichen.
 
+## Themenarchiv
+
+Der Themenspeicher hat zwei Reiter: **Offen** (noch keiner Besprechung
+zugeordnet oder vertagt) und **Archiv**. Das Archiv zeigt alle Themen, die auf
+einer Besprechung standen, und abgeschlossene Themen ohne Besprechung – etwa
+abgelehnte. Je Thema: Besprechung und Datum (verlinkt), Status, Ergebnis,
+Verantwortliche und die daraus entstandenen Aufgaben; bei vertagten Themen,
+woher sie kamen und wohin sie weitergingen. Filter: Suche (auch im Ergebnis),
+Status, Fachgruppe und Zeitraum.
+
+Ein Thema ablehnen: Status **Abgelehnt** – in der Besprechung beim Ergebnis
+oder direkt über *Bearbeiten* im Themenspeicher. Es verschwindet dann aus den
+offenen Themen und steht im Archiv.
+
 ## Themen über Divera einreichen
 
 1. In Divera ein Formular anlegen, z. B. „Thema für die Leitungsrunde“ mit den
