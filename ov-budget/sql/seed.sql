@@ -268,6 +268,8 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('divera_timeout','15','Timeout in Sekunden','','number','Divera 24/7',70),
 ('divera_import_status','neu','Status für importierte Wünsche','slug aus der Liste wunsch_status','text','Divera 24/7',80),
 ('divera_formular_intervall_minuten','15','Formulare automatisch abrufen alle (Minuten)','Gilt für Formulare mit automatischem Import. Jeder Abruf holt alle Seiten (50 Einträge je Seite).','number','Divera 24/7',95),
+('divera_status_bearbeitung','freigegeben','Rückmeldung „In Bearbeitung“ bei Wunsch-Status','Slugs aus der Liste wunsch_status, durch Komma getrennt. Gilt nur für Formulare mit Status-Rückmeldung. Themen gelten als in Bearbeitung, sobald sie auf einer Tagesordnung stehen.','text','Divera 24/7',96),
+('divera_status_abgeschlossen','bestellt','Rückmeldung „Abgeschlossen“ bei Wunsch-Status','Slugs aus der Liste wunsch_status, durch Komma getrennt. Abschließende Status (z. B. beschafft, abgelehnt) gelten immer als abgeschlossen, besprochene Themen ebenso.','text','Divera 24/7',97),
 ('divera_fahrzeuge_aktiv','0','Fahrzeugdaten aus Divera abgleichen','Funkstatus, Position und Besatzung (v2) sowie OPTA, RIC, Kennzeichen und ISSI (v3)','bool','Divera 24/7',100),
 ('divera_status_intervall_minuten','2','Funkstatus abrufen alle (Minuten)','Ein Aufruf je Abruf. Wechsel dazwischen gehen verloren – kurze Abstände geben ein genaueres Fahrtenbuch.','number','Divera 24/7',110),
 ('divera_stamm_intervall_minuten','60','Stammdaten abrufen alle (Minuten)','OPTA, RIC, Kennzeichen, ISSI ändern sich selten','number','Divera 24/7',120),

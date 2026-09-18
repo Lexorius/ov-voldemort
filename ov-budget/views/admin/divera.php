@@ -100,6 +100,7 @@ $cronBasis = 'curl -s "https://DEINE-DOMAIN' . rtrim((string)app_config('base_pa
               <h3 style="margin:0"><?= e($f['name']) ?></h3>
               <div class="muted small">
                 <strong><?= e(DIVERA_ZIELE[divera_ziel($f)]) ?></strong> ·
+                <?php if ((int)($f['status_sync'] ?? 0)): ?>Status-Rückmeldung an ·<?php endif; ?>
                 ID <span class="mono"><?= e($f['form_id']) ?></span> ·
                 <?= count(array_filter($map)) ?> Felder zugeordnet ·
                 letzter Abruf: <?= e(de_datetime($f['last_sync']) ?: 'noch nie') ?>

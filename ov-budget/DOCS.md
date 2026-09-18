@@ -151,6 +151,26 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
    berücksichtigen* setzen. Im Themenspeicher gibt es zusätzlich den Knopf
    **Aus Divera abrufen**, etwa kurz vor der Besprechung.
 
+## Bearbeitungsstand an Divera zurückmelden
+
+Je Formular lässt sich in der Feldzuordnung *Status der Einträge in Divera
+setzen* einschalten. Die Einreichenden sehen dann in Divera, wie weit ihr
+Eintrag ist:
+
+| Bei uns | Status in Divera |
+|---|---|
+| Eintrag übernommen | Weitergeleitet |
+| Wunsch im Status *freigegeben* bzw. Thema auf einer Tagesordnung | In Bearbeitung |
+| Wunsch *bestellt*, beschafft oder abgelehnt bzw. Thema besprochen, beschlossen oder zurückgezogen | Abgeschlossen |
+
+Welche Wunsch-Status als „In Bearbeitung“ und „Abgeschlossen“ gelten, steht
+unter *Einstellungen → Divera 24/7* (Slugs, durch Komma getrennt);
+abschließende Status zählen immer als abgeschlossen. Es geht nur vorwärts: Was
+in Divera schon weiter ist, wird nicht zurückgesetzt. Der Abgleich läuft mit dem
+automatischen Abruf (höchstens 25 Meldungen je Durchlauf), per Knopf *Status
+jetzt abgleichen* auch sofort. Der persönliche Divera-Schlüssel braucht dafür
+Bearbeitungsrechte am Formular; lehnt Divera ab, steht das im Divera-Protokoll.
+
 Stimmt der Einreichername mit einem Benutzer überein, gilt das Thema als von
 dieser Person eingebracht (sie kann es dann auch bearbeiten); sonst steht der
 Name beim Thema. Nicht zugeordnete Felder landen in der Beschreibung.

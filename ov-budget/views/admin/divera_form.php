@@ -101,6 +101,30 @@ $targets = divera_map_targets($ziel);
     </div>
   </fieldset>
 
+  <fieldset>
+    <legend>Bearbeitungsstand an Divera zurückmelden</legend>
+    <div class="field field--check">
+      <input type="checkbox" id="status_sync" name="status_sync" value="1" <?= (int)($form['status_sync'] ?? 0) ? 'checked' : '' ?>>
+      <label for="status_sync">Status der Einträge in Divera setzen</label>
+    </div>
+    <p class="small muted">
+      Übernommen → <strong>Weitergeleitet</strong> ·
+      <?php if ($thema): ?>
+        auf einer Tagesordnung → <strong>In Bearbeitung</strong> · besprochen, beschlossen oder zurückgezogen → <strong>Abgeschlossen</strong>.
+      <?php else: ?>
+        Status <span class="mono"><?= e((string)setting('divera_status_bearbeitung', 'freigegeben')) ?></span> → <strong>In Bearbeitung</strong> ·
+        <span class="mono"><?= e((string)setting('divera_status_abgeschlossen', 'bestellt')) ?></span> und abschließende Status
+        (beschafft, abgelehnt …) → <strong>Abgeschlossen</strong>
+        (<a href="<?= e(url('admin_settings', ['group' => 'Divera 24/7'])) ?>">ändern</a>).
+      <?php endif; ?>
+      Es geht nur vorwärts: Was in Divera schon weiter ist, wird nicht zurückgesetzt. Der Abgleich läuft mit dem
+      automatischen Abruf; der persönliche Schlüssel braucht dafür Bearbeitungsrechte am Formular.
+    </p>
+    <?php if ((int)($form['status_sync'] ?? 0)): ?>
+      <button class="btn btn--sec btn--sm" type="submit" name="action" value="status_sync">Status jetzt abgleichen</button>
+    <?php endif; ?>
+  </fieldset>
+
   <div class="btnrow">
     <button class="btn" type="submit">Zuordnung speichern</button>
     <button class="btn btn--sec" type="submit" name="action" value="preview">Speichern und Vorschau</button>

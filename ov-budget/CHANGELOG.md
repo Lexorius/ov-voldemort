@@ -1,5 +1,21 @@
 # Änderungsverlauf
 
+## 1.21.0
+
+### Divera-Formulare: Bearbeitungsstand zurückmelden
+
+- Neu je Formular: *Status der Einträge in Divera setzen* (standardmäßig aus).
+  Übernommene Einträge werden **Weitergeleitet**, freigegebene Wünsche und
+  Themen auf einer Tagesordnung **In Bearbeitung**, bestellte, beschaffte,
+  abgelehnte Wünsche sowie besprochene Themen **Abgeschlossen**.
+- Welche Wunsch-Status „In Bearbeitung“ bzw. „Abgeschlossen“ auslösen, ist in
+  den Einstellungen unter Divera 24/7 einstellbar.
+- Es geht nur vorwärts: Einen in Divera von Hand weitergeschalteten Status
+  erkennt der Abruf und dreht ihn nicht zurück.
+- Der Abgleich läuft mit dem automatischen Abruf, nach jedem manuellen Import
+  und per Knopf *Status jetzt abgleichen*. Höchstens 25 Meldungen je Durchlauf.
+  Beim ersten Fehler (etwa fehlenden Rechten) wird abgebrochen und protokolliert.
+
 ## 1.20.1
 
 ### Cron-Token nicht mehr im Klartext

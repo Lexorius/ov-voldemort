@@ -36,6 +36,7 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 ### Besprechungen
 - Talking Points im Themenspeicher, Tagesordnung mit Zeitplan
 - **Themen über Divera einreichen**: ein Divera-Formular füllt den Themenspeicher
+- **Status-Rückmeldung an Divera**: Weitergeleitet → In Bearbeitung → Abgeschlossen
 - **Aufgaben aus der Besprechung**: je Punkt vorausgefüllt, mehrere Punkte auf
   einmal übernehmen oder frei anlegen; Übersicht in Besprechung und Protokoll
 - **Wiederkehrende Termine** („alle 2 Wochen montags", „jeden 2. Montag im Monat")

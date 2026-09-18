@@ -33,6 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'ziel'                  => $ziel,
             'field_map'             => json_encode($map, JSON_UNESCAPED_UNICODE),
             'auto_import'           => post_bool('auto_import'),
+            'status_sync'           => post_bool('status_sync'),
             'default_status_id'     => post_int('default_status_id'),
             'default_fachgruppe_id' => post_int('default_fachgruppe_id'),
         ], 'id = ?', [$form['id']]);
@@ -92,8 +93,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
         }
 
+        if ($action === 'status_sync') {
+            $st = divera_status_sync_form($form);
+            if ($st['fehler'] !== '') {
+                $fehler = 'Divera hat die Statusänderung abgelehnt: ' . $st['fehler']
+                    . ' – Hat der persönliche Schlüssel Bearbeitungsrechte für dieses Formular?';
+            } else {
+                $hinweis = sprintf('%d Status an Divera gemeldet%s.', $st['gemeldet'],
+                    $st['offen'] ? sprintf(', %d weitere beim nächsten Durchlauf', $st['offen']) : '');
+            }
+        }
+
         if ($action === 'import') {
             $res = divera_import_form($form, (int)$me['id']);
+            divera_status_sync_form($form);
             flash('success', sprintf('%d neue %s, %d bereits vorhanden, %d fehlerhaft.',
                 $res['created'], divera_ziel($form) === 'thema' ? 'Themen im Themenspeicher' : 'Wünsche angelegt',
                 $res['skipped'], $res['failed']));

@@ -119,6 +119,7 @@ CREATE TABLE IF NOT EXISTS wishes (
   source          VARCHAR(30)  NOT NULL DEFAULT 'manuell',
   divera_form_id  VARCHAR(60)  NOT NULL DEFAULT '',
   divera_entry_id VARCHAR(60)  NOT NULL DEFAULT '',
+  divera_status   TINYINT      NULL,
   freigegeben_von INT UNSIGNED NULL,
   freigegeben_am  DATETIME     NULL,
   created_by      INT UNSIGNED NULL,
@@ -231,6 +232,8 @@ CREATE TABLE IF NOT EXISTS divera_forms (
   name          VARCHAR(200) NOT NULL,
   -- wunsch = Wünsch dir was, thema = Talking Point für den Themenspeicher
   ziel          VARCHAR(20)  NOT NULL DEFAULT 'wunsch',
+  -- Bearbeitungsstand an Divera zurückmelden (Weitergeleitet / In Bearbeitung / Abgeschlossen)
+  status_sync   TINYINT(1)   NOT NULL DEFAULT 0,
   field_map     TEXT NULL,
   auto_import   TINYINT(1)   NOT NULL DEFAULT 0,
   default_status_id INT UNSIGNED NULL,
@@ -467,6 +470,7 @@ CREATE TABLE IF NOT EXISTS talking_points (
   einbringer_name VARCHAR(150) NOT NULL DEFAULT '',
   divera_form_id  VARCHAR(60)  NOT NULL DEFAULT '',
   divera_entry_id VARCHAR(60)  NOT NULL DEFAULT '',
+  divera_status   TINYINT      NULL,
   created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),

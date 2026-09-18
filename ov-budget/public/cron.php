@@ -64,7 +64,7 @@ if (!divera_enabled()) {
     exit("Divera-Anbindung ist deaktiviert oder unvollständig konfiguriert.\n");
 }
 
-$forms = db_all('SELECT * FROM divera_forms WHERE auto_import = 1');
+$forms = db_all('SELECT * FROM divera_forms WHERE auto_import = 1 OR status_sync = 1');
 if (!$forms) {
     exit("Kein Formular für den automatischen Import vorgemerkt.\n");
 }
@@ -81,6 +81,9 @@ $gesamt = ['created' => 0, 'skipped' => 0, 'failed' => 0];
 
 foreach ($forms as $form) {
     try {
+        if (!(int)$form['auto_import']) {
+            continue;
+        }
         $res = divera_import_form($form, null);
         $gesamt['created'] += $res['created'];
         $gesamt['skipped'] += $res['skipped'];
@@ -100,6 +103,22 @@ foreach ($forms as $form) {
             'message' => mb_substr($ex->getMessage(), 0, 500),
         ]);
         printf("%s: FEHLER – %s\n", $form['name'], $ex->getMessage());
+    }
+}
+
+// Bearbeitungsstand zurückmelden – auch für Formulare ohne automatischen Import
+foreach ($forms as $form) {
+    if (!(int)($form['status_sync'] ?? 0)) {
+        continue;
+    }
+    try {
+        $st = divera_status_sync_form($form);
+        if ($st['gemeldet'] > 0 || $st['fehler'] !== '') {
+            printf("%s: %d Status an Divera gemeldet%s\n", $form['name'], $st['gemeldet'],
+                $st['fehler'] !== '' ? ' – FEHLER: ' . $st['fehler'] : '');
+        }
+    } catch (Throwable $ex) {
+        printf("%s: Statusmeldung FEHLER – %s\n", $form['name'], $ex->getMessage());
     }
 }
 

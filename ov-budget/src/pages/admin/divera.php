@@ -47,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     break;
                 }
                 $res = divera_import_form($form, (int)$me['id']);
+                divera_status_sync_form($form);
                 audit('divera.import', 'divera_form', (int)$form['id'],
                     sprintf('%d neu, %d übersprungen, %d Fehler', $res['created'], $res['skipped'], $res['failed']));
                 flash(

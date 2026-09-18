@@ -588,6 +588,17 @@ function ovb_migrate(PDO $pdo, callable $say): void
         }
     }
     $merken('012_divera_themen');
+
+    /* ---- 013: Bearbeitungsstand an Divera zurückmelden ---- */
+    if (ovb_table_exists($pdo, 'divera_forms') && !ovb_column_exists($pdo, 'divera_forms', 'status_sync')) {
+        $pdo->exec('ALTER TABLE divera_forms ADD COLUMN status_sync TINYINT(1) NOT NULL DEFAULT 0 AFTER ziel');
+    }
+    foreach (['wishes', 'talking_points'] as $tabelle) {
+        if (ovb_table_exists($pdo, $tabelle) && !ovb_column_exists($pdo, $tabelle, 'divera_status')) {
+            $pdo->exec("ALTER TABLE $tabelle ADD COLUMN divera_status TINYINT NULL AFTER divera_entry_id");
+        }
+    }
+    $merken('013_divera_status');
 }
 
 /**

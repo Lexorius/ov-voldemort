@@ -22,8 +22,9 @@ function divera_enabled(): bool
 /**
  * Roh-Request gegen die Divera-API.
  * $key: abweichender Schlüssel, etwa der persönliche für /api/v3
+ * $post: Formularfelder – dann als POST gesendet
  */
-function divera_request(string $path, array $query = [], ?string $key = null): array
+function divera_request(string $path, array $query = [], ?string $key = null, ?array $post = null): array
 {
     $base = rtrim((string)setting('divera_base_url', 'https://app.divera247.com/api'), '/');
     $key  = trim((string)($key ?? setting('divera_accesskey', '')));
@@ -56,6 +57,10 @@ function divera_request(string $path, array $query = [], ?string $key = null): a
             CURLOPT_MAXREDIRS      => 3,
             CURLOPT_USERAGENT      => 'OV-Budget/1.0',
         ]);
+        if ($post !== null) {
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post));
+        }
         $body = curl_exec($ch);
         $errno = curl_errno($ch);
         $err = curl_error($ch);
@@ -65,8 +70,12 @@ function divera_request(string $path, array $query = [], ?string $key = null): a
             throw new DiveraException('Verbindungsfehler: ' . $err);
         }
     } else {
+        if ($post !== null) {
+            $headers[] = 'Content-Type: application/x-www-form-urlencoded';
+        }
         $ctx = stream_context_create(['http' => [
-            'method'        => 'GET',
+            'method'        => $post !== null ? 'POST' : 'GET',
+            'content'       => $post !== null ? http_build_query($post) : '',
             'header'        => implode("\r\n", $headers),
             'timeout'       => $timeout,
             'ignore_errors' => true,
@@ -216,6 +225,7 @@ function divera_entry_from_row(array $r): array
     $zeit = divera_pick($r, ['ts_create', 'date', 'created', 'timestamp', 'created_at']);
     return [
         'id'      => (string)(divera_pick($r, ['id', 'entry_id', 'uuid', '_key']) ?? ''),
+        'status'  => isset($r['status']) && is_numeric($r['status']) ? (int)$r['status'] : null,
         'date'    => $zeit,
         'user'    => (string)(divera_pick($r, ['user_name', 'username', 'author', 'creator']) ?? ''),
         // Das Divera-Format hat Felder als {field, value}; anderes wird flach gelesen
@@ -446,6 +456,133 @@ function divera_field_value(array $fields, string $wanted): string
     return '';
 }
 
+/* ==================================================================== */
+/* Bearbeitungsstand an Divera zurückmelden                              */
+/* ==================================================================== */
+
+/** Divera-Status laut Schnittstelle (reporttype-status) */
+const DIVERA_REPORT_STATUS = [
+    0 => 'Ungelesen', 1 => 'Gelesen', 2 => 'In Bearbeitung', 3 => 'Nachkontrolle',
+    4 => 'Abgeschlossen', 5 => 'Archiviert', 6 => 'Weitergeleitet',
+];
+/** Reihenfolge im Ablauf – Weitergeleitet kommt vor In Bearbeitung */
+const DIVERA_STATUS_RANG = [0 => 0, 1 => 1, 6 => 2, 2 => 3, 3 => 4, 4 => 5, 5 => 6];
+const DIVERA_STATUS_MAX_JE_LAUF = 25;
+
+/** Ist $neu ein Schritt nach vorn gegenüber $bisher? Reine Funktion. */
+function divera_status_weiter(?int $bisher, int $neu): bool
+{
+    if (!isset(DIVERA_STATUS_RANG[$neu])) {
+        return false;
+    }
+    return $bisher === null || DIVERA_STATUS_RANG[$neu] > (DIVERA_STATUS_RANG[$bisher] ?? -1);
+}
+
+/** Slug-Liste aus einer Einstellung */
+function divera_slugs(string $wert): array
+{
+    return array_values(array_filter(array_map('trim', explode(',', mb_strtolower($wert)))));
+}
+
+/**
+ * Gewünschter Divera-Status eines Wunsches. Reine Funktion.
+ * $w: status_slug, status_final
+ */
+function divera_zielstatus_wunsch(array $w, array $bearbeitung, array $abgeschlossen): int
+{
+    $slug = (string)($w['status_slug'] ?? '');
+    if ((int)($w['status_final'] ?? 0) === 1 || in_array($slug, $abgeschlossen, true)) {
+        return 4;
+    }
+    if (in_array($slug, $bearbeitung, true)) {
+        return 2;
+    }
+    return 6;
+}
+
+/**
+ * Gewünschter Divera-Status eines Themas. Reine Funktion.
+ * $t: status_final, meeting_id
+ */
+function divera_zielstatus_thema(array $t): int
+{
+    if ((int)($t['status_final'] ?? 0) === 1) {
+        return 4;
+    }
+    return !empty($t['meeting_id']) ? 2 : 6;
+}
+
+/** Status eines Eintrags in Divera setzen */
+function divera_set_report_status(string $entryId, int $status): void
+{
+    divera_request('/v2/reports/' . rawurlencode($entryId) . '/status', [], divera_form_key(),
+        ['Report' => ['status' => $status]]);
+}
+
+/**
+ * Stand aller übernommenen Einträge eines Formulars an Divera melden –
+ * nur Schritte nach vorn, höchstens DIVERA_STATUS_MAX_JE_LAUF je Aufruf.
+ * Bricht beim ersten Fehler ab (meist fehlende Rechte), damit Divera nicht
+ * mit Anfragen überhäuft wird.
+ */
+function divera_status_sync_form(array $form): array
+{
+    $res = ['gemeldet' => 0, 'offen' => 0, 'fehler' => ''];
+    if (!(int)($form['status_sync'] ?? 0)) {
+        return $res;
+    }
+    $thema = divera_ziel($form) === 'thema';
+    $zeilen = $thema
+        ? db_all("SELECT t.id, t.titel AS name, t.meeting_id, t.divera_entry_id, t.divera_status,
+                         COALESCE(st.is_final, 0) AS status_final, st.slug AS status_slug
+                  FROM talking_points t LEFT JOIN list_items st ON st.id = t.status_id
+                  WHERE t.divera_form_id = ? AND t.divera_entry_id <> ''", [(string)$form['form_id']])
+        : db_all("SELECT w.id, w.bezeichnung AS name, w.divera_entry_id, w.divera_status,
+                         COALESCE(st.is_final, 0) AS status_final, st.slug AS status_slug
+                  FROM wishes w LEFT JOIN list_items st ON st.id = w.status_id
+                  WHERE w.divera_form_id = ? AND w.divera_entry_id <> ''", [(string)$form['form_id']]);
+
+    $bearbeitung = divera_slugs((string)setting('divera_status_bearbeitung', 'freigegeben'));
+    $abgeschlossen = divera_slugs((string)setting('divera_status_abgeschlossen', 'bestellt'));
+
+    foreach ($zeilen as $z) {
+        $ziel = $thema ? divera_zielstatus_thema($z) : divera_zielstatus_wunsch($z, $bearbeitung, $abgeschlossen);
+        $bisher = $z['divera_status'] !== null ? (int)$z['divera_status'] : null;
+        if (!divera_status_weiter($bisher, $ziel)) {
+            continue;
+        }
+        if ($res['gemeldet'] >= DIVERA_STATUS_MAX_JE_LAUF) {
+            $res['offen']++;
+            continue;
+        }
+        try {
+            divera_set_report_status((string)$z['divera_entry_id'], $ziel);
+        } catch (Throwable $ex) {
+            $res['fehler'] = $ex->getMessage();
+            db_insert('divera_log', [
+                'form_id'  => (string)$form['form_id'],
+                'entry_id' => (string)$z['divera_entry_id'],
+                'wish_id'  => $thema ? null : (int)$z['id'],
+                'tp_id'    => $thema ? (int)$z['id'] : null,
+                'status'   => 'fehler',
+                'message'  => mb_substr('Status „' . DIVERA_REPORT_STATUS[$ziel] . '“ nicht gesetzt: ' . $ex->getMessage(), 0, 500),
+            ]);
+            break;
+        }
+        db_exec(($thema ? 'UPDATE talking_points' : 'UPDATE wishes') . ' SET divera_status = ? WHERE id = ?', [$ziel, (int)$z['id']]);
+        db_insert('divera_log', [
+            'form_id'  => (string)$form['form_id'],
+            'entry_id' => (string)$z['divera_entry_id'],
+            'wish_id'  => $thema ? null : (int)$z['id'],
+            'tp_id'    => $thema ? (int)$z['id'] : null,
+            'status'   => 'ok',
+            'message'  => mb_substr('Divera-Status „' . DIVERA_REPORT_STATUS[$ziel] . '“: ' . $z['name'], 0, 500),
+        ]);
+        $res['gemeldet']++;
+    }
+    return $res;
+}
+
 /** Wofür ein Formular gedacht ist */
 const DIVERA_ZIELE = [
     'wunsch' => 'Wünsch dir was',
@@ -605,6 +742,7 @@ function divera_entry_to_wish(array $entry, array $map, array $form): array
         'source'          => 'divera',
         'divera_form_id'  => (string)$form['form_id'],
         'divera_entry_id' => (string)$entry['id'],
+        'divera_status'   => $entry['status'] ?? null,
     ];
 }
 
@@ -666,6 +804,7 @@ function divera_entry_to_tp(array $entry, array $map, array $form, array $userBy
         'einbringer_name' => $userId ? '' : mb_substr($name, 0, 150),
         'divera_form_id'  => (string)$form['form_id'],
         'divera_entry_id' => (string)$entry['id'],
+        'divera_status'   => $entry['status'] ?? null,
     ];
 }
 
@@ -690,6 +829,7 @@ function divera_import_themes(?int $userId = null): array
     $gesamt = ['formulare' => 0, 'total' => 0, 'created' => 0, 'skipped' => 0, 'failed' => 0];
     foreach (db_all("SELECT * FROM divera_forms WHERE ziel = 'thema' ORDER BY name") as $form) {
         $res = divera_import_form($form, $userId);
+        divera_status_sync_form($form);
         $gesamt['formulare']++;
         foreach (['total', 'created', 'skipped', 'failed'] as $k) {
             $gesamt[$k] += $res[$k];
@@ -722,12 +862,17 @@ function divera_import_form(array $form, ?int $userId = null, bool $dryRun = fal
             $entry['id'] = $entryId;
         }
 
-        $exists = db_val(
-            "SELECT id FROM $tabelle WHERE divera_form_id = ? AND divera_entry_id = ?",
+        $exists = db_row(
+            "SELECT id, divera_status FROM $tabelle WHERE divera_form_id = ? AND divera_entry_id = ?",
             [(string)$form['form_id'], $entryId]
         );
         if ($exists) {
             $skipped++;
+            // Wer in Divera weitergeschaltet hat, wird nicht zurückgedreht
+            $bekannt = $exists['divera_status'] !== null ? (int)$exists['divera_status'] : null;
+            if (!$dryRun && $entry['status'] !== null && divera_status_weiter($bekannt, (int)$entry['status'])) {
+                db_exec("UPDATE $tabelle SET divera_status = ? WHERE id = ?", [(int)$entry['status'], (int)$exists['id']]);
+            }
             continue;
         }
 
