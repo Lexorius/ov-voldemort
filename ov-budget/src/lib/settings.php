@@ -48,12 +48,73 @@ function setting_save(string $key, ?string $value): void
     );
 }
 
-/** Gruppierte Einstellungen für die Adminmaske */
+/** Gruppe für Merkwerte der Anwendung, die niemand von Hand pflegt */
+const SETTINGS_INTERN = '_intern';
+
+/**
+ * Merkwert speichern (letzter Abruf, Pause, offene Zuordnungen …).
+ * Er landet in einer eigenen Gruppe und erscheint nicht in der Einstellungsmaske –
+ * sonst würde ein Speichern dort einen veralteten Stand zurückschreiben.
+ */
+function state_save(string $key, ?string $value): void
+{
+    db_exec(
+        'INSERT INTO settings (skey, svalue, sgroup, label) VALUES (?,?,?,?)
+         ON DUPLICATE KEY UPDATE svalue = VALUES(svalue), sgroup = VALUES(sgroup)',
+        [$key, $value, SETTINGS_INTERN, $key]
+    );
+}
+
+/**
+ * Merkwert frisch aus der Datenbank – am Zwischenspeicher dieses Aufrufs vorbei.
+ * Nötig, wenn ein anderer Prozess ihn inzwischen geändert haben kann.
+ */
+function state_get(string $key, string $default = ''): string
+{
+    $wert = db_val('SELECT svalue FROM settings WHERE skey = ?', [$key], null);
+    return $wert === null || $wert === '' ? $default : (string)$wert;
+}
+
+/** Gruppierte Einstellungen für die Adminmaske – ohne interne Merkwerte */
 function settings_grouped(): array
 {
     $out = [];
     foreach (settings_all() as $s) {
+        if (str_starts_with((string)$s['sgroup'], '_')) {
+            continue;
+        }
         $out[$s['sgroup']][] = $s;
+    }
+    return $out;
+}
+
+/**
+ * Welche Werte speichert ein Absenden der Einstellungsmaske?
+ *
+ * Nur die Einstellungen der angezeigten Gruppe. Ein nicht angehakter Schalter
+ * fehlt im Formular ganz – würde man alle Einstellungen durchgehen, stünde
+ * danach jeder Schalter der anderen Gruppen auf „aus".
+ * Reine Funktion: bekommt die Einstellungen der Gruppe und $_POST.
+ */
+function settings_from_post(array $gruppe, array $post): array
+{
+    $out = [];
+    foreach ($gruppe as $def) {
+        $skey = (string)$def['skey'];
+        $feld = 's_' . $skey;
+        if ($def['stype'] === 'bool') {
+            $out[$skey] = isset($post[$feld]) ? '1' : '0';
+            continue;
+        }
+        if (!array_key_exists($feld, $post)) {
+            continue;
+        }
+        $wert = trim((string)$post[$feld]);
+        // Leeres Passwortfeld = unverändert lassen
+        if ($def['stype'] === 'password' && $wert === '') {
+            continue;
+        }
+        $out[$skey] = $wert;
     }
     return $out;
 }

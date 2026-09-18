@@ -38,20 +38,25 @@ if (!$cli) {
     }
 }
 
-/* ---- Stein.APP: Vollbild abziehen, Änderungen in die Fahrzeugakten ---- */
-if (stein_enabled()) {
-    $res = stein_sync();
-    printf("Stein.APP: %s – %s\n", $res['status'], $res['message']);
-} else {
-    echo "Stein.APP: nicht eingerichtet.\n";
-}
-
-/* ---- Divera: Funkstatus, Position, Besatzung und Stammdaten der Fahrzeuge ---- */
-if (divera_vehicles_enabled()) {
-    foreach ([divera_vehicles_sync_master(), divera_vehicles_sync_status()] as $res) {
-        if ($res['status'] !== 'wartet') {
-            printf("Divera-Fahrzeuge: %s – %s\n", $res['status'], $res['message']);
+/*
+ * Die Abrufe laufen unabhängig voneinander: Scheitert einer, laufen die
+ * anderen trotzdem. Stein.APP und Divera schreiben in verschiedene Felder;
+ * gemeinsame (Kennzeichen, ISSI, Funkrufname) füllt Divera nur, wenn sie leer sind.
+ */
+$abrufe = [
+    'Stein.APP'         => static fn() => stein_enabled() ? [stein_sync()] : [],
+    'Divera-Stammdaten' => static fn() => divera_vehicles_enabled() ? [divera_vehicles_sync_master()] : [],
+    'Divera-Funkstatus' => static fn() => divera_vehicles_enabled() ? [divera_vehicles_sync_status()] : [],
+];
+foreach ($abrufe as $name => $abruf) {
+    try {
+        foreach ($abruf() as $res) {
+            if ($res['status'] !== 'wartet') {
+                printf("%s: %s – %s\n", $name, $res['status'], $res['message']);
+            }
         }
+    } catch (Throwable $ex) {
+        printf("%s: FEHLER – %s\n", $name, $ex->getMessage());
     }
 }
 

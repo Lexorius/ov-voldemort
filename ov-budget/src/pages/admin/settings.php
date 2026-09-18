@@ -4,28 +4,19 @@ declare(strict_types=1);
 require_role('admin');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $alle = settings_all();
-    foreach ($alle as $skey => $def) {
-        $field = 's_' . $skey;
-
-        if ($def['stype'] === 'bool') {
-            setting_save($skey, isset($_POST[$field]) ? '1' : '0');
-            continue;
-        }
-        if (!array_key_exists($field, $_POST)) {
-            continue;
-        }
-        $val = (string)$_POST[$field];
-
-        // Leeres Passwortfeld = unverändert lassen
-        if ($def['stype'] === 'password' && trim($val) === '') {
-            continue;
-        }
-        setting_save($skey, trim($val));
+    // Nur die Gruppe speichern, die im Formular zu sehen war
+    $gruppen = settings_grouped();
+    $group = get_str('group');
+    if (!isset($gruppen[$group])) {
+        flash('error', 'Unbekannte Gruppe – nichts gespeichert.');
+        redirect_route('admin_settings');
     }
-    audit('einstellungen.gespeichert');
+    foreach (settings_from_post($gruppen[$group], $_POST) as $skey => $wert) {
+        setting_save($skey, $wert);
+    }
+    audit('einstellungen.gespeichert', '', null, $group);
     flash('success', 'Einstellungen gespeichert.');
-    redirect_route('admin_settings', ['group' => get_str('group')]);
+    redirect_route('admin_settings', ['group' => $group]);
 }
 
 $gruppen = settings_grouped();

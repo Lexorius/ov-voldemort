@@ -91,3 +91,29 @@ function db_update(string $table, array $data, string $where, array $whereParams
     $st->execute([...array_values($data), ...$whereParams]);
     return $st->rowCount();
 }
+
+/**
+ * Benannte Sperre der Datenbank (GET_LOCK). Hält die Verbindung, bis sie
+ * freigegeben wird oder das Skript endet.
+ * $warten: Sekunden; 0 = nicht warten, sofort aufgeben.
+ * Liefert der Server keine Antwort (Fehler), wird weitergemacht – lieber ein
+ * Abgleich ohne Sperre als gar keiner.
+ */
+function db_lock(string $name, int $warten = 0): bool
+{
+    try {
+        $r = db_row('SELECT GET_LOCK(?, ?) AS l', [$name, $warten]);
+    } catch (Throwable) {
+        return true;
+    }
+    return $r === null || $r['l'] === null || (int)$r['l'] === 1;
+}
+
+function db_unlock(string $name): void
+{
+    try {
+        db_row('SELECT RELEASE_LOCK(?) AS l', [$name]);
+    } catch (Throwable) {
+        // Die Sperre endet spätestens mit der Verbindung
+    }
+}

@@ -234,6 +234,13 @@ function dv_due(string $schluessel, int $minuten, int $jetzt): bool
     return $letzter === 0 || $jetzt - $letzter >= max(1, $minuten) * 60;
 }
 
+/** Wie dv_due, aber mit dem Stand direkt aus der Datenbank */
+function dv_due_fresh(string $schluessel, int $minuten, int $jetzt): bool
+{
+    $letzter = (int)state_get($schluessel, '0');
+    return $letzter === 0 || $jetzt - $letzter >= max(1, $minuten) * 60;
+}
+
 /** Alle Fahrzeuge mit den Feldern, die die Zuordnung braucht */
 function dv_vehicles_for_matching(): array
 {
@@ -272,7 +279,23 @@ function divera_vehicles_sync_status(bool $erzwingen = false): array
     if (!$erzwingen && !dv_due('divera_status_letzter_abruf', setting_int('divera_status_intervall_minuten', 2), $jetzt)) {
         return ['status' => 'wartet', 'fahrzeuge' => 0, 'wechsel' => 0, 'offen' => 0, 'message' => 'Noch nicht an der Reihe.'];
     }
-    setting_save('divera_status_letzter_abruf', (string)$jetzt);
+    if (!db_lock('ovb_divera_status', 0)) {
+        return ['status' => 'wartet', 'fahrzeuge' => 0, 'wechsel' => 0, 'offen' => 0, 'message' => 'Ein Abruf läuft gerade.'];
+    }
+    try {
+        if (!$erzwingen && !dv_due_fresh('divera_status_letzter_abruf', setting_int('divera_status_intervall_minuten', 2), $jetzt)) {
+            return ['status' => 'wartet', 'fahrzeuge' => 0, 'wechsel' => 0, 'offen' => 0, 'message' => 'Eben erst abgerufen.'];
+        }
+        return dv_sync_status_locked($jetzt);
+    } finally {
+        db_unlock('ovb_divera_status');
+    }
+}
+
+/** Funkstatus abrufen – nur unter der Sperre aufrufen */
+function dv_sync_status_locked(int $jetzt): array
+{
+    state_save('divera_status_letzter_abruf', (string)$jetzt);
 
     try {
         $antwort = divera_request('/v2/pull/vehicle-status');
@@ -334,7 +357,7 @@ function divera_vehicles_sync_status(bool $erzwingen = false): array
         }
     }
 
-    setting_save('divera_offene_fahrzeuge', json_encode(array_values($offen), JSON_UNESCAPED_UNICODE));
+    state_save('divera_offene_fahrzeuge', json_encode(array_values($offen), JSON_UNESCAPED_UNICODE));
     $meldung = sprintf('Funkstatus: %d Fahrzeug(e), %d Wechsel%s.', count($liste), $wechselAnzahl,
         $offen ? ', ' . count($offen) . ' ohne Zuordnung' : '');
     dv_log('ok', $meldung);
@@ -354,7 +377,23 @@ function divera_vehicles_sync_master(bool $erzwingen = false): array
     if (!$erzwingen && !dv_due('divera_stamm_letzter_abruf', setting_int('divera_stamm_intervall_minuten', 60), $jetzt)) {
         return ['status' => 'wartet', 'geaendert' => 0, 'message' => 'Noch nicht an der Reihe.'];
     }
-    setting_save('divera_stamm_letzter_abruf', (string)$jetzt);
+    if (!db_lock('ovb_divera_stamm', 0)) {
+        return ['status' => 'wartet', 'geaendert' => 0, 'message' => 'Ein Abruf läuft gerade.'];
+    }
+    try {
+        if (!$erzwingen && !dv_due_fresh('divera_stamm_letzter_abruf', setting_int('divera_stamm_intervall_minuten', 60), $jetzt)) {
+            return ['status' => 'wartet', 'geaendert' => 0, 'message' => 'Eben erst abgerufen.'];
+        }
+        return dv_sync_master_locked($jetzt);
+    } finally {
+        db_unlock('ovb_divera_stamm');
+    }
+}
+
+/** Stammdaten abrufen – nur unter der Sperre aufrufen */
+function dv_sync_master_locked(int $jetzt): array
+{
+    state_save('divera_stamm_letzter_abruf', (string)$jetzt);
 
     $schluessel = trim((string)setting('divera_personal_key', '')) ?: null;
     try {

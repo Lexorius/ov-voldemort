@@ -1,5 +1,44 @@
 # Änderungsverlauf
 
+## 1.16.1
+
+### Einstellungen: Schalter gingen beim Speichern anderer Gruppen aus
+
+- **Fehler behoben:** Das Speichern einer Gruppe unter *Verwaltung →
+  Einstellungen* setzte **alle** Ja/Nein-Schalter der ganzen Anwendung, nicht
+  nur die der angezeigten Gruppe. Da ein nicht angehakter Schalter im Formular
+  gar nicht mitgeschickt wird, standen danach alle Schalter der anderen
+  Gruppen auf „aus" – etwa der Stein.APP-Abgleich, nachdem man unter
+  „Divera 24/7" gespeichert hatte. Jetzt wird nur die angezeigte Gruppe
+  gespeichert.
+- Interne Merkwerte (letzter Abruf, Pause nach Rate Limit, offene
+  Zuordnungen) standen bisher als Textfelder unter „Allgemein" und wurden beim
+  Speichern mit veralteten Werten überschrieben. Sie liegen jetzt in einer
+  eigenen, unsichtbaren Gruppe.
+### Stein.APP und Divera gleichzeitig
+
+- Beide Abgleiche laufen unabhängig: Scheitert einer (etwa mit einem
+  Datenbankfehler), laufen die anderen im Minutentakt trotzdem weiter.
+  Bisher brach ein Fehler beim Stein-Abgleich auch den Divera-Abruf ab.
+- Jeder Abgleich läuft nur einmal zur Zeit. Treffen Minutentakt und ein
+  Seitenaufruf zusammen, wartet der zweite – und prüft danach frisch, ob
+  überhaupt noch abgerufen werden muss. So gibt es keinen doppelten Aufruf
+  gegen das Rate Limit der Stein.APP.
+- Einträge ins Journal werden je Fahrzeug nacheinander geschrieben. Zwei
+  gleichzeitige Einträge konnten sonst auf denselben Vorgänger zeigen, und
+  die Prüfung hätte fälschlich eine Veränderung gemeldet.
+- Beide schreiben in getrennte Felder: Status, HU und SP kommen aus der
+  Stein.APP, Funkstatus, Position und Besatzung aus Divera. Kennzeichen, ISSI
+  und Funkrufname füllt Divera nur, wenn sie leer sind – die Werte können
+  also nicht hin- und herspringen.
+
+### Hinweis
+
+- Einmal wieder einschalten ist nötig: Schalter, die der Fehler schon
+  ausgeschaltet hat, bleiben aus – welche vorher an waren, lässt sich nicht
+  mehr erkennen. Bitte die Gruppen Stein.APP, Divera 24/7, Fahrzeuge, Budget,
+  Kontakte und Besprechungen einmal durchsehen.
+
 ## 1.16.0
 
 ### Fahrzeugdaten aus Divera 24/7

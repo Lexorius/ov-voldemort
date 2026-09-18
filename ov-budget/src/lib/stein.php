@@ -165,7 +165,7 @@ function stein_request(string $pfad, array $query = []): array
     if ($code === 429) {
         // Laut Dokumentation sperrt die Stein.APP die IP dann für eine Stunde
         $pause = max(60, stein_interval_minutes());
-        setting_save('stein_pause_bis', (string)(time() + $pause * 60));
+        state_save('stein_pause_bis', (string)(time() + $pause * 60));
         throw new SteinException(sprintf(
             'Rate Limit erreicht (HTTP 429). Die Stein.APP sperrt die IP dafür bis zu einer Stunde; '
             . 'der Abruf pausiert %d Minuten.',
@@ -456,8 +456,36 @@ function stein_sync(bool $erzwingen = false): array
         }
     }
 
+    // Nur ein Abgleich zur Zeit – der Minutentakt und ein Seitenaufruf könnten
+    // sonst gleichzeitig abrufen und doppelt ins Journal schreiben
+    if (!db_lock('ovb_stein_sync', 0)) {
+        return ['status' => 'wartet', 'assets' => 0, 'zuordnungen' => 0, 'aenderungen' => 0,
+                'message' => 'Ein Abgleich läuft gerade.'];
+    }
+    try {
+        // Hat ein anderer Prozess eben erst abgerufen, während wir auf die Sperre sahen?
+        if (!$erzwingen) {
+            $grund = stein_wait_reason(
+                (int)state_get('stein_letzter_abruf', '0'),
+                stein_interval_minutes(),
+                (int)state_get('stein_pause_bis', '0'),
+                time()
+            );
+            if ($grund !== null) {
+                return ['status' => 'wartet', 'assets' => 0, 'zuordnungen' => 0, 'aenderungen' => 0, 'message' => $grund];
+            }
+        }
+        return stein_sync_locked($start);
+    } finally {
+        db_unlock('ovb_stein_sync');
+    }
+}
+
+/** Der eigentliche Abgleich – nur unter der Sperre aufrufen */
+function stein_sync_locked(float $start): array
+{
     // Zeitstempel vor dem Aufruf setzen: auch ein Fehlschlag zählt gegen das Rate Limit
-    setting_save('stein_letzter_abruf', (string)time());
+    state_save('stein_letzter_abruf', (string)time());
 
     try {
         $assets = stein_fetch_assets();
@@ -468,7 +496,7 @@ function stein_sync(bool $erzwingen = false): array
         return $res;
     }
 
-    setting_save('stein_pause_bis', '0');
+    state_save('stein_pause_bis', '0');
 
     $user = null;
     $zuordnungen = 0;
@@ -573,7 +601,7 @@ function stein_sync(bool $erzwingen = false): array
         db_update('vehicles', $daten, 'id = ?', [(int)$vehicle['id']]);
     }
 
-    setting_save('stein_offene_assets', json_encode($offen));
+    state_save('stein_offene_assets', json_encode($offen));
 
     $res = [
         'status'      => 'ok',

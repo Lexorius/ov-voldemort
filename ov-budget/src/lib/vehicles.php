@@ -176,15 +176,23 @@ function journal_add(int $vehicleId, array $e, ?array $user = null): int
         'ref_id'     => $e['ref_id'] ?? null,
     ];
 
-    $prev = (string)db_val(
-        'SELECT hash FROM vehicle_journal WHERE vehicle_id = ? ORDER BY id DESC LIMIT 1',
-        [$vehicleId],
-        ''
-    );
-    $eintrag['prev_hash'] = $prev;
-    $eintrag['hash'] = journal_hash($eintrag, $prev);
-
-    return db_insert('vehicle_journal', $eintrag);
+    // Lesen des Vorgängers und Schreiben dürfen nicht von einem zweiten Abruf
+    // unterbrochen werden – sonst zeigen zwei Einträge auf denselben Vorgänger
+    // und die Prüfung meldet eine Manipulation, die es nicht gab.
+    $sperre = 'ovb_journal_' . $vehicleId;
+    db_lock($sperre, 10);
+    try {
+        $prev = (string)db_val(
+            'SELECT hash FROM vehicle_journal WHERE vehicle_id = ? ORDER BY id DESC LIMIT 1',
+            [$vehicleId],
+            ''
+        );
+        $eintrag['prev_hash'] = $prev;
+        $eintrag['hash'] = journal_hash($eintrag, $prev);
+        return db_insert('vehicle_journal', $eintrag);
+    } finally {
+        db_unlock($sperre);
+    }
 }
 
 /** Änderungen an Stammdaten ins Journal schreiben */

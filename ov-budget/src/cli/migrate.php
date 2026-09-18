@@ -503,6 +503,24 @@ function ovb_migrate(PDO $pdo, callable $say): void
         }
     }
     $merken('008_divera_fahrzeuge');
+
+    /* ---- 009: Merkwerte aus der Einstellungsmaske nehmen ---- */
+    // Sie wurden bisher in der Gruppe "Allgemein" angelegt und standen dort als
+    // Textfelder; ein Speichern schrieb dann veraltete Werte zurück.
+    if (ovb_table_exists($pdo, 'settings')) {
+        $intern = ['stein_letzter_abruf', 'stein_pause_bis', 'stein_offene_assets',
+                   'divera_status_letzter_abruf', 'divera_stamm_letzter_abruf', 'divera_offene_fahrzeuge'];
+        $st = $pdo->prepare("UPDATE settings SET sgroup = '_intern', label = skey WHERE skey = ? AND sgroup <> '_intern'");
+        $n = 0;
+        foreach ($intern as $k) {
+            $st->execute([$k]);
+            $n += $st->rowCount();
+        }
+        if ($n > 0) {
+            $say(sprintf('%d interne Merkwerte aus der Einstellungsmaske genommen.', $n));
+        }
+    }
+    $merken('009_interne_merkwerte');
 }
 
 /**
