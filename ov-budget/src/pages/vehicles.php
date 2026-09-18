@@ -32,9 +32,12 @@ foreach ($fahrzeuge as $v) {
     }
 }
 
+$titelbilder = vfile_covers(array_column($fahrzeuge, 'id'));
+
 render('vehicles', [
     'title'      => (string)setting('fahrzeug_modul_name', 'Fahrzeuge'),
     'fahrzeuge'  => $fahrzeuge,
+    'titelbilder' => $titelbilder,
     'fristen'    => $fristen,
     'auffaellig' => $auffaellig,
     'filter'     => $filter,

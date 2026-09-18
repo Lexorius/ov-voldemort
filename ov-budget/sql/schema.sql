@@ -595,6 +595,29 @@ CREATE TABLE IF NOT EXISTS vehicle_orders (
   CONSTRAINT fk_vo_cb   FOREIGN KEY (created_by)    REFERENCES users(id)      ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Bilder und Dokumente zu Fahrzeugen und Aufträgen
+CREATE TABLE IF NOT EXISTS vehicle_files (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  vehicle_id   INT UNSIGNED NOT NULL,
+  order_id     INT UNSIGNED NULL,
+  art          ENUM('bild','dokument') NOT NULL DEFAULT 'dokument',
+  titel        VARCHAR(200) NOT NULL DEFAULT '',
+  orig_name    VARCHAR(255) NOT NULL DEFAULT '',
+  stored_name  VARCHAR(120) NOT NULL,
+  thumb_name   VARCHAR(120) NULL,
+  mime         VARCHAR(100) NOT NULL DEFAULT '',
+  size_bytes   INT UNSIGNED NOT NULL DEFAULT 0,
+  is_cover     TINYINT(1)   NOT NULL DEFAULT 0,
+  uploaded_by  INT UNSIGNED NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_vf_fz (vehicle_id, art),
+  KEY idx_vf_auftrag (order_id),
+  CONSTRAINT fk_vf_fz      FOREIGN KEY (vehicle_id)  REFERENCES vehicles(id)       ON DELETE CASCADE,
+  CONSTRAINT fk_vf_auftrag FOREIGN KEY (order_id)    REFERENCES vehicle_orders(id) ON DELETE CASCADE,
+  CONSTRAINT fk_vf_user    FOREIGN KEY (uploaded_by) REFERENCES users(id)          ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Protokoll der Stein.app-Abrufe (das Rate Limit macht Nachvollziehbarkeit wichtig)
 CREATE TABLE IF NOT EXISTS stein_log (
   id          INT UNSIGNED NOT NULL AUTO_INCREMENT,

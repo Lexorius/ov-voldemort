@@ -60,6 +60,7 @@ $routes = [
     'vehicle_action'     => 'vehicle_action',
     'vehicle_order'      => 'vehicle_order',
     'vehicle_order_edit' => 'vehicle_order_edit',
+    'vehicle_file'       => 'vehicle_file',
 
     'download'           => 'download',
 

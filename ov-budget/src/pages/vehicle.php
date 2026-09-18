@@ -28,4 +28,7 @@ render('vehicle', [
     'extraFields' => vehicle_extra_fields(),
     'extra'    => extra_values($vehicle),
     'pruefung' => get_str('pruefen') === '1' ? journal_verify($id) : null,
+    'bilder'   => array_values(array_filter(vfile_list($id, null, 'bild'), static fn($f) => !$f['order_id'])),
+    'dokumente' => array_values(array_filter(vfile_list($id), static fn($f) => $f['art'] === 'dokument' || $f['order_id'])),
+    'titelbild' => vfile_cover($id),
 ]);

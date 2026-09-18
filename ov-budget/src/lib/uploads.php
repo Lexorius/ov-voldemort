@@ -67,12 +67,8 @@ function wish_handle_uploads(int $wishId, int $userId, string $kind = 'angebot',
             continue;
         }
 
-        $mime = '';
-        if (function_exists('finfo_open')) {
-            $fi = finfo_open(FILEINFO_MIME_TYPE);
-            $mime = (string)finfo_file($fi, $tmp);
-            finfo_close($fi);
-        }
+        // finfo räumt sich selbst auf; finfo_close() ist seit PHP 8.5 veraltet
+        $mime = class_exists('finfo') ? (string)(new finfo(FILEINFO_MIME_TYPE))->file($tmp) : '';
 
         $stored = date('Ymd_His') . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
         if (!move_uploaded_file($tmp, $dir . DIRECTORY_SEPARATOR . $stored)) {

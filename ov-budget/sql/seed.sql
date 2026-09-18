@@ -274,6 +274,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('fahrzeug_user_darf_sehen','1','Alle Mitglieder duerfen Fahrzeuge sehen','Sonst nur Leitung und Administration','bool','Fahrzeuge',30),
 ('fahrzeug_user_darf_melden','1','Alle Mitglieder duerfen Schaeden melden','Legt einen Auftrag an und schreibt ins Journal','bool','Fahrzeuge',40),
 ('fahrzeug_frist_warnung_tage','30','Vorwarnung fuer HU, SP und UVV (Tage)','Ab wann eine Frist als bald faellig gilt','number','Fahrzeuge',50),
+('fahrzeug_dokument_typen','pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,odt,ods,txt','Erlaubte Dokumenttypen bei Fahrzeugen','Dateiendungen, durch Komma getrennt. Die Groesse begrenzt die allgemeine Upload-Grenze.','text','Fahrzeuge',55),
 ('fahrzeug_extra_felder','','Zusaetzliche Felder fuer Fahrzeuge','Ein Feld pro Zeile, Format: schluessel|Beschriftung|typ (text,textarea,number,bool,date)','textarea','Fahrzeuge',60),
 
 ('stein_aktiv','0','Stein.APP-Abgleich aktiv','Holt regelmaessig den Stand aller Fahrzeuge und schreibt Aenderungen ins Journal','bool','Stein.APP',10),

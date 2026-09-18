@@ -192,6 +192,30 @@ h3 { font-size: 1rem; }
   .journal__row { flex-direction: column; gap: .2rem; }
   .journal__when { flex: none; }
 }
+/* Bilder und Dokumente der Fahrzeugakte */
+.galerie { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); }
+.galerie__bild { margin: 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface-2); }
+.galerie__bild.is-cover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.galerie__bild img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.galerie__bild figcaption { padding: .4rem .5rem; font-size: .8rem; }
+.galerie__bild .btnrow { margin-top: .3rem; gap: .3rem; }
+.doclist { display: flex; flex-direction: column; }
+.doc { display: flex; gap: .7rem; align-items: center; padding: .5rem 0; border-bottom: 1px solid var(--border); }
+.doc:last-child { border-bottom: 0; }
+.doc__thumb, .doc__icon { width: 3rem; height: 3rem; flex: none; border-radius: 8px; }
+.doc__thumb { object-fit: cover; }
+.doc__icon { display: grid; place-items: center; background: var(--surface-2); border: 1px solid var(--border);
+  font-size: .7rem; font-weight: 700; color: var(--ink-soft); }
+.doc__text { flex: 1 1 0; min-width: 0; overflow-wrap: anywhere; }
+.doc__aktion { flex: none; }
+.titelbild img { display: block; width: 100%; max-height: 14rem; object-fit: cover; border-radius: var(--radius); margin-bottom: .8rem; }
+.item__bild { width: 3.5rem; height: 3.5rem; object-fit: cover; border-radius: 8px; flex: none; margin-right: .7rem; }
+.upload input[type=file] { max-width: 100%; }
+@media (max-width: 640px) {
+  .doc { flex-wrap: wrap; }
+  .doc__aktion { width: 100%; }
+  .galerie__bild .btn--sm { padding: .25rem .5rem; font-size: .75rem; min-height: 30px; }
+}
 .checkgrid { display: grid; gap: .4rem; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); }
 details > summary { cursor: pointer; font-weight: 600; padding: .3rem 0; }
 .card__head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .75rem; flex-wrap: wrap; }

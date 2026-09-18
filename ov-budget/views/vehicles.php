@@ -1,6 +1,8 @@
 <?php
 /** @var array $fahrzeuge @var array $fristen @var int $auffaellig @var array $filter
- *  @var bool $alle @var array $auftraege @var bool $steinAktiv @var int $steinStand */
+ *  @var bool $alle @var array $auftraege @var bool $steinAktiv @var int $steinStand
+ *  @var array $titelbilder */
+$titelbilder ??= [];
 $offen = 0;
 foreach ($fahrzeuge as $v) {
     $offen += (int)$v['offene_auftraege'];
@@ -95,7 +97,11 @@ $fristBadges = static function (array $liste): string {
         <a class="item<?= (int)$v['is_active'] ? '' : ' item--done' ?>" href="<?= e(url('vehicle', ['id' => $v['id']])) ?>"
            style="border-left-color:<?= e($v['status_color'] ?: '#94a3b8') ?>">
           <div class="item__top">
-            <div style="min-width:0">
+            <?php if (isset($titelbilder[(int)$v['id']])): ?>
+              <img class="item__bild" alt="" loading="lazy"
+                   src="<?= e(url('vehicle_file', ['id' => $titelbilder[(int)$v['id']]['id'], 'vorschau' => 1])) ?>">
+            <?php endif; ?>
+            <div style="min-width:0;flex:1">
               <div class="item__title"><?= e($v['bezeichnung']) ?></div>
               <div class="item__sub">
                 <?= e(implode(' · ', array_filter([

@@ -1,5 +1,36 @@
 # Änderungsverlauf
 
+## 1.15.0
+
+### Bilder und Dokumente an Fahrzeugen und Aufträgen
+
+- **Bilder** je Fahrzeug in einer Galerie. Das erste Bild wird Titelbild und
+  erscheint in der Fahrzeugliste und oben in der Akte; ein anderes lässt sich
+  mit einem Klick zum Titelbild machen.
+- **Dokumente** je Fahrzeug – Fahrzeugschein, Prüfberichte, Anleitungen. Welche
+  Dateitypen erlaubt sind, steht in *Einstellungen → Fahrzeuge*. HTML, SVG,
+  PHP und Ähnliches kommen nie durch, auch wenn man sie dort einträgt; eine
+  Datei, deren Inhalt nicht zur Endung passt, wird abgelehnt.
+- **An Aufträgen**: Fotos vom Schaden, Kostenvoranschlag, Rechnung. Bilder
+  werden dabei selbst erkannt. In der Fahrzeugakte stehen sie mit Verweis auf
+  den Auftrag.
+- **Fotos vom Handy** werden neu gespeichert. Dabei fallen die Metadaten weg,
+  auch der Aufnahmeort. Galeriebilder werden zusätzlich auf 1600 Pixel
+  verkleinert, gedreht, falls das Handy nur eine Drehangabe gespeichert hat,
+  und bekommen ein Vorschaubild. Fotos, die als Dokument hochgeladen werden
+  (etwa der Fahrzeugschein), behalten ihre Auflösung. PDFs und andere
+  Dokumente bleiben unverändert.
+- Hochladen dürfen alle, die Schäden melden dürfen; Entfernen und Titelbild
+  setzen die Leitung. Jedes Hinzufügen und Entfernen steht im Journal, das eine
+  eigene Rubrik *Dateien* bekommt.
+- Das Add-on bringt dafür die PHP-Erweiterungen GD und EXIF mit. Ohne sie
+  werden Bilder unverändert gespeichert.
+
+### Kleinigkeiten
+
+- Veraltete Aufrufe für PHP 8.5 ersetzt (`finfo_close`, `imagedestroy`), auch
+  bei den Anlagen der Wünsche.
+
 ## 1.14.0
 
 ### ISSI am Fahrzeug

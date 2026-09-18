@@ -32,6 +32,59 @@ switch (post_str('action')) {
         flash('success', 'Eintrag im Journal festgehalten.');
         break;
 
+    case 'file_upload':
+        // Bilder und Dokumente: Fahrzeug oder Auftrag
+        $vehicle = vehicle_find(post_int('vehicle_id', 0) ?? 0);
+        if (!$vehicle || !can('report_vehicle')) {
+            flash('error', 'Dafür fehlen dir die Rechte.');
+            break;
+        }
+        $orderId = post_int('order_id') ?: null;
+        if ($orderId !== null) {
+            $order = order_find($orderId);
+            if (!$order || (int)$order['vehicle_id'] !== (int)$vehicle['id']) {
+                flash('error', 'Auftrag nicht gefunden.');
+                break;
+            }
+            $zurueck = url('vehicle_order', ['id' => $orderId]) . '#dateien';
+        } else {
+            $zurueck = url('vehicle', ['id' => $vehicle['id']])
+                . (post_str('art') === 'bild' ? '#bilder' : '#dokumente');
+        }
+        $art = in_array(post_str('art'), ['bild', 'dokument', 'auto'], true) ? post_str('art') : 'auto';
+        [$n, $fehler] = vfile_store_uploads((int)$vehicle['id'], $orderId, 'dateien', $art, post_str('titel'), $user);
+        foreach ($fehler as $f) {
+            flash('warn', e($f));
+        }
+        if ($n > 0) {
+            flash('success', sprintf('%d Datei(en) gespeichert.', $n));
+        }
+        break;
+
+    case 'file_delete':
+        $datei = vfile_find(post_int('file_id', 0) ?? 0);
+        if (!$datei || !can('manage_vehicles')) {
+            flash('error', 'Dafür fehlen dir die Rechte.');
+            break;
+        }
+        $zurueck = $datei['order_id']
+            ? url('vehicle_order', ['id' => $datei['order_id']]) . '#dateien'
+            : url('vehicle', ['id' => $datei['vehicle_id']]) . ($datei['art'] === 'bild' ? '#bilder' : '#dokumente');
+        vfile_delete($datei, $user);
+        flash('success', 'Datei entfernt. Im Journal steht, dass es sie gab.');
+        break;
+
+    case 'file_cover':
+        $datei = vfile_find(post_int('file_id', 0) ?? 0);
+        if (!$datei || !can('manage_vehicles') || $datei['art'] !== 'bild') {
+            flash('error', 'Dafür fehlen dir die Rechte.');
+            break;
+        }
+        vfile_set_cover((int)$datei['vehicle_id'], (int)$datei['id']);
+        $zurueck = url('vehicle', ['id' => $datei['vehicle_id']]) . '#bilder';
+        flash('success', 'Titelbild gesetzt.');
+        break;
+
     case 'order_status':
         $order = order_find(post_int('order_id', 0) ?? 0);
         if (!$order || !can('manage_vehicles')) {

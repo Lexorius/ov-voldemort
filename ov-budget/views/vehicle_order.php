@@ -1,5 +1,5 @@
 <?php
-/** @var array $order @var ?array $vehicle @var array $verlauf */
+/** @var array $order @var ?array $vehicle @var array $verlauf @var array $dateien */
 $verwalten = can('manage_vehicles');
 $fertig = (int)$order['status_final'] === 1;
 ?>
@@ -85,6 +85,12 @@ $fertig = (int)$order['status_final'] === 1;
     <?php endif; ?>
   </section>
 </div>
+
+<?php if ($vehicle): ?>
+  <?= render_partial('partials/vehicle_files', [
+      'vehicle' => $vehicle, 'order' => $order, 'bilder' => [], 'dokumente' => $dateien, 'modus' => 'auftrag',
+  ]) ?>
+<?php endif; ?>
 
 <section class="card">
   <div class="card__head">

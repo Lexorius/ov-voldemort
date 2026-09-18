@@ -99,6 +99,10 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   „Journal auf Veränderungen prüfen" rechnet die Kette nach. Schadensmeldungen
   und **Instandsetzungsaufträge** mit fortlaufender Nummer, Werkstatt, Kosten
   und Bearbeitungsstand – jeder Schritt landet in der Akte.
+  **Bilder** je Fahrzeug (mit Titelbild in Liste und Akte) und **Dokumente**
+  wie Fahrzeugschein oder Prüfberichte; auch an Aufträge lassen sich Fotos und
+  Dokumente hängen, etwa vom Schaden oder der Kostenvoranschlag. Fotos werden
+  neu gespeichert, damit der Aufnahmeort aus den Metadaten verschwindet.
 * **Stein.APP** – Abgleich der Fahrzeuge über die Schnittstelle der Stein.APP
   (gleicher API-Schlüssel wie für die Home-Assistant-Integration). Alle zehn
   Minuten wird der komplette Stand geholt und jede Änderung an Status, HU, SP,

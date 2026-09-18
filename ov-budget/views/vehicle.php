@@ -1,7 +1,7 @@
 <?php
 /** @var array $vehicle @var array $fristen @var array $auftraege @var array $journal
  *  @var string $journalArt @var int $gesamt @var array $extraFields @var array $extra
- *  @var ?array $pruefung */
+ *  @var ?array $pruefung @var array $bilder @var array $dokumente @var ?array $titelbild */
 $verwalten = can('manage_vehicles');
 $melden = can('report_vehicle');
 
@@ -12,6 +12,7 @@ $arten = [
     'auftrag' => 'Aufträge',
     'stein' => 'Stein.APP',
     'stammdaten' => 'Stammdaten',
+    'datei' => 'Dateien',
 ];
 ?>
 <div class="pagehead">
@@ -50,6 +51,12 @@ $arten = [
 
 <div class="grid2">
   <section class="card">
+    <?php if ($titelbild): ?>
+      <a href="<?= e(url('vehicle_file', ['id' => $titelbild['id']])) ?>" target="_blank" rel="noopener" class="titelbild">
+        <img src="<?= e(url('vehicle_file', ['id' => $titelbild['id'], 'vorschau' => 1])) ?>"
+             alt="<?= e($vehicle['bezeichnung']) ?>">
+      </a>
+    <?php endif; ?>
     <h2>Stammdaten</h2>
     <dl class="dl">
       <?php
@@ -170,6 +177,15 @@ $arten = [
       <?php endif; ?>
     <?php endif; ?>
   </section>
+</div>
+
+<div class="grid2">
+  <?= render_partial('partials/vehicle_files', [
+      'vehicle' => $vehicle, 'order' => null, 'bilder' => $bilder, 'dokumente' => $dokumente, 'modus' => 'bilder',
+  ]) ?>
+  <?= render_partial('partials/vehicle_files', [
+      'vehicle' => $vehicle, 'order' => null, 'bilder' => $bilder, 'dokumente' => $dokumente, 'modus' => 'dokumente',
+  ]) ?>
 </div>
 
 <section class="card" id="auftraege">
