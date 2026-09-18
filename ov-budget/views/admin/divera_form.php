@@ -1,12 +1,14 @@
 <?php
 /** @var array $form @var array $map @var array $felder @var array $beispiel
  *  @var string $fehler @var string $hinweis @var array $vorschau */
-$targets = divera_map_targets();
+$ziel = divera_ziel($form);
+$thema = $ziel === 'thema';
+$targets = divera_map_targets($ziel);
 ?>
 <div class="pagehead">
   <div>
     <h1>Feldzuordnung</h1>
-    <p><?= e($form['name']) ?> · ID <span class="mono"><?= e($form['form_id']) ?></span></p>
+    <p><?= e($form['name']) ?> · <?= e(DIVERA_ZIELE[$ziel]) ?> · ID <span class="mono"><?= e($form['form_id']) ?></span></p>
   </div>
   <a class="btn btn--sec" href="<?= e(url('admin_divera')) ?>">Zurück</a>
 </div>
@@ -39,8 +41,23 @@ $targets = divera_map_targets();
   <?= csrf_field() ?>
   <input type="hidden" name="action" value="save">
 
-  <h2>Zuordnung Divera-Feld → Wunsch-Feld</h2>
-  <p class="small muted">Links steht das Feld im Wunschformular, rechts der Name des Divera-Feldes. Groß- und
+  <div class="field" style="max-width:26rem">
+    <label for="ziel">Einträge übernehmen als</label>
+    <select id="ziel" name="ziel">
+      <?php foreach (DIVERA_ZIELE as $k => $l): ?>
+        <option value="<?= e($k) ?>"<?= $k === $ziel ? ' selected' : '' ?>><?= e($l) ?></option>
+      <?php endforeach; ?>
+    </select>
+    <?php if ($thema): ?>
+      <p class="small muted">Jeder Eintrag wird ein Thema im Themenspeicher – von dort setzt die Leitung es auf
+        eine Tagesordnung. Stimmt der Name des Einreichers mit einem Benutzer überein, gilt das Thema als von dieser
+        Person eingebracht.</p>
+    <?php endif; ?>
+    <p class="small muted">Beim Wechsel werden die Felder neu vorgeschlagen.</p>
+  </div>
+
+  <h2>Zuordnung Divera-Feld → <?= $thema ? 'Themen-Feld' : 'Wunsch-Feld' ?></h2>
+  <p class="small muted">Links steht das Feld in der Anwendung, rechts der Name des Divera-Feldes. Groß- und
      Kleinschreibung ist egal; leere Zeilen werden ignoriert. Nicht zugeordnete Divera-Felder landen gesammelt
      in der Beschreibung – es geht also nichts verloren.</p>
 
@@ -59,7 +76,7 @@ $targets = divera_map_targets();
   </div>
 
   <fieldset>
-    <legend>Vorgaben für importierte Wünsche</legend>
+    <legend>Vorgaben für übernommene <?= $thema ? 'Themen' : 'Wünsche' ?></legend>
     <div class="grid3">
       <div class="field">
         <label for="name">Anzeigename des Formulars</label>
@@ -68,7 +85,7 @@ $targets = divera_map_targets();
       <div class="field">
         <label for="default_status_id">Status</label>
         <select id="default_status_id" name="default_status_id">
-          <?= list_options('wunsch_status', (int)($form['default_status_id'] ?? 0), 'Standard aus den Einstellungen') ?>
+          <?= list_options($thema ? 'tp_status' : 'wunsch_status', (int)($form['default_status_id'] ?? 0), $thema ? 'Standard' : 'Standard aus den Einstellungen') ?>
         </select>
       </div>
       <div class="field">
@@ -88,11 +105,31 @@ $targets = divera_map_targets();
     <button class="btn" type="submit">Zuordnung speichern</button>
     <button class="btn btn--sec" type="submit" name="action" value="preview">Speichern und Vorschau</button>
     <button class="btn btn--ok" type="submit" name="action" value="import"
-            data-confirm="Alle noch nicht importierten Einträge jetzt als Wünsche anlegen?">Jetzt importieren</button>
+            data-confirm="Alle noch nicht übernommenen Einträge jetzt als <?= $thema ? 'Themen' : 'Wünsche' ?> anlegen?">Jetzt importieren</button>
   </div>
 </form>
 
-<?php if ($vorschau): ?>
+<?php if ($vorschau && $thema): ?>
+  <div class="card">
+    <h2>Vorschau – diese Themen kämen in den Themenspeicher</h2>
+    <div class="tablewrap">
+      <table class="data">
+        <thead><tr><th>Thema</th><th>Fachgruppe</th><th>Priorität</th><th class="num">Minuten</th><th>Eingereicht von</th></tr></thead>
+        <tbody>
+        <?php foreach ($vorschau as $v): ?>
+          <tr>
+            <td><?= e($v['titel']) ?></td>
+            <td><?= e(list_label((int)($v['fachgruppe_id'] ?? 0), '–')) ?></td>
+            <td><?= e(list_label((int)($v['prioritaet_id'] ?? 0), '–')) ?></td>
+            <td class="num"><?= $v['dauer_min'] ? (int)$v['dauer_min'] : '–' ?></td>
+            <td><?= $v['eingebracht_von'] ? 'Benutzer #' . (int)$v['eingebracht_von'] : e($v['einbringer_name'] ?: '–') ?></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<?php elseif ($vorschau): ?>
   <div class="card">
     <h2>Vorschau – diese Wünsche würden entstehen</h2>
     <div class="tablewrap">

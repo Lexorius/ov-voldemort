@@ -7,8 +7,9 @@ $cronToken = (string)setting('divera_cron_token', '');
 <div class="pagehead">
   <div>
     <h1>Divera 24/7</h1>
-    <p>Formulare aus Divera abrufen und deren Einträge als Wünsche übernehmen. Bereits importierte Einträge werden
-       anhand von Formular- und Eintrags-ID erkannt und nicht doppelt angelegt.</p>
+    <p>Formulare aus Divera abrufen und deren Einträge übernehmen – als Wünsche (Wünsch dir was) oder als
+       Themen für Besprechungen im Themenspeicher. Bereits übernommene Einträge werden anhand von Formular-
+       und Eintrags-ID erkannt und nicht doppelt angelegt.</p>
   </div>
   <div class="btnrow">
     <a class="btn btn--sec" href="<?= e(url('admin_settings', ['group' => 'Divera 24/7'])) ?>">Zugang einrichten</a>
@@ -67,7 +68,8 @@ $cronToken = (string)setting('divera_cron_token', '');
                 <input type="hidden" name="action" value="add_form">
                 <input type="hidden" name="form_id" value="<?= e($rf['id']) ?>">
                 <input type="hidden" name="name" value="<?= e($rf['name']) ?>">
-                <button class="btn btn--sm" type="submit">Einbinden</button>
+                <button class="btn btn--sm" type="submit" name="ziel" value="wunsch">Als Wunschformular</button>
+                <button class="btn btn--sec btn--sm" type="submit" name="ziel" value="thema">Als Themenformular</button>
               </form>
             </td>
           </tr>
@@ -95,6 +97,7 @@ $cronToken = (string)setting('divera_cron_token', '');
             <div>
               <h3 style="margin:0"><?= e($f['name']) ?></h3>
               <div class="muted small">
+                <strong><?= e(DIVERA_ZIELE[divera_ziel($f)]) ?></strong> ·
                 ID <span class="mono"><?= e($f['form_id']) ?></span> ·
                 <?= count(array_filter($map)) ?> Felder zugeordnet ·
                 letzter Abruf: <?= e(de_datetime($f['last_sync']) ?: 'noch nie') ?>
@@ -113,7 +116,7 @@ $cronToken = (string)setting('divera_cron_token', '');
                 <input type="hidden" name="action" value="delete_form">
                 <input type="hidden" name="id" value="<?= (int)$f['id'] ?>">
                 <button class="btn btn--sec btn--sm" type="submit"
-                        data-confirm="Formular aus der Anwendung entfernen? Importierte Wünsche bleiben erhalten.">Entfernen</button>
+                        data-confirm="Formular aus der Anwendung entfernen? Übernommene Wünsche und Themen bleiben erhalten.">Entfernen</button>
               </form>
             </div>
           </div>
@@ -162,6 +165,8 @@ $cronToken = (string)setting('divera_cron_token', '');
             <td class="small">
               <?php if ($l['wish_id']): ?>
                 <a href="<?= e(url('wish', ['id' => $l['wish_id']])) ?>"><?= e($l['message']) ?></a>
+              <?php elseif (!empty($l['tp_id'])): ?>
+                <a href="<?= e(url('talking_point_edit', ['id' => $l['tp_id']])) ?>"><?= e($l['message']) ?></a>
               <?php else: ?>
                 <?= e($l['message']) ?>
               <?php endif; ?>

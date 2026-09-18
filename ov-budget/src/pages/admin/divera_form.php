@@ -18,12 +18,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = post_str('action');
 
     if ($action === 'save' || $action === 'preview') {
+        $ziel = post_str('ziel') === 'thema' ? 'thema' : 'wunsch';
         $map = [];
-        foreach (array_keys(divera_map_targets()) as $target) {
+        foreach (array_keys(divera_map_targets($ziel)) as $target) {
             $map[$target] = post_str('map_' . $target);
+        }
+        if ($ziel !== divera_ziel($form)) {
+            // Die Felder passen nicht mehr zusammen – neu vorschlagen lassen
+            $schema = json_decode((string)$form['raw_schema'], true) ?: [];
+            $map = divera_suggest_map($schema['felder'] ?? [], $ziel);
         }
         db_update('divera_forms', [
             'name'                  => mb_substr(post_str('name') ?: $form['name'], 0, 200),
+            'ziel'                  => $ziel,
             'field_map'             => json_encode($map, JSON_UNESCAPED_UNICODE),
             'auto_import'           => post_bool('auto_import'),
             'default_status_id'     => post_int('default_status_id'),
@@ -53,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             // Leere Zuordnungen mit einem Vorschlag füllen – bestehende bleiben
             $bisher = json_decode((string)($form['field_map'] ?? '{}'), true) ?: [];
-            $vorschlag = divera_suggest_map(array_keys($felder));
+            $vorschlag = divera_suggest_map(array_keys($felder), divera_ziel($form));
             $neu = $bisher;
             foreach ($vorschlag as $ziel => $feld) {
                 if (trim((string)($neu[$ziel] ?? '')) === '') {
@@ -87,8 +94,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($action === 'import') {
             $res = divera_import_form($form, (int)$me['id']);
-            flash('success', sprintf('%d neue Wünsche angelegt, %d bereits vorhanden, %d fehlerhaft.',
-                $res['created'], $res['skipped'], $res['failed']));
+            flash('success', sprintf('%d neue %s, %d bereits vorhanden, %d fehlerhaft.',
+                $res['created'], divera_ziel($form) === 'thema' ? 'Themen im Themenspeicher' : 'Wünsche angelegt',
+                $res['skipped'], $res['failed']));
             redirect_route('admin_divera_form', ['id' => $form['id']]);
         }
     } catch (DiveraException $ex) {

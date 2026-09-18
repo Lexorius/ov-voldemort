@@ -1,5 +1,27 @@
 # Änderungsverlauf
 
+## 1.20.0
+
+### Themenspeicher: Themen über ein Divera-Formular einreichen
+
+- Ein eingebundenes Divera-Formular kann jetzt entweder **Wünsche** (wie
+  bisher) oder **Themen für Besprechungen** liefern. Beim Einbinden wählt man
+  „Als Wunschformular“ oder „Als Themenformular“, später lässt es sich in der
+  Feldzuordnung umstellen.
+- Jeder Eintrag eines Themenformulars wird ein Talking Point im
+  Themenspeicher. Zuordenbar sind Thema, Beschreibung, Fachgruppe, Priorität,
+  Zeitbedarf und „Eingereicht von“; die Felder werden anhand ihrer Namen
+  vorgeschlagen. Nicht zugeordnete Felder und Anhänge werden in der
+  Beschreibung genannt.
+- Passt der Einreichername zu einem Benutzer, gilt das Thema als von dieser
+  Person eingebracht. Sonst steht der Name am Thema („eingebracht von …
+  · über Divera“).
+- Der automatische Abruf berücksichtigt Themenformulare wie Wunschformulare.
+  Im Themenspeicher holt **Aus Divera abrufen** neue Einreichungen sofort.
+  Dort steht auch ein Hinweis, über welches Formular man Themen einreichen kann.
+- Jede Einreichung wird nur einmal übernommen. Das Divera-Protokoll verlinkt auf
+  das entstandene Thema.
+
 ## 1.19.0
 
 ### Besprechungen: Aufgaben direkt aus der Sitzung

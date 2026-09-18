@@ -1,6 +1,7 @@
 <?php
-/** @var array $rows @var array $filters @var array $geplant */
+/** @var array $rows @var array $filters @var array $geplant @var array $diveraThemen */
 $label = tp_label();
+$diveraThemen ??= [];
 ?>
 <div class="pagehead">
   <div>
@@ -12,9 +13,24 @@ $label = tp_label();
     <?php if (can('create_talking_point')): ?>
       <a class="btn" href="<?= e(url('talking_point_edit')) ?>">+ <?= e($label) ?></a>
     <?php endif; ?>
+    <?php if ($diveraThemen && can('manage_meetings')): ?>
+      <form method="post" action="<?= e(url('meeting_action')) ?>" class="inline-form">
+        <?= csrf_field() ?>
+        <input type="hidden" name="action" value="divera_themen">
+        <button class="btn btn--sec" type="submit" title="Neue Einreichungen aus dem Divera-Formular jetzt holen">Aus Divera abrufen</button>
+      </form>
+    <?php endif; ?>
     <a class="btn btn--sec" href="<?= e(url('meetings')) ?>">Besprechungen</a>
   </div>
 </div>
+
+<?php if ($diveraThemen): ?>
+  <p class="small muted">Themen lassen sich auch in Divera über das Formular
+    <?= implode(', ', array_map(static fn($f) => '„' . e($f['name']) . '"', $diveraThemen)) ?> einreichen;
+    sie erscheinen dann hier<?php
+    $zuletzt = max(array_map(static fn($f) => (string)$f['last_sync'], $diveraThemen));
+    if ($zuletzt !== ''): ?> (zuletzt abgerufen <?= e(de_datetime($zuletzt)) ?>)<?php endif; ?>.</p>
+<?php endif; ?>
 
 <form class="card card--tight" method="get" data-autosubmit>
   <input type="hidden" name="p" value="talking_points">
@@ -58,7 +74,7 @@ $label = tp_label();
                 <?php if ($t['status_slug'] === 'vertagt'): ?>
                   vertagt aus „<?= e((string)$t['meeting_titel']) ?>" vom <?= e(de_date($t['meeting_datum'])) ?>
                 <?php else: ?>
-                  eingebracht <?= e(de_date($t['created_at'])) ?><?= $t['einbringer'] ? ' von ' . e($t['einbringer']) : '' ?>
+                  eingebracht <?= e(de_date($t['created_at'])) ?><?= $t['einbringer'] ? ' von ' . e($t['einbringer']) : '' ?><?= !empty($t['aus_divera']) ? ' · über Divera' : '' ?>
                 <?php endif; ?>
               </div>
             </div>

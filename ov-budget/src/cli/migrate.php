@@ -566,6 +566,28 @@ function ovb_migrate(PDO $pdo, callable $say): void
         }
     }
     $merken('011_todo_herkunft');
+
+    /* ---- 012: Themen über Divera-Formulare einreichen ---- */
+    if (ovb_table_exists($pdo, 'divera_forms') && !ovb_column_exists($pdo, 'divera_forms', 'ziel')) {
+        $pdo->exec("ALTER TABLE divera_forms ADD COLUMN ziel VARCHAR(20) NOT NULL DEFAULT 'wunsch' AFTER name");
+    }
+    if (ovb_table_exists($pdo, 'divera_log') && !ovb_column_exists($pdo, 'divera_log', 'tp_id')) {
+        $pdo->exec('ALTER TABLE divera_log ADD COLUMN tp_id INT UNSIGNED NULL AFTER wish_id');
+    }
+    if (ovb_table_exists($pdo, 'talking_points')) {
+        if (!ovb_column_exists($pdo, 'talking_points', 'einbringer_name')) {
+            $pdo->exec("ALTER TABLE talking_points ADD COLUMN einbringer_name VARCHAR(150) NOT NULL DEFAULT '' AFTER eingebracht_von");
+        }
+        if (!ovb_column_exists($pdo, 'talking_points', 'divera_form_id')) {
+            $pdo->exec("ALTER TABLE talking_points
+                        ADD COLUMN divera_form_id VARCHAR(60) NOT NULL DEFAULT '' AFTER einbringer_name,
+                        ADD COLUMN divera_entry_id VARCHAR(60) NOT NULL DEFAULT '' AFTER divera_form_id");
+        }
+        if (!ovb_index_exists($pdo, 'talking_points', 'idx_tp_divera')) {
+            $pdo->exec('ALTER TABLE talking_points ADD KEY idx_tp_divera (divera_form_id, divera_entry_id)');
+        }
+    }
+    $merken('012_divera_themen');
 }
 
 /**

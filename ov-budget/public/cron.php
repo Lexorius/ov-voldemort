@@ -109,4 +109,4 @@ if ($gesamt['created'] > 0 || $gesamt['failed'] > 0) {
         sprintf('%d neu, %d bekannt, %d Fehler', $gesamt['created'], $gesamt['skipped'], $gesamt['failed']));
 }
 
-printf("Fertig: %d neue Wünsche.\n", $gesamt['created']);
+printf("Fertig: %d neue Einträge (Wünsche oder Themen).\n", $gesamt['created']);

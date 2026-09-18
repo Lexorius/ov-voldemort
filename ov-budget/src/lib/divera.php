@@ -320,9 +320,16 @@ function divera_fetch_form_fields(string $formId): array
  * Vorschlag für die Zuordnung: Formularfelder, deren Name nach einem
  * Wunschfeld klingt. Reine Funktion.
  */
-function divera_suggest_map(array $felder): array
+function divera_suggest_map(array $felder, string $ziel = 'wunsch'): array
 {
-    $muster = [
+    $muster = $ziel === 'thema' ? [
+        'titel'        => ['thema', 'titel', 'betreff', 'überschrift', 'ueberschrift', 'worum geht'],
+        'beschreibung' => ['beschreibung', 'details', 'inhalt', 'erläuterung', 'erlaeuterung', 'hintergrund', 'text'],
+        'fachgruppe'   => ['fachgruppe', 'einheit', 'gruppe'],
+        'prioritaet'   => ['priorität', 'prioritaet', 'dringlichkeit', 'wichtigkeit', 'dringend'],
+        'dauer_min'    => ['dauer', 'zeitbedarf', 'minuten', 'zeit'],
+        'einbringer'   => ['eingereicht von', 'einbringer', 'name', 'von', 'ansprechpartner'],
+    ] : [
         'bezeichnung'   => ['bezeichnung', 'was wird benötigt', 'gegenstand', 'artikel', 'titel', 'was'],
         'beschreibung'  => ['beschreibung', 'details'],
         'begruendung'   => ['begründung', 'begruendung', 'warum', 'grund'],
@@ -439,9 +446,30 @@ function divera_field_value(array $fields, string $wanted): string
     return '';
 }
 
-/** Diese Zuordnungen können je Formular gepflegt werden */
-function divera_map_targets(): array
+/** Wofür ein Formular gedacht ist */
+const DIVERA_ZIELE = [
+    'wunsch' => 'Wünsch dir was',
+    'thema'  => 'Themen für Besprechungen',
+];
+
+function divera_ziel(array $form): string
 {
+    return ($form['ziel'] ?? '') === 'thema' ? 'thema' : 'wunsch';
+}
+
+/** Diese Zuordnungen können je Formular gepflegt werden */
+function divera_map_targets(string $ziel = 'wunsch'): array
+{
+    if ($ziel === 'thema') {
+        return [
+            'titel'        => 'Thema (Titel)',
+            'beschreibung' => 'Beschreibung',
+            'fachgruppe'   => 'Fachgruppe',
+            'prioritaet'   => 'Priorität',
+            'dauer_min'    => 'Zeitbedarf in Minuten',
+            'einbringer'   => 'Eingereicht von (Name)',
+        ];
+    }
     return [
         'bezeichnung'   => 'Bezeichnung',
         'beschreibung'  => 'Beschreibung',
@@ -581,6 +609,96 @@ function divera_entry_to_wish(array $entry, array $map, array $form): array
 }
 
 /**
+ * Einen Divera-Eintrag in einen Talking Point für den Themenspeicher übersetzen.
+ * $userByName: Name → Benutzer-id, damit eingereichte Themen wie selbst
+ * angelegte dem Einbringer zugeordnet werden.
+ */
+function divera_entry_to_tp(array $entry, array $map, array $form, array $userByName = []): array
+{
+    $f = $entry['fields'];
+    $get = static fn(string $target) => trim(divera_field_value($f, (string)($map[$target] ?? '')));
+
+    $titel = $get('titel');
+    if ($titel === '') {
+        $titel = 'Thema aus Divera ' . ($entry['id'] ?: date('Y-m-d H:i'));
+    }
+
+    $fgText = $get('fachgruppe');
+    $fachgruppeId = $fgText !== '' ? list_id_by_text('fachgruppe', $fgText) : null;
+    $fachgruppeId ??= !empty($form['default_fachgruppe_id']) ? (int)$form['default_fachgruppe_id'] : null;
+
+    $prText = $get('prioritaet');
+    $prioritaetId = $prText !== '' ? list_id_by_text('todo_prioritaet', $prText) : null;
+    $prioritaetId ??= list_default_id('todo_prioritaet');
+
+    $dauer = (int)round(divera_parse_dec($get('dauer_min')));
+
+    $name = $get('einbringer') ?: trim((string)($entry['user'] ?? ''));
+    $userId = $name !== '' ? ($userByName[mb_strtolower($name)] ?? null) : null;
+
+    // Nicht zugeordnete Felder anhängen – nichts geht verloren
+    $used = array_filter(array_values($map));
+    $rest = [];
+    foreach ($f as $k => $v) {
+        if ($v === '' || in_array($k, $used, true)) {
+            continue;
+        }
+        $rest[] = $k . ': ' . $v;
+    }
+    if (!empty($entry['anhaenge'])) {
+        $rest[] = sprintf('In Divera hängen %d Datei(en) an diesem Eintrag.', (int)$entry['anhaenge']);
+    }
+    $beschreibung = $get('beschreibung');
+    if ($rest) {
+        $beschreibung = trim($beschreibung . "\n\n— Weitere Angaben aus Divera —\n" . implode("\n", $rest));
+    }
+
+    return [
+        'titel'           => mb_substr($titel, 0, 200),
+        'beschreibung'    => $beschreibung,
+        'fachgruppe_id'   => $fachgruppeId,
+        'prioritaet_id'   => $prioritaetId,
+        'status_id'       => !empty($form['default_status_id']) ? (int)$form['default_status_id'] : list_default_id('tp_status'),
+        'dauer_min'       => $dauer > 0 ? min($dauer, 600) : null,
+        'meeting_id'      => null,   // Themenspeicher
+        'sort_order'      => 0,
+        'eingebracht_von' => $userId,
+        'einbringer_name' => $userId ? '' : mb_substr($name, 0, 150),
+        'divera_form_id'  => (string)$form['form_id'],
+        'divera_entry_id' => (string)$entry['id'],
+    ];
+}
+
+/** Aktive Benutzer nach Anzeige- und Benutzername, klein geschrieben */
+function divera_user_index(): array
+{
+    $out = [];
+    foreach (db_all('SELECT id, display_name, username FROM users WHERE is_active = 1') as $u) {
+        foreach ([$u['display_name'] ?? '', $u['username'] ?? ''] as $n) {
+            $n = mb_strtolower(trim((string)$n));
+            if ($n !== '') {
+                $out[$n] ??= (int)$u['id'];
+            }
+        }
+    }
+    return $out;
+}
+
+/** Alle Themenformulare mit automatischem oder manuellem Abruf importieren */
+function divera_import_themes(?int $userId = null): array
+{
+    $gesamt = ['formulare' => 0, 'total' => 0, 'created' => 0, 'skipped' => 0, 'failed' => 0];
+    foreach (db_all("SELECT * FROM divera_forms WHERE ziel = 'thema' ORDER BY name") as $form) {
+        $res = divera_import_form($form, $userId);
+        $gesamt['formulare']++;
+        foreach (['total', 'created', 'skipped', 'failed'] as $k) {
+            $gesamt[$k] += $res[$k];
+        }
+    }
+    return $gesamt;
+}
+
+/**
  * Alle Einträge eines Formulars importieren.
  * Bereits importierte Einträge (gleiche form_id + entry_id) werden übersprungen.
  */
@@ -588,6 +706,9 @@ function divera_import_form(array $form, ?int $userId = null, bool $dryRun = fal
 {
     $map = json_decode((string)($form['field_map'] ?? '{}'), true) ?: [];
     $entries = divera_fetch_entries((string)$form['form_id']);
+    $thema = divera_ziel($form) === 'thema';
+    $tabelle = $thema ? 'talking_points' : 'wishes';
+    $nutzer = $thema ? divera_user_index() : [];
 
     $created = 0;
     $skipped = 0;
@@ -602,7 +723,7 @@ function divera_import_form(array $form, ?int $userId = null, bool $dryRun = fal
         }
 
         $exists = db_val(
-            'SELECT id FROM wishes WHERE divera_form_id = ? AND divera_entry_id = ?',
+            "SELECT id FROM $tabelle WHERE divera_form_id = ? AND divera_entry_id = ?",
             [(string)$form['form_id'], $entryId]
         );
         if ($exists) {
@@ -611,20 +732,28 @@ function divera_import_form(array $form, ?int $userId = null, bool $dryRun = fal
         }
 
         try {
-            $data = divera_entry_to_wish($entry, $map, $form);
+            $data = $thema
+                ? divera_entry_to_tp($entry, $map, $form, $nutzer)
+                : divera_entry_to_wish($entry, $map, $form);
             if ($dryRun) {
                 $preview[] = $data;
                 $created++;
                 continue;
             }
-            $data['created_by'] = $userId;
-            $wishId = db_insert('wishes', $data);
+            if ($thema) {
+                $neuId = db_insert('talking_points', $data);
+                audit('tp.divera', 'talking_point', $neuId, $data['titel']);
+            } else {
+                $data['created_by'] = $userId;
+                $neuId = db_insert('wishes', $data);
+            }
             db_insert('divera_log', [
                 'form_id'  => (string)$form['form_id'],
                 'entry_id' => $entryId,
-                'wish_id'  => $wishId,
+                'wish_id'  => $thema ? null : $neuId,
+                'tp_id'    => $thema ? $neuId : null,
                 'status'   => 'ok',
-                'message'  => 'Wunsch angelegt: ' . $data['bezeichnung'],
+                'message'  => $thema ? 'Thema eingereicht: ' . $data['titel'] : 'Wunsch angelegt: ' . $data['bezeichnung'],
                 'payload'  => json_encode($entry['fields'], JSON_UNESCAPED_UNICODE),
             ]);
             $created++;

@@ -52,6 +52,8 @@
             <td class="small">
               <?php if ($r['wish_id']): ?>
                 <a href="<?= e(url('wish', ['id' => $r['wish_id']])) ?>"><?= e($r['message']) ?></a>
+              <?php elseif (!empty($r['tp_id'])): ?>
+                <a href="<?= e(url('talking_point_edit', ['id' => $r['tp_id']])) ?>"><?= e($r['message']) ?></a>
               <?php else: ?><?= e($r['message']) ?><?php endif; ?>
             </td>
           </tr>

@@ -217,7 +217,8 @@ function tp_select(): string
                    st.is_final AS status_final,
                    pr.label AS prio_label, pr.color AS prio_color, pr.weight AS prio_weight,
                    fg.label AS fachgruppe_label,
-                   u.display_name AS einbringer,
+                   COALESCE(u.display_name, NULLIF(tp.einbringer_name, SPACE(0))) AS einbringer,
+                   (CHAR_LENGTH(tp.divera_entry_id) > 0) AS aus_divera,
                    m.titel AS meeting_titel, m.datum AS meeting_datum, m.status AS meeting_status,
                    td.titel AS todo_titel,
                    (SELECT COUNT(*) FROM talking_points n WHERE n.vorgaenger_id = tp.id) AS nachfolger

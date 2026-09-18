@@ -133,7 +133,27 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   nicht erschienen. Die Zählung steht über der Liste, die Namen im Protokoll.
 * **Divera 24/7 – Formulare** – Formulare abrufen, Felder frei zuordnen und Einträge als
   Wünsche übernehmen. Mit Vorschau, Dubletten-Erkennung und optionalem
-  automatischem Abruf.
+  automatischem Abruf. Ein Formular kann stattdessen auch **Themen für
+  Besprechungen** sammeln: Jeder Eintrag wird ein Talking Point im
+  Themenspeicher (Titel, Beschreibung, Fachgruppe, Priorität, Zeitbedarf,
+  Einreicher). So lassen sich Themen direkt in Divera einreichen.
+
+## Themen über Divera einreichen
+
+1. In Divera ein Formular anlegen, z. B. „Thema für die Leitungsrunde“ mit den
+   Feldern *Thema*, *Beschreibung*, *Fachgruppe*, *Priorität*, *Zeitbedarf
+   (Minuten)* und *Eingereicht von*. Nur *Thema* ist wirklich nötig.
+2. Unter *Verwaltung → Divera 24/7* „Formulare aus Divera abrufen“ und beim
+   Formular **Als Themenformular** wählen.
+3. „Formularfelder abrufen“ – die Felder werden anhand ihrer Namen
+   vorgeschlagen; bei Bedarf anpassen, dann „Speichern und Vorschau“.
+4. Für den automatischen Abruf den Haken *Beim automatischen Abruf
+   berücksichtigen* setzen. Im Themenspeicher gibt es zusätzlich den Knopf
+   **Aus Divera abrufen**, etwa kurz vor der Besprechung.
+
+Stimmt der Einreichername mit einem Benutzer überein, gilt das Thema als von
+dieser Person eingebracht (sie kann es dann auch bearbeiten); sonst steht der
+Name beim Thema. Nicht zugeordnete Felder landen in der Beschreibung.
 * **Verwaltung** – Benutzer und Rollen (Mitglied, Leitung, Administration) sowie
   *alle* Auswahllisten, Texte und Regeln frei konfigurierbar.
 

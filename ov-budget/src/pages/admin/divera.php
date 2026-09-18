@@ -28,9 +28,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     flash('info', 'Dieses Formular ist bereits eingebunden.');
                     redirect_route('admin_divera_form', ['id' => $exists]);
                 }
+                $ziel = post_str('ziel') === 'thema' ? 'thema' : 'wunsch';
                 $newId = db_insert('divera_forms', [
                     'form_id'   => $formId,
                     'name'      => mb_substr($name, 0, 200),
+                    'ziel'      => $ziel,
                     'field_map' => '{}',
                 ]);
                 audit('divera.formular.hinzugefuegt', 'divera_form', $newId, $formId);
@@ -50,10 +52,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 flash(
                     $res['failed'] > 0 ? 'warn' : 'success',
                     sprintf(
-                        'Import "%s": %d Eintrag/Einträge geprüft – <strong>%d neue Wünsche</strong>, %d bereits vorhanden, %d fehlerhaft.',
+                        'Import "%s": %d Eintrag/Einträge geprüft – <strong>%d neue %s</strong>, %d bereits vorhanden, %d fehlerhaft.',
                         e($form['name']),
                         $res['total'],
                         $res['created'],
+                        divera_ziel($form) === 'thema' ? 'Themen' : 'Wünsche',
                         $res['skipped'],
                         $res['failed']
                     )
@@ -66,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($form) {
                     db_exec('DELETE FROM divera_forms WHERE id = ?', [$form['id']]);
                     audit('divera.formular.entfernt', 'divera_form', (int)$form['id'], $form['form_id']);
-                    flash('success', 'Formular entfernt. Bereits importierte Wünsche bleiben bestehen.');
+                    flash('success', 'Formular entfernt. Bereits übernommene Wünsche und Themen bleiben bestehen.');
                 }
                 redirect_route('admin_divera');
                 // no break

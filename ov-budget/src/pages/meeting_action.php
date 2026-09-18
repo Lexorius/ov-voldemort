@@ -127,6 +127,20 @@ switch (post_str('action')) {
         }
         break;
 
+    case 'divera_themen':
+        // Neue Einreichungen aus den Divera-Themenformularen holen
+        try {
+            $res = divera_import_themes((int)$user['id']);
+            flash($res['failed'] > 0 ? 'warn' : 'success', $res['formulare'] === 0
+                ? 'Kein Divera-Formular für Themen eingebunden.'
+                : sprintf('%d neue(s) Thema/Themen aus Divera, %d bereits bekannt%s.', $res['created'], $res['skipped'],
+                    $res['failed'] ? ', ' . $res['failed'] . ' fehlerhaft' : ''));
+        } catch (Throwable $ex) {
+            flash('error', 'Abruf aus Divera fehlgeschlagen: ' . e($ex->getMessage()));
+        }
+        $zurueck = url('talking_points');
+        break;
+
     case 'todos_bulk':
         // Mehrere Talking Points auf einmal als Aufgaben übernehmen
         if (!$meeting || !can('create_todo')) {

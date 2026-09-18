@@ -16,4 +16,6 @@ render('talking_points', [
     'rows'     => tp_backlog($filters),
     'filters'  => $filters,
     'geplant'  => can('manage_meetings') ? meeting_query(['zeit' => 'kommend', 'nur_geplant' => 1]) : [],
+    'diveraThemen' => divera_enabled()
+        ? db_all("SELECT id, name, last_sync FROM divera_forms WHERE ziel = 'thema' ORDER BY name") : [],
 ]);
