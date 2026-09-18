@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 1.17.1
+
+- **Build repariert:** Version 1.17.0 ließ sich nicht installieren. Das
+  Dockerfile kopiert seit dieser Version den Änderungsverlauf in den Container,
+  die `.dockerignore` schloss aber alle `*.md`-Dateien vom Build aus – der
+  Build brach ab, weil `CHANGELOG.md` fehlte. Die Datei ist jetzt ausdrücklich
+  zugelassen.
+
 ## 1.17.0
 
 - **Versionsanzeige:** Unten auf jeder Seite steht jetzt, welche Version läuft.

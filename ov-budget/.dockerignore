@@ -3,6 +3,8 @@
 config/config.php
 storage/
 *.md
+# Der Änderungsverlauf wird in der Anwendung angezeigt ("Was ist neu")
+!CHANGELOG.md
 docker-compose.yml
 .env
 .env.example
