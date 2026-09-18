@@ -139,11 +139,31 @@ function divera_extract_rows(array $data, int $depth = 0): array
     return [];
 }
 
+/*
+ * Formulare heißen bei Divera "reporttypes", ihre Einträge "reports"
+ * (https://api.divera247.com/docs/api_v2_reporttype.yaml):
+ *   GET /api/v2/reporttypes              Formulare samt Felddefinitionen
+ *   GET /api/v2/reporttypes/{id}         ein Formular
+ *   GET /api/v2/reporttypes/{id}/reports Einträge, 50 je Seite (offset)
+ * Die Schnittstelle verlangt den persönlichen Accesskey.
+ */
+const DIVERA_FORMS_PATH = '/v2/reporttypes';
+const DIVERA_ENTRIES_PATH = '/v2/reporttypes/{form_id}/reports';
+const DIVERA_SEITE = 50;
+const DIVERA_MAX_SEITEN = 40;
+
+/** Schlüssel für die Formular-Schnittstelle: der persönliche, sonst der allgemeine */
+function divera_form_key(): ?string
+{
+    $key = trim((string)setting('divera_personal_key', ''));
+    return $key !== '' ? $key : null;
+}
+
 /** Formulare aus Divera holen und auf id/name normalisieren */
 function divera_fetch_forms(): array
 {
-    $path = (string)setting('divera_forms_path', '/v2/forms');
-    $raw = divera_request($path);
+    $path = (string)setting('divera_forms_path', DIVERA_FORMS_PATH);
+    $raw = divera_request($path, [], divera_form_key());
     $rows = divera_extract_rows($raw);
 
     $out = [];
@@ -161,22 +181,178 @@ function divera_fetch_forms(): array
     return $out;
 }
 
-/** Einträge eines Formulars holen */
+/**
+ * Einträge eines Formulars holen – alle Seiten.
+ * Divera liefert je Aufruf 50 Einträge und die Gesamtzahl (itemcount);
+ * weitere Seiten gibt es über den Parameter offset.
+ */
 function divera_fetch_entries(string $formId): array
 {
-    $path = str_replace('{form_id}', rawurlencode($formId), (string)setting('divera_entries_path', '/v2/forms/{form_id}/entries'));
-    $raw = divera_request($path);
-    $rows = divera_extract_rows($raw);
+    $path = str_replace('{form_id}', rawurlencode($formId),
+        (string)setting('divera_entries_path', DIVERA_ENTRIES_PATH));
 
     $out = [];
-    foreach ($rows as $r) {
-        $out[] = [
-            'id'     => (string)(divera_pick($r, ['id', 'entry_id', 'uuid', '_key']) ?? ''),
-            'date'   => divera_pick($r, ['date', 'created', 'timestamp', 'created_at']),
-            'user'   => (string)(divera_pick($r, ['user_name', 'username', 'author', 'creator', 'name']) ?? ''),
-            'fields' => divera_flatten_fields($r),
-            'raw'    => $r,
-        ];
+    $offset = 0;
+    for ($seite = 0; $seite < DIVERA_MAX_SEITEN; $seite++) {
+        $raw = divera_request($path, $offset > 0 ? ['offset' => $offset] : [], divera_form_key());
+        $rows = divera_extract_rows($raw);
+        foreach ($rows as $r) {
+            $out[] = divera_entry_from_row($r);
+        }
+        $gesamt = (int)($raw['data']['itemcount'] ?? 0);
+        $offset += count($rows);
+        // Ende: leere Seite, alles da, oder die Schnittstelle blättert nicht
+        if (!$rows || $gesamt <= 0 || $offset >= $gesamt || count($rows) < DIVERA_SEITE) {
+            break;
+        }
+    }
+    return $out;
+}
+
+/** Einen Eintrag aus der Antwort auf unser Format bringen */
+function divera_entry_from_row(array $r): array
+{
+    $felder = divera_report_fields($r);
+    $zeit = divera_pick($r, ['ts_create', 'date', 'created', 'timestamp', 'created_at']);
+    return [
+        'id'      => (string)(divera_pick($r, ['id', 'entry_id', 'uuid', '_key']) ?? ''),
+        'date'    => $zeit,
+        'user'    => (string)(divera_pick($r, ['user_name', 'username', 'author', 'creator']) ?? ''),
+        // Das Divera-Format hat Felder als {field, value}; anderes wird flach gelesen
+        'fields'  => $felder ?? divera_flatten_fields($r),
+        'anhaenge' => (int)($r['attachment_count'] ?? (is_array($r['attachment'] ?? null) ? count($r['attachment']) : 0)),
+        'adresse' => trim((string)($r['address'] ?? '')),
+        'raw'     => $r,
+    ];
+}
+
+/**
+ * Felder eines Divera-Eintrags als "Feldname => Text".
+ * Gibt null zurück, wenn der Eintrag nicht im Divera-Format vorliegt.
+ * Reine Funktion.
+ */
+function divera_report_fields(array $report): ?array
+{
+    $liste = $report['fields'] ?? null;
+    if (!is_array($liste) || !array_is_list($liste) || $liste === []) {
+        return null;
+    }
+    foreach ($liste as $f) {
+        if (!is_array($f) || !isset($f['field']) || !is_array($f['field'])) {
+            return null;
+        }
+    }
+    $out = [];
+    foreach ($liste as $f) {
+        $feld = $f['field'];
+        $name = trim((string)($feld['name'] ?? ''));
+        if ($name === '' || ($feld['type'] ?? '') === 'headline') {
+            continue;
+        }
+        // Gleich benannte Felder nicht überschreiben
+        $schluessel = $name;
+        for ($n = 2; array_key_exists($schluessel, $out); $n++) {
+            $schluessel = $name . ' (' . $n . ')';
+        }
+        $out[$schluessel] = divera_field_text($feld, $f['value'] ?? null);
+    }
+    return $out;
+}
+
+/**
+ * Wert eines Feldes lesbar machen. Auswahlfelder liefern die ids der
+ * gewählten Optionen – die werden in deren Bezeichnung übersetzt.
+ */
+function divera_field_text(array $feld, mixed $wert): string
+{
+    $typ = (string)($feld['type'] ?? '');
+    if (!in_array($typ, ['radio', 'selectbox', 'checkbox'], true)) {
+        if (is_array($wert)) {
+            return implode(', ', array_map(static fn($x) => is_scalar($x) ? (string)$x : '', $wert));
+        }
+        return is_bool($wert) ? ($wert ? '1' : '0') : trim((string)$wert);
+    }
+
+    $optionen = [];
+    foreach ((array)($feld['options'] ?? []) as $o) {
+        if (is_array($o) && isset($o['id'])) {
+            $optionen[(string)$o['id']] = (string)($o['name'] ?? $o['id']);
+        }
+    }
+
+    // Mehrfachauswahl: Liste, JSON-Liste als Text oder durch Komma getrennt
+    if (is_string($wert) && str_starts_with(trim($wert), '[')) {
+        $json = json_decode($wert, true);
+        $wert = is_array($json) ? $json : $wert;
+    }
+    $ids = is_array($wert) ? $wert : preg_split('/\s*[,;]\s*/', trim((string)$wert));
+    $texte = [];
+    foreach ((array)$ids as $id) {
+        $id = trim((string)$id);
+        if ($id === '') {
+            continue;
+        }
+        $texte[] = $optionen[$id] ?? $id;
+    }
+    return implode(', ', $texte);
+}
+
+/** Feldnamen eines Formulars aus seiner Definition – auch ohne Einträge */
+function divera_fetch_form_fields(string $formId): array
+{
+    try {
+        $raw = divera_request(rtrim((string)setting('divera_forms_path', DIVERA_FORMS_PATH), '/')
+            . '/' . rawurlencode($formId), [], divera_form_key());
+    } catch (Throwable) {
+        return [];
+    }
+    $felder = $raw['data']['fields'] ?? $raw['fields'] ?? [];
+    $namen = [];
+    foreach (is_array($felder) ? $felder : [] as $f) {
+        if (is_array($f) && ($f['type'] ?? '') !== 'headline' && trim((string)($f['name'] ?? '')) !== '') {
+            $namen[] = trim((string)$f['name']);
+        }
+    }
+    return array_values(array_unique($namen));
+}
+
+/**
+ * Vorschlag für die Zuordnung: Formularfelder, deren Name nach einem
+ * Wunschfeld klingt. Reine Funktion.
+ */
+function divera_suggest_map(array $felder): array
+{
+    $muster = [
+        'bezeichnung'   => ['bezeichnung', 'was wird benötigt', 'gegenstand', 'artikel', 'titel', 'was'],
+        'beschreibung'  => ['beschreibung', 'details'],
+        'begruendung'   => ['begründung', 'begruendung', 'warum', 'grund'],
+        'anzahl'        => ['anzahl', 'menge', 'stück', 'stueck'],
+        // "Nettobetrag" neben einer Anzahl ist meist der Stückpreis; der Gesamtbetrag rechnet sich dann
+        'netto_gesamt'  => ['gesamtpreis', 'gesamtbetrag', 'summe', 'gesamt'],
+        'netto_einzel'  => ['einzelpreis', 'preis pro stück', 'stückpreis', 'nettobetrag', 'netto', 'preis', 'kosten', 'betrag'],
+        'fachgruppe'    => ['fachgruppe', 'einheit', 'gruppe'],
+        'kategorie'     => ['kategorie'],
+        'dringlichkeit' => ['dringlichkeit', 'priorität', 'prioritaet', 'dringend'],
+        'nice_to_have'  => ['nice to have', 'nice-to-have', 'optional'],
+        'benoetigt_bis' => ['benötigt bis', 'benoetigt bis', 'bis wann', 'frist', 'datum'],
+        'lieferant'     => ['lieferant', 'händler', 'haendler', 'bezugsquelle', 'shop'],
+        'artikelnummer' => ['artikelnummer', 'art.-nr', 'bestellnummer'],
+        'link'          => ['link', 'url', 'internet'],
+        'antragsteller' => ['antragsteller', 'name', 'von', 'melder'],
+    ];
+    $vergeben = [];
+    $out = [];
+    foreach ($muster as $ziel => $woerter) {
+        foreach ($woerter as $wort) {
+            foreach ($felder as $feld) {
+                $klein = mb_strtolower(trim((string)$feld));
+                if (!isset($vergeben[$feld]) && ($klein === $wort || str_starts_with($klein, $wort))) {
+                    $out[$ziel] = $feld;
+                    $vergeben[$feld] = true;
+                    continue 3;
+                }
+            }
+        }
     }
     return $out;
 }
@@ -368,6 +544,13 @@ function divera_entry_to_wish(array $entry, array $map, array $form): array
     }
 
     $beschreibung = trim($get('beschreibung'));
+    if (!empty($entry['adresse'])) {
+        $rest[] = 'Adresse: ' . $entry['adresse'];
+    }
+    if (!empty($entry['anhaenge'])) {
+        // Divera liefert Anhänge verschlüsselt – sie bleiben dort und werden hier nur genannt
+        $rest[] = sprintf('In Divera hängen %d Datei(en) an diesem Eintrag (z. B. Angebote).', (int)$entry['anhaenge']);
+    }
     if ($rest) {
         $beschreibung = trim($beschreibung . "\n\n— Weitere Angaben aus Divera —\n" . implode("\n", $rest));
     }

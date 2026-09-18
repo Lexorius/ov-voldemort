@@ -69,6 +69,14 @@ if (!$forms) {
     exit("Kein Formular für den automatischen Import vorgemerkt.\n");
 }
 
+// Der Minutentakt ist für die Fahrzeuge gedacht; Formulare reichen seltener.
+// Ein Abruf kann mehrere Seiten umfassen (50 Einträge je Seite).
+$intervall = max(1, setting_int('divera_formular_intervall_minuten', 15));
+if (time() - (int)state_get('divera_formular_letzter_abruf', '0') < $intervall * 60) {
+    exit("Divera-Formulare: noch nicht an der Reihe.\n");
+}
+state_save('divera_formular_letzter_abruf', (string)time());
+
 $gesamt = ['created' => 0, 'skipped' => 0, 'failed' => 0];
 
 foreach ($forms as $form) {
@@ -95,7 +103,10 @@ foreach ($forms as $form) {
     }
 }
 
-audit('divera.cron', 'divera_form', null,
-    sprintf('%d neu, %d bekannt, %d Fehler', $gesamt['created'], $gesamt['skipped'], $gesamt['failed']));
+// Nur ins Änderungsprotokoll, wenn sich etwas getan hat – sonst stünde dort jeder Durchlauf
+if ($gesamt['created'] > 0 || $gesamt['failed'] > 0) {
+    audit('divera.cron', 'divera_form', null,
+        sprintf('%d neu, %d bekannt, %d Fehler', $gesamt['created'], $gesamt['skipped'], $gesamt['failed']));
+}
 
 printf("Fertig: %d neue Wünsche.\n", $gesamt['created']);

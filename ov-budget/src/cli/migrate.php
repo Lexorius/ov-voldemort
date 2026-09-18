@@ -521,6 +521,21 @@ function ovb_migrate(PDO $pdo, callable $say): void
         }
     }
     $merken('009_interne_merkwerte');
+
+    /* ---- 010: richtige Divera-Pfade für Formulare ---- */
+    // Die ersten Vorgaben (/v2/forms ...) gibt es bei Divera nicht; nur wer sie
+    // nicht selbst geändert hat, bekommt die richtigen.
+    if (ovb_table_exists($pdo, 'settings')) {
+        $st = $pdo->prepare('UPDATE settings SET svalue = ? WHERE skey = ? AND svalue = ?');
+        $st->execute(['/v2/reporttypes', 'divera_forms_path', '/v2/forms']);
+        $n = $st->rowCount();
+        $st->execute(['/v2/reporttypes/{form_id}/reports', 'divera_entries_path', '/v2/forms/{form_id}/entries']);
+        $n += $st->rowCount();
+        if ($n > 0) {
+            $say('Divera-Pfade für Formulare auf /v2/reporttypes umgestellt.');
+        }
+    }
+    $merken('010_divera_reporttypes');
 }
 
 /**

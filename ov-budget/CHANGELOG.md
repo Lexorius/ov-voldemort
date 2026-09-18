@@ -1,5 +1,41 @@
 # Änderungsverlauf
 
+## 1.18.0
+
+### Wünsch dir was: Divera-Import an die echte Schnittstelle angepasst
+
+Geprüft gegen die Dokumentation der Divera-Formularschnittstelle
+(<https://api.divera247.com/docs/api_v2_reporttype.yaml>). Der bisherige
+Import passte nicht dazu:
+
+- **Falsche Pfade:** Formulare heißen bei Divera `reporttypes`, ihre Einträge
+  `reports`. Die bisherigen Vorgaben (`/v2/forms`, `/v2/forms/{form_id}/entries`)
+  führten ins Leere. Wer sie nicht selbst geändert hatte, bekommt beim Start
+  die richtigen.
+- **Werte gingen verloren:** Divera liefert jedes Feld als Paar aus
+  Felddefinition und Wert. Der Import las nur die Feldnamen – jeder Wunsch hieß
+  „Divera-Import …" und stand auf 0 €. Jetzt kommen Bezeichnung, Anzahl,
+  Betrag, Frist und alle anderen Felder an.
+- **Auswahlfelder:** Bei Auswahl, Liste und Mehrfachauswahl liefert Divera die
+  Kennung der Option statt ihres Textes. Der Import übersetzt sie jetzt
+  („hoch", „Bergungsgruppe", „Einsatz, Ausbildung"). Überschriften-Felder
+  fallen weg.
+- **Mehr als 50 Einträge:** Divera liefert 50 je Seite; der Import holt jetzt
+  alle Seiten.
+- **Zuordnung vorgeschlagen:** „Formularfelder abrufen" liest die Felder auch
+  aus der Formulardefinition – es muss also noch kein Eintrag vorhanden sein –
+  und füllt leere Zuordnungen mit einem Vorschlag (Bezeichnung, Anzahl,
+  Nettobetrag, Dringlichkeit …). Vorhandene Zuordnungen bleiben.
+- **Anhänge:** Divera liefert Dateianhänge verschlüsselt aus, sie lassen sich
+  nicht übernehmen. Der Wunsch vermerkt stattdessen, wie viele Dateien in
+  Divera hängen.
+- Die Formularschnittstelle verlangt den **persönlichen Accesskey**; ist er
+  hinterlegt, wird er dafür genommen.
+- Der automatische Formular-Import läuft nicht mehr im Minutentakt, sondern
+  alle 15 Minuten (einstellbar) – ein Abruf kann jetzt mehrere Seiten umfassen.
+- Das Änderungsprotokoll bekam bisher jede Minute einen Eintrag „divera.cron",
+  auch ohne Import. Jetzt nur noch, wenn etwas angelegt wurde oder schiefging.
+
 ## 1.17.1
 
 - **Build repariert:** Version 1.17.0 ließ sich nicht installieren. Das

@@ -42,10 +42,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'probe') {
             $entries = divera_fetch_entries((string)$form['form_id']);
             $felder = [];
+            // Felder aus der Formulardefinition – so klappt es auch ohne Einträge
+            foreach (divera_fetch_form_fields((string)$form['form_id']) as $k) {
+                $felder[$k] = true;
+            }
             foreach ($entries as $entry) {
                 foreach (array_keys($entry['fields']) as $k) {
                     $felder[$k] = true;
                 }
+            }
+            // Leere Zuordnungen mit einem Vorschlag füllen – bestehende bleiben
+            $bisher = json_decode((string)($form['field_map'] ?? '{}'), true) ?: [];
+            $vorschlag = divera_suggest_map(array_keys($felder));
+            $neu = $bisher;
+            foreach ($vorschlag as $ziel => $feld) {
+                if (trim((string)($neu[$ziel] ?? '')) === '') {
+                    $neu[$ziel] = $feld;
+                }
+            }
+            if ($neu !== $bisher) {
+                db_update('divera_forms', ['field_map' => json_encode($neu, JSON_UNESCAPED_UNICODE)], 'id = ?', [$form['id']]);
             }
             db_update('divera_forms', [
                 'raw_schema' => json_encode([
