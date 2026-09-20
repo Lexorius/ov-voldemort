@@ -1,5 +1,21 @@
 # Änderungsverlauf
 
+## 1.27.7
+
+### Am Handy ließen sich keine Fotos auswählen
+
+- Das Feld für Fotos hatte einen Filter (`accept="image/*"`). Manche
+  Auswahldialoge auf dem Handy liefern damit gar keine Datei zurück: Die
+  Galerie öffnet sich, man wählt Bilder aus, und im Formular bleibt alles
+  leer. Der Filter ist jetzt weg – bei den Dokumenten gab es ihn nie, dort
+  funktionierte die Auswahl deshalb. Welche Dateien erlaubt sind, prüft
+  weiterhin die Anwendung beim Speichern.
+- Die Größenprüfung im Browser leert die Auswahl nicht mehr stillschweigend.
+  Stattdessen steht unter dem Feld, wie viele Dateien gewählt wurden und wie
+  groß sie zusammen sind; ist etwas zu groß, wird es benannt und das
+  Absenden gesperrt. Der bisherige Hinweis kam als Dialogfenster und konnte
+  vom Browser unterdrückt werden.
+
 ## 1.27.6
 
 ### Dateien an Fahrzeugen: sagen, woran es hakt

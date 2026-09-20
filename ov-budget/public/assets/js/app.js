@@ -110,17 +110,48 @@
     });
   });
 
-  /* Dateigröße vor dem Upload prüfen */
+  /* Auswahl zeigen und vor zu großen Dateien warnen.
+     Früher wurde die Auswahl bei Übergröße einfach geleert – am Handy sah es
+     dann aus, als ließe sich gar kein Foto auswählen. */
   document.querySelectorAll('input[type=file][data-max-mb]').forEach(function (inp) {
+    var hinweis = document.createElement('div');
+    hinweis.className = 'small muted';
+    hinweis.style.marginTop = '.3rem';
+    inp.insertAdjacentElement('afterend', hinweis);
+
+    function mb(bytes) { return (bytes / 1048576).toFixed(1).replace('.', ',') + ' MB'; }
+
     inp.addEventListener('change', function () {
-      var max = parseFloat(inp.getAttribute('data-max-mb')) * 1024 * 1024;
-      for (var i = 0; i < inp.files.length; i++) {
-        if (inp.files[i].size > max) {
-          alert('"' + inp.files[i].name + '" ist größer als ' + inp.getAttribute('data-max-mb') + ' MB.');
-          inp.value = '';
-          return;
+      var grenze = parseFloat(inp.getAttribute('data-max-mb')) || 0;
+      var dateien = inp.files || [];
+      var gross = [];
+      var summe = 0;
+      for (var i = 0; i < dateien.length; i++) {
+        summe += dateien[i].size;
+        if (grenze > 0 && dateien[i].size > grenze * 1048576) {
+          gross.push(dateien[i].name + ' (' + mb(dateien[i].size) + ')');
         }
       }
+      var knopf = inp.form ? inp.form.querySelector('button[type=submit]') : null;
+
+      if (!dateien.length) {
+        hinweis.textContent = '';
+        hinweis.className = 'small muted';
+        if (knopf) { knopf.disabled = false; }
+        return;
+      }
+      if (gross.length) {
+        hinweis.className = 'small';
+        hinweis.style.color = 'var(--bad)';
+        hinweis.textContent = 'Zu groß (Grenze ' + grenze + ' MB): ' + gross.join(', ')
+          + '. Die Grenze lässt sich in den Einstellungen erhöhen.';
+        if (knopf) { knopf.disabled = true; }
+        return;
+      }
+      hinweis.className = 'small muted';
+      hinweis.style.color = '';
+      hinweis.textContent = dateien.length + ' Datei(en) ausgewählt, zusammen ' + mb(summe) + '.';
+      if (knopf) { knopf.disabled = false; }
     });
   });
 

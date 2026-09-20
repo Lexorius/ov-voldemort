@@ -36,8 +36,8 @@ $knoepfe = static function (array $f, bool $mitTitelbild) use ($aktion, $verwalt
 
 /** Upload-Formular */
 $formular = static function (string $art, string $knopf, string $hinweis) use ($vehicle, $order, $aktion): string {
-    // image/* – so bietet das Handy direkt die Kamera an
-    $accept = $art === 'bild' ? 'image/*' : '';
+    // Bewusst ohne accept-Filter: manche Handy-Auswahldialoge liefern damit gar
+    // keine Datei zurück. Was erlaubt ist, prüft die Anwendung beim Speichern.
     return '<form method="post" action="' . e($aktion) . '" enctype="multipart/form-data" class="form upload">'
         . csrf_field()
         . '<input type="hidden" name="action" value="file_upload">'
@@ -46,8 +46,8 @@ $formular = static function (string $art, string $knopf, string $hinweis) use ($
         . ($order ? '<input type="hidden" name="order_id" value="' . (int)$order['id'] . '">' : '')
         . '<div class="grid2">'
         . '<div class="field"><label>Datei(en)</label>'
-        . '<input type="file" name="dateien[]" multiple required data-max-mb="' . (int)setting_int('upload_max_mb', 10) . '"'
-        . ($accept !== '' ? ' accept="' . $accept . '"' : '') . '></div>'
+        . '<input type="file" name="dateien[]" multiple required data-max-mb="'
+        . (int)setting_int('upload_max_mb', 10) . '"></div>'
         . '<div class="field"><label>Titel (optional)</label>'
         . '<input type="text" name="titel" maxlength="200" placeholder="sonst der Dateiname"></div>'
         . '</div>'

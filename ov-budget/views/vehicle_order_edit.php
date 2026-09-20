@@ -51,7 +51,7 @@ $isNew = empty($order['id']);
     <?php if ($isNew): ?>
       <div class="field">
         <label for="fotos">Fotos <span class="muted small">(optional, mehrere möglich)</span></label>
-        <input type="file" id="fotos" name="fotos[]" multiple accept="image/*"
+        <input type="file" id="fotos" name="fotos[]" multiple
                data-max-mb="<?= (int)setting_int('upload_max_mb', 10) ?>">
         <small class="muted">Am Handy geht auch die Kamera. Die Fotos hängen am Auftrag; weitere lassen sich
           später jederzeit hinzufügen. Große Bilder werden verkleinert, Metadaten wie der Aufnahmeort fallen weg.</small>
