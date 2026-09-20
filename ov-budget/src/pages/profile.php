@@ -29,18 +29,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirect_route('profile');
         }
     } else {
-        db_update('users', [
-            'display_name' => mb_substr(post_str('display_name'), 0, 150),
-            'email'        => mb_substr(post_str('email'), 0, 150),
-            'phone'        => mb_substr(post_str('phone'), 0, 60),
-        ], 'id = ?', [$user['id']]);
-        flash('success', 'Profil gespeichert.');
-        redirect_route('profile');
+        $ziel = trim(post_str('ha_notify'));
+        if ($ziel !== '' && !preg_match('/^[a-z0-9_]+$/', $ziel)) {
+            $errors[] = 'Das Benachrichtigungsziel darf nur Kleinbuchstaben, Ziffern und _ enthalten '
+                . '(z. B. mobile_app_pixel_8).';
+        }
+        if (!$errors) {
+            db_update('users', [
+                'display_name' => mb_substr(post_str('display_name'), 0, 150),
+                'email'        => mb_substr(post_str('email'), 0, 150),
+                'phone'        => mb_substr(phone_human(post_str('phone')), 0, 60),
+                'ha_notify'    => mb_substr($ziel, 0, 120),
+                'notify_aktiv' => post_bool('notify_aktiv'),
+            ], 'id = ?', [$user['id']]);
+            flash('success', 'Profil gespeichert.');
+            redirect_route('profile');
+        }
+    }
+}
+
+$dienste = [];
+if (setting_bool('ha_benachrichtigung_aktiv', false)) {
+    try {
+        $dienste = ha_notify_dienste();
+    } catch (Throwable $ex) {
+        $dienste = [];   // ohne Home Assistant bleibt das Feld ein freies Textfeld
     }
 }
 
 render('profile', [
     'title'  => 'Mein Profil',
+    'dienste' => $dienste,
     'user'   => $user,
     'errors' => $errors,
     'meine'  => db_all(

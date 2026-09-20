@@ -1,5 +1,23 @@
 # Änderungsverlauf
 
+## 1.26.0
+
+### Benachrichtigungen über Home Assistant
+
+- Meldungen gehen über `notify.<Ziel>` an die Companion-App: neue Aufgabe,
+  fällige und überfällige Aufgaben, neuer Wunsch zur Freigabe, freigegebener
+  eigener Wunsch, neue Instandsetzungsmeldung, Fahrzeugausfall, ablaufende
+  Fristen und die Besprechung am nächsten Tag.
+- **Je Person ein Ziel:** im eigenen Profil oder über die Benutzerverwaltung;
+  die Auswahl kommt aus Home Assistant. Wer nichts hinterlegt, bekommt nichts.
+  Meldungen lassen sich je Person und je Ereignis abschalten.
+- **Warteschlange statt Warten:** Ereignisse werden eingereiht, der
+  Minutenlauf schickt sie los und wiederholt bis zu dreimal. Der Verlauf samt
+  Fehlergrund steht unter *Verwaltung → Home Assistant*, dort gibt es auch
+  eine Testnachricht.
+- Mit hinterlegter Adresse führt ein Tipp auf die Meldung direkt zum Vorgang.
+- Die täglichen Erinnerungen laufen ab der eingestellten Stunde (Vorgabe 7 Uhr).
+
 ## 1.25.2
 
 ### Home Assistant: Meldung im Änderungsprotokoll schlug fehl

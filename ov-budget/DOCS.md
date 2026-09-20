@@ -242,6 +242,39 @@ Gerät „OV-Budget" zusammen.
 Personenbezogenes wird nicht gemeldet – nur Zahlen, Zeitpunkte und
 Fahrzeugdaten.
 
+## Benachrichtigungen aufs Handy
+
+Die Anwendung ruft in Home Assistant den Dienst `notify.<Ziel>` auf; auf dem
+Handy erscheint die Meldung über die Companion-App. Einschalten unter
+*Einstellungen → Home Assistant*, prüfen unter *Verwaltung → Home Assistant*.
+
+1. **Ziel hinterlegen:** Jede Person trägt im eigenen Profil ihr Ziel ein, etwa
+   `mobile_app_pixel_8` (also `notify.` weglassen). Die Auswahl kommt aus Home
+   Assistant. Für andere setzt es die Benutzerverwaltung.
+2. **Adresse für den Link** (optional): Steht sie in den Einstellungen, führt
+   ein Tipp auf die Meldung direkt zum Vorgang.
+3. **Testnachricht** verschicken – der Knopf steht auf der Verwaltungsseite.
+
+Gemeldet wird:
+
+| Ereignis | An wen |
+|---|---|
+| Neue Aufgabe | Zuständige Person, Fachgruppe oder Funktion |
+| Aufgabe heute fällig oder überfällig | Zuständige, einmal täglich |
+| Neuer Wunsch zur Freigabe | Alle, die ihn in dieser Höhe freigeben dürfen |
+| Wunsch freigegeben | Person, die ihn eingetragen hat |
+| Neue Instandsetzungsmeldung | Leitung |
+| Fahrzeug steht still | Leitung |
+| Fristen HU, SP, UVV | Leitung, einmal täglich |
+| Besprechung am nächsten Tag | Alle mit eingeschalteten Meldungen, einmal täglich |
+
+Jedes Ereignis lässt sich einzeln abschalten, jede Person kann Meldungen für
+sich ganz ausschalten. Die tägliche Runde läuft ab der eingestellten Stunde
+(Vorgabe 7 Uhr). Gesendet wird aus dem Minutenlauf heraus: Ereignisse landen
+zuerst in einer Warteschlange, deshalb wartet niemand im Browser auf Home
+Assistant. Fehlgeschlagene Versuche stehen mit Grund auf der
+Verwaltungsseite und werden bis zu dreimal wiederholt.
+
 ## Fahrzeugdaten aus Divera
 
 Unter *Einstellungen → Divera 24/7* lässt sich *Fahrzeugdaten aus Divera

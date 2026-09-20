@@ -92,6 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'display_name'  => mb_substr(post_str('display_name'), 0, 150),
                 'email'         => mb_substr(post_str('email'), 0, 150),
                 'phone'         => mb_substr(post_str('phone'), 0, 60),
+                'ha_notify'     => mb_substr(preg_replace('/[^a-z0-9_]/', '', strtolower(post_str('ha_notify'))) ?? '', 0, 120),
+                'notify_aktiv'  => post_bool('notify_aktiv'),
                 'role'          => $role,
                 'fachgruppe_id' => post_int('fachgruppe_id'),
                 'is_active'     => $aktiv,
@@ -133,6 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (!$edit) {
     $edit = [
         'id' => null, 'username' => '', 'display_name' => '', 'email' => '', 'phone' => '',
+        'ha_notify' => '', 'notify_aktiv' => 1,
         'role' => 'user', 'fachgruppe_id' => null, 'is_active' => 1, 'must_change_pw' => 0,
         'last_login' => null, 'created_at' => null,
     ];

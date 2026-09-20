@@ -1,5 +1,5 @@
 <?php
-/** @var array $user @var array $errors @var array $meine */
+/** @var array $user @var array $errors @var array $meine @var array $dienste */
 $rollen = ['admin' => 'Administration', 'leitung' => 'Leitung', 'user' => 'Mitglied'];
 ?>
 <div class="pagehead">
@@ -31,6 +31,26 @@ $rollen = ['admin' => 'Administration', 'leitung' => 'Leitung', 'user' => 'Mitgl
       <label for="phone">Telefon</label>
       <input type="tel" id="phone" name="phone" value="<?= e((string)$user['phone']) ?>">
     </div>
+
+    <?php if (setting_bool('ha_benachrichtigung_aktiv', false)): ?>
+      <h3>Benachrichtigungen</h3>
+      <div class="field">
+        <label for="ha_notify">Ziel in Home Assistant</label>
+        <input type="text" id="ha_notify" name="ha_notify" list="notify-dienste" placeholder="mobile_app_…"
+               value="<?= e((string)($user['ha_notify'] ?? '')) ?>">
+        <datalist id="notify-dienste">
+          <?php foreach ($dienste as $d): ?><option value="<?= e($d) ?>"></option><?php endforeach; ?>
+        </datalist>
+        <small class="muted">Der Dienst der Companion-App, also <span class="mono">notify.<em>ziel</em></span> ohne
+          das „notify.". <?= $dienste ? 'Die Liste kommt aus Home Assistant.' : 'Home Assistant meldet gerade keine Ziele.' ?></small>
+      </div>
+      <div class="field field--check">
+        <input type="checkbox" id="notify_aktiv" name="notify_aktiv" value="1"
+               <?= (int)($user['notify_aktiv'] ?? 1) ? 'checked' : '' ?>>
+        <label for="notify_aktiv">Benachrichtigungen erhalten</label>
+      </div>
+    <?php endif; ?>
+
     <div><button class="btn" type="submit">Speichern</button></div>
   </form>
 

@@ -52,6 +52,9 @@ CREATE TABLE IF NOT EXISTS users (
   role          ENUM('admin','leitung','user') NOT NULL DEFAULT 'user',
   fachgruppe_id INT UNSIGNED NULL,
   phone         VARCHAR(60)  NOT NULL DEFAULT '',
+  -- Benachrichtigungen über Home Assistant: Name des notify-Dienstes
+  ha_notify     VARCHAR(120) NOT NULL DEFAULT '',
+  notify_aktiv  TINYINT(1)   NOT NULL DEFAULT 1,
   is_active     TINYINT(1)   NOT NULL DEFAULT 1,
   must_change_pw TINYINT(1)  NOT NULL DEFAULT 0,
   last_login    DATETIME     NULL,
@@ -256,6 +259,25 @@ CREATE TABLE IF NOT EXISTS divera_log (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Warteschlange und Protokoll der Benachrichtigungen
+CREATE TABLE IF NOT EXISTS notifications (
+  id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id    INT UNSIGNED NOT NULL,
+  ereignis   VARCHAR(40)  NOT NULL DEFAULT '',
+  titel      VARCHAR(150) NOT NULL DEFAULT '',
+  text       VARCHAR(500) NOT NULL DEFAULT '',
+  url        VARCHAR(255) NOT NULL DEFAULT '',
+  status     ENUM('offen','gesendet','fehler') NOT NULL DEFAULT 'offen',
+  versuche   TINYINT      NOT NULL DEFAULT 0,
+  fehler     VARCHAR(300) NOT NULL DEFAULT '',
+  created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  sent_at    DATETIME     NULL,
+  PRIMARY KEY (id),
+  KEY idx_status (status, id),
+  KEY idx_user (user_id),
+  CONSTRAINT fk_notify_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

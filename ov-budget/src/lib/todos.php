@@ -191,6 +191,14 @@ function todo_save_from_post(?array $existing, array $user): array
             db_exec('UPDATE talking_points SET todo_id = ? WHERE id = ? AND todo_id IS NULL', [$id, $data['talking_point_id']]);
         }
         audit('aufgabe.angelegt', 'todo', $id, $data['titel']);
+        notify_queue(
+            array_diff(notify_todo_users($data), [(int)$user['id']]),
+            'aufgabe_neu',
+            'Neue Aufgabe: ' . $data['titel'],
+            trim(sprintf('Zuständig: %s%s', todo_target_name($data + ['target_label' => null, 'target_user' => null]),
+                $data['faellig_am'] ? ' · fällig am ' . de_date($data['faellig_am']) : '')),
+            '?p=todo&id=' . $id
+        );
     }
     return [$id, []];
 }

@@ -1,7 +1,10 @@
 <?php
 /** @var ?array $cfg @var array $werte @var array $fahrzeuge @var string $basis
- *  @var int $letzter @var int $anmeldung @var string $fehler @var string $hinweis */
+ *  @var int $letzter @var int $anmeldung @var string $fehler @var string $hinweis
+ *  @var array $dienste @var string $diensteFehler @var array $empfaenger
+ *  @var array $warteschlange @var int $offen */
 $aktiv = setting_bool('ha_mqtt_aktiv', false);
+$melden = notify_enabled();
 ?>
 <div class="pagehead">
   <div>
@@ -79,6 +82,103 @@ $aktiv = setting_bool('ha_mqtt_aktiv', false);
     <p class="small muted mt">Einzelne Fahrzeuge werden nicht gemeldet – das lässt sich in den Einstellungen einschalten.</p>
   <?php endif; ?>
 </div>
+
+<section class="card" id="benachrichtigungen">
+  <div class="card__head">
+    <h2>Benachrichtigungen</h2>
+    <div class="btnrow">
+      <?php if ($melden): ?>
+        <form method="post" class="inline-form"><?= csrf_field() ?>
+          <input type="hidden" name="action" value="dienste">
+          <button class="btn btn--sec btn--sm" type="submit">Ziele neu einlesen</button></form>
+        <form method="post" class="inline-form"><?= csrf_field() ?>
+          <input type="hidden" name="action" value="test_notify">
+          <button class="btn btn--sec btn--sm" type="submit">Testnachricht an mich</button></form>
+        <?php if ($offen > 0): ?>
+          <form method="post" class="inline-form"><?= csrf_field() ?>
+            <input type="hidden" name="action" value="senden">
+            <button class="btn btn--sm" type="submit">Warteschlange senden (<?= $offen ?>)</button></form>
+        <?php endif; ?>
+      <?php endif; ?>
+    </div>
+  </div>
+
+  <?php if (!$melden): ?>
+    <div class="empty">Benachrichtigungen sind ausgeschaltet. In den
+      <a href="<?= e(url('admin_settings', ['group' => 'Home Assistant'])) ?>">Einstellungen</a> einschalten –
+      dort steht auch, welche Ereignisse gemeldet werden.</div>
+  <?php else: ?>
+    <p class="small muted">Gesendet wird über <span class="mono">notify.&lt;Ziel&gt;</span>, also in der Regel die
+      Companion-App. Jede Person hinterlegt ihr Ziel im eigenen Profil; hier lässt es sich auch über die
+      Benutzerverwaltung setzen. Der Minutenlauf schickt die Warteschlange los.</p>
+
+    <?php if ($diensteFehler !== ''): ?>
+      <div class="alert alert--warn">Ziele konnten nicht gelesen werden: <?= e($diensteFehler) ?></div>
+    <?php elseif ($dienste): ?>
+      <div class="chips"><?php foreach ($dienste as $d): ?><span class="chip mono">notify.<?= e($d) ?></span><?php endforeach; ?></div>
+    <?php else: ?>
+      <div class="alert alert--warn">Home Assistant meldet keine Benachrichtigungsziele. Ist die Companion-App
+        eingerichtet?</div>
+    <?php endif; ?>
+
+    <h3 class="mt">Ereignisse</h3>
+    <ul class="small">
+      <?php foreach (notify_ereignisse() as $key => $er): ?>
+        <li><strong><?= e($er['label']) ?></strong><?= !empty($er['taeglich']) ? ' <span class="badge badge--outline">täglich</span>' : '' ?>
+          – <?= e($er['text']) ?>
+          <?= setting_bool('notify_' . $key, true) ? '' : '<span class="muted">(aus)</span>' ?></li>
+      <?php endforeach; ?>
+    </ul>
+
+    <h3 class="mt">Wer bekommt etwas?</h3>
+    <div class="tablewrap">
+      <table class="data">
+        <thead><tr><th>Person</th><th>Ziel</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+        <?php foreach ($empfaenger as $p): ?>
+          <tr>
+            <td><?= e($p['name']) ?></td>
+            <td class="mono small"><?= $p['ha_notify'] ? e('notify.' . $p['ha_notify']) : '<span class="muted">kein Ziel</span>' ?></td>
+            <td class="small"><?= $p['ha_notify'] === '' ? '–' : ((int)$p['notify_aktiv'] ? 'bekommt Meldungen' : 'abgeschaltet') ?></td>
+            <td><a class="btn btn--sec btn--sm" href="<?= e(url('admin_user_edit', ['id' => $p['id']])) ?>">Bearbeiten</a></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="mt">Zuletzt</h3>
+    <?php if (!$warteschlange): ?>
+      <div class="empty">Noch nichts versendet.</div>
+    <?php else: ?>
+      <div class="tablewrap">
+        <table class="data">
+          <thead><tr><th>Zeitpunkt</th><th>An</th><th>Ereignis</th><th>Titel</th><th>Status</th></tr></thead>
+          <tbody>
+          <?php foreach ($warteschlange as $n): ?>
+            <tr>
+              <td class="small nowrap"><?= e(de_datetime($n['created_at'])) ?></td>
+              <td class="small"><?= e($n['name']) ?></td>
+              <td class="small mono"><?= e($n['ereignis']) ?></td>
+              <td class="small"><?= e($n['titel']) ?></td>
+              <td class="small">
+                <?php if ($n['status'] === 'gesendet'): ?>
+                  <span class="badge" style="background:#15803d">gesendet</span>
+                <?php elseif ($n['status'] === 'fehler'): ?>
+                  <span class="badge" style="background:#b91c1c">Fehler</span>
+                  <div class="muted"><?= e($n['fehler']) ?></div>
+                <?php else: ?>
+                  <span class="badge badge--outline">wartet</span>
+                <?php endif; ?>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
+  <?php endif; ?>
+</section>
 
 <div class="card">
   <h2>Aufräumen</h2>

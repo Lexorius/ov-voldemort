@@ -47,6 +47,18 @@ $abrufe = [
     'Stein.APP'         => static fn() => stein_enabled() ? [stein_sync()] : [],
     'Divera-Stammdaten' => static fn() => divera_vehicles_enabled() ? [divera_vehicles_sync_master()] : [],
     'Divera-Funkstatus' => static fn() => divera_vehicles_enabled() ? [divera_vehicles_sync_status()] : [],
+    'Benachrichtigungen' => static function (): array {
+        $n = notify_taeglich();
+        $res = notify_flush();
+        notify_cleanup();
+        if ($res['gesendet'] === 0 && $res['fehler'] === 0 && $n === 0) {
+            return [];
+        }
+        return [['status' => $res['fehler'] ? 'fehler' : 'ok', 'message' => sprintf(
+            '%d gesendet, %d neu eingereiht%s', $res['gesendet'], $n,
+            $res['fehler'] ? ', Fehler: ' . $res['meldung'] : ''
+        )]];
+    },
     'Home Assistant'    => static function (): array {
         $due = ha_due();
         if (!$due['faellig']) {

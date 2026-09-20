@@ -627,6 +627,17 @@ function ovb_migrate(PDO $pdo, callable $say): void
         }
     }
     $merken('014_rufnummern');
+
+    /* ---- 015: Benachrichtigungen über Home Assistant ---- */
+    if (ovb_table_exists($pdo, 'users')) {
+        if (!ovb_column_exists($pdo, 'users', 'ha_notify')) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN ha_notify VARCHAR(120) NOT NULL DEFAULT '' AFTER phone");
+        }
+        if (!ovb_column_exists($pdo, 'users', 'notify_aktiv')) {
+            $pdo->exec('ALTER TABLE users ADD COLUMN notify_aktiv TINYINT(1) NOT NULL DEFAULT 1 AFTER ha_notify');
+        }
+    }
+    $merken('015_benachrichtigungen');
 }
 
 /**

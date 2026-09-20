@@ -484,6 +484,15 @@ function order_save_from_post(?array $existing, array $vehicle, array $user): ar
             'ref_id'  => $id,
         ], $user);
         audit('auftrag.angelegt', 'vehicle_order', $id, $data['titel']);
+        $empfaenger = array_diff(notify_leitung(), [(int)$user['id']]);
+        $wer = sprintf('%s · gemeldet von %s', (string)$vehicle['bezeichnung'], $data['gemeldet_von']);
+        notify_queue($empfaenger, 'auftrag_neu', 'Neue Meldung: ' . $data['titel'], $wer,
+            '?p=vehicle_order&id=' . $id);
+        if (!empty($data['ausfall'])) {
+            notify_queue($empfaenger, 'fahrzeug_ausfall',
+                'Fahrzeug steht still: ' . (string)$vehicle['bezeichnung'],
+                $data['titel'], '?p=vehicle_order&id=' . $id);
+        }
     }
 
     return [$id, []];

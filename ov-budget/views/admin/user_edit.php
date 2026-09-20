@@ -42,6 +42,17 @@ $isNew = empty($edit['id']);
       <input type="tel" id="phone" name="phone" value="<?= e((string)$edit['phone']) ?>">
     </div>
     <div class="field">
+      <label for="ha_notify">Benachrichtigungsziel (Home Assistant)</label>
+      <input type="text" id="ha_notify" name="ha_notify" placeholder="mobile_app_…"
+             value="<?= e((string)($edit['ha_notify'] ?? '')) ?>">
+      <small class="muted">Dienst der Companion-App ohne „notify."; leer = keine Benachrichtigungen.</small>
+    </div>
+    <div class="field field--check">
+      <input type="checkbox" id="notify_aktiv" name="notify_aktiv" value="1"
+             <?= (int)($edit['notify_aktiv'] ?? 1) ? 'checked' : '' ?>>
+      <label for="notify_aktiv">Benachrichtigungen erhalten</label>
+    </div>
+    <div class="field">
       <label for="role">Rolle</label>
       <select id="role" name="role"<?= $istIchSelbst ? ' disabled' : '' ?>>
         <option value="user"<?= $edit['role'] === 'user' ? ' selected' : '' ?>>Mitglied – Wünsche und eigene Aufgaben</option>

@@ -133,7 +133,28 @@ function wish_release(array $wish, array $user): ?string
         'updated_by'      => (int)$user['id'],
     ], 'id = ?', [(int)$wish['id']]);
     audit('wunsch.freigegeben', 'wish', (int)$wish['id'], $wish['bezeichnung']);
+    notify_queue(
+        array_diff([(int)($wish['created_by'] ?? 0)], [(int)$user['id']]),
+        'wunsch_freigegeben',
+        'Wunsch freigegeben: ' . $wish['bezeichnung'],
+        sprintf('%s hat den Wunsch zur Bestellung freigegeben (%s).',
+            (string)($user['display_name'] ?: $user['username']), money((float)$wish['netto_gesamt'])),
+        '?p=wish&id=' . (int)$wish['id']
+    );
     return null;
+}
+
+/** Die Freigabeberechtigten über einen wartenden Wunsch benachrichtigen */
+function wish_notify_freigabe(array $wish): void
+{
+    notify_queue(
+        array_diff(notify_freigeber((float)$wish['netto_gesamt']), [(int)($wish['created_by'] ?? 0)]),
+        'wunsch_freigabe',
+        'Neuer Wunsch: ' . $wish['bezeichnung'],
+        sprintf('%s · eingetragen von %s', money((float)$wish['netto_gesamt']),
+            (string)($wish['antragsteller'] ?: '—')),
+        '?p=wish&id=' . (int)$wish['id']
+    );
 }
 
 /** Freigegebenen Wunsch als bestellt markieren */
@@ -295,6 +316,7 @@ function wish_save_from_post(?array $existing, array $user): array
         $data['source'] = 'manuell';
         $id = db_insert('wishes', $data);
         audit('wunsch.angelegt', 'wish', $id, $data['bezeichnung']);
+        wish_notify_freigabe(['id' => $id] + $data);
     }
 
     return [$id, []];
