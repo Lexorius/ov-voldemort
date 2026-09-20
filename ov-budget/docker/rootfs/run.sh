@@ -166,6 +166,19 @@ php /app/src/cli/setup.php
 php /app/src/cli/mqtt_service.php /data/mqtt.json || true
 chown nginx:nginx /data/mqtt.json 2>/dev/null || true
 
+# Supervisor-Token für den Webserver hinterlegen: php-fpm sieht die
+# Umgebungsvariablen des Containers nicht zuverlässig.
+HA_TOKEN="${SUPERVISOR_TOKEN:-${HASSIO_TOKEN:-}}"
+if [ -n "$HA_TOKEN" ]; then
+    printf '%s' "$HA_TOKEN" > /data/ha_token
+    chmod 640 /data/ha_token
+    chown root:nginx /data/ha_token 2>/dev/null || chown nginx:nginx /data/ha_token 2>/dev/null || true
+    log "Zugang zu Home Assistant hinterlegt."
+else
+    rm -f /data/ha_token
+    log "Kein Supervisor-Token – Benachrichtigungen über Home Assistant sind nicht möglich."
+fi
+
 php-fpm -F &
 FPM_PID=$!
 

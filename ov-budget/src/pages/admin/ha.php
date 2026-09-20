@@ -92,6 +92,7 @@ render('admin/ha', [
     'fehler'    => $fehler,
     'hinweis'   => $hinweis,
     'dienste'   => $dienste,
+    'haQuelle'  => ha_token()[1],
     'diensteFehler' => $diensteFehler,
     'empfaenger' => db_all("SELECT id, COALESCE(NULLIF(display_name, ''), username) AS name, ha_notify, notify_aktiv
                             FROM users WHERE is_active = 1 ORDER BY name"),

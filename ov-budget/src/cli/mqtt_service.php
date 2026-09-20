@@ -9,7 +9,7 @@
 declare(strict_types=1);
 
 $ziel = $argv[1] ?? '/data/mqtt.json';
-$token = (string)getenv('SUPERVISOR_TOKEN');
+$token = trim((string)(getenv('SUPERVISOR_TOKEN') ?: getenv('HASSIO_TOKEN')));
 if ($token === '') {
     echo "Kein Supervisor-Token – MQTT-Zugang bleibt bei den Einstellungen.\n";
     exit(0);

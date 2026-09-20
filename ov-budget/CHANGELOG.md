@@ -1,5 +1,17 @@
 # Änderungsverlauf
 
+## 1.27.2
+
+### „SUPERVISOR_TOKEN fehlt" beim Lesen der Benachrichtigungsziele
+
+- Der Webserver-Prozess bekommt die Umgebungsvariablen des Containers nicht
+  zuverlässig mit; dadurch fand die Seite kein Token für Home Assistant,
+  obwohl das Add-on eines hat. Der Start legt es jetzt zusätzlich in einer
+  Datei ab, die nur der Webserver lesen darf.
+- Der ältere Name `HASSIO_TOKEN` wird ebenfalls akzeptiert.
+- Unter *Verwaltung → Home Assistant* steht jetzt, ob ein Zugang vorliegt und
+  woher er stammt.
+
 ## 1.27.1
 
 ### Testnachricht direkt im Profil

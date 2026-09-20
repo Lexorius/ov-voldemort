@@ -51,16 +51,40 @@ function notify_ereignis_aktiv(string $key): bool
 /* Home Assistant                                                        */
 /* ==================================================================== */
 
+const HA_TOKEN_DATEI = '/data/ha_token';
+
+/**
+ * Zugangstoken des Supervisors.
+ * In der Umgebung steht es nur dem Startskript und dem Minutenlauf zur
+ * Verfügung; der Webserver-Prozess bekommt es nicht immer mit. Deshalb legt
+ * der Start es zusätzlich in einer Datei ab, die nur der Webserver lesen darf.
+ * Rückgabe: [Token, Quelle] – Token leer, wenn es keins gibt.
+ */
+function ha_token(): array
+{
+    foreach (['SUPERVISOR_TOKEN', 'HASSIO_TOKEN'] as $name) {
+        $wert = trim((string)getenv($name));
+        if ($wert !== '') {
+            return [$wert, $name];
+        }
+    }
+    $datei = defined('OVB_HA_TOKEN_DATEI') ? OVB_HA_TOKEN_DATEI : HA_TOKEN_DATEI;
+    $roh = @file_get_contents($datei);
+    $wert = is_string($roh) ? trim($roh) : '';
+    return $wert !== '' ? [$wert, 'Datei'] : ['', ''];
+}
+
 /**
  * Aufruf der Home-Assistant-Kernschnittstelle über den Supervisor.
  * $body = null bedeutet GET.
  */
 function ha_api(string $pfad, ?array $body = null, int $timeout = 10): array
 {
-    $token = (string)getenv('SUPERVISOR_TOKEN');
+    [$token] = ha_token();
     if ($token === '') {
-        throw new RuntimeException('Kein Zugang zu Home Assistant (SUPERVISOR_TOKEN fehlt). '
-            . 'Läuft die Anwendung als Home-Assistant-Add-on?');
+        throw new RuntimeException('Kein Zugang zu Home Assistant: Der Supervisor hat kein Token '
+            . 'hinterlegt. Läuft die Anwendung als Add-on, hilft meist ein Neustart des Add-ons – '
+            . 'dabei wird das Token neu abgelegt.');
     }
     $url = 'http://supervisor/core/api/' . ltrim($pfad, '/');
     $ch = curl_init($url);

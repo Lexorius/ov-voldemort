@@ -2,7 +2,7 @@
 /** @var ?array $cfg @var array $werte @var array $fahrzeuge @var string $basis
  *  @var int $letzter @var int $anmeldung @var string $fehler @var string $hinweis
  *  @var array $dienste @var string $diensteFehler @var array $empfaenger
- *  @var array $warteschlange @var int $offen @var array $push */
+ *  @var array $warteschlange @var int $offen @var array $push @var string $haQuelle */
 $aktiv = setting_bool('ha_mqtt_aktiv', false);
 $melden = notify_enabled();
 ?>
@@ -111,6 +111,10 @@ $melden = notify_enabled();
     <p class="small muted">Gesendet wird über <span class="mono">notify.&lt;Ziel&gt;</span>, also in der Regel die
       Companion-App. Jede Person hinterlegt ihr Ziel im eigenen Profil; hier lässt es sich auch über die
       Benutzerverwaltung setzen. Der Minutenlauf schickt die Warteschlange los.</p>
+
+    <p class="small muted">Zugang zu Home Assistant: <?= $haQuelle === ''
+        ? '<strong style="color:var(--bad)">kein Token</strong> – das Add-on einmal neu starten'
+        : 'vorhanden (' . e($haQuelle === 'Datei' ? 'beim Start hinterlegt' : 'Umgebung') . ')' ?>.</p>
 
     <?php if ($diensteFehler !== ''): ?>
       <div class="alert alert--warn">Ziele konnten nicht gelesen werden: <?= e($diensteFehler) ?></div>
