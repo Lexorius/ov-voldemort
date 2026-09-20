@@ -273,14 +273,28 @@ function notify_queue(array $userIds, string $ereignis, string $titel, string $t
     return $n;
 }
 
-/** Vollständige Adresse für die Companion-App */
-function notify_url(string $pfad): string
+/**
+ * Vollständige Adresse für die Meldung. Reine Funktion (bis auf die Einstellung).
+ *
+ * Zeigt die Adresse auf das Ingress-Panel von Home Assistant, wird der Pfad
+ * weggelassen: Home Assistant reicht angehängte Parameter nicht in den Rahmen
+ * weiter, der Link führt also ohnehin auf die Startseite. Enthält die Adresse
+ * {pfad}, wird dort eingesetzt.
+ */
+function notify_url(string $pfad, ?string $basis = null): string
 {
-    $basis = rtrim((string)setting('ha_benachrichtigung_basis_url', ''), '/');
-    if ($basis === '' || $pfad === '') {
+    $basis = trim($basis ?? (string)setting('ha_benachrichtigung_basis_url', ''));
+    if ($basis === '') {
         return '';
     }
-    return $basis . '/' . ltrim($pfad, '/');
+    if (str_contains($basis, '{pfad}')) {
+        return str_replace('{pfad}', ltrim($pfad, '/'), $basis);
+    }
+    // Panel-Link (…/hassio/ingress/<add-on>) oder App-Verweis: ohne Anhängsel
+    if ($pfad === '' || preg_match('#(^homeassistant://|/hassio/ingress/)#', $basis)) {
+        return rtrim($basis, '/');
+    }
+    return rtrim($basis, '/') . '/' . ltrim($pfad, '/');
 }
 
 /**

@@ -1,5 +1,18 @@
 # Änderungsverlauf
 
+## 1.27.5
+
+### Links in Benachrichtigungen: Panel-Adresse wird erkannt
+
+- Zeigt die hinterlegte Adresse auf das Ingress-Panel (`…/hassio/ingress/…`)
+  oder ist es ein App-Verweis (`homeassistant://…`), hängt die Anwendung
+  keinen Pfad mehr an. Home Assistant reicht ihn ohnehin nicht weiter; der
+  Link blieb dadurch nur unnötig lang.
+- Neuer Platzhalter `{pfad}`: Wer die Anwendung unter einer eigenen Adresse
+  erreicht, bestimmt damit, wo der Pfad eingesetzt wird.
+- Der Hinweistext in den Einstellungen sagt jetzt, welche Adresse taugt – die
+  aus der Browserzeile enthält ein wechselndes Token und gehört nicht dorthin.
+
 ## 1.27.4
 
 ### Klarere Meldungen beim Testversand

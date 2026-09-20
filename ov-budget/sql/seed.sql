@@ -263,7 +263,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 
 ('ha_benachrichtigung_aktiv','0','Benachrichtigungen über Home Assistant','Meldungen gehen an notify.<Ziel> – in der Regel die Companion-App. Je Person wird das Ziel im Profil hinterlegt.','bool','Home Assistant',100),
 ('ha_benachrichtigung_stunde','7','Tägliche Erinnerungen ab (Stunde)','Fällige Aufgaben, Fristen und die Besprechung von morgen','number','Home Assistant',110),
-('ha_benachrichtigung_basis_url','','Adresse der Anwendung','Fuer den Link in der Meldung, z. B. https://ha.example.de/hassio_ingress/... – leer lassen, wenn kein Link gewuenscht ist','text','Home Assistant',120),
+('ha_benachrichtigung_basis_url','','Adresse der Anwendung','Fuer den Link in der Meldung. Am besten der Panel-Link, z. B. https://DEINE-HA-ADRESSE/hassio/ingress/<add-on>. Die Adresse aus der Browserzeile enthaelt ein wechselndes Token und taugt nicht. Leer lassen = kein Link.','text','Home Assistant',120),
 ('notify_aufgabe_neu','1','Melden: neue Aufgabe','','bool','Home Assistant',130),
 ('notify_aufgabe_faellig','1','Melden: Aufgabe faellig','','bool','Home Assistant',131),
 ('notify_wunsch_freigabe','1','Melden: neuer Wunsch zur Freigabe','','bool','Home Assistant',132),

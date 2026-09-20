@@ -251,8 +251,19 @@ Handy erscheint die Meldung über die Companion-App. Einschalten unter
 1. **Ziel hinterlegen:** Jede Person trägt im eigenen Profil ihr Ziel ein, etwa
    `mobile_app_pixel_8` (also `notify.` weglassen). Die Auswahl kommt aus Home
    Assistant. Für andere setzt es die Benutzerverwaltung.
-2. **Adresse für den Link** (optional): Steht sie in den Einstellungen, führt
-   ein Tipp auf die Meldung direkt zum Vorgang.
+2. **Adresse für den Link** (optional): Am besten der Panel-Link der
+   Anwendung, also `https://DEINE-HA-ADRESSE/hassio/ingress/<add-on-slug>`
+   (den Slug zeigt die Adresszeile, z. B. `6c0cd8ac_ov_budget`). Für die
+   Companion-App geht auch
+   `homeassistant://navigate/hassio/ingress/<add-on-slug>`.
+
+   Die Adresse aus der Browserzeile (`…/api/hassio_ingress/<Token>/…`) taugt
+   **nicht**: Das Token wechselt, der Link wäre bald tot. Beim Panel-Link
+   führt die Meldung auf die Startseite, weil Home Assistant angehängte
+   Parameter nicht in den Ingress-Rahmen weiterreicht. Wer die Anwendung
+   zusätzlich unter einer eigenen Adresse erreicht, kann sie hier eintragen –
+   dann führt der Link direkt zum Vorgang, wahlweise mit dem Platzhalter
+   `{pfad}` an der passenden Stelle.
 3. **Testnachricht** verschicken – der Knopf steht auf der Verwaltungsseite.
 
 Gemeldet wird:
