@@ -114,9 +114,21 @@
      Früher wurde die Auswahl bei Übergröße einfach geleert – am Handy sah es
      dann aus, als ließe sich gar kein Foto auswählen. */
   document.querySelectorAll('input[type=file][data-max-mb]').forEach(function (inp) {
+    /* Mehrfachauswahl nur am Rechner: die Auswahldialoge mancher Handys geben
+       bei "multiple" gar keine Datei zurück. Einzeln klappt es dort. */
+    var amHandy = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    if (amHandy && inp.hasAttribute('multiple')) {
+      inp.removeAttribute('multiple');
+      inp.setAttribute('data-einzeln', '1');
+    }
+
+    var grundtext = inp.getAttribute('data-einzeln')
+      ? 'Auf diesem Gerät lässt sich eine Datei auf einmal auswählen – weitere nach dem Hochladen hinzufügen.'
+      : '';
     var hinweis = document.createElement('div');
     hinweis.className = 'small muted';
     hinweis.style.marginTop = '.3rem';
+    hinweis.textContent = grundtext;
     inp.insertAdjacentElement('afterend', hinweis);
 
     function mb(bytes) { return (bytes / 1048576).toFixed(1).replace('.', ',') + ' MB'; }
@@ -135,11 +147,13 @@
       var knopf = inp.form ? inp.form.querySelector('button[type=submit]') : null;
 
       if (!dateien.length) {
-        hinweis.textContent = '';
+        hinweis.textContent = grundtext;
         hinweis.className = 'small muted';
         if (knopf) { knopf.disabled = false; }
         return;
       }
+      var nachsatz = inp.getAttribute('data-einzeln')
+        ? ' Weitere nach dem Hochladen hinzufügen.' : '';
       if (gross.length) {
         hinweis.className = 'small';
         hinweis.style.color = 'var(--bad)';
@@ -150,7 +164,7 @@
       }
       hinweis.className = 'small muted';
       hinweis.style.color = '';
-      hinweis.textContent = dateien.length + ' Datei(en) ausgewählt, zusammen ' + mb(summe) + '.';
+      hinweis.textContent = dateien.length + ' Datei(en) ausgewählt, zusammen ' + mb(summe) + '.' + nachsatz;
       if (knopf) { knopf.disabled = false; }
     });
   });

@@ -1,5 +1,15 @@
 # Änderungsverlauf
 
+## 1.27.8
+
+### Am Handy: eine Datei auf einmal statt gar keine
+
+- Wird auf einem Gerät mit Touch-Bedienung mehr als ein Foto ausgewählt,
+  übernahmen manche Auswahldialoge gar nichts. Auf solchen Geräten fragt das
+  Feld jetzt eine Datei auf einmal ab; ein Hinweis unter dem Feld sagt, dass
+  weitere nach dem Hochladen hinzukommen können. Am Rechner bleibt die
+  Mehrfachauswahl.
+
 ## 1.27.7
 
 ### Am Handy ließen sich keine Fotos auswählen
