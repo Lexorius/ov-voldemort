@@ -1,5 +1,18 @@
 # Änderungsverlauf
 
+## 1.27.4
+
+### Klarere Meldungen beim Testversand
+
+- Antwortet Home Assistant mit einem Fehler, steht jetzt der Grund aus der
+  Antwort dabei statt nur „400: Bad Request", dazu der aufgerufene Dienst.
+- Kennt Home Assistant das eingetragene Ziel nicht, sagt die Meldung das und
+  zählt die vorhandenen notify-Dienste auf.
+- Dienste, die mit dem Feld für den Link nichts anfangen können, bekommen die
+  Nachricht automatisch ein zweites Mal ohne diesen Zusatz.
+- Lässt sich eine Nachricht nicht als JSON verpacken, wird das gemeldet,
+  statt eine leere Anfrage zu schicken.
+
 ## 1.27.3
 
 ### Ursache gefunden: Das Add-on sah die Container-Umgebung gar nicht

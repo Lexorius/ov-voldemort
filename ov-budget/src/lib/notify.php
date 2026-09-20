@@ -110,9 +110,15 @@ function ha_api(string $pfad, ?array $body = null, int $timeout = 10): array
         CURLOPT_CONNECTTIMEOUT => $timeout,
     ];
     if ($body !== null) {
+        $json = json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($json === false) {
+            // Passiert, wenn ein Text keine gültige UTF-8-Folge ist
+            throw new RuntimeException('Die Nachricht ließ sich nicht als JSON verpacken: '
+                . json_last_error_msg());
+        }
         $header[] = 'Content-Type: application/json';
         $opt[CURLOPT_POST] = true;
-        $opt[CURLOPT_POSTFIELDS] = json_encode($body, JSON_UNESCAPED_UNICODE);
+        $opt[CURLOPT_POSTFIELDS] = $json;
     }
     $opt[CURLOPT_HTTPHEADER] = $header;
     curl_setopt_array($ch, $opt);
@@ -125,8 +131,14 @@ function ha_api(string $pfad, ?array $body = null, int $timeout = 10): array
         throw new RuntimeException('Home Assistant nicht erreichbar: ' . ($fehler ?: 'Zeitüberschreitung'));
     }
     if ($code >= 400) {
-        throw new RuntimeException('Home Assistant antwortete mit HTTP ' . $code . ': '
-            . mb_substr((string)$antwort, 0, 200));
+        // Home Assistant schickt den Grund meist als JSON ("message"), sonst nur "400: Bad Request"
+        $grund = trim((string)$antwort);
+        $alsJson = json_decode($grund, true);
+        if (is_array($alsJson) && trim((string)($alsJson['message'] ?? '')) !== '') {
+            $grund = (string)$alsJson['message'];
+        }
+        throw new RuntimeException(sprintf('Home Assistant antwortete auf %s mit HTTP %d: %s',
+            $pfad, $code, mb_substr($grund, 0, 200)));
     }
     $daten = json_decode((string)$antwort, true);
     return is_array($daten) ? $daten : [];
@@ -156,19 +168,62 @@ function ha_notify_dienste(bool $frisch = false): array
     return $out;
 }
 
-/** Eine Nachricht an einen notify-Dienst schicken */
+/**
+ * Eine Nachricht an einen notify-Dienst schicken.
+ *
+ * Zwei Stolperstellen sind eingebaut behandelt: Ein Ziel, das es in Home
+ * Assistant gar nicht gibt, wird vorher erkannt; und Dienste, die mit dem
+ * Feld "data" nichts anfangen können, bekommen die Nachricht ohne den Link.
+ */
 function ha_notify_send(string $dienst, string $titel, string $text, string $url = ''): void
 {
     $dienst = trim($dienst);
     if ($dienst === '' || !preg_match('/^[a-z0-9_]+$/', $dienst)) {
-        throw new RuntimeException('Ungültiges Benachrichtigungsziel: ' . $dienst);
+        throw new RuntimeException('Ungültiges Benachrichtigungsziel: „' . $dienst . '". '
+            . 'Erlaubt sind Kleinbuchstaben, Ziffern und _, also z. B. mobile_app_pixel_8.');
     }
+
     $daten = ['title' => $titel, 'message' => $text];
     if ($url !== '') {
         // Die Companion-App öffnet damit direkt die passende Seite
         $daten['data'] = ['url' => $url, 'clickAction' => $url];
     }
-    ha_api('services/notify/' . $dienst, $daten);
+
+    try {
+        ha_api('services/notify/' . $dienst, $daten);
+        return;
+    } catch (Throwable $ex) {
+        if (isset($daten['data'])) {
+            // Manche notify-Dienste lehnen unbekannte Felder ab – dann eben ohne Link
+            unset($daten['data']);
+            try {
+                ha_api('services/notify/' . $dienst, $daten);
+                return;
+            } catch (Throwable $zweiter) {
+                $ex = $zweiter;
+            }
+        }
+        throw new RuntimeException(ha_notify_hinweis($dienst, $ex->getMessage()), 0, $ex);
+    }
+}
+
+/**
+ * Fehlermeldung verständlich machen: Meist stimmt der Name des Ziels nicht.
+ * Die Liste wird nur zur Erklärung herangezogen – gesendet wird immer erst.
+ */
+function ha_notify_hinweis(string $dienst, string $meldung): string
+{
+    try {
+        $bekannt = ha_notify_dienste(true);
+    } catch (Throwable $ex) {
+        return $meldung;
+    }
+    if ($bekannt && !in_array($dienst, $bekannt, true)) {
+        return sprintf('%s – Home Assistant kennt kein notify.%s. Vorhanden sind: %s.',
+            $meldung, $dienst,
+            implode(', ', array_map(static fn($d) => 'notify.' . $d, array_slice($bekannt, 0, 12))));
+    }
+    return $meldung;
 }
 
 /* ==================================================================== */
