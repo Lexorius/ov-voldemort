@@ -57,7 +57,7 @@ $arten = [
 <div class="grid2">
   <section class="card">
     <?php if ($titelbild): ?>
-      <a href="<?= e(url('vehicle_file', ['id' => $titelbild['id']])) ?>" target="_blank" rel="noopener" class="titelbild">
+      <a href="<?= e(url('vehicle_file', ['id' => $titelbild['id']])) ?>" class="titelbild">
         <img src="<?= e(url('vehicle_file', ['id' => $titelbild['id'], 'vorschau' => 1])) ?>"
              alt="<?= e($vehicle['bezeichnung']) ?>">
       </a>

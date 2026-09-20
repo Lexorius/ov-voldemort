@@ -1,5 +1,16 @@
 # Änderungsverlauf
 
+## 1.27.9
+
+### HTTP 401 beim Öffnen von Dateien am Handy
+
+- Bilder, Dokumente und die Druckansichten öffneten sich in einem neuen Tab.
+  Hinter dem Ingress von Home Assistant fehlt dort die Anmeldung – in der
+  Companion-App kam deshalb „401". Diese Seiten öffnen jetzt im selben Tab;
+  mit „Zurück" geht es weiter wie vorher.
+- Links auf fremde Seiten (Produktseite eines Wunsches, Karte) öffnen weiter
+  in einem neuen Tab.
+
 ## 1.27.8
 
 ### Am Handy: eine Datei auf einmal statt gar keine

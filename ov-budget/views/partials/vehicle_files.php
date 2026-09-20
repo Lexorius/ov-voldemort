@@ -68,7 +68,7 @@ $dateiZeile = static function (array $f) use ($knoepfe, $order): string {
         !$order && $f['auftrag_nummer'] ? 'Auftrag ' . $f['auftrag_nummer'] : '',
     ]);
     return '<div class="doc">' . $vorschau
-        . '<div class="doc__text"><a href="' . $link . '" target="_blank" rel="noopener">' . e($f['titel'] ?: $f['orig_name']) . '</a>'
+        . '<div class="doc__text"><a href="' . $link . '">' . e($f['titel'] ?: $f['orig_name']) . '</a>'
         . '<div class="small muted">' . e(implode(' · ', $zusatz)) . '</div></div>'
         . '<div class="doc__aktion">' . $knoepfe($f, false) . '</div></div>';
 };
@@ -79,7 +79,7 @@ $galerie = static function (array $liste, bool $mitTitelbild) use ($knoepfe): st
     $html = '<div class="galerie">';
     foreach ($liste as $f) {
         $html .= '<figure class="galerie__bild' . ((int)$f['is_cover'] ? ' is-cover' : '') . '">'
-            . '<a href="' . e(url('vehicle_file', ['id' => $f['id']])) . '" target="_blank" rel="noopener">'
+            . '<a href="' . e(url('vehicle_file', ['id' => $f['id']])) . '">'
             . '<img src="' . e(url('vehicle_file', ['id' => $f['id'], 'vorschau' => 1])) . '"'
             . ' alt="' . e($f['titel']) . '" loading="lazy"></a>'
             . '<figcaption>' . e($f['titel'])

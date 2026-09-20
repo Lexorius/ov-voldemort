@@ -56,8 +56,8 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
     <?php if ($meeting['beschreibung']): ?><p><?= nl2br(e((string)$meeting['beschreibung'])) ?></p><?php endif; ?>
   </div>
   <div class="btnrow">
-    <a class="btn btn--sec" href="<?= e(url('meeting_print', ['id' => $meeting['id']])) ?>" target="_blank" rel="noopener">Tagesordnung</a>
-    <a class="btn btn--sec" href="<?= e(url('meeting_print', ['id' => $meeting['id'], 'art' => 'protokoll'])) ?>" target="_blank" rel="noopener">Protokoll</a>
+    <a class="btn btn--sec" href="<?= e(url('meeting_print', ['id' => $meeting['id']])) ?>">Tagesordnung</a>
+    <a class="btn btn--sec" href="<?= e(url('meeting_print', ['id' => $meeting['id'], 'art' => 'protokoll'])) ?>">Protokoll</a>
     <?php if ($verwalten): ?>
       <a class="btn btn--sec" href="<?= e(url('meeting_edit', ['id' => $meeting['id']])) ?>">Bearbeiten</a>
     <?php endif; ?>
