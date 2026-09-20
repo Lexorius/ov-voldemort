@@ -1,5 +1,17 @@
 # Änderungsverlauf
 
+## 1.27.3
+
+### Ursache gefunden: Das Add-on sah die Container-Umgebung gar nicht
+
+- Das Basisimage von Home Assistant startet die Anwendung über s6-overlay.
+  Dienste erben dort die Umgebung des Containers **nicht** – sie liegt als
+  einzelne Dateien unter `/run/s6/container_environment`. Deshalb fehlten
+  `SUPERVISOR_TOKEN` (Benachrichtigungen, MQTT-Zugang vom Supervisor) und
+  auch `TZ`. Das Startskript liest die Umgebung jetzt selbst ein.
+- Zusätzlich liest die Anwendung das Token notfalls direkt aus dieser Ablage.
+- Unter *Verwaltung → Home Assistant* steht, woher der Zugang stammt.
+
 ## 1.27.2
 
 ### „SUPERVISOR_TOKEN fehlt" beim Lesen der Benachrichtigungsziele

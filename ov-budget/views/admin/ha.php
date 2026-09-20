@@ -114,7 +114,11 @@ $melden = notify_enabled();
 
     <p class="small muted">Zugang zu Home Assistant: <?= $haQuelle === ''
         ? '<strong style="color:var(--bad)">kein Token</strong> – das Add-on einmal neu starten'
-        : 'vorhanden (' . e($haQuelle === 'Datei' ? 'beim Start hinterlegt' : 'Umgebung') . ')' ?>.</p>
+        : 'vorhanden (' . e(match ($haQuelle) {
+            'Datei' => 'beim Start hinterlegt',
+            's6'    => 'aus der Container-Umgebung',
+            default => 'Umgebung',
+        }) . ')' ?>.</p>
 
     <?php if ($diensteFehler !== ''): ?>
       <div class="alert alert--warn">Ziele konnten nicht gelesen werden: <?= e($diensteFehler) ?></div>

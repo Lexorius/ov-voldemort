@@ -49,6 +49,27 @@ trap stop_all TERM INT
 
 log "OV-Budget startet ..."
 
+# ------------------------------------------------------------------
+# Umgebung des Containers einlesen
+# ------------------------------------------------------------------
+# Das Basisimage von Home Assistant startet uns über s6-overlay. Dienste
+# erben dort die Umgebung des Containers nicht; sie liegt als je eine Datei
+# unter /run/s6/container_environment. Ohne diesen Schritt fehlen unter
+# anderem SUPERVISOR_TOKEN und TZ.
+for s6dir in /run/s6/container_environment /var/run/s6/container_environment; do
+    [ -d "$s6dir" ] || continue
+    for datei in "$s6dir"/*; do
+        [ -f "$datei" ] || continue
+        name=$(basename "$datei")
+        # nur gültige Variablennamen, und nichts überschreiben, was schon gesetzt ist
+        case "$name" in
+            *[!A-Za-z0-9_]* | [0-9]*) continue ;;
+        esac
+        eval "vorhanden=\${$name:-}"
+        [ -n "$vorhanden" ] || export "$name=$(cat "$datei")"
+    done
+done
+
 mkdir -p /data/uploads /data/sessions /run/nginx
 chown -R nginx:nginx /data/uploads /data/sessions
 chmod 750 /data/uploads /data/sessions

@@ -52,6 +52,8 @@ function notify_ereignis_aktiv(string $key): bool
 /* ==================================================================== */
 
 const HA_TOKEN_DATEI = '/data/ha_token';
+/** s6-overlay legt die Umgebung des Containers hier als Dateien ab */
+const HA_S6_UMGEBUNG = ['/run/s6/container_environment', '/var/run/s6/container_environment'];
 
 /**
  * Zugangstoken des Supervisors.
@@ -71,7 +73,20 @@ function ha_token(): array
     $datei = defined('OVB_HA_TOKEN_DATEI') ? OVB_HA_TOKEN_DATEI : HA_TOKEN_DATEI;
     $roh = @file_get_contents($datei);
     $wert = is_string($roh) ? trim($roh) : '';
-    return $wert !== '' ? [$wert, 'Datei'] : ['', ''];
+    if ($wert !== '') {
+        return [$wert, 'Datei'];
+    }
+    // Letzter Versuch: die von s6-overlay abgelegte Umgebung
+    foreach (defined('OVB_HA_S6') ? [OVB_HA_S6] : HA_S6_UMGEBUNG as $ordner) {
+        foreach (['SUPERVISOR_TOKEN', 'HASSIO_TOKEN'] as $name) {
+            $roh = @file_get_contents($ordner . '/' . $name);
+            $wert = is_string($roh) ? trim($roh) : '';
+            if ($wert !== '') {
+                return [$wert, 's6'];
+            }
+        }
+    }
+    return ['', ''];
 }
 
 /**
