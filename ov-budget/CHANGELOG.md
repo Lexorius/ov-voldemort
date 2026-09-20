@@ -1,5 +1,15 @@
 # Änderungsverlauf
 
+## 1.25.2
+
+### Home Assistant: Meldung im Änderungsprotokoll schlug fehl
+
+- Nach *Jetzt senden* erschien die Meldung „audit(): Argument #2 ($entity)
+  must be of type string, null given". Gesendet wurde trotzdem alles; nur der
+  Protokolleintrag scheiterte. Jetzt steht dort ordentlich „mqtt".
+- Neuer Test: Kein Aufruf von `audit()` oder `flash()` in der ganzen Anwendung
+  übergibt `null`, wo Text erwartet wird.
+
 ## 1.25.1
 
 ### Start schlug fehl: Rufnummern-Wanderung fand ihre Funktion nicht

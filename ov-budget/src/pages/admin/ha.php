@@ -13,13 +13,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $res = ha_publish(true);
                 $hinweis = sprintf('%d Nachricht(en) gesendet, davon %d Anmeldungen. '
                     . 'In Home Assistant erscheint das Gerät „OV-Budget".', $res['nachrichten'], $res['entitaeten']);
-                audit('ha.gesendet', null, null, $hinweis);
+                audit('ha.gesendet', 'mqtt', null, $hinweis);
                 break;
 
             case 'entfernen':
                 $n = ha_entfernen();
                 $hinweis = sprintf('%d Nachricht(en) gesendet – die Entitäten verschwinden aus Home Assistant.', $n);
-                audit('ha.entfernt', null, null, $hinweis);
+                audit('ha.entfernt', 'mqtt', null, $hinweis);
                 break;
         }
     } catch (Throwable $ex) {
