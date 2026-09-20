@@ -602,8 +602,9 @@ function ovb_migrate(PDO $pdo, callable $say): void
 
     /* ---- 014: Rufnummern der Kontakte international schreiben ---- */
     if (ovb_table_exists($pdo, 'contacts')) {
+        // phone_human() steht in util.php; die Wanderung läuft ohne bootstrap.php
         if (!function_exists('phone_human')) {
-            require_once APP_ROOT . '/src/lib/contacts.php';
+            require_once APP_ROOT . '/src/lib/util.php';
         }
         $land = '+49';
         $row = $pdo->query("SELECT svalue FROM settings WHERE skey = 'telefon_landesvorwahl'")->fetchColumn();

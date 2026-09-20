@@ -1,5 +1,16 @@
 # Änderungsverlauf
 
+## 1.25.1
+
+### Start schlug fehl: Rufnummern-Wanderung fand ihre Funktion nicht
+
+- Die Wanderung aus 1.24.0 lud `contacts.php`, um Rufnummern umzuschreiben.
+  `phone_human()` war aber nach `util.php` umgezogen. Folge: `PHP Fatal error:
+  Call to undefined function phone_human()` beim Start, der Container startete
+  in einer Schleife neu. Jetzt wird die richtige Datei geladen.
+- Neuer Test: Jede Funktion, die eine Wanderung aufruft, muss entweder
+  eingebaut sein oder aus einer Datei stammen, die `migrate.php` selbst lädt.
+
 ## 1.25.0
 
 ### Home Assistant: Kennzahlen über MQTT
