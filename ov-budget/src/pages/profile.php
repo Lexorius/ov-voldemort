@@ -59,6 +59,8 @@ if (setting_bool('ha_benachrichtigung_aktiv', false)) {
 
 render('profile', [
     'title'  => 'Mein Profil',
+    'push'      => webpush_enabled(),
+    'pushAbos'  => webpush_enabled() ? push_subscriptions((int)$user['id']) : [],
     'dienste' => $dienste,
     'user'   => $user,
     'errors' => $errors,

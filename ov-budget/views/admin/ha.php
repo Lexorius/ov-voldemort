@@ -2,7 +2,7 @@
 /** @var ?array $cfg @var array $werte @var array $fahrzeuge @var string $basis
  *  @var int $letzter @var int $anmeldung @var string $fehler @var string $hinweis
  *  @var array $dienste @var string $diensteFehler @var array $empfaenger
- *  @var array $warteschlange @var int $offen */
+ *  @var array $warteschlange @var int $offen @var array $push */
 $aktiv = setting_bool('ha_mqtt_aktiv', false);
 $melden = notify_enabled();
 ?>
@@ -176,6 +176,58 @@ $melden = notify_enabled();
           </tbody>
         </table>
       </div>
+    <?php endif; ?>
+  <?php endif; ?>
+</section>
+
+<section class="card" id="webpush">
+  <div class="card__head">
+    <h2>Benachrichtigungen im Browser (Web Push)</h2>
+    <div class="btnrow">
+      <?php if ($push['aktiv'] && !$push['schluessel']): ?>
+        <form method="post" class="inline-form"><?= csrf_field() ?>
+          <input type="hidden" name="action" value="push_schluessel">
+          <button class="btn" type="submit">Schlüssel erzeugen</button></form>
+      <?php elseif ($push['aktiv']): ?>
+        <form method="post" class="inline-form"><?= csrf_field() ?>
+          <input type="hidden" name="action" value="push_test">
+          <button class="btn btn--sec btn--sm" type="submit">Testnachricht an meine Browser</button></form>
+      <?php endif; ?>
+    </div>
+  </div>
+
+  <?php if (!$push['aktiv']): ?>
+    <div class="empty">Ausgeschaltet. In den
+      <a href="<?= e(url('admin_settings', ['group' => 'Home Assistant'])) ?>">Einstellungen</a> einschalten –
+      danach melden sich die Browser im jeweiligen Profil selbst an.</div>
+  <?php else: ?>
+    <p class="small muted">Push funktioniert nur über HTTPS – über den Ingress von Home Assistant also von
+      selbst, über den direkten Port 8099 nicht. Auf dem iPhone muss die Seite zum Home-Bildschirm
+      hinzugefügt sein. Der Container muss die Push-Dienste von Google und Mozilla erreichen können.</p>
+    <?php if (!$push['schluessel']): ?>
+      <div class="alert alert--warn">Es fehlen noch die VAPID-Schlüssel. Sie werden einmalig erzeugt und
+        bleiben danach gleich – tauscht man sie aus, müssen sich alle Browser neu anmelden.</div>
+    <?php else: ?>
+      <?php if (!$push['abos']): ?>
+        <div class="empty">Noch kein Browser angemeldet. Das geht unter
+          <a href="<?= e(url('profile')) ?>">Mein Profil</a>.</div>
+      <?php else: ?>
+        <div class="tablewrap">
+          <table class="data">
+            <thead><tr><th>Person</th><th>Gerät</th><th>angemeldet</th><th>zuletzt erreicht</th></tr></thead>
+            <tbody>
+            <?php foreach ($push['abos'] as $a): ?>
+              <tr>
+                <td><?= e($a['name']) ?></td>
+                <td class="small"><?= e(mb_substr((string)$a['geraet'], 0, 60) ?: 'unbekannt') ?></td>
+                <td class="small nowrap"><?= e(de_date($a['created_at'])) ?></td>
+                <td class="small nowrap"><?= $a['last_ok'] ? e(de_datetime($a['last_ok'])) : '<span class="muted">noch nie</span>' ?></td>
+              </tr>
+            <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
     <?php endif; ?>
   <?php endif; ?>
 </section>

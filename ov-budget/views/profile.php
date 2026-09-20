@@ -1,5 +1,7 @@
 <?php
-/** @var array $user @var array $errors @var array $meine @var array $dienste */
+/** @var array $user @var array $errors @var array $meine @var array $dienste
+ *  @var bool $push @var array $pushAbos */
+$GLOBALS['ovb_push_js'] = $push;
 $rollen = ['admin' => 'Administration', 'leitung' => 'Leitung', 'user' => 'Mitglied'];
 ?>
 <div class="pagehead">
@@ -55,6 +57,34 @@ $rollen = ['admin' => 'Administration', 'leitung' => 'Leitung', 'user' => 'Mitgl
   </form>
 
   <div>
+    <?php if ($push): ?>
+      <div class="card" id="push-box"
+           data-vapid="<?= e(webpush_public_key()) ?>"
+           data-csrf="<?= e(csrf_token()) ?>"
+           data-url-an="<?= e(url('push_subscribe')) ?>"
+           data-url-aus="<?= e(url('push_unsubscribe')) ?>">
+        <h2>Benachrichtigungen in diesem Browser</h2>
+        <p class="small muted">Meldungen erscheinen auch, wenn die Seite geschlossen ist. Jedes Gerät meldet
+          sich einmal selbst an. Auf dem iPhone muss die Seite vorher über „Teilen → Zum Home-Bildschirm"
+          hinzugefügt werden.</p>
+        <p id="push-meldung" class="small muted">Wird geprüft …</p>
+        <div class="btnrow">
+          <button class="btn" type="button" id="push-an" hidden>In diesem Browser anmelden</button>
+          <button class="btn btn--sec" type="button" id="push-aus" hidden>Abmelden</button>
+        </div>
+        <?php if ($pushAbos): ?>
+          <h3 class="mt">Angemeldete Geräte</h3>
+          <ul class="small">
+            <?php foreach ($pushAbos as $a): ?>
+              <li><?= e($a['geraet'] ?: 'unbekanntes Gerät') ?>
+                <span class="muted">· seit <?= e(de_date($a['created_at'])) ?><?php
+                  if ($a['last_ok']): ?> · zuletzt erreicht <?= e(de_datetime($a['last_ok'])) ?><?php endif; ?></span></li>
+            <?php endforeach; ?>
+          </ul>
+        <?php endif; ?>
+      </div>
+    <?php endif; ?>
+
     <div class="card">
       <h2>Zuordnung</h2>
       <dl class="dl">

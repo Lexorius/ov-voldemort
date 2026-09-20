@@ -62,6 +62,7 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
   Themen, nächste Besprechung, Fahrzeuge, Fristen
 - Optional **je Fahrzeug eigene Entitäten** samt Standort auf der Karte
 - Zugang kommt vom Mosquitto-Add-on oder aus den Einstellungen
+- **Web Push im Browser** – ohne Companion-App, auch bei geschlossener Seite
 - **Benachrichtigungen aufs Handy** über die Companion-App: neue Aufgabe,
   fällige Aufgaben, neuer Wunsch zur Freigabe, Instandsetzungsmeldung,
   Fahrzeugausfall, ablaufende Fristen, Besprechung am nächsten Tag

@@ -272,6 +272,8 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('notify_fahrzeug_ausfall','1','Melden: Fahrzeug faellt aus','','bool','Home Assistant',135),
 ('notify_fristen','1','Melden: Fristen laufen ab','','bool','Home Assistant',136),
 ('notify_besprechung','1','Melden: Besprechung am naechsten Tag','','bool','Home Assistant',137),
+('push_aktiv','0','Benachrichtigungen im Browser (Web Push)','Meldungen erscheinen auch bei geschlossener Seite. Braucht HTTPS; auf dem iPhone muss die Seite zum Home-Bildschirm hinzugefügt sein.','bool','Home Assistant',140),
+('push_kontakt','','Kontaktadresse für die Push-Dienste','E-Mail-Adresse, die Google und Mozilla bei Problemen anschreiben können','text','Home Assistant',141),
 ('ha_mqtt_aktiv','0','Kennzahlen an Home Assistant melden','Über MQTT mit Auto-Discovery. Ohne eigene Angaben unten wird der Broker des Mosquitto-Add-ons genutzt.','bool','Home Assistant',10),
 ('ha_mqtt_intervall_minuten','5','Meldung alle (Minuten)','','number','Home Assistant',20),
 ('ha_mqtt_fahrzeuge','0','Je Fahrzeug eigene Entitäten','Status, Funkstatus, HU, SP, Kilometerstand und offene Auftraege je Fahrzeug','bool','Home Assistant',30),

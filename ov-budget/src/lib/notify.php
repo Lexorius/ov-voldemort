@@ -38,7 +38,7 @@ function notify_ereignisse(): array
 
 function notify_enabled(): bool
 {
-    return setting_bool('ha_benachrichtigung_aktiv', false);
+    return setting_bool('ha_benachrichtigung_aktiv', false) || setting_bool('push_aktiv', false);
 }
 
 /** Ist dieses Ereignis eingeschaltet? */
@@ -144,9 +144,13 @@ function notify_users(array $userIds): array
         return [];
     }
     $in = implode(',', array_fill(0, count($ids), '?'));
+    // Erreichbar ist, wer ein Ziel in Home Assistant hat oder einen Browser angemeldet hat
     return db_all(
-        "SELECT id, display_name, username, ha_notify FROM users
-         WHERE id IN ($in) AND is_active = 1 AND notify_aktiv = 1 AND ha_notify <> ''",
+        "SELECT u.id, u.display_name, u.username, u.ha_notify,
+                (SELECT COUNT(*) FROM push_subscriptions p WHERE p.user_id = u.id) AS browser
+         FROM users u
+         WHERE u.id IN ($in) AND u.is_active = 1 AND u.notify_aktiv = 1
+           AND (u.ha_notify <> '' OR EXISTS (SELECT 1 FROM push_subscriptions p2 WHERE p2.user_id = u.id))",
         $ids
     );
 }
@@ -198,27 +202,51 @@ function notify_flush(int $max = 25): array
     $offen = db_all(
         "SELECT n.*, u.ha_notify FROM notifications n
          JOIN users u ON u.id = n.user_id
-         WHERE n.status = 'offen' AND u.is_active = 1 AND u.notify_aktiv = 1 AND u.ha_notify <> ''
+         WHERE n.status = 'offen' AND u.is_active = 1 AND u.notify_aktiv = 1
          ORDER BY n.id LIMIT " . max(1, $max)
     );
     foreach ($offen as $n) {
-        try {
-            ha_notify_send((string)$n['ha_notify'], (string)$n['titel'], (string)$n['text'],
+        $wege = 0;
+        $fehler = [];
+
+        // Weg 1: Home Assistant (Companion-App)
+        if (trim((string)$n['ha_notify']) !== '') {
+            try {
+                ha_notify_send((string)$n['ha_notify'], (string)$n['titel'], (string)$n['text'],
+                    notify_url((string)$n['url']));
+                $wege++;
+            } catch (Throwable $ex) {
+                $fehler[] = $ex->getMessage();
+            }
+        }
+
+        // Weg 2: angemeldete Browser derselben Person
+        if (webpush_enabled()) {
+            $push = push_to_user((int)$n['user_id'], (string)$n['titel'], (string)$n['text'],
                 notify_url((string)$n['url']));
-            db_update('notifications', ['status' => 'gesendet', 'sent_at' => date('Y-m-d H:i:s'), 'fehler' => ''],
+            $wege += $push['gesendet'];
+            if ($push['fehler'] !== '') {
+                $fehler[] = $push['fehler'];
+            }
+        }
+
+        if ($wege > 0) {
+            db_update('notifications', ['status' => 'gesendet', 'sent_at' => date('Y-m-d H:i:s'),
+                'fehler' => $fehler ? mb_substr('Teilweise: ' . implode(' / ', $fehler), 0, 300) : ''],
                 'id = ?', [(int)$n['id']]);
             $res['gesendet']++;
-        } catch (Throwable $ex) {
-            $versuche = (int)$n['versuche'] + 1;
-            db_update('notifications', [
-                'versuche' => $versuche,
-                'status'   => $versuche >= 3 ? 'fehler' : 'offen',
-                'fehler'   => mb_substr($ex->getMessage(), 0, 300),
-            ], 'id = ?', [(int)$n['id']]);
-            $res['fehler']++;
-            $res['meldung'] = $ex->getMessage();
-            break;   // meist ist der Zugang gestört – nicht weiter hämmern
+            continue;
         }
+
+        $versuche = (int)$n['versuche'] + 1;
+        db_update('notifications', [
+            'versuche' => $versuche,
+            'status'   => $versuche >= 3 ? 'fehler' : 'offen',
+            'fehler'   => mb_substr($fehler ? implode(' / ', $fehler) : 'Kein Weg zum Empfänger.', 0, 300),
+        ], 'id = ?', [(int)$n['id']]);
+        $res['fehler']++;
+        $res['meldung'] = $fehler ? $fehler[0] : 'Kein Weg zum Empfänger.';
+        break;   // meist ist der Zugang gestört – nicht weiter hämmern
     }
     return $res;
 }
@@ -244,7 +272,8 @@ function notify_leitung(): array
 function notify_alle(): array
 {
     return array_map(static fn($r) => (int)$r['id'],
-        db_all("SELECT id FROM users WHERE is_active = 1 AND notify_aktiv = 1 AND ha_notify <> ''"));
+        db_all("SELECT id FROM users u WHERE is_active = 1 AND notify_aktiv = 1
+                AND (ha_notify <> '' OR EXISTS (SELECT 1 FROM push_subscriptions p WHERE p.user_id = u.id))"));
 }
 
 /** Wer ist für diese Aufgabe zuständig? */

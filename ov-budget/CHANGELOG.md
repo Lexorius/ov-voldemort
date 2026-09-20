@@ -1,5 +1,23 @@
 # Änderungsverlauf
 
+## 1.27.0
+
+### Benachrichtigungen im Browser (Web Push)
+
+- Neben der Companion-App gibt es jetzt echten Web Push: Meldungen erscheinen
+  auch bei geschlossener Seite, ohne dass Home Assistant auf dem Gerät nötig
+  ist. Wer beide Wege eingerichtet hat, bekommt die Meldung über beide.
+- **Einrichtung:** in den Einstellungen einschalten, unter *Verwaltung → Home
+  Assistant* einmalig die VAPID-Schlüssel erzeugen, danach meldet sich jede
+  Person im eigenen Profil mit ihren Geräten an. Dort steht auch, welche
+  Geräte angemeldet sind und wann sie zuletzt erreicht wurden.
+- Verschlüsselung und Anmeldung beim Push-Dienst sind nach RFC 8291 und
+  RFC 8292 selbst umgesetzt – ohne Fremdbibliothek, nur mit OpenSSL.
+- Abgelaufene Anmeldungen (Browser neu aufgesetzt) werden beim Versand
+  automatisch entfernt.
+- Nötig ist HTTPS; über den Ingress von Home Assistant ist das gegeben. Auf dem
+  iPhone muss die Seite zum Home-Bildschirm hinzugefügt sein.
+
 ## 1.26.0
 
 ### Benachrichtigungen über Home Assistant

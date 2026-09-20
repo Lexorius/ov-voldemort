@@ -16,6 +16,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 audit('ha.gesendet', 'mqtt', null, $hinweis);
                 break;
 
+            case 'push_schluessel':
+                webpush_keys_ensure();
+                $hinweis = 'VAPID-Schlüssel liegen bereit. Jetzt können sich Browser anmelden.';
+                audit('push.schluessel', 'push');
+                break;
+
+            case 'push_test':
+                $res = push_to_user((int)$me['id'], 'OV-Budget', 'Testnachricht an diesen Browser.',
+                    notify_url('?p=dashboard'));
+                if ($res['gesendet'] === 0) {
+                    $fehler = $res['fehler'] !== '' ? 'Push fehlgeschlagen: ' . $res['fehler']
+                        : 'Für dich ist kein Browser angemeldet – das geht im eigenen Profil.';
+                } else {
+                    $hinweis = sprintf('An %d Browser geschickt%s.', $res['gesendet'],
+                        $res['entfernt'] ? sprintf(', %d abgelaufene Anmeldung(en) entfernt', $res['entfernt']) : '');
+                }
+                break;
+
             case 'test_notify':
                 $ziel = trim((string)($me['ha_notify'] ?? ''));
                 if ($ziel === '') {
@@ -81,4 +99,12 @@ render('admin/ha', [
                                FROM notifications n JOIN users u ON u.id = n.user_id
                                ORDER BY n.id DESC LIMIT 15"),
     'offen'     => (int)db_val("SELECT COUNT(*) FROM notifications WHERE status = 'offen'", [], 0),
+    'push'      => [
+        'aktiv'     => setting_bool('push_aktiv', false),
+        'schluessel' => webpush_public_key() !== '',
+        'abos'      => db_all("SELECT p.geraet, p.created_at, p.last_ok,
+                                      COALESCE(NULLIF(u.display_name, ''), u.username) AS name
+                               FROM push_subscriptions p JOIN users u ON u.id = p.user_id
+                               ORDER BY name, p.id"),
+    ],
 ]);

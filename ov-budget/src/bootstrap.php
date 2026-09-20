@@ -46,6 +46,7 @@ require __DIR__ . '/lib/divera_vehicles.php';
 require __DIR__ . '/lib/mqtt.php';
 require __DIR__ . '/lib/ha_export.php';
 require __DIR__ . '/lib/notify.php';
+require __DIR__ . '/lib/webpush.php';
 
 /** Ist die Anwendung eingerichtet? */
 function app_installed(): bool

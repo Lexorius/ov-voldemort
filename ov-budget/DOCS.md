@@ -275,6 +275,31 @@ zuerst in einer Warteschlange, deshalb wartet niemand im Browser auf Home
 Assistant. Fehlgeschlagene Versuche stehen mit Grund auf der
 Verwaltungsseite und werden bis zu dreimal wiederholt.
 
+## Benachrichtigungen im Browser (Web Push)
+
+Zweiter Weg neben der Companion-App: Der Browser bekommt die Meldung direkt,
+auch wenn die Seite geschlossen ist. Wer beides eingerichtet hat, bekommt die
+Meldung über beide Wege.
+
+1. *Einstellungen → Home Assistant*: **Benachrichtigungen im Browser (Web Push)**
+   einschalten, gern mit einer Kontaktadresse für die Push-Dienste.
+2. *Verwaltung → Home Assistant*: **Schlüssel erzeugen** – das passiert einmalig
+   (VAPID). Tauscht man sie später aus, müssen sich alle Browser neu anmelden.
+3. Jede Person meldet ihre Geräte selbst an: *Mein Profil* →
+   **In diesem Browser anmelden**, dann die Nachfrage des Browsers bestätigen.
+4. Prüfen mit **Testnachricht an meine Browser**.
+
+Voraussetzungen: eine Verbindung über HTTPS – über den Ingress von Home
+Assistant also von selbst, über den direkten Port 8099 nicht. Auf dem iPhone
+muss die Seite über *Teilen → Zum Home-Bildschirm* hinzugefügt sein (ab
+iOS 16.4). Der Container muss die Push-Dienste von Google und Mozilla
+erreichen können.
+
+Gemeldet werden dieselben Ereignisse wie oben. Ein Tipp auf die Meldung öffnet
+den Vorgang, sofern die Adresse der Anwendung hinterlegt ist. Läuft ein Abo ab
+(Browser neu aufgesetzt, App gelöscht), wird es beim nächsten Versand
+automatisch entfernt.
+
 ## Fahrzeugdaten aus Divera
 
 Unter *Einstellungen → Divera 24/7* lässt sich *Fahrzeugdaten aus Divera

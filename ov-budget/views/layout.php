@@ -86,5 +86,8 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
 </footer>
 
 <script src="<?= e(asset('js/app.js')) ?>" defer></script>
+<?php if (!empty($GLOBALS['ovb_push_js'])): ?>
+  <script src="<?= e(asset('js/push.js')) ?>" defer></script>
+<?php endif; ?>
 </body>
 </html>
