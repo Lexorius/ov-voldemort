@@ -91,7 +91,8 @@
             }).then(function () {
               knopfAn.disabled = false;
               zeige(true);
-              sage('Angemeldet. Zum Prüfen unten eine Testnachricht schicken.');
+              sage('Angemeldet – die Seite lädt neu, dann steht der Testknopf bereit.');
+              window.location.reload();
             });
           }).catch(function (e) {
             knopfAn.disabled = false;
@@ -115,6 +116,7 @@
             knopfAus.disabled = false;
             zeige(false);
             sage('Dieser Browser bekommt keine Benachrichtigungen mehr.');
+            window.location.reload();
           }).catch(function (e) {
             knopfAus.disabled = false;
             sage('Abmelden fehlgeschlagen: ' + e.message, 'fehler');

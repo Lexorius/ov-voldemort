@@ -57,6 +57,17 @@ $rollen = ['admin' => 'Administration', 'leitung' => 'Leitung', 'user' => 'Mitgl
   </form>
 
   <div>
+    <?php if (trim((string)($user['ha_notify'] ?? '')) !== '' && setting_bool('ha_benachrichtigung_aktiv', false)): ?>
+      <form method="post" class="card">
+        <?= csrf_field() ?>
+        <input type="hidden" name="action" value="notify_test">
+        <h2>Benachrichtigungen in der App</h2>
+        <p class="small muted">Ziel: <span class="mono">notify.<?= e((string)$user['ha_notify']) ?></span>
+          – die Meldung kommt über die Home-Assistant-App.</p>
+        <div class="btnrow"><button class="btn btn--sec" type="submit">Testnachricht schicken</button></div>
+      </form>
+    <?php endif; ?>
+
     <?php if ($push): ?>
       <div class="card" id="push-box"
            data-vapid="<?= e(webpush_public_key()) ?>"
@@ -71,6 +82,13 @@ $rollen = ['admin' => 'Administration', 'leitung' => 'Leitung', 'user' => 'Mitgl
         <div class="btnrow">
           <button class="btn" type="button" id="push-an" hidden>In diesem Browser anmelden</button>
           <button class="btn btn--sec" type="button" id="push-aus" hidden>Abmelden</button>
+          <?php if ($pushAbos): ?>
+            <form method="post" class="inline-form">
+              <?= csrf_field() ?>
+              <input type="hidden" name="action" value="push_test">
+              <button class="btn btn--sec" type="submit">Testnachricht schicken</button>
+            </form>
+          <?php endif; ?>
         </div>
         <?php if ($pushAbos): ?>
           <h3 class="mt">Angemeldete Geräte</h3>

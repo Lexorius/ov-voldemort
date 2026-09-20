@@ -287,7 +287,9 @@ Meldung über beide Wege.
    (VAPID). Tauscht man sie später aus, müssen sich alle Browser neu anmelden.
 3. Jede Person meldet ihre Geräte selbst an: *Mein Profil* →
    **In diesem Browser anmelden**, dann die Nachfrage des Browsers bestätigen.
-4. Prüfen mit **Testnachricht an meine Browser**.
+4. Prüfen mit **Testnachricht schicken** – der Knopf steht im Profil direkt
+   neben der Anmeldung, sobald dieser Browser angemeldet ist. Für die
+   Companion-App gibt es im Profil einen eigenen Testknopf.
 
 Voraussetzungen: eine Verbindung über HTTPS – über den Ingress von Home
 Assistant also von selbst, über den direkten Port 8099 nicht. Auf dem iPhone

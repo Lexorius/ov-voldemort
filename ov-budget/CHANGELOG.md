@@ -1,5 +1,18 @@
 # Änderungsverlauf
 
+## 1.27.1
+
+### Testnachricht direkt im Profil
+
+- Unter *Mein Profil* steht jetzt neben „Abmelden" ein Knopf
+  **Testnachricht schicken** – er geht an die angemeldeten Browser dieser
+  Person. Vorher ging das nur über die Verwaltung.
+- Wer ein Ziel in Home Assistant hinterlegt hat, findet daneben einen eigenen
+  Testknopf für die Companion-App.
+- Nach dem An- oder Abmelden lädt die Seite neu, damit der Testknopf sofort
+  passt. War die Anmeldung abgelaufen, sagt die Meldung das und der Eintrag
+  wird entfernt.
+
 ## 1.27.0
 
 ### Benachrichtigungen im Browser (Web Push)
