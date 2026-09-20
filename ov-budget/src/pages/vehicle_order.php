@@ -19,5 +19,6 @@ render('vehicle_order', [
     'order'   => $order,
     'vehicle' => vehicle_find((int)$order['vehicle_id']),
     'verlauf' => journal_query((int)$order['vehicle_id'], ['ref_typ' => 'auftrag', 'ref_id' => (int)$order['id']]),
-    'dateien' => vfile_list((int)$order['vehicle_id'], (int)$order['id']),
+    'bilder'    => vfile_list((int)$order['vehicle_id'], (int)$order['id'], 'bild'),
+    'dokumente' => vfile_list((int)$order['vehicle_id'], (int)$order['id'], 'dokument'),
 ]);

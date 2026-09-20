@@ -106,8 +106,12 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   und **Instandsetzungsaufträge** mit fortlaufender Nummer, Werkstatt, Kosten
   und Bearbeitungsstand – jeder Schritt landet in der Akte.
   **Bilder** je Fahrzeug (mit Titelbild in Liste und Akte) und **Dokumente**
-  wie Fahrzeugschein oder Prüfberichte; auch an Aufträge lassen sich Fotos und
-  Dokumente hängen, etwa vom Schaden oder der Kostenvoranschlag. Fotos werden
+  wie Fahrzeugschein oder Prüfberichte. Jeder Instandsetzungsauftrag hat eine
+  eigene **Fotogalerie** – Fotos lassen sich schon beim Melden anhängen (am
+  Handy direkt aus der Kamera) und später jederzeit ergänzen – dazu eine
+  getrennte Liste für Dokumente wie Kostenvoranschlag, Werkstattbericht oder
+  Rechnung. In der Auftragsliste des Fahrzeugs steht, wie viele Fotos und
+  Dokumente hängen. Fotos werden
   neu gespeichert, damit der Aufnahmeort aus den Metadaten verschwindet.
 * **Stein.APP** – Abgleich der Fahrzeuge über die Schnittstelle der Stein.APP
   (gleicher API-Schlüssel wie für die Home-Assistant-Integration). Alle zehn

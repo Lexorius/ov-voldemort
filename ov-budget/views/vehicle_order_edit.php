@@ -14,7 +14,7 @@ $isNew = empty($order['id']);
   <div class="alert alert--error"><ul><?php foreach ($errors as $er): ?><li><?= e($er) ?></li><?php endforeach; ?></ul></div>
 <?php endif; ?>
 
-<form method="post" class="form"
+<form method="post" class="form" enctype="multipart/form-data"
       action="<?= e($isNew ? url('vehicle_order_edit', ['vehicle_id' => $vehicle['id']]) : url('vehicle_order_edit', ['id' => $order['id']])) ?>">
   <?= csrf_field() ?>
 
@@ -48,6 +48,15 @@ $isNew = empty($order['id']);
       <input type="checkbox" id="ausfall" name="ausfall" value="1" <?= !empty($order['ausfall']) ? 'checked' : '' ?>>
       <label for="ausfall">Das Fahrzeug steht deswegen still</label>
     </div>
+    <?php if ($isNew): ?>
+      <div class="field">
+        <label for="fotos">Fotos <span class="muted small">(optional, mehrere möglich)</span></label>
+        <input type="file" id="fotos" name="fotos[]" multiple accept="image/*"
+               data-max-mb="<?= (int)setting_int('upload_max_mb', 10) ?>">
+        <small class="muted">Am Handy geht auch die Kamera. Die Fotos hängen am Auftrag; weitere lassen sich
+          später jederzeit hinzufügen. Große Bilder werden verkleinert, Metadaten wie der Aufnahmeort fallen weg.</small>
+      </div>
+    <?php endif; ?>
   </section>
 
   <section class="card">

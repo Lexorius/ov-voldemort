@@ -394,6 +394,10 @@ function order_query(array $f = []): array
         $w[] = 'COALESCE(s.is_final, 0) = 0';
     }
     $sql = 'SELECT o.*, v.bezeichnung AS fahrzeug, v.kennzeichen,
+                   (SELECT COUNT(*) FROM vehicle_files f
+                     WHERE f.order_id = o.id AND f.art = \'bild\') AS fotos,
+                   (SELECT COUNT(*) FROM vehicle_files f
+                     WHERE f.order_id = o.id AND f.art = \'dokument\') AS dokumente,
                    a.label AS art_label, a.color AS art_color,
                    p.label AS prio_label, p.color AS prio_color, p.weight AS prio_weight,
                    s.label AS status_label, s.color AS status_color, s.is_final AS status_final

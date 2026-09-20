@@ -24,6 +24,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     [$neu, $errors] = order_save_from_post($order, $vehicle, $user);
     if ($neu) {
         flash('success', $order ? 'Auftrag gespeichert.' : 'Auftrag angelegt und in der Fahrzeugakte vermerkt.');
+        // Direkt mitgeschickte Fotos an den Auftrag hängen
+        if (!empty($_FILES['fotos']['name'][0])) {
+            [$n, $fehler] = vfile_store_uploads((int)$vehicle['id'], $neu, 'fotos', 'bild', '', $user);
+            foreach ($fehler as $f) {
+                flash('warn', e($f));
+            }
+            if ($n > 0) {
+                flash('success', sprintf('%d Foto(s) an den Auftrag gehängt.', $n));
+            }
+        }
         redirect_route('vehicle_order', ['id' => $neu]);
     }
     $order = array_merge($order ?? [], $_POST);

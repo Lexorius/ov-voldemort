@@ -256,6 +256,13 @@ $arten = [
             <td>
               <a href="<?= e(url('vehicle_order', ['id' => $o['id']])) ?>"><?= e($o['titel']) ?></a>
               <?php if ((int)$o['ausfall']): ?> <span class="badge" style="background:#b91c1c">Ausfall</span><?php endif; ?>
+              <?php if (!empty($o['fotos']) || !empty($o['dokumente'])): ?>
+                <span class="small muted" title="angehängte Dateien"><?php
+                  echo implode(' · ', array_filter([
+                      $o['fotos'] ? (int)$o['fotos'] . ' Foto(s)' : '',
+                      $o['dokumente'] ? (int)$o['dokumente'] . ' Dokument(e)' : '',
+                  ])); ?></span>
+              <?php endif; ?>
             </td>
             <td class="small"><?= e((string)$o['art_label']) ?></td>
             <td><?= badge($o['prio_label'] ? ['label' => $o['prio_label'], 'color' => $o['prio_color']] : null) ?></td>

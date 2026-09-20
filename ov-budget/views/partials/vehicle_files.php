@@ -36,7 +36,8 @@ $knoepfe = static function (array $f, bool $mitTitelbild) use ($aktion, $verwalt
 
 /** Upload-Formular */
 $formular = static function (string $art, string $knopf, string $hinweis) use ($vehicle, $order, $aktion): string {
-    $accept = $art === 'bild' ? 'image/jpeg,image/png,image/webp,image/gif' : '';
+    // image/* – so bietet das Handy direkt die Kamera an
+    $accept = $art === 'bild' ? 'image/*' : '';
     return '<form method="post" action="' . e($aktion) . '" enctype="multipart/form-data" class="form upload">'
         . csrf_field()
         . '<input type="hidden" name="action" value="file_upload">'
@@ -72,6 +73,25 @@ $dateiZeile = static function (array $f) use ($knoepfe, $order): string {
         . '<div class="doc__aktion">' . $knoepfe($f, false) . '</div></div>';
 };
 ?>
+<?php
+/** Galerie – am Fahrzeug mit Titelbild, am Auftrag ohne */
+$galerie = static function (array $liste, bool $mitTitelbild) use ($knoepfe): string {
+    $html = '<div class="galerie">';
+    foreach ($liste as $f) {
+        $html .= '<figure class="galerie__bild' . ((int)$f['is_cover'] ? ' is-cover' : '') . '">'
+            . '<a href="' . e(url('vehicle_file', ['id' => $f['id']])) . '" target="_blank" rel="noopener">'
+            . '<img src="' . e(url('vehicle_file', ['id' => $f['id'], 'vorschau' => 1])) . '"'
+            . ' alt="' . e($f['titel']) . '" loading="lazy"></a>'
+            . '<figcaption>' . e($f['titel'])
+            . ((int)$f['is_cover'] ? ' <span class="badge badge--outline">Titelbild</span>' : '')
+            . '<div class="small muted">' . e(de_datetime($f['created_at'])
+                . ($f['hochgeladen_von'] ? ' · ' . $f['hochgeladen_von'] : '')) . '</div>'
+            . '<div class="btnrow">' . $knoepfe($f, $mitTitelbild) . '</div>'
+            . '</figcaption></figure>';
+    }
+    return $html . '</div>';
+};
+?>
 <?php if ($modus === 'bilder'): ?>
   <section class="card" id="bilder">
     <div class="card__head">
@@ -81,21 +101,7 @@ $dateiZeile = static function (array $f) use ($knoepfe, $order): string {
     <?php if (!$bilder): ?>
       <div class="empty">Noch kein Bild.</div>
     <?php else: ?>
-      <div class="galerie">
-        <?php foreach ($bilder as $f): ?>
-          <figure class="galerie__bild<?= (int)$f['is_cover'] ? ' is-cover' : '' ?>">
-            <a href="<?= e(url('vehicle_file', ['id' => $f['id']])) ?>" target="_blank" rel="noopener">
-              <img src="<?= e(url('vehicle_file', ['id' => $f['id'], 'vorschau' => 1])) ?>"
-                   alt="<?= e($f['titel']) ?>" loading="lazy">
-            </a>
-            <figcaption>
-              <?= e($f['titel']) ?>
-              <?php if ((int)$f['is_cover']): ?><span class="badge badge--outline">Titelbild</span><?php endif; ?>
-              <div class="btnrow"><?= $knoepfe($f, true) ?></div>
-            </figcaption>
-          </figure>
-        <?php endforeach; ?>
-      </div>
+      <?= $galerie($bilder, true) ?>
     <?php endif; ?>
     <?php if ($hochladen): ?>
       <details class="mt"<?= $bilder ? '' : ' open' ?>>
@@ -127,13 +133,31 @@ $dateiZeile = static function (array $f) use ($knoepfe, $order): string {
   </section>
 
 <?php else: ?>
+  <section class="card" id="fotos">
+    <div class="card__head">
+      <h2>Fotos zum Auftrag</h2>
+      <span class="small muted"><?= count($bilder) ?></span>
+    </div>
+    <?php if (!$bilder): ?>
+      <div class="empty">Noch kein Foto – etwa vom Schaden, vom Ersatzteil oder von der Reparatur.</div>
+    <?php else: ?>
+      <?= $galerie($bilder, false) ?>
+    <?php endif; ?>
+    <?php if ($hochladen): ?>
+      <details class="mt"<?= $bilder ? '' : ' open' ?>>
+        <summary>Fotos hinzufügen</summary>
+        <?= $formular('bild', 'Hochladen', 'JPG, PNG, WebP oder GIF – am Handy auch direkt aus der Kamera. Große Fotos werden verkleinert; dabei fallen die Metadaten wie der Aufnahmeort weg.') ?>
+      </details>
+    <?php endif; ?>
+  </section>
+
   <section class="card" id="dateien">
     <div class="card__head">
-      <h2>Bilder und Dokumente</h2>
+      <h2>Dokumente zum Auftrag</h2>
       <span class="small muted"><?= count($dokumente) ?></span>
     </div>
     <?php if (!$dokumente): ?>
-      <div class="empty">Noch nichts angehängt – etwa Fotos vom Schaden, Kostenvoranschlag oder Rechnung.</div>
+      <div class="empty">Noch kein Dokument – etwa Kostenvoranschlag, Werkstattbericht oder Rechnung.</div>
     <?php else: ?>
       <div class="doclist">
         <?php foreach ($dokumente as $f): ?><?= $dateiZeile($f) ?><?php endforeach; ?>
@@ -141,8 +165,8 @@ $dateiZeile = static function (array $f) use ($knoepfe, $order): string {
     <?php endif; ?>
     <?php if ($hochladen): ?>
       <details class="mt"<?= $dokumente ? '' : ' open' ?>>
-        <summary>Datei anhängen</summary>
-        <?= $formular('auto', 'Anhängen', 'Fotos und Dokumente (' . $typen . '). Bilder werden erkannt und angezeigt.') ?>
+        <summary>Dokument anhängen</summary>
+        <?= $formular('dokument', 'Anhängen', 'Erlaubt: ' . $typen . '. Fotos gehören oben in die Galerie.') ?>
       </details>
     <?php endif; ?>
   </section>

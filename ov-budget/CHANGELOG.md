@@ -1,5 +1,18 @@
 # Änderungsverlauf
 
+## 1.23.0
+
+### Instandsetzungsaufträge: Fotos je Auftrag
+
+- Jeder Auftrag hat jetzt eine eigene **Fotogalerie** mit Vorschaubildern,
+  getrennt von den Dokumenten (Kostenvoranschlag, Werkstattbericht, Rechnung).
+- **Beim Melden fotografieren:** Das Formular „Auftrag / Meldung" nimmt Fotos
+  direkt entgegen; am Handy bietet es die Kamera an. Weitere Fotos lassen sich
+  jederzeit am Auftrag ergänzen.
+- Die Auftragsliste des Fahrzeugs zeigt, wie viele Fotos und Dokumente hängen.
+- Wie bisher werden große Fotos verkleinert und verlieren dabei ihre Metadaten
+  (etwa den Aufnahmeort); jedes Hinzufügen und Entfernen steht im Journal.
+
 ## 1.22.0
 
 ### Themenspeicher: Archiv und Status „Abgelehnt“

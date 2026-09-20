@@ -51,8 +51,9 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - **Journal, das sich nicht nachträglich ändern lässt** – jede Änderung, jeder
   Auftragsschritt, jede Meldung; eine Prüfsummen-Kette zeigt Manipulationen an
 - **Instandsetzungsaufträge** mit Nummer, Werkstatt, Kosten und Bearbeitungsstand
-- **Bilder** (mit Titelbild) und **Dokumente** an Fahrzeugen und Aufträgen;
-  Fotos verlieren beim Speichern den Aufnahmeort
+- **Bilder** (mit Titelbild) und **Dokumente** an Fahrzeugen
+- **Fotogalerie je Auftrag**: Fotos beim Melden direkt aus der Kamera anhängen,
+  Dokumente getrennt davon; Fotos verlieren beim Speichern den Aufnahmeort
 
 ### Stein.APP
 - Abgleich von Status, HU, SP, Kennzeichen, ISSI und Funkrufname; jede
