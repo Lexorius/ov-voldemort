@@ -33,6 +33,29 @@
     <p>Bezeichnungen, Einleitungstexte, Pflichtfelder, Upload-Grenzen, Haushaltsjahr und Sicherheit.</p></div></a>
   <a href="<?= e(url('admin_order_rights')) ?>"><div class="card"><h3>Bestellberechtigungen</h3>
     <p>Wer Wünsche zur Bestellung freigeben darf – etwa Ortsbeauftragte:r, auch mit Betragsgrenze – und wer bestellt.</p></div></a>
+  <div class="card">
+    <h3>Dateiablage</h3>
+    <p class="small">Bilder und Dokumente der Fahrzeuge liegen unter
+      <span class="mono"><?= e($ablage['pfad']) ?></span>.</p>
+    <p class="small">
+      <?php if (!$ablage['vorhanden']): ?>
+        <strong style="color:var(--bad)">Der Ordner fehlt.</strong>
+      <?php elseif (!$ablage['beschreibbar']): ?>
+        <strong style="color:var(--bad)">Nicht beschreibbar</strong> – der Webserver läuft als
+        „<?= e($ablage['benutzer'] ?: 'unbekannt') ?>". Hochladen kann deshalb nicht klappen.
+      <?php else: ?>
+        <?= (int)$ablage['dateien'] ?> Datei(en) abgelegt, <?= (int)$ablage['eintraege'] ?> Einträge geprüft.
+      <?php endif; ?>
+    </p>
+    <?php if ($ablage['fehlend']): ?>
+      <p class="small" style="color:var(--warn)"><?= count($ablage['fehlend']) ?> Eintrag/Einträge ohne Datei
+        auf der Platte, z. B.
+        <?= e(implode(', ', array_map(static fn($f) => (string)($f['titel'] ?: $f['stored_name']),
+            array_slice($ablage['fehlend'], 0, 3)))) ?>.
+        Diese Dateien sind beim Hochladen nicht angekommen oder später verloren gegangen.</p>
+    <?php endif; ?>
+  </div>
+
   <a href="<?= e(url('admin_ha')) ?>"><div class="card"><h3>Home Assistant</h3>
     <p>Kennzahlen und Fahrzeuge über MQTT an Home Assistant melden – mit Auto-Discovery.</p></div></a>
   <a href="<?= e(url('admin_stein')) ?>"><div class="card"><h3>Stein.APP</h3>

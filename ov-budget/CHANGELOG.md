@@ -1,5 +1,21 @@
 # Änderungsverlauf
 
+## 1.27.6
+
+### Dateien an Fahrzeugen: sagen, woran es hakt
+
+- Schlägt das Hochladen fehl, weil der Ordner der Ablage fehlt oder für den
+  Webserver nicht beschreibbar ist, steht das jetzt als Meldung da – mit Pfad
+  und dem Benutzer, unter dem der Webserver läuft. Vorher passierte scheinbar
+  nichts.
+- Kommt gar keine Datei an (etwa weil sie zu groß für die Übertragung war),
+  sagt die Meldung auch das.
+- Beim Öffnen einer Datei wird jetzt unterschieden: Gibt es den Eintrag nicht,
+  bleibt es bei „nicht gefunden". Ist der Eintrag da, aber die Datei fehlt in
+  der Ablage, steht genau das da – vorher kam nur eine nackte 404.
+- Neu in der Verwaltung: die Karte **Dateiablage** mit Pfad, Schreibrecht,
+  Anzahl der Dateien und den Einträgen, zu denen keine Datei mehr existiert.
+
 ## 1.27.5
 
 ### Links in Benachrichtigungen: Panel-Adresse wird erkannt

@@ -8,7 +8,10 @@ require_role('admin');
 $dbZeit = (string)db_val('SELECT NOW()', [], '');
 $versatz = $dbZeit !== '' ? abs(time() - strtotime($dbZeit)) : 0;
 
+$ablage = vfile_storage_status();
+
 render('admin/index', [
+    'ablage' => $ablage,
     'title' => 'Verwaltung',
     'zeit'  => [
         'zone'     => date_default_timezone_get(),

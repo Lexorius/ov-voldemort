@@ -33,6 +33,60 @@ function vfile_dir(): string
     return $dir;
 }
 
+/**
+ * Zustand der Dateiablage: Ist der Ordner da, darf der Webserver hineinschreiben,
+ * und passen die Einträge in der Datenbank zu den Dateien auf der Platte?
+ */
+function vfile_storage_status(bool $mitZaehlung = true): array
+{
+    $pfad = upload_dir() . DIRECTORY_SEPARATOR . 'fahrzeuge';
+    $da = is_dir($pfad);
+    if (!$da) {
+        @mkdir($pfad, 0770, true);
+        $da = is_dir($pfad);
+    }
+    $status = [
+        'pfad'        => $pfad,
+        'vorhanden'   => $da,
+        'beschreibbar' => $da && is_writable($pfad),
+        'benutzer'    => function_exists('posix_geteuid') && function_exists('posix_getpwuid')
+            ? (string)(posix_getpwuid(posix_geteuid())['name'] ?? '')
+            : (string)(getenv('USER') ?: ''),
+        'dateien'     => 0,
+        'eintraege'   => 0,
+        'fehlend'     => [],
+    ];
+    if (!$mitZaehlung) {
+        return $status;
+    }
+    if ($da) {
+        $status['dateien'] = max(0, count((array)@scandir($pfad)) - 2);
+    }
+    foreach (db_all('SELECT id, titel, stored_name FROM vehicle_files ORDER BY id DESC LIMIT 500') as $f) {
+        $status['eintraege']++;
+        if (!is_file($pfad . DIRECTORY_SEPARATOR . basename((string)$f['stored_name']))) {
+            $status['fehlend'][] = $f;
+        }
+    }
+    return $status;
+}
+
+/**
+ * Klartext zum Zustand der Ablage – oder null, wenn alles passt.
+ * Reine Funktion.
+ */
+function vfile_storage_problem(array $status): ?string
+{
+    if (!empty($status['vorhanden']) && !empty($status['beschreibbar'])) {
+        return null;
+    }
+    return sprintf('Der Ordner %s %s. Der Webserver läuft als „%s". '
+        . 'Das lässt sich in der Verwaltung unter „Dateiablage" nachsehen.',
+        (string)$status['pfad'],
+        empty($status['vorhanden']) ? 'fehlt und ließ sich nicht anlegen' : 'ist für den Webserver nicht beschreibbar',
+        (string)($status['benutzer'] ?: 'unbekannt'));
+}
+
 /** Erlaubte Endungen für Dokumente (einstellbar) */
 function vfile_document_types(): array
 {
@@ -152,7 +206,14 @@ function vfile_store_uploads(int $vehicleId, ?int $orderId, string $feld, string
     $fehler = [];
     $anzahl = 0;
     if (empty($_FILES[$feld]) || !is_array($_FILES[$feld]['name'])) {
-        return [0, ['Keine Datei ausgewählt.']];
+        // Ohne Feld im Formular kommt hier nichts an – das passiert auch,
+        // wenn die Datei größer ist als post_max_size von PHP
+        return [0, ['Es kam keine Datei an. Bei sehr großen Dateien bricht der Browser '
+            . 'den Upload ab, bevor die Anwendung ihn sieht.']];
+    }
+
+    if ($grund = vfile_storage_problem(vfile_storage_status(false))) {
+        return [0, [$grund]];
     }
 
     $erlaubt = $art === 'bild'

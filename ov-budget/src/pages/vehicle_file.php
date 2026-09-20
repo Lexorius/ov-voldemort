@@ -13,9 +13,28 @@ if (!can('view_vehicles')) {
 
 $datei = vfile_find((int)get_int('id', 0));
 $pfad = $datei ? vfile_path($datei, get_str('vorschau') === '1') : null;
-if (!$datei || $pfad === null) {
+
+if (!$datei) {
     http_response_code(404);
     render('error', ['title' => 'Nicht gefunden', 'message' => 'Diese Datei gibt es nicht (mehr).']);
+    return;
+}
+
+if ($pfad === null) {
+    // Der Eintrag steht in der Datenbank, die Datei liegt aber nicht auf der Platte
+    http_response_code(404);
+    $hinweis = 'Der Eintrag „' . (string)($datei['titel'] ?: $datei['orig_name'])
+        . '" ist vorhanden, die Datei selbst fehlt aber in der Ablage.';
+    if (can('manage_vehicles')) {
+        $st = vfile_storage_status(false);
+        $hinweis .= sprintf(' Ordner: %s (%s, %s). Näheres steht in der Verwaltung unter „Dateiablage".',
+            $st['pfad'],
+            $st['vorhanden'] ? 'vorhanden' : 'fehlt',
+            $st['beschreibbar'] ? 'beschreibbar' : 'nicht beschreibbar');
+    } else {
+        $hinweis .= ' Bitte in der Verwaltung nachsehen lassen.';
+    }
+    render('error', ['title' => 'Datei fehlt', 'message' => $hinweis]);
     return;
 }
 
