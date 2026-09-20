@@ -1,5 +1,24 @@
 # Änderungsverlauf
 
+## 1.25.0
+
+### Home Assistant: Kennzahlen über MQTT
+
+- Neue Seite *Verwaltung → Home Assistant*: Der Ortsverband erscheint in Home
+  Assistant als Gerät „OV-Budget" mit Sensoren für Budget, Wünsche, Aufgaben,
+  Themen, nächste Besprechung, Fahrzeuge, offene Instandsetzungsaufträge und
+  fällige Fristen. Die Entitäten legt Home Assistant selbst an (MQTT
+  Auto-Discovery).
+- **Zugang ohne Tipparbeit:** Ist das Mosquitto-Add-on installiert, holt sich
+  das Add-on Host, Benutzer und Passwort beim Start vom Supervisor. Ein eigener
+  Broker lässt sich in den Einstellungen eintragen.
+- **Je Fahrzeug** auf Wunsch ein eigenes Gerät mit Status, Funkstatus, HU, SP,
+  Kilometerstand und offenen Aufträgen – und, wenn gewünscht, dem Standort aus
+  Divera auf der Karte.
+- Gemeldet wird alle 5 Minuten (einstellbar), die Anmeldung der Entitäten
+  einmal täglich. *Jetzt senden* und *Entitäten entfernen* gibt es als Knopf.
+- Gemeldet werden nur Zahlen, Zeitpunkte und Fahrzeugdaten – keine Namen.
+
 ## 1.24.0
 
 ### Kontakte: anrufen und mailen mit einem Tipp

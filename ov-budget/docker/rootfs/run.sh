@@ -162,6 +162,10 @@ fi
 # ------------------------------------------------------------------
 php /app/src/cli/setup.php
 
+# Zugang zum MQTT-Broker (Mosquitto-Add-on) erfragen – ohne Broker passiert nichts
+php /app/src/cli/mqtt_service.php /data/mqtt.json || true
+chown nginx:nginx /data/mqtt.json 2>/dev/null || true
+
 php-fpm -F &
 FPM_PID=$!
 

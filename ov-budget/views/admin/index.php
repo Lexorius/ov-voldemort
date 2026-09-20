@@ -33,6 +33,8 @@
     <p>Bezeichnungen, Einleitungstexte, Pflichtfelder, Upload-Grenzen, Haushaltsjahr und Sicherheit.</p></div></a>
   <a href="<?= e(url('admin_order_rights')) ?>"><div class="card"><h3>Bestellberechtigungen</h3>
     <p>Wer Wünsche zur Bestellung freigeben darf – etwa Ortsbeauftragte:r, auch mit Betragsgrenze – und wer bestellt.</p></div></a>
+  <a href="<?= e(url('admin_ha')) ?>"><div class="card"><h3>Home Assistant</h3>
+    <p>Kennzahlen und Fahrzeuge über MQTT an Home Assistant melden – mit Auto-Discovery.</p></div></a>
   <a href="<?= e(url('admin_stein')) ?>"><div class="card"><h3>Stein.APP</h3>
     <p>Fahrzeuge aus der Stein.APP abgleichen, zuordnen und das Protokoll der Abrufe ansehen.</p></div></a>
   <a href="<?= e(url('admin_divera_fahrzeuge')) ?>"><div class="card"><h3>Divera-Fahrzeuge</h3>

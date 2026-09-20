@@ -47,6 +47,15 @@ $abrufe = [
     'Stein.APP'         => static fn() => stein_enabled() ? [stein_sync()] : [],
     'Divera-Stammdaten' => static fn() => divera_vehicles_enabled() ? [divera_vehicles_sync_master()] : [],
     'Divera-Funkstatus' => static fn() => divera_vehicles_enabled() ? [divera_vehicles_sync_status()] : [],
+    'Home Assistant'    => static function (): array {
+        $due = ha_due();
+        if (!$due['faellig']) {
+            return [];
+        }
+        $res = ha_publish($due['discovery']);
+        return [['status' => 'ok', 'message' => sprintf('%d Nachricht(en) an MQTT%s',
+            $res['nachrichten'], $due['discovery'] ? ', Entitäten angemeldet' : '')]];
+    },
 ];
 foreach ($abrufe as $name => $abruf) {
     try {

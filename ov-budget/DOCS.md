@@ -215,6 +215,33 @@ Bei einer externen Datenbank stellt die Anwendung die Zeitzone zusätzlich je
 Verbindung passend ein. Ob beides zusammenpasst, zeigt die Startseite der
 Verwaltung: Gehen Anwendung und Datenbank auseinander, steht dort ein Hinweis.
 
+## Kennzahlen an Home Assistant melden
+
+Unter *Verwaltung → Home Assistant* und *Einstellungen → Home Assistant*
+lässt sich der Export einschalten. Die Anwendung meldet die Werte über MQTT;
+Home Assistant legt die Entitäten selbst an (Auto-Discovery) und fasst sie zum
+Gerät „OV-Budget" zusammen.
+
+* **Broker:** Ist das Mosquitto-Add-on installiert, holt sich das Add-on die
+  Zugangsdaten beim Start automatisch. Sonst Host, Port, Benutzer und Passwort
+  in den Einstellungen eintragen.
+* **Gemeldet werden:** Budget (gesamt, verplant, frei, Auslastung), offene
+  Wünsche und deren Summe, zur Bestellung freigegebene Wünsche, offene und
+  überfällige Aufgaben, Themen im Themenspeicher, die nächste Besprechung als
+  Zeitstempel, Fahrzeuge (gesamt, einsatzbereit, im Ausfall), offene
+  Instandsetzungsaufträge und fällige Fristen (HU, SP, UVV). Dazu als Diagnose
+  die Zeitpunkte der letzten Abrufe.
+* **Je Fahrzeug** (abschaltbar) ein eigenes Gerät mit Status, Funkstatus, HU,
+  SP, Kilometerstand und offenen Aufträgen; mit der Option *Fahrzeugstandort*
+  zusätzlich ein `device_tracker` mit der Position aus Divera.
+* **Takt:** Standardmäßig alle 5 Minuten; die Anmeldung der Entitäten wird
+  einmal täglich wiederholt, damit neue Fahrzeuge ankommen. Der Knopf
+  *Jetzt senden* macht es sofort.
+* **Aufräumen:** *Entitäten entfernen* nimmt alle Anmeldungen zurück.
+
+Personenbezogenes wird nicht gemeldet – nur Zahlen, Zeitpunkte und
+Fahrzeugdaten.
+
 ## Fahrzeugdaten aus Divera
 
 Unter *Einstellungen → Divera 24/7* lässt sich *Fahrzeugdaten aus Divera

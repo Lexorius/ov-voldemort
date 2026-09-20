@@ -57,6 +57,12 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - **Fotogalerie je Auftrag**: Fotos beim Melden direkt aus der Kamera anhängen,
   Dokumente getrennt davon; Fotos verlieren beim Speichern den Aufnahmeort
 
+### Home Assistant
+- **Kennzahlen über MQTT** mit Auto-Discovery: Budget, Wünsche, Aufgaben,
+  Themen, nächste Besprechung, Fahrzeuge, Fristen
+- Optional **je Fahrzeug eigene Entitäten** samt Standort auf der Karte
+- Zugang kommt vom Mosquitto-Add-on oder aus den Einstellungen
+
 ### Stein.APP
 - Abgleich von Status, HU, SP, Kennzeichen, ISSI und Funkrufname; jede
   Änderung steht in der Fahrzeugakte

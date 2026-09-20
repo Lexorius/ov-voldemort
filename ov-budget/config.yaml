@@ -5,7 +5,7 @@
 # Container, es sind keine weiteren Add-ons nötig.
 name: OV-Budget
 slug: ov_budget
-version: "1.24.0"
+version: "1.25.0"
 description: >-
   THW-Ortsverband: Wünsche und Budget, Aufgaben, Kontakte, Besprechungen und
   Fahrzeugakten – mit Stein.APP- und Divera-24/7-Anbindung. Eigene Datenbank inklusive.
@@ -17,6 +17,10 @@ arch:
 
 # Das Basisimage bringt kein s6-overlay mit – der Container startet /run.sh selbst.
 init: false
+
+# Zugangsdaten des Mosquitto-Add-ons, falls vorhanden (für den MQTT-Export)
+services:
+  - mqtt:want
 
 boot: auto
 startup: services
