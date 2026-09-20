@@ -69,14 +69,25 @@ $extraFelder = contact_extra_fields();
       <div class="field">
         <label for="email">E-Mail</label>
         <input type="email" id="email" name="email" value="<?= e((string)$contact['email']) ?>">
+        <?php if (trim((string)$contact['email']) !== ''): ?>
+          <small class="muted"><?= email_html($contact['email']) ?> schreiben</small>
+        <?php endif; ?>
       </div>
       <div class="field">
         <label for="telefon">Telefon</label>
-        <input type="tel" id="telefon" name="telefon" value="<?= e((string)$contact['telefon']) ?>">
+        <input type="tel" id="telefon" name="telefon" value="<?= e((string)$contact['telefon']) ?>"
+               placeholder="z. B. 0201 123456">
+        <?php if (trim((string)$contact['telefon']) !== ''): ?>
+          <small class="muted"><?= phone_html($contact['telefon']) ?> anrufen</small>
+        <?php endif; ?>
       </div>
       <div class="field">
         <label for="mobil">Mobil</label>
-        <input type="tel" id="mobil" name="mobil" value="<?= e((string)$contact['mobil']) ?>">
+        <input type="tel" id="mobil" name="mobil" value="<?= e((string)$contact['mobil']) ?>"
+               placeholder="z. B. 0151 1234567">
+        <?php if (trim((string)$contact['mobil']) !== ''): ?>
+          <small class="muted"><?= phone_html($contact['mobil']) ?> anrufen</small>
+        <?php endif; ?>
       </div>
     </div>
   </section>

@@ -599,6 +599,33 @@ function ovb_migrate(PDO $pdo, callable $say): void
         }
     }
     $merken('013_divera_status');
+
+    /* ---- 014: Rufnummern der Kontakte international schreiben ---- */
+    if (ovb_table_exists($pdo, 'contacts')) {
+        if (!function_exists('phone_human')) {
+            require_once APP_ROOT . '/src/lib/contacts.php';
+        }
+        $land = '+49';
+        $row = $pdo->query("SELECT svalue FROM settings WHERE skey = 'telefon_landesvorwahl'")->fetchColumn();
+        if (is_string($row) && trim($row) !== '') {
+            $land = trim($row);
+        }
+        $st = $pdo->prepare('UPDATE contacts SET telefon = ?, mobil = ? WHERE id = ?');
+        $n = 0;
+        foreach ($pdo->query('SELECT id, telefon, mobil FROM contacts') as $c) {
+            $tel = phone_human((string)$c['telefon'], $land);
+            $mob = phone_human((string)$c['mobil'], $land);
+            if ($tel === (string)$c['telefon'] && $mob === (string)$c['mobil']) {
+                continue;
+            }
+            $st->execute([mb_substr($tel, 0, 60), mb_substr($mob, 0, 60), (int)$c['id']]);
+            $n++;
+        }
+        if ($n > 0) {
+            $say(sprintf('%d Kontakt(e): Rufnummern international geschrieben.', $n));
+        }
+    }
+    $merken('014_rufnummern');
 }
 
 /**

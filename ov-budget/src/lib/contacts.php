@@ -161,8 +161,9 @@ function contact_save_from_post(?array $existing, array $user): array
         'position'     => mb_substr(post_str('position'), 0, 150),
         'kategorie_id' => post_int('kategorie_id'),
         'email'        => mb_substr($email, 0, 150),
-        'telefon'      => mb_substr(post_str('telefon'), 0, 60),
-        'mobil'        => mb_substr(post_str('mobil'), 0, 60),
+        // Rufnummern einheitlich international speichern, damit sie überall wählbar sind
+        'telefon'      => mb_substr(phone_human(post_str('telefon')), 0, 60),
+        'mobil'        => mb_substr(phone_human(post_str('mobil')), 0, 60),
         'strasse'      => mb_substr(post_str('strasse'), 0, 150),
         'plz'          => mb_substr(post_str('plz'), 0, 15),
         'ort'          => mb_substr(post_str('ort'), 0, 100),

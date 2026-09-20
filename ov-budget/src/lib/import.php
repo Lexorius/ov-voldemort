@@ -504,10 +504,10 @@ function import_vcard_to_fields(array $eigenschaften): array
         $f['email'] = $email[0];
     }
     if ($telefon) {
-        $f['telefon'] = $telefon[0];
+        $f['telefon'] = phone_human($telefon[0]);
     }
     if ($mobil) {
-        $f['mobil'] = $mobil[0];
+        $f['mobil'] = phone_human($mobil[0]);
     }
     if ($adressen) {
         foreach ($adressen[0] as $k => $v) {

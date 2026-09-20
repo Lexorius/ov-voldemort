@@ -124,7 +124,16 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   Förderern, dazu Verteiler für Einladungen mit Rückmeldungen und einer
   CSV-Ausgabe für den Serienbrief. Neben den Standardfeldern lassen sich
   eigene Felder definieren. Import aus Excel, Outlook, Google Kontakte und vCard
-  mit Vorschau und Dublettenerkennung.
+  mit Vorschau und Dublettenerkennung. **Rufnummern und E-Mail-Adressen sind
+  anklickbar** – am Handy wählt ein Tipp direkt.
+
+  Rufnummern werden beim Speichern und beim Import international geschrieben:
+  aus „0151 123456" wird „+49 151 123456", aus „0201/1234567" wird
+  „+49 2011234567". Die Landesvorwahl steht unter *Einstellungen → Allgemein*
+  (Vorgabe +49) und gilt für Nummern mit führender 0. Nummern, die schon mit +
+  oder 00 beginnen, bleiben bei ihrem Land. Steht im Feld ein Hinweis statt
+  einer Nummer („über das Büro"), bleibt der Text unverändert stehen.
+  Bestehende Kontakte werden beim nächsten Start einmalig umgeschrieben.
 * **Besprechungen** – Talking Points im Themenspeicher sammeln, auf die
   Tagesordnung setzen, während der Sitzung Ergebnisse festhalten und daraus
   Aufgaben machen – einzeln über das vorausgefüllte Aufgabenformular, mehrere

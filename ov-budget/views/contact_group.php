@@ -68,8 +68,9 @@ foreach ($members as $m) {
             </td>
             <td class="small"><?= e($m['organisation'] ?: '–') ?></td>
             <td class="small">
-              <?php if ($m['email']): ?><a href="mailto:<?= e($m['email']) ?>"><?= e($m['email']) ?></a><br><?php endif; ?>
-              <?= e($m['telefon'] ?: $m['mobil'] ?: '') ?>
+              <?php if ($m['email']): ?><?= email_html($m['email']) ?><br><?php endif; ?>
+              <?php if ($m['mobil']): ?><?= phone_html($m['mobil']) ?><br><?php endif; ?>
+              <?php if ($m['telefon']): ?><?= phone_html($m['telefon']) ?><?php endif; ?>
             </td>
             <td><?= badge($m['status_label'] ? ['label' => $m['status_label'], 'color' => $m['status_color']] : null, 'offen') ?></td>
             <td class="num"><?= (int)$m['personen'] ?></td>

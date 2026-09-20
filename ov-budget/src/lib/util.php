@@ -367,6 +367,127 @@ function contrast_color(string $hex): string
     return (($r * 299 + $g * 587 + $b * 114) / 1000) > 150 ? '#111827' : '#ffffff';
 }
 
+/* ---------------- Rufnummern und E-Mail ---------------- */
+
+/**
+ * Rufnummer in die internationale Form bringen (E.164, z. B. +4915112345678).
+ * Reine Funktion.
+ *   "0151 / 123 45-67"  -> +49151123456 7 (ohne Trennzeichen)
+ *   "0049 151 ..."      -> +49151...
+ *   "+43 660 ..."       -> unverändert übernommen
+ * Steht eine zweite Nummer im Feld (nach Komma, Semikolon oder "oder"),
+ * zählt die erste. Der Schrägstrich trennt in "0201/1234567" die Vorwahl und
+ * gilt deshalb nur dann als Trenner, wenn danach eine eigene Nummer beginnt.
+ * Gibt null zurück, wenn sich keine wählbare Nummer erkennen lässt.
+ */
+function phone_e164(string $nr, string $land = '+49'): ?string
+{
+    $nr = trim($nr);
+    if ($nr === '') {
+        return null;
+    }
+    // Nur den ersten Eintrag nehmen, falls mehrere in einem Feld stehen
+    $nr = (string)preg_split('#[,;]| oder | bzw\.? #iu', $nr, 2)[0];
+    if (preg_match('#^(\D*(?:\d\D*){5,}?)\s*/\s*([0+]\D*\d.*)$#u', $nr, $m)) {
+        $nr = $m[1];   // "0201 1234567 / 0151 999888" – die zweite Nummer entfällt
+    }
+
+    $plus = str_starts_with(ltrim($nr), '+');
+    // "+49 (0)201" – die Null gilt nur im Inland; ohne Ländervorwahl bleibt sie
+    $nr = (string)preg_replace('/\(\s*0\s*\)/u', $plus ? '' : '0', $nr);
+    // Übrige Klammerzusätze wie "(privat)" entfernen, Durchwahl-Bindestriche behalten
+    $nr = (string)preg_replace('/\([^)]*\)/u', '', $nr);
+    $ziffern = (string)preg_replace('/\D+/', '', $nr);
+    if ($ziffern === '') {
+        return null;
+    }
+
+    $land = '+' . (string)preg_replace('/\D+/', '', $land);
+    if ($land === '+') {
+        $land = '+49';
+    }
+
+    if ($plus) {
+        $e164 = '+' . $ziffern;
+    } elseif (str_starts_with($ziffern, '00')) {
+        $e164 = '+' . substr($ziffern, 2);
+    } elseif (str_starts_with($ziffern, '0')) {
+        $e164 = $land . ltrim(substr($ziffern, 1), '0');
+    } else {
+        // Ohne Vorwahl lässt sich nichts ergänzen – so wählen wie eingegeben
+        $e164 = $ziffern;
+    }
+
+    // Zu kurz zum Wählen (Notrufe wie 112 bleiben erlaubt)
+    $stellen = strlen((string)preg_replace('/\D+/', '', $e164));
+    if ($stellen < 3 || $stellen > 15) {
+        return null;
+    }
+    return $e164;
+}
+
+/** Eingestellte Landesvorwahl; ohne Einstellungen +49 */
+function phone_land(): string
+{
+    return function_exists('setting') ? (string)setting('telefon_landesvorwahl', '+49') : '+49';
+}
+
+/** Fertiger tel:-Verweis oder null */
+function phone_link(string $nr, ?string $land = null): ?string
+{
+    $e164 = phone_e164($nr, $land ?? phone_land());
+    return $e164 === null ? null : 'tel:' . $e164;
+}
+
+/**
+ * Anzeigeform: internationale Nummer mit Vorwahl abgesetzt,
+ * z. B. "+49 151 12345678". Reine Funktion.
+ */
+function phone_human(string $nr, ?string $land = null): string
+{
+    $e164 = phone_e164($nr, $land ?? phone_land());
+    if ($e164 === null) {
+        return trim($nr);
+    }
+    if (!str_starts_with($e164, '+49') || strlen($e164) < 7) {
+        return $e164;
+    }
+    $rest = substr($e164, 3);
+    // Mobilnummern haben eine dreistellige Netzkennung (0151, 0176 ...);
+    // Ortsnetzkennzahlen sind unterschiedlich lang und werden nicht geraten.
+    if (preg_match('/^1[5-7]\d/', $rest)) {
+        return '+49 ' . substr($rest, 0, 3) . ' ' . substr($rest, 3);
+    }
+    return '+49 ' . $rest;
+}
+
+/**
+ * HTML für eine anklickbare Rufnummer. Ohne erkennbare Nummer bleibt
+ * es beim Text; ohne Eingabe kommt $leer zurück.
+ */
+function phone_html(?string $nr, string $leer = '–'): string
+{
+    $nr = trim((string)$nr);
+    if ($nr === '') {
+        return $leer;
+    }
+    $link = phone_link($nr);
+    $text = phone_human($nr);
+    return $link === null
+        ? e($text)
+        : '<a href="' . e($link) . '">' . e($text) . '</a>';
+}
+
+/** HTML für eine anklickbare E-Mail-Adresse */
+function email_html(?string $adresse, string $leer = '–'): string
+{
+    $adresse = trim((string)$adresse);
+    if ($adresse === '') {
+        return $leer;
+    }
+    return '<a href="mailto:' . e($adresse) . '">' . e($adresse) . '</a>';
+}
+
 /** Farbiges Label (Status, Dringlichkeit ...) */
 function badge(?array $item, string $fallback = '–'): string
 {

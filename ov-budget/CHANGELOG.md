@@ -1,5 +1,21 @@
 # Änderungsverlauf
 
+## 1.24.0
+
+### Kontakte: anrufen und mailen mit einem Tipp
+
+- Rufnummern und E-Mail-Adressen sind in der Kontaktliste, im Verteiler und im
+  Bearbeiten-Formular anklickbar (`tel:` und `mailto:`). Am Handy wählt ein
+  Tipp direkt, am PC öffnet sich ein Softphone, falls eingerichtet.
+- In der Handy-Ansicht der Kontaktliste standen bisher weder Nummer noch
+  E-Mail – jetzt stehen Mobil, Telefon und E-Mail dort antippbar.
+- **Rufnummern international:** Beim Speichern und beim Import wird aus
+  „0151 123456" die Form „+49 151 123456". Erkannt werden Schreibweisen mit
+  Klammern, Schrägstrich, Bindestrichen und „(0)"; steht eine zweite Nummer im
+  Feld, zählt die erste. Text statt Nummer bleibt unverändert.
+- Die Landesvorwahl ist einstellbar (Einstellungen → Allgemein, Vorgabe +49).
+- Beim nächsten Start werden bestehende Kontakte einmalig umgeschrieben.
+
 ## 1.23.0
 
 ### Instandsetzungsaufträge: Fotos je Auftrag

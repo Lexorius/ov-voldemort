@@ -29,6 +29,8 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 
 ### Kontakte
 - Ansprechpartner mit eigenen Zusatzfeldern
+- **Anrufen und mailen mit einem Tipp**; Rufnummern werden international
+  gespeichert (+49 …)
 - Verteiler für Einladungen mit Rückmeldung, CSV für den Serienbrief
 - Import aus Excel/CSV, Outlook, Google Kontakte und vCard mit
   Dublettenerkennung

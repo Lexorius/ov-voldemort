@@ -107,6 +107,13 @@ foreach ($rows as $r) {
               </div>
             </div>
           </div>
+          <?php if ($c['telefon'] || $c['mobil'] || $c['email']): ?>
+            <div class="small" style="margin-top:.3rem;display:flex;gap:.6rem;flex-wrap:wrap">
+              <?php if ($c['mobil']): ?><span>📱 <?= phone_html($c['mobil']) ?></span><?php endif; ?>
+              <?php if ($c['telefon']): ?><span>☎ <?= phone_html($c['telefon']) ?></span><?php endif; ?>
+              <?php if ($c['email']): ?><span>✉ <?= email_html($c['email']) ?></span><?php endif; ?>
+            </div>
+          <?php endif; ?>
           <div class="item__meta">
             <?= badge($c['kategorie_label'] ? ['label' => $c['kategorie_label'], 'color' => $c['kategorie_color']] : null, 'ohne Kategorie') ?>
             <?php if (!(int)$c['is_active']): ?><span class="badge badge--muted">inaktiv</span><?php endif; ?>
@@ -137,12 +144,14 @@ foreach ($rows as $r) {
             <td class="small"><?= e($c['organisation'] ?: '–') ?></td>
             <td><?= badge($c['kategorie_label'] ? ['label' => $c['kategorie_label'], 'color' => $c['kategorie_color']] : null, '–') ?></td>
             <td class="small"><?= e(trim($c['plz'] . ' ' . $c['ort']) ?: '–') ?></td>
-            <td class="small">
-              <?php if ($c['email']): ?>
-                <a href="mailto:<?= e($c['email']) ?>"><?= e($c['email']) ?></a>
-              <?php else: ?>–<?php endif; ?>
+            <td class="small"><?= email_html($c['email']) ?></td>
+            <td class="small nowrap">
+              <?= phone_html($c['telefon'], $c['mobil'] ? '' : '–') ?>
+              <?php if ($c['mobil']): ?>
+                <?php if ($c['telefon']): ?><br><?php endif; ?>
+                <?= phone_html($c['mobil']) ?> <span class="muted">mobil</span>
+              <?php endif; ?>
             </td>
-            <td class="small nowrap"><?= e($c['telefon'] ?: $c['mobil'] ?: '–') ?></td>
             <td class="num small"><?= (int)$c['verteiler'] ?></td>
             <td><?php if (can('manage_contacts')): ?>
               <a class="btn btn--sec btn--sm" href="<?= e(url('contact_edit', ['id' => $c['id']])) ?>">Bearbeiten</a>

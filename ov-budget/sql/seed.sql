@@ -235,6 +235,7 @@ INSERT IGNORE INTO list_items (list_key, label, slug, sort_order, is_default) VA
 INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_order) VALUES
 ('app_name','OV-Budget','Name der Anwendung','Erscheint im Kopf und Browser-Titel','text','Allgemein',10),
 ('ov_name','THW Ortsverband Musterstadt','Name des Ortsverbands','','text','Allgemein',20),
+('telefon_landesvorwahl','+49','Landesvorwahl für Rufnummern','Nummern mit führender 0 werden damit international gespeichert (z. B. 0151… wird +49 151…).','text','Allgemein',35),
 ('ov_kurz','OV Musterstadt','Kurzname','Für die mobile Ansicht','text','Allgemein',30),
 ('theme_color','#003399','Akzentfarbe','THW-Blau ist #003399','color','Allgemein',40),
 ('footer_text','Interne Planungshilfe – keine offizielle Beschaffungsplattform.','Fußzeile','','textarea','Allgemein',50),
