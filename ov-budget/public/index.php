@@ -52,6 +52,7 @@ $routes = [
     'meeting_print'      => 'meeting_print',
     'talking_points'     => 'talking_points',
     'talking_point_edit' => 'talking_point_edit',
+    'talking_point'      => 'talking_point',
 
     // Fahrzeuge
     'vehicles'           => 'vehicles',

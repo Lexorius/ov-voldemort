@@ -221,6 +221,7 @@ function tp_select(): string
                    (CHAR_LENGTH(tp.divera_entry_id) > 0) AS aus_divera,
                    m.titel AS meeting_titel, m.datum AS meeting_datum, m.status AS meeting_status,
                    td.titel AS todo_titel,
+                   (SELECT COUNT(*) FROM talking_point_comments tc WHERE tc.tp_id = tp.id) AS anmerkungen,
                    (SELECT COUNT(*) FROM talking_points n WHERE n.vorgaenger_id = tp.id) AS nachfolger
             FROM talking_points tp
             LEFT JOIN list_items st ON st.id = tp.status_id
@@ -333,6 +334,79 @@ function tp_archive(array $f = []): array
     }
     unset($r);
     return $rows;
+}
+
+/* ---------------- Anmerkungen ---------------- */
+
+/** Ein Punkt mit allen Beschriftungen */
+function tp_find_full(int $id): ?array
+{
+    return db_row(tp_select() . ' WHERE tp.id = ?', [$id]);
+}
+
+/**
+ * Darf zu diesem Punkt noch diskutiert werden?
+ * Solange er nicht abgeschlossen ist – also nicht besprochen, beschlossen,
+ * abgelehnt oder zurückgezogen. Vertagte Punkte bleiben offen. Reine Funktion.
+ */
+function tp_discussion_open(array $tp): bool
+{
+    return (int)($tp['status_final'] ?? 0) !== 1;
+}
+
+function tp_comments(int $tpId): array
+{
+    return db_all(
+        "SELECT c.*, COALESCE(NULLIF(u.display_name, ''), u.username) AS autor
+         FROM talking_point_comments c
+         LEFT JOIN users u ON u.id = c.user_id
+         WHERE c.tp_id = ?
+         ORDER BY c.id",
+        [$tpId]
+    );
+}
+
+/**
+ * Anmerkung speichern. Rückgabe: Fehlermeldung oder null.
+ * Wer eingebracht oder schon mitdiskutiert hat, wird benachrichtigt.
+ */
+function tp_comment_add(array $tp, array $user, string $text): ?string
+{
+    $text = trim($text);
+    if ($text === '') {
+        return 'Bitte etwas eintragen.';
+    }
+    if (!tp_discussion_open($tp)) {
+        return 'Dieser Punkt ist abgeschlossen – Anmerkungen sind nicht mehr möglich.';
+    }
+    $id = db_insert('talking_point_comments', [
+        'tp_id'   => (int)$tp['id'],
+        'user_id' => (int)$user['id'],
+        'body'    => mb_substr($text, 0, 5000),
+    ]);
+    audit('tp.anmerkung', 'talking_point', (int)$tp['id'], mb_substr($text, 0, 80));
+
+    $beteiligte = array_map(static fn($r) => (int)$r['user_id'],
+        db_all('SELECT DISTINCT user_id FROM talking_point_comments WHERE tp_id = ? AND user_id IS NOT NULL',
+            [(int)$tp['id']]));
+    $beteiligte[] = (int)($tp['eingebracht_von'] ?? 0);
+    notify_queue(
+        array_diff($beteiligte, [(int)$user['id']]),
+        'tp_anmerkung',
+        'Anmerkung zu „' . $tp['titel'] . '"',
+        (string)($user['display_name'] ?: $user['username']) . ': ' . mb_strimwidth($text, 0, 180, '…'),
+        '?p=talking_point&id=' . (int)$tp['id'] . '#anmerkung' . $id
+    );
+    return null;
+}
+
+/** Löschen dürfen die Person selbst und die Leitung – solange der Punkt offen ist */
+function tp_comment_deletable(array $kommentar, array $tp, array $user): bool
+{
+    if (!tp_discussion_open($tp)) {
+        return false;
+    }
+    return (int)$kommentar['user_id'] === (int)$user['id'] || can('manage_meetings');
 }
 
 /** Darf der Benutzer diesen Punkt bearbeiten? */

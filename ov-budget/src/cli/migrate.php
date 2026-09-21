@@ -658,6 +658,23 @@ function ovb_migrate(PDO $pdo, callable $say): void
         $say('Tabelle für Web-Push-Abos angelegt.');
     }
     $merken('016_webpush');
+
+    /* ---- 017: Anmerkungen zu Talking Points ---- */
+    if (!ovb_table_exists($pdo, 'talking_point_comments') && ovb_table_exists($pdo, 'talking_points')) {
+        $pdo->exec("CREATE TABLE talking_point_comments (
+  id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  tp_id      INT UNSIGNED NOT NULL,
+  user_id    INT UNSIGNED NULL,
+  body       TEXT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_tpc_tp (tp_id, id),
+  CONSTRAINT fk_tpc_tp   FOREIGN KEY (tp_id)   REFERENCES talking_points(id) ON DELETE CASCADE,
+  CONSTRAINT fk_tpc_user FOREIGN KEY (user_id) REFERENCES users(id)          ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        $say('Tabelle für Anmerkungen zu Talking Points angelegt.');
+    }
+    $merken('017_tp_anmerkungen');
 }
 
 /**

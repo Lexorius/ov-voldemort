@@ -71,7 +71,12 @@ $diveraThemen ??= [];
               <input type="checkbox" name="tp_ids[]" value="<?= (int)$t['id'] ?>" aria-label="auswählen" style="margin-top:.2rem">
             <?php endif; ?>
             <div style="min-width:0">
-              <div class="item__title"><?= e($t['titel']) ?></div>
+              <div class="item__title">
+                <a href="<?= e(url('talking_point', ['id' => $t['id']])) ?>"><?= e($t['titel']) ?></a>
+                <?php if ((int)$t['anmerkungen'] > 0): ?>
+                  <a class="small muted" href="<?= e(url('talking_point', ['id' => $t['id']])) ?>#anmerkungen">· <?= (int)$t['anmerkungen'] ?> Anmerkung(en)</a>
+                <?php endif; ?>
+              </div>
               <div class="item__sub">
                 <?php if ($t['status_slug'] === 'vertagt'): ?>
                   vertagt aus „<?= e((string)$t['meeting_titel']) ?>" vom <?= e(de_date($t['meeting_datum'])) ?>

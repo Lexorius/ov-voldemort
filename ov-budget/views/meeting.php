@@ -112,13 +112,17 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
                 <?php if ($zeiten[$i] !== ''): ?> · <?= e($zeiten[$i]) ?> Uhr<?php endif; ?>
                 · <?= e(minutes_human($p['dauer_min'] !== null ? (int)$p['dauer_min'] : setting_int('tp_dauer_vorgabe', 10))) ?>
               </div>
-              <h3 style="margin:.15rem 0 0"><?= e($p['titel']) ?></h3>
+              <h3 style="margin:.15rem 0 0"><a href="<?= e(url('talking_point', ['id' => $p['id']])) ?>"><?= e($p['titel']) ?></a></h3>
               <div class="item__meta">
                 <?= badge($p['status_label'] ? ['label' => $p['status_label'], 'color' => $p['status_color']] : null) ?>
                 <?php if ($p['prio_label']): ?><?= badge(['label' => $p['prio_label'], 'color' => $p['prio_color']]) ?><?php endif; ?>
                 <?php if ($p['fachgruppe_label']): ?><span class="badge badge--outline"><?= e($p['fachgruppe_label']) ?></span><?php endif; ?>
                 <?php if ($p['einbringer']): ?><span class="small muted">eingebracht von <?= e($p['einbringer']) ?></span><?php endif; ?>
                 <?php if ($p['vorgaenger_id']): ?><span class="badge badge--outline">vertagt übernommen</span><?php endif; ?>
+                <a class="small" href="<?= e(url('talking_point', ['id' => $p['id']])) ?>#anmerkungen"><?=
+                    (int)$p['anmerkungen'] > 0
+                        ? (int)$p['anmerkungen'] . ' Anmerkung(en)'
+                        : (tp_discussion_open($p) ? 'Anmerkung schreiben' : '') ?></a>
               </div>
             </div>
             <?php if ($verwalten && $geplant): ?>

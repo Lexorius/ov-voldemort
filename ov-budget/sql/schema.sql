@@ -524,6 +524,19 @@ CREATE TABLE IF NOT EXISTS talking_points (
   CONSTRAINT fk_tp_user    FOREIGN KEY (eingebracht_von) REFERENCES users(id)          ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Anmerkungen und Diskussion zu einem Talking Point, solange er offen ist
+CREATE TABLE IF NOT EXISTS talking_point_comments (
+  id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  tp_id      INT UNSIGNED NOT NULL,
+  user_id    INT UNSIGNED NULL,
+  body       TEXT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_tpc_tp (tp_id, id),
+  CONSTRAINT fk_tpc_tp   FOREIGN KEY (tp_id)   REFERENCES talking_points(id) ON DELETE CASCADE,
+  CONSTRAINT fk_tpc_user FOREIGN KEY (user_id) REFERENCES users(id)          ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ------------------------------------------------------------
 -- Bestellberechtigungen: je Rolle oder Funktion, wer Wünsche zur
 -- Bestellung freigeben (optional bis zu einem Nettobetrag) und wer sie

@@ -1,5 +1,22 @@
 # Änderungsverlauf
 
+## 1.28.0
+
+### Talking Points: Anmerkungen und Diskussion
+
+- Jeder Talking Point hat jetzt eine eigene Seite mit Beschreibung, Stand und
+  einer **Diskussion**. Erreichbar über den Titel im Themenspeicher, im
+  Archiv und auf der Besprechungsseite; dort steht auch die Zahl der
+  Anmerkungen.
+- Anmerkungen sind möglich, **solange der Punkt nicht abgeschlossen ist**
+  (besprochen, beschlossen, abgelehnt oder zurückgezogen). Danach bleibt die
+  Diskussion lesbar. Vertagte Punkte bleiben offen.
+- Die eigene Anmerkung lässt sich wieder entfernen, die Leitung kann jede
+  entfernen – beides nur, solange der Punkt offen ist.
+- Neues Benachrichtigungsereignis: Wer den Punkt eingebracht oder schon
+  mitdiskutiert hat, bekommt neue Anmerkungen gemeldet (über die
+  Companion-App oder Web Push). Ein Tipp führt direkt zur Anmerkung.
+
 ## 1.27.9
 
 ### HTTP 401 beim Öffnen von Dateien am Handy

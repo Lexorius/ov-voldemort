@@ -31,6 +31,8 @@ function notify_ereignisse(): array
                                  'text'  => 'An die Leitung, wenn eine Meldung das Fahrzeug stilllegt.'],
         'fristen'            => ['label' => 'Fristen laufen ab (HU, SP, UVV)', 'taeglich' => true,
                                  'text'  => 'Einmal am Tag an die Leitung, solange eine Frist bald fällig oder abgelaufen ist.'],
+        'tp_anmerkung'       => ['label' => 'Neue Anmerkung zu einem Talking Point',
+                                 'text'  => 'An die Person, die den Punkt eingebracht hat, und alle, die schon mitdiskutiert haben.'],
         'besprechung'        => ['label' => 'Besprechung am nächsten Tag', 'taeglich' => true,
                                  'text'  => 'Einmal am Tag an alle mit Benachrichtigungen, wenn morgen eine Besprechung ansteht.'],
     ];

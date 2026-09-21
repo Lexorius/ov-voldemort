@@ -55,7 +55,12 @@ $label = tp_label();
       <div class="item" style="border-left-color:<?= e($t['status_color'] ?: '#94a3b8') ?>">
         <div class="item__top">
           <div style="min-width:0">
-            <div class="item__title"><?= e($t['titel']) ?></div>
+            <div class="item__title">
+              <a href="<?= e(url('talking_point', ['id' => $t['id']])) ?>"><?= e($t['titel']) ?></a>
+              <?php if ((int)$t['anmerkungen'] > 0): ?>
+                <span class="small muted">· <?= (int)$t['anmerkungen'] ?> Anmerkung(en)</span>
+              <?php endif; ?>
+            </div>
             <div class="item__sub">
               <?php if ($t['meeting_id']): ?>
                 <a href="<?= e(url('meeting', ['id' => $t['meeting_id']])) ?>#tp<?= (int)$t['id'] ?>"><?= e((string)$t['meeting_titel']) ?></a>

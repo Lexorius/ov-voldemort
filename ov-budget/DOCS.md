@@ -151,6 +151,21 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   Themenspeicher (Titel, Beschreibung, Fachgruppe, Priorität, Zeitbedarf,
   Einreicher). So lassen sich Themen direkt in Divera einreichen.
 
+## Anmerkungen zu Talking Points
+
+Jeder Talking Point hat eine eigene Seite – erreichbar über seinen Titel im
+Themenspeicher, im Archiv und in der Besprechung. Dort lässt sich über den
+Punkt diskutieren: Ergänzungen, Rückfragen, Gegenvorschläge.
+
+* Anmerkungen gehen, **solange der Punkt nicht abgeschlossen ist**. Mit einem
+  abschließenden Status (besprochen, beschlossen, abgelehnt, zurückgezogen)
+  wird die Diskussion zu einem lesbaren Verlauf. Vertagte Punkte bleiben offen.
+* Die eigene Anmerkung lässt sich entfernen, die Leitung kann jede entfernen –
+  ebenfalls nur, solange der Punkt offen ist.
+* Wer den Punkt eingebracht oder schon mitdiskutiert hat, wird benachrichtigt
+  (Ereignis *Neue Anmerkung zu einem Talking Point*, einzeln abschaltbar).
+* In der Besprechung steht bei jedem Punkt die Zahl der Anmerkungen.
+
 ## Themenarchiv
 
 Der Themenspeicher hat zwei Reiter: **Offen** (noch keiner Besprechung
