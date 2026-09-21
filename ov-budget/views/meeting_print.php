@@ -1,6 +1,9 @@
 <?php
 /** @var array $meeting @var array $punkte @var array $zeiten @var int $gesamt @var string $art
- *  @var array $teilnehmer */
+ *  @var array $teilnehmer @var array $anmerkungen @var bool $mitAnmerkungen @var bool $mitNamen */
+$anmerkungen ??= [];
+$mitAnmerkungen ??= false;
+$mitNamen ??= true;
 $protokoll = $art === 'protokoll';
 $label = tp_label();
 $ovName = (string)setting('ov_name', '');
@@ -39,16 +42,31 @@ $ovName = (string)setting('ov_name', '');
   .ergebnis__kopf { font-size: 9pt; font-weight: 700; color: #334155; }
   .ergebnis__text { white-space: pre-wrap; }
   .leer { margin: .4rem 0 0 16mm; height: 14mm; border-bottom: 1px dotted #94a3b8; }
+  .anm { margin: .35rem 0 0 16mm; font-size: 8.5pt; line-height: 1.35; color: #475569; }
+  .anm__kopf { font-weight: 700; text-transform: uppercase; letter-spacing: .04em; font-size: 7.5pt; }
+  .anm ul { margin: .15rem 0 0; padding-left: 1rem; }
+  .anm li { margin: .1rem 0; white-space: pre-wrap; }
+  .anm__wer { color: #64748b; }
+  .leiste { position: fixed; top: 1rem; right: 7.5rem; font-size: 9pt; }
+  .leiste a { color: #003399; }
   .notizen { margin-top: 1rem; border-top: 2px solid #003399; padding-top: .6rem; }
   .fuss { margin-top: 1.5rem; font-size: 8.5pt; color: #64748b; display: flex; justify-content: space-between; }
   .knopf { position: fixed; top: 1rem; right: 1rem; padding: .5rem .9rem; border: 0; border-radius: 8px;
            background: #003399; color: #fff; font: inherit; cursor: pointer; }
-  @media print { .knopf { display: none; } body { padding: 0; } }
+  @media print { .knopf, .leiste { display: none; } body { padding: 0; } }
 </style>
 </head>
 <body>
 
 <button class="knopf" type="button" onclick="window.print()">Drucken</button>
+<div class="leiste">
+  <?php $mitArt = $protokoll ? ['art' => 'protokoll'] : []; ?>
+  <?php if ($mitAnmerkungen): ?>
+    <a href="<?= e(url('meeting_print', ['id' => $meeting['id']] + $mitArt + ['anmerkungen' => '0'])) ?>">ohne Anmerkungen</a>
+  <?php else: ?>
+    <a href="<?= e(url('meeting_print', ['id' => $meeting['id']] + $mitArt + ['anmerkungen' => '1'])) ?>">mit Anmerkungen</a>
+  <?php endif; ?>
+</div>
 
 <div class="kopf">
   <div>
@@ -140,6 +158,18 @@ $ovName = (string)setting('ov_name', '');
       <?php endif; ?>
     <?php else: ?>
       <div class="leer"></div>
+    <?php endif; ?>
+
+    <?php if ($mitAnmerkungen && !empty($anmerkungen[(int)$p['id']])): ?>
+      <div class="anm">
+        <div class="anm__kopf">Anmerkungen</div>
+        <ul>
+          <?php foreach ($anmerkungen[(int)$p['id']] as $k): ?>
+            <li><?php if ($mitNamen): ?><span class="anm__wer"><?= e($k['autor'] ?: 'unbekannt') ?>,
+              <?= e(date('d.m.', (int)strtotime((string)$k['created_at']))) ?>:</span> <?php endif; ?><?= e((string)$k['body']) ?></li>
+          <?php endforeach; ?>
+        </ul>
+      </div>
     <?php endif; ?>
   </div>
 <?php endforeach; ?>

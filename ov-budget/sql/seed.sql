@@ -339,6 +339,8 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('besprechung_intro','Themen sammeln, auf Besprechungen setzen und Ergebnisse festhalten.','Einleitungstext','','textarea','Besprechungen',30),
 ('besprechung_user_darf_sehen','1','Alle Mitglieder duerfen Besprechungen sehen','Sonst nur Leitung und Administration','bool','Besprechungen',40),
 ('tp_user_darf_anlegen','1','Alle Mitglieder duerfen Themen einbringen','Eigene Themen bleiben bearbeitbar, bis sie besprochen sind','bool','Besprechungen',50),
+('protokoll_anmerkungen','protokoll','Anmerkungen im Ausdruck','Ob die Anmerkungen zu den Talking Points klein gedruckt mit erscheinen. Beim Drucken laesst es sich jedes Mal umschalten.','select','Besprechungen',70),
+('protokoll_anmerkungen_namen','1','Im Ausdruck Namen und Zeitpunkt der Anmerkungen zeigen','Aus = nur der Text','bool','Besprechungen',71),
 ('tp_dauer_vorgabe','10','Vorgabedauer je Thema (Minuten)','Fuer die geplanten Uhrzeiten in der Tagesordnung','number','Besprechungen',60),
 ('serie_vorlauf_tage','60','Wiederkehrende Besprechungen: Termine im Voraus (Tage)','So weit in die Zukunft werden Termine einer Serie angelegt, damit man Themen daraufsetzen kann','number','Besprechungen',70),
 ('session_lifetime','43200','Session-Laufzeit in Sekunden','Standard: 12 Stunden','number','Sicherheit',10),

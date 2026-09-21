@@ -165,6 +165,10 @@ Punkt diskutieren: Ergänzungen, Rückfragen, Gegenvorschläge.
 * Wer den Punkt eingebracht oder schon mitdiskutiert hat, wird benachrichtigt
   (Ereignis *Neue Anmerkung zu einem Talking Point*, einzeln abschaltbar).
 * In der Besprechung steht bei jedem Punkt die Zahl der Anmerkungen.
+* **Im Ausdruck** erscheinen die Anmerkungen klein unter dem jeweiligen Punkt.
+  *Einstellungen → Besprechungen*: nur im Protokoll (Vorgabe), in Tagesordnung
+  und Protokoll oder nie; dazu, ob Name und Tag mitgedruckt werden. Oben auf
+  der Druckansicht lässt es sich für den einzelnen Ausdruck umschalten.
 
 ## Themenarchiv
 

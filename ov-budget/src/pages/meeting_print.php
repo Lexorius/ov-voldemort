@@ -19,6 +19,11 @@ $dauern = array_map(static fn($p) => $p['dauer_min'] !== null ? (int)$p['dauer_m
 // Protokoll erst sinnvoll, wenn es Ergebnisse gibt – sonst Tagesordnung
 $art = get_str('art') === 'protokoll' ? 'protokoll' : 'tagesordnung';
 
+// Anmerkungen: Einstellung, beim Drucken umschaltbar (?anmerkungen=1/0)
+$umschalter = in_array(get_str('anmerkungen'), ['0', '1'], true) ? get_str('anmerkungen') : null;
+$mitAnmerkungen = meeting_print_with_comments($art,
+    (string)setting('protokoll_anmerkungen', 'protokoll'), $umschalter);
+
 echo render_partial('meeting_print', [
     'meeting' => $meeting,
     'punkte'  => $punkte,
@@ -27,4 +32,8 @@ echo render_partial('meeting_print', [
     'art'     => $art,
     'teilnehmer' => attendance_list((int)$meeting['id']),
     'aufgaben'   => meeting_todos((int)$meeting['id']),
+    'anmerkungen' => $mitAnmerkungen
+        ? tp_comments_for(array_map(static fn($p) => (int)$p['id'], $punkte)) : [],
+    'mitAnmerkungen' => $mitAnmerkungen,
+    'mitNamen'   => setting_bool('protokoll_anmerkungen_namen', true),
 ]);

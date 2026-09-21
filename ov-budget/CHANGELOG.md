@@ -1,5 +1,18 @@
 # Änderungsverlauf
 
+## 1.28.1
+
+### Anmerkungen im Ausdruck
+
+- Tagesordnung und Protokoll drucken die Anmerkungen zu den Talking Points
+  jetzt klein unter dem jeweiligen Punkt mit.
+- Einstellbar unter *Einstellungen → Besprechungen*: nur im Protokoll
+  (Vorgabe), in Tagesordnung und Protokoll oder nie – und ob Name und Tag der
+  Anmerkung dabeistehen.
+- Oben in der Druckansicht lässt es sich für den einzelnen Ausdruck umschalten
+  („mit Anmerkungen" / „ohne Anmerkungen"); der Schalter selbst wird nicht
+  mitgedruckt.
+
 ## 1.28.0
 
 ### Talking Points: Anmerkungen und Diskussion

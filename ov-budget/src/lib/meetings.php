@@ -409,6 +409,55 @@ function tp_comment_deletable(array $kommentar, array $tp, array $user): bool
     return (int)$kommentar['user_id'] === (int)$user['id'] || can('manage_meetings');
 }
 
+/** Möglichkeiten für die Einstellung "Anmerkungen im Ausdruck" */
+const MEETING_DRUCK_ANMERKUNGEN = [
+    'protokoll' => 'nur im Protokoll',
+    'beide'     => 'in Tagesordnung und Protokoll',
+    'aus'       => 'nie',
+];
+
+/**
+ * Sollen Anmerkungen in diesen Ausdruck? Reine Funktion.
+ * $art: 'protokoll' oder 'tagesordnung'; $einstellung aus den Einstellungen;
+ * $umschalter aus der Adresse ('1', '0' oder null = Einstellung gilt).
+ */
+function meeting_print_with_comments(string $art, string $einstellung, ?string $umschalter): bool
+{
+    if ($umschalter === '1') {
+        return true;
+    }
+    if ($umschalter === '0') {
+        return false;
+    }
+    return match ($einstellung) {
+        'beide' => true,
+        'aus'   => false,
+        default => $art === 'protokoll',
+    };
+}
+
+/** Anmerkungen vieler Punkte auf einmal: [tp_id => [Anmerkung, …]] */
+function tp_comments_for(array $tpIds): array
+{
+    $ids = array_values(array_unique(array_filter(array_map('intval', $tpIds))));
+    if (!$ids) {
+        return [];
+    }
+    $in = implode(',', array_fill(0, count($ids), '?'));
+    $out = [];
+    foreach (db_all(
+        "SELECT c.*, COALESCE(NULLIF(u.display_name, ''), u.username) AS autor
+         FROM talking_point_comments c
+         LEFT JOIN users u ON u.id = c.user_id
+         WHERE c.tp_id IN ($in)
+         ORDER BY c.tp_id, c.id",
+        $ids
+    ) as $c) {
+        $out[(int)$c['tp_id']][] = $c;
+    }
+    return $out;
+}
+
 /** Darf der Benutzer diesen Punkt bearbeiten? */
 function tp_editable(array $tp, ?array $user = null): bool
 {

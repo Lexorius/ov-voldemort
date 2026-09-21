@@ -57,6 +57,12 @@
                 <?= e($text) ?></option>
             <?php endforeach; ?>
           </select>
+        <?php elseif ($s['stype'] === 'select' && $s['skey'] === 'protokoll_anmerkungen'): ?>
+          <select id="<?= e($id) ?>" name="<?= e($id) ?>">
+            <?php foreach (MEETING_DRUCK_ANMERKUNGEN as $wert => $text): ?>
+              <option value="<?= e($wert) ?>"<?= $val === $wert ? ' selected' : '' ?>><?= e($text) ?></option>
+            <?php endforeach; ?>
+          </select>
         <?php elseif ($s['stype'] === 'select' && $s['skey'] === 'divera_auth_mode'): ?>
           <select id="<?= e($id) ?>" name="<?= e($id) ?>">
             <option value="query"<?= $val === 'query' ? ' selected' : '' ?>>Als Parameter (?accesskey=...)</option>
