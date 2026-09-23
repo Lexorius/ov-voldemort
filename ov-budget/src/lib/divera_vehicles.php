@@ -246,7 +246,7 @@ function dv_vehicles_for_matching(): array
 {
     return db_all(
         'SELECT id, bezeichnung, funkrufname, kennzeichen, issi, opta, ric, divera_vehicle_id,
-                fms_status, fms_at, stein_asset_id
+                fms_status, fms_at, geo_lat, geo_lng, stein_asset_id
          FROM vehicles WHERE is_active = 1'
     );
 }
@@ -341,12 +341,20 @@ function dv_sync_status_locked(int $jetzt): array
         $ergebnis['daten']['divera_daten'] = json_encode($st, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         db_update('vehicles', $ergebnis['daten'], 'id = ?', [$id]);
 
+        // Standort: beim Statuswechsel mit vermerken, sonst nur bei größerer Bewegung
+        $pos = dv_position_text($ergebnis['daten']['geo_lat'] ?? null, $ergebnis['daten']['geo_lng'] ?? null);
+        $bewegung = dv_movement_note(
+            $fz['geo_lat'] ?? null, $fz['geo_lng'] ?? null,
+            $ergebnis['daten']['geo_lat'] ?? null, $ergebnis['daten']['geo_lng'] ?? null,
+            setting_int('divera_position_journal_meter', 0)
+        );
+
         $w = $ergebnis['statuswechsel'];
         if ($w !== null && $insJournal) {
             journal_add($id, [
                 'art'      => 'fms',
                 'titel'    => fms_label($w['neu']) . ($w['zeit'] ? ' um ' . date('H:i', (int)strtotime($w['zeit'])) . ' Uhr' : ''),
-                'text'     => $w['notiz'],
+                'text'     => trim($w['notiz'] . ($pos !== '' ? "\nStandort: " . $pos : '')),
                 'feld'     => 'fms_status',
                 'alt_wert' => $w['alt'] !== null ? fms_label($w['alt']) : '',
                 'neu_wert' => fms_label($w['neu']),
@@ -354,6 +362,22 @@ function dv_sync_status_locked(int $jetzt): array
                 'autor'    => 'Divera',
             ], null);
             $wechselAnzahl++;
+        } elseif ($bewegung !== null && $pos !== '' && $insJournal) {
+            // Eigener Eintrag nur, wenn die Bewegung nicht ohnehin oben steht
+            journal_add($id, [
+                'art'      => 'divera',
+                'titel'    => 'Standort ' . ($bewegung > 0
+                    ? 'geändert (' . ($bewegung >= 1000
+                        ? number_format($bewegung / 1000, 1, ',', '.') . ' km'
+                        : round($bewegung) . ' m') . ')'
+                    : 'erstmals bekannt'),
+                'text'     => 'Standort: ' . $pos,
+                'feld'     => 'geo',
+                'alt_wert' => dv_position_text($fz['geo_lat'] ?? null, $fz['geo_lng'] ?? null),
+                'neu_wert' => $pos,
+                'quelle'   => 'divera',
+                'autor'    => 'Divera',
+            ], null);
         }
     }
 
@@ -496,6 +520,45 @@ function dv_crew_of(array $vehicle): array
 }
 
 /** Link auf die Karte (OpenStreetMap) */
+/** Koordinaten als Text für das Journal, leer ohne Angabe. Reine Funktion. */
+function dv_position_text(mixed $lat, mixed $lng): string
+{
+    if (!is_numeric($lat) || !is_numeric($lng)) {
+        return '';
+    }
+    return sprintf('%.5f, %.5f', (float)$lat, (float)$lng);
+}
+
+/**
+ * Entfernung zweier Punkte in Metern (Haversine). Reine Funktion.
+ * Genau genug, um zu entscheiden, ob sich ein Fahrzeug bewegt hat.
+ */
+function dv_distance_m(float $lat1, float $lng1, float $lat2, float $lng2): float
+{
+    $r = 6371000.0;
+    $dLat = deg2rad($lat2 - $lat1);
+    $dLng = deg2rad($lng2 - $lng1);
+    $a = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
+    return $r * 2 * atan2(sqrt($a), sqrt(1 - $a));
+}
+
+/**
+ * Soll die Bewegung ins Journal? Nur wenn eingeschaltet und weit genug
+ * vom zuletzt vermerkten Punkt entfernt. Reine Funktion.
+ * Rückgabe: Entfernung in Metern oder null.
+ */
+function dv_movement_note(mixed $altLat, mixed $altLng, mixed $neuLat, mixed $neuLng, int $schwelleM): ?float
+{
+    if ($schwelleM <= 0 || !is_numeric($neuLat) || !is_numeric($neuLng)) {
+        return null;
+    }
+    if (!is_numeric($altLat) || !is_numeric($altLng)) {
+        return 0.0;   // erste bekannte Position
+    }
+    $m = dv_distance_m((float)$altLat, (float)$altLng, (float)$neuLat, (float)$neuLng);
+    return $m >= $schwelleM ? $m : null;
+}
+
 function dv_map_url(float $lat, float $lng): string
 {
     return sprintf('https://www.openstreetmap.org/?mlat=%1$.6f&mlon=%2$.6f#map=16/%1$.6f/%2$.6f', $lat, $lng);

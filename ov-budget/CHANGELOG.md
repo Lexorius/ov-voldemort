@@ -1,5 +1,18 @@
 # Änderungsverlauf
 
+## 1.30.1
+
+### Standort im Journal der Fahrzeugakte
+
+- Bisher wurden die Koordinaten aus Divera nur am Fahrzeug gespeichert und bei
+  jedem Abruf überschrieben – im Journal stand nichts davon.
+- Jetzt steht der Standort **im Eintrag zum Funkstatuswechsel** mit dabei. So
+  ist nachvollziehbar, wo das Fahrzeug bei „Einsatz übernommen" stand, ohne
+  dass das Journal volläuft.
+- Wer mehr will: *Einstellungen → Divera 24/7* → **Standortwechsel ins Journal
+  ab (Meter)**. Ab dieser Strecke gibt es einen eigenen Eintrag mit alter und
+  neuer Position. Vorgabe ist 0, also aus.
+
 ## 1.30.0
 
 ### Kacheln: Stempel für nicht einsatzbereite Fahrzeuge

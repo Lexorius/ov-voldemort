@@ -356,6 +356,11 @@ Dann holt die Anwendung:
   einstellbar. Wechsel zwischen zwei Abrufen sieht die Anwendung nicht.
 * **Letzte Position** mit Link auf die Karte (OpenStreetMap), abschaltbar.
 * **Besatzung**, die in Divera dem Fahrzeug zugeordnet ist, abschaltbar.
+* **Standort im Journal:** Bei jedem Funkstatuswechsel stehen die Koordinaten
+  im Journaleintrag. Reine Positionsmeldungen landen nur dort, wenn unter
+  *Einstellungen → Divera 24/7* eine Strecke eingetragen ist
+  (*Standortwechsel ins Journal ab (Meter)*, Vorgabe 0 = aus) – sonst gäbe es
+  alle paar Minuten einen Eintrag.
 * **OPTA, RIC**, dazu Kennzeichen und ISSI, falls bei uns noch nichts steht –
   aus der v3-Schnittstelle, die Divera noch als Beta führt. Sie braucht einen
   **persönlichen Accesskey** mit Verwaltungsrechten
