@@ -92,6 +92,22 @@ function vehicle_sort_sql(string $sort): string
     };
 }
 
+/**
+ * Stempel für die Kachel: Text oder null. Reine Funktion.
+ * Ausgemustert schlägt den Status – ein ausgemustertes Fahrzeug ist ohnehin weg.
+ */
+function vehicle_stamp(array $v): ?string
+{
+    if (!(int)($v['is_active'] ?? 1)) {
+        return 'Ausgemustert';
+    }
+    return match ((string)($v['status_slug'] ?? '')) {
+        'nicht-einsatzbereit' => 'Nicht einsatzbereit',
+        'wartung'             => 'In Wartung',
+        default               => null,
+    };
+}
+
 /** Fahrzeug-ids, die diese Person angeheftet hat */
 function vehicle_favorites(int $userId): array
 {

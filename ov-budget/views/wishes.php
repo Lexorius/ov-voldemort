@@ -1,5 +1,5 @@
 <?php
-/** @var array $rows @var array $stats @var array $filters @var array $votes @var array $budgets */
+/** @var array $rows @var array $stats @var array $filters @var array $votes @var array $budgets @var array $fahrzeuge */
 $modul = (string)setting('wunsch_modul_name', 'Wünsch dir was');
 $alle = get_str('alle') === '1';
 $mine = get_str('mine') === '1';
@@ -36,6 +36,16 @@ $mine = get_str('mine') === '1';
     <div class="field">
       <label for="fachgruppe_id">Fachgruppe</label>
       <select id="fachgruppe_id" name="fachgruppe_id"><?= list_options('fachgruppe', $filters['fachgruppe_id'], 'alle') ?></select>
+    </div>
+    <div class="field"<?= !empty($fahrzeuge) ? '' : ' hidden' ?>>
+      <label for="vehicle_id">Fahrzeug</label>
+      <select id="vehicle_id" name="vehicle_id">
+        <option value="">alle</option>
+        <?php foreach (($fahrzeuge ?? []) as $fz): ?>
+          <option value="<?= (int)$fz['id'] ?>"<?= (int)($filters['vehicle_id'] ?? 0) === (int)$fz['id'] ? ' selected' : '' ?>>
+            <?= e($fz['bezeichnung']) ?></option>
+        <?php endforeach; ?>
+      </select>
     </div>
     <div class="field">
       <label for="dringlichkeit_id">Dringlichkeit</label>

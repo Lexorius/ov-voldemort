@@ -86,6 +86,17 @@ $pflichtAb = setting_float('wunsch_angebot_pflicht_ab', 0);
         <label for="fachgruppe_id">Fachgruppe / Einheit</label>
         <select id="fachgruppe_id" name="fachgruppe_id"><?= list_options('fachgruppe', (int)($wish['fachgruppe_id'] ?? 0)) ?></select>
       </div>
+      <div class="field"<?= $fahrzeuge ? '' : ' hidden' ?>>
+        <label for="vehicle_id">Für welches Fahrzeug?</label>
+        <select id="vehicle_id" name="vehicle_id">
+          <option value="">– kein bestimmtes Fahrzeug –</option>
+          <?php foreach ($fahrzeuge as $fz): ?>
+            <option value="<?= (int)$fz['id'] ?>"<?= (int)($wish['vehicle_id'] ?? 0) === (int)$fz['id'] ? ' selected' : '' ?>>
+              <?= e($fz['bezeichnung'] . ($fz['kennzeichen'] ? ' · ' . $fz['kennzeichen'] : '')) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <small class="muted">Etwa Ersatzteil oder Ausstattung – der Wunsch erscheint dann auch in der Fahrzeugakte.</small>
+      </div>
       <div class="field">
         <label for="kategorie_id">Kategorie</label>
         <select id="kategorie_id" name="kategorie_id"><?= list_options('kategorie', (int)($wish['kategorie_id'] ?? 0)) ?></select>

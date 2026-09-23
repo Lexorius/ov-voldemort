@@ -236,6 +236,20 @@ h3 { font-size: 1rem; }
 .kachel__text { padding: .5rem .6rem .6rem; display: grid; gap: .25rem; }
 .kachel__text .item__title { text-decoration: none; }
 
+/* Schräger Stempel über der Kachel, wenn ein Fahrzeug nicht einsatzbereit ist */
+.kachel__bild { position: relative; }
+.stempel {
+  position: absolute; top: 50%; left: 50%; z-index: 1;
+  transform: translate(-50%, -50%) rotate(-18deg);
+  padding: .2rem .6rem; max-width: 95%;
+  border: 3px solid #b91c1c; border-radius: 6px;
+  color: #b91c1c; background: rgba(255, 255, 255, .72);
+  font-weight: 800; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase;
+  text-align: center; white-space: nowrap; opacity: .9; pointer-events: none;
+}
+.stempel--grau { border-color: #475569; color: #475569; }
+@media (prefers-color-scheme: dark) { .stempel { background: rgba(15, 23, 42, .68); } }
+
 .item-mit-stern { display: flex; align-items: flex-start; gap: .3rem; }
 .item-mit-stern > .item { flex: 1; min-width: 0; }
 .stern { border: 0; background: none; cursor: pointer; padding: .35rem .25rem; line-height: 1;

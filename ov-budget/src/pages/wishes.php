@@ -10,6 +10,7 @@ $filters = [
     'kategorie_id'     => get_int('kategorie_id'),
     'dringlichkeit_id' => get_int('dringlichkeit_id'),
     'budget_id'        => get_int('budget_id'),
+    'vehicle_id'       => get_int('vehicle_id'),
     'nice'             => get_str('nice'),
     'sort'             => get_str('sort', 'prio'),
     'offen'            => get_str('alle') === '1' ? 0 : 1,
@@ -21,6 +22,8 @@ $stats = wish_stats($rows);
 $votes = wish_votes_of_user((int)$user['id']);
 
 render('wishes', [
+    'fahrzeuge' => can('view_vehicles')
+        ? db_all('SELECT id, bezeichnung FROM vehicles WHERE is_active = 1 ORDER BY bezeichnung') : [],
     'title'   => (string)setting('wunsch_modul_name', 'Wünsch dir was'),
     'rows'    => $rows,
     'stats'   => $stats,

@@ -699,6 +699,19 @@ function ovb_migrate(PDO $pdo, callable $say): void
                     ADD KEY idx_thw_nummer (thw_nummer)");
     }
     $merken('019_thw_nummer');
+
+    /* ---- 020: Wünsche einem Fahrzeug zuordnen ---- */
+    if (ovb_table_exists($pdo, 'wishes')) {
+        if (!ovb_column_exists($pdo, 'wishes', 'vehicle_id')) {
+            $pdo->exec('ALTER TABLE wishes ADD COLUMN vehicle_id INT UNSIGNED NULL AFTER budget_id,
+                        ADD KEY idx_w_fahrzeug (vehicle_id)');
+        }
+        if (ovb_table_exists($pdo, 'vehicles') && !ovb_constraint_exists($pdo, 'wishes', 'fk_w_fahrzeug')) {
+            $pdo->exec('ALTER TABLE wishes ADD CONSTRAINT fk_w_fahrzeug
+                        FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE SET NULL');
+        }
+    }
+    $merken('020_wunsch_fahrzeug');
 }
 
 /**

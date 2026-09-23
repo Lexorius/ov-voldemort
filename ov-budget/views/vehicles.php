@@ -155,7 +155,11 @@ $fristBadges = static function (array $liste): string {
         <div class="kachel<?= (int)$v['is_active'] ? '' : ' kachel--aus' ?>"
              style="border-top-color:<?= e($v['status_color'] ?: '#94a3b8') ?>">
           <div class="kachel__stern"><?= $stern($v) ?></div>
+          <?php $stempel = vehicle_stamp($v); ?>
           <a class="kachel__bild" href="<?= e(url('vehicle', ['id' => $v['id']])) ?>">
+            <?php if ($stempel !== null): ?>
+              <span class="stempel<?= (int)$v['is_active'] ? '' : ' stempel--grau' ?>"><?= e($stempel) ?></span>
+            <?php endif; ?>
             <?php if (isset($titelbilder[(int)$v['id']])): ?>
               <img alt="" loading="lazy"
                    src="<?= e(url('vehicle_file', ['id' => $titelbilder[(int)$v['id']]['id'], 'vorschau' => 1])) ?>">

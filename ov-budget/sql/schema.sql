@@ -111,6 +111,8 @@ CREATE TABLE IF NOT EXISTS wishes (
   dringlichkeit_id INT UNSIGNED NULL,
   status_id       INT UNSIGNED NULL,
   budget_id       INT UNSIGNED NULL,
+  -- Wunsch gehört zu einem Fahrzeug (Ersatzteil, Ausstattung); Verweis folgt in Wanderung 020
+  vehicle_id      INT UNSIGNED NULL,
   nice_to_have    TINYINT(1)   NOT NULL DEFAULT 0,
   prioritaet      INT          NOT NULL DEFAULT 0,
   benoetigt_bis   DATE         NULL,
@@ -133,6 +135,7 @@ CREATE TABLE IF NOT EXISTS wishes (
   KEY idx_status (status_id),
   KEY idx_fg (fachgruppe_id),
   KEY idx_divera (divera_form_id, divera_entry_id),
+  KEY idx_w_fahrzeug (vehicle_id),
   CONSTRAINT fk_w_fg   FOREIGN KEY (fachgruppe_id)    REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_w_kat  FOREIGN KEY (kategorie_id)     REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_w_dri  FOREIGN KEY (dringlichkeit_id) REFERENCES list_items(id) ON DELETE SET NULL,

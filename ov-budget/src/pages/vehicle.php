@@ -18,6 +18,7 @@ $id = (int)$vehicle['id'];
 $art = get_str('art');
 
 render('vehicle', [
+    'wuensche'   => wish_query(['vehicle_id' => $id, 'sort' => 'prio']),
     'favorit'    => vehicle_is_favorite((int)current_user()['id'], $id),
     'title'    => $vehicle['bezeichnung'],
     'vehicle'  => $vehicle,

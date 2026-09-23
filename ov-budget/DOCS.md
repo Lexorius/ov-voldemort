@@ -112,6 +112,11 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   zuletzt angelegt), als **Liste oder Kacheln** anzeigen, und einzelne
   Fahrzeuge lassen sich mit dem Stern **anheften** – sie stehen dann oben und
   lassen sich allein anzeigen. Sortierung und Ansicht merkt sich die Sitzung.
+  In der Kachelansicht liegt bei nicht einsatzbereiten Fahrzeugen ein schräger
+  Stempel über dem Bild (auch bei „In Wartung" und „Ausgemustert").
+  **Wünsche** lassen sich einem Fahrzeug zuordnen – etwa Ersatzteile oder
+  Ausstattung. Sie erscheinen dann in der Fahrzeugakte, und in der Wunschliste
+  lässt sich nach Fahrzeug filtern.
   **Bilder** je Fahrzeug (mit Titelbild in Liste und Akte) und **Dokumente**
   wie Fahrzeugschein oder Prüfberichte. Jeder Instandsetzungsauftrag hat eine
   eigene **Fotogalerie** – Fotos lassen sich schon beim Melden anhängen (am

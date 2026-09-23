@@ -81,6 +81,11 @@ $brutto = (float)$wish['netto_gesamt'] * (1 + ((float)$wish['mwst_satz'] / 100))
       <div class="dl__item"><div class="dl__label">Link</div>
         <div class="dl__value"><a href="<?= e($wish['link']) ?>" target="_blank" rel="noopener noreferrer">Produktseite öffnen</a></div></div>
     <?php endif; ?>
+    <?php if (!empty($wish['vehicle_id']) && can('view_vehicles')): ?>
+      <div class="dl__item"><div class="dl__label">Fahrzeug</div>
+        <div class="dl__value"><a href="<?= e(url('vehicle', ['id' => $wish['vehicle_id']])) ?>"><?= e((string)$wish['fahrzeug']) ?></a>
+          <?= $wish['fahrzeug_kennzeichen'] ? '<span class="muted">· ' . e((string)$wish['fahrzeug_kennzeichen']) . '</span>' : '' ?></div></div>
+    <?php endif; ?>
     <?php foreach ($extraFields as $key => $def): $v = (string)($extra[$key] ?? ''); if ($v === '') continue; ?>
       <div class="dl__item"><div class="dl__label"><?= e($def['label']) ?></div>
         <div class="dl__value"><?= $def['type'] === 'bool' ? ($v === '1' ? 'ja' : 'nein') : e($v) ?></div></div>

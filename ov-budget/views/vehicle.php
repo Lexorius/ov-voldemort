@@ -287,6 +287,38 @@ $arten = [
   <?php endif; ?>
 </section>
 
+<section class="card" id="wuensche">
+  <div class="card__head">
+    <h2><?= e((string)setting('wunsch_modul_name', 'Wünsch dir was')) ?> für dieses Fahrzeug</h2>
+    <div class="btnrow">
+      <span class="muted small"><?= count($wuensche ?? []) ?></span>
+      <?php if (can('create_wish')): ?>
+        <a class="btn btn--sm" href="<?= e(url('wish_edit', ['vehicle_id' => $vehicle['id']])) ?>">+ Wunsch</a>
+      <?php endif; ?>
+    </div>
+  </div>
+  <?php if (empty($wuensche)): ?>
+    <div class="empty">Kein Wunsch für dieses Fahrzeug – etwa Ersatzteile oder Ausstattung.</div>
+  <?php else: ?>
+    <div class="tablewrap">
+      <table class="data">
+        <thead><tr><th>Wunsch</th><th>Status</th><th>Dringlichkeit</th><th class="num">Netto gesamt</th></tr></thead>
+        <tbody>
+        <?php foreach ($wuensche as $w): ?>
+          <tr>
+            <td><a href="<?= e(url('wish', ['id' => $w['id']])) ?>"><?= e($w['bezeichnung']) ?></a>
+              <?php if ((int)$w['nice_to_have']): ?> <span class="badge badge--outline">nice to have</span><?php endif; ?></td>
+            <td><?= badge($w['status_label'] ? ['label' => $w['status_label'], 'color' => $w['status_color']] : null, '–') ?></td>
+            <td><?= badge($w['dring_label'] ? ['label' => $w['dring_label'], 'color' => $w['dring_color']] : null, '–') ?></td>
+            <td class="num"><?= e(money((float)$w['netto_gesamt'], false)) ?></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  <?php endif; ?>
+</section>
+
 <section class="card" id="journal">
   <div class="card__head">
     <h2>Journal der Fahrzeugakte</h2>

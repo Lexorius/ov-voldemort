@@ -1,5 +1,22 @@
 # Änderungsverlauf
 
+## 1.30.0
+
+### Kacheln: Stempel für nicht einsatzbereite Fahrzeuge
+
+- Über der Kachel liegt jetzt ein schräger Stempel, wenn das Fahrzeug nicht
+  einsatzbereit ist. Auch „In Wartung" (rot) und „Ausgemustert" (grau)
+  bekommen einen; alles andere bleibt ohne.
+
+### Wünsche für ein Fahrzeug
+
+- Ein Wunsch lässt sich einem Fahrzeug zuordnen, etwa ein Ersatzteil oder
+  Ausstattung. Das Feld steht im Wunschformular, wenn es Fahrzeuge gibt.
+- Die Fahrzeugakte zeigt einen eigenen Abschnitt mit den Wünschen für dieses
+  Fahrzeug, samt Knopf **+ Wunsch** – das Fahrzeug ist dann vorausgewählt.
+- In der Wunschliste lässt sich nach Fahrzeug filtern; im Wunsch selbst führt
+  ein Verweis zur Fahrzeugakte.
+
 ## 1.29.0
 
 ### Fahrzeuge: sortieren, Kacheln, Favoriten

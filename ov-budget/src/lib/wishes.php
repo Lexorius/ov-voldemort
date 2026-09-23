@@ -25,7 +25,7 @@ function wish_query(array $f = []): array
         $like = '%' . $f['q'] . '%';
         array_push($p, $like, $like, $like, $like);
     }
-    foreach (['status_id', 'fachgruppe_id', 'kategorie_id', 'dringlichkeit_id', 'budget_id'] as $col) {
+    foreach (['status_id', 'fachgruppe_id', 'kategorie_id', 'dringlichkeit_id', 'budget_id', 'vehicle_id'] as $col) {
         if (!empty($f[$col])) {
             $w[] = 'w.' . $col . ' = ?';
             $p[] = (int)$f[$col];
@@ -73,6 +73,7 @@ function wish_query(array $f = []): array
                    ka.label AS kategorie_label,
                    ei.label AS einheit_label,
                    b.name AS budget_name, b.jahr AS budget_jahr,
+                   fz.bezeichnung AS fahrzeug, fz.kennzeichen AS fahrzeug_kennzeichen,
                    u.display_name AS ersteller,
                    (SELECT COUNT(*) FROM wish_attachments a WHERE a.wish_id = w.id) AS anlagen,
                    (SELECT COALESCE(SUM(v.points),0) FROM wish_votes v WHERE v.wish_id = w.id) AS votes
@@ -83,6 +84,7 @@ function wish_query(array $f = []): array
             LEFT JOIN list_items ka ON ka.id = w.kategorie_id
             LEFT JOIN list_items ei ON ei.id = w.einheit_id
             LEFT JOIN budgets   b  ON b.id  = w.budget_id
+            LEFT JOIN vehicles  fz ON fz.id = w.vehicle_id
             LEFT JOIN users     u  ON u.id  = w.created_by
             LEFT JOIN users     fu ON fu.id = w.freigegeben_von'
         . ($w ? ' WHERE ' . implode(' AND ', $w) : '')
@@ -254,6 +256,7 @@ function wish_save_from_post(?array $existing, array $user): array
         'netto_gesamt'     => $gesamt,
         'mwst_satz'        => post_dec('mwst_satz', setting_float('mwst_satz', 19.0)),
         'fachgruppe_id'    => post_int('fachgruppe_id'),
+        'vehicle_id'       => post_int('vehicle_id') ?: null,
         'kategorie_id'     => post_int('kategorie_id'),
         'dringlichkeit_id' => post_int('dringlichkeit_id') ?: list_default_id('dringlichkeit'),
         'nice_to_have'     => post_bool('nice_to_have'),

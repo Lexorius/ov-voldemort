@@ -55,7 +55,9 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
   Auftragsschritt, jede Meldung; eine Prüfsummen-Kette zeigt Manipulationen an
 - **Instandsetzungsaufträge** mit eigener Nummer, der Nummer der
   THW-Verwaltung, Werkstatt, Kosten und Bearbeitungsstand
-- **Sortierbare Liste und Kachelansicht**, Favoriten je Person
+- **Sortierbare Liste und Kachelansicht** mit Stempel „Nicht einsatzbereit",
+  Favoriten je Person
+- **Wünsche je Fahrzeug**: Ersatzteile und Ausstattung hängen an der Akte
 - **Bilder** (mit Titelbild) und **Dokumente** an Fahrzeugen
 - **Fotogalerie je Auftrag**: Fotos beim Melden direkt aus der Kamera anhängen,
   Dokumente getrennt davon; Fotos verlieren beim Speichern den Aufnahmeort

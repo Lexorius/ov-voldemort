@@ -57,8 +57,16 @@ if (!$wish) {
     ];
 }
 
+// Aus der Fahrzeugakte heraus: Fahrzeug vorbelegen
+if (!$wish['id'] && get_int('vehicle_id')) {
+    $wish['vehicle_id'] = get_int('vehicle_id');
+}
+
 render('wish_edit', [
     'title'   => $wish['id'] ? 'Wunsch bearbeiten' : 'Neuer Wunsch',
+    'fahrzeuge' => can('view_vehicles')
+        ? db_all('SELECT id, bezeichnung, kennzeichen FROM vehicles WHERE is_active = 1 ORDER BY bezeichnung')
+        : [],
     'wish'    => $wish,
     'errors'  => $errors,
     'budgets' => db_all('SELECT id, jahr, name FROM budgets WHERE is_active = 1 ORDER BY jahr DESC, name'),
