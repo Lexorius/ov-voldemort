@@ -1,5 +1,28 @@
 # Änderungsverlauf
 
+## 1.29.0
+
+### Fahrzeuge: sortieren, Kacheln, Favoriten
+
+- Die Fahrzeugliste lässt sich **sortieren**: Name auf- und absteigend,
+  Status, Fachgruppe, Kennzeichen, nächste Frist zuerst, offene Aufträge
+  zuerst, Kilometerstand, Funkstatus oder zuletzt angelegt. Ausgemusterte
+  stehen immer hinten.
+- Neue **Kachelansicht** mit Titelbild, Status und Fristen; oben rechts lässt
+  sich zwischen Liste und Kacheln umschalten. Sortierung und Ansicht merkt
+  sich die Sitzung.
+- **Favoriten:** Mit dem Stern lässt sich ein Fahrzeug anheften. In der
+  Standardsortierung stehen angeheftete oben, und der Filter *Nur meine
+  angehefteten* blendet den Rest aus. Die Auswahl gilt je Person; auf der
+  Fahrzeugseite gibt es denselben Knopf.
+
+### Instandsetzungsaufträge: Nummer der THW-Verwaltung
+
+- Neues Feld neben der Auftragsnummer der Werkstatt. Die Verwaltung vergibt
+  die Nummer, hier wird sie übernommen.
+- Die Nummer steht in der Auftragsliste des Fahrzeugs unter der eigenen
+  Nummer und lässt sich suchen; jede Änderung steht im Journal.
+
 ## 1.28.1
 
 ### Anmerkungen im Ausdruck

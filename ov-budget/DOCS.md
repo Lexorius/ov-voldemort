@@ -104,7 +104,14 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   ändern noch löschen, jeder trägt die Prüfsumme des vorherigen, und
   „Journal auf Veränderungen prüfen" rechnet die Kette nach. Schadensmeldungen
   und **Instandsetzungsaufträge** mit fortlaufender Nummer, Werkstatt, Kosten
-  und Bearbeitungsstand – jeder Schritt landet in der Akte.
+  und Bearbeitungsstand – jeder Schritt landet in der Akte. Dazu die **Nummer
+  der THW-Verwaltung**: Sie vergibt die Nummern, hier werden sie übernommen
+  und sind durchsuchbar; jede Änderung steht im Journal.
+  Die Fahrzeugliste lässt sich **sortieren** (Name, Status, Fachgruppe,
+  Kennzeichen, nächste Frist, offene Aufträge, Kilometerstand, Funkstatus,
+  zuletzt angelegt), als **Liste oder Kacheln** anzeigen, und einzelne
+  Fahrzeuge lassen sich mit dem Stern **anheften** – sie stehen dann oben und
+  lassen sich allein anzeigen. Sortierung und Ansicht merkt sich die Sitzung.
   **Bilder** je Fahrzeug (mit Titelbild in Liste und Akte) und **Dokumente**
   wie Fahrzeugschein oder Prüfberichte. Jeder Instandsetzungsauftrag hat eine
   eigene **Fotogalerie** – Fotos lassen sich schon beim Melden anhängen (am

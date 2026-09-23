@@ -10,6 +10,20 @@ $zurueck = url('vehicles');
 
 switch (post_str('action')) {
 
+    case 'favorit':
+        // Fahrzeug anheften oder lösen – gilt nur für die eigene Liste
+        $vehicle = vehicle_find(post_int('vehicle_id', 0) ?? 0);
+        if ($vehicle) {
+            $jetzt = vehicle_favorite_toggle((int)$user['id'], (int)$vehicle['id']);
+            flash('success', $jetzt
+                ? e($vehicle['bezeichnung']) . ' steht jetzt oben in deiner Liste.'
+                : e($vehicle['bezeichnung']) . ' ist nicht mehr angeheftet.');
+        }
+        $zurueck = post_str('zurueck') === 'fahrzeug' && $vehicle
+            ? url('vehicle', ['id' => $vehicle['id']])
+            : url('vehicles');
+        break;
+
     case 'note':
         // Journaleintrag von Hand – anschließend nicht mehr änderbar
         $vehicle = vehicle_find(post_int('vehicle_id', 0) ?? 0);

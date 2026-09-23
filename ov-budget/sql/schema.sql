@@ -652,6 +652,8 @@ CREATE TABLE IF NOT EXISTS vehicle_orders (
   status_id     INT UNSIGNED NULL,
   werkstatt     VARCHAR(150) NOT NULL DEFAULT '',
   auftragsnummer VARCHAR(60) NOT NULL DEFAULT '',
+  -- Nummer aus der THW-Verwaltung; sie vergibt die Nummern, wir übernehmen sie
+  thw_nummer    VARCHAR(60) NOT NULL DEFAULT '',
   gemeldet_von  VARCHAR(150) NOT NULL DEFAULT '',
   gemeldet_am   DATE         NULL,
   faellig_am    DATE         NULL,
@@ -698,6 +700,17 @@ CREATE TABLE IF NOT EXISTS vehicle_files (
   CONSTRAINT fk_vf_fz      FOREIGN KEY (vehicle_id)  REFERENCES vehicles(id)       ON DELETE CASCADE,
   CONSTRAINT fk_vf_auftrag FOREIGN KEY (order_id)    REFERENCES vehicle_orders(id) ON DELETE CASCADE,
   CONSTRAINT fk_vf_user    FOREIGN KEY (uploaded_by) REFERENCES users(id)          ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Merkliste: wer welches Fahrzeug oben angeheftet hat
+CREATE TABLE IF NOT EXISTS vehicle_favorites (
+  user_id    INT UNSIGNED NOT NULL,
+  vehicle_id INT UNSIGNED NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id, vehicle_id),
+  KEY idx_vfav_fz (vehicle_id),
+  CONSTRAINT fk_vfav_user FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
+  CONSTRAINT fk_vfav_fz   FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Protokoll der Stein.app-Abrufe (das Rate Limit macht Nachvollziehbarkeit wichtig)

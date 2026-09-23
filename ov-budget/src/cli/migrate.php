@@ -675,6 +675,30 @@ function ovb_migrate(PDO $pdo, callable $say): void
         $say('Tabelle für Anmerkungen zu Talking Points angelegt.');
     }
     $merken('017_tp_anmerkungen');
+
+    /* ---- 018: Favoriten bei den Fahrzeugen ---- */
+    if (!ovb_table_exists($pdo, 'vehicle_favorites')
+        && ovb_table_exists($pdo, 'vehicles') && ovb_table_exists($pdo, 'users')) {
+        $pdo->exec("CREATE TABLE vehicle_favorites (
+  user_id    INT UNSIGNED NOT NULL,
+  vehicle_id INT UNSIGNED NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id, vehicle_id),
+  KEY idx_vfav_fz (vehicle_id),
+  CONSTRAINT fk_vfav_user FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
+  CONSTRAINT fk_vfav_fz   FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        $say('Tabelle für Fahrzeug-Favoriten angelegt.');
+    }
+    $merken('018_fahrzeug_favoriten');
+
+    /* ---- 019: Nummer der THW-Verwaltung am Instandsetzungsauftrag ---- */
+    if (ovb_table_exists($pdo, 'vehicle_orders') && !ovb_column_exists($pdo, 'vehicle_orders', 'thw_nummer')) {
+        $pdo->exec("ALTER TABLE vehicle_orders
+                    ADD COLUMN thw_nummer VARCHAR(60) NOT NULL DEFAULT '' AFTER auftragsnummer,
+                    ADD KEY idx_thw_nummer (thw_nummer)");
+    }
+    $merken('019_thw_nummer');
 }
 
 /**

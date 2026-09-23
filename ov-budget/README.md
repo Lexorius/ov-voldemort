@@ -53,7 +53,9 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
   Fristen HU, SP und UVV
 - **Journal, das sich nicht nachträglich ändern lässt** – jede Änderung, jeder
   Auftragsschritt, jede Meldung; eine Prüfsummen-Kette zeigt Manipulationen an
-- **Instandsetzungsaufträge** mit Nummer, Werkstatt, Kosten und Bearbeitungsstand
+- **Instandsetzungsaufträge** mit eigener Nummer, der Nummer der
+  THW-Verwaltung, Werkstatt, Kosten und Bearbeitungsstand
+- **Sortierbare Liste und Kachelansicht**, Favoriten je Person
 - **Bilder** (mit Titelbild) und **Dokumente** an Fahrzeugen
 - **Fotogalerie je Auftrag**: Fotos beim Melden direkt aus der Kamera anhängen,
   Dokumente getrennt davon; Fotos verlieren beim Speichern den Aufnahmeort

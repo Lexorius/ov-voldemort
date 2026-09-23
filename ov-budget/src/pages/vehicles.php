@@ -11,12 +11,28 @@ if (!can('view_vehicles')) {
 stein_sync_if_due();
 divera_vehicles_sync_if_due();
 
+$user = current_user();
+
+// Sortierung und Ansicht merken sich je Sitzung – beim nächsten Besuch steht es wieder so
+$sort = array_key_exists(get_str('sort'), vehicle_sorts())
+    ? get_str('sort')
+    : (string)($_SESSION['ovb_fz_sort'] ?? 'standard');
+$_SESSION['ovb_fz_sort'] = $sort;
+
+$ansicht = in_array(get_str('ansicht'), ['liste', 'kacheln'], true)
+    ? get_str('ansicht')
+    : (string)($_SESSION['ovb_fz_ansicht'] ?? 'liste');
+$_SESSION['ovb_fz_ansicht'] = $ansicht;
+
 $filter = [
     'q'             => get_str('q'),
     'status_id'     => get_int('status_id'),
     'typ_id'        => get_int('typ_id'),
     'fachgruppe_id' => get_int('fachgruppe_id'),
     'nur_aktive'    => get_str('alle') === '1' ? 0 : 1,
+    'nur_favoriten' => get_str('favoriten') === '1' ? 1 : 0,
+    'user_id'       => (int)$user['id'],
+    'sort'          => $sort,
 ];
 $fahrzeuge = vehicle_query($filter);
 $warnTage = setting_int('fahrzeug_frist_warnung_tage', 30);
@@ -42,6 +58,10 @@ render('vehicles', [
     'fristen'    => $fristen,
     'auffaellig' => $auffaellig,
     'filter'     => $filter,
+    'sort'       => $sort,
+    'ansicht'    => $ansicht,
+    'nurFavoriten' => get_str('favoriten') === '1',
+    'favoriten'  => count(vehicle_favorites((int)$user['id'])),
     'alle'       => get_str('alle') === '1',
     'auftraege'  => order_query(['offen' => 1, 'limit' => 10]),
     'steinAktiv' => stein_enabled(),

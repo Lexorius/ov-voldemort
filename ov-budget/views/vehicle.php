@@ -44,6 +44,13 @@ $arten = [
     </p>
   </div>
   <div class="btnrow">
+    <form method="post" action="<?= e(url('vehicle_action')) ?>" class="inline-form">
+      <?= csrf_field() ?>
+      <input type="hidden" name="action" value="favorit">
+      <input type="hidden" name="vehicle_id" value="<?= (int)$vehicle['id'] ?>">
+      <input type="hidden" name="zurueck" value="fahrzeug">
+      <button class="btn btn--sec" type="submit"><?= !empty($favorit) ? '★ Angeheftet' : '☆ Anheften' ?></button>
+    </form>
     <?php if ($melden): ?>
       <a class="btn" href="<?= e(url('vehicle_order_edit', ['vehicle_id' => $vehicle['id']])) ?>">+ Auftrag / Meldung</a>
     <?php endif; ?>
@@ -252,7 +259,11 @@ $arten = [
         <tbody>
         <?php foreach ($auftraege as $o): $fertig = (int)$o['status_final'] === 1; ?>
           <tr<?= $fertig ? ' class="muted"' : '' ?>>
-            <td class="mono small nowrap"><a href="<?= e(url('vehicle_order', ['id' => $o['id']])) ?>"><?= e($o['nummer']) ?></a></td>
+            <td class="mono small nowrap"><a href="<?= e(url('vehicle_order', ['id' => $o['id']])) ?>"><?= e($o['nummer']) ?></a>
+              <?php if (trim((string)($o['thw_nummer'] ?? '')) !== ''): ?>
+                <div class="muted" title="Nummer der THW-Verwaltung">THW <?= e((string)$o['thw_nummer']) ?></div>
+              <?php endif; ?>
+            </td>
             <td>
               <a href="<?= e(url('vehicle_order', ['id' => $o['id']])) ?>"><?= e($o['titel']) ?></a>
               <?php if ((int)$o['ausfall']): ?> <span class="badge" style="background:#b91c1c">Ausfall</span><?php endif; ?>

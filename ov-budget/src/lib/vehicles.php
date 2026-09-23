@@ -52,6 +52,69 @@ function vehicle_find(int $id): ?array
 }
 
 /** Fahrzeugliste. $f: q, status_id, typ_id, fachgruppe_id, nur_aktive, mit_auftraegen */
+/** Sortierungen der Fahrzeugliste: Schlüssel => Beschriftung */
+function vehicle_sorts(): array
+{
+    return [
+        'standard'    => 'Favoriten, dann Name',
+        'name'        => 'Name (A–Z)',
+        'name_ab'     => 'Name (Z–A)',
+        'status'      => 'Status',
+        'fachgruppe'  => 'Fachgruppe',
+        'kennzeichen' => 'Kennzeichen',
+        'frist'       => 'nächste Frist zuerst',
+        'auftraege'   => 'offene Aufträge zuerst',
+        'km'          => 'Kilometerstand',
+        'fms'         => 'Funkstatus',
+        'neu'         => 'zuletzt angelegt',
+    ];
+}
+
+/**
+ * ORDER BY zu einer Sortierung. Reine Funktion; unbekannte Schlüssel
+ * fallen auf die Vorgabe zurück. Ausgemusterte stehen immer hinten.
+ */
+function vehicle_sort_sql(string $sort): string
+{
+    $vorne = 'v.is_active DESC, ';
+    return $vorne . match ($sort) {
+        'name'        => 'v.bezeichnung ASC',
+        'name_ab'     => 'v.bezeichnung DESC',
+        'status'      => 's.sort_order IS NULL, s.sort_order ASC, v.bezeichnung ASC',
+        'fachgruppe'  => 'f.label IS NULL, f.label ASC, v.bezeichnung ASC',
+        'kennzeichen' => "NULLIF(v.kennzeichen, '') IS NULL, v.kennzeichen ASC",
+        'frist'       => 'naechste_frist ASC, v.bezeichnung ASC',
+        'auftraege'   => 'offene_auftraege DESC, v.bezeichnung ASC',
+        'km'          => 'v.km_stand IS NULL, v.km_stand DESC',
+        'fms'         => 'v.fms_status IS NULL, v.fms_status ASC, v.bezeichnung ASC',
+        'neu'         => 'v.id DESC',
+        default       => 'favorit DESC, v.bezeichnung ASC',
+    };
+}
+
+/** Fahrzeug-ids, die diese Person angeheftet hat */
+function vehicle_favorites(int $userId): array
+{
+    return array_map(static fn($r) => (int)$r['vehicle_id'],
+        db_all('SELECT vehicle_id FROM vehicle_favorites WHERE user_id = ?', [$userId]));
+}
+
+/** Anheften oder lösen. Rückgabe: true, wenn es jetzt angeheftet ist. */
+function vehicle_favorite_toggle(int $userId, int $vehicleId): bool
+{
+    if (db_val('SELECT 1 FROM vehicle_favorites WHERE user_id = ? AND vehicle_id = ?', [$userId, $vehicleId])) {
+        db_exec('DELETE FROM vehicle_favorites WHERE user_id = ? AND vehicle_id = ?', [$userId, $vehicleId]);
+        return false;
+    }
+    db_exec('INSERT IGNORE INTO vehicle_favorites (user_id, vehicle_id) VALUES (?,?)', [$userId, $vehicleId]);
+    return true;
+}
+
+function vehicle_is_favorite(int $userId, int $vehicleId): bool
+{
+    return (bool)db_val('SELECT 1 FROM vehicle_favorites WHERE user_id = ? AND vehicle_id = ?', [$userId, $vehicleId]);
+}
+
 function vehicle_query(array $f = []): array
 {
     $w = [];
@@ -71,11 +134,25 @@ function vehicle_query(array $f = []): array
     if (!empty($f['nur_aktive'])) {
         $w[] = 'v.is_active = 1';
     }
+    if (!empty($f['nur_favoriten'])) {
+        $w[] = 'EXISTS (SELECT 1 FROM vehicle_favorites vf2
+                        WHERE vf2.vehicle_id = v.id AND vf2.user_id = ?)';
+        $p[] = (int)$f['user_id'];
+    }
+
+    // Für die Sortierung nach Favoriten und nach der nächsten Frist
+    $favUser = (int)($f['user_id'] ?? 0);
+    $vorne = [$favUser];
 
     return db_all(
         'SELECT v.*, t.label AS typ_label, t.color AS typ_color,
                 f.label AS fachgruppe_label,
                 s.label AS status_label, s.color AS status_color, s.slug AS status_slug,
+                (SELECT COUNT(*) FROM vehicle_favorites vf
+                  WHERE vf.vehicle_id = v.id AND vf.user_id = ?) AS favorit,
+                LEAST(COALESCE(v.hu_bis, \'9999-12-31\'),
+                      COALESCE(v.sp_bis, \'9999-12-31\'),
+                      COALESCE(v.uvv_bis, \'9999-12-31\')) AS naechste_frist,
                 (SELECT COUNT(*) FROM vehicle_orders o
                   LEFT JOIN list_items os ON os.id = o.status_id
                  WHERE o.vehicle_id = v.id AND COALESCE(os.is_final,0) = 0) AS offene_auftraege
@@ -84,8 +161,8 @@ function vehicle_query(array $f = []): array
          LEFT JOIN list_items f ON f.id = v.fachgruppe_id
          LEFT JOIN list_items s ON s.id = v.status_id'
         . ($w ? ' WHERE ' . implode(' AND ', $w) : '')
-        . ' ORDER BY v.is_active DESC, v.bezeichnung',
-        $p
+        . ' ORDER BY ' . vehicle_sort_sql((string)($f['sort'] ?? 'standard')),
+        array_merge($vorne, $p)
     );
 }
 
@@ -393,6 +470,12 @@ function order_query(array $f = []): array
     if (!empty($f['offen'])) {
         $w[] = 'COALESCE(s.is_final, 0) = 0';
     }
+    if (!empty($f['q'])) {
+        $w[] = '(o.titel LIKE ? OR o.nummer LIKE ? OR o.thw_nummer LIKE ? OR o.auftragsnummer LIKE ?'
+            . ' OR o.werkstatt LIKE ?)';
+        $like = '%' . $f['q'] . '%';
+        array_push($p, $like, $like, $like, $like, $like);
+    }
     $sql = 'SELECT o.*, v.bezeichnung AS fahrzeug, v.kennzeichen,
                    (SELECT COUNT(*) FROM vehicle_files f
                      WHERE f.order_id = o.id AND f.art = \'bild\') AS fotos,
@@ -443,6 +526,7 @@ function order_save_from_post(?array $existing, array $vehicle, array $user): ar
         'prioritaet_id' => post_int('prioritaet_id') ?: list_default_id('auftrag_prioritaet'),
         'werkstatt'     => mb_substr(post_str('werkstatt'), 0, 150),
         'auftragsnummer' => mb_substr(post_str('auftragsnummer'), 0, 60),
+        'thw_nummer'    => mb_substr(trim(post_str('thw_nummer')), 0, 60),
         'gemeldet_von'  => mb_substr(post_str('gemeldet_von') ?: (string)($user['display_name'] ?: $user['username']), 0, 150),
         'gemeldet_am'   => post_date('gemeldet_am') ?: date('Y-m-d'),
         'faellig_am'    => post_date('faellig_am'),
@@ -461,6 +545,17 @@ function order_save_from_post(?array $existing, array $vehicle, array $user): ar
     if ($existing) {
         db_update('vehicle_orders', $data, 'id = ?', [$existing['id']]);
         $id = (int)$existing['id'];
+        if (trim((string)($existing['thw_nummer'] ?? '')) !== trim($data['thw_nummer'])) {
+            journal_add((int)$vehicle['id'], [
+                'art'      => 'auftrag',
+                'titel'    => 'Nummer der THW-Verwaltung ' . ($data['thw_nummer'] !== '' ? 'gesetzt' : 'entfernt'),
+                'text'     => $data['thw_nummer'] !== '' ? $data['thw_nummer'] : (string)$existing['thw_nummer'],
+                'alt_wert' => (string)($existing['thw_nummer'] ?? ''),
+                'neu_wert' => $data['thw_nummer'],
+                'ref_typ'  => 'auftrag',
+                'ref_id'   => (int)$existing['id'],
+            ], $user);
+        }
         journal_add((int)$vehicle['id'], [
             'art'     => 'auftrag',
             'titel'   => 'Auftrag ' . $existing['nummer'] . ' bearbeitet',

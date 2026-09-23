@@ -42,6 +42,7 @@ $fertig = (int)$order['status_final'] === 1;
           'Gemeldet am'    => $order['gemeldet_am'] ? de_date($order['gemeldet_am']) : '',
           'Fällig am'      => $order['faellig_am'] ? de_date($order['faellig_am']) : '',
           'Erledigt am'    => $order['erledigt_am'] ? de_date($order['erledigt_am']) : '',
+          'Nummer der THW-Verwaltung' => $order['thw_nummer'] ?? '',
           'Werkstatt'      => $order['werkstatt'],
           'Auftragsnummer der Werkstatt' => $order['auftragsnummer'],
           'Kilometerstand' => $order['km_stand'] !== null ? number_format((float)$order['km_stand'], 0, ',', '.') . ' km' : '',

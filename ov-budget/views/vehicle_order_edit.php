@@ -84,6 +84,13 @@ $isNew = empty($order['id']);
         <input type="text" id="auftragsnummer" name="auftragsnummer" value="<?= e((string)$order['auftragsnummer']) ?>">
       </div>
       <div class="field">
+        <label for="thw_nummer">Nummer der THW-Verwaltung</label>
+        <input type="text" id="thw_nummer" name="thw_nummer" value="<?= e((string)($order['thw_nummer'] ?? '')) ?>"
+               placeholder="wird von der Verwaltung vergeben">
+        <small class="muted">Sobald die Verwaltung den Vorgang angelegt hat, hier eintragen –
+          danach lässt sich der Auftrag darüber finden.</small>
+      </div>
+      <div class="field">
         <label for="kosten_geschaetzt">Kosten geschätzt (netto)</label>
         <input type="text" inputmode="decimal" id="kosten_geschaetzt" name="kosten_geschaetzt"
                value="<?= e(num_input($order['kosten_geschaetzt'] ?? null)) ?>">

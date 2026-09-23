@@ -18,6 +18,7 @@ $id = (int)$vehicle['id'];
 $art = get_str('art');
 
 render('vehicle', [
+    'favorit'    => vehicle_is_favorite((int)current_user()['id'], $id),
     'title'    => $vehicle['bezeichnung'],
     'vehicle'  => $vehicle,
     'fristen'  => vehicle_deadlines($vehicle, setting_int('fahrzeug_frist_warnung_tage', 30)),
