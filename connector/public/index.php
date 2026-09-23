@@ -5,7 +5,6 @@ declare(strict_types=1);
  * Einstieg des Connectors. Alles läuft über diese Datei.
  *
  *   ?p=melden&fz=<Zugang>   Seite für das Handy (aus dem QR-Code)
- *   ?p=info&fz=<Zugang>     Angaben für die Seite (JSON)
  *   ?p=position             Meldung des Handys (POST, verschlüsselt)
  *   /<Code> oder ?e=<Code>  Einladungsseite einer Veranstaltung
  *   ?p=rueckmeldung         Rückmeldung auf eine Einladung (POST, verschlüsselt)
@@ -24,21 +23,28 @@ require dirname(__DIR__) . '/src/connector.php';
 header('Referrer-Policy: no-referrer');
 header('X-Content-Type-Options: nosniff');
 header('X-Robots-Tag: noindex, nofollow');
+header('X-Frame-Options: DENY');
 
-$p = (string)($_GET['p'] ?? '');
-$token = trim((string)($_GET['fz'] ?? ''));
+/** Nur echte Zeichenketten annehmen – ?fz[]=… käme sonst als "Array" an */
+function nur_text(mixed $wert): string
+{
+    return is_string($wert) ? trim($wert) : '';
+}
+
+$p = nur_text($_GET['p'] ?? '');
+$token = nur_text($_GET['fz'] ?? '');
 
 // Einladungscode: aus ?e= oder aus dem Pfad hinter index.php (kurze Adresse)
-$code = trim((string)($_GET['e'] ?? ''));
+$code = nur_text($_GET['e'] ?? '');
 if ($code === '' && ($_SERVER['PATH_INFO'] ?? '') !== '') {
-    $code = trim((string)$_SERVER['PATH_INFO'], '/');
+    $code = trim(nur_text($_SERVER['PATH_INFO']), '/');
 }
 if ($code !== '' && $p === '') {
     $p = 'einladung';
 }
 
 // Ohne verschlüsselte Verbindung nehmen wir nichts entgegen und geben nichts heraus
-if (!con_https() && in_array($p, ['koppeln', 'position', 'fahrzeuge', 'abholen', 'info', 'melden',
+if (!con_https() && in_array($p, ['koppeln', 'position', 'fahrzeuge', 'abholen', 'melden',
         'einladung', 'rueckmeldung', 'veranstaltungen', 'rueckmeldungen'], true)) {
     http_response_code(400);
     header('Content-Type: text/plain; charset=UTF-8');
@@ -64,6 +70,21 @@ function antwort(array $daten, int $code = 200): never
 function fehler(string $text, int $code = 400): never
 {
     antwort(['ok' => false, 'fehler' => $text], $code);
+}
+
+/**
+ * Kopfzeilen der beiden offenen Seiten.
+ *
+ * Die Seiten laden nur ihr eigenes Skript, dürfen nirgends eingebettet werden
+ * und sollen in keinem Zwischenspeicher landen – auf ihnen steht, wohin ein
+ * Fahrzeug gehört oder wozu jemand eingeladen ist.
+ */
+function seiten_kopf(bool $html = false): void
+{
+    header('Content-Type: text/' . ($html ? 'html' : 'plain') . '; charset=UTF-8');
+    header('Cache-Control: no-store, private');
+    header("Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; "
+        . "connect-src 'self'; form-action 'none'; base-uri 'none'; frame-ancestors 'none'");
 }
 
 /** Rumpf lesen – mit Deckel, damit niemand den Server vollschreibt */
@@ -95,15 +116,6 @@ try {
                 (string)($daten['pubkey'] ?? '')
             ));
 
-        /* ---------------- Angaben für die Melde-Seite ---------------- */
-        case 'info':
-            if (con_fahrzeug($token) === null) {
-                fehler('Dieser Zugang ist nicht (mehr) gültig.', 404);
-            }
-            $k = con_kopplung();
-            // Namen kennt der Connector nicht – die stehen im Anker der Adresse
-            antwort(['ok' => true, 'schluessel' => (string)($k['ov_pubkey'] ?? '')]);
-
         /* ---------------- Meldung vom Handy ---------------- */
         case 'position':
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -117,10 +129,7 @@ try {
             if (!con_limit_frei('ip:' . substr(sha1((string)($_SERVER['REMOTE_ADDR'] ?? '')), 0, 16), 300)) {
                 fehler('Zu viele Meldungen von diesem Anschluss. Bitte später erneut.', 429);
             }
-            con_meldung_ablegen(
-                trim((string)($daten['fz'] ?? '')),
-                trim((string)($daten['daten'] ?? ''))
-            );
+            con_meldung_ablegen(nur_text($daten['fz'] ?? ''), nur_text($daten['daten'] ?? ''));
             antwort(['ok' => true]);
 
         /* ---------------- Von OV-Budget, signiert ---------------- */
@@ -132,6 +141,7 @@ try {
 
         case 'abholen':
             $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'abholen');
+            con_alte_wegwerfen('meldungen');
             $meldungen = con_meldungen_abholen((int)($daten['max'] ?? 200));
             antwort(['ok' => true, 'meldungen' => $meldungen]);
 
@@ -148,10 +158,7 @@ try {
             if (!con_limit_frei('ip:' . substr(sha1((string)($_SERVER['REMOTE_ADDR'] ?? '')), 0, 16), 300)) {
                 fehler('Zu viele Anfragen von diesem Anschluss. Bitte später erneut.', 429);
             }
-            con_rueckmeldung_ablegen(
-                trim((string)($daten['code'] ?? '')),
-                trim((string)($daten['daten'] ?? ''))
-            );
+            con_rueckmeldung_ablegen(nur_text($daten['code'] ?? ''), nur_text($daten['daten'] ?? ''));
             antwort(['ok' => true]);
 
         /* ---------------- Von OV-Budget, signiert ---------------- */
@@ -167,17 +174,32 @@ try {
 
         case 'rueckmeldungen':
             $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'rueckmeldungen');
+            con_alte_wegwerfen('rueckmeldungen');
             antwort(['ok' => true, 'rueckmeldungen' => con_rueckmeldungen_abholen((int)($daten['max'] ?? 200))]);
 
         /* ---------------- Einladungsseite ---------------- */
         case 'einladung':
             $einladung = con_einladung($code);
+            // Wer die richtige Adresse hat, darf sie beliebig oft öffnen.
+            // Wer daneben greift, wird gebremst – sonst ließen sich Codes durchprobieren.
+            if ($einladung === null && !con_fehlgriff()) {
+                seiten_kopf();
+                http_response_code(429);
+                exit("Zu viele Versuche von diesem Anschluss. Bitte später erneut.\n");
+            }
+            seiten_kopf(true);
             require dirname(__DIR__) . '/src/seite_einladung.php';
             exit;
 
         /* ---------------- Seite für das Handy ---------------- */
         case 'melden':
             $bekannt = con_fahrzeug($token) !== null;
+            if (!$bekannt && !con_fehlgriff()) {
+                seiten_kopf();
+                http_response_code(429);
+                exit("Zu viele Versuche von diesem Anschluss. Bitte später erneut.\n");
+            }
+            seiten_kopf(true);
             require dirname(__DIR__) . '/src/seite_melden.php';
             exit;
 

@@ -70,6 +70,8 @@ $schluessel = (string)($k['ov_pubkey'] ?? '');
     <button type="button" class="zweit" id="stopp" hidden>Senden beenden</button>
 
     <div class="meldung" id="meldung">Bereit.</div>
+    <noscript><p class="meldung schlecht">Ohne JavaScript geht es hier nicht – der Standort
+      wird im Browser verschlüsselt.</p></noscript>
   </div>
   <p class="klein">Bleibt die Seite offen, sendet sie im gewählten Takt weiter. Schließen beendet es sofort.</p>
   <script src="assets/melden.js" defer></script>

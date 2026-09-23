@@ -1,5 +1,36 @@
 # Änderungsverlauf
 
+## 1.35.1
+
+### Connector nachgehärtet
+
+Nach einem Angriffstest gegen den Connector (Kopplung raten, Anfragen fälschen
+und wiedereinspielen, aus Pfaden ausbrechen, Meldungen mitlesen, den Server
+vollschreiben – 43 Versuche, alle abgewehrt) sind die Ecken nachgezogen, die
+der Test nicht abdeckt:
+
+- **Durchprobieren wird gebremst:** 60 Fehlgriffe je Anschluss und Stunde,
+  danach 429. Wer die richtige Adresse hat, merkt davon nichts – gezählt wird
+  nur, was ins Leere greift. Damit lassen sich kurze Einladungscodes nicht
+  systematisch absuchen.
+- **Kopfzeilen der offenen Seiten:** `Content-Security-Policy` (nur das eigene
+  Skript, keine fremden Quellen), `frame-ancestors 'none'` und
+  `X-Frame-Options: DENY` gegen Einbetten, `Cache-Control: no-store`.
+- **`?p=info` entfernt** – die Melde-Seite brauchte den Endpunkt nicht, er war
+  nur ein Orakel für gültige Zugänge.
+- **Eingaben:** `?fz[]=…` und Ähnliches werden als das behandelt, was sie sind
+  (keine Zeichenkette), statt als „Array".
+- **Protokoll:** Steuerzeichen werden ersetzt, damit sich über eine
+  Fehlermeldung keine eigenen Zeilen einschmuggeln lassen.
+- **Aufräumen:** Unabgeholtes verschwindet nach 30 Tagen. Die Schutzdateien im
+  Datenordner werden auch nachträglich angelegt.
+- Ohne JavaScript sagen beide Seiten jetzt, warum es nicht geht.
+- Neu in der Anleitung: was offen bleibt – der Code steht im Zugriffsprotokoll
+  des Webservers, und `X-Forwarded-Proto` wird geglaubt.
+
+Connector jetzt Fassung 1.1.1; die Dateien auf dem Webserver bitte
+aktualisieren.
+
 ## 1.35.0
 
 ### Veranstaltungen

@@ -116,6 +116,15 @@ server {
   und Stunde, 20 Rückmeldungen je Einladung und Stunde sowie 300 je Anschluss;
   höchstens 500 unabgeholte je Zugang, größere Pakete als 4 KB (Standort) bzw.
   8 KB (Rückmeldung) werden abgewiesen.
+* **Durchprobieren:** 60 Fehlgriffe je Anschluss und Stunde, danach 429. Wer
+  die richtige Adresse hat, darf sie beliebig oft öffnen — gezählt wird nur,
+  was ins Leere greift.
+* **Die beiden offenen Seiten** laufen mit `Content-Security-Policy`
+  (nur eigenes Skript, keine fremden Quellen), `frame-ancestors 'none'` gegen
+  Einbetten und `Cache-Control: no-store`.
+* **Aufräumen:** Was nach 30 Tagen niemand abgeholt hat, wirft der Connector
+  weg. Das Protokoll hält nur fest, *dass* etwas passiert ist — ohne Codes,
+  ohne Zugänge, ohne Inhalte.
 * **Rückmeldefrist:** Steht bei der Veranstaltung eine, nimmt der Connector
   danach nichts mehr an.
 * **Zurückziehen:** In OV-Budget den QR-Code oder den Einladungscode neu
@@ -124,10 +133,23 @@ server {
 * **Ablage:** nur Prüfsummen der Zugänge und Codes, verschlüsselte Meldungen,
   Zeitstempel und die Angaben, die auf der Einladungsseite stehen müssen.
 
-Was bleibt: Wer einen QR-Code abfotografiert oder eine Einladung weitergibt,
-kann bis zum Zurückziehen in fremdem Namen melden. Deshalb steht in der
-Fahrzeugakte bei jeder Position, woher sie kommt, und in der Gästeliste, ob
-eine Rückmeldung über die Einladung oder von Hand kam.
+## Was offen bleibt
+
+Drei Dinge lassen sich nicht wegprogrammieren — sie gehören zum Aufbau:
+
+* **Wer den Code hat, darf melden.** Ein abfotografierter QR-Code oder eine
+  weitergereichte Einladung funktioniert bis zum Zurückziehen. Deshalb steht in
+  der Fahrzeugakte bei jeder Position, woher sie kommt, und in der Gästeliste,
+  ob eine Rückmeldung über die Einladung oder von Hand kam. Zurückziehen geht
+  jederzeit: neuer QR-Code, neuer Einladungscode, Person von der Liste nehmen.
+* **Das Zugriffsprotokoll des Webservers sieht die Codes.** Sie stehen in der
+  Adresse (`/AB23CD`), sonst ließe sich die Seite nicht ausliefern. Wer den
+  Server betreibt, sollte die Protokolle also kurz halten oder ohne Pfad
+  schreiben. In der Anwendung selbst wird nichts davon gespeichert.
+* **`X-Forwarded-Proto` wird geglaubt.** Steht ein Proxy davor, muss er den
+  Kopf selbst setzen und von außen kommende überschreiben — sonst lässt sich
+  die HTTPS-Prüfung damit umgehen. Ohne Proxy zählt nur, was der Webserver
+  meldet.
 
 ## Dateien
 

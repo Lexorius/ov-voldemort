@@ -147,6 +147,8 @@ $zeitpunkt = static function (string $wert, bool $mitZeit = true): string {
 
         <button type="submit" id="senden">Rückmeldung senden</button>
       </form>
+      <noscript><p class="meldung schlecht">Ohne JavaScript geht es hier nicht – die Rückmeldung
+        wird im Browser verschlüsselt. Bitte im Ortsverband anrufen.</p></noscript>
       <div class="meldung" id="meldung">Bitte wählen Sie aus, ob Sie kommen.</div>
     </div>
     <p class="klein">Ihre Rückmeldung wird hier im Browser verschlüsselt. Dieser Server kann sie nicht

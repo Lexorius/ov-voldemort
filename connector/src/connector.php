@@ -30,7 +30,7 @@ declare(strict_types=1);
  * Gespeichert wird in Dateien unterhalb von daten/ – keine Datenbank nötig.
  */
 
-const CON_VERSION = '1.1.0';
+const CON_VERSION = '1.1.1';
 
 /** Höchstalter einer signierten Anfrage in Sekunden (gegen Wiedereinspielen) */
 const CON_ZEITFENSTER = 300;
@@ -42,6 +42,10 @@ const CON_MAX_OFFEN = 500;
 const CON_MAX_MELDUNG = 4096;
 /** Rückmeldungen je Einladung und Stunde */
 const CON_LIMIT_EINLADUNG = 20;
+/** Fehlgriffe je Anschluss und Stunde (Zugänge oder Codes durchprobieren) */
+const CON_LIMIT_FEHLGRIFF = 60;
+/** So lange hebt der Connector Unabgeholtes auf, dann wirft er es weg (Tage) */
+const CON_AUFHEBEN_TAGE = 30;
 /** Größte erlaubte Rückmeldung in Byte */
 const CON_MAX_RUECKMELDUNG = 8192;
 
@@ -71,8 +75,13 @@ function con_dir(string $unter = ''): string
     $basis = dirname(__DIR__) . '/daten';
     if (!is_dir($basis)) {
         @mkdir($basis, 0770, true);
-        // Falls das Wurzelverzeichnis des Webservers doch auf den Ordner darüber zeigt
+    }
+    // Falls das Wurzelverzeichnis des Webservers doch auf den Ordner darüber zeigt.
+    // Auch nachträglich: Ein von Hand angelegter Ordner wäre sonst ungeschützt.
+    if (!is_file($basis . '/.htaccess')) {
         @file_put_contents($basis . '/.htaccess', "Require all denied\nDeny from all\n");
+    }
+    if (!is_file($basis . '/index.html')) {
         @file_put_contents($basis . '/index.html', '');
     }
     $pfad = $unter === '' ? $basis : $basis . '/' . trim($unter, '/');
@@ -306,6 +315,20 @@ function con_nonce_neu(string $nonce, int $ts): bool
     });
 }
 
+/**
+ * Ein Fehlgriff: jemand hat einen Zugang oder einen Einladungscode versucht,
+ * den es nicht gibt. Ein paar davon sind normal (alter QR-Code, vertippt) –
+ * viele heißen: Hier probiert jemand durch.
+ *
+ * Gezählt wird je Anschluss, und nur die Fehlgriffe: Wer die richtige Adresse
+ * hat, darf die Seite so oft öffnen, wie er mag.
+ */
+function con_fehlgriff(): bool
+{
+    return con_limit_frei('f:' . substr(sha1((string)($_SERVER['REMOTE_ADDR'] ?? '')), 0, 16),
+        CON_LIMIT_FEHLGRIFF);
+}
+
 /* ==================================================================== */
 /* Fahrzeuge                                                             */
 /* ==================================================================== */
@@ -415,6 +438,20 @@ function con_meldungen_abholen(int $max = 200): array
         }
     }
     return $out;
+}
+
+/**
+ * Uraltes Unabgeholtes wegwerfen. Holt OV-Budget längere Zeit nichts ab
+ * (abgeschaltet, umgezogen), soll das hier nicht ewig liegen bleiben.
+ */
+function con_alte_wegwerfen(string $unter): void
+{
+    $grenze = time() - CON_AUFHEBEN_TAGE * 86400;
+    foreach (glob(con_dir($unter) . '/*/*.json') ?: [] as $datei) {
+        if ((int)@filemtime($datei) < $grenze) {
+            @unlink($datei);
+        }
+    }
 }
 
 /** Wie viele Meldungen kamen in der letzten Stunde? Begrenzt Missbrauch. */
@@ -619,7 +656,11 @@ function con_ordner_leeren(string $ordner): void
 /** Knappes Protokoll – ohne Inhalte, nur was passiert ist */
 function con_notiz(string $was, string $dazu = ''): void
 {
-    $zeile = sprintf("%s\t%s\t%s\n", date('c'), $was, mb_substr($dazu, 0, 120));
+    // Steuerzeichen raus: Sonst ließen sich über eine Fehlermeldung eigene
+    // Zeilen ins Protokoll schreiben
+    $sauber = static fn(string $t): string => mb_substr(
+        (string)preg_replace('/[\x00-\x1f\x7f]/u', ' ', $t), 0, 120);
+    $zeile = sprintf("%s\t%s\t%s\n", date('c'), $sauber($was), $sauber($dazu));
     @file_put_contents(con_dir() . '/protokoll.log', $zeile, FILE_APPEND);
 }
 
