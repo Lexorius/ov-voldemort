@@ -140,10 +140,19 @@
     });
   });
 
-  /* Rückfrage vor dem Löschen */
+  /* Rückfrage vor dem Löschen.
+     data-confirm2 hängt eine zweite Frage an – für Schritte, die anderen
+     draußen etwas kaputtmachen, etwa einen ausgehängten QR-Code. */
   document.querySelectorAll('[data-confirm]').forEach(function (el) {
     el.addEventListener('click', function (ev) {
-      if (!window.confirm(el.getAttribute('data-confirm'))) ev.preventDefault();
+      if (!window.confirm(el.getAttribute('data-confirm'))) {
+        ev.preventDefault();
+        return;
+      }
+      var zweite = el.getAttribute('data-confirm2');
+      if (zweite && !window.confirm(zweite)) {
+        ev.preventDefault();
+      }
     });
   });
 

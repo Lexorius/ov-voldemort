@@ -190,14 +190,16 @@ $arten = [
                       <input type="hidden" name="action" value="qr_neu">
                       <input type="hidden" name="vehicle_id" value="<?= (int)$vehicle['id'] ?>">
                       <button class="btn btn--sec btn--sm" type="submit"
-                              data-confirm="Neuen Code erzeugen? Der bisherige gilt dann nicht mehr.">Neu erzeugen</button>
+                              data-confirm="Neuen QR-Code erzeugen? Der bisherige gilt dann nicht mehr – ausgedruckte Codes im Fahrzeug werden damit unbrauchbar."
+                              data-confirm2="Bist du wirklich sicher? Danach muss der neue Code ausgedruckt und im Fahrzeug ausgetauscht werden.">Neu erzeugen</button>
                     </form>
                     <form method="post" action="<?= e(url('vehicle_action')) ?>" class="inline-form">
                       <?= csrf_field() ?>
                       <input type="hidden" name="action" value="qr_weg">
                       <input type="hidden" name="vehicle_id" value="<?= (int)$vehicle['id'] ?>">
                       <button class="btn btn--sec btn--sm" type="submit"
-                              data-confirm="Code zurückziehen? Meldungen werden dann nicht mehr angenommen.">Zurückziehen</button>
+                              data-confirm="QR-Code zurückziehen? Meldungen über diesen Code werden dann nicht mehr angenommen."
+                              data-confirm2="Bist du wirklich sicher? Der Code im Fahrzeug funktioniert danach nicht mehr, bis ein neuer erzeugt wird.">Zurückziehen</button>
                     </form>
                   <?php endif; ?>
                 </div>

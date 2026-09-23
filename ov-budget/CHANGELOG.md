@@ -1,5 +1,15 @@
 # Änderungsverlauf
 
+## 1.33.1
+
+### QR-Code: zweite Rückfrage vor folgenreichen Schritten
+
+- *Neu erzeugen* und *Zurückziehen* fragen jetzt zweimal. Die erste Frage sagt,
+  was passiert, die zweite fragt „Bist du wirklich sicher?" – beides betrifft
+  einen Code, der im Fahrzeug hängt und danach unbrauchbar wäre.
+- Dafür gibt es allgemein die Möglichkeit, an jeden Knopf eine zweite Rückfrage
+  zu hängen (`data-confirm2`).
+
 ## 1.33.0
 
 ### Standort melden per QR-Code
