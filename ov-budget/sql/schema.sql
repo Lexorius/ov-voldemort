@@ -596,6 +596,11 @@ CREATE TABLE IF NOT EXISTS vehicles (
   geo_lng           DECIMAL(9,6) NULL,
   -- woher der Standort kommt: divera oder mensch
   geo_quelle        VARCHAR(20)  NOT NULL DEFAULT '',
+  -- steht seit wann an derselben Stelle (für die Parkposition im Journal)
+  geo_park_seit     DATETIME     NULL,
+  geo_park_gemeldet TINYINT(1)   NOT NULL DEFAULT 0,
+  -- Zugang für den QR-Code im Fahrzeug
+  qr_token          VARCHAR(80)  NOT NULL DEFAULT '',
   geo_at            DATETIME     NULL,
   divera_besatzung  TEXT         NULL,
   divera_daten      MEDIUMTEXT   NULL,

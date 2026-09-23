@@ -236,6 +236,11 @@ h3 { font-size: 1rem; }
 .kachel__text { padding: .5rem .6rem .6rem; display: grid; gap: .25rem; }
 .kachel__text .item__title { text-decoration: none; }
 
+.qr-block { display: grid; gap: 1rem; grid-template-columns: 1fr; align-items: start; }
+@media (min-width: 640px) { .qr-block { grid-template-columns: 12rem 1fr; } }
+.qr-bild { background: #fff; padding: .5rem; border: 1px solid var(--border); border-radius: var(--radius); }
+.qr-bild svg { display: block; width: 100%; height: auto; }
+
 .karte { display: block; width: 100%; height: 16rem; border: 1px solid var(--border);
   border-radius: var(--radius); background: var(--surface-2); }
 @media (min-width: 900px) { .karte { height: 20rem; } }

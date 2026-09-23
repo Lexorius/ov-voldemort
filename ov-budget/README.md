@@ -60,6 +60,8 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - **Wünsche je Fahrzeug**: Ersatzteile und Ausstattung hängen an der Akte
 - **Karte in der Fahrzeugakte** (OpenStreetMap) mit der letzten Position
 - **„Jetzt Position setzen"** am Handy: Standort des Geräts übernehmen
+- **QR-Code je Fahrzeug**: Standort melden ohne Anmeldung, verschlüsselt über
+  den mitgelieferten Connector; Parkpositionen landen im Journal
 - **Bilder** (mit Titelbild) und **Dokumente** an Fahrzeugen
 - **Fotogalerie je Auftrag**: Fotos beim Melden direkt aus der Kamera anhängen,
   Dokumente getrennt davon; Fotos verlieren beim Speichern den Aufnahmeort

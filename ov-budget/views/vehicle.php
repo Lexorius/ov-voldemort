@@ -3,6 +3,8 @@
  *  @var string $journalArt @var int $gesamt @var array $extraFields @var array $extra
  *  @var ?array $pruefung @var array $bilder @var array $dokumente @var ?array $titelbild */
 $verwalten = can('manage_vehicles');
+// Der QR-Zeichner wird nur geladen, wenn es hier auch einen Code gibt
+$GLOBALS['ovb_qr_js'] = trim((string)($vehicle['qr_token'] ?? '')) !== '';
 $melden = can('report_vehicle');
 
 $quellen = ['mensch' => '', 'stein' => 'Stein.APP', 'divera' => 'Divera', 'system' => 'System'];
@@ -168,6 +170,50 @@ $arten = [
         </dl>
       <?php else: ?>
         <p class="small muted">Für dieses Fahrzeug ist kein Standort bekannt.</p>
+      <?php endif; ?>
+
+      <?php if (connector_enabled() || trim((string)($vehicle['qr_token'] ?? '')) !== ''): ?>
+        <div id="qr" class="mt">
+          <?php $qrToken = trim((string)($vehicle['qr_token'] ?? '')); ?>
+          <?php if ($qrToken !== ''): ?>
+            <div class="qr-block" data-qr="<?= e(connector_qr_url($qrToken)) ?>">
+              <div class="qr-bild" id="qr-bild"></div>
+              <div>
+                <p class="small">Im Fahrzeug aufhängen: Wer den Code scannt, kann den Standort melden –
+                  ohne Zugang zu dieser Anwendung.</p>
+                <p class="small muted mono" style="word-break:break-all"><?= e(connector_qr_url($qrToken)) ?></p>
+                <div class="btnrow">
+                  <button class="btn btn--sec btn--sm" type="button" id="qr-drucken">Drucken</button>
+                  <?php if (can('manage_vehicles')): ?>
+                    <form method="post" action="<?= e(url('vehicle_action')) ?>" class="inline-form">
+                      <?= csrf_field() ?>
+                      <input type="hidden" name="action" value="qr_neu">
+                      <input type="hidden" name="vehicle_id" value="<?= (int)$vehicle['id'] ?>">
+                      <button class="btn btn--sec btn--sm" type="submit"
+                              data-confirm="Neuen Code erzeugen? Der bisherige gilt dann nicht mehr.">Neu erzeugen</button>
+                    </form>
+                    <form method="post" action="<?= e(url('vehicle_action')) ?>" class="inline-form">
+                      <?= csrf_field() ?>
+                      <input type="hidden" name="action" value="qr_weg">
+                      <input type="hidden" name="vehicle_id" value="<?= (int)$vehicle['id'] ?>">
+                      <button class="btn btn--sec btn--sm" type="submit"
+                              data-confirm="Code zurückziehen? Meldungen werden dann nicht mehr angenommen.">Zurückziehen</button>
+                    </form>
+                  <?php endif; ?>
+                </div>
+              </div>
+            </div>
+          <?php elseif (can('manage_vehicles')): ?>
+            <form method="post" action="<?= e(url('vehicle_action')) ?>" class="inline-form">
+              <?= csrf_field() ?>
+              <input type="hidden" name="action" value="qr_neu">
+              <input type="hidden" name="vehicle_id" value="<?= (int)$vehicle['id'] ?>">
+              <button class="btn btn--sec" type="submit">QR-Code erzeugen</button>
+            </form>
+            <p class="small muted">Erzeugt einen Zugang, mit dem jede Person den Standort dieses Fahrzeugs
+              melden kann – ohne Anmeldung und ohne Einblick in die Akte.</p>
+          <?php endif; ?>
+        </div>
       <?php endif; ?>
 
       <?php if (can('report_vehicle')): ?>

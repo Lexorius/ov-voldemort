@@ -10,6 +10,35 @@ $zurueck = url('vehicles');
 
 switch (post_str('action')) {
 
+    case 'qr_neu':
+    case 'qr_weg':
+        // Zugang für den QR-Code erzeugen oder zurückziehen
+        $vehicle = vehicle_find(post_int('vehicle_id', 0) ?? 0);
+        if (!$vehicle || !can('manage_vehicles')) {
+            flash('error', 'Dafür fehlen dir die Rechte.');
+            break;
+        }
+        $zurueck = url('vehicle', ['id' => $vehicle['id']]) . '#qr';
+        $neuerToken = post_str('action') === 'qr_neu' ? connector_token_neu() : '';
+        db_update('vehicles', ['qr_token' => $neuerToken], 'id = ?', [(int)$vehicle['id']]);
+        journal_add((int)$vehicle['id'], [
+            'art'   => 'notiz',
+            'titel' => $neuerToken !== '' ? 'QR-Code für Standortmeldung erzeugt' : 'QR-Code zurückgezogen',
+            'text'  => $neuerToken !== ''
+                ? 'Ein alter Code, falls vorhanden, gilt ab jetzt nicht mehr.'
+                : 'Meldungen über den bisherigen Code werden nicht mehr angenommen.',
+        ], $user);
+        try {
+            connector_push_vehicles();
+            flash('success', $neuerToken !== ''
+                ? 'QR-Code erzeugt und beim Connector angemeldet.'
+                : 'QR-Code zurückgezogen.');
+        } catch (Throwable $ex) {
+            flash('warn', 'Gespeichert, aber der Connector war nicht erreichbar: ' . e($ex->getMessage()));
+        }
+        audit('fahrzeug.qr', 'vehicle', (int)$vehicle['id'], $neuerToken !== '' ? 'erzeugt' : 'zurückgezogen');
+        break;
+
     case 'position':
         // Standort vom Gerät übernehmen – der Browser fragt selbst um Erlaubnis
         $vehicle = vehicle_find(post_int('vehicle_id', 0) ?? 0);

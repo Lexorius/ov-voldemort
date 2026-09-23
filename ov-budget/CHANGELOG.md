@@ -1,5 +1,31 @@
 # Änderungsverlauf
 
+## 1.33.0
+
+### Standort melden per QR-Code
+
+- Neu im Repository: der **Connector** (Ordner `connector/`) – eine kleine
+  PHP-Anwendung für einen öffentlich erreichbaren Webserver. In den Fahrzeugen
+  hängt ein QR-Code; wer ihn scannt, meldet den Standort ohne Anmeldung und
+  ohne Zugang zu OV-Budget.
+- **Ende zu Ende verschlüsselt:** Das Handy verschlüsselt die Position im
+  Browser für den Schlüssel von OV-Budget. Der Connector speichert nur
+  Geheimtext und löscht ihn beim Abholen.
+- **Kopplung:** einmalig mit einem Code, der auf dem Server in einer Datei
+  steht; danach tauschen beide Seiten ihre öffentlichen Schlüssel aus und jede
+  Anfrage ist signiert (mit Zeitfenster, Einmalkennung und Zweck).
+- **Melde-Seite:** einmal senden, alle 60 oder alle 500 Sekunden – nur solange
+  die Seite offen ist. Fahrzeugname und Kennzeichen stehen oben, das Namensfeld
+  ist freiwillig und wird auf dem Gerät gemerkt.
+- **In der Fahrzeugakte:** Knopf *QR-Code erzeugen*, Anzeige zum Aufhängen und
+  Drucken, neu erzeugen und zurückziehen. Die Karte zeigt jede Meldung sofort;
+  ins Journal kommt nur eine **Parkposition** (Vorgabe: ab 60 Minuten im
+  selben Umkreis von 50 Metern, beides einstellbar).
+- Begrenzungen gegen Missbrauch: 120 Meldungen je Fahrzeug und Stunde, 300 je
+  Anschluss, höchstens 500 wartende Meldungen, nur über HTTPS.
+- Der QR-Code wird im Browser gezeichnet – mit qrcode-generator 1.4.4 von
+  Kazuhiko Arase (MIT), abgelegt unter `public/assets/js/qrcode.js`.
+
 ## 1.32.0
 
 ### „Jetzt Position setzen" am Handy

@@ -367,6 +367,15 @@ Dann holt die Anwendung:
   überschreibt die Position wieder. Im Journal bleibt der Eintrag stehen. Mit
   *Standort erneuern alle (Minuten)* lässt sich festlegen, wie lange die von
   Hand gesetzte Position stehen bleibt.
+* **Standort melden per QR-Code:** In jedem Fahrzeug kann ein QR-Code hängen.
+  Wer ihn scannt, meldet den Standort – ohne Anmeldung und ohne Einblick in die
+  Akte. Dafür läuft der mitgelieferte *Connector* auf einem öffentlich
+  erreichbaren Webserver; die Meldung wird auf dem Handy verschlüsselt, der
+  Connector kann sie nicht lesen. Einrichtung unter *Verwaltung → Standort&shy;meldung
+  per QR-Code*, Code je Fahrzeug in der Fahrzeugakte (erzeugen, drucken,
+  zurückziehen). Auf der Karte erscheint jede Meldung sofort; ins Journal kommt
+  nur eine **Parkposition**, wenn das Fahrzeug länger als die eingestellte Zeit
+  im selben Umkreis steht.
 * **Karte in der Fahrzeugakte:** Zur letzten Position zeigt die Akte eine
   Karte von OpenStreetMap. Der Browser lädt sie direkt von dort; wer das nicht
   möchte, schaltet sie unter *Einstellungen → Fahrzeuge* ab

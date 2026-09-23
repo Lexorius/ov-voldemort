@@ -47,6 +47,7 @@ require __DIR__ . '/lib/mqtt.php';
 require __DIR__ . '/lib/ha_export.php';
 require __DIR__ . '/lib/notify.php';
 require __DIR__ . '/lib/webpush.php';
+require __DIR__ . '/lib/connector.php';
 
 /** Ist die Anwendung eingerichtet? */
 function app_installed(): bool

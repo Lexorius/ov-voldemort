@@ -168,6 +168,11 @@ Das Repository ist ein Home-Assistant-Add-on-Repository: oben liegt nur
 ```
 repository.yaml     macht das Repository im Add-on Store nutzbar
 docker-compose.yml  Betrieb ohne Home Assistant
+scripts/            kleine Helfer (z. B. QR-Bibliothek aktualisieren)
+connector/          eigenstaendiger Briefkasten fuer Standortmeldungen per QR-Code
+  public/           Dokumentenverzeichnis: index.php und melden.js
+  src/              Ablage, Kopplung, Signaturen, Melde-Seite
+  daten/            entsteht beim ersten Aufruf; gehoert NICHT ins Web
 ov-budget/          das Add-on – zugleich die vollstaendige Anwendung
   config.yaml, build.yaml, Dockerfile, DOCS.md, CHANGELOG.md, translations/
   docker/rootfs/    nginx, php-fpm, MariaDB und Startskript des Containers
@@ -257,6 +262,35 @@ curl -s "https://DEINE-DOMAIN/cron.php?token=DEIN_TOKEN"
 
 Auf der Konsole geht es auch ohne Token: `php public/cron.php`.
 
+## Standortmeldung per QR-Code
+
+In jedem Fahrzeug kann ein QR-Code hängen. Wer ihn scannt, meldet den Standort
+des Fahrzeugs – ohne Anmeldung, ohne Zugang zu OV-Budget und ohne Home
+Assistant. Gedacht für Helferinnen und Helfer, die ein Fahrzeug irgendwo
+abstellen oder wiederfinden.
+
+Dafür gibt es den **Connector** im Ordner `connector/`: eine kleine
+PHP-Anwendung für einen öffentlich erreichbaren Webserver. Die Anleitung steht
+in [connector/README.md](connector/README.md).
+
+```
+Handy (QR)  --verschluesselt-->  Connector  <--holt ab--  OV-Budget (Add-on)
+```
+
+* Das Handy verschlüsselt die Position **im Browser** für den öffentlichen
+  Schlüssel von OV-Budget (ECDH P-256, AES-256-GCM). Der Connector speichert
+  nur Geheimtext und löscht ihn beim Abholen – er kann die Standorte nicht
+  lesen.
+* Connector und OV-Budget koppeln sich einmalig mit einem Code und tauschen
+  dabei ihre öffentlichen Schlüssel aus. Danach ist jede Anfrage signiert.
+* Die Melde-Seite bietet drei Möglichkeiten: einmal senden, alle 60 Sekunden
+  oder alle 500 Sekunden – jeweils nur, solange die Seite offen ist. Ein
+  Namensfeld ist freiwillig und wird auf dem Gerät gemerkt.
+* Auf der Karte in der Fahrzeugakte erscheint jede Meldung sofort. Ins Journal
+  kommt nur eine **Parkposition**: wenn ein Fahrzeug länger als eine Stunde
+  (einstellbar) im selben Umkreis steht.
+* Codes lassen sich je Fahrzeug erzeugen, neu erzeugen und zurückziehen.
+
 ## Sicherheit
 
 * Passwörter als `password_hash()` (bcrypt/argon2, automatischer Rehash beim Anmelden)
@@ -266,6 +300,9 @@ Auf der Konsole geht es auch ohne Token: `php public/cron.php`.
 * durchgängig vorbereitete Statements, Ausgabe HTML-escaped
 * Uploads mit Endungs- und Größenprüfung, Ablage außerhalb des Webroots unter zufälligem Namen
 * Änderungsprotokoll unter *Verwaltung → Protokoll*
+* Standortmeldungen per QR-Code: Ende-zu-Ende verschlüsselt, signierte
+  Kopplung, Begrenzung je Fahrzeug und Anschluss – Einzelheiten in
+  [connector/README.md](connector/README.md)
 
 ## Datensicherung
 

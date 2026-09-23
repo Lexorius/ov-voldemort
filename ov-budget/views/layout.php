@@ -89,5 +89,9 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
 <?php if (!empty($GLOBALS['ovb_push_js'])): ?>
   <script src="<?= e(asset('js/push.js')) ?>" defer></script>
 <?php endif; ?>
+<?php if (!empty($GLOBALS['ovb_qr_js'])): ?>
+  <script src="<?= e(asset('js/qrcode.js')) ?>" defer></script>
+  <script src="<?= e(asset('js/qr-zeichnen.js')) ?>" defer></script>
+<?php endif; ?>
 </body>
 </html>

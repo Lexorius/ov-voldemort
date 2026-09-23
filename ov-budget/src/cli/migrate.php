@@ -720,6 +720,23 @@ function ovb_migrate(PDO $pdo, callable $say): void
         $pdo->exec("UPDATE vehicles SET geo_quelle = 'divera' WHERE geo_lat IS NOT NULL AND geo_quelle = ''");
     }
     $merken('021_standort_quelle');
+
+    /* ---- 022: QR-Standortmeldung ---- */
+    if (ovb_table_exists($pdo, 'vehicles')) {
+        foreach ([
+            'geo_park_seit'     => 'DATETIME NULL',
+            'geo_park_gemeldet' => 'TINYINT(1) NOT NULL DEFAULT 0',
+            'qr_token'          => "VARCHAR(80) NOT NULL DEFAULT ''",
+        ] as $spalte => $art) {
+            if (!ovb_column_exists($pdo, 'vehicles', $spalte)) {
+                $pdo->exec("ALTER TABLE vehicles ADD COLUMN $spalte $art");
+            }
+        }
+        if (!ovb_index_exists($pdo, 'vehicles', 'idx_qr_token')) {
+            $pdo->exec('ALTER TABLE vehicles ADD KEY idx_qr_token (qr_token)');
+        }
+    }
+    $merken('022_qr_standort');
 }
 
 /**
