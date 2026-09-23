@@ -1,5 +1,20 @@
 # Änderungsverlauf
 
+## 1.32.0
+
+### „Jetzt Position setzen" am Handy
+
+- Die Fahrzeugakte hat einen eigenen Abschnitt **Standort** – jetzt auch bei
+  Fahrzeugen ohne Divera-Anbindung, mit Karte und Koordinaten.
+- Neuer Knopf **Jetzt Position setzen**: Der Browser fragt um Erlaubnis und
+  übermittelt den Standort des Geräts. Er wird am Fahrzeug gespeichert und
+  mit Genauigkeit im Journal vermerkt.
+- In der Akte steht, woher der Standort kommt: von Hand gesetzt oder aus
+  Divera abgerufen.
+- Hängt das Fahrzeug an Divera, überschreibt der nächste Abgleich die
+  Position wieder; der Journaleintrag bleibt. Wie lange eine gesetzte Position
+  stehen bleibt, regelt *Standort erneuern alle (Minuten)*.
+
 ## 1.31.0
 
 ### Karte in der Fahrzeugakte

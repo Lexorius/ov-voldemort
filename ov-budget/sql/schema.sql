@@ -594,6 +594,8 @@ CREATE TABLE IF NOT EXISTS vehicles (
   fms_at            DATETIME     NULL,
   geo_lat           DECIMAL(9,6) NULL,
   geo_lng           DECIMAL(9,6) NULL,
+  -- woher der Standort kommt: divera oder mensch
+  geo_quelle        VARCHAR(20)  NOT NULL DEFAULT '',
   geo_at            DATETIME     NULL,
   divera_besatzung  TEXT         NULL,
   divera_daten      MEDIUMTEXT   NULL,

@@ -712,6 +712,14 @@ function ovb_migrate(PDO $pdo, callable $say): void
         }
     }
     $merken('020_wunsch_fahrzeug');
+
+    /* ---- 021: Herkunft des Standorts ---- */
+    if (ovb_table_exists($pdo, 'vehicles') && !ovb_column_exists($pdo, 'vehicles', 'geo_quelle')) {
+        $pdo->exec("ALTER TABLE vehicles ADD COLUMN geo_quelle VARCHAR(20) NOT NULL DEFAULT '' AFTER geo_lng");
+        // Was schon da ist, kam bisher nur aus Divera
+        $pdo->exec("UPDATE vehicles SET geo_quelle = 'divera' WHERE geo_lat IS NOT NULL AND geo_quelle = ''");
+    }
+    $merken('021_standort_quelle');
 }
 
 /**

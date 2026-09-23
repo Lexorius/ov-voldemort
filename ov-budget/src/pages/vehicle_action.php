@@ -10,6 +10,29 @@ $zurueck = url('vehicles');
 
 switch (post_str('action')) {
 
+    case 'position':
+        // Standort vom Gerät übernehmen – der Browser fragt selbst um Erlaubnis
+        $vehicle = vehicle_find(post_int('vehicle_id', 0) ?? 0);
+        if (!$vehicle || !can('report_vehicle')) {
+            flash('error', 'Dafür fehlen dir die Rechte.');
+            break;
+        }
+        $zurueck = url('vehicle', ['id' => $vehicle['id']]);
+        $lat = post_str('lat');
+        $lng = post_str('lng');
+        if (!is_numeric($lat) || !is_numeric($lng)) {
+            flash('error', 'Es kam keine Position an.');
+            break;
+        }
+        $genau = is_numeric(post_str('genauigkeit')) ? (float)post_str('genauigkeit') : null;
+        $fehler = vehicle_position_set($vehicle, (float)$lat, (float)$lng, $genau, $user);
+        if ($fehler !== null) {
+            flash('error', e($fehler));
+            break;
+        }
+        flash('success', 'Standort übernommen und im Journal vermerkt.');
+        break;
+
     case 'favorit':
         // Fahrzeug anheften oder lösen – gilt nur für die eigene Liste
         $vehicle = vehicle_find(post_int('vehicle_id', 0) ?? 0);

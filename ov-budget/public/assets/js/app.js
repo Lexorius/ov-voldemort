@@ -103,6 +103,43 @@
     }
   });
 
+  /* "Jetzt Position setzen": erst den Standort holen, dann absenden */
+  document.querySelectorAll('form[data-position]').forEach(function (form) {
+    var hinweis = document.getElementById('position-hinweis');
+    var knopf = form.querySelector('button[type=submit]');
+
+    function sage(text) {
+      if (hinweis) { hinweis.textContent = text; }
+    }
+
+    if (!navigator.geolocation) {
+      sage('Dieses Gerät gibt seinen Standort nicht heraus.');
+      if (knopf) { knopf.disabled = true; }
+      return;
+    }
+
+    form.addEventListener('submit', function (ev) {
+      if (form.lat.value !== '') {
+        return;   // zweiter Durchlauf: jetzt wirklich abschicken
+      }
+      ev.preventDefault();
+      if (knopf) { knopf.disabled = true; }
+      sage('Standort wird ermittelt – bitte die Nachfrage des Browsers bestätigen …');
+
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        form.lat.value = pos.coords.latitude;
+        form.lng.value = pos.coords.longitude;
+        form.genauigkeit.value = pos.coords.accuracy || '';
+        form.submit();
+      }, function (fehler) {
+        if (knopf) { knopf.disabled = false; }
+        sage(fehler.code === 1
+          ? 'Ohne Erlaubnis geht es nicht. Sie lässt sich in den Browser-Einstellungen für diese Seite setzen.'
+          : 'Der Standort ließ sich nicht ermitteln: ' + (fehler.message || 'unbekannter Grund') + '.');
+      }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 });
+    });
+  });
+
   /* Rückfrage vor dem Löschen */
   document.querySelectorAll('[data-confirm]').forEach(function (el) {
     el.addEventListener('click', function (ev) {

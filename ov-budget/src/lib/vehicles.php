@@ -108,6 +108,35 @@ function vehicle_stamp(array $v): ?string
     };
 }
 
+/**
+ * Standort von Hand setzen (vom Handy). Rückgabe: Fehlermeldung oder null.
+ * $genauigkeit in Metern, wie der Browser sie meldet.
+ */
+function vehicle_position_set(array $vehicle, float $lat, float $lng, ?float $genauigkeit, array $user): ?string
+{
+    if (abs($lat) > 90 || abs($lng) > 180 || ($lat === 0.0 && $lng === 0.0)) {
+        return 'Die übermittelte Position ist unbrauchbar.';
+    }
+    $text = sprintf('%.5f, %.5f', $lat, $lng);
+    db_update('vehicles', [
+        'geo_lat'    => round($lat, 6),
+        'geo_lng'    => round($lng, 6),
+        'geo_at'     => date('Y-m-d H:i:s'),
+        'geo_quelle' => 'mensch',
+    ], 'id = ?', [(int)$vehicle['id']]);
+
+    journal_add((int)$vehicle['id'], [
+        'art'      => 'notiz',
+        'titel'    => 'Standort gesetzt',
+        'text'     => 'Standort: ' . $text
+            . ($genauigkeit !== null && $genauigkeit > 0 ? sprintf(' (±%d m)', (int)round($genauigkeit)) : ''),
+        'feld'     => 'geo',
+        'neu_wert' => $text,
+    ], $user);
+    audit('fahrzeug.standort', 'vehicle', (int)$vehicle['id'], $text);
+    return null;
+}
+
 /** Fahrzeug-ids, die diese Person angeheftet hat */
 function vehicle_favorites(int $userId): array
 {

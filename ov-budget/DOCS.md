@@ -356,6 +356,17 @@ Dann holt die Anwendung:
   einstellbar. Wechsel zwischen zwei Abrufen sieht die Anwendung nicht.
 * **Letzte Position** mit Link auf die Karte (OpenStreetMap), abschaltbar.
 * **Besatzung**, die in Divera dem Fahrzeug zugeordnet ist, abschaltbar.
+* **Standort von Hand setzen:** In der Fahrzeugakte gibt es unter *Standort*
+  den Knopf **Jetzt Position setzen**. Er übernimmt den Standort des Geräts –
+  gedacht fürs Handy, wenn ein Fahrzeug irgendwo abgestellt wurde. Der Browser
+  fragt dabei um Erlaubnis; nötig ist eine Verbindung über HTTPS (über den
+  Ingress gegeben). Der Standort landet mit Genauigkeit im Journal.
+  Wer den Auftrag hat, Meldungen zu schreiben, darf das.
+
+  Achtung bei Fahrzeugen, die in Divera hängen: Der nächste Abgleich
+  überschreibt die Position wieder. Im Journal bleibt der Eintrag stehen. Mit
+  *Standort erneuern alle (Minuten)* lässt sich festlegen, wie lange die von
+  Hand gesetzte Position stehen bleibt.
 * **Karte in der Fahrzeugakte:** Zur letzten Position zeigt die Akte eine
   Karte von OpenStreetMap. Der Browser lädt sie direkt von dort; wer das nicht
   möchte, schaltet sie unter *Einstellungen → Fahrzeuge* ab

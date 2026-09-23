@@ -137,21 +137,11 @@ $arten = [
       </div>
     <?php endif; ?>
 
-    <?php if (!empty($vehicle['divera_vehicle_id'])): ?>
-      <h3 class="mt">Divera</h3>
-      <dl class="dl">
-        <?php if ($vehicle['fms_status'] !== null && $vehicle['fms_status'] !== ''): ?>
-          <div class="dl__item"><div class="dl__label">Funkstatus</div>
-            <div class="dl__value">
-              <span class="badge" style="background:<?= e(fms_color((int)$vehicle['fms_status'])) ?>"><?= e(fms_label((int)$vehicle['fms_status'])) ?></span>
-              <?php if ($vehicle['fms_at']): ?><span class="small muted">seit <?= e(de_datetime($vehicle['fms_at'])) ?></span><?php endif; ?>
-              <?php if (trim((string)$vehicle['fms_note']) !== ''): ?><div class="small"><?= e((string)$vehicle['fms_note']) ?></div><?php endif; ?>
-            </div></div>
-        <?php endif; ?>
-        <?php if (setting_bool('divera_besatzung_anzeigen', true) && ($crew = dv_crew_of($vehicle))): ?>
-          <div class="dl__item"><div class="dl__label">Besatzung</div>
-            <div class="dl__value"><?= e(implode(', ', $crew)) ?></div></div>
-        <?php endif; ?>
+    <?php $hatPosition = $vehicle['geo_lat'] !== null && $vehicle['geo_lng'] !== null; ?>
+    <?php if ($hatPosition || can('report_vehicle')): ?>
+      <h3 class="mt">Standort</h3>
+      <?php if ($hatPosition): ?>
+        <dl class="dl">
         <?php if ($vehicle['geo_lat'] !== null && $vehicle['geo_lng'] !== null
                   && setting_bool('fahrzeug_karte', true)): ?>
           <div class="dl__item" style="grid-column:1 / -1">
@@ -168,8 +158,48 @@ $arten = [
             <div class="dl__value">
               <a href="<?= e(dv_map_url((float)$vehicle['geo_lat'], (float)$vehicle['geo_lng'])) ?>" target="_blank" rel="noopener">
                 <?= e(number_format((float)$vehicle['geo_lat'], 5, ',', '') . ' / ' . number_format((float)$vehicle['geo_lng'], 5, ',', '')) ?></a>
-              <?php if ($vehicle['geo_at']): ?><span class="small muted">abgerufen <?= e(de_datetime($vehicle['geo_at'])) ?></span><?php endif; ?>
+              <?php if ($vehicle['geo_at']): ?>
+                <span class="small muted">
+                  <?= ($vehicle['geo_quelle'] ?? '') === 'mensch' ? 'von Hand gesetzt' : 'abgerufen' ?>
+                  <?= e(de_datetime($vehicle['geo_at'])) ?></span>
+              <?php endif; ?>
             </div></div>
+        <?php endif; ?>
+        </dl>
+      <?php else: ?>
+        <p class="small muted">Für dieses Fahrzeug ist kein Standort bekannt.</p>
+      <?php endif; ?>
+
+      <?php if (can('report_vehicle')): ?>
+        <form method="post" action="<?= e(url('vehicle_action')) ?>" class="inline-form"
+              id="position-form" data-position>
+          <?= csrf_field() ?>
+          <input type="hidden" name="action" value="position">
+          <input type="hidden" name="vehicle_id" value="<?= (int)$vehicle['id'] ?>">
+          <input type="hidden" name="lat" value="">
+          <input type="hidden" name="lng" value="">
+          <input type="hidden" name="genauigkeit" value="">
+          <button class="btn btn--sec" type="submit">Jetzt Position setzen</button>
+        </form>
+        <p class="small muted" id="position-hinweis">Übernimmt den Standort dieses Geräts – praktisch,
+          wenn das Fahrzeug irgendwo abgestellt wurde. Der Browser fragt dafür um Erlaubnis.</p>
+      <?php endif; ?>
+    <?php endif; ?>
+
+    <?php if (!empty($vehicle['divera_vehicle_id'])): ?>
+      <h3 class="mt">Divera</h3>
+      <dl class="dl">
+        <?php if ($vehicle['fms_status'] !== null && $vehicle['fms_status'] !== ''): ?>
+          <div class="dl__item"><div class="dl__label">Funkstatus</div>
+            <div class="dl__value">
+              <span class="badge" style="background:<?= e(fms_color((int)$vehicle['fms_status'])) ?>"><?= e(fms_label((int)$vehicle['fms_status'])) ?></span>
+              <?php if ($vehicle['fms_at']): ?><span class="small muted">seit <?= e(de_datetime($vehicle['fms_at'])) ?></span><?php endif; ?>
+              <?php if (trim((string)$vehicle['fms_note']) !== ''): ?><div class="small"><?= e((string)$vehicle['fms_note']) ?></div><?php endif; ?>
+            </div></div>
+        <?php endif; ?>
+        <?php if (setting_bool('divera_besatzung_anzeigen', true) && ($crew = dv_crew_of($vehicle))): ?>
+          <div class="dl__item"><div class="dl__label">Besatzung</div>
+            <div class="dl__value"><?= e(implode(', ', $crew)) ?></div></div>
         <?php endif; ?>
       </dl>
       <p class="small muted">

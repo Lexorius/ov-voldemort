@@ -207,6 +207,7 @@ function dv_status_update(array $st, array $fahrzeug, bool $mitPosition, int $je
             $daten['geo_lat'] = round((float)$lat, 6);
             $daten['geo_lng'] = round((float)$lng, 6);
             $daten['geo_at'] = date('Y-m-d H:i:s', $jetzt);
+            $daten['geo_quelle'] = 'divera';
         }
     }
 
