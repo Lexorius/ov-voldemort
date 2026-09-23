@@ -276,9 +276,23 @@ Aus der Veranstaltung heraus:
   Leiste oben rechts lässt sich auf *nur Zusagen* oder *nur Offene*
   umschalten (praktisch zum Hinterhertelefonieren) und die Nachrichten der
   Gäste aus- und wieder einblenden.
-* **CSV** – dieselbe Liste für Excel, mit E-Mail, Rufnummern, Einladungscode
-  und fertigem Einladungslink. Weil darin Rufnummern und Codes stehen, gibt es
+* **Einladungsliste (Serienbrief)** – je eingeladener Person eine Karte mit
+  **Anschrift** für den Umschlag, **Briefanrede**, dem Einladungslink als Text
+  und einem **QR-Code**, der auf genau diese Einladung zeigt. Umschaltbar auf
+  *nur mit Anschrift* (für den Versand) oder *nur Offene* (für die
+  Erinnerung), auf Wunsch ohne QR-Codes. Wer im Kontaktmodul keine Anschrift
+  hat, steht gestrichelt umrandet dabei – dann weiß man, wen man anders
+  einladen muss.
+* **CSV** – dieselbe Liste für Excel und den Serienbrief: Anrede, Titel,
+  Vorname, Nachname, Organisation, Position, Straße, PLZ, Ort, Land,
+  **Briefanrede**, E-Mail, Rufnummern, Rückmeldung sowie **Einladungscode und
+  fertiger Einladungslink**. Weil darin Rufnummern und Codes stehen, gibt es
   die Datei nur für die Leitung.
+
+Für einen Serienbrief in Word oder LibreOffice ist die CSV die Datenquelle:
+Anschriftfeld aus Straße/PLZ/Ort, Briefanrede als Feld, und den Einladungslink
+in den Brieftext. Wer den QR-Code im Brief haben möchte, nimmt die gedruckte
+Einladungsliste als Vorlage.
 
 ### Einladung im Netz
 

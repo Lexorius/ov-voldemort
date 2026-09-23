@@ -1,5 +1,22 @@
 # Änderungsverlauf
 
+## 1.37.0
+
+### Einladungsliste für den Serienbrief
+
+- Neue Druckansicht **Einladungsliste**: je eingeladener Person eine Karte mit
+  **Anschrift** für den Umschlag, **Briefanrede** (wie im Kontaktmodul, eigene
+  Anrede geht vor), dem **Einladungslink** als Text und einem **QR-Code**, der
+  auf genau diese Einladung zeigt.
+- Umschaltbar auf *nur mit Anschrift* – für den Versand – oder *nur Offene*
+  für die Erinnerung; die QR-Codes lassen sich weglassen.
+- Wer im Kontaktmodul keine Anschrift hat, steht gestrichelt umrandet dabei,
+  und oben wird gezählt, wie viele das sind.
+- Die **CSV der Gästeliste** trägt jetzt die Felder für den Serienbrief:
+  Anrede, Titel, Vorname, Nachname, Organisation, Position, Straße, PLZ, Ort,
+  Land und die Briefanrede – zusätzlich zu Rückmeldung, Code und Link.
+- Die QR-Codes zeichnet der Browser mit der schon vorhandenen Bibliothek.
+
 ## 1.36.0
 
 ### Gästeliste zum Mitnehmen

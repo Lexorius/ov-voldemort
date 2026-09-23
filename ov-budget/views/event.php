@@ -148,6 +148,7 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
       <a class="btn btn--sec btn--sm" href="<?= e(url('event_print', ['id' => $id, 'wen' => 'zusagen'])) ?>">Einlassliste drucken</a>
       <a class="btn btn--sec btn--sm" href="<?= e(url('event_print', ['id' => $id])) ?>">Ganze Liste drucken</a>
       <?php if ($darf): ?>
+        <a class="btn btn--sec btn--sm" href="<?= e(url('event_invites', ['id' => $id])) ?>">Einladungsliste (Serienbrief)</a>
         <a class="btn btn--sec btn--sm" href="<?= e(url('event_export', ['id' => $id])) ?>">CSV</a>
       <?php endif; ?>
     </div>

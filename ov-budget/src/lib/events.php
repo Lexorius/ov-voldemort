@@ -328,7 +328,8 @@ function event_guests(int $eventId, string $status = ''): array
     }
     return db_all(
         'SELECT g.*, k.vorname, k.nachname, k.anrede, k.titel AS kontakt_titel,
-                k.organisation, k.email, k.telefon, k.mobil
+                k.organisation, k.position, k.email, k.telefon, k.mobil,
+                k.strasse, k.plz, k.ort, k.land, k.anschreiben
          FROM event_guests g
          LEFT JOIN contacts k ON k.id = g.contact_id
          WHERE ' . implode(' AND ', $w) . '
@@ -368,6 +369,53 @@ function event_guest_name(array $gast): string
         trim((string)($gast['nachname'] ?? '')),
     ])));
     return $name !== '' ? $name : 'Ohne Namen';
+}
+
+/**
+ * Die Angaben aus dem Kontakt so zusammenstellen, wie das Kontaktmodul sie
+ * kennt – für Anschrift und Briefanrede. Reine Funktion.
+ */
+function event_guest_contact(array $g): array
+{
+    return [
+        'anrede'       => (string)($g['anrede'] ?? ''),
+        'titel'        => (string)($g['kontakt_titel'] ?? ''),
+        'vorname'      => (string)($g['vorname'] ?? ''),
+        'nachname'     => (string)($g['nachname'] ?? ''),
+        'organisation' => (string)($g['organisation'] ?? ''),
+        'position'     => (string)($g['position'] ?? ''),
+        'strasse'      => (string)($g['strasse'] ?? ''),
+        'plz'          => (string)($g['plz'] ?? ''),
+        'ort'          => (string)($g['ort'] ?? ''),
+        'land'         => (string)($g['land'] ?? ''),
+        'anschreiben'  => (string)($g['anschreiben'] ?? ''),
+    ];
+}
+
+/**
+ * Anschrift für den Umschlag, Zeile für Zeile. Wer ohne Kontakt auf der
+ * Liste steht, hat nur seinen Namen. Reine Funktion.
+ */
+function event_guest_address(array $g): array
+{
+    $zeilen = contact_address_lines(event_guest_contact($g));
+    if (!$zeilen) {
+        $eigen = trim((string)($g['name'] ?? ''));
+        return $eigen !== '' ? [$eigen] : [];
+    }
+    return $zeilen;
+}
+
+/** Briefanrede, wie sie das Kontaktmodul bildet */
+function event_guest_salutation(array $g): string
+{
+    return contact_salutation(event_guest_contact($g));
+}
+
+/** Reicht das für einen Brief? Reine Funktion. */
+function event_guest_postfaehig(array $g): bool
+{
+    return trim((string)($g['strasse'] ?? '')) !== '' && trim((string)($g['ort'] ?? '')) !== '';
 }
 
 /**

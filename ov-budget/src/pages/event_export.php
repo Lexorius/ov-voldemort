@@ -36,8 +36,11 @@ header('Content-Disposition: attachment; filename="gaesteliste_'
 $out = fopen('php://output', 'wb');
 fwrite($out, "\xEF\xBB\xBF");   // BOM, damit Excel die Umlaute richtig anzeigt
 
+// Spaltennamen passend für einen Serienbrief – Anschrift zuerst
 fputcsv($out, [
-    'Name', 'Vorname', 'Nachname', 'Organisation', 'E-Mail', 'Telefon', 'Mobil',
+    'Anrede', 'Titel', 'Vorname', 'Nachname', 'Name', 'Organisation', 'Position',
+    'Strasse', 'PLZ', 'Ort', 'Land', 'Briefanrede',
+    'E-Mail', 'Telefon', 'Mobil',
     'Rueckmeldung', 'Begleiter', 'Personen', 'Vertretung', 'Nachricht',
     'Geantwortet am', 'Weg', 'Einladungscode', 'Einladungslink',
 ], ';');
@@ -46,10 +49,18 @@ foreach ($gaeste as $g) {
     $status = (string)$g['status'];
     $personen = in_array($status, ['zusage', 'vertretung'], true) ? 1 + (int)$g['begleiter'] : 0;
     fputcsv($out, [
-        event_guest_name($g),
+        (string)($g['anrede'] ?? ''),
+        (string)($g['kontakt_titel'] ?? ''),
         (string)($g['vorname'] ?? ''),
         (string)($g['nachname'] ?? ''),
+        event_guest_name($g),
         (string)($g['organisation'] ?? ''),
+        (string)($g['position'] ?? ''),
+        (string)($g['strasse'] ?? ''),
+        (string)($g['plz'] ?? ''),
+        (string)($g['ort'] ?? ''),
+        (string)($g['land'] ?? ''),
+        event_guest_salutation($g),
         (string)($g['email'] ?? ''),
         (string)($g['telefon'] ?? ''),
         (string)($g['mobil'] ?? ''),

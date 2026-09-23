@@ -60,6 +60,8 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
   Anwendung, verschlüsselt über einen Connector
 - **Einlassliste zum Drucken** mit Kästchen zum Abhaken und der Summe der
   erwarteten Personen; Gästeliste als CSV für Excel
+- **Einladungsliste für den Serienbrief**: Anschrift, Briefanrede,
+  Einladungslink und QR-Code je Person
 - Je Veranstaltung einstellbar: wie viele Begleiter erlaubt sind, ob
   Kommentare und Vertretungen erlaubt sind, bis wann zurückgemeldet wird und
   wie lang der Einladungscode ist
