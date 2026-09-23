@@ -54,6 +54,13 @@ $routes = [
     'talking_point_edit' => 'talking_point_edit',
     'talking_point'      => 'talking_point',
 
+    // Veranstaltungen
+    'events'             => 'events',
+    'event'              => 'event',
+    'event_edit'         => 'event_edit',
+    'event_action'       => 'event_action',
+    'event_file'         => 'event_file',
+
     // Fahrzeuge
     'vehicles'           => 'vehicles',
     'vehicle'            => 'vehicle',

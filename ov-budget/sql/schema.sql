@@ -327,6 +327,9 @@ CREATE TABLE IF NOT EXISTS expenses (
   fachgruppe_id INT UNSIGNED  NULL,
   budget_id     INT UNSIGNED  NULL,
   wish_id       INT UNSIGNED  NULL,
+  -- Bezug zu einer Veranstaltung; der Fremdschluessel kommt in der Wanderung,
+  -- weil events erst weiter unten angelegt wird
+  event_id      INT UNSIGNED  NULL,
   betrag_brutto DECIMAL(12,2) NOT NULL DEFAULT 0,
   mwst_satz     DECIMAL(5,2)  NOT NULL DEFAULT 19.00,
   betrag_netto  DECIMAL(12,2) NOT NULL DEFAULT 0,
@@ -585,6 +588,91 @@ CREATE TABLE IF NOT EXISTS connectors (
   created_at           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- Veranstaltungen: Planung, Budget, Dateien und Einladungen
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS events (
+  id                 INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  titel              VARCHAR(200) NOT NULL,
+  beschreibung       TEXT         NULL,
+  ort                VARCHAR(200) NOT NULL DEFAULT '',
+  beginn             DATETIME     NOT NULL,
+  ende               DATETIME     NULL,
+  status             ENUM('geplant','laeuft','abgeschlossen','abgesagt') NOT NULL DEFAULT 'geplant',
+  jahr               SMALLINT     NOT NULL,
+  budget_id          INT UNSIGNED NULL,
+  fachgruppe_id      INT UNSIGNED NULL,
+  kosten_geplant     DECIMAL(12,2) NOT NULL DEFAULT 0,
+  -- Einladungen ueber einen Connector
+  connector_id       INT UNSIGNED NULL,
+  code_laenge        TINYINT UNSIGNED NOT NULL DEFAULT 6,
+  begleiter_max      TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  kommentare_erlaubt TINYINT(1)   NOT NULL DEFAULT 1,
+  vertretung_erlaubt TINYINT(1)   NOT NULL DEFAULT 1,
+  rueckmeldung_bis   DATE         NULL,
+  hinweis            TEXT         NULL,
+  einladung_aktiv    TINYINT(1)   NOT NULL DEFAULT 0,
+  angemeldet_am      DATETIME     NULL,
+  notiz              TEXT         NULL,
+  created_by         INT UNSIGNED NULL,
+  updated_by         INT UNSIGNED NULL,
+  created_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_ev_beginn (beginn),
+  KEY idx_ev_jahr (jahr, status),
+  CONSTRAINT fk_ev_budget FOREIGN KEY (budget_id)     REFERENCES budgets(id)    ON DELETE SET NULL,
+  CONSTRAINT fk_ev_fg     FOREIGN KEY (fachgruppe_id) REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_ev_con    FOREIGN KEY (connector_id)  REFERENCES connectors(id) ON DELETE SET NULL,
+  CONSTRAINT fk_ev_cb     FOREIGN KEY (created_by)    REFERENCES users(id)      ON DELETE SET NULL,
+  CONSTRAINT fk_ev_ub     FOREIGN KEY (updated_by)    REFERENCES users(id)      ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Eingeladene und ihre Rueckmeldung. Der Code steht in der Einladung;
+-- beim Connector liegt nur seine Pruefsumme.
+CREATE TABLE IF NOT EXISTS event_guests (
+  id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  event_id       INT UNSIGNED NOT NULL,
+  contact_id     INT UNSIGNED NULL,
+  name           VARCHAR(150) NOT NULL DEFAULT '',
+  code           VARCHAR(32)  NOT NULL,
+  status         ENUM('offen','zusage','absage','vertretung') NOT NULL DEFAULT 'offen',
+  begleiter      TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  vertretung     VARCHAR(150) NOT NULL DEFAULT '',
+  kommentar      TEXT         NULL,
+  quelle         VARCHAR(20)  NOT NULL DEFAULT '',
+  geantwortet_am DATETIME     NULL,
+  notiz          TEXT         NULL,
+  created_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_code (code),
+  UNIQUE KEY uq_event_kontakt (event_id, contact_id),
+  KEY idx_eg_event (event_id, status),
+  CONSTRAINT fk_eg_event   FOREIGN KEY (event_id)   REFERENCES events(id)   ON DELETE CASCADE,
+  CONSTRAINT fk_eg_kontakt FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dateien zur Veranstaltung: Rechnungen, Angebote, Programm, Bilder
+CREATE TABLE IF NOT EXISTS event_files (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  event_id     INT UNSIGNED NOT NULL,
+  art          VARCHAR(20)  NOT NULL DEFAULT 'dokument',
+  titel        VARCHAR(200) NOT NULL DEFAULT '',
+  orig_name    VARCHAR(255) NOT NULL DEFAULT '',
+  stored_name  VARCHAR(255) NOT NULL,
+  thumb_name   VARCHAR(255) NULL,
+  mime         VARCHAR(120) NOT NULL DEFAULT '',
+  size_bytes   INT UNSIGNED NOT NULL DEFAULT 0,
+  betrag       DECIMAL(12,2) NULL,
+  uploaded_by  INT UNSIGNED NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_ef_event (event_id),
+  CONSTRAINT fk_ef_event FOREIGN KEY (event_id)    REFERENCES events(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ef_ub    FOREIGN KEY (uploaded_by) REFERENCES users(id)  ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

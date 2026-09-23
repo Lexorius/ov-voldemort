@@ -84,6 +84,16 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
         </select>
       </div>
       <div class="field">
+        <label for="event_id">Gehört zu Veranstaltung</label>
+        <select id="event_id" name="event_id">
+          <option value="">– kein Bezug –</option>
+          <?php foreach ($events as $v): ?>
+            <option value="<?= (int)$v['id'] ?>"<?= (int)($expense['event_id'] ?? 0) === (int)$v['id'] ? ' selected' : '' ?>>
+              <?= e(de_date(substr((string)$v['beginn'], 0, 10)) . ' · ' . mb_substr((string)$v['titel'], 0, 60)) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div class="field">
         <label for="wish_id">Gehört zu Wunsch</label>
         <select id="wish_id" name="wish_id">
           <option value="">– kein Bezug –</option>

@@ -138,6 +138,9 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
               <?php if ($r['wunsch_bezeichnung']): ?>
                 <div class="small muted">zu Wunsch: <?= e($r['wunsch_bezeichnung']) ?></div>
               <?php endif; ?>
+              <?php if (!empty($r['veranstaltung_titel'])): ?>
+                <div class="small muted">zu Veranstaltung: <?= e((string)$r['veranstaltung_titel']) ?></div>
+              <?php endif; ?>
             </td>
             <td><?= badge($r['kategorie_label'] ? ['label' => $r['kategorie_label'], 'color' => $r['kategorie_color']] : null, '–') ?></td>
             <td class="small"><?= e($r['fachgruppe_label'] ?: '–') ?></td>

@@ -96,7 +96,7 @@ function expense_query(array $f = []): array
         $like = '%' . $f['q'] . '%';
         array_push($p, $like, $like, $like, $like, $like);
     }
-    foreach (['kategorie_id', 'fachgruppe_id', 'budget_id'] as $col) {
+    foreach (['kategorie_id', 'fachgruppe_id', 'budget_id', 'event_id'] as $col) {
         if (!empty($f[$col])) {
             $w[] = 'e.' . $col . ' = ?';
             $p[] = (int)$f[$col];
@@ -123,12 +123,14 @@ function expense_query(array $f = []): array
                    fg.label AS fachgruppe_label,
                    b.name AS budget_name,
                    w.bezeichnung AS wunsch_bezeichnung,
+                   ev.titel AS veranstaltung_titel,
                    u.display_name AS erfasser
             FROM expenses e
             LEFT JOIN list_items ka ON ka.id = e.kategorie_id
             LEFT JOIN list_items fg ON fg.id = e.fachgruppe_id
             LEFT JOIN budgets    b  ON b.id  = e.budget_id
             LEFT JOIN wishes     w  ON w.id  = e.wish_id
+            LEFT JOIN events     ev ON ev.id = e.event_id
             LEFT JOIN users      u  ON u.id  = e.created_by'
         . ($w ? ' WHERE ' . implode(' AND ', $w) : '')
         . ' ORDER BY ' . $order;
@@ -265,6 +267,7 @@ function expense_save_from_post(?array $existing, array $user): array
         'fachgruppe_id' => post_int('fachgruppe_id'),
         'budget_id'     => post_int('budget_id'),
         'wish_id'       => post_int('wish_id'),
+        'event_id'      => post_int('event_id'),
         'betrag_brutto' => $brutto,
         'mwst_satz'     => $mwst,
         'betrag_netto'  => $netto,

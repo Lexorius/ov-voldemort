@@ -50,6 +50,7 @@ if (!$expense) {
         'bezeichnung' => '', 'beschreibung' => '',
         'kategorie_id' => null, 'fachgruppe_id' => null,
         'budget_id' => get_int('budget_id'), 'wish_id' => get_int('wish_id'),
+        'event_id' => get_int('event_id'),
         'betrag_brutto' => '', 'betrag_netto' => '',
         'mwst_satz' => setting_float('mwst_satz', 19.0),
         'lieferant' => '', 'beleg_nr' => '', 'referenz' => '',
@@ -66,4 +67,5 @@ render('expense_edit', [
     'errors'  => $errors,
     'budgets' => db_all('SELECT id, jahr, name FROM budgets WHERE is_active = 1 ORDER BY jahr DESC, name'),
     'wishes'  => db_all('SELECT id, bezeichnung FROM wishes ORDER BY created_at DESC LIMIT 200'),
+    'events'  => db_all('SELECT id, titel, beginn FROM events ORDER BY beginn DESC LIMIT 200'),
 ]);

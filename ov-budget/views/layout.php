@@ -58,6 +58,10 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
       <a class="mainnav__item<?= nav_active('contacts', 'contact_edit', 'contact_groups', 'contact_group', 'contacts_import') ?>" href="<?= e(url('contacts')) ?>">
         <span class="mainnav__icon">✉</span><span><?= e(setting('kontakte_modul_name', 'Kontakte')) ?></span></a>
     <?php endif; ?>
+    <?php if (can('view_events')): ?>
+      <a class="mainnav__item<?= nav_active('events', 'event', 'event_edit') ?>" href="<?= e(url('events')) ?>">
+        <span class="mainnav__icon">◍</span><span><?= e(setting('veranstaltung_modul_name', 'Veranstaltungen')) ?></span></a>
+    <?php endif; ?>
     <?php if (can('view_meetings')): ?>
       <a class="mainnav__item<?= nav_active('meetings', 'meeting', 'meeting_edit', 'meeting_series_edit', 'talking_points', 'talking_point_edit') ?>" href="<?= e(url('meetings')) ?>">
         <span class="mainnav__icon">☰</span><span><?= e(setting('besprechung_modul_name', 'Besprechungen')) ?></span></a>

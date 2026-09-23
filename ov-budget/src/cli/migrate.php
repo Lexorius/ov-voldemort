@@ -813,6 +813,97 @@ function ovb_migrate(PDO $pdo, callable $say): void
                      'connector_angemeldet','connector_format')");
     }
     $merken('023_connectoren');
+
+    /* ---- 024: Veranstaltungen ---- */
+    if (!ovb_table_exists($pdo, 'events')) {
+        $pdo->exec(<<<'SQL'
+CREATE TABLE events (
+  id                 INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  titel              VARCHAR(200) NOT NULL,
+  beschreibung       TEXT         NULL,
+  ort                VARCHAR(200) NOT NULL DEFAULT '',
+  beginn             DATETIME     NOT NULL,
+  ende               DATETIME     NULL,
+  status             ENUM('geplant','laeuft','abgeschlossen','abgesagt') NOT NULL DEFAULT 'geplant',
+  jahr               SMALLINT     NOT NULL,
+  budget_id          INT UNSIGNED NULL,
+  fachgruppe_id      INT UNSIGNED NULL,
+  kosten_geplant     DECIMAL(12,2) NOT NULL DEFAULT 0,
+  connector_id       INT UNSIGNED NULL,
+  code_laenge        TINYINT UNSIGNED NOT NULL DEFAULT 6,
+  begleiter_max      TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  kommentare_erlaubt TINYINT(1)   NOT NULL DEFAULT 1,
+  vertretung_erlaubt TINYINT(1)   NOT NULL DEFAULT 1,
+  rueckmeldung_bis   DATE         NULL,
+  hinweis            TEXT         NULL,
+  einladung_aktiv    TINYINT(1)   NOT NULL DEFAULT 0,
+  angemeldet_am      DATETIME     NULL,
+  notiz              TEXT         NULL,
+  created_by         INT UNSIGNED NULL,
+  updated_by         INT UNSIGNED NULL,
+  created_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_ev_beginn (beginn),
+  KEY idx_ev_jahr (jahr, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
+    }
+    if (!ovb_table_exists($pdo, 'event_guests')) {
+        $pdo->exec(<<<'SQL'
+CREATE TABLE event_guests (
+  id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  event_id       INT UNSIGNED NOT NULL,
+  contact_id     INT UNSIGNED NULL,
+  name           VARCHAR(150) NOT NULL DEFAULT '',
+  code           VARCHAR(32)  NOT NULL,
+  status         ENUM('offen','zusage','absage','vertretung') NOT NULL DEFAULT 'offen',
+  begleiter      TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  vertretung     VARCHAR(150) NOT NULL DEFAULT '',
+  kommentar      TEXT         NULL,
+  quelle         VARCHAR(20)  NOT NULL DEFAULT '',
+  geantwortet_am DATETIME     NULL,
+  notiz          TEXT         NULL,
+  created_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_code (code),
+  UNIQUE KEY uq_event_kontakt (event_id, contact_id),
+  KEY idx_eg_event (event_id, status),
+  CONSTRAINT fk_eg_event FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
+    }
+    if (!ovb_table_exists($pdo, 'event_files')) {
+        $pdo->exec(<<<'SQL'
+CREATE TABLE event_files (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  event_id     INT UNSIGNED NOT NULL,
+  art          VARCHAR(20)  NOT NULL DEFAULT 'dokument',
+  titel        VARCHAR(200) NOT NULL DEFAULT '',
+  orig_name    VARCHAR(255) NOT NULL DEFAULT '',
+  stored_name  VARCHAR(255) NOT NULL,
+  thumb_name   VARCHAR(255) NULL,
+  mime         VARCHAR(120) NOT NULL DEFAULT '',
+  size_bytes   INT UNSIGNED NOT NULL DEFAULT 0,
+  betrag       DECIMAL(12,2) NULL,
+  uploaded_by  INT UNSIGNED NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_ef_event (event_id),
+  CONSTRAINT fk_ef_event FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
+    }
+    // Buchungen koennen zu einer Veranstaltung gehoeren
+    if (ovb_table_exists($pdo, 'expenses') && !ovb_column_exists($pdo, 'expenses', 'event_id')) {
+        $pdo->exec('ALTER TABLE expenses ADD COLUMN event_id INT UNSIGNED NULL AFTER wish_id');
+    }
+    if (ovb_table_exists($pdo, 'expenses') && !ovb_constraint_exists($pdo, 'expenses', 'fk_exp_ev')) {
+        $pdo->exec('ALTER TABLE expenses ADD CONSTRAINT fk_exp_ev FOREIGN KEY (event_id)
+                    REFERENCES events(id) ON DELETE SET NULL');
+    }
+    $merken('024_veranstaltungen');
 }
 
 /**
