@@ -60,6 +60,8 @@ $routes = [
     'event_edit'         => 'event_edit',
     'event_action'       => 'event_action',
     'event_file'         => 'event_file',
+    'event_print'        => 'event_print',
+    'event_export'       => 'event_export',
 
     // Fahrzeuge
     'vehicles'           => 'vehicles',

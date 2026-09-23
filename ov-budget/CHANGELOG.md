@@ -1,5 +1,20 @@
 # Änderungsverlauf
 
+## 1.36.0
+
+### Gästeliste zum Mitnehmen
+
+- **Einlassliste drucken:** alle, die zugesagt haben, mit Kästchen zum
+  Abhaken, Begleiterzahl, Vertretung und Nachricht – unten die Summe der
+  erwarteten Personen. Das ist die Liste für den Eingang.
+- **Ganze Liste drucken:** alle Eingeladenen mit ihrer Rückmeldung. Oben
+  rechts lässt sich zwischen *alle*, *nur Zusagen* und *nur Offene*
+  umschalten und die Nachrichten der Gäste aus- und einblenden.
+- **CSV:** dieselbe Liste für Excel – mit E-Mail, Rufnummern, Einladungscode
+  und fertigem Einladungslink. Weil darin Rufnummern und Codes stehen, gibt
+  es die Datei nur für die Leitung.
+- Beides steht in der Veranstaltung über der Gästeliste.
+
 ## 1.35.3
 
 ### Nach dem Test am laufenden Connector

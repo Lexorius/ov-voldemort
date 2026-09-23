@@ -155,8 +155,9 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   **Einladungscode**; über eine kurze Adresse sagt sie zu, ab, kündigt
   Begleiter an oder nennt eine Vertretung. Je Veranstaltung ist einstellbar,
   wie viele Begleiter erlaubt sind, ob Kommentare und Vertretungen erlaubt
-  sind und bis wann zurückgemeldet wird. Siehe
-  *Veranstaltungen und Einladungen* weiter unten.
+  sind und bis wann zurückgemeldet wird. Für den Eingang gibt es die
+  **Einlassliste zum Drucken** (mit Kästchen zum Abhaken) und die Gästeliste
+  als **CSV**. Siehe *Veranstaltungen und Einladungen* weiter unten.
 * **Besprechungen** – Talking Points im Themenspeicher sammeln, auf die
   Tagesordnung setzen, während der Sitzung Ergebnisse festhalten und daraus
   Aufgaben machen – einzeln über das vorausgefüllte Aufgabenformular, mehrere
@@ -263,6 +264,21 @@ Rückmeldungen lassen sich jederzeit von Hand eintragen – für alle, die anruf
 statt zu klicken. In der Übersicht stehen Zusagen, Absagen, Offene und die
 **Gesamtzahl der Personen**: die eingeladene Person (oder ihre Vertretung) plus
 ihre Begleiter.
+
+### Gästeliste auf Papier und als Datei
+
+Aus der Veranstaltung heraus:
+
+* **Einlassliste drucken** – alle, die zugesagt haben (Zusagen und
+  Vertretungen), mit Kästchen zum Abhaken, Begleiterzahl und der Summe der
+  erwarteten Personen unten. Das ist die Liste für den Eingang.
+* **Ganze Liste drucken** – alle Eingeladenen mit ihrer Rückmeldung. Über die
+  Leiste oben rechts lässt sich auf *nur Zusagen* oder *nur Offene*
+  umschalten (praktisch zum Hinterhertelefonieren) und die Nachrichten der
+  Gäste aus- und wieder einblenden.
+* **CSV** – dieselbe Liste für Excel, mit E-Mail, Rufnummern, Einladungscode
+  und fertigem Einladungslink. Weil darin Rufnummern und Codes stehen, gibt es
+  die Datei nur für die Leitung.
 
 ### Einladung im Netz
 
