@@ -1,5 +1,6 @@
 <?php
-/** @var array|null $c @var bool $aktiv @var array $fahrzeuge @var string $fehler @var string $hinweis */
+/** @var array|null $c @var bool $aktiv @var array $fahrzeuge @var ?array $zustand
+ *  @var string $fehler @var string $hinweis */
 $neu = $c === null;
 ?>
 <div class="pagehead">
@@ -115,6 +116,9 @@ $neu = $c === null;
           <button class="btn btn--sec" type="submit">Fahrzeuge neu anmelden</button></form>
       <?php endif; ?>
       <form method="post" class="inline-form"><?= csrf_field() ?>
+        <input type="hidden" name="action" value="zustand">
+        <button class="btn btn--sec" type="submit">Zustand abfragen</button></form>
+      <form method="post" class="inline-form"><?= csrf_field() ?>
         <input type="hidden" name="action" value="trennen">
         <button class="btn btn--sec" type="submit"
                 data-confirm="Kopplung lösen? Die QR-Codes und Einladungen funktionieren erst nach einer neuen Kopplung wieder."
@@ -122,6 +126,33 @@ $neu = $c === null;
     </div>
   <?php endif; ?>
 </div>
+
+<?php if ($zustand !== null): ?>
+<div class="card">
+  <h2>Zustand des Connectors</h2>
+  <p class="small">Diese Zahlen stehen auf keiner Webseite des Connectors – seine Startseite
+    verrät nichts über den Ortsverband. Abgefragt werden sie signiert.</p>
+  <dl class="dl">
+    <div class="dl__item"><div class="dl__label">Fassung</div>
+      <div class="dl__value"><?= e((string)($zustand['version'] ?? '?')) ?>
+        <span class="muted small">· PHP <?= e((string)($zustand['php'] ?? '?')) ?></span></div></div>
+    <div class="dl__item"><div class="dl__label">Fahrzeuge dort angemeldet</div>
+      <div class="dl__value"><?= (int)($zustand['fahrzeuge'] ?? 0) ?></div></div>
+    <div class="dl__item"><div class="dl__label">Veranstaltungen</div>
+      <div class="dl__value"><?= (int)($zustand['veranstaltungen'] ?? 0) ?>
+        <span class="muted small">· <?= (int)($zustand['einladungen'] ?? 0) ?> Einladungen</span></div></div>
+    <div class="dl__item"><div class="dl__label">Wartet auf Abholung</div>
+      <div class="dl__value"><?= (int)($zustand['meldungen'] ?? 0) ?> Standortmeldung(en),
+        <?= (int)($zustand['rueckmeldungen'] ?? 0) ?> Rückmeldung(en)</div></div>
+    <div class="dl__item"><div class="dl__label">Ablage</div>
+      <div class="dl__value"><?= !empty($zustand['schreibbar'])
+          ? 'beschreibbar' : '<span style="color:var(--bad)">nicht beschreibbar</span>' ?>
+        <?php if (!empty($zustand['frei'])): ?>
+          <span class="muted small">· <?= e(bytes_human((int)$zustand['frei'])) ?> frei</span>
+        <?php endif; ?></div></div>
+  </dl>
+</div>
+<?php endif; ?>
 
 <?php if ((int)$c['fuer_fahrzeuge'] === 1): ?>
 <div class="card">

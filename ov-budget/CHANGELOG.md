@@ -1,5 +1,23 @@
 # Änderungsverlauf
 
+## 1.35.2
+
+### Connector zeigt nichts mehr
+
+- Die **Startseite des Connectors nennt keine Zahlen mehr** – weder Fahrzeuge
+  noch Veranstaltungen, Einladungen oder Wartendes, auch nicht die Fassung.
+  Stattdessen steht dort ein **Feld für den Einladungscode**: Wer von der
+  Einladung nur den Code abgetippt hat, kommt darüber zu seiner Veranstaltung.
+- Die Zahlen gibt es weiterhin – aber nur **signiert für OV-Budget**. In der
+  Verwaltung unter *Connectoren* gibt es dafür den Knopf **Zustand abfragen**:
+  Fassung und PHP-Version, angemeldete Fahrzeuge, Veranstaltungen und
+  Einladungen, Wartendes und der freie Platz auf der Platte.
+- Solange die Kopplung aussteht, steht auf der Startseite die
+  Einrichtungsanleitung – zu dem Zeitpunkt gibt es noch nichts zu verraten.
+- Die Startseite verlangt jetzt ebenfalls https.
+
+Connector Fassung 1.1.2; die Dateien auf dem Webserver bitte aktualisieren.
+
 ## 1.35.1
 
 ### Connector nachgehärtet

@@ -40,6 +40,12 @@ Ein Unterschied bleibt: Den Einladungscode bekommt der Server beim Aufruf zu
 sehen, sonst könnte er die Seite nicht ausliefern. Gespeichert wird er nicht,
 und für sich genommen sagt er nichts darüber aus, wer ihn bekommen hat.
 
+Und er **zeigt nichts**: Seine Startseite verrät weder, wie viele Fahrzeuge
+oder Einladungen er kennt, noch ob gerade etwas wartet, noch welche Fassung
+er hat. Dort steht nur ein Feld für den Einladungscode – für alle, die von
+der Einladung nur den Code abgetippt haben. Wie es ihm geht, fragt OV-Budget
+signiert ab: *Verwaltung → Connectoren → Zustand abfragen*.
+
 ## Einrichten
 
 1. Den Ordner `connector/` auf den Webserver legen.
@@ -132,6 +138,10 @@ server {
   verwirft der Connector auch die wartenden Meldungen dazu.
 * **Ablage:** nur Prüfsummen der Zugänge und Codes, verschlüsselte Meldungen,
   Zeitstempel und die Angaben, die auf der Einladungsseite stehen müssen.
+* **Zahlen nur signiert:** Bestand und Wartendes gibt der Connector allein
+  dem gekoppelten OV-Budget heraus (`?p=zustand`), nicht der Startseite.
+  Solange die Kopplung aussteht, steht dort die Einrichtungsanleitung – zu dem
+  Zeitpunkt gibt es noch nichts zu verraten.
 
 ## Was offen bleibt
 
@@ -161,6 +171,7 @@ connector/
 │   └── assets/melden.js, assets/einladung.js
 ├── src/
 │   ├── connector.php  Ablage, Kopplung, Signaturen, Begrenzungen
+│   ├── seite_start.php     Feld für den Einladungscode
 │   ├── seite_melden.php
 │   └── seite_einladung.php
 └── daten/             wird beim ersten Aufruf angelegt (nicht ins Web!)

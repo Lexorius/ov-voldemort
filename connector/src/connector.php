@@ -30,7 +30,7 @@ declare(strict_types=1);
  * Gespeichert wird in Dateien unterhalb von daten/ – keine Datenbank nötig.
  */
 
-const CON_VERSION = '1.1.1';
+const CON_VERSION = '1.1.2';
 
 /** Höchstalter einer signierten Anfrage in Sekunden (gegen Wiedereinspielen) */
 const CON_ZEITFENSTER = 300;
@@ -664,26 +664,34 @@ function con_notiz(string $was, string $dazu = ''): void
     @file_put_contents(con_dir() . '/protokoll.log', $zeile, FILE_APPEND);
 }
 
-/** Zustand für die Statusseite – ohne Geheimnisse */
+/**
+ * Zustand des Connectors – Zahlen, keine Geheimnisse.
+ *
+ * Das steht bewusst auf keiner Webseite: Wie viele Fahrzeuge oder Einladungen
+ * hier hängen, geht nur das gekoppelte OV-Budget etwas an. Abgefragt wird es
+ * signiert über ?p=zustand.
+ */
 function con_status(): array
 {
-    $fz = con_lesen('fahrzeuge.json');
-    $offen = 0;
-    foreach (glob(con_dir('meldungen') . '/*') ?: [] as $ordner) {
-        $offen += count(glob($ordner . '/*.json') ?: []);
-    }
-    foreach (glob(con_dir('rueckmeldungen') . '/*') ?: [] as $ordner) {
-        $offen += count(glob($ordner . '/*.json') ?: []);
-    }
+    $zaehlen = static function (string $unter): int {
+        $n = 0;
+        foreach (glob(con_dir($unter) . '/*') ?: [] as $ordner) {
+            $n += count(glob($ordner . '/*.json') ?: []);
+        }
+        return $n;
+    };
     $k = con_kopplung();
     return [
-        'version'        => CON_VERSION,
-        'gekoppelt'      => con_gekoppelt(),
-        'seit'           => (string)($k['gekoppelt_am'] ?? ''),
-        'fahrzeuge'      => count($fz),
+        'version'         => CON_VERSION,
+        'php'             => PHP_VERSION,
+        'gekoppelt'       => con_gekoppelt(),
+        'seit'            => (string)($k['gekoppelt_am'] ?? ''),
+        'fahrzeuge'       => count(con_lesen('fahrzeuge.json')),
         'veranstaltungen' => count(con_lesen('veranstaltungen.json')),
-        'einladungen'    => count(con_lesen('einladungen.json')),
-        'offen'          => $offen,
-        'schreibbar'     => is_writable(con_dir()),
+        'einladungen'     => count(con_lesen('einladungen.json')),
+        'meldungen'       => $zaehlen('meldungen'),
+        'rueckmeldungen'  => $zaehlen('rueckmeldungen'),
+        'schreibbar'      => is_writable(con_dir()),
+        'frei'            => (int)max(0, (float)@disk_free_space(con_dir())),
     ];
 }

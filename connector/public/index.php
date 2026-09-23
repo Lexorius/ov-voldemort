@@ -13,7 +13,8 @@ declare(strict_types=1);
  *   ?p=veranstaltungen      Veranstaltungen und Einladungen setzen (POST, signiert)
  *   ?p=abholen              Standortmeldungen abholen (POST, signiert)
  *   ?p=rueckmeldungen       Rückmeldungen abholen (POST, signiert)
- *   sonst                   knappe Statusseite
+ *   ?p=zustand              Zahlen für OV-Budget (POST, signiert)
+ *   sonst                   Startseite: Feld für den Einladungscode
  *
  * Die kurze Adresse (z. B. https://i.example.de/AB23CD) kommt über eine
  * Umschreibregel des Webservers hier an; siehe public/.htaccess.
@@ -44,8 +45,7 @@ if ($code !== '' && $p === '') {
 }
 
 // Ohne verschlüsselte Verbindung nehmen wir nichts entgegen und geben nichts heraus
-if (!con_https() && in_array($p, ['koppeln', 'position', 'fahrzeuge', 'abholen', 'melden',
-        'einladung', 'rueckmeldung', 'veranstaltungen', 'rueckmeldungen'], true)) {
+if (!con_https()) {
     http_response_code(400);
     header('Content-Type: text/plain; charset=UTF-8');
     exit("Dieser Dienst arbeitet nur über https.\n");
@@ -84,7 +84,7 @@ function seiten_kopf(bool $html = false): void
     header('Content-Type: text/' . ($html ? 'html' : 'plain') . '; charset=UTF-8');
     header('Cache-Control: no-store, private');
     header("Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; "
-        . "connect-src 'self'; form-action 'none'; base-uri 'none'; frame-ancestors 'none'");
+        . "connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
 }
 
 /** Rumpf lesen – mit Deckel, damit niemand den Server vollschreibt */
@@ -177,6 +177,11 @@ try {
             con_alte_wegwerfen('rueckmeldungen');
             antwort(['ok' => true, 'rueckmeldungen' => con_rueckmeldungen_abholen((int)($daten['max'] ?? 200))]);
 
+        /* ---------------- Zahlen für OV-Budget ---------------- */
+        case 'zustand':
+            con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'zustand');
+            antwort(['ok' => true, 'zustand' => con_status()]);
+
         /* ---------------- Einladungsseite ---------------- */
         case 'einladung':
             $einladung = con_einladung($code);
@@ -203,34 +208,17 @@ try {
             require dirname(__DIR__) . '/src/seite_melden.php';
             exit;
 
-        /* ---------------- Status ---------------- */
+        /* ---------------- Startseite ---------------- */
         default:
-            $st = con_status();
-            header('Content-Type: text/html; charset=UTF-8');
-            echo '<!doctype html><html lang="de"><head><meta charset="utf-8">'
-                . '<meta name="viewport" content="width=device-width, initial-scale=1">'
-                . '<title>OV-Budget-Connector</title>'
-                . '<style>body{font:16px/1.5 system-ui,sans-serif;margin:2rem auto;max-width:34rem;padding:0 1rem;color:#111827}'
-                . 'h1{font-size:1.3rem}dt{color:#475569;font-size:.9rem}dd{margin:0 0 .6rem}</style></head><body>';
-            echo '<h1>OV-Budget-Connector</h1>';
-            echo '<p>Dieser Dienst nimmt Standortmeldungen aus Fahrzeugen und Rückmeldungen auf '
-                . 'Einladungen entgegen und reicht sie verschlüsselt an OV-Budget weiter. '
-                . 'Er speichert nichts, was er selbst lesen könnte.</p><dl>';
-            echo '<dt>Fassung</dt><dd>' . htmlspecialchars($st['version']) . '</dd>';
-            echo '<dt>Kopplung</dt><dd>' . ($st['gekoppelt']
-                ? 'eingerichtet' . ($st['seit'] !== '' ? ' seit ' . htmlspecialchars(substr($st['seit'], 0, 10)) : '')
-                : 'noch offen – der Kopplungscode steht auf dem Server in <code>daten/kopplungscode.txt</code>') . '</dd>';
-            echo '<dt>Fahrzeuge</dt><dd>' . (int)$st['fahrzeuge'] . '</dd>';
-            echo '<dt>Veranstaltungen</dt><dd>' . (int)$st['veranstaltungen']
-                . ' (' . (int)$st['einladungen'] . ' Einladungen)</dd>';
-            echo '<dt>Wartende Meldungen</dt><dd>' . (int)$st['offen'] . '</dd>';
-            if (!$st['schreibbar']) {
-                echo '<dt>Achtung</dt><dd>Der Ordner <code>daten/</code> ist nicht beschreibbar.</dd>';
-            }
-            echo '</dl></body></html>';
+            // Hier stehen bewusst keine Zahlen: Wie viele Fahrzeuge oder
+            // Einladungen es gibt, geht nur OV-Budget etwas an (?p=zustand).
+            $gekoppelt = con_gekoppelt();
+            $schreibbar = is_writable(con_dir());
+            seiten_kopf(true);
+            require dirname(__DIR__) . '/src/seite_start.php';
 
-            // Beim ersten Aufruf den Code anlegen, falls noch nicht geschehen
-            if (!$st['gekoppelt']) {
+            // Beim ersten Aufruf den Kopplungscode anlegen
+            if (!$gekoppelt) {
                 con_kopplungscode();
             }
             exit;

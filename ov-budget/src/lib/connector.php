@@ -299,6 +299,18 @@ function connector_call(array $c, string $pfad, array $daten = []): array
     return connector_http(connector_url($c), $pfad, $daten, (string)$c['pem'], (string)$c['server_pub']);
 }
 
+/**
+ * Zahlen vom Connector holen: wie viele Zugänge, Veranstaltungen und
+ * Einladungen er kennt und was gerade wartet.
+ *
+ * Auf seiner eigenen Startseite steht davon nichts – die verrät bewusst
+ * nichts über den Ortsverband. Fragen darf nur das gekoppelte OV-Budget.
+ */
+function connector_zustand(array $c): array
+{
+    return (array)(connector_call($c, 'zustand')['zustand'] ?? []);
+}
+
 /* ==================================================================== */
 /* Zugänge der Fahrzeuge                                                 */
 /* ==================================================================== */

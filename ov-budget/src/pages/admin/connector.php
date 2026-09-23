@@ -8,6 +8,7 @@ $me = require_role('admin');
 $c = connector_find(get_int('id'));
 $fehler = '';
 $hinweis = '';
+$zustand = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
@@ -33,6 +34,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $c = connector_find((int)$c['id']);
                 if ($c && connector_taugt($c, 'fahrzeuge')) {
                     connector_push_vehicles($c);
+                }
+                break;
+
+            case 'zustand':
+                if ($c) {
+                    $zustand = connector_zustand($c);
                 }
                 break;
 
@@ -85,6 +92,7 @@ render('admin/connector', [
          FROM vehicles WHERE qr_token <> '' AND qr_connector_id = ? ORDER BY bezeichnung",
         [(int)$c['id']]
     ) : [],
+    'zustand'   => $zustand,
     'fehler'    => $fehler,
     'hinweis'   => $hinweis,
 ]);
