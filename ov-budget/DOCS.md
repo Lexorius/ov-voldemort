@@ -356,6 +356,14 @@ Dann holt die Anwendung:
   einstellbar. Wechsel zwischen zwei Abrufen sieht die Anwendung nicht.
 * **Letzte Position** mit Link auf die Karte (OpenStreetMap), abschaltbar.
 * **Besatzung**, die in Divera dem Fahrzeug zugeordnet ist, abschaltbar.
+* **Karte in der Fahrzeugakte:** Zur letzten Position zeigt die Akte eine
+  Karte von OpenStreetMap. Der Browser lädt sie direkt von dort; wer das nicht
+  möchte, schaltet sie unter *Einstellungen → Fahrzeuge* ab
+  (*Karte in der Fahrzeugakte zeigen*) – der Verweis auf die große Karte bleibt.
+* **Wie oft der Standort erneuert wird:** *Einstellungen → Divera 24/7* →
+  *Standort erneuern alle (Minuten)*. Vorgabe 0 heißt: bei jedem Abruf des
+  Funkstatus (alle 2 Minuten). Ein größerer Wert lässt die letzte Position
+  stehen, bis die Zeit um ist.
 * **Standort im Journal:** Bei jedem Funkstatuswechsel stehen die Koordinaten
   im Journaleintrag. Reine Positionsmeldungen landen nur dort, wenn unter
   *Einstellungen → Divera 24/7* eine Strecke eingetragen ist

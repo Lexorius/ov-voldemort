@@ -162,7 +162,20 @@ function dv_crew_names(mixed $crew): array
  * ableiten – ohne Datenbank.
  * Rückgabe: ['daten' => Spalten, 'statuswechsel' => null|[alt, neu, zeit, notiz]]
  */
-function dv_status_update(array $st, array $fahrzeug, bool $mitPosition, int $jetzt): array
+/**
+ * Ist eine neue Standortmeldung fällig? Reine Funktion.
+ * $intervall in Minuten; 0 heißt: bei jedem Abruf.
+ */
+function dv_position_due(?string $letzteMeldung, int $intervall, int $jetzt): bool
+{
+    if ($intervall <= 0 || $letzteMeldung === null || $letzteMeldung === '') {
+        return true;
+    }
+    $ts = strtotime($letzteMeldung);
+    return $ts === false || $jetzt - $ts >= $intervall * 60;
+}
+
+function dv_status_update(array $st, array $fahrzeug, bool $mitPosition, int $jetzt, int $posIntervall = 0): array
 {
     $daten = ['divera_sync_at' => date('Y-m-d H:i:s', $jetzt)];
     $wechsel = null;
@@ -186,7 +199,7 @@ function dv_status_update(array $st, array $fahrzeug, bool $mitPosition, int $je
         $daten['fms_note'] = mb_substr($notiz, 0, 255);
     }
 
-    if ($mitPosition) {
+    if ($mitPosition && dv_position_due($fahrzeug['geo_at'] ?? null, $posIntervall, $jetzt)) {
         $lat = $st['lat'] ?? null;
         $lng = $st['lng'] ?? null;
         if (is_numeric($lat) && is_numeric($lng) && ((float)$lat !== 0.0 || (float)$lng !== 0.0)
@@ -246,7 +259,7 @@ function dv_vehicles_for_matching(): array
 {
     return db_all(
         'SELECT id, bezeichnung, funkrufname, kennzeichen, issi, opta, ric, divera_vehicle_id,
-                fms_status, fms_at, geo_lat, geo_lng, stein_asset_id
+                fms_status, fms_at, geo_lat, geo_lng, geo_at, stein_asset_id
          FROM vehicles WHERE is_active = 1'
     );
 }
@@ -337,7 +350,8 @@ function dv_sync_status_locked(int $jetzt): array
             continue;
         }
 
-        $ergebnis = dv_status_update($st, $fz, $mitPosition, $jetzt);
+        $ergebnis = dv_status_update($st, $fz, $mitPosition, $jetzt,
+            setting_int('divera_position_intervall_minuten', 0));
         $ergebnis['daten']['divera_daten'] = json_encode($st, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         db_update('vehicles', $ergebnis['daten'], 'id = ?', [$id]);
 
@@ -557,6 +571,19 @@ function dv_movement_note(mixed $altLat, mixed $altLng, mixed $neuLat, mixed $ne
     }
     $m = dv_distance_m((float)$altLat, (float)$altLng, (float)$neuLat, (float)$neuLng);
     return $m >= $schwelleM ? $m : null;
+}
+
+/**
+ * Adresse der eingebetteten OpenStreetMap-Karte.
+ * $spanne ist der halbe Kartenausschnitt in Grad (0.01 ≈ 1,1 km).
+ * Reine Funktion.
+ */
+function dv_map_embed_url(float $lat, float $lng, float $spanne = 0.008): string
+{
+    return sprintf(
+        'https://www.openstreetmap.org/export/embed.html?bbox=%.6f%%2C%.6f%%2C%.6f%%2C%.6f&layer=mapnik&marker=%.6f%%2C%.6f',
+        $lng - $spanne, $lat - $spanne / 2, $lng + $spanne, $lat + $spanne / 2, $lat, $lng
+    );
 }
 
 function dv_map_url(float $lat, float $lng): string

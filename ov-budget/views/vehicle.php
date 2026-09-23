@@ -152,6 +152,17 @@ $arten = [
           <div class="dl__item"><div class="dl__label">Besatzung</div>
             <div class="dl__value"><?= e(implode(', ', $crew)) ?></div></div>
         <?php endif; ?>
+        <?php if ($vehicle['geo_lat'] !== null && $vehicle['geo_lng'] !== null
+                  && setting_bool('fahrzeug_karte', true)): ?>
+          <div class="dl__item" style="grid-column:1 / -1">
+            <div class="dl__label">Karte</div>
+            <div class="dl__value">
+              <iframe class="karte" loading="lazy" referrerpolicy="no-referrer"
+                      title="Standort auf der Karte"
+                      src="<?= e(dv_map_embed_url((float)$vehicle['geo_lat'], (float)$vehicle['geo_lng'])) ?>"></iframe>
+              <div class="small muted">Karte von OpenStreetMap, direkt von dort geladen.</div>
+            </div></div>
+        <?php endif; ?>
         <?php if ($vehicle['geo_lat'] !== null && $vehicle['geo_lng'] !== null): ?>
           <div class="dl__item"><div class="dl__label">Letzte Position</div>
             <div class="dl__value">

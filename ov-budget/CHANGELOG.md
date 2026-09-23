@@ -1,5 +1,23 @@
 # Änderungsverlauf
 
+## 1.31.0
+
+### Karte in der Fahrzeugakte
+
+- Hat ein Fahrzeug eine Position aus Divera, zeigt die Akte sie jetzt auf
+  einer Karte von OpenStreetMap – mit Markierung, direkt in der Seite.
+- Abschaltbar unter *Einstellungen → Fahrzeuge* (*Karte in der Fahrzeugakte
+  zeigen*). Dann bleibt es beim bisherigen Verweis auf die große Karte. Die
+  Karte wird vom Browser direkt bei OpenStreetMap geladen.
+
+### Wie oft der Standort erneuert wird
+
+- Neue Einstellung *Standort erneuern alle (Minuten)* unter Divera 24/7.
+  Vorgabe 0 = mit jedem Abruf des Funkstatus (also alle 2 Minuten).
+- Mit einem größeren Wert bleibt die letzte Position stehen, bis die Zeit um
+  ist. Das spart Schreibzugriffe und hält die Karte ruhig, ohne den
+  Funkstatus zu verlangsamen.
+
 ## 1.30.1
 
 ### Standort im Journal der Fahrzeugakte

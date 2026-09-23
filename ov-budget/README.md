@@ -58,6 +58,7 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - **Sortierbare Liste und Kachelansicht** mit Stempel „Nicht einsatzbereit",
   Favoriten je Person
 - **Wünsche je Fahrzeug**: Ersatzteile und Ausstattung hängen an der Akte
+- **Karte in der Fahrzeugakte** (OpenStreetMap) mit der letzten Position
 - **Bilder** (mit Titelbild) und **Dokumente** an Fahrzeugen
 - **Fotogalerie je Auftrag**: Fotos beim Melden direkt aus der Kamera anhängen,
   Dokumente getrennt davon; Fotos verlieren beim Speichern den Aufnahmeort
