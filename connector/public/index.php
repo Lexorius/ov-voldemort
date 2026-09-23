@@ -44,6 +44,15 @@ if ($code !== '' && $p === '') {
     $p = 'einladung';
 }
 
+// Andere Verfahren als diese drei hat der Connector nicht zu beantworten
+if (!in_array(strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET')), ['GET', 'HEAD', 'POST'], true)) {
+    http_response_code(405);
+    header('Allow: GET, HEAD, POST');
+    header('Content-Type: text/plain; charset=UTF-8');
+    exit("Nur GET, HEAD und POST.
+");
+}
+
 // Ohne verschlüsselte Verbindung nehmen wir nichts entgegen und geben nichts heraus
 if (!con_https()) {
     http_response_code(400);

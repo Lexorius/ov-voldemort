@@ -1,5 +1,19 @@
 # Änderungsverlauf
 
+## 1.35.3
+
+### Nach dem Test am laufenden Connector
+
+Der Connector auf dem Webserver wurde von außen geprüft: Kopfzeilen, Ablage,
+Endpunkte, Begrenzungen. Alles Wesentliche hielt; eine Kleinigkeit ist
+nachgezogen:
+
+- **PUT, DELETE und OPTIONS** beantwortete der Connector wie ein GET – also
+  mit der Startseite. Jetzt kommt darauf ein sauberes `405` samt `Allow`.
+  Geändert wurde dadurch nie etwas, aber es gehört sich nicht.
+
+Connector Fassung 1.1.3.
+
 ## 1.35.2
 
 ### Connector zeigt nichts mehr
