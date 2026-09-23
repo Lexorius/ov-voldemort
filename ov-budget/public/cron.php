@@ -61,6 +61,20 @@ $abrufe = [
             $res['fehler'] ? ', ' . $res['fehler'] . ' unbrauchbar' : ''
         )]];
     },
+    'Einladungen'       => static function (): array {
+        if (!connector_events_due()) {
+            return [];
+        }
+        $res = connector_events_sync();
+        if ($res['gesendet'] === 0 && $res['geholt'] === 0 && $res['fehler'] === 0) {
+            return [];
+        }
+        return [['status' => $res['fehler'] ? 'fehler' : 'ok', 'message' => sprintf(
+            '%d Connector(en) neu angemeldet, %d Rückmeldung(en) geholt, %d übernommen%s',
+            $res['gesendet'], $res['geholt'], $res['uebernommen'],
+            $res['fehler'] ? ', ' . $res['fehler'] . ' unbrauchbar' : ''
+        )]];
+    },
     'Benachrichtigungen' => static function (): array {
         $n = notify_taeglich();
         $res = notify_flush();

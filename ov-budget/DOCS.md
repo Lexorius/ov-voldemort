@@ -146,6 +146,17 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   oder 00 beginnen, bleiben bei ihrem Land. Steht im Feld ein Hinweis statt
   einer Nummer („über das Büro"), bleibt der Text unverändert stehen.
   Bestehende Kontakte werden beim nächsten Start einmalig umgeschrieben.
+* **Veranstaltungen** – Termin, Ort und Status, dazu ein Budgettopf mit
+  geplanten Kosten. Buchungen aus dem Budgetmodul lassen sich der Veranstaltung
+  zuordnen; die Seite stellt geplant und tatsächlich nebeneinander und listet
+  die Buchungen. **Rechnungen, Angebote und das Programm** hängen als Datei
+  daran. Die **Gästeliste** kommt aus den Kontakten – einzeln, als ganzer
+  Verteiler oder frei mit Namen. Jede eingeladene Person bekommt einen eigenen
+  **Einladungscode**; über eine kurze Adresse sagt sie zu, ab, kündigt
+  Begleiter an oder nennt eine Vertretung. Je Veranstaltung ist einstellbar,
+  wie viele Begleiter erlaubt sind, ob Kommentare und Vertretungen erlaubt
+  sind und bis wann zurückgemeldet wird. Siehe
+  *Veranstaltungen und Einladungen* weiter unten.
 * **Besprechungen** – Talking Points im Themenspeicher sammeln, auf die
   Tagesordnung setzen, während der Sitzung Ergebnisse festhalten und daraus
   Aufgaben machen – einzeln über das vorausgefüllte Aufgabenformular, mehrere
@@ -234,6 +245,61 @@ dieser Person eingebracht (sie kann es dann auch bearbeiten); sonst steht der
 Name beim Thema. Nicht zugeordnete Felder landen in der Beschreibung.
 * **Verwaltung** – Benutzer und Rollen (Mitglied, Leitung, Administration) sowie
   *alle* Auswahllisten, Texte und Regeln frei konfigurierbar.
+
+## Veranstaltungen und Einladungen
+
+Anlegen und ändern darf die **OV-Leitung**; ob alle Mitglieder Veranstaltungen
+sehen, steht unter *Einstellungen → Veranstaltungen*.
+
+### Gästeliste
+
+Eingeladen wird aus dem Kontaktmodul: einzeln über die Suche, als ganzer
+Verteiler oder – für alle, die dort nicht stehen – frei mit Namen. Jede Person
+bekommt dabei einen **Einladungscode** aus Ziffern und Großbuchstaben, ohne
+die leicht verwechselbaren (0/O, 1/I/L). Die Länge steht in den Einstellungen
+und lässt sich je Veranstaltung ändern; sechs Zeichen sind die Vorgabe.
+
+Rückmeldungen lassen sich jederzeit von Hand eintragen – für alle, die anrufen
+statt zu klicken. In der Übersicht stehen Zusagen, Absagen, Offene und die
+**Gesamtzahl der Personen**: die eingeladene Person (oder ihre Vertretung) plus
+ihre Begleiter.
+
+### Einladung im Netz
+
+Damit die Einladung eine Adresse bekommt, braucht es einen **Connector** mit
+der Verwendung *Veranstaltungen* (siehe `connector/README.md`). Er wird beim
+Bearbeiten der Veranstaltung ausgewählt. Die Adresse ist so kurz wie möglich:
+
+```
+https://i.example.de/AB23CD
+```
+
+Auf der Seite stehen Titel, Zeitpunkt, Ort und der Hinweistext, den man im
+Formular mitgibt. Zur Auswahl stehen *Ich nehme teil*, *Ich kann leider nicht
+teilnehmen* und – wenn erlaubt – *Es kommt jemand für mich*, dazu „Mit wie
+vielen Begleitern kommen Sie?" und ein Feld für eine Nachricht.
+
+Was der Connector dabei erfährt und was nicht:
+
+| Liegt dort | Liegt dort nicht |
+|---|---|
+| Titel, Zeitpunkt, Ort, Hinweistext | Namen und Anschriften der Eingeladenen |
+| Prüfsummen der Einladungscodes | die Codes selbst |
+| verschlüsselte Rückmeldungen | Zusagen, Absagen, Kommentare im Klartext |
+
+OV-Budget meldet Veranstaltungen und Codes von allein an und holt die
+Rückmeldungen ab – im Takt von *Rückmeldungen abholen alle (Minuten)*, Vorgabe
+zehn. Dafür muss der automatische Abruf (`cron.php`) laufen; im Add-on tut er
+das ohnehin. Auf der Veranstaltungsseite gibt es beide Knöpfe auch von Hand.
+
+Steht bei der Veranstaltung eine **Rückmeldefrist**, nimmt die Seite danach
+nichts mehr an. Ist die Veranstaltung abgesagt, sagt sie das.
+
+### Wenn ein Code in falsche Hände gerät
+
+*Code neu* in der Gästeliste erzeugt einen neuen; der alte Link führt beim
+nächsten Abgleich ins Leere. Wer ganz von der Liste genommen wird, verliert
+seinen Zugang ebenso.
 
 ## Zeitzone
 
@@ -479,7 +545,7 @@ die Dateien enthalten alle Fahrzeugdaten im Klartext.
 | Rolle | Darf |
 |---|---|
 | Mitglied | Wünsche anlegen und die eigenen bearbeiten, abstimmen, kommentieren, Aufgaben im eigenen Zuständigkeitsbereich bearbeiten |
-| Leitung | zusätzlich: alle Wünsche bearbeiten, Status und Priorität setzen, Budgettöpfe pflegen, alle Aufgaben verwalten |
+| Leitung | zusätzlich: alle Wünsche bearbeiten, Status und Priorität setzen, Budgettöpfe pflegen, alle Aufgaben verwalten, Veranstaltungen anlegen und die Gästeliste führen |
 | Administration | zusätzlich: Benutzerverwaltung, Auswahllisten, Einstellungen, Divera-Anbindung, Protokoll |
 
 ## Wenn etwas klemmt

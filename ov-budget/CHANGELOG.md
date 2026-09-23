@@ -1,5 +1,62 @@
 # Änderungsverlauf
 
+## 1.35.0
+
+### Veranstaltungen
+
+Neues Modul: Veranstaltungen anlegen, Geld im Blick behalten, einladen.
+
+- **Termin und Ort**, Status (geplant, läuft, abgeschlossen, abgesagt),
+  Fachgruppe und Beschreibung.
+- **Budget:** ein Budgettopf und geplante Kosten; Buchungen aus dem
+  Budgetmodul lassen sich einer Veranstaltung zuordnen. Die Seite stellt
+  geplant und tatsächlich nebeneinander und listet alle Buchungen.
+- **Dateien** je Veranstaltung – Rechnungen, Angebote, Programm; auf Wunsch
+  mit dem Betrag als Merkposten. Bilder werden neu gespeichert und verlieren
+  dabei ihre Metadaten.
+- **Gästeliste** aus dem Kontaktmodul: einzeln, als ganzer Verteiler oder frei
+  mit Namen. Rückmeldungen lassen sich auch von Hand eintragen.
+- **Übersicht:** Zusagen, Absagen, Offene und die Gesamtzahl der Personen –
+  eingeladene Person plus Begleiter.
+- Anlegen und ändern darf die OV-Leitung; ob alle Mitglieder Veranstaltungen
+  sehen, ist einstellbar.
+
+### Einladungen über eine kurze Adresse
+
+- Jede eingeladene Person bekommt einen eigenen **Einladungscode** aus Ziffern
+  und Großbuchstaben, ohne die leicht verwechselbaren (0/O, 1/I/L). Die Länge
+  ist einstellbar (Vorgabe sechs Zeichen).
+- Der Code steht in einer möglichst kurzen Adresse, z. B.
+  `https://i.example.de/AB23CD`. Ausgeliefert wird die Seite vom Connector.
+- Dort stehen Titel, Zeitpunkt, Ort und ein eigener Hinweistext, dazu die
+  Auswahl: *Ich nehme teil*, *Ich kann leider nicht teilnehmen* oder *Es kommt
+  jemand für mich*. Wenn erlaubt, dazu „Mit wie vielen Begleitern kommen Sie?"
+  und ein Feld für eine Nachricht.
+- **Verschlüsselt wie die Standortmeldungen:** Die Rückmeldung wird im Browser
+  für OV-Budget verschlüsselt. Der Connector kennt Titel, Zeitpunkt und Ort –
+  die Seite muss sie zeigen –, aber keine Namen und keine Antworten. Von den
+  Codes liegen dort nur Prüfsummen.
+- Je Veranstaltung einstellbar: Begleiter je Person, Kommentare, Vertretungen,
+  Rückmeldefrist. Nach der Frist nimmt die Seite nichts mehr an.
+- Anmelden und Abholen laufen von allein (Vorgabe: alle zehn Minuten) und auf
+  Knopfdruck. *Code neu* zieht eine einzelne Einladung zurück.
+
+### Mehrere Connectoren
+
+- Connectoren stehen jetzt unter *Verwaltung → Connectoren*; es können
+  mehrere sein. Jeder trägt eine eigene Kopplung, eine kurze Adresse für
+  Einladungen und seine Verwendung: **Fahrzeuge**, **Veranstaltungen** oder
+  beides.
+- Am Fahrzeug steht, über welchen Connector sein QR-Code läuft; beim Erzeugen
+  lässt er sich auswählen, wenn es mehrere gibt.
+- Der bisherige Connector wird beim Update samt Schlüsseln übernommen, seine
+  Adresse wandert aus den Einstellungen in die Liste. Vorhandene QR-Codes
+  bleiben gültig.
+- Der Connector meldet sich jetzt als Fassung 1.1.0. Die Dateien auf dem
+  Webserver bitte mit aktualisieren – für kurze Einladungsadressen braucht es
+  dort außerdem eine Umschreibregel (liegt für Apache als `.htaccess` bei, für
+  nginx steht sie in `connector/README.md`).
+
 ## 1.34.0
 
 ### Connector kennt die Fahrzeuge nicht mehr

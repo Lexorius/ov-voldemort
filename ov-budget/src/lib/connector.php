@@ -376,6 +376,166 @@ function connector_push_vehicles_all(): int
 }
 
 /* ==================================================================== */
+/* Veranstaltungen und Einladungen                                       */
+/* ==================================================================== */
+
+/**
+ * Was der Connector über eine Veranstaltung wissen muss, damit die
+ * Einladungsseite sie zeigen kann – und nicht mehr. Reine Funktion.
+ */
+function connector_event_daten(array $e): array
+{
+    return [
+        'kennung'       => event_kennung($e),
+        'titel'         => (string)$e['titel'],
+        'beginn'        => (string)$e['beginn'],
+        'ende'          => (string)($e['ende'] ?? ''),
+        'ort'           => (string)($e['ort'] ?? ''),
+        'hinweis'       => (string)($e['hinweis'] ?? ''),
+        'bis'           => (string)($e['rueckmeldung_bis'] ?? ''),
+        'status'        => (string)$e['status'],
+        'begleiter_max' => (int)$e['begleiter_max'],
+        'kommentare'    => (int)$e['kommentare_erlaubt'],
+        'vertretung'    => (int)$e['vertretung_erlaubt'],
+    ];
+}
+
+/**
+ * Das Paket für einen Connector: seine Veranstaltungen und die Prüfsummen
+ * der Einladungscodes. Namen der Eingeladenen sind nicht dabei.
+ *
+ * Lange vorbei ist lange vorbei: Was seit mehr als einer Woche zu Ende ist,
+ * muss nicht weiter im Netz stehen.
+ */
+function connector_event_paket(array $c): array
+{
+    $veranstaltungen = [];
+    $einladungen = [];
+    $grenze = time() - 7 * 86400;
+
+    foreach (db_all('SELECT * FROM events WHERE connector_id = ? ORDER BY beginn', [(int)$c['id']]) as $e) {
+        $ende = strtotime((string)($e['ende'] ?: $e['beginn']));
+        if ($ende !== false && $ende < $grenze) {
+            continue;
+        }
+        $veranstaltungen[] = connector_event_daten($e);
+        foreach (db_all('SELECT code FROM event_guests WHERE event_id = ?', [(int)$e['id']]) as $g) {
+            $einladungen[event_code_kennung((string)$g['code'])] = event_kennung($e);
+        }
+    }
+    return ['veranstaltungen' => $veranstaltungen, 'einladungen' => $einladungen];
+}
+
+/**
+ * Veranstaltungen und Einladungen anmelden. Geschickt wird nur, wenn sich
+ * etwas geändert hat – sonst schriebe jeder Abruf dieselben Dateien neu.
+ */
+function connector_push_events(array $c, bool $erzwingen = false): array
+{
+    $paket = connector_event_paket($c);
+    $stand = hash('sha256', (string)json_encode($paket, JSON_UNESCAPED_UNICODE));
+    $merker = 'connector_events_' . (int)$c['id'];
+
+    if (!$erzwingen && state_get($merker, '') === $stand) {
+        return [
+            'gesendet'        => false,
+            'veranstaltungen' => count($paket['veranstaltungen']),
+            'einladungen'     => count($paket['einladungen']),
+        ];
+    }
+    $antwort = connector_call($c, 'veranstaltungen', $paket);
+    state_save($merker, $stand);
+    return [
+        'gesendet'        => true,
+        'veranstaltungen' => (int)($antwort['veranstaltungen'] ?? count($paket['veranstaltungen'])),
+        'einladungen'     => (int)($antwort['einladungen'] ?? count($paket['einladungen'])),
+    ];
+}
+
+/**
+ * Rückmeldungen abholen und in die Gästelisten eintragen.
+ * Rückgabe: ['geholt', 'uebernommen', 'fehler']
+ */
+function connector_fetch_answers(array $c): array
+{
+    $res = ['geholt' => 0, 'uebernommen' => 0, 'fehler' => 0];
+    if (!connector_taugt($c, 'veranstaltungen')) {
+        return $res;
+    }
+    $antwort = connector_call($c, 'rueckmeldungen', ['max' => 200]);
+    $liste = (array)($antwort['rueckmeldungen'] ?? []);
+    $res['geholt'] = count($liste);
+    if (!$liste) {
+        return $res;
+    }
+
+    // Gäste dieses Connectors, nach der Prüfsumme ihres Codes
+    $gaeste = [];
+    foreach (db_all(
+        'SELECT g.* FROM event_guests g
+         JOIN events e ON e.id = g.event_id
+         WHERE e.connector_id = ?',
+        [(int)$c['id']]
+    ) as $g) {
+        $gaeste[event_code_kennung((string)$g['code'])] = $g;
+    }
+
+    // Älteste zuerst: Wer zweimal antwortet, dessen letzte Antwort gilt
+    usort($liste, static fn($a, $b) => (int)($a['ts'] ?? 0) <=> (int)($b['ts'] ?? 0));
+
+    $veranstaltungen = [];
+    foreach ($liste as $m) {
+        $gast = $gaeste[(string)($m['code'] ?? '')] ?? null;
+        if ($gast === null) {
+            $res['fehler']++;
+            continue;
+        }
+        try {
+            $daten = connector_entschluesseln((string)($m['daten'] ?? ''), (string)$c['pem'], ['status']);
+        } catch (Throwable $ex) {
+            $res['fehler']++;
+            continue;
+        }
+        $eventId = (int)$gast['event_id'];
+        $veranstaltungen[$eventId] ??= event_find($eventId);
+        if ($veranstaltungen[$eventId] === null) {
+            $res['fehler']++;
+            continue;
+        }
+        $gaeste[(string)$m['code']] = event_guest_antwort($veranstaltungen[$eventId], $gast, $daten, 'einladung');
+        $res['uebernommen']++;
+    }
+    return $res;
+}
+
+/** Anmelden und abholen bei allen Connectoren für Veranstaltungen */
+function connector_events_sync(): array
+{
+    $res = ['connectoren' => 0, 'gesendet' => 0, 'geholt' => 0, 'uebernommen' => 0, 'fehler' => 0];
+    foreach (connector_liste('veranstaltungen') as $c) {
+        $res['connectoren']++;
+        $push = connector_push_events($c);
+        $res['gesendet'] += $push['gesendet'] ? 1 : 0;
+        foreach (connector_fetch_answers($c) as $k => $v) {
+            $res[$k] += $v;
+        }
+    }
+    state_save('veranstaltung_letzter_abruf', (string)time());
+    return $res;
+}
+
+/** Ist ein Abgleich der Einladungen fällig? */
+function connector_events_due(?int $jetzt = null): bool
+{
+    $jetzt ??= time();
+    if (!connector_for('veranstaltungen')) {
+        return false;
+    }
+    $intervall = max(1, setting_int('veranstaltung_intervall_minuten', 10)) * 60;
+    return $jetzt - (int)state_get('veranstaltung_letzter_abruf', '0') >= $intervall;
+}
+
+/* ==================================================================== */
 /* Meldungen abholen                                                     */
 /* ==================================================================== */
 

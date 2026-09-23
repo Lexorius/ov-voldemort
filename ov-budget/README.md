@@ -48,6 +48,20 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - **Anwesenheit**: teilgenommen, entschuldigt, nicht erschienen
 - Tagesordnung und Protokoll zum Drucken
 
+### Veranstaltungen
+- Termin, Ort, Status und Beschreibung; Budgettopf und geplante Kosten
+- **Ausgaben im Blick**: Buchungen aus dem Budgetmodul lassen sich der
+  Veranstaltung zuordnen, die Seite zeigt geplant gegen tatsächlich
+- **Dateien** wie Rechnungen, Angebote und Programm
+- **Gästeliste aus den Kontakten** – einzeln, als ganzer Verteiler oder frei
+  mit Namen
+- **Einladung per kurzer Adresse** (`https://i.example.de/AB23CD`): zusagen,
+  absagen, Begleiter ankündigen oder eine Vertretung nennen – ohne Zugang zur
+  Anwendung, verschlüsselt über einen Connector
+- Je Veranstaltung einstellbar: wie viele Begleiter erlaubt sind, ob
+  Kommentare und Vertretungen erlaubt sind, bis wann zurückgemeldet wird und
+  wie lang der Einladungscode ist
+
 ### Fahrzeuge
 - **Fahrzeugakte** mit Funkrufname, Kennzeichen, ISSI, OPTA, RIC und den
   Fristen HU, SP und UVV

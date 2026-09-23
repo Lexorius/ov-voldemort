@@ -107,6 +107,41 @@ switch (post_str('action')) {
         $zurueck .= '#dateien';
         break;
 
+    /* ---------------- Einladungen über den Connector ---------------- */
+
+    case 'einladungen':
+        $c = connector_find((int)($event['connector_id'] ?? 0));
+        if ($c === null || !connector_taugt($c, 'veranstaltungen')) {
+            flash('error', 'Für diese Veranstaltung ist kein gekoppelter Connector eingetragen.');
+            break;
+        }
+        try {
+            $res = connector_push_events($c, true);
+            flash('success', sprintf('%d Veranstaltung(en) und %d Einladung(en) angemeldet.',
+                $res['veranstaltungen'], $res['einladungen']));
+        } catch (Throwable $ex) {
+            flash('error', 'Der Connector war nicht erreichbar: ' . e($ex->getMessage()));
+        }
+        $zurueck .= '#einladungen';
+        break;
+
+    case 'abholen':
+        $c = connector_find((int)($event['connector_id'] ?? 0));
+        if ($c === null || !connector_taugt($c, 'veranstaltungen')) {
+            flash('error', 'Für diese Veranstaltung ist kein gekoppelter Connector eingetragen.');
+            break;
+        }
+        try {
+            $res = connector_fetch_answers($c);
+            flash('success', sprintf('%d Rückmeldung(en) geholt, %d übernommen%s.',
+                $res['geholt'], $res['uebernommen'],
+                $res['fehler'] ? ', ' . $res['fehler'] . ' unbrauchbar' : ''));
+        } catch (Throwable $ex) {
+            flash('error', 'Der Connector war nicht erreichbar: ' . e($ex->getMessage()));
+        }
+        $zurueck .= '#gaeste';
+        break;
+
     /* ---------------- Veranstaltung ---------------- */
 
     case 'loeschen':

@@ -348,6 +348,51 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
   <?php endif; ?>
 </div>
 
+<div class="card" id="einladungen">
+  <h2>Einladungen im Netz</h2>
+  <?php if ($connector === null): ?>
+    <p class="small">Für diese Veranstaltung ist kein Connector eingetragen. Die Einladungscodes
+      gibt es trotzdem – nur steht keine Seite im Netz, auf der sich jemand zurückmelden kann.
+      <?php if ($darf): ?>
+        Ein Connector lässt sich beim <a href="<?= e(url('event_edit', ['id' => $id])) ?>">Bearbeiten</a>
+        auswählen; angelegt wird er in der <a href="<?= e(url('admin_connectors')) ?>">Verwaltung</a>.
+      <?php endif; ?></p>
+  <?php else: ?>
+    <dl class="dl">
+      <div class="dl__item"><div class="dl__label">Connector</div>
+        <div class="dl__value"><?= e((string)$connector['name']) ?>
+          <?php if (!connector_gekoppelt($connector)): ?>
+            <span class="badge" style="background:var(--warn)">nicht gekoppelt</span>
+          <?php elseif ((int)$connector['fuer_veranstaltungen'] !== 1): ?>
+            <span class="badge" style="background:var(--warn)">nicht für Veranstaltungen freigegeben</span>
+          <?php endif; ?></div></div>
+      <div class="dl__item"><div class="dl__label">Einladungsadresse</div>
+        <div class="dl__value mono small" style="word-break:break-all">
+          <?= e(event_invite_url($connector, str_repeat('X', (int)$event['code_laenge']))) ?></div></div>
+    </dl>
+    <p class="small muted">Auf der Einladungsseite stehen Titel, Zeitpunkt, Ort und der Hinweistext –
+      mehr weiß der Connector nicht. Von den Codes liegen dort nur Prüfsummen, Namen gar nicht.</p>
+    <?php if ($darf): ?>
+      <div class="btnrow">
+        <form method="post" action="<?= e(url('event_action')) ?>" class="inline-form">
+          <?= csrf_field() ?>
+          <input type="hidden" name="action" value="einladungen">
+          <input type="hidden" name="event_id" value="<?= $id ?>">
+          <button class="btn btn--sec" type="submit">Jetzt anmelden</button>
+        </form>
+        <form method="post" action="<?= e(url('event_action')) ?>" class="inline-form">
+          <?= csrf_field() ?>
+          <input type="hidden" name="action" value="abholen">
+          <input type="hidden" name="event_id" value="<?= $id ?>">
+          <button class="btn btn--sec" type="submit">Rückmeldungen abholen</button>
+        </form>
+      </div>
+      <p class="small muted">Beides passiert von allein im Takt der Einstellung
+        „Rückmeldungen abholen alle (Minuten)". Die Knöpfe sind für die Ungeduld.</p>
+    <?php endif; ?>
+  <?php endif; ?>
+</div>
+
 <div class="card" id="dateien">
   <div class="card__head">
     <h2>Dateien</h2>

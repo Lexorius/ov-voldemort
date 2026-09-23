@@ -2,10 +2,15 @@
 declare(strict_types=1);
 
 /**
- * OV-Budget-Connector: Briefkasten für Standortmeldungen aus Fahrzeugen.
+ * OV-Budget-Connector: Briefkasten für alles, was von außen hereinkommt.
  *
- * Der Connector steht auf einem öffentlich erreichbaren Webserver. Er nimmt
- * Meldungen von Handys entgegen und gibt sie an OV-Budget weiter – mehr nicht.
+ * Der Connector steht auf einem öffentlich erreichbaren Webserver und hat
+ * zwei Aufgaben:
+ *
+ *   Fahrzeuge       – Standortmeldungen von Handys (QR-Code im Fahrzeug)
+ *   Veranstaltungen – Rückmeldungen auf Einladungen (kurze Adresse mit Code)
+ *
+ * Beides nimmt er entgegen und gibt es an OV-Budget weiter – mehr nicht.
  *
  * Zwei Dinge sind wichtig:
  *
@@ -15,13 +20,17 @@ declare(strict_types=1);
  * 1a. Er kennt die Fahrzeuge nicht. Gespeichert werden nur Prüfsummen der
  *    Zugänge; Bezeichnung und Kennzeichen stehen im Anker der Adresse
  *    (hinter dem #) und erreichen den Server nie.
+ * 1b. Von den Veranstaltungen kennt er nur, was die Einladungsseite zeigen
+ *    muss: Titel, Zeitpunkt, Ort und den Hinweistext. Wer eingeladen ist,
+ *    weiß er nicht – von den Einladungscodes liegen nur Prüfsummen hier,
+ *    und die Rückmeldungen sind verschlüsselt.
  * 2. Er redet nur mit einem gekoppelten OV-Budget. Die Kopplung passiert
  *    einmalig mit einem Code, danach ist jede Anfrage signiert.
  *
  * Gespeichert wird in Dateien unterhalb von daten/ – keine Datenbank nötig.
  */
 
-const CON_VERSION = '1.0.0';
+const CON_VERSION = '1.1.0';
 
 /** Höchstalter einer signierten Anfrage in Sekunden (gegen Wiedereinspielen) */
 const CON_ZEITFENSTER = 300;
@@ -31,6 +40,10 @@ const CON_LIMIT_STUNDE = 120;
 const CON_MAX_OFFEN = 500;
 /** Größte erlaubte Meldung in Byte */
 const CON_MAX_MELDUNG = 4096;
+/** Rückmeldungen je Einladung und Stunde */
+const CON_LIMIT_EINLADUNG = 20;
+/** Größte erlaubte Rückmeldung in Byte */
+const CON_MAX_RUECKMELDUNG = 8192;
 
 class ConException extends RuntimeException
 {
@@ -430,6 +443,169 @@ function con_limit_frei(string $schluessel, int $hoechstens = CON_LIMIT_STUNDE):
 }
 
 /* ==================================================================== */
+/* Veranstaltungen und Einladungen                                       */
+/* ==================================================================== */
+
+/**
+ * Was der Connector über eine Veranstaltung wissen darf. Titel, Zeitpunkt
+ * und Ort muss die Einladungsseite zeigen – alles andere bleibt in
+ * OV-Budget. Reine Funktion.
+ */
+function con_veranstaltung_saeubern(array $v): ?array
+{
+    $kennung = strtolower(trim((string)($v['kennung'] ?? '')));
+    if (!preg_match('/^[a-f0-9]{64}$/', $kennung)) {
+        return null;
+    }
+    $text = static fn(string $wert, int $laenge): string => mb_substr(
+        trim(preg_replace('/[\x00-\x08\x0b\x0c\x0e-\x1f]/u', '', $wert) ?? ''), 0, $laenge);
+
+    return [
+        'kennung'       => $kennung,
+        'titel'         => $text((string)($v['titel'] ?? ''), 200),
+        'beginn'        => $text((string)($v['beginn'] ?? ''), 30),
+        'ende'          => $text((string)($v['ende'] ?? ''), 30),
+        'ort'           => $text((string)($v['ort'] ?? ''), 200),
+        'hinweis'       => $text((string)($v['hinweis'] ?? ''), 2000),
+        'bis'           => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($v['bis'] ?? ''))
+            ? (string)$v['bis'] : '',
+        'status'        => in_array((string)($v['status'] ?? ''), ['geplant', 'laeuft', 'abgesagt', 'abgeschlossen'], true)
+            ? (string)$v['status'] : 'geplant',
+        'begleiter_max' => max(0, min(50, (int)($v['begleiter_max'] ?? 0))),
+        'kommentare'    => !empty($v['kommentare']) ? 1 : 0,
+        'vertretung'    => !empty($v['vertretung']) ? 1 : 0,
+    ];
+}
+
+/**
+ * Veranstaltungen und Einladungen setzen – beide Listen kommen komplett von
+ * OV-Budget und ersetzen die bisherigen. Von den Codes kommen nur Prüfsummen.
+ */
+function con_veranstaltungen_setzen(array $veranstaltungen, array $einladungen): array
+{
+    $neu = [];
+    foreach ($veranstaltungen as $v) {
+        $sauber = is_array($v) ? con_veranstaltung_saeubern($v) : null;
+        if ($sauber !== null) {
+            $neu[$sauber['kennung']] = $sauber;
+        }
+    }
+    $codes = [];
+    foreach ($einladungen as $code => $veranstaltung) {
+        $code = strtolower(trim((string)$code));
+        $veranstaltung = strtolower(trim((string)$veranstaltung));
+        if (preg_match('/^[a-f0-9]{64}$/', $code) && isset($neu[$veranstaltung])) {
+            $codes[$code] = $veranstaltung;
+        }
+    }
+    con_schreiben('veranstaltungen.json', $neu);
+    con_schreiben('einladungen.json', $codes);
+
+    // Rückmeldungen zurückgezogener Einladungen wegwerfen
+    foreach (glob(con_dir('rueckmeldungen') . '/*') ?: [] as $ordner) {
+        if (!isset($codes[basename($ordner)])) {
+            con_ordner_leeren($ordner);
+            @rmdir($ordner);
+        }
+    }
+    return ['veranstaltungen' => count($neu), 'einladungen' => count($codes)];
+}
+
+/** So steht ein Einladungscode in der Ablage: als Prüfsumme. Reine Funktion. */
+function con_code_kennung(string $code): string
+{
+    return hash('sha256', 'ovb-einladung:' . strtoupper(trim($code)));
+}
+
+/** Sieht die Zeichenfolge wie ein Einladungscode aus? Reine Funktion. */
+function con_code_gueltig(string $code): bool
+{
+    return (bool)preg_match('/^[0-9A-Za-z]{4,16}$/', trim($code));
+}
+
+/**
+ * Zu einem Code die Veranstaltung suchen.
+ * Rückgabe: ['kennung' => Prüfsumme des Codes, 'veranstaltung' => Angaben]
+ * oder null, wenn der Code nicht (mehr) gilt.
+ */
+function con_einladung(string $code): ?array
+{
+    if (!con_code_gueltig($code)) {
+        return null;
+    }
+    $kennung = con_code_kennung($code);
+    $ziel = con_lesen('einladungen.json')[$kennung] ?? null;
+    if (!is_string($ziel)) {
+        return null;
+    }
+    $v = con_lesen('veranstaltungen.json')[$ziel] ?? null;
+    return is_array($v) ? ['kennung' => $kennung, 'veranstaltung' => $v] : null;
+}
+
+/** Ist die Rückmeldefrist abgelaufen? Reine Funktion. */
+function con_frist_vorbei(array $veranstaltung, ?string $heute = null): bool
+{
+    $bis = (string)($veranstaltung['bis'] ?? '');
+    if ($bis === '') {
+        return false;
+    }
+    return ($heute ?? date('Y-m-d')) > $bis;
+}
+
+/**
+ * Rückmeldung ablegen. $inhalt ist bereits verschlüsselt – der Connector
+ * erfährt weder Namen noch Antwort.
+ */
+function con_rueckmeldung_ablegen(string $code, string $inhalt): void
+{
+    $einladung = con_einladung($code);
+    if ($einladung === null) {
+        throw new ConException('Diese Einladung gilt nicht (mehr).');
+    }
+    if (con_frist_vorbei($einladung['veranstaltung'])) {
+        throw new ConException('Die Rückmeldefrist ist abgelaufen.');
+    }
+    if ($inhalt === '' || strlen($inhalt) > CON_MAX_RUECKMELDUNG) {
+        throw new ConException('Die Rückmeldung hat eine unerwartete Größe.');
+    }
+    if (!con_limit_frei('e:' . $einladung['kennung'], CON_LIMIT_EINLADUNG)) {
+        throw new ConException('Für diese Einladung kamen gerade sehr viele Rückmeldungen. Bitte später erneut.');
+    }
+
+    $ordner = con_dir('rueckmeldungen/' . $einladung['kennung']);
+    $offen = glob($ordner . '/*.json') ?: [];
+    if (count($offen) >= CON_MAX_OFFEN) {
+        sort($offen);
+        @unlink($offen[0]);
+    }
+    $name = sprintf('%d-%s.json', time(), bin2hex(random_bytes(5)));
+    file_put_contents($ordner . '/' . $name, json_encode([
+        'ts'    => time(),
+        'daten' => $inhalt,
+    ], JSON_UNESCAPED_SLASHES));
+}
+
+/** Rückmeldungen abholen und dabei löschen */
+function con_rueckmeldungen_abholen(int $max = 200): array
+{
+    $out = [];
+    foreach (glob(con_dir('rueckmeldungen') . '/*') ?: [] as $ordner) {
+        $kennung = basename($ordner);
+        foreach (glob($ordner . '/*.json') ?: [] as $datei) {
+            if (count($out) >= $max) {
+                break 2;
+            }
+            $roh = json_decode((string)@file_get_contents($datei), true);
+            @unlink($datei);
+            if (is_array($roh) && isset($roh['daten'])) {
+                $out[] = ['code' => $kennung, 'ts' => (int)($roh['ts'] ?? 0), 'daten' => (string)$roh['daten']];
+            }
+        }
+    }
+    return $out;
+}
+
+/* ==================================================================== */
 /* Kleinkram                                                             */
 /* ==================================================================== */
 
@@ -455,13 +631,18 @@ function con_status(): array
     foreach (glob(con_dir('meldungen') . '/*') ?: [] as $ordner) {
         $offen += count(glob($ordner . '/*.json') ?: []);
     }
+    foreach (glob(con_dir('rueckmeldungen') . '/*') ?: [] as $ordner) {
+        $offen += count(glob($ordner . '/*.json') ?: []);
+    }
     $k = con_kopplung();
     return [
-        'version'    => CON_VERSION,
-        'gekoppelt'  => con_gekoppelt(),
-        'seit'       => (string)($k['gekoppelt_am'] ?? ''),
-        'fahrzeuge'  => count($fz),
-        'offen'      => $offen,
-        'schreibbar' => is_writable(con_dir()),
+        'version'        => CON_VERSION,
+        'gekoppelt'      => con_gekoppelt(),
+        'seit'           => (string)($k['gekoppelt_am'] ?? ''),
+        'fahrzeuge'      => count($fz),
+        'veranstaltungen' => count(con_lesen('veranstaltungen.json')),
+        'einladungen'    => count(con_lesen('einladungen.json')),
+        'offen'          => $offen,
+        'schreibbar'     => is_writable(con_dir()),
     ];
 }

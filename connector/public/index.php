@@ -7,10 +7,17 @@ declare(strict_types=1);
  *   ?p=melden&fz=<Zugang>   Seite für das Handy (aus dem QR-Code)
  *   ?p=info&fz=<Zugang>     Angaben für die Seite (JSON)
  *   ?p=position             Meldung des Handys (POST, verschlüsselt)
+ *   /<Code> oder ?e=<Code>  Einladungsseite einer Veranstaltung
+ *   ?p=rueckmeldung         Rückmeldung auf eine Einladung (POST, verschlüsselt)
  *   ?p=koppeln              einmalige Kopplung mit OV-Budget (POST)
  *   ?p=fahrzeuge            Liste der Zugänge setzen (POST, signiert)
- *   ?p=abholen              Meldungen abholen (POST, signiert)
+ *   ?p=veranstaltungen      Veranstaltungen und Einladungen setzen (POST, signiert)
+ *   ?p=abholen              Standortmeldungen abholen (POST, signiert)
+ *   ?p=rueckmeldungen       Rückmeldungen abholen (POST, signiert)
  *   sonst                   knappe Statusseite
+ *
+ * Die kurze Adresse (z. B. https://i.example.de/AB23CD) kommt über eine
+ * Umschreibregel des Webservers hier an; siehe public/.htaccess.
  */
 require dirname(__DIR__) . '/src/connector.php';
 
@@ -21,8 +28,18 @@ header('X-Robots-Tag: noindex, nofollow');
 $p = (string)($_GET['p'] ?? '');
 $token = trim((string)($_GET['fz'] ?? ''));
 
+// Einladungscode: aus ?e= oder aus dem Pfad hinter index.php (kurze Adresse)
+$code = trim((string)($_GET['e'] ?? ''));
+if ($code === '' && ($_SERVER['PATH_INFO'] ?? '') !== '') {
+    $code = trim((string)$_SERVER['PATH_INFO'], '/');
+}
+if ($code !== '' && $p === '') {
+    $p = 'einladung';
+}
+
 // Ohne verschlüsselte Verbindung nehmen wir nichts entgegen und geben nichts heraus
-if (!con_https() && in_array($p, ['koppeln', 'position', 'fahrzeuge', 'abholen', 'info', 'melden'], true)) {
+if (!con_https() && in_array($p, ['koppeln', 'position', 'fahrzeuge', 'abholen', 'info', 'melden',
+        'einladung', 'rueckmeldung', 'veranstaltungen', 'rueckmeldungen'], true)) {
     http_response_code(400);
     header('Content-Type: text/plain; charset=UTF-8');
     exit("Dieser Dienst arbeitet nur über https.\n");
@@ -118,6 +135,46 @@ try {
             $meldungen = con_meldungen_abholen((int)($daten['max'] ?? 200));
             antwort(['ok' => true, 'meldungen' => $meldungen]);
 
+        /* ---------------- Rückmeldung auf eine Einladung ---------------- */
+        case 'rueckmeldung':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                fehler('Nur POST.', 405);
+            }
+            $daten = json_decode(koerper_lesen(), true);
+            if (!is_array($daten)) {
+                fehler('Kein gültiges JSON.');
+            }
+            // Auch hier je Absender bremsen, damit niemand Codes durchprobiert
+            if (!con_limit_frei('ip:' . substr(sha1((string)($_SERVER['REMOTE_ADDR'] ?? '')), 0, 16), 300)) {
+                fehler('Zu viele Anfragen von diesem Anschluss. Bitte später erneut.', 429);
+            }
+            con_rueckmeldung_ablegen(
+                trim((string)($daten['code'] ?? '')),
+                trim((string)($daten['daten'] ?? ''))
+            );
+            antwort(['ok' => true]);
+
+        /* ---------------- Von OV-Budget, signiert ---------------- */
+        case 'veranstaltungen':
+            $daten = con_pruefe_anfrage(koerper_lesen(131072),
+                (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'veranstaltungen');
+            $res = con_veranstaltungen_setzen(
+                (array)($daten['veranstaltungen'] ?? []),
+                (array)($daten['einladungen'] ?? [])
+            );
+            con_notiz('veranstaltungen.gesetzt', $res['veranstaltungen'] . '/' . $res['einladungen']);
+            antwort(['ok' => true] + $res);
+
+        case 'rueckmeldungen':
+            $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'rueckmeldungen');
+            antwort(['ok' => true, 'rueckmeldungen' => con_rueckmeldungen_abholen((int)($daten['max'] ?? 200))]);
+
+        /* ---------------- Einladungsseite ---------------- */
+        case 'einladung':
+            $einladung = con_einladung($code);
+            require dirname(__DIR__) . '/src/seite_einladung.php';
+            exit;
+
         /* ---------------- Seite für das Handy ---------------- */
         case 'melden':
             $bekannt = con_fahrzeug($token) !== null;
@@ -134,13 +191,16 @@ try {
                 . '<style>body{font:16px/1.5 system-ui,sans-serif;margin:2rem auto;max-width:34rem;padding:0 1rem;color:#111827}'
                 . 'h1{font-size:1.3rem}dt{color:#475569;font-size:.9rem}dd{margin:0 0 .6rem}</style></head><body>';
             echo '<h1>OV-Budget-Connector</h1>';
-            echo '<p>Dieser Dienst nimmt Standortmeldungen aus Fahrzeugen entgegen und reicht sie verschlüsselt '
-                . 'an OV-Budget weiter. Er speichert nichts, was er selbst lesen könnte.</p><dl>';
+            echo '<p>Dieser Dienst nimmt Standortmeldungen aus Fahrzeugen und Rückmeldungen auf '
+                . 'Einladungen entgegen und reicht sie verschlüsselt an OV-Budget weiter. '
+                . 'Er speichert nichts, was er selbst lesen könnte.</p><dl>';
             echo '<dt>Fassung</dt><dd>' . htmlspecialchars($st['version']) . '</dd>';
             echo '<dt>Kopplung</dt><dd>' . ($st['gekoppelt']
                 ? 'eingerichtet' . ($st['seit'] !== '' ? ' seit ' . htmlspecialchars(substr($st['seit'], 0, 10)) : '')
                 : 'noch offen – der Kopplungscode steht auf dem Server in <code>daten/kopplungscode.txt</code>') . '</dd>';
             echo '<dt>Fahrzeuge</dt><dd>' . (int)$st['fahrzeuge'] . '</dd>';
+            echo '<dt>Veranstaltungen</dt><dd>' . (int)$st['veranstaltungen']
+                . ' (' . (int)$st['einladungen'] . ' Einladungen)</dd>';
             echo '<dt>Wartende Meldungen</dt><dd>' . (int)$st['offen'] . '</dd>';
             if (!$st['schreibbar']) {
                 echo '<dt>Achtung</dt><dd>Der Ordner <code>daten/</code> ist nicht beschreibbar.</dd>';

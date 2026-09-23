@@ -1,0 +1,17 @@
+# Kurze Einladungsadressen: https://i.example.de/AB23CD -> index.php?e=AB23CD
+#
+# Nur nötig, wenn Einladungen über eine kurze Adresse laufen sollen. Ohne
+# diese Regel funktioniert der lange Weg (index.php?e=AB23CD) trotzdem.
+# Für nginx steht die passende location in der README.
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Vorhandene Dateien und Ordner (assets/) bleiben, wie sie sind
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^([0-9A-Za-z]{4,16})/?$ index.php?e=$1 [L,QSA]
+</IfModule>
+
+# Verzeichnisse nicht auflisten
+Options -Indexes

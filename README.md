@@ -169,9 +169,9 @@ Das Repository ist ein Home-Assistant-Add-on-Repository: oben liegt nur
 repository.yaml     macht das Repository im Add-on Store nutzbar
 docker-compose.yml  Betrieb ohne Home Assistant
 scripts/            kleine Helfer (z. B. QR-Bibliothek aktualisieren)
-connector/          eigenstaendiger Briefkasten fuer Standortmeldungen per QR-Code
-  public/           Dokumentenverzeichnis: index.php und melden.js
-  src/              Ablage, Kopplung, Signaturen, Melde-Seite
+connector/          eigenstaendiger Briefkasten: Standort per QR-Code, Einladungen
+  public/           Dokumentenverzeichnis: index.php, melden.js, einladung.js
+  src/              Ablage, Kopplung, Signaturen, Melde- und Einladungsseite
   daten/            entsteht beim ersten Aufruf; gehoert NICHT ins Web
 ov-budget/          das Add-on – zugleich die vollstaendige Anwendung
   config.yaml, build.yaml, Dockerfile, DOCS.md, CHANGELOG.md, translations/
@@ -196,7 +196,7 @@ für angemeldete Benutzer und mit `nosniff`-Header.
 | Rolle | Darf |
 |---|---|
 | `user` (Mitglied) | Wünsche anlegen und die eigenen bearbeiten, abstimmen, kommentieren, Aufgaben im eigenen Zuständigkeitsbereich bearbeiten |
-| `leitung` | zusätzlich: alle Wünsche bearbeiten, Status und Priorität setzen, Budgettöpfe pflegen, alle Aufgaben verwalten |
+| `leitung` | zusätzlich: alle Wünsche bearbeiten, Status und Priorität setzen, Budgettöpfe pflegen, alle Aufgaben verwalten, Veranstaltungen anlegen und die Gästeliste führen |
 | `admin` | zusätzlich: Benutzerverwaltung, Auswahllisten, Einstellungen, Divera-Anbindung, Protokoll |
 
 Ob Mitglieder Aufgaben anlegen oder Status ändern dürfen, ist in den Einstellungen umschaltbar.
@@ -262,7 +262,23 @@ curl -s "https://DEINE-DOMAIN/cron.php?token=DEIN_TOKEN"
 
 Auf der Konsole geht es auch ohne Token: `php public/cron.php`.
 
-## Standortmeldung per QR-Code
+## Connectoren
+
+Manches kommt von außen: der Standort eines Fahrzeugs, das jemand ohne Zugang
+abgestellt hat, oder die Rückmeldung auf eine Einladung. Dafür gibt es den
+**Connector** im Ordner `connector/` – eine kleine PHP-Anwendung für einen
+öffentlich erreichbaren Webserver. Die Anleitung steht in
+[connector/README.md](connector/README.md).
+
+```
+Handy / Browser  --verschluesselt-->  Connector  <--holt ab--  OV-Budget (Add-on)
+```
+
+Unter *Verwaltung → Connectoren* lassen sich beliebig viele anlegen. Jeder
+bekommt eine eigene Kopplung und trägt, wofür er zuständig ist: **Fahrzeuge**
+(Standort per QR-Code), **Veranstaltungen** (Einladungen) oder beides.
+
+### Standortmeldung per QR-Code
 
 In jedem Fahrzeug kann ein QR-Code hängen. Wer ihn scannt, meldet den Standort
 des Fahrzeugs – ohne Anmeldung, ohne Zugang zu OV-Budget und ohne Home
@@ -293,6 +309,31 @@ Handy (QR)  --verschluesselt-->  Connector  <--holt ab--  OV-Budget (Add-on)
   kommt nur eine **Parkposition**: wenn ein Fahrzeug länger als eine Stunde
   (einstellbar) im selben Umkreis steht.
 * Codes lassen sich je Fahrzeug erzeugen, neu erzeugen und zurückziehen.
+  Gibt es mehrere Connectoren, wird beim Erzeugen ausgewählt, über welchen der
+  Code läuft.
+
+### Einladungen zu Veranstaltungen
+
+Wer im Veranstaltungsmodul auf der Gästeliste steht, bekommt einen eigenen
+Einladungscode. Er steht in einer möglichst kurzen Adresse:
+
+```
+https://i.example.de/AB23CD
+```
+
+* Die Seite zeigt Titel, Zeitpunkt, Ort und den Hinweistext und fragt:
+  *Ich nehme teil*, *Ich kann leider nicht teilnehmen* oder *Es kommt jemand
+  für mich*. Dazu, wenn erlaubt, „Mit wie vielen Begleitern kommen Sie?" und
+  ein Feld für eine Nachricht.
+* Die Rückmeldung wird **im Browser verschlüsselt**. Der Connector kennt Titel,
+  Zeitpunkt und Ort der Veranstaltung – die Seite muss sie zeigen –, aber
+  weder Namen noch Antworten.
+* Von den Einladungscodes liegen dort nur Prüfsummen. Ein Code lässt sich
+  jederzeit neu erzeugen; der alte gilt dann nicht mehr.
+* OV-Budget meldet Veranstaltungen und Codes selbstständig an und holt die
+  Rückmeldungen ab (Vorgabe: alle zehn Minuten). Beides geht auch von Hand.
+* Ohne Connector funktioniert das Modul trotzdem – Rückmeldungen werden dann
+  von Hand eingetragen.
 
 ## Sicherheit
 

@@ -292,6 +292,15 @@ function event_code_gueltig(string $code): bool
     return (bool)preg_match('/^[' . EVENT_CODE_ZEICHEN . ']{4,16}$/', strtoupper(trim($code)));
 }
 
+/**
+ * So steht eine Veranstaltung beim Connector: als Prüfsumme ihrer Nummer.
+ * Reine Funktion.
+ */
+function event_kennung(array|int $e): string
+{
+    return hash('sha256', 'ovb-veranstaltung:' . (is_array($e) ? (int)$e['id'] : $e));
+}
+
 /** So steht ein Code beim Connector: als Prüfsumme. Reine Funktion. */
 function event_code_kennung(string $code): string
 {
