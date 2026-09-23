@@ -373,7 +373,9 @@ Dann holt die Anwendung:
   erreichbaren Webserver; die Meldung wird auf dem Handy verschlüsselt, der
   Connector kann sie nicht lesen. Einrichtung unter *Verwaltung → Standort&shy;meldung
   per QR-Code*, Code je Fahrzeug in der Fahrzeugakte (erzeugen, drucken,
-  zurückziehen). Auf der Karte erscheint jede Meldung sofort; ins Journal kommt
+  zurückziehen). Auf dem Connector liegen dabei **nur Prüfsummen** der Zugänge –
+  Bezeichnung und Kennzeichen stehen im Anker der Adresse (hinter dem `#`) und
+  erreichen den Server nie. Auf der Karte erscheint jede Meldung sofort; ins Journal kommt
   nur eine **Parkposition**, wenn das Fahrzeug länger als die eingestellte Zeit
   im selben Umkreis steht.
 * **Karte in der Fahrzeugakte:** Zur letzten Position zeigt die Akte eine

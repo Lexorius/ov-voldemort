@@ -14,15 +14,18 @@ Er kann die Meldungen **nicht lesen**. Das Handy verschlüsselt die Position im
 Browser für den öffentlichen Schlüssel von OV-Budget (ECDH auf P-256, dann
 AES-256-GCM). Hier liegt nur Geheimtext, und der wird beim Abholen gelöscht.
 
-Im Klartext liegen auf dem Server:
+Er weiß auch **nicht, um welche Fahrzeuge es geht**:
 
-* Bezeichnung und Kennzeichen der Fahrzeuge – die Melde-Seite muss ja zeigen,
-  um welches Fahrzeug es geht,
-* die Zeitpunkte der Meldungen,
-* die Zugänge (Tokens) selbst.
+* Gespeichert werden nur **Prüfsummen** der Zugänge (SHA-256), nie die Zugänge
+  selbst. Aus einer erbeuteten `daten/fahrzeuge.json` lässt sich also kein
+  gültiger QR-Code bauen.
+* Bezeichnung und Kennzeichen stehen im **Anker der Adresse**, also hinter dem
+  `#`. Browser schicken den Anker nicht an den Server; die Melde-Seite setzt
+  ihn selbst ein.
 
-Wer also den Server kontrolliert, sieht *dass* für „GKW 1“ um 14:02 gemeldet
-wurde, aber nicht *wo*.
+Auf dem Server liegen damit nur Prüfsummen, Geheimtext und Zeitpunkte. Wer ihn
+kontrolliert, sieht *dass* um 14:02 für irgendein Fahrzeug gemeldet wurde –
+nicht für welches und nicht wo.
 
 ## Einrichten
 
@@ -62,6 +65,8 @@ wieder bei Schritt 3.
   werden abgewiesen.
 * **Zurückziehen:** In OV-Budget den Code neu erzeugen oder zurückziehen —
   dann verwirft der Connector auch die wartenden Meldungen dazu.
+* **Ablage:** nur Prüfsummen der Zugänge, verschlüsselte Meldungen und
+  Zeitstempel. Keine Fahrzeugnamen, keine Kennzeichen, keine Klartext-Zugänge.
 
 Was bleibt: Wer den QR-Code abfotografiert, kann bis zum Zurückziehen falsche
 Standorte melden. Deshalb steht in der Fahrzeugakte bei jeder Position, woher

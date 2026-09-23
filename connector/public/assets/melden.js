@@ -15,6 +15,17 @@
   var box = document.getElementById('box');
   if (!box) { return; }
 
+  // Bezeichnung steht im Anker der Adresse und bleibt im Browser
+  try {
+    var anker = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
+    var name = anker.get('n');
+    if (name) {
+      var feld = document.getElementById('fahrzeug');
+      var lesbar = decodeURIComponent(escape(atob(name.replace(/-/g, '+').replace(/_/g, '/'))));
+      if (feld && lesbar) { feld.textContent = lesbar; document.title = lesbar + ' – Standort melden'; }
+    }
+  } catch (e) { /* ohne Anker bleibt es beim schlichten "Fahrzeug" */ }
+
   var token = box.getAttribute('data-token');
   var serverSchluessel = box.getAttribute('data-schluessel');
   var meldung = document.getElementById('meldung');

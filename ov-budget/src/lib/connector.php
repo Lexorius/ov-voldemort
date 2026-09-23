@@ -187,25 +187,45 @@ function connector_token_neu(): string
     return b64u_encode(random_bytes(24));
 }
 
-/** Adresse, die im QR-Code steht */
-function connector_qr_url(string $token): string
+/** So steht ein Zugang beim Connector: als Prüfsumme. Reine Funktion. */
+function connector_kennung(string $token): string
 {
-    return connector_url() . '/index.php?p=melden&fz=' . rawurlencode($token);
+    return hash('sha256', 'ovb-zugang:' . $token);
+}
+
+/**
+ * Adresse, die im QR-Code steht.
+ *
+ * Die Bezeichnung hängt hinter dem #. Browser schicken den Anker nicht mit –
+ * der Connector erfährt also nie, um welches Fahrzeug es geht, die Seite kann
+ * es aber anzeigen.
+ */
+function connector_qr_url(string $token, string $name = ''): string
+{
+    $url = connector_url() . '/index.php?p=melden&fz=' . rawurlencode($token);
+    $name = trim($name);
+    return $name === '' ? $url : $url . '#n=' . b64u_encode($name);
+}
+
+/** Bezeichnung für den Anker: "GKW 1 · THW 99020". Reine Funktion. */
+function connector_qr_name(array $fahrzeug): string
+{
+    return trim(implode(' · ', array_filter([
+        trim((string)($fahrzeug['bezeichnung'] ?? '')),
+        trim((string)($fahrzeug['kennzeichen'] ?? '')),
+    ])));
 }
 
 /** Alle Zugänge an den Connector melden – die Liste dort wird ersetzt */
 function connector_push_vehicles(): int
 {
+    // Übertragen wird nur die Prüfsumme des Zugangs – keine Namen, keine Kennzeichen
     $liste = [];
-    foreach (db_all("SELECT id, bezeichnung, kennzeichen, qr_token FROM vehicles
-                     WHERE qr_token <> '' AND is_active = 1") as $v) {
-        $liste[] = [
-            'token'       => (string)$v['qr_token'],
-            'name'        => (string)$v['bezeichnung'],
-            'kennzeichen' => (string)$v['kennzeichen'],
-        ];
+    foreach (db_all("SELECT qr_token FROM vehicles WHERE qr_token <> '' AND is_active = 1") as $v) {
+        $liste[] = ['kennung' => connector_kennung((string)$v['qr_token'])];
     }
     $antwort = connector_call('fahrzeuge', ['fahrzeuge' => $liste]);
+    state_save('connector_angemeldet', (string)time());
     return (int)($antwort['fahrzeuge'] ?? count($liste));
 }
 
@@ -263,6 +283,12 @@ function connector_fetch(): array
     if (!connector_enabled()) {
         return $res;
     }
+    // Nach einer Umstellung des Formats die Zugänge einmal neu anmelden
+    if (state_get('connector_format', '') !== '2') {
+        connector_push_vehicles();
+        state_save('connector_format', '2');
+    }
+
     $antwort = connector_call('abholen', ['max' => 200]);
     $meldungen = (array)($antwort['meldungen'] ?? []);
     $res['geholt'] = count($meldungen);
@@ -273,7 +299,7 @@ function connector_fetch(): array
     // Fahrzeuge zu den Zugängen, damit wir nicht je Meldung suchen
     $fahrzeuge = [];
     foreach (db_all("SELECT * FROM vehicles WHERE qr_token <> ''") as $v) {
-        $fahrzeuge[(string)$v['qr_token']] = $v;
+        $fahrzeuge[connector_kennung((string)$v['qr_token'])] = $v;
     }
 
     // Nur die jeweils jüngste Meldung je Fahrzeug zählt für die Karte,
@@ -293,7 +319,7 @@ function connector_fetch(): array
             continue;
         }
         $ergebnis = connector_position_anwenden($fz, $daten, (int)($m['ts'] ?? time()));
-        $fahrzeuge[(string)$fz['qr_token']] = $ergebnis['fahrzeug'];
+        $fahrzeuge[connector_kennung((string)$fz['qr_token'])] = $ergebnis['fahrzeug'];
         $res['uebernommen']++;
         $res['parkpositionen'] += $ergebnis['park'] ? 1 : 0;
     }

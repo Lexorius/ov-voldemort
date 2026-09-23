@@ -281,6 +281,9 @@ Handy (QR)  --verschluesselt-->  Connector  <--holt ab--  OV-Budget (Add-on)
   Schlüssel von OV-Budget (ECDH P-256, AES-256-GCM). Der Connector speichert
   nur Geheimtext und löscht ihn beim Abholen – er kann die Standorte nicht
   lesen.
+* Er kennt auch die Fahrzeuge nicht: gespeichert werden nur **Prüfsummen** der
+  Zugänge; Bezeichnung und Kennzeichen stehen im Anker der Adresse (hinter dem
+  `#`) und erreichen den Server nie.
 * Connector und OV-Budget koppeln sich einmalig mit einem Code und tauschen
   dabei ihre öffentlichen Schlüssel aus. Danach ist jede Anfrage signiert.
 * Die Melde-Seite bietet drei Möglichkeiten: einmal senden, alle 60 Sekunden

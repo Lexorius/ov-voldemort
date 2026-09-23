@@ -1,5 +1,22 @@
 # Änderungsverlauf
 
+## 1.34.0
+
+### Connector kennt die Fahrzeuge nicht mehr
+
+- Bisher lagen Bezeichnung und Kennzeichen sowie der Zugang im Klartext in
+  `daten/fahrzeuge.json` auf dem öffentlichen Webserver. Das ist jetzt anders:
+  - Übertragen und gespeichert wird nur noch die **Prüfsumme** des Zugangs
+    (SHA-256). Aus der Datei lässt sich kein gültiger QR-Code mehr bauen.
+  - Bezeichnung und Kennzeichen stehen im **Anker der Adresse** (hinter dem
+    `#`). Browser schicken ihn nicht mit – die Melde-Seite zeigt den Namen
+    trotzdem, der Server erfährt ihn nie.
+  - Auch die Ordner der wartenden Meldungen heißen nach der Prüfsumme.
+- Damit liegen auf dem Server nur Prüfsummen, Geheimtext und Zeitpunkte.
+- Die Zugänge werden nach dem Update einmal automatisch neu angemeldet.
+  Wichtig: Bereits gedruckte QR-Codes bitte neu ausdrucken – ohne den Anker
+  zeigt die Seite nur „Fahrzeug" statt der Bezeichnung.
+
 ## 1.33.1
 
 ### QR-Code: zweite Rückfrage vor folgenreichen Schritten

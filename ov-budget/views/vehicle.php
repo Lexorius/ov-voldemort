@@ -176,12 +176,15 @@ $arten = [
         <div id="qr" class="mt">
           <?php $qrToken = trim((string)($vehicle['qr_token'] ?? '')); ?>
           <?php if ($qrToken !== ''): ?>
-            <div class="qr-block" data-qr="<?= e(connector_qr_url($qrToken)) ?>">
+            <?php $qrAdresse = connector_qr_url($qrToken, connector_qr_name($vehicle)); ?>
+            <div class="qr-block" data-qr="<?= e($qrAdresse) ?>">
               <div class="qr-bild" id="qr-bild"></div>
               <div>
                 <p class="small">Im Fahrzeug aufhängen: Wer den Code scannt, kann den Standort melden –
                   ohne Zugang zu dieser Anwendung.</p>
-                <p class="small muted mono" style="word-break:break-all"><?= e(connector_qr_url($qrToken)) ?></p>
+                <p class="small muted mono" style="word-break:break-all"><?= e($qrAdresse) ?></p>
+                <p class="small muted">Der Teil hinter dem <span class="mono">#</span> bleibt im Browser –
+                  der Connector erfährt nie, zu welchem Fahrzeug der Code gehört.</p>
                 <div class="btnrow">
                   <button class="btn btn--sec btn--sm" type="button" id="qr-drucken">Drucken</button>
                   <?php if (can('manage_vehicles')): ?>

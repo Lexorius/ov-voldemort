@@ -80,17 +80,12 @@ try {
 
         /* ---------------- Angaben für die Melde-Seite ---------------- */
         case 'info':
-            $fz = con_fahrzeug($token);
-            if ($fz === null) {
+            if (con_fahrzeug($token) === null) {
                 fehler('Dieser Zugang ist nicht (mehr) gültig.', 404);
             }
             $k = con_kopplung();
-            antwort([
-                'ok'          => true,
-                'name'        => $fz['name'],
-                'kennzeichen' => $fz['kennzeichen'],
-                'schluessel'  => (string)($k['ov_pubkey'] ?? ''),
-            ]);
+            // Namen kennt der Connector nicht – die stehen im Anker der Adresse
+            antwort(['ok' => true, 'schluessel' => (string)($k['ov_pubkey'] ?? '')]);
 
         /* ---------------- Meldung vom Handy ---------------- */
         case 'position':
@@ -125,7 +120,7 @@ try {
 
         /* ---------------- Seite für das Handy ---------------- */
         case 'melden':
-            $fz = con_fahrzeug($token);
+            $bekannt = con_fahrzeug($token) !== null;
             require dirname(__DIR__) . '/src/seite_melden.php';
             exit;
 

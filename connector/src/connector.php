@@ -12,6 +12,9 @@ declare(strict_types=1);
  * 1. Er kann die Meldungen nicht lesen. Das Handy verschlüsselt sie im Browser
  *    für den öffentlichen Schlüssel von OV-Budget; hier liegt nur Geheimtext,
  *    und der wird nach dem Abholen gelöscht.
+ * 1a. Er kennt die Fahrzeuge nicht. Gespeichert werden nur Prüfsummen der
+ *    Zugänge; Bezeichnung und Kennzeichen stehen im Anker der Adresse
+ *    (hinter dem #) und erreichen den Server nie.
  * 2. Er redet nur mit einem gekoppelten OV-Budget. Die Kopplung passiert
  *    einmalig mit einem Code, danach ist jede Anfrage signiert.
  *
@@ -294,26 +297,36 @@ function con_nonce_neu(string $nonce, int $ts): bool
 /* Fahrzeuge                                                             */
 /* ==================================================================== */
 
-/** Die Liste kommt komplett von OV-Budget und ersetzt die bisherige */
+/**
+ * Wie ein Zugang in der Ablage steht: als Prüfsumme, nie im Klartext.
+ * Wer die Datei erbeutet, kann damit keine Meldungen abgeben – aus der
+ * Prüfsumme lässt sich der Zugang nicht zurückrechnen. Reine Funktion.
+ */
+function con_kennung(string $token): string
+{
+    return hash('sha256', 'ovb-zugang:' . $token);
+}
+
+/**
+ * Die Liste kommt komplett von OV-Budget und ersetzt die bisherige.
+ * Übertragen werden nur Prüfsummen – Bezeichnung und Kennzeichen der
+ * Fahrzeuge bleiben in OV-Budget und stehen für die Melde-Seite im
+ * Adressanker, der den Server nie erreicht.
+ */
 function con_fahrzeuge_setzen(array $liste): int
 {
     $neu = [];
     foreach ($liste as $fz) {
-        $token = trim((string)($fz['token'] ?? ''));
-        if (!preg_match('/^[A-Za-z0-9_-]{20,80}$/', $token)) {
-            continue;
+        $kennung = strtolower(trim((string)(is_array($fz) ? ($fz['kennung'] ?? '') : $fz)));
+        if (preg_match('/^[a-f0-9]{64}$/', $kennung)) {
+            $neu[$kennung] = true;
         }
-        $neu[$token] = [
-            'name'        => mb_substr(trim((string)($fz['name'] ?? '')), 0, 120),
-            'kennzeichen' => mb_substr(trim((string)($fz['kennzeichen'] ?? '')), 0, 60),
-        ];
     }
     con_schreiben('fahrzeuge.json', $neu);
 
     // Meldungen zurückgezogener Fahrzeuge wegwerfen
     foreach (glob(con_dir('meldungen') . '/*') ?: [] as $ordner) {
-        $token = basename($ordner);
-        if (!isset($neu[$token])) {
+        if (!isset($neu[basename($ordner)])) {
             con_ordner_leeren($ordner);
             @rmdir($ordner);
         }
@@ -327,13 +340,14 @@ function con_token_gueltig(string $token): bool
     return (bool)preg_match('/^[A-Za-z0-9_-]{20,80}$/', $token);
 }
 
-function con_fahrzeug(string $token): ?array
+/** Ist dieser Zugang angemeldet? Rückgabe: seine Kennung oder null. */
+function con_fahrzeug(string $token): ?string
 {
     if (!con_token_gueltig($token)) {
         return null;
     }
-    $alle = con_lesen('fahrzeuge.json');
-    return isset($alle[$token]) ? ['token' => $token] + $alle[$token] : null;
+    $kennung = con_kennung($token);
+    return isset(con_lesen('fahrzeuge.json')[$kennung]) ? $kennung : null;
 }
 
 /* ==================================================================== */
@@ -346,17 +360,18 @@ function con_fahrzeug(string $token): ?array
  */
 function con_meldung_ablegen(string $token, string $inhalt): void
 {
-    if (con_fahrzeug($token) === null) {
+    $kennung = con_fahrzeug($token);
+    if ($kennung === null) {
         throw new ConException('Unbekannter Zugang. Vermutlich wurde der QR-Code zurückgezogen.');
     }
     if ($inhalt === '' || strlen($inhalt) > CON_MAX_MELDUNG) {
         throw new ConException('Die Meldung hat eine unerwartete Größe.');
     }
-    if (!con_limit_frei($token)) {
+    if (!con_limit_frei($kennung)) {
         throw new ConException('Für dieses Fahrzeug kamen gerade sehr viele Meldungen. Bitte später erneut.');
     }
 
-    $ordner = con_dir('meldungen/' . $token);
+    $ordner = con_dir('meldungen/' . $kennung);
     $offen = glob($ordner . '/*.json') ?: [];
     if (count($offen) >= CON_MAX_OFFEN) {
         sort($offen);
@@ -374,7 +389,7 @@ function con_meldungen_abholen(int $max = 200): array
 {
     $out = [];
     foreach (glob(con_dir('meldungen') . '/*') ?: [] as $ordner) {
-        $token = basename($ordner);
+        $kennung = basename($ordner);
         foreach (glob($ordner . '/*.json') ?: [] as $datei) {
             if (count($out) >= $max) {
                 break 2;
@@ -382,7 +397,7 @@ function con_meldungen_abholen(int $max = 200): array
             $roh = json_decode((string)@file_get_contents($datei), true);
             @unlink($datei);
             if (is_array($roh) && isset($roh['daten'])) {
-                $out[] = ['fz' => $token, 'ts' => (int)($roh['ts'] ?? 0), 'daten' => (string)$roh['daten']];
+                $out[] = ['fz' => $kennung, 'ts' => (int)($roh['ts'] ?? 0), 'daten' => (string)$roh['daten']];
             }
         }
     }

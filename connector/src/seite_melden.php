@@ -1,7 +1,12 @@
 <?php
 /**
  * Seite für das Handy – das Ziel des QR-Codes im Fahrzeug.
- * @var ?array $fz     Fahrzeug zum Zugang (null = ungültig)
+ *
+ * Welches Fahrzeug es ist, weiß der Server nicht: Bezeichnung und Kennzeichen
+ * stehen im Anker der Adresse (hinter dem #) und werden vom Browser nie
+ * mitgeschickt. Eingesetzt werden sie unten per JavaScript.
+ *
+ * @var bool   $bekannt  Ist der Zugang angemeldet?
  * @var string $token
  */
 declare(strict_types=1);
@@ -40,17 +45,16 @@ $schluessel = (string)($k['ov_pubkey'] ?? '');
 </head>
 <body>
 
-<?php if ($fz === null || $schluessel === ''): ?>
+<?php if (!$bekannt || $schluessel === ''): ?>
   <h1>Das klappt nicht</h1>
   <div class="karte">
-    <p><?= $fz === null
+    <p><?= !$bekannt
         ? 'Dieser QR-Code gehört zu keinem Fahrzeug (mehr). Vermutlich wurde er zurückgezogen.'
         : 'Der Dienst ist noch nicht eingerichtet. Bitte im Ortsverband Bescheid geben.' ?></p>
   </div>
 <?php else: ?>
   <h1>Standort melden</h1>
-  <div class="fz"><?= htmlspecialchars($fz['name'] ?: 'Fahrzeug') ?><?php
-    if ($fz['kennzeichen'] !== ''): ?> · <?= htmlspecialchars($fz['kennzeichen']) ?><?php endif; ?></div>
+  <div class="fz" id="fahrzeug">Fahrzeug</div>
   <p class="klein">Dein Gerät übermittelt seinen Standort als Standort dieses Fahrzeugs. Die Angabe wird
     hier im Browser verschlüsselt; der Server kann sie nicht lesen. Es läuft nur, solange diese Seite offen ist.</p>
 
