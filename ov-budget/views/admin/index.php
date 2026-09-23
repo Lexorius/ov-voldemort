@@ -56,8 +56,9 @@
     <?php endif; ?>
   </div>
 
-  <a href="<?= e(url('admin_connector')) ?>"><div class="card"><h3>Standortmeldung per QR-Code</h3>
-    <p>Connector koppeln, Fahrzeuge anmelden und Meldungen abholen.</p></div></a>
+  <a href="<?= e(url('admin_connectors')) ?>"><div class="card"><h3>Connectoren</h3>
+    <p>Briefkästen auf öffentlichen Webservern: Standort per QR-Code und Einladungen zu
+       Veranstaltungen. Koppeln, anmelden, abholen.</p></div></a>
   <a href="<?= e(url('admin_ha')) ?>"><div class="card"><h3>Home Assistant</h3>
     <p>Kennzahlen und Fahrzeuge über MQTT an Home Assistant melden – mit Auto-Discovery.</p></div></a>
   <a href="<?= e(url('admin_stein')) ?>"><div class="card"><h3>Stein.APP</h3>

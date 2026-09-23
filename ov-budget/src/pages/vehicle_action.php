@@ -19,8 +19,21 @@ switch (post_str('action')) {
             break;
         }
         $zurueck = url('vehicle', ['id' => $vehicle['id']]) . '#qr';
-        $neuerToken = post_str('action') === 'qr_neu' ? connector_token_neu() : '';
-        db_update('vehicles', ['qr_token' => $neuerToken], 'id = ?', [(int)$vehicle['id']]);
+        $erzeugen = post_str('action') === 'qr_neu';
+
+        // Über welchen Connector der Code laufen soll – und über welchen er bisher lief
+        $bisher = connector_find((int)($vehicle['qr_connector_id'] ?? 0));
+        $ziel = $erzeugen ? (connector_find(post_int('connector_id')) ?? connector_for('fahrzeuge')) : null;
+        if ($erzeugen && $ziel === null) {
+            flash('error', 'Dafür muss erst ein Connector für Fahrzeuge eingerichtet und gekoppelt sein.');
+            break;
+        }
+
+        $neuerToken = $erzeugen ? connector_token_neu() : '';
+        db_update('vehicles', [
+            'qr_token'        => $neuerToken,
+            'qr_connector_id' => $ziel !== null ? (int)$ziel['id'] : null,
+        ], 'id = ?', [(int)$vehicle['id']]);
         journal_add((int)$vehicle['id'], [
             'art'   => 'notiz',
             'titel' => $neuerToken !== '' ? 'QR-Code für Standortmeldung erzeugt' : 'QR-Code zurückgezogen',
@@ -28,8 +41,19 @@ switch (post_str('action')) {
                 ? 'Ein alter Code, falls vorhanden, gilt ab jetzt nicht mehr.'
                 : 'Meldungen über den bisherigen Code werden nicht mehr angenommen.',
         ], $user);
+
+        // Beide betroffenen Connectoren auf Stand bringen – auch den bisherigen,
+        // damit er den zurückgezogenen Zugang vergisst
+        $melden = [];
+        foreach ([$bisher, $ziel] as $con) {
+            if ($con !== null) {
+                $melden[(int)$con['id']] = $con;
+            }
+        }
         try {
-            connector_push_vehicles();
+            foreach ($melden as $con) {
+                connector_push_vehicles($con);
+            }
             flash('success', $neuerToken !== ''
                 ? 'QR-Code erzeugt und beim Connector angemeldet.'
                 : 'QR-Code zurückgezogen.');

@@ -63,7 +63,7 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
         <span class="mainnav__icon">☰</span><span><?= e(setting('besprechung_modul_name', 'Besprechungen')) ?></span></a>
     <?php endif; ?>
     <?php if (can('admin')): ?>
-      <a class="mainnav__item<?= nav_active('admin', 'admin_users', 'admin_user_edit', 'admin_lists', 'admin_list_edit', 'admin_settings', 'admin_divera', 'admin_divera_form', 'admin_order_rights', 'admin_stein', 'admin_divera_fahrzeuge', 'admin_log') ?>" href="<?= e(url('admin')) ?>">
+      <a class="mainnav__item<?= nav_active('admin', 'admin_users', 'admin_user_edit', 'admin_lists', 'admin_list_edit', 'admin_settings', 'admin_divera', 'admin_divera_form', 'admin_order_rights', 'admin_stein', 'admin_divera_fahrzeuge', 'admin_connectors', 'admin_connector', 'admin_log') ?>" href="<?= e(url('admin')) ?>">
         <span class="mainnav__icon">⚙</span><span>Verwaltung</span></a>
     <?php endif; ?>
   </div>

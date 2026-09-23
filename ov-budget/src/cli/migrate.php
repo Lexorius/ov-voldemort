@@ -737,6 +737,82 @@ function ovb_migrate(PDO $pdo, callable $say): void
         }
     }
     $merken('022_qr_standort');
+
+    /* ---- 023: mehrere Connectoren ---- */
+    if (!ovb_table_exists($pdo, 'connectors')) {
+        $pdo->exec(
+            "CREATE TABLE connectors (
+               id                   INT UNSIGNED NOT NULL AUTO_INCREMENT,
+               name                 VARCHAR(100) NOT NULL,
+               url                  VARCHAR(255) NOT NULL DEFAULT '',
+               kurz_url             VARCHAR(255) NOT NULL DEFAULT '',
+               fuer_fahrzeuge       TINYINT(1)   NOT NULL DEFAULT 1,
+               fuer_veranstaltungen TINYINT(1)   NOT NULL DEFAULT 0,
+               is_active            TINYINT(1)   NOT NULL DEFAULT 1,
+               pem                  TEXT         NULL,
+               pubkey               VARCHAR(255) NOT NULL DEFAULT '',
+               server_pub           VARCHAR(255) NOT NULL DEFAULT '',
+               version              VARCHAR(20)  NOT NULL DEFAULT '',
+               gekoppelt_am         DATETIME     NULL,
+               angemeldet_am        DATETIME     NULL,
+               letzter_abruf        DATETIME     NULL,
+               notiz                TEXT         NULL,
+               created_at           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+               updated_at           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+               PRIMARY KEY (id)
+             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+    }
+    if (ovb_table_exists($pdo, 'vehicles') && !ovb_column_exists($pdo, 'vehicles', 'qr_connector_id')) {
+        $pdo->exec('ALTER TABLE vehicles ADD COLUMN qr_connector_id INT UNSIGNED NULL AFTER qr_token');
+    }
+    if (ovb_table_exists($pdo, 'vehicles') && !ovb_constraint_exists($pdo, 'vehicles', 'fk_fz_con')) {
+        $pdo->exec('ALTER TABLE vehicles ADD CONSTRAINT fk_fz_con FOREIGN KEY (qr_connector_id)
+                    REFERENCES connectors(id) ON DELETE SET NULL');
+    }
+
+    // Den bisher einzigen Connector aus den Einstellungen in die Tabelle holen
+    if (ovb_table_exists($pdo, 'settings')
+        && (int)$pdo->query('SELECT COUNT(*) FROM connectors')->fetchColumn() === 0) {
+        $wert = static function (string $schluessel) use ($pdo): string {
+            $st = $pdo->prepare('SELECT svalue FROM settings WHERE skey = ?');
+            $st->execute([$schluessel]);
+            return (string)($st->fetchColumn() ?: '');
+        };
+        $url = rtrim(trim($wert('connector_url')), '/');
+        if ($url !== '') {
+            $serverPub = $wert('connector_server_pub');
+            $abruf = (int)$wert('connector_letzter_abruf');
+            $st = $pdo->prepare(
+                'INSERT INTO connectors (name, url, fuer_fahrzeuge, is_active, pem, pubkey,
+                                         server_pub, gekoppelt_am, angemeldet_am, letzter_abruf)
+                 VALUES (?,?,1,?,?,?,?,?,?,?)'
+            );
+            $st->execute([
+                'Connector',
+                $url,
+                $wert('connector_aktiv') === '1' ? 1 : 0,
+                $wert('connector_pem'),
+                $wert('connector_pub'),
+                $serverPub,
+                $serverPub !== '' ? date('Y-m-d H:i:s') : null,
+                // Fassung 2 hiess: die Zugaenge sind dort bereits angemeldet
+                $wert('connector_format') === '2' ? date('Y-m-d H:i:s') : null,
+                $abruf > 0 ? date('Y-m-d H:i:s', $abruf) : null,
+            ]);
+            $id = (int)$pdo->lastInsertId();
+            if (ovb_column_exists($pdo, 'vehicles', 'qr_connector_id')) {
+                $pdo->prepare("UPDATE vehicles SET qr_connector_id = ? WHERE qr_token <> ''")->execute([$id]);
+            }
+        }
+    }
+    // Adresse und Schluessel stehen jetzt am Connector, nicht mehr in den Einstellungen
+    if (ovb_table_exists($pdo, 'settings')) {
+        $pdo->exec("DELETE FROM settings WHERE skey IN
+                    ('connector_url','connector_pem','connector_pub','connector_server_pub',
+                     'connector_angemeldet','connector_format')");
+    }
+    $merken('023_connectoren');
 }
 
 /**

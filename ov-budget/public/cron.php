@@ -51,7 +51,7 @@ $abrufe = [
         if (!connector_due()) {
             return [];
         }
-        $res = connector_fetch();
+        $res = connector_fetch_all();
         if ($res['geholt'] === 0 && $res['fehler'] === 0) {
             return [];
         }

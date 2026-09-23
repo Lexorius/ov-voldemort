@@ -2,12 +2,18 @@
 declare(strict_types=1);
 
 /**
- * Anbindung an den OV-Budget-Connector.
+ * Anbindung an die OV-Budget-Connectoren.
  *
- * Der Connector steht auf einem öffentlich erreichbaren Webserver und nimmt
- * Standortmeldungen aus den Fahrzeugen entgegen (QR-Code im Fahrzeug).
- * Diese Anwendung holt sie regelmäßig ab; der Connector selbst kann sie nicht
- * lesen, weil das Handy sie für unseren öffentlichen Schlüssel verschlüsselt.
+ * Ein Connector steht auf einem öffentlich erreichbaren Webserver und ist
+ * Briefkasten für alles, was von außen hereinkommt, ohne dass jemand Zugang
+ * zu dieser Anwendung braucht:
+ *
+ *   Fahrzeuge       – Standortmeldungen aus dem QR-Code im Fahrzeug
+ *   Veranstaltungen – Rückmeldungen auf Einladungen
+ *
+ * Es können mehrere sein; jeder trägt, wofür er zuständig ist. Lesen kann
+ * keiner von ihnen etwas: Was hereinkommt, ist im Browser des Absenders für
+ * unseren öffentlichen Schlüssel verschlüsselt.
  *
  * Verbindung:
  *   Kopplung   – einmalig mit einem Code, danach kennen beide Seiten den
@@ -16,7 +22,7 @@ declare(strict_types=1);
  *
  * Format einer Meldung (so verpackt der Browser, siehe melden.js):
  *   Byte 0      Fassung (1)
- *   Byte 1..65  flüchtiger öffentlicher Schlüssel des Handys
+ *   Byte 1..65  flüchtiger öffentlicher Schlüssel des Absenders
  *   Byte 66..81 Salz
  *   ab Byte 82  Geheimtext samt Prüfsumme (AES-256-GCM)
  */
@@ -27,36 +33,144 @@ class ConnectorException extends RuntimeException
 
 const CONNECTOR_INFO = 'OV-Budget Standort v1';
 
-function connector_url(): string
+/** Wofür ein Connector zuständig sein kann */
+const CONNECTOR_ZWECKE = [
+    'fahrzeuge'       => 'Fahrzeuge: Standort melden per QR-Code',
+    'veranstaltungen' => 'Veranstaltungen: Einladungen und Rückmeldungen',
+];
+
+/* ==================================================================== */
+/* Die Connectoren                                                       */
+/* ==================================================================== */
+
+function connector_all(bool $nurAktive = false): array
 {
-    return rtrim(trim((string)setting('connector_url', '')), '/');
+    return db_all('SELECT * FROM connectors'
+        . ($nurAktive ? ' WHERE is_active = 1' : '')
+        . ' ORDER BY name, id');
 }
 
+function connector_find(?int $id): ?array
+{
+    return $id ? db_row('SELECT * FROM connectors WHERE id = ?', [$id]) : null;
+}
+
+/** Ist die Kopplung vollständig? Reine Funktion. */
+function connector_gekoppelt(array $c): bool
+{
+    return trim((string)($c['server_pub'] ?? '')) !== '' && trim((string)($c['pem'] ?? '')) !== '';
+}
+
+/** Taugt dieser Connector für den Zweck – aktiv, gekoppelt, zuständig? Reine Funktion. */
+function connector_taugt(array $c, string $zweck): bool
+{
+    $spalte = $zweck === 'veranstaltungen' ? 'fuer_veranstaltungen' : 'fuer_fahrzeuge';
+    return (int)($c['is_active'] ?? 0) === 1
+        && (int)($c[$spalte] ?? 0) === 1
+        && trim((string)($c['url'] ?? '')) !== ''
+        && connector_gekoppelt($c);
+}
+
+/** Alle einsatzbereiten Connectoren für einen Zweck */
+function connector_liste(string $zweck): array
+{
+    return array_values(array_filter(
+        connector_all(true),
+        static fn(array $c) => connector_taugt($c, $zweck)
+    ));
+}
+
+/** Der erste einsatzbereite Connector für einen Zweck – oder null */
+function connector_for(string $zweck): ?array
+{
+    return connector_liste($zweck)[0] ?? null;
+}
+
+/** Ist die Standortmeldung per QR-Code überhaupt eingerichtet? */
 function connector_enabled(): bool
 {
-    return setting_bool('connector_aktiv', false) && connector_url() !== '' && connector_gekoppelt();
+    return setting_bool('connector_aktiv', false) && connector_for('fahrzeuge') !== null;
 }
 
-function connector_gekoppelt(): bool
+function connector_url(array $c): string
 {
-    return state_get('connector_server_pub', '') !== '' && state_get('connector_pem', '') !== '';
+    return rtrim(trim((string)($c['url'] ?? '')), '/');
 }
 
-/** Eigenes Schlüsselpaar, einmalig erzeugt */
-function connector_keys_ensure(): void
+/**
+ * Adresse für kurze Einladungslinks – z. B. https://i.example.de
+ * Ist keine eingetragen, dient die normale Adresse des Connectors.
+ */
+function connector_kurz_url(array $c): string
 {
-    if (state_get('connector_pem', '') !== '') {
-        return;
+    $kurz = rtrim(trim((string)($c['kurz_url'] ?? '')), '/');
+    return $kurz !== '' ? $kurz : connector_url($c);
+}
+
+/** Eigenes Schlüsselpaar für diesen Connector, einmalig erzeugt */
+function connector_keys_ensure(array $c): array
+{
+    if (trim((string)($c['pem'] ?? '')) !== '') {
+        return $c;
     }
     [$pem, $punkt] = p256_keypair();
-    state_save('connector_pem', $pem);
-    state_save('connector_pub', b64u_encode($punkt));
+    $neu = ['pem' => $pem, 'pubkey' => b64u_encode($punkt)];
+    db_update('connectors', $neu, 'id = ?', [(int)$c['id']]);
+    return array_merge($c, $neu);
 }
 
-function connector_public_key(): string
+/** Connector aus dem Formular anlegen oder ändern. Gibt [id, fehler[]] zurück. */
+function connector_save_from_post(?array $c): array
 {
-    connector_keys_ensure();
-    return state_get('connector_pub', '');
+    $fehler = [];
+    $name = mb_substr(post_str('name'), 0, 100);
+    $url = rtrim(trim(post_str('url')), '/');
+    $kurz = rtrim(trim(post_str('kurz_url')), '/');
+
+    if ($name === '') {
+        $fehler[] = 'Bitte einen Namen angeben.';
+    }
+    if ($url === '' || !preg_match('#^https://#i', $url)) {
+        $fehler[] = 'Die Adresse muss mit https:// beginnen.';
+    }
+    if ($kurz !== '' && !preg_match('#^https://#i', $kurz)) {
+        $fehler[] = 'Die kurze Adresse muss mit https:// beginnen.';
+    }
+    if ($fehler) {
+        return [null, $fehler];
+    }
+
+    $daten = [
+        'name'                 => $name,
+        'url'                  => $url,
+        'kurz_url'             => $kurz,
+        'fuer_fahrzeuge'       => post_bool('fuer_fahrzeuge') ? 1 : 0,
+        'fuer_veranstaltungen' => post_bool('fuer_veranstaltungen') ? 1 : 0,
+        'is_active'            => post_bool('is_active') ? 1 : 0,
+        'notiz'                => post_str('notiz'),
+    ];
+
+    if ($c) {
+        // Die Adresse zu ändern hieße, mit einem anderen Server zu sprechen –
+        // die Kopplung gälte dann nicht mehr.
+        if (connector_gekoppelt($c) && $daten['url'] !== connector_url($c)) {
+            return [null, ['Die Adresse lässt sich nicht ändern, solange die Kopplung steht. '
+                . 'Dafür erst die Kopplung lösen.']];
+        }
+        db_update('connectors', $daten, 'id = ?', [(int)$c['id']]);
+        $id = (int)$c['id'];
+        audit('connector.bearbeitet', 'connector', $id, $name);
+    } else {
+        $id = db_insert('connectors', $daten);
+        audit('connector.angelegt', 'connector', $id, $name);
+    }
+    return [$id, []];
+}
+
+function connector_delete(array $c): void
+{
+    db_exec('DELETE FROM connectors WHERE id = ?', [(int)$c['id']]);
+    audit('connector.geloescht', 'connector', (int)$c['id'], (string)$c['name']);
 }
 
 /* ==================================================================== */
@@ -64,42 +178,51 @@ function connector_public_key(): string
 /* ==================================================================== */
 
 /** Einmalige Kopplung mit dem Connector */
-function connector_pair(string $url, string $code): array
+function connector_pair(array $c, string $code): array
 {
-    $url = rtrim(trim($url), '/');
-    if ($url === '' || !preg_match('#^https://#i', $url)) {
-        throw new ConnectorException('Bitte die Adresse des Connectors angeben – sie muss mit https:// beginnen.');
+    if (connector_url($c) === '' || !preg_match('#^https://#i', connector_url($c))) {
+        throw new ConnectorException('Die Adresse des Connectors muss mit https:// beginnen.');
     }
-    connector_keys_ensure();
+    $c = connector_keys_ensure($c);
 
-    $antwort = connector_http($url, 'koppeln', [
+    $antwort = connector_http(connector_url($c), 'koppeln', [
         'code'   => trim($code),
-        'pubkey' => connector_public_key(),
+        'pubkey' => (string)$c['pubkey'],
     ], null);
 
     $serverPub = trim((string)($antwort['pubkey'] ?? ''));
     if ($serverPub === '' || strlen(b64u_decode($serverPub)) !== 65) {
         throw new ConnectorException('Der Connector hat keinen brauchbaren Schlüssel zurückgegeben.');
     }
-    state_save('connector_server_pub', $serverPub);
-    setting_save('connector_url', $url);
-    audit('connector.gekoppelt', 'connector', null, $url);
+    db_update('connectors', [
+        'server_pub'    => $serverPub,
+        'version'       => mb_substr((string)($antwort['version'] ?? ''), 0, 20),
+        'gekoppelt_am'  => date('Y-m-d H:i:s'),
+        'angemeldet_am' => null,
+    ], 'id = ?', [(int)$c['id']]);
+    audit('connector.gekoppelt', 'connector', (int)$c['id'], connector_url($c));
     return $antwort;
 }
 
 /** Kopplung hier vergessen (der Connector braucht dann auch eine neue) */
-function connector_unpair(): void
+function connector_unpair(array $c): void
 {
-    state_save('connector_server_pub', '');
-    audit('connector.getrennt', 'connector');
+    db_update('connectors', ['server_pub' => '', 'angemeldet_am' => null], 'id = ?', [(int)$c['id']]);
+    audit('connector.getrennt', 'connector', (int)$c['id'], (string)$c['name']);
 }
 
 /**
- * Signierte Anfrage an den Connector. $signieren = false nur bei der Kopplung,
+ * Signierte Anfrage an den Connector. $pem = null nur bei der Kopplung,
  * dort kennt die Gegenseite unseren Schlüssel noch nicht.
  */
-function connector_http(string $url, string $pfad, array $daten, ?string $pem, int $timeout = 15): array
-{
+function connector_http(
+    string $url,
+    string $pfad,
+    array $daten,
+    ?string $pem,
+    string $serverPub = '',
+    int $timeout = 15
+): array {
     $koerper = (string)json_encode($daten, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     $header = ['Content-Type: application/json', 'Accept: application/json'];
 
@@ -142,7 +265,6 @@ function connector_http(string $url, string $pfad, array $daten, ?string $pem, i
     }
 
     // Antwort prüfen, sobald wir den Schlüssel der Gegenseite kennen
-    $serverPub = state_get('connector_server_pub', '');
     if ($serverPub !== '' && $pfad !== 'koppeln') {
         if (!connector_antwort_echt($kopf, $inhalt, $serverPub)) {
             throw new ConnectorException('Die Antwort war nicht richtig signiert – spricht hier wirklich unser Connector?');
@@ -165,23 +287,23 @@ function connector_antwort_echt(string $kopf, string $inhalt, string $serverPub)
     }
 }
 
-/** Signierte Anfrage an den gekoppelten Connector */
-function connector_call(string $pfad, array $daten = []): array
+/** Signierte Anfrage an einen gekoppelten Connector */
+function connector_call(array $c, string $pfad, array $daten = []): array
 {
-    if (!connector_gekoppelt()) {
-        throw new ConnectorException('Es ist kein Connector gekoppelt.');
+    if (!connector_gekoppelt($c)) {
+        throw new ConnectorException(sprintf('Der Connector „%s" ist nicht gekoppelt.', (string)$c['name']));
     }
     $daten['zweck'] = $pfad;
     $daten['ts'] = time();
     $daten['nonce'] = bin2hex(random_bytes(12));
-    return connector_http(connector_url(), $pfad, $daten, state_get('connector_pem', ''));
+    return connector_http(connector_url($c), $pfad, $daten, (string)$c['pem'], (string)$c['server_pub']);
 }
 
 /* ==================================================================== */
 /* Zugänge der Fahrzeuge                                                 */
 /* ==================================================================== */
 
-/** Neuer Zugang für ein Fahrzeug (der Inhalt des QR-Codes) */
+/** Neuer Zugang (der Inhalt eines QR-Codes) */
 function connector_token_neu(): string
 {
     return b64u_encode(random_bytes(24));
@@ -200,9 +322,9 @@ function connector_kennung(string $token): string
  * der Connector erfährt also nie, um welches Fahrzeug es geht, die Seite kann
  * es aber anzeigen.
  */
-function connector_qr_url(string $token, string $name = ''): string
+function connector_qr_url(array $c, string $token, string $name = ''): string
 {
-    $url = connector_url() . '/index.php?p=melden&fz=' . rawurlencode($token);
+    $url = connector_url($c) . '/index.php?p=melden&fz=' . rawurlencode($token);
     $name = trim($name);
     return $name === '' ? $url : $url . '#n=' . b64u_encode($name);
 }
@@ -216,17 +338,41 @@ function connector_qr_name(array $fahrzeug): string
     ])));
 }
 
-/** Alle Zugänge an den Connector melden – die Liste dort wird ersetzt */
-function connector_push_vehicles(): int
+/** Der Connector, über den der QR-Code eines Fahrzeugs läuft */
+function connector_of_vehicle(array $fahrzeug): ?array
+{
+    // Steht einer am Fahrzeug, gilt genau der – auch wenn es ihn nicht mehr gibt.
+    // Ohne Eintrag (alte Daten) nehmen wir den ersten zuständigen.
+    $id = (int)($fahrzeug['qr_connector_id'] ?? 0);
+    return $id > 0 ? connector_find($id) : connector_for('fahrzeuge');
+}
+
+/** Alle Zugänge an einen Connector melden – die Liste dort wird ersetzt */
+function connector_push_vehicles(array $c): int
 {
     // Übertragen wird nur die Prüfsumme des Zugangs – keine Namen, keine Kennzeichen
     $liste = [];
-    foreach (db_all("SELECT qr_token FROM vehicles WHERE qr_token <> '' AND is_active = 1") as $v) {
+    $fahrzeuge = db_all(
+        "SELECT qr_token FROM vehicles
+         WHERE qr_token <> '' AND is_active = 1 AND qr_connector_id = ?",
+        [(int)$c['id']]
+    );
+    foreach ($fahrzeuge as $v) {
         $liste[] = ['kennung' => connector_kennung((string)$v['qr_token'])];
     }
-    $antwort = connector_call('fahrzeuge', ['fahrzeuge' => $liste]);
-    state_save('connector_angemeldet', (string)time());
+    $antwort = connector_call($c, 'fahrzeuge', ['fahrzeuge' => $liste]);
+    db_update('connectors', ['angemeldet_am' => date('Y-m-d H:i:s')], 'id = ?', [(int)$c['id']]);
     return (int)($antwort['fahrzeuge'] ?? count($liste));
+}
+
+/** Zugänge an alle zuständigen Connectoren melden */
+function connector_push_vehicles_all(): int
+{
+    $n = 0;
+    foreach (connector_liste('fahrzeuge') as $c) {
+        $n += connector_push_vehicles($c);
+    }
+    return $n;
 }
 
 /* ==================================================================== */
@@ -234,10 +380,10 @@ function connector_push_vehicles(): int
 /* ==================================================================== */
 
 /**
- * Eine Meldung entschlüsseln. Rückgabe: Angaben des Handys.
- * Reine Funktion bis auf den eigenen Schlüssel.
+ * Eine Meldung entschlüsseln. Rückgabe: Angaben des Absenders.
+ * Reine Funktion bis auf den Schlüssel, der mitgegeben wird.
  */
-function connector_entschluesseln(string $paket, ?string $pem = null): array
+function connector_entschluesseln(string $paket, string $pem, array $pflicht = ['lat', 'lng']): array
 {
     $roh = b64u_decode($paket);
     if (strlen($roh) < 82 + 16) {
@@ -250,8 +396,7 @@ function connector_entschluesseln(string $paket, ?string $pem = null): array
     $salz = substr($roh, 66, 16);
     $geheim = substr($roh, 82);
 
-    $pem ??= state_get('connector_pem', '');
-    if ($pem === '') {
+    if (trim($pem) === '') {
         throw new ConnectorException('Ohne eigenen Schlüssel lässt sich nichts entschlüsseln.');
     }
     $gemeinsam = openssl_pkey_derive(p256_public_pem($punkt), openssl_pkey_get_private($pem));
@@ -267,38 +412,43 @@ function connector_entschluesseln(string $paket, ?string $pem = null): array
         throw new ConnectorException('Die Meldung ließ sich nicht entschlüsseln.');
     }
     $daten = json_decode($klartext, true);
-    if (!is_array($daten) || !isset($daten['lat'], $daten['lng'])) {
-        throw new ConnectorException('Die Meldung enthielt keine Position.');
+    if (!is_array($daten)) {
+        throw new ConnectorException('Die Meldung war kein gültiges JSON.');
+    }
+    foreach ($pflicht as $feld) {
+        if (!isset($daten[$feld])) {
+            throw new ConnectorException('Der Meldung fehlt die Angabe „' . $feld . '".');
+        }
     }
     return $daten;
 }
 
 /**
- * Meldungen abholen und auf die Fahrzeuge anwenden.
+ * Meldungen eines Connectors abholen und auf die Fahrzeuge anwenden.
  * Rückgabe: ['geholt', 'uebernommen', 'fehler', 'parkpositionen']
  */
-function connector_fetch(): array
+function connector_fetch(array $c): array
 {
     $res = ['geholt' => 0, 'uebernommen' => 0, 'fehler' => 0, 'parkpositionen' => 0];
-    if (!connector_enabled()) {
+    if (!connector_taugt($c, 'fahrzeuge')) {
         return $res;
     }
-    // Nach einer Umstellung des Formats die Zugänge einmal neu anmelden
-    if (state_get('connector_format', '') !== '2') {
-        connector_push_vehicles();
-        state_save('connector_format', '2');
+    // Nach dem Koppeln (oder einer Umstellung) die Zugänge einmal anmelden
+    if (($c['angemeldet_am'] ?? null) === null) {
+        connector_push_vehicles($c);
     }
 
-    $antwort = connector_call('abholen', ['max' => 200]);
+    $antwort = connector_call($c, 'abholen', ['max' => 200]);
     $meldungen = (array)($antwort['meldungen'] ?? []);
     $res['geholt'] = count($meldungen);
+    db_update('connectors', ['letzter_abruf' => date('Y-m-d H:i:s')], 'id = ?', [(int)$c['id']]);
     if (!$meldungen) {
         return $res;
     }
 
     // Fahrzeuge zu den Zugängen, damit wir nicht je Meldung suchen
     $fahrzeuge = [];
-    foreach (db_all("SELECT * FROM vehicles WHERE qr_token <> ''") as $v) {
+    foreach (db_all("SELECT * FROM vehicles WHERE qr_token <> '' AND qr_connector_id = ?", [(int)$c['id']]) as $v) {
         $fahrzeuge[connector_kennung((string)$v['qr_token'])] = $v;
     }
 
@@ -313,7 +463,7 @@ function connector_fetch(): array
             continue;
         }
         try {
-            $daten = connector_entschluesseln((string)($m['daten'] ?? ''));
+            $daten = connector_entschluesseln((string)($m['daten'] ?? ''), (string)$c['pem']);
         } catch (Throwable $ex) {
             $res['fehler']++;
             continue;
@@ -324,8 +474,20 @@ function connector_fetch(): array
         $res['parkpositionen'] += $ergebnis['park'] ? 1 : 0;
     }
 
-    state_save('connector_letzter_abruf', (string)time());
     return $res;
+}
+
+/** Bei allen zuständigen Connectoren abholen */
+function connector_fetch_all(): array
+{
+    $gesamt = ['geholt' => 0, 'uebernommen' => 0, 'fehler' => 0, 'parkpositionen' => 0];
+    foreach (connector_liste('fahrzeuge') as $c) {
+        foreach (connector_fetch($c) as $k => $v) {
+            $gesamt[$k] += $v;
+        }
+    }
+    state_save('connector_letzter_abruf', (string)time());
+    return $gesamt;
 }
 
 /**

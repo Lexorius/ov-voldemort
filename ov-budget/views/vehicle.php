@@ -172,11 +172,12 @@ $arten = [
         <p class="small muted">Für dieses Fahrzeug ist kein Standort bekannt.</p>
       <?php endif; ?>
 
+      <?php $qrConnector = connector_of_vehicle($vehicle); ?>
       <?php if (connector_enabled() || trim((string)($vehicle['qr_token'] ?? '')) !== ''): ?>
         <div id="qr" class="mt">
-          <?php $qrToken = trim((string)($vehicle['qr_token'] ?? '')); ?>
+          <?php $qrToken = $qrConnector === null ? '' : trim((string)($vehicle['qr_token'] ?? '')); ?>
           <?php if ($qrToken !== ''): ?>
-            <?php $qrAdresse = connector_qr_url($qrToken, connector_qr_name($vehicle)); ?>
+            <?php $qrAdresse = connector_qr_url($qrConnector, $qrToken, connector_qr_name($vehicle)); ?>
             <div class="qr-block" data-qr="<?= e($qrAdresse) ?>">
               <div class="qr-bild" id="qr-bild"></div>
               <div>
@@ -184,7 +185,8 @@ $arten = [
                   ohne Zugang zu dieser Anwendung.</p>
                 <p class="small muted mono" style="word-break:break-all"><?= e($qrAdresse) ?></p>
                 <p class="small muted">Der Teil hinter dem <span class="mono">#</span> bleibt im Browser –
-                  der Connector erfährt nie, zu welchem Fahrzeug der Code gehört.</p>
+                  der Connector erfährt nie, zu welchem Fahrzeug der Code gehört.
+                  Er läuft über <strong><?= e((string)$qrConnector['name']) ?></strong>.</p>
                 <div class="btnrow">
                   <button class="btn btn--sec btn--sm" type="button" id="qr-drucken">Drucken</button>
                   <?php if (can('manage_vehicles')): ?>
@@ -209,10 +211,18 @@ $arten = [
               </div>
             </div>
           <?php elseif (can('manage_vehicles')): ?>
+            <?php $qrConnectoren = connector_liste('fahrzeuge'); ?>
             <form method="post" action="<?= e(url('vehicle_action')) ?>" class="inline-form">
               <?= csrf_field() ?>
               <input type="hidden" name="action" value="qr_neu">
               <input type="hidden" name="vehicle_id" value="<?= (int)$vehicle['id'] ?>">
+              <?php if (count($qrConnectoren) > 1): ?>
+                <select name="connector_id" aria-label="Connector">
+                  <?php foreach ($qrConnectoren as $con): ?>
+                    <option value="<?= (int)$con['id'] ?>"><?= e((string)$con['name']) ?></option>
+                  <?php endforeach; ?>
+                </select>
+              <?php endif; ?>
               <button class="btn btn--sec" type="submit">QR-Code erzeugen</button>
             </form>
             <p class="small muted">Erzeugt einen Zugang, mit dem jede Person den Standort dieses Fahrzeugs

@@ -79,6 +79,7 @@ $routes = [
     'stein_debug'        => 'stein_debug',
     'push_subscribe'     => 'push_subscribe',
     'push_unsubscribe'   => 'push_unsubscribe',
+    'admin_connectors'   => 'admin/connectors',
     'admin_connector'    => 'admin/connector',
     'admin_ha'           => 'admin/ha',
     'admin_divera'       => 'admin/divera',

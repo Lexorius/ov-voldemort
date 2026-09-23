@@ -311,7 +311,6 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('fahrzeug_user_darf_sehen','1','Alle Mitglieder duerfen Fahrzeuge sehen','Sonst nur Leitung und Administration','bool','Fahrzeuge',30),
 ('fahrzeug_user_darf_melden','1','Alle Mitglieder duerfen Schaeden melden','Legt einen Auftrag an und schreibt ins Journal','bool','Fahrzeuge',40),
 ('connector_aktiv','0','Standortmeldung per QR-Code','Fahrzeuge bekommen einen QR-Code, ueber den jede Person ohne Zugang den Standort melden kann. Braucht den OV-Budget-Connector auf einem oeffentlich erreichbaren Webserver.','bool','Fahrzeuge',80),
-('connector_url','','Adresse des Connectors','z. B. https://ov.example.de/connector – ohne index.php','text','Fahrzeuge',81),
 ('connector_intervall_minuten','2','Meldungen abholen alle (Minuten)','','number','Fahrzeuge',82),
 ('connector_park_minuten','60','Parkposition ab (Minuten)','So lange muss ein Fahrzeug an derselben Stelle stehen, bevor es einen Journaleintrag gibt','number','Fahrzeuge',83),
 ('connector_park_radius_meter','50','Derselbe Ort bis (Meter)','Wie weit sich ein Fahrzeug bewegen darf, ohne dass es als Ortswechsel gilt','number','Fahrzeuge',84),

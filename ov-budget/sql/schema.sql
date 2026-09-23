@@ -561,6 +561,33 @@ CREATE TABLE IF NOT EXISTS bestell_rechte (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- Connectoren: Briefkaesten auf oeffentlich erreichbaren Webservern
+-- (Standortmeldung per QR-Code, Einladungen zu Veranstaltungen)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS connectors (
+  id                   INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  name                 VARCHAR(100) NOT NULL,
+  url                  VARCHAR(255) NOT NULL DEFAULT '',
+  -- kurze Adresse fuer Einladungslinks, z. B. https://i.example.de
+  kurz_url             VARCHAR(255) NOT NULL DEFAULT '',
+  fuer_fahrzeuge       TINYINT(1)   NOT NULL DEFAULT 1,
+  fuer_veranstaltungen TINYINT(1)   NOT NULL DEFAULT 0,
+  is_active            TINYINT(1)   NOT NULL DEFAULT 1,
+  -- unser Schluesselpaar fuer diesen Connector und sein oeffentlicher Schluessel
+  pem                  TEXT         NULL,
+  pubkey               VARCHAR(255) NOT NULL DEFAULT '',
+  server_pub           VARCHAR(255) NOT NULL DEFAULT '',
+  version              VARCHAR(20)  NOT NULL DEFAULT '',
+  gekoppelt_am         DATETIME     NULL,
+  angemeldet_am        DATETIME     NULL,
+  letzter_abruf        DATETIME     NULL,
+  notiz                TEXT         NULL,
+  created_at           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- Fahrzeuge und Fahrzeugakte
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS vehicles (
@@ -601,6 +628,8 @@ CREATE TABLE IF NOT EXISTS vehicles (
   geo_park_gemeldet TINYINT(1)   NOT NULL DEFAULT 0,
   -- Zugang für den QR-Code im Fahrzeug
   qr_token          VARCHAR(80)  NOT NULL DEFAULT '',
+  -- ueber welchen Connector der QR-Code laeuft
+  qr_connector_id   INT UNSIGNED NULL,
   geo_at            DATETIME     NULL,
   divera_besatzung  TEXT         NULL,
   divera_daten      MEDIUMTEXT   NULL,
@@ -618,10 +647,12 @@ CREATE TABLE IF NOT EXISTS vehicles (
   UNIQUE KEY uq_stein_asset (stein_asset_id),
   UNIQUE KEY uq_divera_fz (divera_vehicle_id),
   KEY idx_fz_status (status_id),
+  KEY idx_qr_token (qr_token),
   CONSTRAINT fk_fz_typ FOREIGN KEY (typ_id)         REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_fz_fg  FOREIGN KEY (fachgruppe_id)  REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_fz_sta FOREIGN KEY (status_id)      REFERENCES list_items(id) ON DELETE SET NULL,
-  CONSTRAINT fk_fz_cb  FOREIGN KEY (created_by)     REFERENCES users(id)      ON DELETE SET NULL
+  CONSTRAINT fk_fz_cb  FOREIGN KEY (created_by)     REFERENCES users(id)      ON DELETE SET NULL,
+  CONSTRAINT fk_fz_con FOREIGN KEY (qr_connector_id) REFERENCES connectors(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Journal der Fahrzeugakte: wird nur angehaengt, nie geaendert oder geloescht.
