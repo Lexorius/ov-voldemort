@@ -41,6 +41,10 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
 
 <?php if ($u): ?>
 <nav class="mainnav" aria-label="Hauptnavigation">
+  <button class="mainnav__pfeil mainnav__pfeil--links" type="button"
+          data-nav-pfeil="-1" aria-label="Weiter nach links" tabindex="-1">‹</button>
+  <button class="mainnav__pfeil mainnav__pfeil--rechts" type="button"
+          data-nav-pfeil="1" aria-label="Weiter nach rechts" tabindex="-1">›</button>
   <div class="mainnav__inner">
     <a class="mainnav__item<?= nav_active('dashboard') ?>" href="<?= e(url('dashboard')) ?>">
       <span class="mainnav__icon">▦</span><span>Übersicht</span></a>

@@ -97,6 +97,32 @@ h3 { font-size: 1rem; }
   padding-bottom: env(safe-area-inset-bottom);
 }
 /*
+ * Geht die Leiste über den Rand hinaus, soll man das sehen: ein weicher
+ * Verlauf an der Seite, dazu ein Pfeil zum Antippen. Beides schaltet das
+ * Skript ein und aus (Klassen hat-links / hat-rechts); ohne JavaScript
+ * bleibt es beim schlichten Wischen.
+ */
+.mainnav::before, .mainnav::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 2.4rem;
+  pointer-events: none; opacity: 0; transition: opacity .15s ease; z-index: 2;
+}
+.mainnav::before { left: 0; background: linear-gradient(to right, var(--surface) 35%, transparent); }
+.mainnav::after { right: 0; background: linear-gradient(to left, var(--surface) 35%, transparent); }
+.mainnav.hat-links::before, .mainnav.hat-rechts::after { opacity: 1; }
+
+.mainnav__pfeil {
+  position: absolute; top: 0; z-index: 3;
+  display: none; align-items: center; justify-content: center;
+  width: 2.2rem; height: var(--nav-h); padding: 0;
+  border: 0; background: transparent; cursor: pointer;
+  color: var(--ink-soft); font-size: 1.5rem; line-height: 1;
+}
+.mainnav__pfeil:hover { color: var(--accent); }
+.mainnav__pfeil--links { left: 0; }
+.mainnav__pfeil--rechts { right: 0; }
+.mainnav.hat-links .mainnav__pfeil--links,
+.mainnav.hat-rechts .mainnav__pfeil--rechts { display: flex; }
+/*
  * Bei vielen Modulen reicht die Breite am Handy nicht für gleich breite
  * Knöpfe. Jeder Eintrag behält daher eine Mindestbreite, und die Leiste
  * lässt sich seitlich wischen, statt Beschriftungen abzuschneiden.
@@ -127,6 +153,7 @@ h3 { font-size: 1rem; }
   /* feste Kopfhöhe, damit die Navigation darunter sauber andockt */
   .topbar { height: 58px; padding-top: .6rem; }
   .mainnav { position: sticky; top: 58px; bottom: auto; border-top: 0; border-bottom: 1px solid var(--border); }
+  .mainnav__pfeil { height: 48px; }
   .mainnav__inner { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
   .mainnav__item {
     flex: 0 0 auto; flex-direction: row; gap: .5rem; height: 48px;

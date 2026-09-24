@@ -1,5 +1,19 @@
 # Änderungsverlauf
 
+## 1.43.1
+
+### Navigation zeigt, dass es weitergeht
+
+Mit elf Modulen passt die Leiste nicht mehr auf einen Handybildschirm. Bisher
+musste man ahnen, dass sich seitlich wischen lässt – jetzt sieht man es:
+
+- An jeder Seite, an der es weitergeht, liegt ein **weicher Verlauf** über der
+  Leiste, dazu ein **Pfeil zum Antippen** (‹ und ›).
+- Beides verschwindet, sobald der Rand erreicht ist – am Anfang gibt es nur
+  den Pfeil nach rechts, am Ende nur den nach links.
+- Ein Tipp auf den Pfeil rückt die Leiste um etwa eine Bildschirmbreite weiter.
+- Der aktive Eintrag rückt weiterhin beim Öffnen in die Mitte.
+
 ## 1.43.0
 
 ### Funkgeräte

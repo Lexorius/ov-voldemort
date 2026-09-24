@@ -12,6 +12,41 @@
     leiste.scrollLeft = aktiv.offsetLeft - (leiste.clientWidth - aktiv.offsetWidth) / 2;
   }
 
+  /* An den Rändern zeigen, dass es weitergeht: Verlauf und Pfeil.
+     Ein Rest von zwei Pixeln bleibt unbeachtet – gebrochene Zoomstufen
+     lassen scrollLeft sonst nie ganz bei null oder ganz am Ende landen. */
+  if (leiste) {
+    var navLeiste = leiste.closest('.mainnav');
+    var pfeile = navLeiste ? navLeiste.querySelectorAll('[data-nav-pfeil]') : [];
+
+    var zeigeRaender = function () {
+      // Solange die Leiste nicht sichtbar ist (Breite 0), lässt sich nichts messen
+      if (!leiste.clientWidth) {
+        return;
+      }
+      var rest = leiste.scrollWidth - leiste.clientWidth - leiste.scrollLeft;
+      navLeiste.classList.toggle('hat-links', leiste.scrollLeft > 2);
+      navLeiste.classList.toggle('hat-rechts', rest > 2);
+    };
+
+    if (navLeiste) {
+      leiste.addEventListener('scroll', zeigeRaender, { passive: true });
+      window.addEventListener('resize', zeigeRaender);
+      Array.prototype.forEach.call(pfeile, function (pfeil) {
+        pfeil.addEventListener('click', function () {
+          // Den Wert direkt setzen; weich läuft es über scroll-behavior in der
+          // CSS. scrollBy mit behavior verschlucken manche Umgebungen.
+          var weite = Math.max(120, Math.round(leiste.clientWidth * 0.7));
+          var richtung = parseInt(pfeil.getAttribute('data-nav-pfeil'), 10) || 1;
+          var ziel = leiste.scrollLeft + weite * richtung;
+          leiste.scrollLeft = Math.max(0, Math.min(ziel, leiste.scrollWidth - leiste.clientWidth));
+          zeigeRaender();
+        });
+      });
+      zeigeRaender();
+    }
+  }
+
   function num(el) {
     if (!el) return 0;
     var v = String(el.value || '').replace(/\s|€/g, '');
