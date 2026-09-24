@@ -57,11 +57,12 @@ function event_find(?int $id): ?array
     }
     return db_row(
         'SELECT e.*, b.name AS budget_name, b.betrag_netto AS budget_betrag,
-                fg.label AS fachgruppe_label, c.name AS connector_name,
-                u.display_name AS ersteller
+                fg.label AS fachgruppe_label, t.label AS typ_label, t.color AS typ_color,
+                c.name AS connector_name, u.display_name AS ersteller
          FROM events e
          LEFT JOIN budgets    b  ON b.id  = e.budget_id
          LEFT JOIN list_items fg ON fg.id = e.fachgruppe_id
+         LEFT JOIN list_items t  ON t.id  = e.typ_id
          LEFT JOIN connectors c  ON c.id  = e.connector_id
          LEFT JOIN users      u  ON u.id  = e.created_by
          WHERE e.id = ?',
@@ -86,6 +87,10 @@ function event_query(array $f = []): array
         $w[] = 'e.status = ?';
         $p[] = (string)$f['status'];
     }
+    if (!empty($f['typ_id'])) {
+        $w[] = 'e.typ_id = ?';
+        $p[] = (int)$f['typ_id'];
+    }
     if (!empty($f['q'])) {
         $w[] = '(e.titel LIKE ? OR e.beschreibung LIKE ? OR e.ort LIKE ?)';
         $like = '%' . $f['q'] . '%';
@@ -104,12 +109,14 @@ function event_query(array $f = []): array
     };
 
     $sql = 'SELECT e.*, b.name AS budget_name, fg.label AS fachgruppe_label,
+                   t.label AS typ_label, t.color AS typ_color,
                    (SELECT COUNT(*) FROM event_guests g WHERE g.event_id = e.id) AS gaeste,
                    (SELECT COUNT(*) FROM event_guests g WHERE g.event_id = e.id
                      AND g.status IN (\'zusage\',\'vertretung\')) AS zusagen
             FROM events e
             LEFT JOIN budgets    b  ON b.id  = e.budget_id
-            LEFT JOIN list_items fg ON fg.id = e.fachgruppe_id'
+            LEFT JOIN list_items fg ON fg.id = e.fachgruppe_id
+            LEFT JOIN list_items t  ON t.id  = e.typ_id'
         . ($w ? ' WHERE ' . implode(' AND ', $w) : '')
         . ' ORDER BY ' . $order;
 
@@ -185,6 +192,7 @@ function event_save_from_post(?array $e, array $user): array
         'beginn'             => $beginn,
         'ende'               => $ende,
         'status'             => $status,
+        'typ_id'             => post_int('typ_id'),
         'jahr'               => (int)substr((string)$beginn, 0, 4),
         'budget_id'          => post_int('budget_id'),
         'fachgruppe_id'      => post_int('fachgruppe_id'),

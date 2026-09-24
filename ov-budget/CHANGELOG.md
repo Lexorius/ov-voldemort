@@ -1,5 +1,20 @@
 # Änderungsverlauf
 
+## 1.38.0
+
+### Arten von Veranstaltungen
+
+- Jede Veranstaltung bekommt eine **Art**. Mitgeliefert werden Ausbildung,
+  Übung, Helferversammlung, Empfang, Grillabend, Feier, Tag der offenen Tür,
+  Jugendveranstaltung und Sonstiges.
+- Die Liste steht unter *Verwaltung → Auswahllisten → Veranstaltungsarten*:
+  erweitern, umbenennen, umsortieren, einfärben oder stilllegen – wie bei den
+  Besprechungsarten.
+- Die Farbe der Art führt in der Übersicht: farbiger Streifen an der Karte und
+  eine Plakette neben dem Status. Ohne Art bleibt es beim Status.
+- In der Liste lässt sich **nach Art filtern**; auf Gästeliste, Einlassliste
+  und Einladungsliste steht sie im Kopf.
+
 ## 1.37.0
 
 ### Einladungsliste für den Serienbrief

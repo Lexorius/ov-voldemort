@@ -78,6 +78,8 @@ function ovb_list_item_refs(): array
         ['talking_points', 'fachgruppe_id',        ''],
         ['talking_points', 'prioritaet_id',        ''],
         ['talking_points', 'status_id',            ''],
+        ['events',         'typ_id',              ''],
+        ['events',         'fachgruppe_id',       ''],
     ];
 }
 
@@ -904,6 +906,16 @@ SQL);
                     REFERENCES events(id) ON DELETE SET NULL');
     }
     $merken('024_veranstaltungen');
+
+    /* ---- 025: Arten von Veranstaltungen ---- */
+    if (ovb_table_exists($pdo, 'events') && !ovb_column_exists($pdo, 'events', 'typ_id')) {
+        $pdo->exec('ALTER TABLE events ADD COLUMN typ_id INT UNSIGNED NULL AFTER status');
+    }
+    if (ovb_table_exists($pdo, 'events') && !ovb_constraint_exists($pdo, 'events', 'fk_ev_typ')) {
+        $pdo->exec('ALTER TABLE events ADD CONSTRAINT fk_ev_typ FOREIGN KEY (typ_id)
+                    REFERENCES list_items(id) ON DELETE SET NULL');
+    }
+    $merken('025_veranstaltungsarten');
 }
 
 /**

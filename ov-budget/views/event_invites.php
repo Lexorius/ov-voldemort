@@ -71,7 +71,7 @@ $wann = de_date(substr($beginn, 0, 10)) . ($zeit !== '00:00' ? ', ' . $zeit . ' 
   <div class="art">Einladungsliste</div>
 </div>
 
-<div class="wann"><?= e($wann) ?><?= trim((string)$event['ort']) !== ''
+<div class="wann"><?= !empty($event['typ_label']) ? e((string)$event['typ_label']) . ' · ' : '' ?><?= e($wann) ?><?= trim((string)$event['ort']) !== ''
     ? ' · ' . e((string)$event['ort']) : '' ?>
   · <?= count($gaeste) ?> Einladung(en)</div>
 

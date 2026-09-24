@@ -9,9 +9,10 @@ if (!can('view_events')) {
 
 $jahr = get_int('jahr');
 $status = get_str('status');
+$typ = get_int('typ_id');
 $q = get_str('q');
 
-$filter = ['jahr' => $jahr, 'status' => $status, 'q' => $q];
+$filter = ['jahr' => $jahr, 'status' => $status, 'typ_id' => $typ, 'q' => $q];
 
 render('events', [
     'title'     => (string)setting('veranstaltung_modul_name', 'Veranstaltungen'),
@@ -20,5 +21,6 @@ render('events', [
     'jahre'     => event_years(),
     'jahr'      => $jahr,
     'status'    => $status,
+    'typ'       => $typ,
     'q'         => $q,
 ]);

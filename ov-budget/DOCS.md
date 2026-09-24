@@ -146,7 +146,9 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   oder 00 beginnen, bleiben bei ihrem Land. Steht im Feld ein Hinweis statt
   einer Nummer („über das Büro"), bleibt der Text unverändert stehen.
   Bestehende Kontakte werden beim nächsten Start einmalig umgeschrieben.
-* **Veranstaltungen** – Termin, Ort und Status, dazu ein Budgettopf mit
+* **Veranstaltungen** – Termin, Ort, **Art** (Ausbildung, Übung,
+  Helferversammlung, Empfang, Grillabend, Feier, Tag der offenen Tür,
+  Jugendveranstaltung – in der Verwaltung erweiterbar) und Status, dazu ein Budgettopf mit
   geplanten Kosten. Buchungen aus dem Budgetmodul lassen sich der Veranstaltung
   zuordnen; die Seite stellt geplant und tatsächlich nebeneinander und listet
   die Buchungen. **Rechnungen, Angebote und das Programm** hängen als Datei
@@ -264,6 +266,17 @@ Rückmeldungen lassen sich jederzeit von Hand eintragen – für alle, die anruf
 statt zu klicken. In der Übersicht stehen Zusagen, Absagen, Offene und die
 **Gesamtzahl der Personen**: die eingeladene Person (oder ihre Vertretung) plus
 ihre Begleiter.
+
+### Arten von Veranstaltungen
+
+Jede Veranstaltung hat eine **Art**: Ausbildung, Übung, Helferversammlung,
+Empfang, Grillabend, Feier, Tag der offenen Tür, Jugendveranstaltung oder
+Sonstiges. Die Liste steht unter *Verwaltung → Auswahllisten →
+Veranstaltungsarten* und lässt sich beliebig erweitern, umbenennen und
+einfärben – die Farbe erscheint als Streifen und Plakette in der Übersicht.
+
+In der Liste der Veranstaltungen lässt sich nach der Art filtern; auf den
+Ausdrucken steht sie im Kopf.
 
 ### Gästeliste auf Papier und als Datei
 

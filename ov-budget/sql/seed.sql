@@ -213,6 +213,18 @@ INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_defa
 ('besprechung_typ','Jugendgruppe',              'jugend',         '#16a34a',60,0),
 ('besprechung_typ','Sonstiges',                 'sonstiges',      '#64748b',70,0);
 
+-- ---------- Arten von Veranstaltungen ----------
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default) VALUES
+('veranstaltung_typ','Ausbildung',            'ausbildung',      '#0369a1',10,0),
+('veranstaltung_typ','Übung',                 'uebung',          '#b45309',20,0),
+('veranstaltung_typ','Helferversammlung',     'helferversammlung','#15803d',30,0),
+('veranstaltung_typ','Empfang',               'empfang',         '#7c3aed',40,0),
+('veranstaltung_typ','Grillabend',            'grillabend',      '#be123c',50,0),
+('veranstaltung_typ','Feier',                 'feier',           '#db2777',60,0),
+('veranstaltung_typ','Tag der offenen Tür',   'tag-der-offenen-tuer','#0891b2',70,0),
+('veranstaltung_typ','Jugendveranstaltung',   'jugend',          '#16a34a',80,0),
+('veranstaltung_typ','Sonstiges',             'sonstiges',       '#64748b',90,1);
+
 -- ---------- Status der Talking Points ----------
 INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default, is_final) VALUES
 ('tp_status','Offen',         'offen',         '#0284c7',10,1,0),

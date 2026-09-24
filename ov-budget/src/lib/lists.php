@@ -16,6 +16,7 @@ const LIST_KEYS = [
     'kontakt_kategorie' => 'Kontaktkategorien',
     'einladung_status' => 'Status (Einladungen)',
     'besprechung_typ' => 'Besprechungsarten',
+    'veranstaltung_typ' => 'Veranstaltungsarten',
     'tp_status'       => 'Status (Talking Points)',
     'teilnahme_status' => 'Status (Teilnahme)',
     'dringlichkeit'   => 'Dringlichkeiten',

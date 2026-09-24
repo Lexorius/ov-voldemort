@@ -50,6 +50,8 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 
 ### Veranstaltungen
 - Termin, Ort, Status und Beschreibung; Budgettopf und geplante Kosten
+- **Arten**: Ausbildung, Übung, Helferversammlung, Empfang, Grillabend, Feier,
+  Tag der offenen Tür, Jugendveranstaltung – erweiterbar, mit eigener Farbe
 - **Ausgaben im Blick**: Buchungen aus dem Budgetmodul lassen sich der
   Veranstaltung zuordnen, die Seite zeigt geplant gegen tatsächlich
 - **Dateien** wie Rechnungen, Angebote und Programm

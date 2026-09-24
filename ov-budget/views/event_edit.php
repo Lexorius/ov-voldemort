@@ -65,6 +65,10 @@ $endeZeit = substr((string)($event['ende'] ?? ''), 11, 5);
         </select>
       </div>
       <div class="field">
+        <label for="typ_id">Art der Veranstaltung</label>
+        <select id="typ_id" name="typ_id"><?= list_options('veranstaltung_typ', (int)($event['typ_id'] ?? 0)) ?></select>
+      </div>
+      <div class="field">
         <label for="fachgruppe_id">Fachgruppe</label>
         <select id="fachgruppe_id" name="fachgruppe_id">
           <option value="">– alle –</option>

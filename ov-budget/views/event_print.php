@@ -90,6 +90,9 @@ $ueberschrift = match ($wen) {
           : ' bis ' . de_datetime((string)$event['ende']);
   }
   ?>
+  <?php if (!empty($event['typ_label'])): ?>
+    <tr><td>Art</td><td><?= e((string)$event['typ_label']) ?></td></tr>
+  <?php endif; ?>
   <tr><td>Wann</td><td><?= e($wann) ?></td></tr>
   <?php if (trim((string)$event['ort']) !== ''): ?>
     <tr><td>Wo</td><td><?= e((string)$event['ort']) ?></td></tr>

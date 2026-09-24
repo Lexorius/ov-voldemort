@@ -33,6 +33,7 @@ render('event_edit', [
     'event'  => $event ?? [
         'id' => null, 'titel' => '', 'beschreibung' => '', 'ort' => '',
         'beginn' => null, 'ende' => null, 'status' => 'geplant',
+        'typ_id' => list_default_id('veranstaltung_typ'),
         'budget_id' => null, 'fachgruppe_id' => null, 'kosten_geplant' => 0,
         'connector_id' => (connector_for('veranstaltungen')['id'] ?? null),
         'code_laenge' => setting_int('veranstaltung_code_laenge', 6),

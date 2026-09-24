@@ -1,10 +1,11 @@
 <?php
 /** @var array $kommend @var array $vergangen @var array $jahre
- *  @var ?int $jahr @var string $status @var string $q */
+ *  @var ?int $jahr @var string $status @var ?int $typ @var string $q */
 
 $karte = static function (array $e): string {
     $zeit = substr((string)$e['beginn'], 11, 5);
-    $farbe = match ((string)$e['status']) {
+    // Die Farbe der Art führt; ohne Art sagt der Status, wie es aussieht
+    $farbe = trim((string)($e['typ_color'] ?? '')) !== '' ? (string)$e['typ_color'] : match ((string)$e['status']) {
         'abgesagt'      => '#b91c1c',
         'abgeschlossen' => '#15803d',
         'laeuft'        => '#0284c7',
@@ -19,6 +20,9 @@ $karte = static function (array $e): string {
         . ($e['ort'] ? ' · ' . e((string)$e['ort']) : '') . '</div>'
         . '</div><div class="item__amount">' . (int)$e['zusagen'] . '/' . (int)$e['gaeste'] . '</div></div>'
         . '<div class="item__meta">';
+    if (!empty($e['typ_label'])) {
+        $html .= badge(['label' => $e['typ_label'], 'color' => $e['typ_color']]);
+    }
     $html .= '<span class="badge badge--outline">' . e(event_status_label((string)$e['status'])) . '</span>';
     if ((int)$e['gaeste'] > 0) {
         $html .= '<span class="badge badge--outline">' . (int)$e['zusagen'] . ' von '
@@ -63,6 +67,10 @@ $karte = static function (array $e): string {
           <option value="<?= (int)$j ?>" <?= (int)$j === (int)$jahr ? 'selected' : '' ?>><?= (int)$j ?></option>
         <?php endforeach; ?>
       </select>
+    </div>
+    <div class="field">
+      <label for="typ_id">Art</label>
+      <select id="typ_id" name="typ_id"><?= list_options('veranstaltung_typ', $typ, 'alle') ?></select>
     </div>
     <div class="field">
       <label for="status">Status</label>
