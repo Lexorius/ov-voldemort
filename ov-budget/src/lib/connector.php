@@ -37,6 +37,7 @@ const CONNECTOR_INFO = 'OV-Budget Standort v1';
 const CONNECTOR_ZWECKE = [
     'fahrzeuge'       => 'Fahrzeuge: Standort melden per QR-Code',
     'veranstaltungen' => 'Veranstaltungen: Einladungen und Rückmeldungen',
+    'bestand'         => 'Funkgeräte: „ist am Lagerort" per QR-Code',
 ];
 
 /* ==================================================================== */
@@ -64,7 +65,11 @@ function connector_gekoppelt(array $c): bool
 /** Taugt dieser Connector für den Zweck – aktiv, gekoppelt, zuständig? Reine Funktion. */
 function connector_taugt(array $c, string $zweck): bool
 {
-    $spalte = $zweck === 'veranstaltungen' ? 'fuer_veranstaltungen' : 'fuer_fahrzeuge';
+    $spalte = match ($zweck) {
+        'veranstaltungen' => 'fuer_veranstaltungen',
+        'bestand'         => 'fuer_bestand',
+        default           => 'fuer_fahrzeuge',
+    };
     return (int)($c['is_active'] ?? 0) === 1
         && (int)($c[$spalte] ?? 0) === 1
         && trim((string)($c['url'] ?? '')) !== ''
@@ -146,6 +151,7 @@ function connector_save_from_post(?array $c): array
         'kurz_url'             => $kurz,
         'fuer_fahrzeuge'       => post_bool('fuer_fahrzeuge') ? 1 : 0,
         'fuer_veranstaltungen' => post_bool('fuer_veranstaltungen') ? 1 : 0,
+        'fuer_bestand'         => post_bool('fuer_bestand') ? 1 : 0,
         'is_active'            => post_bool('is_active') ? 1 : 0,
         'notiz'                => post_str('notiz'),
     ];
@@ -545,6 +551,148 @@ function connector_events_due(?int $jetzt = null): bool
     }
     $intervall = max(1, setting_int('veranstaltung_intervall_minuten', 10)) * 60;
     return $jetzt - (int)state_get('veranstaltung_letzter_abruf', '0') >= $intervall;
+}
+
+/* ==================================================================== */
+/* Bestand: Funkgeräte und Gruppen am Lagerort                           */
+/* ==================================================================== */
+
+/**
+ * Adresse, die im QR-Code am Gerät oder am Koffer steht. Die Bezeichnung
+ * hängt hinter dem # und erreicht den Connector nie.
+ */
+function connector_qr_bestand_url(array $c, string $token, string $name = ''): string
+{
+    $url = connector_url($c) . '/index.php?p=bestand&g=' . rawurlencode($token);
+    $name = trim($name);
+    return $name === '' ? $url : $url . '#n=' . b64u_encode($name);
+}
+
+/**
+ * Was der Connector über den Bestand wissen muss: je Zugang nur die
+ * Prüfsumme, ob Gerät oder Gruppe – und bei einer Gruppe, wie viele Geräte
+ * dazugehören. Bezeichnungen bleiben hier.
+ */
+function connector_bestand_paket(array $c): array
+{
+    $liste = [];
+    foreach (db_all("SELECT qr_token FROM radios
+                     WHERE qr_token <> '' AND is_active = 1 AND qr_connector_id = ?", [(int)$c['id']]) as $r) {
+        $liste[] = ['kennung' => connector_kennung((string)$r['qr_token']), 'art' => 'geraet', 'anzahl' => 1];
+    }
+    foreach (db_all("SELECT g.qr_token,
+                            (SELECT COUNT(*) FROM radios r WHERE r.group_id = g.id AND r.is_active = 1) AS geraete
+                     FROM radio_groups g
+                     WHERE g.qr_token <> '' AND g.is_active = 1 AND g.qr_connector_id = ?",
+                    [(int)$c['id']]) as $g) {
+        $liste[] = [
+            'kennung' => connector_kennung((string)$g['qr_token']),
+            'art'     => 'gruppe',
+            'anzahl'  => (int)$g['geraete'],
+        ];
+    }
+    return $liste;
+}
+
+/** Zugänge anmelden – geschickt wird nur, wenn sich etwas geändert hat */
+function connector_push_bestand(array $c, bool $erzwingen = false): array
+{
+    $paket = connector_bestand_paket($c);
+    $stand = hash('sha256', (string)json_encode($paket));
+    $merker = 'connector_bestand_' . (int)$c['id'];
+
+    if (!$erzwingen && state_get($merker, '') === $stand) {
+        return ['gesendet' => false, 'zugaenge' => count($paket)];
+    }
+    $antwort = connector_call($c, 'bestandsliste', ['bestand' => $paket]);
+    state_save($merker, $stand);
+    return ['gesendet' => true, 'zugaenge' => (int)($antwort['bestand'] ?? count($paket))];
+}
+
+/**
+ * Bestandsmeldungen abholen und eintragen.
+ * Rückgabe: ['geholt', 'uebernommen', 'fehler']
+ */
+function connector_fetch_bestand(array $c): array
+{
+    $res = ['geholt' => 0, 'uebernommen' => 0, 'fehler' => 0];
+    if (!connector_taugt($c, 'bestand')) {
+        return $res;
+    }
+    if (state_get('connector_bestand_' . (int)$c['id'], '') === '') {
+        connector_push_bestand($c, true);
+    }
+
+    $antwort = connector_call($c, 'bestand_abholen', ['max' => 200]);
+    $meldungen = (array)($antwort['meldungen'] ?? []);
+    $res['geholt'] = count($meldungen);
+    if (!$meldungen) {
+        return $res;
+    }
+
+    // Geräte und Gruppen zu den Zugängen
+    $ziele = [];
+    foreach (db_all("SELECT * FROM radios WHERE qr_token <> '' AND qr_connector_id = ?", [(int)$c['id']]) as $r) {
+        $ziele[connector_kennung((string)$r['qr_token'])] = ['art' => 'geraet', 'ziel' => $r];
+    }
+    foreach (db_all("SELECT g.*,
+                            (SELECT COUNT(*) FROM radios r WHERE r.group_id = g.id AND r.is_active = 1) AS geraete
+                     FROM radio_groups g WHERE g.qr_token <> '' AND g.qr_connector_id = ?",
+                    [(int)$c['id']]) as $g) {
+        $ziele[connector_kennung((string)$g['qr_token'])] = ['art' => 'gruppe', 'ziel' => $g];
+    }
+
+    usort($meldungen, static fn($a, $b) => (int)($a['ts'] ?? 0) <=> (int)($b['ts'] ?? 0));
+
+    foreach ($meldungen as $m) {
+        $eintrag = $ziele[(string)($m['zugang'] ?? '')] ?? null;
+        if ($eintrag === null) {
+            $res['fehler']++;
+            continue;
+        }
+        try {
+            $daten = connector_entschluesseln((string)($m['daten'] ?? ''), (string)$c['pem'], ['da']);
+        } catch (Throwable $ex) {
+            $res['fehler']++;
+            continue;
+        }
+        // Uralte oder in der Zukunft liegende Meldungen ignorieren
+        $gemeldet = (int)($daten['zeit'] ?? 0);
+        if ($gemeldet > 0 && abs(time() - $gemeldet) > 86400) {
+            $res['fehler']++;
+            continue;
+        }
+        radio_bestand_anwenden($eintrag['art'], $eintrag['ziel'], $daten, (int)($m['ts'] ?? time()));
+        $res['uebernommen']++;
+    }
+    return $res;
+}
+
+/** Anmelden und abholen bei allen Connectoren für den Bestand */
+function connector_bestand_sync(): array
+{
+    $res = ['connectoren' => 0, 'gesendet' => 0, 'geholt' => 0, 'uebernommen' => 0, 'fehler' => 0];
+    foreach (connector_liste('bestand') as $c) {
+        $res['connectoren']++;
+        $push = connector_push_bestand($c);
+        $res['gesendet'] += $push['gesendet'] ? 1 : 0;
+        foreach (connector_fetch_bestand($c) as $k => $v) {
+            $res[$k] += $v;
+        }
+    }
+    state_save('connector_bestand_letzter_abruf', (string)time());
+    return $res;
+}
+
+/** Ist ein Abgleich der Bestandsmeldungen fällig? */
+function connector_bestand_due(?int $jetzt = null): bool
+{
+    $jetzt ??= time();
+    if (!connector_for('bestand')) {
+        return false;
+    }
+    $intervall = max(1, setting_int('connector_intervall_minuten', 2)) * 60;
+    return $jetzt - (int)state_get('connector_bestand_letzter_abruf', '0') >= $intervall;
 }
 
 /* ==================================================================== */

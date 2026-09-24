@@ -13,6 +13,10 @@ declare(strict_types=1);
  *   ?p=veranstaltungen      Veranstaltungen und Einladungen setzen (POST, signiert)
  *   ?p=abholen              Standortmeldungen abholen (POST, signiert)
  *   ?p=rueckmeldungen       Rückmeldungen abholen (POST, signiert)
+ *   ?p=bestand&g=<Zugang>   Seite "ist am Lagerort" (QR am Funkgerät/Koffer)
+ *   ?p=bestandsmeldung      Meldung dazu (POST, verschlüsselt)
+ *   ?p=bestandsliste        Zugänge setzen (POST, signiert)
+ *   ?p=bestand_abholen      Bestandsmeldungen abholen (POST, signiert)
  *   ?p=zustand              Zahlen für OV-Budget (POST, signiert)
  *   sonst                   Startseite: Feld für den Einladungscode
  *
@@ -37,6 +41,10 @@ $token = nur_text($_GET['fz'] ?? '');
 
 // Einladungscode: aus ?e= oder aus dem Pfad hinter index.php (kurze Adresse)
 $code = nur_text($_GET['e'] ?? '');
+// Zugang der Bestandsmeldung (QR am Funkgerät oder am Koffer)
+if ($token === '') {
+    $token = nur_text($_GET['g'] ?? '');
+}
 if ($code === '' && ($_SERVER['PATH_INFO'] ?? '') !== '') {
     $code = trim(nur_text($_SERVER['PATH_INFO']), '/');
 }
@@ -185,6 +193,46 @@ try {
             $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'rueckmeldungen');
             con_alte_wegwerfen('rueckmeldungen');
             antwort(['ok' => true, 'rueckmeldungen' => con_rueckmeldungen_abholen((int)($daten['max'] ?? 200))]);
+
+        /* ---------------- Bestand: Meldung vom Handy ---------------- */
+        case 'bestandsmeldung':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                fehler('Nur POST.', 405);
+            }
+            $daten = json_decode(koerper_lesen(), true);
+            if (!is_array($daten)) {
+                fehler('Kein gültiges JSON.');
+            }
+            if (!con_limit_frei('ip:' . substr(sha1((string)($_SERVER['REMOTE_ADDR'] ?? '')), 0, 16), 300)) {
+                fehler('Zu viele Meldungen von diesem Anschluss. Bitte später erneut.', 429);
+            }
+            con_bestandsmeldung_ablegen(nur_text($daten['g'] ?? ''), nur_text($daten['daten'] ?? ''));
+            antwort(['ok' => true]);
+
+        /* ---------------- Bestand: von OV-Budget, signiert ---------------- */
+        case 'bestandsliste':
+            $daten = con_pruefe_anfrage(koerper_lesen(131072),
+                (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'bestandsliste');
+            $anzahl = con_bestand_setzen((array)($daten['bestand'] ?? []));
+            con_notiz('bestand.gesetzt', (string)$anzahl);
+            antwort(['ok' => true, 'bestand' => $anzahl]);
+
+        case 'bestand_abholen':
+            $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'bestand_abholen');
+            con_alte_wegwerfen('bestandsmeldungen');
+            antwort(['ok' => true, 'meldungen' => con_bestandsmeldungen_abholen((int)($daten['max'] ?? 200))]);
+
+        /* ---------------- Bestand: Seite am Lagerort ---------------- */
+        case 'bestand':
+            $eintrag = con_bestand($token);
+            if ($eintrag === null && !con_fehlgriff()) {
+                seiten_kopf();
+                http_response_code(429);
+                exit("Zu viele Versuche von diesem Anschluss. Bitte später erneut.\n");
+            }
+            seiten_kopf(true);
+            require dirname(__DIR__) . '/src/seite_bestand.php';
+            exit;
 
         /* ---------------- Zahlen für OV-Budget ---------------- */
         case 'zustand':

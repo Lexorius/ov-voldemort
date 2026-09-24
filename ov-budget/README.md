@@ -29,6 +29,15 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 ### Aufgaben
 - Für den Ortsverband, Fachgruppen, Funktionen oder einzelne Personen
 
+### Funkgeräte
+- HRT, MRT, Feststationen und Meldeempfänger mit Seriennummer, Inventarnummer,
+  Funkrufname und Prüffrist
+- **Karten hineinbuchen**, Geräte **Fahrzeugen** zuordnen – von der
+  Fahrzeugakte bis zur ISSI durchsehbar
+- **Gruppen** für Koffer, Ladeschalen und Sätze
+- **QR-Code am Lagerort**: „Gerät ist da" oder „alle 8 Geräte sind da",
+  verschlüsselt über den Connector
+
 ### SIM- und TETRA-Karten
 - **Mobilfunk** mit Rufnummer, ICCID und Vertrag oder **TETRA-Sicherheitskarte**
   mit ISSI und OPTA

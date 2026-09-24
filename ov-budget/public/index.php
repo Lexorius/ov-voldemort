@@ -65,6 +65,14 @@ $routes = [
     'event_export'       => 'event_export',
     'event_invites'      => 'event_invites',
 
+    // Funkgeräte
+    'radios'             => 'radios',
+    'radio'              => 'radio',
+    'radio_edit'         => 'radio_edit',
+    'radio_action'       => 'radio_action',
+    'radio_group'        => 'radio_group',
+    'radio_group_edit'   => 'radio_group_edit',
+
     // SIM-Karten
     'sims'               => 'sims',
     'sim_edit'           => 'sim_edit',

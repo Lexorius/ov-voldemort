@@ -67,7 +67,18 @@ $zielId = (int)($sim['ziel_id'] ?? 0);
       </div>
     </div>
     <div class="field">
-      <label for="geraet">Steckt in <span class="muted">(freiwillig)</span></label>
+      <label for="radio_id">Steckt in einem Funkgerät</label>
+      <select id="radio_id" name="radio_id">
+        <option value="">– keinem –</option>
+        <?php foreach (radio_query(['aktiv' => 'alle']) as $r): ?>
+          <option value="<?= (int)$r['id'] ?>" <?= (int)$r['id'] === (int)($sim['radio_id'] ?? 0) ? 'selected' : '' ?>>
+            <?= e((string)$r['bezeichnung']) ?><?= $r['typ_label'] ? ' · ' . e((string)$r['typ_label']) : '' ?></option>
+        <?php endforeach; ?>
+      </select>
+      <small class="muted">Geräte stehen im Funkmodul. Für Router und Tablets reicht das Freitextfeld darunter.</small>
+    </div>
+    <div class="field">
+      <label for="geraet">Steckt in <span class="muted">(freiwillig, Freitext)</span></label>
       <input type="text" id="geraet" name="geraet" maxlength="150"
              value="<?= e((string)($sim['geraet'] ?? '')) ?>" placeholder="z. B. Router GKW 1, Tablet FGr N">
     </div>
@@ -77,7 +88,7 @@ $zielId = (int)($sim['ziel_id'] ?? 0);
     <h2>Zuordnung</h2>
     <div class="field">
       <label for="ziel_typ">Gehört zu</label>
-      <select id="ziel_typ" name="ziel_typ" data-sim-ziel>
+      <select id="ziel_typ" name="ziel_typ" data-ziel-auswahl>
         <?php foreach (SIM_ZIELE as $key => $label): ?>
           <option value="<?= e($key) ?>" <?= $key === $zielTyp ? 'selected' : '' ?>><?= e($label) ?></option>
         <?php endforeach; ?>

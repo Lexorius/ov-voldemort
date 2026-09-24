@@ -1,5 +1,40 @@
 # Änderungsverlauf
 
+## 1.43.0
+
+### Funkgeräte
+
+Neues Modul für die Geräte selbst – die Karten darin bleiben im Kartenmodul.
+
+- **Je Gerät:** Bezeichnung, Art (HRT, MRT, FRT, Meldeempfänger, Analogfunk,
+  Zubehör), Status, Hersteller, Modell, Seriennummer, Inventarnummer,
+  Funkrufname, Standort, Beschaffung und Prüffrist. Arten und Status sind
+  Auswahllisten und damit frei pflegbar.
+- **Karten buchen:** Eine freie SIM- oder TETRA-Karte lässt sich in ein Gerät
+  buchen – auf Wunsch übernimmt sie dabei dessen Zuordnung. *Entnehmen* legt
+  sie wieder frei. Im Kartenformular steht dasselbe unter „Steckt in einem
+  Funkgerät".
+- **Geräte zu Fahrzeugen:** wie bei den Karten zu Fahrzeug, Fachgruppe, Person
+  oder zum Ortsverband. Die Fahrzeugakte hat einen Abschnitt „Funkgeräte".
+- **Gruppen:** Koffer, Ladeschale, Satz – mit Lagerort und eigener Seite.
+
+### „Ist am Lagerort" per QR-Code
+
+- Auf einem **Gerät** oder einer ganzen **Gruppe** lässt sich ein QR-Code
+  erzeugen. Wer ihn scannt, meldet mit einem Tipp: *Gerät ist am Lagerort*
+  beziehungsweise *Alle 8 Geräte sind da* – oder trägt eine kleinere Zahl ein.
+- Läuft über den **Connector** und ist **im Browser verschlüsselt**: Der Server
+  weiß nur, dass jemand gemeldet hat. Gespeichert sind dort die Prüfsumme des
+  Zugangs, ob Gerät oder Gruppe und die Anzahl der Geräte – Bezeichnung und
+  Lagerort stehen im Anker der Adresse und erreichen ihn nie.
+- Je Gerät und Gruppe steht danach **zuletzt gesehen** mit Namen. Eine
+  vollzählige Gruppenmeldung setzt alle Geräte darin auf „gesehen"; bei einer
+  kleineren Zahl bleibt es bei der Gruppe („6 von 8 gemeldet").
+- Dafür hat der Connector eine dritte Verwendung: **Funkgeräte**. Connector
+  jetzt Fassung 1.2.0 – die Dateien auf dem Webserver bitte aktualisieren.
+- Die Übersicht zählt, wie viele Geräte länger als 30 Tage nicht gemeldet
+  wurden.
+
 ## 1.42.0
 
 ### TETRA-Sicherheitskarten, Vertrag und PIN zuschaltbar

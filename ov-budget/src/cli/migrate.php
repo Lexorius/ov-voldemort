@@ -80,6 +80,8 @@ function ovb_list_item_refs(): array
         ['talking_points', 'status_id',            ''],
         ['events',         'typ_id',              ''],
         ['sims',           'typ_id',              ''],
+        ['radios',         'typ_id',              ''],
+        ['radios',         'status_id',           ''],
         ['sims',           'status_id',           ''],
         ['sims',           'ziel_id',             "ziel_typ = 'fachgruppe'"],
         ['events',         'fachgruppe_id',       ''],
@@ -988,6 +990,89 @@ SQL);
         $pdo->exec("UPDATE sims SET hat_pin = 1 WHERE pin <> '' OR puk <> ''");
     }
     $merken('028_tetra_karten');
+
+    /* ---- 029: Funkgeraete, Gruppen und Bestands-QR ---- */
+    if (!ovb_table_exists($pdo, 'radio_groups')) {
+        $pdo->exec(<<<'SQL'
+CREATE TABLE radio_groups (
+  id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  name            VARCHAR(150) NOT NULL,
+  beschreibung    TEXT         NULL,
+  lagerort        VARCHAR(150) NOT NULL DEFAULT '',
+  ziel_typ        ENUM('ov','fahrzeug','fachgruppe','person') NOT NULL DEFAULT 'ov',
+  ziel_id         INT UNSIGNED NULL,
+  qr_token        VARCHAR(80)  NOT NULL DEFAULT '',
+  qr_connector_id INT UNSIGNED NULL,
+  zuletzt_gesehen DATETIME     NULL,
+  zuletzt_anzahl  SMALLINT UNSIGNED NULL,
+  zuletzt_melder  VARCHAR(60)  NOT NULL DEFAULT '',
+  is_active       TINYINT(1)   NOT NULL DEFAULT 1,
+  created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_gruppe_qr (qr_token)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
+    }
+    if (!ovb_table_exists($pdo, 'radios')) {
+        $pdo->exec(<<<'SQL'
+CREATE TABLE radios (
+  id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  bezeichnung    VARCHAR(150) NOT NULL,
+  typ_id         INT UNSIGNED NULL,
+  status_id      INT UNSIGNED NULL,
+  hersteller     VARCHAR(80)  NOT NULL DEFAULT '',
+  modell         VARCHAR(80)  NOT NULL DEFAULT '',
+  seriennummer   VARCHAR(60)  NOT NULL DEFAULT '',
+  inventarnummer VARCHAR(60)  NOT NULL DEFAULT '',
+  funkrufname    VARCHAR(80)  NOT NULL DEFAULT '',
+  group_id       INT UNSIGNED NULL,
+  qr_token        VARCHAR(80) NOT NULL DEFAULT '',
+  qr_connector_id INT UNSIGNED NULL,
+  zuletzt_gesehen DATETIME    NULL,
+  zuletzt_melder  VARCHAR(60) NOT NULL DEFAULT '',
+  ziel_typ       ENUM('ov','fahrzeug','fachgruppe','person') NOT NULL DEFAULT 'ov',
+  ziel_id        INT UNSIGNED NULL,
+  standort       VARCHAR(150) NOT NULL DEFAULT '',
+  beschafft_am   DATE         NULL,
+  pruefung_bis   DATE         NULL,
+  notiz          TEXT         NULL,
+  is_active      TINYINT(1)   NOT NULL DEFAULT 1,
+  created_by     INT UNSIGNED NULL,
+  updated_by     INT UNSIGNED NULL,
+  created_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_funk_ziel (ziel_typ, ziel_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
+    }
+    // Fuer Bestandsinstallationen: die Spalten einzeln nachziehen
+    if (ovb_table_exists($pdo, 'radios')) {
+        foreach ([
+            'group_id'        => 'INT UNSIGNED NULL',
+            'qr_token'        => "VARCHAR(80) NOT NULL DEFAULT ''",
+            'qr_connector_id' => 'INT UNSIGNED NULL',
+            'zuletzt_gesehen' => 'DATETIME NULL',
+            'zuletzt_melder'  => "VARCHAR(60) NOT NULL DEFAULT ''",
+        ] as $spalte => $art) {
+            if (!ovb_column_exists($pdo, 'radios', $spalte)) {
+                $pdo->exec("ALTER TABLE radios ADD COLUMN $spalte $art");
+            }
+        }
+    }
+    if (ovb_table_exists($pdo, 'sims') && !ovb_column_exists($pdo, 'sims', 'radio_id')) {
+        $pdo->exec('ALTER TABLE sims ADD COLUMN radio_id INT UNSIGNED NULL AFTER geraet');
+    }
+    if (ovb_table_exists($pdo, 'sims') && !ovb_constraint_exists($pdo, 'sims', 'fk_sim_funk')) {
+        $pdo->exec('ALTER TABLE sims ADD CONSTRAINT fk_sim_funk FOREIGN KEY (radio_id)
+                    REFERENCES radios(id) ON DELETE SET NULL');
+    }
+    if (ovb_table_exists($pdo, 'connectors') && !ovb_column_exists($pdo, 'connectors', 'fuer_bestand')) {
+        $pdo->exec('ALTER TABLE connectors ADD COLUMN fuer_bestand TINYINT(1) NOT NULL DEFAULT 0
+                    AFTER fuer_veranstaltungen');
+    }
+    $merken('029_funkgeraete');
 }
 
 /**

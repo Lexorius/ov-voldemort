@@ -34,4 +34,5 @@ render('vehicle', [
     'dokumente' => array_values(array_filter(vfile_list($id), static fn($f) => $f['art'] === 'dokument' || $f['order_id'])),
     'titelbild' => vfile_cover($id),
     'sims'     => can('view_sims') ? sim_for_vehicle($id) : [],
+    'funkgeraete' => can('view_radios') ? radio_for_vehicle($id) : [],
 ]);

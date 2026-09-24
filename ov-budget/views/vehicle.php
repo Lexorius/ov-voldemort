@@ -389,6 +389,48 @@ $arten = [
   <?php endif; ?>
 </section>
 
+<?php if (can('view_radios')): ?>
+<section class="card" id="funk">
+  <div class="card__head">
+    <h2>Funkgeräte</h2>
+    <div class="btnrow">
+      <span class="muted small"><?= count($funkgeraete ?? []) ?></span>
+      <?php if (can('manage_radios')): ?>
+        <a class="btn btn--sec btn--sm" href="<?= e(url('radio_edit',
+            ['ziel_typ' => 'fahrzeug', 'ziel_id' => $vehicle['id']])) ?>">+ Funkgerät</a>
+      <?php endif; ?>
+    </div>
+  </div>
+  <?php if (!($funkgeraete ?? [])): ?>
+    <div class="empty">Für dieses Fahrzeug ist kein Funkgerät hinterlegt.</div>
+  <?php else: ?>
+    <div class="tablewrap">
+      <table class="data">
+        <thead><tr><th>Gerät</th><th>Art</th><th>Karte</th><th>Zuletzt gesehen</th></tr></thead>
+        <tbody>
+        <?php foreach ($funkgeraete as $r): ?>
+          <?php $gesehen = radio_gesehen($r); ?>
+          <tr>
+            <td><a href="<?= e(url('radio', ['id' => $r['id']])) ?>"><strong><?= e((string)$r['bezeichnung']) ?></strong></a>
+              <?php if (trim((string)$r['funkrufname']) !== ''): ?>
+                <div class="small muted"><?= e((string)$r['funkrufname']) ?></div>
+              <?php endif; ?></td>
+            <td class="small"><?= badge($r['typ_label']
+                ? ['label' => $r['typ_label'], 'color' => $r['typ_color']] : null, '–') ?></td>
+            <td class="small"><?= (int)$r['karten'] > 0
+                ? (int)$r['karten'] . ' Karte(n)' : '<span class="muted">keine</span>' ?></td>
+            <td class="small"><?= $gesehen['stufe'] === 'nie'
+                ? '<span class="muted">–</span>'
+                : e(de_date(substr((string)$r['zuletzt_gesehen'], 0, 10))) ?></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  <?php endif; ?>
+</section>
+<?php endif; ?>
+
 <?php if (can('view_sims')): ?>
 <section class="card" id="sims">
   <div class="card__head">

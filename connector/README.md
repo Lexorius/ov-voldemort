@@ -10,6 +10,9 @@ Aufgaben:
 * **Veranstaltungen** – Einladungen. Hinter einer kurzen Adresse
   (`https://i.example.de/AB23CD`) steht eine Seite mit Titel, Zeitpunkt und
   Ort; dort sagt man zu, ab, kündigt Begleiter an oder nennt eine Vertretung.
+* **Bestand** – „ist am Lagerort". Am Funkgerät oder am Koffer hängt ein
+  QR-Code; ein Tipp meldet, dass das Gerät da ist – bei einer Gruppe wahlweise
+  „alle 8 Geräte" oder eine kleinere Zahl.
 
 Beides ohne Anmeldung, ohne Zugang zu OV-Budget und ohne Home Assistant.
 Welche der beiden Aufgaben ein Connector übernimmt, steht in OV-Budget unter
@@ -35,6 +38,10 @@ Er weiß auch **nicht, um wen es geht**:
   Klartext hier – die Einladungsseite muss sie zeigen. **Wer eingeladen ist,
   steht nicht hier**: keine Namen, keine Adressen, keine Rückmeldungen im
   Klartext.
+* **Bestand:** Gespeichert sind nur die Prüfsumme des Zugangs, ob es ein
+  einzelnes Gerät oder eine Gruppe ist und wie viele Geräte dazugehören – ohne
+  diese Zahl ließe sich „alle 8 Geräte" nicht schreiben. Bezeichnung und
+  Lagerort stehen im **Anker der Adresse** und erreichen den Server nie.
 
 Ein Unterschied bleibt: Den Einladungscode bekommt der Server beim Aufruf zu
 sehen, sonst könnte er die Seite nicht ausliefern. Gespeichert wird er nicht,
@@ -122,6 +129,7 @@ server {
   und Stunde, 20 Rückmeldungen je Einladung und Stunde sowie 300 je Anschluss;
   höchstens 500 unabgeholte je Zugang, größere Pakete als 4 KB (Standort) bzw.
   8 KB (Rückmeldung) werden abgewiesen.
+* **Bestandsmeldungen:** 60 je Zugang und Stunde.
 * **Durchprobieren:** 60 Fehlgriffe je Anschluss und Stunde, danach 429. Wer
   die richtige Adresse hat, darf sie beliebig oft öffnen — gezählt wird nur,
   was ins Leere greift.
@@ -173,6 +181,7 @@ connector/
 │   ├── connector.php  Ablage, Kopplung, Signaturen, Begrenzungen
 │   ├── seite_start.php     Feld für den Einladungscode
 │   ├── seite_melden.php
-│   └── seite_einladung.php
+│   ├── seite_einladung.php
+│   └── seite_bestand.php   "ist am Lagerort"
 └── daten/             wird beim ersten Aufruf angelegt (nicht ins Web!)
 ```

@@ -58,6 +58,11 @@ $neu = $c === null;
              <?= (int)($c['fuer_veranstaltungen'] ?? 0) === 1 ? 'checked' : '' ?>>
       <label for="fuer_veranstaltungen">Veranstaltungen: Einladungen und Rückmeldungen</label>
     </div>
+    <div class="field field--check">
+      <input type="checkbox" id="fuer_bestand" name="fuer_bestand" value="1"
+             <?= (int)($c['fuer_bestand'] ?? 0) === 1 ? 'checked' : '' ?>>
+      <label for="fuer_bestand">Funkgeräte: „ist am Lagerort" per QR-Code</label>
+    </div>
     <small class="muted" style="margin-top:-.6rem">Beides zusammen ist möglich – ein Connector, eine Kopplung.</small>
     <div class="field field--check">
       <input type="checkbox" id="is_active" name="is_active" value="1"

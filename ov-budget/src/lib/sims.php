@@ -73,7 +73,7 @@ function sim_find(?int $id): ?array
 /** Gemeinsamer Rumpf der Abfragen – mit allem, was die Anzeige braucht */
 function sim_select(): string
 {
-    return 'SELECT s.*,
+    return 'SELECT s.*, rd.bezeichnung AS funkgeraet,
                    t.label AS typ_label, t.color AS typ_color,
                    st.label AS status_label, st.color AS status_color,
                    st.slug AS status_slug, st.is_final AS status_final,
@@ -81,6 +81,7 @@ function sim_select(): string
                    fg.label AS fachgruppe_label,
                    u.display_name AS person_label
             FROM sims s
+            LEFT JOIN radios     rd  ON rd.id = s.radio_id
             LEFT JOIN list_items t   ON t.id  = s.typ_id
             LEFT JOIN list_items st  ON st.id = s.status_id
             LEFT JOIN vehicles   v   ON v.id  = s.ziel_id AND s.ziel_typ = \'fahrzeug\'
@@ -307,6 +308,7 @@ function sim_save_from_post(?array $sim, array $user): array
         'pin'           => $hatPin ? mb_substr(post_str('pin'), 0, 20) : '',
         'puk'           => $hatPin ? mb_substr(post_str('puk'), 0, 30) : '',
         'geraet'        => mb_substr(post_str('geraet'), 0, 150),
+        'radio_id'      => post_int('radio_id'),
         'ziel_typ'      => $zielTyp,
         'ziel_id'       => $zielId,
         'ausgegeben_am' => post_date('ausgegeben_am'),

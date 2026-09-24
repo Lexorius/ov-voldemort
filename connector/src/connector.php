@@ -9,6 +9,7 @@ declare(strict_types=1);
  *
  *   Fahrzeuge       – Standortmeldungen von Handys (QR-Code im Fahrzeug)
  *   Veranstaltungen – Rückmeldungen auf Einladungen (kurze Adresse mit Code)
+ *   Bestand         – "ist am Lagerort" für Funkgeräte und ganze Gruppen
  *
  * Beides nimmt er entgegen und gibt es an OV-Budget weiter – mehr nicht.
  *
@@ -30,7 +31,7 @@ declare(strict_types=1);
  * Gespeichert wird in Dateien unterhalb von daten/ – keine Datenbank nötig.
  */
 
-const CON_VERSION = '1.1.3';
+const CON_VERSION = '1.2.0';
 
 /** Höchstalter einer signierten Anfrage in Sekunden (gegen Wiedereinspielen) */
 const CON_ZEITFENSTER = 300;
@@ -42,6 +43,8 @@ const CON_MAX_OFFEN = 500;
 const CON_MAX_MELDUNG = 4096;
 /** Rückmeldungen je Einladung und Stunde */
 const CON_LIMIT_EINLADUNG = 20;
+/** Bestandsmeldungen je Zugang und Stunde */
+const CON_LIMIT_BESTAND = 60;
 /** Fehlgriffe je Anschluss und Stunde (Zugänge oder Codes durchprobieren) */
 const CON_LIMIT_FEHLGRIFF = 60;
 /** So lange hebt der Connector Unabgeholtes auf, dann wirft er es weg (Tage) */
@@ -643,6 +646,109 @@ function con_rueckmeldungen_abholen(int $max = 200): array
 }
 
 /* ==================================================================== */
+/* Bestand: Funkgeräte und Gruppen am Lagerort                           */
+/* ==================================================================== */
+
+/**
+ * Die Liste kommt komplett von OV-Budget und ersetzt die bisherige.
+ * Gespeichert wird je Eintrag nur: Prüfsumme des Zugangs, ob es ein
+ * einzelnes Gerät oder eine Gruppe ist, und wie viele Geräte dazugehören –
+ * die Seite muss "alle 8 Geräte" schreiben können. Keine Bezeichnungen.
+ */
+function con_bestand_setzen(array $liste): int
+{
+    $neu = [];
+    foreach ($liste as $eintrag) {
+        if (!is_array($eintrag)) {
+            continue;
+        }
+        $kennung = strtolower(trim((string)($eintrag['kennung'] ?? '')));
+        if (!preg_match('/^[a-f0-9]{64}$/', $kennung)) {
+            continue;
+        }
+        $neu[$kennung] = [
+            'art'    => (string)($eintrag['art'] ?? '') === 'gruppe' ? 'gruppe' : 'geraet',
+            'anzahl' => max(0, min(9999, (int)($eintrag['anzahl'] ?? 0))),
+        ];
+    }
+    con_schreiben('bestand.json', $neu);
+
+    // Meldungen zurückgezogener Zugänge wegwerfen
+    foreach (glob(con_dir('bestandsmeldungen') . '/*') ?: [] as $ordner) {
+        if (!isset($neu[basename($ordner)])) {
+            con_ordner_leeren($ordner);
+            @rmdir($ordner);
+        }
+    }
+    return count($neu);
+}
+
+/**
+ * Zu einem Zugang die Angaben holen.
+ * Rückgabe: ['kennung' => …, 'art' => 'geraet'|'gruppe', 'anzahl' => int] oder null
+ */
+function con_bestand(string $token): ?array
+{
+    if (!con_token_gueltig($token)) {
+        return null;
+    }
+    $kennung = con_kennung($token);
+    $eintrag = con_lesen('bestand.json')[$kennung] ?? null;
+    if (!is_array($eintrag)) {
+        return null;
+    }
+    return [
+        'kennung' => $kennung,
+        'art'     => (string)($eintrag['art'] ?? 'geraet'),
+        'anzahl'  => (int)($eintrag['anzahl'] ?? 0),
+    ];
+}
+
+/** Bestandsmeldung ablegen – verschlüsselt, der Connector liest sie nicht */
+function con_bestandsmeldung_ablegen(string $token, string $inhalt): void
+{
+    $eintrag = con_bestand($token);
+    if ($eintrag === null) {
+        throw new ConException('Dieser QR-Code gilt nicht (mehr).');
+    }
+    if ($inhalt === '' || strlen($inhalt) > CON_MAX_MELDUNG) {
+        throw new ConException('Die Meldung hat eine unerwartete Größe.');
+    }
+    if (!con_limit_frei('b:' . $eintrag['kennung'], CON_LIMIT_BESTAND)) {
+        throw new ConException('Für diesen Code kamen gerade sehr viele Meldungen. Bitte später erneut.');
+    }
+
+    $ordner = con_dir('bestandsmeldungen/' . $eintrag['kennung']);
+    $offen = glob($ordner . '/*.json') ?: [];
+    if (count($offen) >= CON_MAX_OFFEN) {
+        sort($offen);
+        @unlink($offen[0]);
+    }
+    file_put_contents($ordner . '/' . sprintf('%d-%s.json', time(), bin2hex(random_bytes(5))),
+        json_encode(['ts' => time(), 'daten' => $inhalt], JSON_UNESCAPED_SLASHES));
+}
+
+/** Bestandsmeldungen abholen und dabei löschen */
+function con_bestandsmeldungen_abholen(int $max = 200): array
+{
+    $out = [];
+    foreach (glob(con_dir('bestandsmeldungen') . '/*') ?: [] as $ordner) {
+        $kennung = basename($ordner);
+        foreach (glob($ordner . '/*.json') ?: [] as $datei) {
+            if (count($out) >= $max) {
+                break 2;
+            }
+            $roh = json_decode((string)@file_get_contents($datei), true);
+            @unlink($datei);
+            if (is_array($roh) && isset($roh['daten'])) {
+                $out[] = ['zugang' => $kennung, 'ts' => (int)($roh['ts'] ?? 0), 'daten' => (string)$roh['daten']];
+            }
+        }
+    }
+    return $out;
+}
+
+/* ==================================================================== */
 /* Kleinkram                                                             */
 /* ==================================================================== */
 
@@ -689,8 +795,10 @@ function con_status(): array
         'fahrzeuge'       => count(con_lesen('fahrzeuge.json')),
         'veranstaltungen' => count(con_lesen('veranstaltungen.json')),
         'einladungen'     => count(con_lesen('einladungen.json')),
+        'bestand'         => count(con_lesen('bestand.json')),
         'meldungen'       => $zaehlen('meldungen'),
         'rueckmeldungen'  => $zaehlen('rueckmeldungen'),
+        'bestandsmeldungen' => $zaehlen('bestandsmeldungen'),
         'schreibbar'      => is_writable(con_dir()),
         'frei'            => (int)max(0, (float)@disk_free_space(con_dir())),
     ];

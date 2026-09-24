@@ -575,6 +575,7 @@ CREATE TABLE IF NOT EXISTS connectors (
   kurz_url             VARCHAR(255) NOT NULL DEFAULT '',
   fuer_fahrzeuge       TINYINT(1)   NOT NULL DEFAULT 1,
   fuer_veranstaltungen TINYINT(1)   NOT NULL DEFAULT 0,
+  fuer_bestand         TINYINT(1)   NOT NULL DEFAULT 0,
   is_active            TINYINT(1)   NOT NULL DEFAULT 1,
   -- unser Schluesselpaar fuer diesen Connector und sein oeffentlicher Schluessel
   pem                  TEXT         NULL,
@@ -683,6 +684,72 @@ CREATE TABLE IF NOT EXISTS event_files (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- Gruppen von Funkgeraeten: ein Koffer, eine Ladeschale, ein Satz
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS radio_groups (
+  id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  name            VARCHAR(150) NOT NULL,
+  beschreibung    TEXT         NULL,
+  lagerort        VARCHAR(150) NOT NULL DEFAULT '',
+  ziel_typ        ENUM('ov','fahrzeug','fachgruppe','person') NOT NULL DEFAULT 'ov',
+  ziel_id         INT UNSIGNED NULL,
+  -- QR-Code fuer die Bestandsmeldung am Lagerort
+  qr_token        VARCHAR(80)  NOT NULL DEFAULT '',
+  qr_connector_id INT UNSIGNED NULL,
+  zuletzt_gesehen DATETIME     NULL,
+  zuletzt_anzahl  SMALLINT UNSIGNED NULL,
+  zuletzt_melder  VARCHAR(60)  NOT NULL DEFAULT '',
+  is_active       TINYINT(1)   NOT NULL DEFAULT 1,
+  created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_gruppe_qr (qr_token),
+  CONSTRAINT fk_gruppe_con FOREIGN KEY (qr_connector_id) REFERENCES connectors(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- Funkgeraete: Bestand, Zuordnung und die Karte darin
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS radios (
+  id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  bezeichnung    VARCHAR(150) NOT NULL,
+  typ_id         INT UNSIGNED NULL,
+  status_id      INT UNSIGNED NULL,
+  hersteller     VARCHAR(80)  NOT NULL DEFAULT '',
+  modell         VARCHAR(80)  NOT NULL DEFAULT '',
+  seriennummer   VARCHAR(60)  NOT NULL DEFAULT '',
+  inventarnummer VARCHAR(60)  NOT NULL DEFAULT '',
+  funkrufname    VARCHAR(80)  NOT NULL DEFAULT '',
+  -- Koffer, Ladeschale oder Satz, zu dem das Geraet gehoert
+  group_id       INT UNSIGNED NULL,
+  -- eigener QR-Code fuer die Bestandsmeldung
+  qr_token        VARCHAR(80) NOT NULL DEFAULT '',
+  qr_connector_id INT UNSIGNED NULL,
+  zuletzt_gesehen DATETIME    NULL,
+  zuletzt_melder  VARCHAR(60) NOT NULL DEFAULT '',
+  -- wem das Geraet gehoert: ov, fahrzeug, fachgruppe oder person
+  ziel_typ       ENUM('ov','fahrzeug','fachgruppe','person') NOT NULL DEFAULT 'ov',
+  ziel_id        INT UNSIGNED NULL,
+  standort       VARCHAR(150) NOT NULL DEFAULT '',
+  beschafft_am   DATE         NULL,
+  pruefung_bis   DATE         NULL,
+  notiz          TEXT         NULL,
+  is_active      TINYINT(1)   NOT NULL DEFAULT 1,
+  created_by     INT UNSIGNED NULL,
+  updated_by     INT UNSIGNED NULL,
+  created_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_funk_ziel (ziel_typ, ziel_id),
+  CONSTRAINT fk_funk_grp FOREIGN KEY (group_id)  REFERENCES radio_groups(id) ON DELETE SET NULL,
+  CONSTRAINT fk_funk_con FOREIGN KEY (qr_connector_id) REFERENCES connectors(id) ON DELETE SET NULL,
+  CONSTRAINT fk_funk_typ FOREIGN KEY (typ_id)     REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_funk_sta FOREIGN KEY (status_id)  REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_funk_cb  FOREIGN KEY (created_by) REFERENCES users(id)      ON DELETE SET NULL,
+  CONSTRAINT fk_funk_ub  FOREIGN KEY (updated_by) REFERENCES users(id)      ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- SIM-Karten: Bestand, Zuordnung zu Fahrzeug, Fachgruppe oder Person
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS sims (
@@ -708,6 +775,8 @@ CREATE TABLE IF NOT EXISTS sims (
   pin           VARCHAR(20)  NOT NULL DEFAULT '',
   puk           VARCHAR(30)  NOT NULL DEFAULT '',
   geraet        VARCHAR(150) NOT NULL DEFAULT '',
+  -- in welchem Funkgeraet die Karte steckt
+  radio_id      INT UNSIGNED NULL,
   -- wem die Karte gehoert: ov, fahrzeug, fachgruppe oder person
   ziel_typ      ENUM('ov','fahrzeug','fachgruppe','person') NOT NULL DEFAULT 'ov',
   ziel_id       INT UNSIGNED NULL,
@@ -721,6 +790,7 @@ CREATE TABLE IF NOT EXISTS sims (
   PRIMARY KEY (id),
   KEY idx_sim_ziel (ziel_typ, ziel_id),
   KEY idx_sim_nummer (rufnummer),
+  CONSTRAINT fk_sim_funk FOREIGN KEY (radio_id) REFERENCES radios(id)     ON DELETE SET NULL,
   CONSTRAINT fk_sim_typ FOREIGN KEY (typ_id)     REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_sim_sta FOREIGN KEY (status_id)  REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_sim_cb  FOREIGN KEY (created_by) REFERENCES users(id)      ON DELETE SET NULL,

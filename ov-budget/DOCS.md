@@ -134,6 +134,13 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   Auf Wunsch sofort per Webhook; Mitschnitt der Antworten zur Fehlersuche.
 * **Divera 24/7 – Fahrzeuge** – Funkstatus (FMS) als Fahrtenbuch im Journal,
   letzte Position mit Kartenlink, Besatzung sowie OPTA und RIC.
+* **Funkgeräte** – HRT, MRT, Feststationen und Meldeempfänger mit
+  Seriennummer, Inventarnummer, Funkrufname und Prüffrist. Karten werden in
+  Geräte **gebucht**, Geräte einem **Fahrzeug** (oder einer Fachgruppe, einer
+  Person) zugeordnet – von der Fahrzeugakte bis zur ISSI durchsehbar. Geräte
+  lassen sich zu **Gruppen** bündeln (Koffer, Ladeschale, Satz), und auf Gerät
+  wie Gruppe kann ein **QR-Code** für die Bestandskontrolle hängen. Siehe
+  *Funkgeräte* weiter unten.
 * **SIM- und TETRA-Karten** – Bestand mit Rufnummer, Kartennummer (ICCID), Anbieter,
   Tarif, Datenvolumen, Kosten und Vertragsende. Jede Karte gehört zu einem
   **Fahrzeug**, einer **Fachgruppe**, einer **Person** oder allgemein zum
@@ -256,6 +263,45 @@ dieser Person eingebracht (sie kann es dann auch bearbeiten); sonst steht der
 Name beim Thema. Nicht zugeordnete Felder landen in der Beschreibung.
 * **Verwaltung** – Benutzer und Rollen (Mitglied, Leitung, Administration) sowie
   *alle* Auswahllisten, Texte und Regeln frei konfigurierbar.
+
+## Funkgeräte
+
+Das Modul führt die Geräte selbst – die Karten darin stehen im Kartenmodul.
+
+* **Je Gerät:** Bezeichnung, Art (HRT, MRT, FRT, Meldeempfänger, Analogfunk …),
+  Status, Hersteller, Modell, Seriennummer, Inventarnummer, Funkrufname,
+  Standort, Beschaffung und Prüffrist.
+* **Karten buchen:** Auf der Geräteseite lässt sich eine freie Karte in das
+  Gerät buchen – auf Wunsch übernimmt sie dabei die Zuordnung des Geräts.
+  *Entnehmen* legt sie wieder frei. Im Kartenformular steht dasselbe unter
+  „Steckt in einem Funkgerät".
+* **Zuordnung:** wie bei den Karten zu Fahrzeug, Fachgruppe, Person oder zum
+  Ortsverband. Die Fahrzeugakte zeigt die Geräte des Fahrzeugs.
+* **Gruppen:** Koffer, Ladeschale, Satz. Ein Gerät gehört zu höchstens einer
+  Gruppe; die Gruppenseite zeigt alle Geräte darin.
+
+### „Ist am Lagerort" per QR-Code
+
+Auf einem Gerät **oder** auf einer Gruppe lässt sich ein QR-Code erzeugen.
+Wer ihn scannt, bekommt eine kleine Seite mit einem Knopf:
+
+* am Gerät: **„Gerät ist am Lagerort"**
+* an der Gruppe: **„Alle 8 Geräte sind da"** – oder *Nicht alle*, dann trägt
+  man die Zahl ein.
+
+Die Meldung geht über den **Connector** und ist im Browser verschlüsselt: Der
+Server weiß, dass jemand gemeldet hat, aber weder was noch von wem. Er kennt
+nur die Prüfsumme des Zugangs, ob es ein Gerät oder eine Gruppe ist und wie
+viele Geräte dazugehören. Bezeichnung und Lagerort stehen im Anker der Adresse
+(hinter dem `#`) und erreichen ihn nie.
+
+In OV-Budget steht danach je Gerät und Gruppe **zuletzt gesehen** samt Namen,
+wenn er eingetragen wurde. Meldet jemand eine Gruppe **vollzählig**, gelten
+alle Geräte darin als gesehen; bei einer kleineren Zahl bleibt es bei der
+Gruppe – dann steht dort „6 von 8 Geräten gemeldet".
+
+Dafür braucht der Connector die Verwendung **Funkgeräte** (*Verwaltung →
+Connectoren*). Abgeholt wird im Takt des Standort-Intervalls und auf Knopfdruck.
 
 ## SIM-Karten
 

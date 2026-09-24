@@ -119,17 +119,17 @@
     zeigeArt();
   }
 
-  /* SIM-Karte: nur das Auswahlfeld zeigen, das zur Zuordnung passt.
+  /* Karten und Funkgeräte: nur das Auswahlfeld zeigen, das zur Zuordnung passt.
      Ohne JavaScript stehen alle drei da – gespeichert wird trotzdem das richtige. */
-  var simZiel = document.querySelector('[data-sim-ziel]');
-  if (simZiel) {
+  var zielAuswahl = document.querySelector('[data-ziel-auswahl]');
+  if (zielAuswahl) {
     var felder = document.querySelectorAll('[data-ziel-feld]');
     var zeigeZiel = function () {
       Array.prototype.forEach.call(felder, function (feld) {
-        feld.hidden = feld.getAttribute('data-ziel-feld') !== simZiel.value;
+        feld.hidden = feld.getAttribute('data-ziel-feld') !== zielAuswahl.value;
       });
     };
-    simZiel.addEventListener('change', zeigeZiel);
+    zielAuswahl.addEventListener('change', zeigeZiel);
     zeigeZiel();
   }
 

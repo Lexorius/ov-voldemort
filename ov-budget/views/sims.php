@@ -131,7 +131,12 @@ $darf = can('manage_sims');
                 <div class="small muted mono"><?= sim_ist_tetra($s) ? 'Karte' : 'ICCID' ?>
                   <?= e((string)$s['iccid']) ?></div>
               <?php endif; ?>
-              <?php if (trim((string)$s['geraet']) !== ''): ?>
+              <?php if (trim((string)($s['funkgeraet'] ?? '')) !== ''): ?>
+                <div class="small muted">im Gerät:
+                  <?php if (can('view_radios')): ?>
+                    <a href="<?= e(url('radio', ['id' => $s['radio_id']])) ?>"><?= e((string)$s['funkgeraet']) ?></a>
+                  <?php else: ?><?= e((string)$s['funkgeraet']) ?><?php endif; ?></div>
+              <?php elseif (trim((string)$s['geraet']) !== ''): ?>
                 <div class="small muted">steckt in: <?= e((string)$s['geraet']) ?></div>
               <?php endif; ?>
             </td>

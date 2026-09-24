@@ -27,7 +27,8 @@ $out = fopen('php://output', 'wb');
 fwrite($out, "\xEF\xBB\xBF");   // BOM, damit Excel die Umlaute richtig anzeigt
 
 fputcsv($out, [
-    'Kartenwelt', 'Rufnummer', 'ISSI', 'OPTA', 'ICCID', 'Art', 'Status', 'Gehoert zu', 'Zuordnung', 'Steckt in',
+    'Kartenwelt', 'Rufnummer', 'ISSI', 'OPTA', 'ICCID', 'Art', 'Status', 'Gehoert zu', 'Zuordnung',
+    'Funkgeraet', 'Steckt in',
     'Anbieter', 'Tarif', 'Datenvolumen', 'Kosten je Monat', 'Vertrag bis',
     'Ausgegeben am', 'PIN', 'PUK', 'Im Bestand', 'Notiz',
 ], ';');
@@ -43,6 +44,7 @@ foreach ($sims as $s) {
         (string)($s['status_label'] ?? ''),
         SIM_ZIELE[(string)$s['ziel_typ']] ?? '',
         sim_ziel_text($s),
+        (string)($s['funkgeraet'] ?? ''),
         (string)$s['geraet'],
         (string)$s['anbieter'],
         (string)$s['tarif'],

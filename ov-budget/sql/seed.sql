@@ -213,6 +213,23 @@ INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_defa
 ('besprechung_typ','Jugendgruppe',              'jugend',         '#16a34a',60,0),
 ('besprechung_typ','Sonstiges',                 'sonstiges',      '#64748b',70,0);
 
+-- ---------- Arten von Funkgeraeten ----------
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default) VALUES
+('funk_typ','Handsprechfunk (HRT)',   'hrt',        '#0369a1',10,1),
+('funk_typ','Fahrzeugfunk (MRT)',     'mrt',        '#b45309',20,0),
+('funk_typ','Feststation (FRT)',      'frt',        '#7c3aed',30,0),
+('funk_typ','Digitaler Meldeempfaenger','dme',      '#15803d',40,0),
+('funk_typ','Analogfunk 2m',          'analog-2m',  '#64748b',50,0),
+('funk_typ','Analogfunk 4m',          'analog-4m',  '#475569',60,0),
+('funk_typ','Zubehoer',               'zubehoer',   '#94a3b8',70,0);
+
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default, is_final) VALUES
+('funk_status','Im Einsatz',   'aktiv',       '#15803d',10,1,0),
+('funk_status','Reserve',      'reserve',     '#0369a1',20,0,0),
+('funk_status','In Reparatur', 'reparatur',   '#b45309',30,0,0),
+('funk_status','Defekt',       'defekt',      '#b91c1c',40,0,0),
+('funk_status','Ausgemustert', 'ausgemustert','#64748b',50,0,1);
+
 -- ---------- Arten von SIM-Karten ----------
 INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default) VALUES
 ('sim_typ','Datenkarte',              'daten',       '#0369a1',10,1),
@@ -381,6 +398,10 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('protokoll_anmerkungen_namen','1','Im Ausdruck Namen und Zeitpunkt der Anmerkungen zeigen','Aus = nur der Text','bool','Besprechungen',71),
 ('tp_dauer_vorgabe','10','Vorgabedauer je Thema (Minuten)','Fuer die geplanten Uhrzeiten in der Tagesordnung','number','Besprechungen',60),
 ('serie_vorlauf_tage','60','Wiederkehrende Besprechungen: Termine im Voraus (Tage)','So weit in die Zukunft werden Termine einer Serie angelegt, damit man Themen daraufsetzen kann','number','Besprechungen',70),
+('funk_modul_name','Funkgeraete','Bezeichnung des Funkmoduls','','text','Funkgeraete',10),
+('funk_intro','Funkgeraete des Ortsverbands mit Karte, Zuordnung und Pruefung.','Einleitungstext im Funkmodul','','textarea','Funkgeraete',20),
+('funk_user_darf_sehen','0','Alle Mitglieder duerfen Funkgeraete sehen','Sonst nur Leitung und Administration','bool','Funkgeraete',30),
+('funk_pruefung_warnung_tage','30','Vorwarnung fuer die Pruefung (Tage)','Ab wann eine Pruefung als bald faellig gilt','number','Funkgeraete',40),
 ('sim_modul_name','SIM-Karten','Bezeichnung des SIM-Moduls','','text','SIM-Karten',10),
 ('sim_intro','Karten des Ortsverbands mit Rufnummer, Vertrag und Zuordnung zu Fahrzeug, Fachgruppe oder Person.','Einleitungstext im SIM-Modul','','textarea','SIM-Karten',20),
 ('sim_user_darf_sehen','0','Alle Mitglieder duerfen SIM-Karten sehen','PIN und PUK bleiben in jedem Fall der Leitung vorbehalten','bool','SIM-Karten',30),
