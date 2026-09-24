@@ -368,6 +368,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('veranstaltung_code_laenge','6','Laenge des Einladungscodes','Anzahl der Zeichen hinter der kurzen Adresse. Vorgabe fuer neue Veranstaltungen, je Veranstaltung aenderbar. Mehr Zeichen heisst schwerer zu erraten.','number','Veranstaltungen',40),
 ('veranstaltung_begleiter_max','0','Begleiter je eingeladener Person (Vorgabe)','0 = niemand bringt jemanden mit. Je Veranstaltung aenderbar.','number','Veranstaltungen',50),
 ('veranstaltung_kommentare','1','Kommentare auf der Einladungsseite (Vorgabe)','Eingeladene koennen der Rueckmeldung eine Nachricht mitgeben. Je Veranstaltung aenderbar.','bool','Veranstaltungen',60),
+('veranstaltung_ohne_gaesteliste','ausbildung,uebung','Arten ohne Gaesteliste','Kurznamen der Veranstaltungsarten, durch Komma getrennt (siehe Verwaltung - Auswahllisten - Veranstaltungsarten). Bei diesen Arten wird beim Anlegen nur die Teilnehmerzahl erfasst, keine Einladungen. Je Veranstaltung umschaltbar.','text','Veranstaltungen',65),
 ('veranstaltung_intervall_minuten','10','Rueckmeldungen abholen alle (Minuten)','Wie oft der automatische Abruf beim Connector nach neuen Rueckmeldungen sieht','number','Veranstaltungen',70),
 ('session_lifetime','43200','Session-Laufzeit in Sekunden','Standard: 12 Stunden','number','Sicherheit',10),
 ('login_max_versuche','8','Fehlversuche bis Sperre','Sperre gilt pro Benutzername für die Sperrdauer','number','Sicherheit',20),

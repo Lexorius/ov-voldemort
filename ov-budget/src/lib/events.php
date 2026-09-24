@@ -112,7 +112,9 @@ function event_query(array $f = []): array
                    t.label AS typ_label, t.color AS typ_color,
                    (SELECT COUNT(*) FROM event_guests g WHERE g.event_id = e.id) AS gaeste,
                    (SELECT COUNT(*) FROM event_guests g WHERE g.event_id = e.id
-                     AND g.status IN (\'zusage\',\'vertretung\')) AS zusagen
+                     AND g.status IN (\'zusage\',\'vertretung\')) AS zusagen,
+                   (SELECT COALESCE(SUM(1 + g.begleiter), 0) FROM event_guests g
+                     WHERE g.event_id = e.id AND g.status IN (\'zusage\',\'vertretung\')) AS personen
             FROM events e
             LEFT JOIN budgets    b  ON b.id  = e.budget_id
             LEFT JOIN list_items fg ON fg.id = e.fachgruppe_id
@@ -203,6 +205,9 @@ function event_save_from_post(?array $e, array $user): array
         'kommentare_erlaubt' => post_bool('kommentare_erlaubt'),
         'vertretung_erlaubt' => post_bool('vertretung_erlaubt'),
         'rueckmeldung_bis'   => post_date('rueckmeldung_bis'),
+        'gaesteliste'        => post_bool('gaesteliste'),
+        'teilnehmer_geplant' => post_int('teilnehmer_geplant'),
+        'teilnehmer_ist'     => post_int('teilnehmer_ist'),
         'hinweis'            => post_str('hinweis'),
         'notiz'              => post_str('notiz'),
         'updated_by'         => (int)$user['id'],
@@ -229,6 +234,49 @@ function event_delete(array $e): void
     db_exec('UPDATE expenses SET event_id = NULL WHERE event_id = ?', [(int)$e['id']]);
     db_exec('DELETE FROM events WHERE id = ?', [(int)$e['id']]);
     audit('veranstaltung.geloescht', 'event', (int)$e['id'], (string)$e['titel']);
+}
+
+/** Kurznamen der Arten, die ohne Gästeliste auskommen. Reine Funktion. */
+function event_typen_ohne_liste(string $roh): array
+{
+    $out = [];
+    foreach (explode(',', $roh) as $slug) {
+        $slug = trim($slug);
+        if ($slug !== '') {
+            $out[] = $slug;
+        }
+    }
+    return $out;
+}
+
+/** Kommt diese Art ohne Gästeliste aus? */
+function event_typ_ohne_liste(?int $typId): bool
+{
+    if (!$typId) {
+        return false;
+    }
+    $slug = (string)(list_item($typId)['slug'] ?? '');
+    return $slug !== '' && in_array($slug, event_typen_ohne_liste(
+        (string)setting('veranstaltung_ohne_gaesteliste', '')), true);
+}
+
+/** Wird bei dieser Veranstaltung eine Gästeliste geführt? Reine Funktion. */
+function event_mit_gaesteliste(array $e): bool
+{
+    return (int)($e['gaesteliste'] ?? 1) === 1;
+}
+
+/**
+ * Wie viele Personen kommen: bei einer Gästeliste die Summe der Zusagen,
+ * sonst die eingetragene Zahl. Reine Funktion.
+ */
+function event_personen(array $e, array $stats): int
+{
+    if (event_mit_gaesteliste($e)) {
+        return (int)($stats['personen'] ?? 0);
+    }
+    $ist = $e['teilnehmer_ist'] ?? null;
+    return (int)($ist !== null && $ist !== '' ? $ist : (int)($e['teilnehmer_geplant'] ?? 0));
 }
 
 /* ==================================================================== */

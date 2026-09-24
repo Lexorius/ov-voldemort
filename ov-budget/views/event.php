@@ -38,6 +38,16 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
 <?php endif; ?>
 
 <div class="stats">
+  <?php if (!event_mit_gaesteliste($event)): ?>
+    <div class="stat">
+      <div class="stat__label">Teilnehmer</div>
+      <div class="stat__value"><?= $event['teilnehmer_ist'] !== null
+          ? (int)$event['teilnehmer_ist'] : ((int)$event['teilnehmer_geplant'] ?: '–') ?></div>
+      <div class="stat__hint"><?= $event['teilnehmer_ist'] !== null
+          ? 'tatsächlich · geplant waren ' . ((int)$event['teilnehmer_geplant'] ?: '–')
+          : 'geplant · tatsächliche Zahl fehlt noch' ?></div>
+    </div>
+  <?php else: ?>
   <div class="stat">
     <div class="stat__label">Zusagen</div>
     <div class="stat__value"><?= (int)$stats['zusagen'] + (int)$stats['vertretungen'] ?></div>
@@ -53,6 +63,7 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
     <div class="stat__value"><?= (int)$stats['offen'] ?></div>
     <div class="stat__hint"><?= (int)$stats['absagen'] ?> Absagen</div>
   </div>
+  <?php endif; ?>
   <?php if (can('view_expenses')): ?>
     <div class="stat">
       <div class="stat__label">Ausgegeben</div>
@@ -145,6 +156,38 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
 </div>
 <?php endif; ?>
 
+<?php if (!event_mit_gaesteliste($event)): ?>
+<div class="card" id="teilnehmer">
+  <h2>Teilnehmer</h2>
+  <p class="small">Für diese Veranstaltung wird keine Gästeliste geführt – hier zählt nur die
+    Zahl. Umstellen lässt sich das beim <a href="<?= e(url('event_edit', ['id' => $id])) ?>">Bearbeiten</a>.</p>
+  <dl class="dl">
+    <div class="dl__item"><div class="dl__label">Geplant</div>
+      <div class="dl__value"><?= (int)$event['teilnehmer_geplant'] ?: '–' ?></div></div>
+    <div class="dl__item"><div class="dl__label">Tatsächlich</div>
+      <div class="dl__value"><?= $event['teilnehmer_ist'] !== null
+          ? (int)$event['teilnehmer_ist'] : '<span class="muted">noch nicht eingetragen</span>' ?></div></div>
+  </dl>
+  <?php if ($darf): ?>
+    <form method="post" action="<?= e(url('event_action')) ?>" class="form">
+      <?= csrf_field() ?>
+      <input type="hidden" name="action" value="teilnehmer">
+      <input type="hidden" name="event_id" value="<?= $id ?>">
+      <div class="filters">
+        <div class="field">
+          <label for="teilnehmer_ist">Wie viele waren da?</label>
+          <input type="number" id="teilnehmer_ist" name="teilnehmer_ist" min="0" max="65000"
+                 value="<?= $event['teilnehmer_ist'] !== null ? (int)$event['teilnehmer_ist'] : '' ?>">
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <button class="btn btn--sec" type="submit">Eintragen</button>
+        </div>
+      </div>
+    </form>
+  <?php endif; ?>
+</div>
+<?php else: ?>
 <div class="card" id="gaeste">
   <div class="card__head">
     <h2>Gästeliste</h2>
@@ -409,6 +452,8 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
     <?php endif; ?>
   <?php endif; ?>
 </div>
+
+<?php endif; ?>
 
 <div class="card" id="dateien">
   <div class="card__head">

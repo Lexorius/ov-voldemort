@@ -34,6 +34,8 @@ render('event_edit', [
         'id' => null, 'titel' => '', 'beschreibung' => '', 'ort' => '',
         'beginn' => null, 'ende' => null, 'status' => 'geplant',
         'typ_id' => list_default_id('veranstaltung_typ'),
+        'gaesteliste' => event_typ_ohne_liste(list_default_id('veranstaltung_typ')) ? 0 : 1,
+        'teilnehmer_geplant' => null, 'teilnehmer_ist' => null,
         'budget_id' => null, 'fachgruppe_id' => null, 'kosten_geplant' => 0,
         'connector_id' => (connector_for('veranstaltungen')['id'] ?? null),
         'code_laenge' => setting_int('veranstaltung_code_laenge', 6),
@@ -45,5 +47,6 @@ render('event_edit', [
     'budgets' => db_all('SELECT id, name, jahr FROM budgets WHERE is_active = 1 ORDER BY jahr DESC, name', []),
     'fachgruppen' => list_items('fachgruppe'),
     'connectoren' => connector_all(),
+    'ohneListe'   => event_typen_ohne_liste((string)setting('veranstaltung_ohne_gaesteliste', '')),
     'jahr'    => $jahr,
 ]);

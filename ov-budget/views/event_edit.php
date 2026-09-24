@@ -1,6 +1,6 @@
 <?php
 /** @var array $event @var array $errors @var array $budgets @var array $fachgruppen
- *  @var array $connectoren @var int $jahr */
+ *  @var array $connectoren @var array $ohneListe @var int $jahr */
 $isNew = empty($event['id']);
 $datum = substr((string)($event['beginn'] ?? ''), 0, 10);
 $beginnZeit = substr((string)($event['beginn'] ?? ''), 11, 5);
@@ -66,7 +66,10 @@ $endeZeit = substr((string)($event['ende'] ?? ''), 11, 5);
       </div>
       <div class="field">
         <label for="typ_id">Art der Veranstaltung</label>
-        <select id="typ_id" name="typ_id"><?= list_options('veranstaltung_typ', (int)($event['typ_id'] ?? 0)) ?></select>
+        <select id="typ_id" name="typ_id" data-neu="<?= $isNew ? '1' : '' ?>"
+                data-ohne-liste="<?= e(implode(',', array_map(
+            static fn($slug) => (string)(list_id_by_slug('veranstaltung_typ', $slug) ?? 0),
+            $ohneListe))) ?>"><?= list_options('veranstaltung_typ', (int)($event['typ_id'] ?? 0)) ?></select>
       </div>
       <div class="field">
         <label for="fachgruppe_id">Fachgruppe</label>
@@ -109,6 +112,32 @@ $endeZeit = substr((string)($event['ende'] ?? ''), 11, 5);
   </section>
 
   <section class="card">
+    <h2>Teilnehmer</h2>
+    <div class="field field--check">
+      <input type="checkbox" id="gaesteliste" name="gaesteliste" value="1"
+             <?= (int)($event['gaesteliste'] ?? 1) === 1 ? 'checked' : '' ?>>
+      <label for="gaesteliste">Gästeliste mit Einladungen führen</label>
+    </div>
+    <small class="muted" style="margin-top:-.6rem">Aus heißt: Es wird nur gezählt, wie viele
+      gekommen sind – ohne Namen, ohne Einladungen. Für Ausbildungen und Übungen ist das meist
+      genug. Welche Arten damit anfangen, steht in den Einstellungen.</small>
+    <div class="grid2" id="zahlen-block">
+      <div class="field">
+        <label for="teilnehmer_geplant">Teilnehmer geplant</label>
+        <input type="number" id="teilnehmer_geplant" name="teilnehmer_geplant" min="0" max="65000"
+               value="<?= $event['teilnehmer_geplant'] !== null ? (int)$event['teilnehmer_geplant'] : '' ?>">
+      </div>
+      <div class="field">
+        <label for="teilnehmer_ist">Teilnehmer tatsächlich</label>
+        <input type="number" id="teilnehmer_ist" name="teilnehmer_ist" min="0" max="65000"
+               value="<?= $event['teilnehmer_ist'] !== null ? (int)$event['teilnehmer_ist'] : '' ?>">
+        <small class="muted">Nach der Veranstaltung nachtragen – geht auch direkt auf der
+          Veranstaltungsseite.</small>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="einladungen-block">
     <h2>Einladungen</h2>
     <p class="small">Jede eingeladene Person bekommt einen eigenen Code. Damit die Einladungsseite
       im Netz steht, braucht es einen Connector mit der Verwendung „Veranstaltungen".</p>

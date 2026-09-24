@@ -278,6 +278,25 @@ einfärben – die Farbe erscheint als Streifen und Plakette in der Übersicht.
 In der Liste der Veranstaltungen lässt sich nach der Art filtern; auf den
 Ausdrucken steht sie im Kopf.
 
+### Mit Gästeliste oder nur mit einer Zahl
+
+Nicht jede Veranstaltung braucht Namen. Bei einer **Ausbildung oder Übung**
+reicht meist, wie viele gekommen sind. Deshalb hat jede Veranstaltung den
+Schalter **„Gästeliste mit Einladungen führen"**:
+
+* **an** – Gästeliste aus den Kontakten, Einladungscodes, Rückmeldungen,
+  Einlassliste. So wie oben beschrieben.
+* **aus** – keine Namen, keine Einladungen. Stattdessen zwei Zahlen:
+  **geplant** und **tatsächlich**. Die tatsächliche Zahl lässt sich direkt auf
+  der Veranstaltungsseite nachtragen, wenn es vorbei ist.
+
+Welche Arten gleich ohne Liste anfangen, steht unter *Einstellungen →
+Veranstaltungen → Arten ohne Gästeliste* (Vorgabe: Ausbildung und Übung).
+Beim Anlegen folgt der Schalter der gewählten Art; danach entscheidet, wer die
+Veranstaltung anlegt. Umstellen geht jederzeit – eine schon geführte
+Gästeliste bleibt dabei erhalten und taucht wieder auf, sobald der Schalter
+wieder an ist.
+
 ### Gästeliste auf Papier und als Datei
 
 Aus der Veranstaltung heraus:

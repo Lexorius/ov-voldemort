@@ -1,5 +1,25 @@
 # Änderungsverlauf
 
+## 1.39.0
+
+### Veranstaltungen ohne Gästeliste
+
+Nicht jede Veranstaltung braucht Namen – bei einer Ausbildung oder Übung
+reicht, wie viele gekommen sind.
+
+- Neuer Schalter je Veranstaltung: **Gästeliste mit Einladungen führen**. Ist
+  er aus, gibt es statt Gästeliste und Einladungen nur zwei Zahlen:
+  **Teilnehmer geplant** und **tatsächlich**.
+- Die tatsächliche Zahl lässt sich direkt auf der Veranstaltungsseite
+  nachtragen, wenn es vorbei ist.
+- Welche **Arten** gleich ohne Liste anfangen, steht in den Einstellungen
+  (Vorgabe: Ausbildung und Übung). Beim Anlegen folgt der Schalter der
+  gewählten Art; danach entscheidet, wer die Veranstaltung anlegt.
+- Umstellen geht jederzeit: Eine schon geführte Gästeliste bleibt erhalten und
+  taucht wieder auf, sobald der Schalter wieder an ist.
+- In der Übersicht steht bei diesen Veranstaltungen die Teilnehmerzahl statt
+  der Zusagen, dazu die Plakette „ohne Gästeliste".
+
 ## 1.38.0
 
 ### Arten von Veranstaltungen

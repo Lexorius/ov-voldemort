@@ -72,6 +72,29 @@
   }
 
   /* Filter beim Ändern direkt anwenden */
+  /* Veranstaltung: Gästeliste oder nur eine Zahl.
+     Manche Arten (Ausbildung, Übung) kommen ohne Liste aus – beim Anlegen
+     folgt der Haken der gewählten Art, danach entscheidet die Person. */
+  var gaesteliste = document.getElementById('gaesteliste');
+  if (gaesteliste) {
+    var einladungen = document.getElementById('einladungen-block');
+    var art = document.getElementById('typ_id');
+
+    var zeigen = function () {
+      if (einladungen) { einladungen.hidden = !gaesteliste.checked; }
+    };
+    gaesteliste.addEventListener('change', zeigen);
+    zeigen();
+
+    if (art && art.getAttribute('data-neu') === '1') {
+      var ohne = (art.getAttribute('data-ohne-liste') || '').split(',').filter(Boolean);
+      art.addEventListener('change', function () {
+        gaesteliste.checked = ohne.indexOf(art.value) === -1;
+        zeigen();
+      });
+    }
+  }
+
   document.querySelectorAll('form[data-autosubmit] select').forEach(function (sel) {
     sel.addEventListener('change', function () { sel.form.submit(); });
   });

@@ -614,6 +614,11 @@ CREATE TABLE IF NOT EXISTS events (
   vertretung_erlaubt TINYINT(1)   NOT NULL DEFAULT 1,
   rueckmeldung_bis   DATE         NULL,
   hinweis            TEXT         NULL,
+  -- Manche Arten (Ausbildung, Uebung) brauchen keine Gaesteliste,
+  -- sondern nur eine Zahl
+  gaesteliste        TINYINT(1)   NOT NULL DEFAULT 1,
+  teilnehmer_geplant SMALLINT UNSIGNED NULL,
+  teilnehmer_ist     SMALLINT UNSIGNED NULL,
   einladung_aktiv    TINYINT(1)   NOT NULL DEFAULT 0,
   angemeldet_am      DATETIME     NULL,
   notiz              TEXT         NULL,

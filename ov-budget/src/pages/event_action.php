@@ -81,6 +81,19 @@ switch (post_str('action')) {
         $zurueck .= '#gaeste';
         break;
 
+    case 'teilnehmer':
+        $zahl = post_int('teilnehmer_ist');
+        db_update('events', [
+            'teilnehmer_ist' => $zahl !== null ? max(0, min(65000, $zahl)) : null,
+            'updated_by'     => (int)$user['id'],
+        ], 'id = ?', [(int)$event['id']]);
+        audit('veranstaltung.teilnehmer', 'event', (int)$event['id'], (string)($zahl ?? ''));
+        flash('success', $zahl !== null
+            ? sprintf('%d Teilnehmer eingetragen.', $zahl)
+            : 'Die Teilnehmerzahl ist wieder offen.');
+        $zurueck .= '#teilnehmer';
+        break;
+
     /* ---------------- Dateien ---------------- */
 
     case 'datei':

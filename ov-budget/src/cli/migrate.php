@@ -916,6 +916,20 @@ SQL);
                     REFERENCES list_items(id) ON DELETE SET NULL');
     }
     $merken('025_veranstaltungsarten');
+
+    /* ---- 026: Veranstaltungen ohne Gaesteliste ---- */
+    if (ovb_table_exists($pdo, 'events')) {
+        foreach ([
+            'gaesteliste'        => 'TINYINT(1) NOT NULL DEFAULT 1',
+            'teilnehmer_geplant' => 'SMALLINT UNSIGNED NULL',
+            'teilnehmer_ist'     => 'SMALLINT UNSIGNED NULL',
+        ] as $spalte => $art) {
+            if (!ovb_column_exists($pdo, 'events', $spalte)) {
+                $pdo->exec("ALTER TABLE events ADD COLUMN $spalte $art");
+            }
+        }
+    }
+    $merken('026_teilnehmerzahl');
 }
 
 /**

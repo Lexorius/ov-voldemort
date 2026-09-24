@@ -57,6 +57,8 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - **Dateien** wie Rechnungen, Angebote und Programm
 - **Gästeliste aus den Kontakten** – einzeln, als ganzer Verteiler oder frei
   mit Namen
+- **Oder nur eine Zahl**: Ausbildungen und Übungen kommen ohne Gästeliste aus –
+  dort zählen nur Teilnehmer geplant und tatsächlich
 - **Einladung per kurzer Adresse** (`https://i.example.de/AB23CD`): zusagen,
   absagen, Begleiter ankündigen oder eine Vertretung nennen – ohne Zugang zur
   Anwendung, verschlüsselt über einen Connector

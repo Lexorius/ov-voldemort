@@ -18,13 +18,23 @@ $karte = static function (array $e): string {
         . '<div class="item__sub">' . e(de_date(substr((string)$e['beginn'], 0, 10)))
         . ($zeit !== '00:00' ? ', ' . e($zeit) . ' Uhr' : '')
         . ($e['ort'] ? ' · ' . e((string)$e['ort']) : '') . '</div>'
-        . '</div><div class="item__amount">' . (int)$e['zusagen'] . '/' . (int)$e['gaeste'] . '</div></div>'
+        . '</div><div class="item__amount">'
+        . ((int)($e['gaesteliste'] ?? 1) === 1
+            ? (int)$e['zusagen'] . '/' . (int)$e['gaeste']
+            : ($e['teilnehmer_ist'] !== null ? (int)$e['teilnehmer_ist']
+                : ((int)$e['teilnehmer_geplant'] ?: '–')))
+        . '</div></div>'
         . '<div class="item__meta">';
     if (!empty($e['typ_label'])) {
         $html .= badge(['label' => $e['typ_label'], 'color' => $e['typ_color']]);
     }
     $html .= '<span class="badge badge--outline">' . e(event_status_label((string)$e['status'])) . '</span>';
-    if ((int)$e['gaeste'] > 0) {
+    if ((int)($e['gaesteliste'] ?? 1) !== 1) {
+        $html .= '<span class="badge badge--outline">ohne Gästeliste</span>';
+        if ($e['teilnehmer_ist'] !== null) {
+            $html .= '<span class="badge badge--outline">' . (int)$e['teilnehmer_ist'] . ' Teilnehmer</span>';
+        }
+    } elseif ((int)$e['gaeste'] > 0) {
         $html .= '<span class="badge badge--outline">' . (int)$e['zusagen'] . ' von '
             . (int)$e['gaeste'] . ' zugesagt</span>';
     }
