@@ -111,6 +111,7 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
       <a class="btn" href="<?= e(url('expense_edit', ['jahr' => $jahr, 'art' => 'ausgabe'])) ?>">+ Ausgabe</a>
       <a class="btn btn--ok" href="<?= e(url('expense_edit', ['jahr' => $jahr, 'art' => 'einnahme'])) ?>">+ Einnahme</a>
       <a class="btn btn--sec" href="<?= e(url('budget_year_edit', ['jahr' => $jahr])) ?>">Jahresbudget</a>
+      <a class="btn btn--sec" href="<?= e(url('budget_pots', ['jahr' => $jahr])) ?>">Budgettöpfe verwalten</a>
     <?php endif; ?>
   </div>
 </div>
@@ -291,13 +292,20 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
 <section class="card">
   <div class="card__head">
     <h2>Budgettöpfe</h2>
-    <span class="muted small"><?= e(money_rounded($summeToepfe)) ?> geplant</span>
+    <div class="btnrow">
+      <span class="muted small"><?= e(money_rounded($summeToepfe)) ?> geplant</span>
+      <?php if (can('manage_budget')): ?>
+        <a class="btn btn--sec btn--sm" href="<?= e(url('budget_pots', ['jahr' => $jahr])) ?>">Verwalten</a>
+        <a class="btn btn--sec btn--sm" href="<?= e(url('budget_edit', ['jahr' => $jahr])) ?>">+ Topf</a>
+      <?php endif; ?>
+    </div>
   </div>
   <?php if (!$budgets): ?>
     <div class="empty">Für <?= (int)$jahr ?> ist noch kein Budgettopf angelegt.
       Töpfe sind optional – sie unterteilen das Jahresbudget nach Zweck.
       <?php if (can('manage_budget')): ?>
         <br><a href="<?= e(url('budget_edit', ['jahr' => $jahr])) ?>">Topf anlegen</a>
+        oder <a href="<?= e(url('budget_pots', ['jahr' => $jahr])) ?>">Töpfe verwalten</a>
       <?php endif; ?>
     </div>
   <?php else: ?>

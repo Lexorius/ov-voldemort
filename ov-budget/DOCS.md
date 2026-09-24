@@ -91,7 +91,9 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   Getränke, Tanken ...) und **Einnahmen** (Kostenerstattung für Einsätze,
   technische Hilfeleistung, Spenden ...) mit Einsatz- oder Auftragsnummer.
   Die Übersicht rechnet Budget plus Einnahmen minus Ausgaben und schlüsselt
-  nach Kategorie und Monat auf. Optional unterteilen Budgettöpfe das Jahr.
+  nach Kategorie und Monat auf. Optional unterteilen **Budgettöpfe** das Jahr;
+  sie werden unter *Budget → Budgettöpfe verwalten* gepflegt – anlegen,
+  ändern, stilllegen und zum Jahreswechsel aus dem Vorjahr übernehmen.
   Mit **„Freigegeben, bitte bestellen"** wird ein Wunsch zur Bestellung
   freigegeben; die Übersicht listet alles Freigegebene, bis es als bestellt
   markiert ist. Wer freigeben (optional bis zu einem Nettobetrag) und wer

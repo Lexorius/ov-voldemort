@@ -1,5 +1,25 @@
 # Änderungsverlauf
 
+## 1.40.0
+
+### Budgettöpfe verwalten
+
+Ein zweiter Topf ließ sich bisher kaum anlegen: Der Verweis *Topf anlegen*
+stand nur da, solange es **keinen** Topf gab. Danach kam man nur noch über
+„bearbeiten" an einem bestehenden Topf ins Formular.
+
+- Neuer Knopf **Budgettöpfe verwalten** oben auf der Budgetseite, dazu ein
+  Reiter *Töpfe* in der Budget-Navigation und ein **+ Topf** direkt an der
+  Topf-Übersicht.
+- Die neue Seite zeigt je Topf Betrag, Verplantes aus Wünschen, tatsächlich
+  Ausgegebenes sowie die Zahl der Wünsche und Buchungen – und oben, wie viel
+  vom Jahresbudget noch **nicht verteilt** ist.
+- **Stilllegen und Aktivieren** mit einem Klick: Ein stillgelegter Topf lässt
+  sich nicht mehr auswählen, alle bisherigen Zuordnungen bleiben.
+- **Aus dem Vorjahr übernehmen**: Zum Jahreswechsel die Töpfe des Vorjahres in
+  einem Schritt anlegen. Gleichnamige Töpfe bleiben unberührt, stillgelegte
+  kommen nicht mit; die Beträge stehen danach zum Prüfen bereit.
+
 ## 1.39.0
 
 ### Veranstaltungen ohne Gästeliste

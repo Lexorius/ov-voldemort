@@ -21,7 +21,9 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 ### Budget
 - Jahresbudget, **Ausgaben** (Haus, Nebenkosten, Getränke, Tanken …) und
   **Einnahmen** (Einsätze, technische Hilfeleistung, Spenden …)
-- Übersicht nach Kategorie und Monat mit Grafik, Budgettöpfe
+- Übersicht nach Kategorie und Monat mit Grafik
+- **Budgettöpfe verwalten**: anlegen, ändern, stilllegen und zum Jahreswechsel
+  aus dem Vorjahr übernehmen
 - Auf Wunsch „unscharf" gerundet auf 10, 100 oder 1.000
 
 ### Aufgaben

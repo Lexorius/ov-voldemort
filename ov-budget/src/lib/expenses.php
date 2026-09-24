@@ -67,6 +67,60 @@ function budget_years_known(): array
     return $jahre;
 }
 
+/** Budgettöpfe eines Jahres samt Zahlen für die Verwaltung */
+function budget_pots(int $jahr): array
+{
+    return db_all(
+        'SELECT b.*, k.label AS kategorie_label, f.label AS fachgruppe_label,
+                (SELECT COALESCE(SUM(w.netto_gesamt),0) FROM wishes w
+                  LEFT JOIN list_items s ON s.id = w.status_id
+                 WHERE w.budget_id = b.id AND COALESCE(s.is_final,0) = 0) AS verplant,
+                (SELECT COUNT(*) FROM wishes w WHERE w.budget_id = b.id) AS wuensche,
+                (SELECT COUNT(*) FROM expenses e WHERE e.budget_id = b.id) AS buchungen,
+                (SELECT COALESCE(SUM(e.betrag_netto),0) FROM expenses e
+                 WHERE e.budget_id = b.id AND e.art = \'ausgabe\') AS ausgegeben
+         FROM budgets b
+         LEFT JOIN list_items k ON k.id = b.kategorie_id
+         LEFT JOIN list_items f ON f.id = b.fachgruppe_id
+         WHERE b.jahr = ?
+         ORDER BY b.is_active DESC, b.name',
+        [$jahr]
+    );
+}
+
+/**
+ * Töpfe eines Jahres in ein anderes übernehmen – zum Jahreswechsel.
+ * Gleichnamige Töpfe im Zieljahr bleiben unberührt. Gibt die Anzahl zurück.
+ */
+function budget_pot_copy(int $von, int $nach): int
+{
+    $vorhanden = array_map(
+        static fn($b) => mb_strtolower(trim((string)$b['name'])),
+        db_all('SELECT name FROM budgets WHERE jahr = ?', [$nach])
+    );
+    $kopiert = 0;
+    foreach (db_all('SELECT * FROM budgets WHERE jahr = ? AND is_active = 1 ORDER BY name', [$von]) as $b) {
+        if (in_array(mb_strtolower(trim((string)$b['name'])), $vorhanden, true)) {
+            continue;
+        }
+        db_insert('budgets', [
+            'jahr'          => $nach,
+            'name'          => (string)$b['name'],
+            'kategorie_id'  => $b['kategorie_id'],
+            'fachgruppe_id' => $b['fachgruppe_id'],
+            'betrag_netto'  => (float)$b['betrag_netto'],
+            'beschreibung'  => (string)$b['beschreibung'],
+            'is_active'     => 1,
+        ]);
+        $kopiert++;
+    }
+    if ($kopiert > 0) {
+        audit('budget.uebernommen', 'budget', null,
+            sprintf('%d Topf/Töpfe von %d nach %d', $kopiert, $von, $nach));
+    }
+    return $kopiert;
+}
+
 /* ---------------- Ausgaben ---------------- */
 
 function expense_find(int $id): ?array
