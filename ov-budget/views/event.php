@@ -322,7 +322,9 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
   <?php endif; ?>
 
   <?php if ($darf): ?>
-    <h3>Einladen</h3>
+    <?php /* Offen, solange niemand eingeladen ist – und während einer Kontaktsuche */ ?>
+    <details class="mt"<?= (!$gaeste || $kontaktSuche !== '') ? ' open' : '' ?>>
+    <summary>Gäste einladen</summary>
     <?php if ($verteiler): ?>
       <form method="post" action="<?= e(url('event_action')) ?>" class="form">
         <?= csrf_field() ?>
@@ -405,6 +407,7 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
         </div>
       </div>
     </form>
+    </details>
   <?php endif; ?>
 </div>
 
@@ -504,7 +507,10 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
   <?php endif; ?>
 
   <?php if ($darf): ?>
-    <form method="post" action="<?= e(url('event_action')) ?>" class="form" enctype="multipart/form-data">
+    <details class="mt"<?= $dateien ? '' : ' open' ?>>
+    <summary>Datei hinzufügen</summary>
+    <form method="post" action="<?= e(url('event_action')) ?>" class="form" enctype="multipart/form-data"
+          style="margin-top:.8rem">
       <?= csrf_field() ?>
       <input type="hidden" name="action" value="datei">
       <input type="hidden" name="event_id" value="<?= $id ?>">
@@ -527,21 +533,6 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
         <button class="btn" type="submit">Hochladen</button>
       </div>
     </form>
+    </details>
   <?php endif; ?>
 </div>
-
-<?php if ($darf): ?>
-<div class="card">
-  <h2>Veranstaltung löschen</h2>
-  <p class="small">Gästeliste, Rückmeldungen und Dateien verschwinden mit. Erfasste Buchungen
-    bleiben im Budget stehen und verlieren nur den Bezug.</p>
-  <form method="post" action="<?= e(url('event_action')) ?>" class="inline-form">
-    <?= csrf_field() ?>
-    <input type="hidden" name="action" value="loeschen">
-    <input type="hidden" name="event_id" value="<?= $id ?>">
-    <button class="btn btn--sec" type="submit"
-            data-confirm="Diese Veranstaltung mit Gästeliste, Rückmeldungen und Dateien löschen?"
-            data-confirm2="Bist du wirklich sicher?">Löschen</button>
-  </form>
-</div>
-<?php endif; ?>

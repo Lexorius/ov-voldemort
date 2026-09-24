@@ -207,3 +207,19 @@ $endeZeit = substr((string)($event['ende'] ?? ''), 11, 5);
     </div>
   </section>
 </form>
+
+<?php if (!$isNew): ?>
+  <section class="card">
+    <h2>Veranstaltung löschen</h2>
+    <p class="small">Gästeliste, Rückmeldungen und Dateien verschwinden mit. Erfasste Buchungen
+      bleiben im Budget stehen und verlieren nur den Bezug.</p>
+    <form method="post" action="<?= e(url('event_action')) ?>" class="inline-form">
+      <?= csrf_field() ?>
+      <input type="hidden" name="action" value="loeschen">
+      <input type="hidden" name="event_id" value="<?= (int)$event['id'] ?>">
+      <button class="btn btn--danger" type="submit"
+              data-confirm="Diese Veranstaltung mit Gästeliste, Rückmeldungen und Dateien löschen?"
+              data-confirm2="Bist du wirklich sicher?">Veranstaltung löschen</button>
+    </form>
+  </section>
+<?php endif; ?>

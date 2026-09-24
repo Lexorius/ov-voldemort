@@ -1,5 +1,17 @@
 # Änderungsverlauf
 
+## 1.40.1
+
+### Veranstaltungsseite aufgeräumt
+
+- **Löschen** steht nicht mehr unter der Veranstaltung, sondern beim
+  **Bearbeiten** – dort, wo man ohnehin ist, wenn etwas weg soll. Rot, mit
+  zwei Rückfragen, wie bei den Budgettöpfen.
+- **Gäste einladen** und **Datei hinzufügen** sind jetzt eingeklappt. Sie
+  öffnen sich von selbst, solange noch niemand eingeladen oder nichts
+  abgelegt ist – und während einer Kontaktsuche bleibt der Einladen-Block
+  offen, damit die Treffer sichtbar sind.
+
 ## 1.40.0
 
 ### Budgettöpfe verwalten
