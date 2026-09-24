@@ -220,7 +220,11 @@ INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_defa
 ('sim_typ','Fahrzeugrouter',          'router',      '#b45309',30,0),
 ('sim_typ','Tablet',                  'tablet',      '#7c3aed',40,0),
 ('sim_typ','Telemetrie (M2M)',        'm2m',         '#0891b2',50,0),
-('sim_typ','Reservekarte',            'reserve',     '#64748b',60,0);
+('sim_typ','Reservekarte',            'reserve',     '#64748b',60,0),
+('sim_typ','TETRA Handsprechfunk (HRT)',  'tetra-hrt',   '#be123c',70,0),
+('sim_typ','TETRA Fahrzeugfunk (MRT)',    'tetra-mrt',   '#9f1239',80,0),
+('sim_typ','TETRA Feststation (FRT)',     'tetra-frt',   '#7f1d1d',90,0),
+('sim_typ','TETRA Reservekarte',          'tetra-reserve','#64748b',100,0);
 
 INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default, is_final) VALUES
 ('sim_status','Im Einsatz',  'aktiv',      '#15803d',10,1,0),

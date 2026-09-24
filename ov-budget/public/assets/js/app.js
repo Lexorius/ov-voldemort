@@ -95,6 +95,30 @@
     }
   }
 
+  /* Abschnitte, die an einem Haken hängen (Vertrag, PIN und PUK) */
+  document.querySelectorAll('[data-schalter]').forEach(function (haken) {
+    var name = haken.getAttribute('data-schalter');
+    var bloecke = document.querySelectorAll('[data-schalter-block="' + name + '"]');
+    var zeige = function () {
+      Array.prototype.forEach.call(bloecke, function (b) { b.hidden = !haken.checked; });
+    };
+    haken.addEventListener('change', zeige);
+    zeige();
+  });
+
+  /* SIM-Karte: Mobilfunk oder TETRA – je Welt andere Felder */
+  var karteArt = document.querySelector('[data-karte-art]');
+  if (karteArt) {
+    var artFelder = document.querySelectorAll('[data-art-feld]');
+    var zeigeArt = function () {
+      Array.prototype.forEach.call(artFelder, function (feld) {
+        feld.hidden = feld.getAttribute('data-art-feld') !== karteArt.value;
+      });
+    };
+    karteArt.addEventListener('change', zeigeArt);
+    zeigeArt();
+  }
+
   /* SIM-Karte: nur das Auswahlfeld zeigen, das zur Zuordnung passt.
      Ohne JavaScript stehen alle drei da – gespeichert wird trotzdem das richtige. */
   var simZiel = document.querySelector('[data-sim-ziel]');

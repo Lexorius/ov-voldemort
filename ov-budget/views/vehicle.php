@@ -410,9 +410,18 @@ $arten = [
         <tbody>
         <?php foreach ($sims as $s): ?>
           <tr>
-            <td><strong><?= phone_html((string)$s['rufnummer'], '–') ?></strong>
-              <?php if (trim((string)$s['iccid']) !== ''): ?>
-                <div class="small muted mono">ICCID <?= e((string)$s['iccid']) ?></div>
+            <td>
+              <?php if (sim_ist_tetra($s)): ?>
+                <strong class="mono"><?= e(sim_kennung($s)) ?: '–' ?></strong>
+                <span class="badge badge--outline">TETRA</span>
+                <?php if (trim((string)$s['opta']) !== ''): ?>
+                  <div class="small muted mono"><?= e((string)$s['opta']) ?></div>
+                <?php endif; ?>
+              <?php else: ?>
+                <strong><?= phone_html((string)$s['rufnummer'], '–') ?></strong>
+                <?php if (trim((string)$s['iccid']) !== ''): ?>
+                  <div class="small muted mono">ICCID <?= e((string)$s['iccid']) ?></div>
+                <?php endif; ?>
               <?php endif; ?></td>
             <td class="small">
               <?= badge($s['typ_label'] ? ['label' => $s['typ_label'], 'color' => $s['typ_color']] : null, '–') ?>
@@ -420,7 +429,9 @@ $arten = [
             </td>
             <td class="small"><?= e((string)$s['geraet']) ?: '<span class="muted">–</span>' ?></td>
             <td class="small">
-              <?= $s['vertrag_bis'] ? e(de_date((string)$s['vertrag_bis'])) : '<span class="muted">unbefristet</span>' ?>
+              <?= sim_hat_vertrag($s) && $s['vertrag_bis']
+                  ? e(de_date((string)$s['vertrag_bis']))
+                  : '<span class="muted">' . (sim_hat_vertrag($s) ? 'unbefristet' : 'ohne Vertrag') . '</span>' ?>
               <?php if (can('manage_sims')): ?>
                 <div><a href="<?= e(url('sim_edit', ['id' => $s['id']])) ?>">bearbeiten</a></div>
               <?php endif; ?>

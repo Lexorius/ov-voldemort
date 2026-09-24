@@ -1,5 +1,28 @@
 # Änderungsverlauf
 
+## 1.42.0
+
+### TETRA-Sicherheitskarten, Vertrag und PIN zuschaltbar
+
+- **Zwei Kartenwelten:** Eine Karte ist entweder **Mobilfunk** (Rufnummer,
+  ICCID, Vertrag) oder eine **TETRA-Sicherheitskarte** mit **ISSI** und
+  **OPTA**. Die Auswahl steht oben im Formular, die Felder richten sich
+  danach. In der Liste steht bei TETRA die ISSI, darunter die OPTA, dazu eine
+  Plakette; gefiltert werden kann nach Kartenwelt, und oben wird gezählt, wie
+  viele Sicherheitskarten geführt werden.
+- Neue Arten für den Funk: **TETRA HRT, MRT, FRT** und **TETRA Reservekarte** –
+  wie die übrigen frei änderbar.
+- **Vertrag zuschaltbar:** Der Haken *Diese Karte hat einen Vertrag* blendet
+  Anbieter, Tarif, Datenvolumen, Kosten und Laufzeit ein. Ohne Haken bleibt
+  der Abschnitt weg, in der Liste steht „ohne Vertrag", und die Karte zählt
+  weder bei den monatlichen Kosten noch bei den auslaufenden Verträgen mit.
+- **PIN und PUK zuschaltbar:** Der Haken *PIN und PUK hier hinterlegen* zeigt
+  die beiden Felder. Ohne Haken werden sie beim Speichern geleert – wer sie
+  nicht in der Anwendung führen will, bekommt sie so auch wieder los.
+- Eine **ISSI** lässt sich wie eine Rufnummer nur einmal vergeben.
+- Bestehende Karten bekommen die Haken beim Update automatisch gesetzt, wenn
+  Vertragsangaben oder eine PIN hinterlegt sind (Wanderung 028).
+
 ## 1.41.0
 
 ### SIM-Karten

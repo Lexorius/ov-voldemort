@@ -9,6 +9,7 @@ if (!can('view_sims')) {
 
 $filter = [
     'q'         => get_str('q'),
+    'karte_art' => get_str('karte_art'),
     'typ_id'    => get_int('typ_id'),
     'status_id' => get_int('status_id'),
     'ziel_typ'  => get_str('ziel_typ'),

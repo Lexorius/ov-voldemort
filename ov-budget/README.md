@@ -29,8 +29,11 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 ### Aufgaben
 - Für den Ortsverband, Fachgruppen, Funktionen oder einzelne Personen
 
-### SIM-Karten
-- Rufnummer, ICCID, Anbieter, Tarif, Datenvolumen, Kosten und Vertragsende
+### SIM- und TETRA-Karten
+- **Mobilfunk** mit Rufnummer, ICCID und Vertrag oder **TETRA-Sicherheitskarte**
+  mit ISSI und OPTA
+- Vertrag und PIN/PUK nur, wenn die Karte sie hat – beides wird zugeschaltet
+- Anbieter, Tarif, Datenvolumen, Kosten und Vertragsende
 - Zuordnung zu **Fahrzeug, Fachgruppe, Person** oder zum Ortsverband; in der
   Fahrzeugakte stehen die Karten des Fahrzeugs
 - **Arten und Status frei pflegbar** (Datenkarte, Telefon, Fahrzeugrouter,

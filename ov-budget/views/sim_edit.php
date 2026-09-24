@@ -1,6 +1,8 @@
 <?php
 /** @var array $sim @var array $errors @var array $fahrzeuge @var array $fachgruppen @var array $personen */
 $isNew = empty($sim['id']);
+$karteArt = sim_karte_art((string)($sim['karte_art'] ?? 'mobilfunk'));
+$tetra = $karteArt === 'tetra';
 $zielTyp = sim_ziel_typ((string)($sim['ziel_typ'] ?? 'ov'));
 $zielId = (int)($sim['ziel_id'] ?? 0);
 ?>
@@ -20,15 +22,37 @@ $zielId = (int)($sim['ziel_id'] ?? 0);
 
   <section class="card">
     <h2>Karte</h2>
+    <div class="field">
+      <label for="karte_art">Kartenwelt</label>
+      <select id="karte_art" name="karte_art" data-karte-art>
+        <?php foreach (SIM_ARTEN as $key => $label): ?>
+          <option value="<?= e($key) ?>" <?= $key === $karteArt ? 'selected' : '' ?>><?= e($label) ?></option>
+        <?php endforeach; ?>
+      </select>
+      <small class="muted">Mobilfunk hat Rufnummer und Vertrag, eine TETRA-Sicherheitskarte
+        stattdessen ISSI und OPTA.</small>
+    </div>
     <div class="grid2">
-      <div class="field">
+      <div class="field" data-art-feld="mobilfunk"<?= $tetra ? ' hidden' : '' ?>>
         <label for="rufnummer">Rufnummer</label>
         <input type="text" id="rufnummer" name="rufnummer" inputmode="tel"
                value="<?= e((string)($sim['rufnummer'] ?? '')) ?>" placeholder="0151 1234567">
         <small class="muted">Wird international geschrieben (+49 …), genau wie im Kontaktmodul.</small>
       </div>
+      <div class="field" data-art-feld="tetra"<?= $tetra ? '' : ' hidden' ?>>
+        <label for="issi">ISSI</label>
+        <input type="text" id="issi" name="issi" inputmode="numeric" maxlength="16"
+               value="<?= e((string)($sim['issi'] ?? '')) ?>" placeholder="z. B. 2621234">
+        <small class="muted">Die Teilnehmerkennung der Karte – nur Ziffern.</small>
+      </div>
+      <div class="field" data-art-feld="tetra"<?= $tetra ? '' : ' hidden' ?>>
+        <label for="opta">OPTA</label>
+        <input type="text" id="opta" name="opta" maxlength="60"
+               value="<?= e((string)($sim['opta'] ?? '')) ?>" placeholder="z. B. NW THW OV MUST 01">
+        <small class="muted">Operativ-taktische Adresse, wie sie im Funk erscheint.</small>
+      </div>
       <div class="field">
-        <label for="iccid">Kartennummer (ICCID)</label>
+        <label for="iccid">Kartennummer<span data-art-feld="mobilfunk"<?= $tetra ? ' hidden' : '' ?>> (ICCID)</span></label>
         <input type="text" id="iccid" name="iccid" inputmode="numeric" maxlength="30"
                value="<?= e((string)($sim['iccid'] ?? '')) ?>" placeholder="8949…">
         <small class="muted">Steht auf der Karte selbst – hilft beim Sperren.</small>
@@ -105,7 +129,15 @@ $zielId = (int)($sim['ziel_id'] ?? 0);
 
   <section class="card">
     <h2>Vertrag</h2>
-    <div class="grid2">
+    <div class="field field--check">
+      <input type="checkbox" id="hat_vertrag" name="hat_vertrag" value="1"
+             data-schalter="vertrag" <?= sim_hat_vertrag($sim) ? 'checked' : '' ?>>
+      <label for="hat_vertrag">Diese Karte hat einen Vertrag</label>
+    </div>
+    <small class="muted" style="margin-top:-.6rem">Aus heißt: keine Angaben zu Anbieter, Tarif,
+      Kosten und Laufzeit – etwa bei einer TETRA-Sicherheitskarte oder einer Karte aus dem Bestand
+      des Landesverbands.</small>
+    <div class="grid2" data-schalter-block="vertrag"<?= sim_hat_vertrag($sim) ? '' : ' hidden' ?>>
       <div class="field">
         <label for="anbieter">Anbieter</label>
         <input type="text" id="anbieter" name="anbieter" maxlength="80"
@@ -138,9 +170,15 @@ $zielId = (int)($sim['ziel_id'] ?? 0);
 
   <section class="card">
     <h2>PIN und PUK</h2>
-    <p class="small">Stehen nur der Leitung offen und werden in der Liste verdeckt angezeigt.
-      Wer sie hier nicht führen möchte, lässt die Felder leer.</p>
-    <div class="grid2">
+    <div class="field field--check">
+      <input type="checkbox" id="hat_pin" name="hat_pin" value="1"
+             data-schalter="pin" <?= sim_hat_pin($sim) ? 'checked' : '' ?>>
+      <label for="hat_pin">PIN und PUK hier hinterlegen</label>
+    </div>
+    <p class="small">Sie stehen dann nur der Leitung offen und werden in der Liste verdeckt
+      angezeigt. Ohne Haken bleiben die Felder leer – und was schon darin stand, wird beim
+      Speichern entfernt.</p>
+    <div class="grid2" data-schalter-block="pin"<?= sim_hat_pin($sim) ? '' : ' hidden' ?>>
       <div class="field">
         <label for="pin">PIN</label>
         <input type="text" id="pin" name="pin" maxlength="20" autocomplete="off"

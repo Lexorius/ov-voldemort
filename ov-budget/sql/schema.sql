@@ -687,15 +687,23 @@ CREATE TABLE IF NOT EXISTS event_files (
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS sims (
   id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  -- Mobilfunkkarte oder TETRA-Sicherheitskarte; danach richten sich die Felder
+  karte_art     ENUM('mobilfunk','tetra') NOT NULL DEFAULT 'mobilfunk',
   rufnummer     VARCHAR(40)  NOT NULL DEFAULT '',
   iccid         VARCHAR(30)  NOT NULL DEFAULT '',
+  -- nur bei TETRA: Teilnehmerkennung und operativ-taktische Adresse
+  issi          VARCHAR(40)  NOT NULL DEFAULT '',
+  opta          VARCHAR(60)  NOT NULL DEFAULT '',
   typ_id        INT UNSIGNED NULL,
   status_id     INT UNSIGNED NULL,
   anbieter      VARCHAR(80)  NOT NULL DEFAULT '',
   tarif         VARCHAR(120) NOT NULL DEFAULT '',
   datenvolumen  VARCHAR(40)  NOT NULL DEFAULT '',
+  -- Vertrag und PIN gibt es nur, wenn die Karte sie hat
+  hat_vertrag   TINYINT(1)   NOT NULL DEFAULT 0,
   kosten_monat  DECIMAL(10,2) NULL,
   vertrag_bis   DATE         NULL,
+  hat_pin       TINYINT(1)   NOT NULL DEFAULT 0,
   -- PIN und PUK stehen verdeckt in der Anwendung und nur fuer die Leitung
   pin           VARCHAR(20)  NOT NULL DEFAULT '',
   puk           VARCHAR(30)  NOT NULL DEFAULT '',

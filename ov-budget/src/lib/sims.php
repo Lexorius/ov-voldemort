@@ -10,10 +10,44 @@ declare(strict_types=1);
  * Zuordnung fest – Art und Status kommen aus den Auswahllisten und lassen
  * sich in der Verwaltung ändern.
  *
+ * Zwei Kartenwelten stecken darin: Mobilfunkkarten (Rufnummer, ICCID,
+ * Vertrag) und TETRA-Sicherheitskarten (ISSI, OPTA, keine Rufnummer).
+ * Vertrag und PIN gibt es nur, wenn die Karte sie hat – beides wird im
+ * Formular zugeschaltet.
+ *
  * PIN und PUK stehen hier, weil sie sonst auf einem Zettel im Schrank
  * liegen. Sie sind der Leitung vorbehalten und werden in der Liste
  * verdeckt angezeigt.
  */
+
+/** Welche Art von Karte – danach richten sich die Felder */
+const SIM_ARTEN = [
+    'mobilfunk' => 'Mobilfunk (SIM)',
+    'tetra'     => 'TETRA-Sicherheitskarte',
+];
+
+function sim_karte_art(string $art): string
+{
+    return array_key_exists($art, SIM_ARTEN) ? $art : 'mobilfunk';
+}
+
+/** Ist das eine TETRA-Karte? Reine Funktion. */
+function sim_ist_tetra(array $sim): bool
+{
+    return (string)($sim['karte_art'] ?? 'mobilfunk') === 'tetra';
+}
+
+/** Führt die Karte einen Vertrag? Reine Funktion. */
+function sim_hat_vertrag(array $sim): bool
+{
+    return (int)($sim['hat_vertrag'] ?? 0) === 1;
+}
+
+/** Sind PIN und PUK hinterlegt? Reine Funktion. */
+function sim_hat_pin(array $sim): bool
+{
+    return (int)($sim['hat_pin'] ?? 0) === 1;
+}
 
 /** Wem eine Karte gehören kann */
 const SIM_ZIELE = [
@@ -64,16 +98,20 @@ function sim_query(array $f = []): array
     $p = [];
 
     if (!empty($f['q'])) {
-        $w[] = '(s.rufnummer LIKE ? OR s.iccid LIKE ? OR s.anbieter LIKE ?'
-            . ' OR s.geraet LIKE ? OR s.tarif LIKE ? OR s.notiz LIKE ?)';
+        $w[] = '(s.rufnummer LIKE ? OR s.iccid LIKE ? OR s.issi LIKE ? OR s.opta LIKE ?'
+            . ' OR s.anbieter LIKE ? OR s.geraet LIKE ? OR s.tarif LIKE ? OR s.notiz LIKE ?)';
         $like = '%' . $f['q'] . '%';
-        array_push($p, $like, $like, $like, $like, $like, $like);
+        array_push($p, $like, $like, $like, $like, $like, $like, $like, $like);
     }
     foreach (['typ_id', 'status_id'] as $spalte) {
         if (!empty($f[$spalte])) {
             $w[] = 's.' . $spalte . ' = ?';
             $p[] = (int)$f[$spalte];
         }
+    }
+    if (!empty($f['karte_art'])) {
+        $w[] = 's.karte_art = ?';
+        $p[] = sim_karte_art((string)$f['karte_art']);
     }
     if (!empty($f['ziel_typ'])) {
         $w[] = 's.ziel_typ = ?';
@@ -92,7 +130,7 @@ function sim_query(array $f = []): array
         'vertrag' => 's.vertrag_bis IS NULL, s.vertrag_bis ASC',
         'kosten'  => 's.kosten_monat DESC',
         'neu'     => 's.created_at DESC',
-        default   => 't.sort_order, s.ziel_typ, s.rufnummer',
+        default   => 's.karte_art, t.sort_order, s.ziel_typ, s.rufnummer, s.issi',
     };
 
     return db_all(sim_select()
@@ -123,6 +161,22 @@ function sim_ziel_text(array $sim): string
     };
 }
 
+/**
+ * Woran man die Karte erkennt: bei Mobilfunk die Rufnummer, bei TETRA die
+ * ISSI. Reine Funktion.
+ */
+function sim_kennung(array $sim): string
+{
+    if (sim_ist_tetra($sim)) {
+        $issi = trim((string)($sim['issi'] ?? ''));
+        $opta = trim((string)($sim['opta'] ?? ''));
+        return $issi !== '' ? $issi : ($opta !== '' ? $opta : trim((string)($sim['iccid'] ?? '')));
+    }
+    return trim((string)($sim['rufnummer'] ?? '')) !== ''
+        ? trim((string)$sim['rufnummer'])
+        : trim((string)($sim['iccid'] ?? ''));
+}
+
 /** Verdeckte Anzeige für PIN und PUK. Reine Funktion. */
 function sim_verdeckt(string $wert): string
 {
@@ -136,7 +190,7 @@ function sim_verdeckt(string $wert): string
  */
 function sim_vertrag(array $sim, int $warnTage = 60, ?string $heute = null): array
 {
-    $bis = trim((string)($sim['vertrag_bis'] ?? ''));
+    $bis = sim_hat_vertrag($sim) ? trim((string)($sim['vertrag_bis'] ?? '')) : '';
     if ($bis === '') {
         return ['tage' => null, 'stufe' => 'offen'];
     }
@@ -151,11 +205,17 @@ function sim_vertrag(array $sim, int $warnTage = 60, ?string $heute = null): arr
 /** Zahlen für den Kopf der Liste. Reine Funktion. */
 function sim_stats(array $sims, int $warnTage = 60, ?string $heute = null): array
 {
-    $s = ['anzahl' => count($sims), 'kosten' => 0.0, 'ohne_zuordnung' => 0, 'vertrag_bald' => 0];
+    $s = ['anzahl' => count($sims), 'kosten' => 0.0, 'ohne_zuordnung' => 0,
+          'vertrag_bald' => 0, 'tetra' => 0];
     foreach ($sims as $sim) {
-        $s['kosten'] += (float)($sim['kosten_monat'] ?? 0);
+        if (sim_hat_vertrag($sim)) {
+            $s['kosten'] += (float)($sim['kosten_monat'] ?? 0);
+        }
         if ((string)$sim['ziel_typ'] === 'ov') {
             $s['ohne_zuordnung']++;
+        }
+        if (sim_ist_tetra($sim)) {
+            $s['tetra']++;
         }
         $vertrag = sim_vertrag($sim, $warnTage, $heute);
         if (in_array($vertrag['stufe'], ['bald', 'faellig'], true)) {
@@ -170,15 +230,34 @@ function sim_save_from_post(?array $sim, array $user): array
 {
     $fehler = [];
 
+    $karteArt = sim_karte_art(post_str('karte_art', 'mobilfunk'));
+    $tetra = $karteArt === 'tetra';
+
     // Wie im Kontaktmodul: international geschrieben, Unlesbares bleibt stehen
-    $rufnummer = phone_human(post_str('rufnummer'));
+    $rufnummer = $tetra ? '' : phone_human(post_str('rufnummer'));
     $iccid = preg_replace('/[^0-9A-Za-z]/', '', post_str('iccid')) ?? '';
-    if ($rufnummer === '' && $iccid === '') {
-        $fehler[] = 'Bitte wenigstens die Rufnummer oder die Kartennummer (ICCID) angeben.';
+    $issi = $tetra ? preg_replace('/[^0-9]/', '', post_str('issi')) ?? '' : '';
+    $opta = $tetra ? mb_substr(post_str('opta'), 0, 60) : '';
+
+    if ($tetra) {
+        if ($issi === '' && $iccid === '' && $opta === '') {
+            $fehler[] = 'Bitte wenigstens ISSI, OPTA oder die Kartennummer angeben.';
+        }
+        if ($issi !== '' && (mb_strlen($issi) < 5 || mb_strlen($issi) > 16)) {
+            $fehler[] = 'Die ISSI besteht aus Ziffern und hat üblicherweise 7 bis 16 Stellen.';
+        }
+    } else {
+        if ($rufnummer === '' && $iccid === '') {
+            $fehler[] = 'Bitte wenigstens die Rufnummer oder die Kartennummer (ICCID) angeben.';
+        }
+        if ($iccid !== '' && (mb_strlen($iccid) < 10 || mb_strlen($iccid) > 22)) {
+            $fehler[] = 'Die Kartennummer (ICCID) hat üblicherweise 18 bis 22 Stellen.';
+        }
     }
-    if ($iccid !== '' && (mb_strlen($iccid) < 10 || mb_strlen($iccid) > 22)) {
-        $fehler[] = 'Die Kartennummer (ICCID) hat üblicherweise 18 bis 22 Stellen.';
-    }
+
+    // Vertrag und PIN stehen nur in der Karte, wenn sie angehakt sind
+    $hatVertrag = post_bool('hat_vertrag');
+    $hatPin = post_bool('hat_pin');
 
     // Im Formular steht je Art ein eigenes Auswahlfeld; gültig ist das zur
     // gewählten Art. So klappt es auch ohne JavaScript.
@@ -186,6 +265,15 @@ function sim_save_from_post(?array $sim, array $user): array
     $zielId = $zielTyp === 'ov' ? null : (post_int('ziel_id_' . $zielTyp) ?? post_int('ziel_id'));
     if ($zielTyp !== 'ov' && !$zielId) {
         $fehler[] = 'Bitte auswählen, zu wem die Karte gehört.';
+    }
+
+    // Dieselbe ISSI zweimal gibt es im Funknetz nicht
+    if ($issi !== '') {
+        $doppeltIssi = db_val('SELECT id FROM sims WHERE issi = ? AND issi <> \'\' AND id <> ?',
+            [$issi, (int)($sim['id'] ?? 0)]);
+        if ($doppeltIssi) {
+            $fehler[] = 'Diese ISSI steht schon auf einer anderen Karte.';
+        }
     }
 
     // Dieselbe Rufnummer zweimal ist fast immer ein Versehen
@@ -202,17 +290,22 @@ function sim_save_from_post(?array $sim, array $user): array
     }
 
     $daten = [
+        'karte_art'     => $karteArt,
         'rufnummer'     => mb_substr($rufnummer, 0, 40),
         'iccid'         => mb_substr($iccid, 0, 30),
+        'issi'          => mb_substr($issi, 0, 40),
+        'opta'          => $opta,
         'typ_id'        => post_int('typ_id'),
         'status_id'     => post_int('status_id'),
-        'anbieter'      => mb_substr(post_str('anbieter'), 0, 80),
-        'tarif'         => mb_substr(post_str('tarif'), 0, 120),
-        'datenvolumen'  => mb_substr(post_str('datenvolumen'), 0, 40),
-        'kosten_monat'  => post_str('kosten_monat') === '' ? null : post_dec('kosten_monat'),
-        'vertrag_bis'   => post_date('vertrag_bis'),
-        'pin'           => mb_substr(post_str('pin'), 0, 20),
-        'puk'           => mb_substr(post_str('puk'), 0, 30),
+        'hat_vertrag'   => $hatVertrag,
+        'anbieter'      => $hatVertrag ? mb_substr(post_str('anbieter'), 0, 80) : '',
+        'tarif'         => $hatVertrag ? mb_substr(post_str('tarif'), 0, 120) : '',
+        'datenvolumen'  => $hatVertrag ? mb_substr(post_str('datenvolumen'), 0, 40) : '',
+        'kosten_monat'  => $hatVertrag && post_str('kosten_monat') !== '' ? post_dec('kosten_monat') : null,
+        'vertrag_bis'   => $hatVertrag ? post_date('vertrag_bis') : null,
+        'hat_pin'       => $hatPin,
+        'pin'           => $hatPin ? mb_substr(post_str('pin'), 0, 20) : '',
+        'puk'           => $hatPin ? mb_substr(post_str('puk'), 0, 30) : '',
         'geraet'        => mb_substr(post_str('geraet'), 0, 150),
         'ziel_typ'      => $zielTyp,
         'ziel_id'       => $zielId,
@@ -237,12 +330,11 @@ function sim_save_from_post(?array $sim, array $user): array
 /** Kurzer Name einer Karte fürs Protokoll und für Listen. Reine Funktion. */
 function sim_bezeichnung(array $sim): string
 {
-    $nummer = trim((string)($sim['rufnummer'] ?? ''));
-    if ($nummer !== '') {
-        return $nummer;
+    $kennung = sim_kennung($sim);
+    if ($kennung === '') {
+        return sim_ist_tetra($sim) ? 'TETRA-Karte' : 'SIM-Karte';
     }
-    $iccid = trim((string)($sim['iccid'] ?? ''));
-    return $iccid !== '' ? 'ICCID ' . $iccid : 'SIM-Karte';
+    return sim_ist_tetra($sim) ? 'ISSI ' . $kennung : $kennung;
 }
 
 function sim_delete(array $sim): void

@@ -12,6 +12,7 @@ if (!can('manage_sims')) {
 
 $sims = sim_query([
     'q'         => get_str('q'),
+    'karte_art' => get_str('karte_art'),
     'typ_id'    => get_int('typ_id'),
     'status_id' => get_int('status_id'),
     'ziel_typ'  => get_str('ziel_typ'),
@@ -26,14 +27,17 @@ $out = fopen('php://output', 'wb');
 fwrite($out, "\xEF\xBB\xBF");   // BOM, damit Excel die Umlaute richtig anzeigt
 
 fputcsv($out, [
-    'Rufnummer', 'ICCID', 'Art', 'Status', 'Gehoert zu', 'Zuordnung', 'Steckt in',
+    'Kartenwelt', 'Rufnummer', 'ISSI', 'OPTA', 'ICCID', 'Art', 'Status', 'Gehoert zu', 'Zuordnung', 'Steckt in',
     'Anbieter', 'Tarif', 'Datenvolumen', 'Kosten je Monat', 'Vertrag bis',
     'Ausgegeben am', 'PIN', 'PUK', 'Im Bestand', 'Notiz',
 ], ';');
 
 foreach ($sims as $s) {
     fputcsv($out, [
+        SIM_ARTEN[(string)$s['karte_art']] ?? '',
         (string)$s['rufnummer'],
+        (string)$s['issi'],
+        (string)$s['opta'],
         (string)$s['iccid'],
         (string)($s['typ_label'] ?? ''),
         (string)($s['status_label'] ?? ''),
@@ -43,7 +47,8 @@ foreach ($sims as $s) {
         (string)$s['anbieter'],
         (string)$s['tarif'],
         (string)$s['datenvolumen'],
-        $s['kosten_monat'] !== null ? number_format((float)$s['kosten_monat'], 2, ',', '') : '',
+        sim_hat_vertrag($s) && $s['kosten_monat'] !== null
+            ? number_format((float)$s['kosten_monat'], 2, ',', '') : '',
         $s['vertrag_bis'] ? de_date((string)$s['vertrag_bis']) : '',
         $s['ausgegeben_am'] ? de_date((string)$s['ausgegeben_am']) : '',
         (string)$s['pin'],

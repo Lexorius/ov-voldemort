@@ -967,6 +967,27 @@ CREATE TABLE sims (
 SQL);
     }
     $merken('027_simkarten');
+
+    /* ---- 028: TETRA-Karten, Vertrag und PIN zuschaltbar ---- */
+    if (ovb_table_exists($pdo, 'sims')) {
+        foreach ([
+            'karte_art'   => "ENUM('mobilfunk','tetra') NOT NULL DEFAULT 'mobilfunk'",
+            'issi'        => "VARCHAR(40) NOT NULL DEFAULT ''",
+            'opta'        => "VARCHAR(60) NOT NULL DEFAULT ''",
+            'hat_vertrag' => 'TINYINT(1) NOT NULL DEFAULT 0',
+            'hat_pin'     => 'TINYINT(1) NOT NULL DEFAULT 0',
+        ] as $spalte => $art) {
+            if (!ovb_column_exists($pdo, 'sims', $spalte)) {
+                $pdo->exec("ALTER TABLE sims ADD COLUMN $spalte $art");
+            }
+        }
+        // Was schon Vertragsangaben oder eine PIN hat, bekommt den Haken gesetzt
+        $pdo->exec("UPDATE sims SET hat_vertrag = 1
+                    WHERE vertrag_bis IS NOT NULL OR kosten_monat IS NOT NULL
+                       OR anbieter <> '' OR tarif <> '' OR datenvolumen <> ''");
+        $pdo->exec("UPDATE sims SET hat_pin = 1 WHERE pin <> '' OR puk <> ''");
+    }
+    $merken('028_tetra_karten');
 }
 
 /**

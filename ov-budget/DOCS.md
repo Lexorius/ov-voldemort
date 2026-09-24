@@ -134,7 +134,7 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   Auf Wunsch sofort per Webhook; Mitschnitt der Antworten zur Fehlersuche.
 * **Divera 24/7 – Fahrzeuge** – Funkstatus (FMS) als Fahrtenbuch im Journal,
   letzte Position mit Kartenlink, Besatzung sowie OPTA und RIC.
-* **SIM-Karten** – Bestand mit Rufnummer, Kartennummer (ICCID), Anbieter,
+* **SIM- und TETRA-Karten** – Bestand mit Rufnummer, Kartennummer (ICCID), Anbieter,
   Tarif, Datenvolumen, Kosten und Vertragsende. Jede Karte gehört zu einem
   **Fahrzeug**, einer **Fachgruppe**, einer **Person** oder allgemein zum
   Ortsverband; in der Fahrzeugakte stehen die Karten des Fahrzeugs. Art und
@@ -262,9 +262,18 @@ Name beim Thema. Nicht zugeordnete Felder landen in der Beschreibung.
 Wer im Ortsverband Karten für Router, Tablets und Diensthandys verwaltet,
 kennt den Zettel im Schrank. Das Modul führt sie stattdessen sauber:
 
+* **Zwei Kartenwelten:** **Mobilfunk** mit Rufnummer, ICCID und Vertrag –
+  oder **TETRA-Sicherheitskarte** mit **ISSI** und **OPTA** statt Rufnummer.
+  Die Auswahl steht oben im Formular; danach richten sich die Felder.
 * **Angaben je Karte:** Rufnummer (international geschrieben wie im
-  Kontaktmodul), Kartennummer (ICCID), Art, Status, Gerät („steckt in"),
-  Anbieter, Tarif, Datenvolumen, monatliche Kosten, Vertragsende, PIN und PUK.
+  Kontaktmodul) beziehungsweise ISSI und OPTA, Kartennummer, Art, Status,
+  Gerät („steckt in"), und – wenn vorhanden – Vertrag sowie PIN und PUK.
+* **Vertrag nur, wenn es einen gibt:** Der Haken *Diese Karte hat einen
+  Vertrag* blendet Anbieter, Tarif, Datenvolumen, Kosten und Laufzeit ein.
+  Ohne Haken bleiben sie weg – TETRA-Karten und Karten aus dem Bestand des
+  Landesverbands haben meist keinen eigenen Vertrag. Dasselbe gilt für
+  *PIN und PUK hier hinterlegen*: ohne Haken werden beide Felder beim
+  Speichern geleert.
 * **Zuordnung:** zu einem **Fahrzeug**, einer **Fachgruppe**, einer **Person**
   oder – ohne feste Zuordnung – zum Ortsverband. Die Fahrzeugakte zeigt die
   Karten des Fahrzeugs gleich mit; von dort lässt sich eine neue Karte mit
@@ -272,8 +281,9 @@ kennt den Zettel im Schrank. Das Modul führt sie stattdessen sauber:
 * **Arten und Status** stehen unter *Verwaltung → Auswahllisten*
   (SIM-Kartenarten, Status (SIM-Karten)) und lassen sich erweitern,
   umbenennen und einfärben. Mitgeliefert: Datenkarte, Telefon,
-  Fahrzeugrouter, Tablet, Telemetrie (M2M), Reservekarte – und die Status
-  Im Einsatz, Reserve, Gesperrt, Gekündigt.
+  Fahrzeugrouter, Tablet, Telemetrie (M2M), Reservekarte sowie für den Funk
+  TETRA HRT, MRT, FRT und Reservekarte – und die Status Im Einsatz, Reserve,
+  Gesperrt, Gekündigt.
 * **Vertragsende:** Karten, deren Vertrag in den nächsten 60 Tagen (Vorgabe,
   einstellbar) ausläuft oder schon abgelaufen ist, stehen oben in der
   Zählung und farbig in der Liste.
@@ -282,7 +292,7 @@ kennt den Zettel im Schrank. Das Modul führt sie stattdessen sauber:
   sehen, steht in den Einstellungen (Vorgabe: nein).
 * **CSV** mit allen Angaben einschließlich PIN und PUK – nur für die Leitung.
 
-Eine Rufnummer kann nur einmal vergeben werden; wer eine Karte ausmustert,
+Eine Rufnummer und eine ISSI können jeweils nur einmal vergeben werden; wer eine Karte ausmustert,
 nimmt sie aus dem Bestand, statt sie zu löschen – dann bleibt sie zum
 Nachschlagen erhalten.
 

@@ -22,6 +22,11 @@ $darf = can('manage_sims');
     <div class="stat__hint"><?= (int)$stats['ohne_zuordnung'] ?> ohne feste Zuordnung</div>
   </div>
   <div class="stat">
+    <div class="stat__label">TETRA</div>
+    <div class="stat__value"><?= (int)$stats['tetra'] ?></div>
+    <div class="stat__hint">Sicherheitskarten</div>
+  </div>
+  <div class="stat">
     <div class="stat__label">Monatlich</div>
     <div class="stat__value"><?= e(money((float)$stats['kosten'])) ?></div>
     <div class="stat__hint">Summe der hinterlegten Tarife</div>
@@ -40,6 +45,16 @@ $darf = can('manage_sims');
       <label for="q">Suche</label>
       <input type="search" id="q" name="q" value="<?= e((string)$filter['q']) ?>"
              placeholder="Nummer, ICCID, Anbieter, Gerät">
+    </div>
+    <div class="field">
+      <label for="karte_art">Kartenwelt</label>
+      <select id="karte_art" name="karte_art">
+        <option value="">alle</option>
+        <?php foreach (SIM_ARTEN as $key => $label): ?>
+          <option value="<?= e($key) ?>" <?= $key === (string)($filter['karte_art'] ?? '') ? 'selected' : '' ?>>
+            <?= e($label) ?></option>
+        <?php endforeach; ?>
+      </select>
     </div>
     <div class="field">
       <label for="typ_id">Art</label>
@@ -92,7 +107,7 @@ $darf = can('manage_sims');
     <div class="tablewrap">
       <table class="data">
         <thead><tr>
-          <th>Rufnummer</th><th>Art</th><th>Gehört zu</th><th>Vertrag</th>
+          <th>Rufnummer / ISSI</th><th>Art</th><th>Gehört zu</th><th>Vertrag</th>
           <?php if ($darf): ?><th>PIN / PUK</th><th></th><?php endif; ?>
         </tr></thead>
         <tbody>
@@ -100,12 +115,21 @@ $darf = can('manage_sims');
           <?php $vertrag = sim_vertrag($s, $warn); ?>
           <tr<?= (int)$s['is_active'] !== 1 ? ' class="is-muted"' : '' ?>>
             <td>
-              <strong><?= phone_html((string)$s['rufnummer'], '–') ?></strong>
+              <?php if (sim_ist_tetra($s)): ?>
+                <strong class="mono"><?= e(sim_kennung($s)) ?: '–' ?></strong>
+                <span class="badge badge--outline">TETRA</span>
+                <?php if (trim((string)$s['opta']) !== ''): ?>
+                  <div class="small muted mono"><?= e((string)$s['opta']) ?></div>
+                <?php endif; ?>
+              <?php else: ?>
+                <strong><?= phone_html((string)$s['rufnummer'], '–') ?></strong>
+              <?php endif; ?>
               <?php if ((int)$s['is_active'] !== 1): ?>
                 <span class="badge badge--muted">ausgemustert</span>
               <?php endif; ?>
               <?php if (trim((string)$s['iccid']) !== ''): ?>
-                <div class="small muted mono">ICCID <?= e((string)$s['iccid']) ?></div>
+                <div class="small muted mono"><?= sim_ist_tetra($s) ? 'Karte' : 'ICCID' ?>
+                  <?= e((string)$s['iccid']) ?></div>
               <?php endif; ?>
               <?php if (trim((string)$s['geraet']) !== ''): ?>
                 <div class="small muted">steckt in: <?= e((string)$s['geraet']) ?></div>
@@ -126,7 +150,9 @@ $darf = can('manage_sims');
               <div class="muted"><?= e(SIM_ZIELE[(string)$s['ziel_typ']] ?? '') ?></div>
             </td>
             <td class="small">
-              <?php if ($vertrag['stufe'] === 'offen'): ?>
+              <?php if (!sim_hat_vertrag($s)): ?>
+                <span class="muted">ohne Vertrag</span>
+              <?php elseif ($vertrag['stufe'] === 'offen'): ?>
                 <span class="muted">unbefristet</span>
               <?php else: ?>
                 <span<?= $vertrag['stufe'] === 'faellig' ? ' style="color:var(--bad);font-weight:700"'
