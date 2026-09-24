@@ -134,6 +134,12 @@ angehalten, damit die Datenbankdateien in sich stimmig sind.
   Auf Wunsch sofort per Webhook; Mitschnitt der Antworten zur Fehlersuche.
 * **Divera 24/7 – Fahrzeuge** – Funkstatus (FMS) als Fahrtenbuch im Journal,
   letzte Position mit Kartenlink, Besatzung sowie OPTA und RIC.
+* **SIM-Karten** – Bestand mit Rufnummer, Kartennummer (ICCID), Anbieter,
+  Tarif, Datenvolumen, Kosten und Vertragsende. Jede Karte gehört zu einem
+  **Fahrzeug**, einer **Fachgruppe**, einer **Person** oder allgemein zum
+  Ortsverband; in der Fahrzeugakte stehen die Karten des Fahrzeugs. Art und
+  Status kommen aus den Auswahllisten und lassen sich erweitern. PIN und PUK
+  stehen verdeckt und nur für die Leitung. Siehe *SIM-Karten* weiter unten.
 * **Kontakte** – Ansprechpartner bei Kommune, Feuerwehr, Presse, Firmen und
   Förderern, dazu Verteiler für Einladungen mit Rückmeldungen und einer
   CSV-Ausgabe für den Serienbrief. Neben den Standardfeldern lassen sich
@@ -250,6 +256,35 @@ dieser Person eingebracht (sie kann es dann auch bearbeiten); sonst steht der
 Name beim Thema. Nicht zugeordnete Felder landen in der Beschreibung.
 * **Verwaltung** – Benutzer und Rollen (Mitglied, Leitung, Administration) sowie
   *alle* Auswahllisten, Texte und Regeln frei konfigurierbar.
+
+## SIM-Karten
+
+Wer im Ortsverband Karten für Router, Tablets und Diensthandys verwaltet,
+kennt den Zettel im Schrank. Das Modul führt sie stattdessen sauber:
+
+* **Angaben je Karte:** Rufnummer (international geschrieben wie im
+  Kontaktmodul), Kartennummer (ICCID), Art, Status, Gerät („steckt in"),
+  Anbieter, Tarif, Datenvolumen, monatliche Kosten, Vertragsende, PIN und PUK.
+* **Zuordnung:** zu einem **Fahrzeug**, einer **Fachgruppe**, einer **Person**
+  oder – ohne feste Zuordnung – zum Ortsverband. Die Fahrzeugakte zeigt die
+  Karten des Fahrzeugs gleich mit; von dort lässt sich eine neue Karte mit
+  bereits gesetztem Fahrzeug anlegen.
+* **Arten und Status** stehen unter *Verwaltung → Auswahllisten*
+  (SIM-Kartenarten, Status (SIM-Karten)) und lassen sich erweitern,
+  umbenennen und einfärben. Mitgeliefert: Datenkarte, Telefon,
+  Fahrzeugrouter, Tablet, Telemetrie (M2M), Reservekarte – und die Status
+  Im Einsatz, Reserve, Gesperrt, Gekündigt.
+* **Vertragsende:** Karten, deren Vertrag in den nächsten 60 Tagen (Vorgabe,
+  einstellbar) ausläuft oder schon abgelaufen ist, stehen oben in der
+  Zählung und farbig in der Liste.
+* **PIN und PUK** sieht nur die Leitung, und auch dort verdeckt – ein Klick
+  auf *PIN* blendet den Wert ein. Ob alle Mitglieder die Karten überhaupt
+  sehen, steht in den Einstellungen (Vorgabe: nein).
+* **CSV** mit allen Angaben einschließlich PIN und PUK – nur für die Leitung.
+
+Eine Rufnummer kann nur einmal vergeben werden; wer eine Karte ausmustert,
+nimmt sie aus dem Bestand, statt sie zu löschen – dann bleibt sie zum
+Nachschlagen erhalten.
 
 ## Veranstaltungen und Einladungen
 

@@ -389,6 +389,51 @@ $arten = [
   <?php endif; ?>
 </section>
 
+<?php if (can('view_sims')): ?>
+<section class="card" id="sims">
+  <div class="card__head">
+    <h2>SIM-Karten</h2>
+    <div class="btnrow">
+      <span class="muted small"><?= count($sims ?? []) ?></span>
+      <?php if (can('manage_sims')): ?>
+        <a class="btn btn--sec btn--sm" href="<?= e(url('sim_edit',
+            ['ziel_typ' => 'fahrzeug', 'ziel_id' => $vehicle['id']])) ?>">+ SIM-Karte</a>
+      <?php endif; ?>
+    </div>
+  </div>
+  <?php if (!($sims ?? [])): ?>
+    <div class="empty">Für dieses Fahrzeug ist keine SIM-Karte hinterlegt.</div>
+  <?php else: ?>
+    <div class="tablewrap">
+      <table class="data">
+        <thead><tr><th>Rufnummer</th><th>Art</th><th>Steckt in</th><th>Vertrag</th></tr></thead>
+        <tbody>
+        <?php foreach ($sims as $s): ?>
+          <tr>
+            <td><strong><?= phone_html((string)$s['rufnummer'], '–') ?></strong>
+              <?php if (trim((string)$s['iccid']) !== ''): ?>
+                <div class="small muted mono">ICCID <?= e((string)$s['iccid']) ?></div>
+              <?php endif; ?></td>
+            <td class="small">
+              <?= badge($s['typ_label'] ? ['label' => $s['typ_label'], 'color' => $s['typ_color']] : null, '–') ?>
+              <?= $s['status_label'] ? badge(['label' => $s['status_label'], 'color' => $s['status_color']]) : '' ?>
+            </td>
+            <td class="small"><?= e((string)$s['geraet']) ?: '<span class="muted">–</span>' ?></td>
+            <td class="small">
+              <?= $s['vertrag_bis'] ? e(de_date((string)$s['vertrag_bis'])) : '<span class="muted">unbefristet</span>' ?>
+              <?php if (can('manage_sims')): ?>
+                <div><a href="<?= e(url('sim_edit', ['id' => $s['id']])) ?>">bearbeiten</a></div>
+              <?php endif; ?>
+            </td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  <?php endif; ?>
+</section>
+<?php endif; ?>
+
 <section class="card" id="wuensche">
   <div class="card__head">
     <h2><?= e((string)setting('wunsch_modul_name', 'Wünsch dir was')) ?> für dieses Fahrzeug</h2>

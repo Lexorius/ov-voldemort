@@ -54,6 +54,10 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
       <a class="mainnav__item<?= nav_active('vehicles', 'vehicle', 'vehicle_edit', 'vehicle_order', 'vehicle_order_edit') ?>" href="<?= e(url('vehicles')) ?>">
         <span class="mainnav__icon">⛟</span><span><?= e(setting('fahrzeug_modul_name', 'Fahrzeuge')) ?></span></a>
     <?php endif; ?>
+    <?php if (can('view_sims')): ?>
+      <a class="mainnav__item<?= nav_active('sims', 'sim_edit') ?>" href="<?= e(url('sims')) ?>">
+        <span class="mainnav__icon">▯</span><span><?= e(setting('sim_modul_name', 'SIM-Karten')) ?></span></a>
+    <?php endif; ?>
     <?php if (can('view_contacts')): ?>
       <a class="mainnav__item<?= nav_active('contacts', 'contact_edit', 'contact_groups', 'contact_group', 'contacts_import') ?>" href="<?= e(url('contacts')) ?>">
         <span class="mainnav__icon">✉</span><span><?= e(setting('kontakte_modul_name', 'Kontakte')) ?></span></a>

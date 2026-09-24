@@ -49,6 +49,7 @@ require __DIR__ . '/lib/notify.php';
 require __DIR__ . '/lib/webpush.php';
 require __DIR__ . '/lib/connector.php';
 require __DIR__ . '/lib/events.php';
+require __DIR__ . '/lib/sims.php';
 
 /** Ist die Anwendung eingerichtet? */
 function app_installed(): bool

@@ -95,6 +95,20 @@
     }
   }
 
+  /* SIM-Karte: nur das Auswahlfeld zeigen, das zur Zuordnung passt.
+     Ohne JavaScript stehen alle drei da – gespeichert wird trotzdem das richtige. */
+  var simZiel = document.querySelector('[data-sim-ziel]');
+  if (simZiel) {
+    var felder = document.querySelectorAll('[data-ziel-feld]');
+    var zeigeZiel = function () {
+      Array.prototype.forEach.call(felder, function (feld) {
+        feld.hidden = feld.getAttribute('data-ziel-feld') !== simZiel.value;
+      });
+    };
+    simZiel.addEventListener('change', zeigeZiel);
+    zeigeZiel();
+  }
+
   document.querySelectorAll('form[data-autosubmit] select').forEach(function (sel) {
     sel.addEventListener('change', function () { sel.form.submit(); });
   });
@@ -107,10 +121,14 @@
     var zeigen = box.querySelector('[data-geheim-zeigen]');
     var kopieren = box.querySelector('[data-geheim-kopieren]');
     if (zeigen) {
+      // Beschriftung kommt aus dem Knopf selbst; data-aus sagt, wie er im
+      // offenen Zustand heißt (Vorgabe passt für den Cron-Aufruf)
+      var anText = zeigen.textContent;
+      var ausText = zeigen.getAttribute('data-aus') || 'Token verbergen';
       zeigen.addEventListener('click', function () {
         var offen = el.textContent !== verdeckt;
         el.textContent = offen ? verdeckt : el.getAttribute('data-geheim');
-        zeigen.textContent = offen ? 'Token anzeigen' : 'Token verbergen';
+        zeigen.textContent = offen ? anText : ausText;
       });
     }
     if (kopieren && navigator.clipboard) {

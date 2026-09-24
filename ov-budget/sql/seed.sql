@@ -213,6 +213,21 @@ INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_defa
 ('besprechung_typ','Jugendgruppe',              'jugend',         '#16a34a',60,0),
 ('besprechung_typ','Sonstiges',                 'sonstiges',      '#64748b',70,0);
 
+-- ---------- Arten von SIM-Karten ----------
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default) VALUES
+('sim_typ','Datenkarte',              'daten',       '#0369a1',10,1),
+('sim_typ','Telefon',                 'telefon',     '#15803d',20,0),
+('sim_typ','Fahrzeugrouter',          'router',      '#b45309',30,0),
+('sim_typ','Tablet',                  'tablet',      '#7c3aed',40,0),
+('sim_typ','Telemetrie (M2M)',        'm2m',         '#0891b2',50,0),
+('sim_typ','Reservekarte',            'reserve',     '#64748b',60,0);
+
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default, is_final) VALUES
+('sim_status','Im Einsatz',  'aktiv',      '#15803d',10,1,0),
+('sim_status','Reserve',     'reserve',    '#0369a1',20,0,0),
+('sim_status','Gesperrt',    'gesperrt',   '#b45309',30,0,0),
+('sim_status','Gekuendigt',  'gekuendigt', '#b91c1c',40,0,1);
+
 -- ---------- Arten von Veranstaltungen ----------
 INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default) VALUES
 ('veranstaltung_typ','Ausbildung',            'ausbildung',      '#0369a1',10,0),
@@ -362,6 +377,10 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('protokoll_anmerkungen_namen','1','Im Ausdruck Namen und Zeitpunkt der Anmerkungen zeigen','Aus = nur der Text','bool','Besprechungen',71),
 ('tp_dauer_vorgabe','10','Vorgabedauer je Thema (Minuten)','Fuer die geplanten Uhrzeiten in der Tagesordnung','number','Besprechungen',60),
 ('serie_vorlauf_tage','60','Wiederkehrende Besprechungen: Termine im Voraus (Tage)','So weit in die Zukunft werden Termine einer Serie angelegt, damit man Themen daraufsetzen kann','number','Besprechungen',70),
+('sim_modul_name','SIM-Karten','Bezeichnung des SIM-Moduls','','text','SIM-Karten',10),
+('sim_intro','Karten des Ortsverbands mit Rufnummer, Vertrag und Zuordnung zu Fahrzeug, Fachgruppe oder Person.','Einleitungstext im SIM-Modul','','textarea','SIM-Karten',20),
+('sim_user_darf_sehen','0','Alle Mitglieder duerfen SIM-Karten sehen','PIN und PUK bleiben in jedem Fall der Leitung vorbehalten','bool','SIM-Karten',30),
+('sim_vertrag_warnung_tage','60','Vorwarnung fuer das Vertragsende (Tage)','Ab wann eine Karte als bald faellig gilt','number','SIM-Karten',40),
 ('veranstaltung_modul_name','Veranstaltungen','Bezeichnung des Veranstaltungsmoduls','','text','Veranstaltungen',10),
 ('veranstaltung_intro','Veranstaltungen des Ortsverbands: Termin, Budget, Rechnungen und die Gaesteliste an einer Stelle.','Einleitungstext im Veranstaltungsmodul','','textarea','Veranstaltungen',20),
 ('veranstaltung_user_darf_sehen','1','Alle Mitglieder duerfen Veranstaltungen sehen','Anlegen und aendern darf nur die OV-Leitung','bool','Veranstaltungen',30),

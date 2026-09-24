@@ -29,6 +29,15 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 ### Aufgaben
 - Für den Ortsverband, Fachgruppen, Funktionen oder einzelne Personen
 
+### SIM-Karten
+- Rufnummer, ICCID, Anbieter, Tarif, Datenvolumen, Kosten und Vertragsende
+- Zuordnung zu **Fahrzeug, Fachgruppe, Person** oder zum Ortsverband; in der
+  Fahrzeugakte stehen die Karten des Fahrzeugs
+- **Arten und Status frei pflegbar** (Datenkarte, Telefon, Fahrzeugrouter,
+  Tablet, Telemetrie, Reserve …)
+- PIN und PUK verdeckt und nur für die Leitung, CSV-Bestandsliste
+- Warnung, wenn ein Vertrag ausläuft
+
 ### Kontakte
 - Ansprechpartner mit eigenen Zusatzfeldern
 - **Anrufen und mailen mit einem Tipp**; Rufnummern werden international

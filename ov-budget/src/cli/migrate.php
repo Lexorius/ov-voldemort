@@ -79,6 +79,9 @@ function ovb_list_item_refs(): array
         ['talking_points', 'prioritaet_id',        ''],
         ['talking_points', 'status_id',            ''],
         ['events',         'typ_id',              ''],
+        ['sims',           'typ_id',              ''],
+        ['sims',           'status_id',           ''],
+        ['sims',           'ziel_id',             "ziel_typ = 'fachgruppe'"],
         ['events',         'fachgruppe_id',       ''],
     ];
 }
@@ -930,6 +933,40 @@ SQL);
         }
     }
     $merken('026_teilnehmerzahl');
+
+    /* ---- 027: SIM-Karten ---- */
+    if (!ovb_table_exists($pdo, 'sims')) {
+        $pdo->exec(<<<'SQL'
+CREATE TABLE sims (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  rufnummer     VARCHAR(40)  NOT NULL DEFAULT '',
+  iccid         VARCHAR(30)  NOT NULL DEFAULT '',
+  typ_id        INT UNSIGNED NULL,
+  status_id     INT UNSIGNED NULL,
+  anbieter      VARCHAR(80)  NOT NULL DEFAULT '',
+  tarif         VARCHAR(120) NOT NULL DEFAULT '',
+  datenvolumen  VARCHAR(40)  NOT NULL DEFAULT '',
+  kosten_monat  DECIMAL(10,2) NULL,
+  vertrag_bis   DATE         NULL,
+  pin           VARCHAR(20)  NOT NULL DEFAULT '',
+  puk           VARCHAR(30)  NOT NULL DEFAULT '',
+  geraet        VARCHAR(150) NOT NULL DEFAULT '',
+  ziel_typ      ENUM('ov','fahrzeug','fachgruppe','person') NOT NULL DEFAULT 'ov',
+  ziel_id       INT UNSIGNED NULL,
+  ausgegeben_am DATE         NULL,
+  notiz         TEXT         NULL,
+  is_active     TINYINT(1)   NOT NULL DEFAULT 1,
+  created_by    INT UNSIGNED NULL,
+  updated_by    INT UNSIGNED NULL,
+  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_sim_ziel (ziel_typ, ziel_id),
+  KEY idx_sim_nummer (rufnummer)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
+    }
+    $merken('027_simkarten');
 }
 
 /**

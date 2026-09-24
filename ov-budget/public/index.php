@@ -65,6 +65,11 @@ $routes = [
     'event_export'       => 'event_export',
     'event_invites'      => 'event_invites',
 
+    // SIM-Karten
+    'sims'               => 'sims',
+    'sim_edit'           => 'sim_edit',
+    'sims_export'        => 'sims_export',
+
     // Fahrzeuge
     'vehicles'           => 'vehicles',
     'vehicle'            => 'vehicle',

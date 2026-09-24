@@ -1,5 +1,34 @@
 # Änderungsverlauf
 
+## 1.41.0
+
+### SIM-Karten
+
+Neues Modul für die Karten des Ortsverbands – Router im Fahrzeug, Tablet der
+Fachgruppe, Diensthandy.
+
+- **Je Karte:** Rufnummer (international geschrieben wie im Kontaktmodul),
+  Kartennummer (ICCID), Art, Status, Gerät, Anbieter, Tarif, Datenvolumen,
+  monatliche Kosten, Vertragsende, PIN und PUK.
+- **Zuordnung** zu einem **Fahrzeug**, einer **Fachgruppe**, einer **Person**
+  oder zum Ortsverband. In der **Fahrzeugakte** steht ein eigener Abschnitt
+  mit den Karten des Fahrzeugs; von dort lässt sich eine neue Karte mit schon
+  gesetztem Fahrzeug anlegen.
+- **Arten und Status sind Auswahllisten** und damit frei erweiterbar,
+  umbenennbar und einfärbbar. Mitgeliefert sind Datenkarte, Telefon,
+  Fahrzeugrouter, Tablet, Telemetrie (M2M) und Reservekarte sowie die Status
+  Im Einsatz, Reserve, Gesperrt und Gekündigt.
+- **PIN und PUK** stehen verdeckt und nur für die Leitung; ein Klick blendet
+  sie kurz ein. Ob alle Mitglieder die Karten sehen, ist einstellbar
+  (Vorgabe: nein).
+- **Vertragsende im Blick:** Karten, deren Vertrag in den nächsten 60 Tagen
+  ausläuft (einstellbar) oder schon abgelaufen ist, werden gezählt und farbig
+  hervorgehoben.
+- Filter nach Art, Status, Zuordnung und Suche über Nummer, ICCID, Anbieter
+  und Gerät; dazu eine **CSV-Bestandsliste** für die Leitung.
+- Dieselbe Rufnummer lässt sich nicht zweimal eintragen. Ausgemusterte Karten
+  bleiben zum Nachschlagen erhalten.
+
 ## 1.40.1
 
 ### Veranstaltungsseite aufgeräumt
