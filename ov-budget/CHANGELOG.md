@@ -1,5 +1,24 @@
 # Änderungsverlauf
 
+## 1.44.1
+
+### Rechte nachgezogen
+
+Ergebnis einer zweiten Durchsicht aller Seiten, Aktionszweige und Ansichten:
+
+- **Abgeschlossene Aufträge** konnten Mitglieder mit Melderecht über die
+  Adresse der Bearbeitungsseite weiterhin ändern, obwohl die Ansicht den Knopf
+  dafür schon ausblendete. Jetzt gilt an beiden Stellen dieselbe Regel: offene
+  Aufträge bearbeitet, wer melden darf; abgeschlossene nur die Leitung.
+- **Rücksprung nach einer Wunsch-Aktion** (Abstimmen, Kommentieren) prüfte
+  das Ziel nur auf einen führenden Schrägstrich – dieselbe Lücke wie zuletzt
+  beim Anmelden, jetzt mit derselben Regel geschlossen.
+
+Alles andere hielt: Jede Seite prüft ihr Recht, jeder Aktionszweig seins,
+fremde Objekte sind über die ID nur erreichbar, wo sie ohnehin für alle
+sichtbar sind, und PIN, PUK sowie Zugangsdaten stehen nur in Ansichten der
+Leitung beziehungsweise Administration.
+
 ## 1.44.0
 
 ### Sicherung und Wiederherstellung

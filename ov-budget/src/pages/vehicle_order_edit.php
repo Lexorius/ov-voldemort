@@ -18,6 +18,12 @@ if (($id && !$order) || !$vehicle) {
     render('error', ['title' => 'Nicht gefunden', 'message' => 'Fahrzeug oder Auftrag gibt es nicht (mehr).']);
     return;
 }
+if ($order && !order_editable($order)) {
+    http_response_code(403);
+    render('error', ['title' => 'Kein Zugriff',
+        'message' => 'Dieser Auftrag ist abgeschlossen und kann nur noch von der Leitung geändert werden.']);
+    return;
+}
 
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

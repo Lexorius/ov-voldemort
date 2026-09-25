@@ -20,7 +20,7 @@ $fertig = (int)$order['status_final'] === 1;
     </p>
   </div>
   <div class="btnrow">
-    <?php if ($verwalten || !$fertig): ?>
+    <?php if (order_editable($order)): ?>
       <a class="btn btn--sec" href="<?= e(url('vehicle_order_edit', ['id' => $order['id']])) ?>">Bearbeiten</a>
     <?php endif; ?>
     <a class="btn btn--sec" href="<?= e(url('vehicle', ['id' => $order['vehicle_id']])) ?>#auftraege">Zur Fahrzeugakte</a>

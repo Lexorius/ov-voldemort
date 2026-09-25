@@ -752,7 +752,7 @@ die Dateien enthalten alle Fahrzeugdaten im Klartext.
 
 | Rolle | Darf |
 |---|---|
-| Mitglied | Wünsche anlegen und die eigenen bearbeiten, abstimmen, kommentieren, Aufgaben im eigenen Zuständigkeitsbereich bearbeiten |
+| Mitglied | Wünsche anlegen und die eigenen bearbeiten, abstimmen, kommentieren, Aufgaben im eigenen Zuständigkeitsbereich bearbeiten; je nach Einstellung Schäden melden und offene Aufträge bearbeiten, Standort und Journal der Fahrzeuge ergänzen |
 | Leitung | zusätzlich: alle Wünsche bearbeiten, Status und Priorität setzen, Budgettöpfe pflegen, alle Aufgaben verwalten, Veranstaltungen anlegen und die Gästeliste führen |
 | Administration | zusätzlich: Benutzerverwaltung, Auswahllisten, Einstellungen, Divera-Anbindung, Protokoll |
 

@@ -14,7 +14,7 @@ if (!$wish) {
 }
 
 $back = post_str('back');
-$backUrl = ($back !== '' && str_starts_with($back, '/')) ? $back : url('wish', ['id' => $id]);
+$backUrl = url_ist_intern($back) ? $back : url('wish', ['id' => $id]);
 
 switch (post_str('action')) {
 

@@ -480,6 +480,19 @@ function vehicle_save_from_post(?array $existing, array $user): array
  * Instandsetzungsaufträge
  * ==================================================================== */
 
+/**
+ * Darf diese Person den Auftrag bearbeiten? Die Leitung immer; wer melden
+ * darf, nur solange der Auftrag nicht abgeschlossen ist – ein erledigter
+ * Auftrag ist Teil der Akte und bleibt, wie er war. Reine Funktion bis auf can().
+ */
+function order_editable(array $order): bool
+{
+    if (can('manage_vehicles')) {
+        return true;
+    }
+    return can('report_vehicle') && (int)($order['status_final'] ?? 0) !== 1;
+}
+
 function order_find(int $id): ?array
 {
     return db_row(
