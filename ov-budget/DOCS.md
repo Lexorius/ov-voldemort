@@ -530,22 +530,39 @@ Gerät „OV-Budget" zusammen.
 * **Broker:** Ist das Mosquitto-Add-on installiert, holt sich das Add-on die
   Zugangsdaten beim Start automatisch. Sonst Host, Port, Benutzer und Passwort
   in den Einstellungen eintragen.
-* **Gemeldet werden:** Budget (gesamt, verplant, frei, Auslastung), offene
-  Wünsche und deren Summe, zur Bestellung freigegebene Wünsche, offene und
-  überfällige Aufgaben, Themen im Themenspeicher, die nächste Besprechung als
-  Zeitstempel, Fahrzeuge (gesamt, einsatzbereit, im Ausfall), offene
-  Instandsetzungsaufträge und fällige Fristen (HU, SP, UVV). Dazu als Diagnose
-  die Zeitpunkte der letzten Abrufe.
+* **Gemeldet werden:**
+  * Budget: gesamt, verplant, frei, Auslastung; Ausgaben, Einnahmen und Saldo
+    im Haushaltsjahr
+  * Wünsche: offen, zur Bestellung freigegeben, Summe der offenen
+  * Aufgaben: offen, überfällig; Themen im Themenspeicher
+  * Besprechungen: die nächste als Zeitstempel mit Titel und Ort
+  * Veranstaltungen: die nächste als Zeitstempel mit Titel, Art und Ort;
+    dazu Zusagen, offene Rückmeldungen und erwartete Personen; Anzahl in den
+    nächsten 30 Tagen
+  * Fahrzeuge: gesamt, einsatzbereit, im Ausfall, offene Aufträge, fällige
+    Fristen (HU, SP, UVV)
+  * Funkgeräte: gesamt, mit Karte, ohne Zuordnung, Prüfung fällig, länger
+    nicht gemeldet
+  * SIM- und TETRA-Karten: gesamt, TETRA, ohne Zuordnung, Vertrag läuft aus,
+    Kosten je Monat
+  * Diagnose: gekoppelte Connectoren, letzte Abrufe (Connector, Stein.APP,
+    Divera), letzte Sicherung und Anzahl der Sicherungen
 * **Je Fahrzeug** (abschaltbar) ein eigenes Gerät mit Status, Funkstatus, HU,
-  SP, Kilometerstand und offenen Aufträgen; mit der Option *Fahrzeugstandort*
-  zusätzlich ein `device_tracker` mit der Position aus Divera.
+  SP, UVV, Kilometerstand und offenen Aufträgen; mit der Option
+  *Fahrzeugstandort* zusätzlich ein `device_tracker` mit der Position aus
+  Divera oder aus den QR-Standortmeldungen.
 * **Takt:** Standardmäßig alle 5 Minuten; die Anmeldung der Entitäten wird
   einmal täglich wiederholt, damit neue Fahrzeuge ankommen. Der Knopf
   *Jetzt senden* macht es sofort.
 * **Aufräumen:** *Entitäten entfernen* nimmt alle Anmeldungen zurück.
 
-Personenbezogenes wird nicht gemeldet – nur Zahlen, Zeitpunkte und
-Fahrzeugdaten.
+**Was bewusst nicht gemeldet wird:** alles, was jemandem nützt, der den
+Broker mitliest. Keine Namen, keine Gästelisten, keine Rufnummern, keine
+Funkkennungen (ISSI, OPTA), keine Karten- oder Seriennummern, keine
+Zugangsdaten, keine QR-Zugänge – und nicht, welches Funkgerät oder welcher
+Koffer gerade am Lagerort ist oder fehlt. Von den Funkgeräten gehen nur
+Summen hinaus. Einzig der Fahrzeugstandort ist ein Standort, deshalb ist er
+eine eigene Einstellung und in der Vorgabe aus.
 
 ## Benachrichtigungen aufs Handy
 

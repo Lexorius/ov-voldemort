@@ -1,5 +1,31 @@
 # Änderungsverlauf
 
+## 1.45.0
+
+### MQTT: alle Module melden Kennzahlen
+
+Der Export an Home Assistant deckt jetzt jedes Modul ab – mit derselben
+Regel wie bisher, nur strenger gefasst: **Zahlen, Zeitpunkte und Beträge,
+nichts, was einem Mitleser des Brokers nützt.**
+
+- **Veranstaltungen:** die nächste als Zeitstempel mit Titel, Art und Ort;
+  Zusagen, offene Rückmeldungen und erwartete Personen dazu; Anzahl in den
+  nächsten 30 Tagen. Keine Gäste, keine Namen.
+- **Funkgeräte:** gesamt, mit Karte, ohne Zuordnung, Prüfung fällig, länger
+  nicht gemeldet. Nur Summen – nicht, welches Gerät oder welcher Koffer am
+  Lagerort ist oder fehlt.
+- **SIM- und TETRA-Karten:** gesamt, TETRA, ohne Zuordnung, Vertrag läuft
+  aus, Kosten je Monat. Keine Rufnummern, keine ICCID, keine ISSI.
+- **Ausgaben:** Ausgaben, Einnahmen und Saldo im Haushaltsjahr – neben dem
+  verplanten Budget jetzt auch das tatsächlich Ausgegebene.
+- **Diagnose:** gekoppelte Connectoren und ihr letzter Abruf, letzte
+  Sicherung und Anzahl der Sicherungen. Home Assistant kann warnen, wenn
+  länger nicht gesichert wurde.
+- **Fahrzeuge:** UVV-Frist je Fahrzeug dazu. **Entfernt:** ISSI und OPTA aus
+  den Fahrzeugattributen – Funkkennungen gehören nicht in den Broker.
+- Der Hinweis zum Fahrzeugstandort sagt jetzt, dass die Position auch aus den
+  QR-Meldungen kommt und dass es ein Standort ist – Vorgabe bleibt aus.
+
 ## 1.44.1
 
 ### Rechte nachgezogen

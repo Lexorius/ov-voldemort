@@ -51,6 +51,46 @@ function ha_sensoren(): array
         'fristen_faellig'    => ['name' => 'Fällige Fristen (HU, SP, UVV)', 'unit' => 'Fristen',
                                  'icon' => 'mdi:calendar-alert', 'state_class' => 'measurement',
                                  'attribute' => 'fristen_info'],
+        'veranstaltung_naechste' => ['name' => 'Nächste Veranstaltung', 'device_class' => 'timestamp',
+                                     'icon' => 'mdi:calendar-star', 'attribute' => 'veranstaltung_info'],
+        'veranstaltung_zusagen' => ['name' => 'Zusagen zur nächsten Veranstaltung', 'unit' => 'Zusagen',
+                                    'icon' => 'mdi:account-check', 'state_class' => 'measurement'],
+        'veranstaltung_offen' => ['name' => 'Offene Rückmeldungen zur nächsten Veranstaltung', 'unit' => 'Einladungen',
+                                  'icon' => 'mdi:account-question', 'state_class' => 'measurement'],
+        'veranstaltung_personen' => ['name' => 'Personen bei der nächsten Veranstaltung', 'unit' => 'Personen',
+                                     'icon' => 'mdi:account-group', 'state_class' => 'measurement'],
+        'veranstaltungen_30_tage' => ['name' => 'Veranstaltungen in den nächsten 30 Tagen', 'unit' => 'Veranstaltungen',
+                                      'icon' => 'mdi:calendar-month', 'state_class' => 'measurement'],
+        'funk_gesamt'        => ['name' => 'Funkgeräte', 'unit' => 'Geräte', 'icon' => 'mdi:radio-handheld',
+                                 'state_class' => 'measurement'],
+        'funk_mit_karte'     => ['name' => 'Funkgeräte mit Karte', 'unit' => 'Geräte', 'icon' => 'mdi:sim',
+                                 'state_class' => 'measurement'],
+        'funk_ohne_zuordnung' => ['name' => 'Funkgeräte ohne Zuordnung', 'unit' => 'Geräte',
+                                  'icon' => 'mdi:help-circle-outline', 'state_class' => 'measurement'],
+        'funk_pruefung_bald' => ['name' => 'Funkgeräte mit fälliger Prüfung', 'unit' => 'Geräte',
+                                 'icon' => 'mdi:calendar-alert', 'state_class' => 'measurement'],
+        'funk_nicht_gemeldet' => ['name' => 'Funkgeräte länger nicht gemeldet', 'unit' => 'Geräte',
+                                  'icon' => 'mdi:radio-off', 'state_class' => 'measurement'],
+        'sim_gesamt'         => ['name' => 'SIM- und TETRA-Karten', 'unit' => 'Karten', 'icon' => 'mdi:sim',
+                                 'state_class' => 'measurement'],
+        'sim_tetra'          => ['name' => 'TETRA-Karten', 'unit' => 'Karten', 'icon' => 'mdi:sim-outline',
+                                 'state_class' => 'measurement'],
+        'sim_ohne_zuordnung' => ['name' => 'Karten ohne Zuordnung', 'unit' => 'Karten',
+                                 'icon' => 'mdi:help-circle-outline', 'state_class' => 'measurement'],
+        'sim_vertrag_bald'   => ['name' => 'Karten mit auslaufendem Vertrag', 'unit' => 'Karten',
+                                 'icon' => 'mdi:file-document-alert', 'state_class' => 'measurement'],
+        'sim_kosten_monat'   => ['name' => 'Kartenkosten je Monat', 'icon' => 'mdi:cash-sync'] + $geld,
+        'ausgaben_jahr'      => ['name' => 'Ausgaben im Haushaltsjahr', 'icon' => 'mdi:cash-minus'] + $geld,
+        'einnahmen_jahr'     => ['name' => 'Einnahmen im Haushaltsjahr', 'icon' => 'mdi:cash-plus'] + $geld,
+        'saldo_jahr'         => ['name' => 'Saldo im Haushaltsjahr', 'icon' => 'mdi:scale-balance'] + $geld,
+        'connectoren_gekoppelt' => ['name' => 'Gekoppelte Connectoren', 'unit' => 'Connectoren',
+                                    'icon' => 'mdi:lan-connect', 'state_class' => 'measurement', 'diagnose' => true],
+        'connector_letzter_abruf' => ['name' => 'Connector letzter Abruf', 'device_class' => 'timestamp',
+                                      'icon' => 'mdi:lan-check', 'diagnose' => true],
+        'sicherung_letzte'   => ['name' => 'Letzte Sicherung', 'device_class' => 'timestamp',
+                                 'icon' => 'mdi:backup-restore', 'diagnose' => true],
+        'sicherungen'        => ['name' => 'Sicherungen vorhanden', 'unit' => 'Sicherungen',
+                                 'icon' => 'mdi:archive', 'state_class' => 'measurement', 'diagnose' => true],
         'stein_letzter_abruf' => ['name' => 'Stein.APP letzter Abruf', 'device_class' => 'timestamp',
                                   'icon' => 'mdi:cloud-download', 'diagnose' => true],
         'divera_letzter_abruf' => ['name' => 'Divera letzter Abruf', 'device_class' => 'timestamp',
@@ -68,6 +108,7 @@ function ha_fahrzeug_sensoren(): array
         'fms'       => ['name' => 'Funkstatus', 'icon' => 'mdi:radio-handheld'],
         'hu_bis'    => ['name' => 'HU bis', 'device_class' => 'date', 'icon' => 'mdi:calendar-check'],
         'sp_bis'    => ['name' => 'SP bis', 'device_class' => 'date', 'icon' => 'mdi:calendar-check'],
+        'uvv_bis'   => ['name' => 'UVV bis', 'device_class' => 'date', 'icon' => 'mdi:calendar-check'],
         'km_stand'  => ['name' => 'Kilometerstand', 'unit' => 'km', 'icon' => 'mdi:counter',
                         'state_class' => 'total_increasing'],
         'auftraege' => ['name' => 'Offene Aufträge', 'unit' => 'Aufträge', 'icon' => 'mdi:wrench',
@@ -157,6 +198,22 @@ function ha_werte(): array
         ];
     }
 
+    $funk = radio_stats(radio_query([]), setting_int('funk_pruefung_warnung_tage', 30));
+    $sim = sim_stats(sim_query([]), setting_int('sim_vertrag_warnung_tage', 60));
+    $veranstaltung = ha_veranstaltung_werte(
+        event_query(['zeit' => 'kommend', 'sort' => 'alt']),
+        static fn(array $e): array => event_stats(event_guests((int)$e['id']))
+    );
+    $ausgaben = expense_total($jahr, 'betrag_brutto', 'ausgabe');
+    $einnahmen = expense_total($jahr, 'betrag_brutto', 'einnahme');
+    $gekoppelt = 0;
+    foreach (connector_all(true) as $c) {
+        if (connector_gekoppelt($c)) {
+            $gekoppelt++;
+        }
+    }
+    $sicherungen = function_exists('backup_list') && backup_problem() === null ? count(backup_list()) : 0;
+
     return [
         'budget_gesamt'         => round($gesamt, 2),
         'budget_verplant'       => round($verplant, 2),
@@ -177,6 +234,33 @@ function ha_werte(): array
         'auftraege_offen'       => $auftraege,
         'fristen_faellig'       => count($fristen),
         'fristen_info'          => ['fristen' => $fristen],
+        'veranstaltung_naechste' => $veranstaltung['naechste'],
+        'veranstaltung_info'    => $veranstaltung['info'],
+        'veranstaltung_zusagen' => $veranstaltung['zusagen'],
+        'veranstaltung_offen'   => $veranstaltung['offen'],
+        'veranstaltung_personen' => $veranstaltung['personen'],
+        'veranstaltungen_30_tage' => $veranstaltung['in_30_tagen'],
+        'funk_gesamt'           => (int)$funk['anzahl'],
+        'funk_mit_karte'        => (int)$funk['mit_karte'],
+        'funk_ohne_zuordnung'   => (int)$funk['ohne_zuordnung'],
+        'funk_pruefung_bald'    => (int)$funk['pruefung_bald'],
+        'funk_nicht_gemeldet'   => (int)$funk['lange_nicht_gesehen'],
+        'sim_gesamt'            => (int)$sim['anzahl'],
+        'sim_tetra'             => (int)$sim['tetra'],
+        'sim_ohne_zuordnung'    => (int)$sim['ohne_zuordnung'],
+        'sim_vertrag_bald'      => (int)$sim['vertrag_bald'],
+        'sim_kosten_monat'      => round((float)$sim['kosten'], 2),
+        'ausgaben_jahr'         => round($ausgaben, 2),
+        'einnahmen_jahr'        => round($einnahmen, 2),
+        'saldo_jahr'            => round($einnahmen - $ausgaben, 2),
+        'connectoren_gekoppelt' => $gekoppelt,
+        'connector_letzter_abruf' => ha_zeit(max(
+            (int)state_get('connector_letzter_abruf', '0'),
+            (int)state_get('veranstaltung_letzter_abruf', '0'),
+            (int)state_get('connector_bestand_letzter_abruf', '0')
+        )),
+        'sicherung_letzte'      => ha_zeit((int)strtotime(state_get('backup_letzte', '') ?: '') ?: null),
+        'sicherungen'           => $sicherungen,
         'stein_letzter_abruf'   => ha_zeit((int)state_get('stein_letzter_abruf', '0')),
         'divera_letzter_abruf'  => ha_zeit(max(
             (int)state_get('divera_status_letzter_abruf', '0'),
@@ -186,7 +270,51 @@ function ha_werte(): array
     ];
 }
 
-/** Werte eines Fahrzeugs. Reine Funktion. */
+/**
+ * Kennzahlen zur nächsten Veranstaltung. Gemeldet werden nur Zahlen, Zeitpunkt,
+ * Titel, Art und Ort – keine Gäste, keine Namen. $kommende ist aufsteigend
+ * sortiert; $statsVon liefert die Gästestatistik zu einer Veranstaltung.
+ * Reine Funktion.
+ */
+function ha_veranstaltung_werte(array $kommende, callable $statsVon, ?int $jetzt = null): array
+{
+    $jetzt ??= time();
+    $out = ['naechste' => null, 'info' => [], 'zusagen' => null, 'offen' => null,
+            'personen' => null, 'in_30_tagen' => 0];
+    $grenze = $jetzt + 30 * 86400;
+    $erste = null;
+    foreach ($kommende as $e) {
+        if (($e['status'] ?? '') === 'abgesagt') {
+            continue;
+        }
+        $beginn = strtotime((string)$e['beginn']);
+        if ($beginn === false) {
+            continue;
+        }
+        if ($beginn <= $grenze) {
+            $out['in_30_tagen']++;
+        }
+        $erste ??= $e;
+    }
+    if ($erste === null) {
+        return $out;
+    }
+    $stats = event_mit_gaesteliste($erste) ? $statsVon($erste) : [];
+    $out['naechste'] = ha_zeit((int)strtotime((string)$erste['beginn']));
+    $out['info'] = array_filter([
+        'titel' => (string)($erste['titel'] ?? ''),
+        'art'   => (string)($erste['typ_label'] ?? ''),
+        'ort'   => (string)($erste['ort'] ?? ''),
+        'datum' => de_date((string)$erste['beginn']),
+        'gaesteliste' => event_mit_gaesteliste($erste) ? 'ja' : 'nein',
+    ], static fn($x) => $x !== '');
+    $out['zusagen'] = event_mit_gaesteliste($erste) ? (int)($stats['zusagen'] ?? 0) : null;
+    $out['offen'] = event_mit_gaesteliste($erste) ? (int)($stats['offen'] ?? 0) : null;
+    $out['personen'] = event_personen($erste, $stats);
+    return $out;
+}
+
+/** Werte eines Fahrzeugs. Reine Funktion – ohne Funkkennungen (ISSI, OPTA). */
 function ha_fahrzeug_werte(array $v): array
 {
     $fms = $v['fms_status'] ?? null;
@@ -195,13 +323,12 @@ function ha_fahrzeug_werte(array $v): array
         'fms'       => $fms !== null ? (string)(int)$fms : null,
         'hu_bis'    => $v['hu_bis'] ?: null,
         'sp_bis'    => $v['sp_bis'] ?: null,
+        'uvv_bis'   => ($v['uvv_bis'] ?? null) ?: null,
         'km_stand'  => $v['km_stand'] !== null ? (int)$v['km_stand'] : null,
         'auftraege' => (int)($v['offene_auftraege'] ?? 0),
         'info'      => array_filter([
             'kennzeichen' => (string)($v['kennzeichen'] ?? ''),
             'funkrufname' => (string)($v['funkrufname'] ?? ''),
-            'issi'        => (string)($v['issi'] ?? ''),
-            'opta'        => (string)($v['opta'] ?? ''),
             'fachgruppe'  => (string)($v['fachgruppe_label'] ?? ''),
             'fms_hinweis' => (string)($v['fms_note'] ?? ''),
         ], static fn($x) => $x !== ''),
