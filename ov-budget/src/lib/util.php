@@ -488,6 +488,27 @@ function email_html(?string $adresse, string $leer = '–'): string
     return '<a href="mailto:' . e($adresse) . '">' . e($adresse) . '</a>';
 }
 
+/**
+ * Kleines Symbol als SVG – einfarbig in der Textfarbe und überall gleich groß.
+ * Emoji und Sonderzeichen (📱 ☎ ✉) sehen je nach Handy anders aus, mal bunt,
+ * mal schwarz, mal größer; deshalb eigene Pfade.
+ */
+function icon(string $name): string
+{
+    $pfade = [
+        'telefon' => '<path d="M21 16.5v3a2 2 0 0 1-2.2 2A18.5 18.5 0 0 1 2.5 5.2 2 2 0 0 1 4.5 3h3a2 2 0 0 1 2 1.7c.13.95.37 1.88.7 2.76a2 2 0 0 1-.45 2.1L8.5 10.8a15 15 0 0 0 4.7 4.7l1.25-1.25a2 2 0 0 1 2.1-.45c.88.33 1.8.57 2.76.7A2 2 0 0 1 21 16.5z"/>',
+        'mobil'   => '<rect x="6.5" y="2.5" width="11" height="19" rx="2.2"/><path d="M10.5 18.5h3"/>',
+        'mail'    => '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/>',
+    ];
+    if (!isset($pfade[$name])) {
+        return '';
+    }
+    // Alle als Umriss mit gleicher Strichstärke – sonst wirkt eins schwerer als das andere
+    return '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"'
+        . ' fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+        . $pfade[$name] . '</svg>';
+}
+
 /** Farbiges Label (Status, Dringlichkeit ...) */
 function badge(?array $item, string $fallback = '–'): string
 {

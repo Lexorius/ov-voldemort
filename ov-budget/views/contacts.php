@@ -96,11 +96,17 @@ foreach ($rows as $r) {
   <div class="card only-mobile">
     <div class="itemlist">
       <?php foreach ($rows as $c): ?>
-        <a class="item" style="border-left-color:<?= e($c['kategorie_color'] ?: '#94a3b8') ?>"
-           href="<?= can('manage_contacts') ? e(url('contact_edit', ['id' => $c['id']])) : '#' ?>">
+        <?php $darfBearbeiten = can('manage_contacts'); ?>
+        <div class="item" style="border-left-color:<?= e($c['kategorie_color'] ?: '#94a3b8') ?>">
           <div class="item__top">
             <div style="min-width:0">
-              <div class="item__title"><?= e(contact_name($c)) ?></div>
+              <div class="item__title">
+                <?php if ($darfBearbeiten): ?>
+                  <a class="item__link" href="<?= e(url('contact_edit', ['id' => $c['id']])) ?>"><?= e(contact_name($c)) ?></a>
+                <?php else: ?>
+                  <?= e(contact_name($c)) ?>
+                <?php endif; ?>
+              </div>
               <div class="item__sub">
                 <?= e($c['organisation'] ?: '–') ?>
                 <?php if ($c['ort']): ?> · <?= e($c['ort']) ?><?php endif; ?>
@@ -108,11 +114,17 @@ foreach ($rows as $r) {
             </div>
           </div>
           <?php if ($c['telefon'] || $c['mobil'] || $c['email']): ?>
-            <div class="small" style="margin-top:.3rem;display:flex;gap:.6rem;flex-wrap:wrap">
-              <?php if ($c['mobil']): ?><span>📱 <?= phone_html($c['mobil']) ?></span><?php endif; ?>
-              <?php if ($c['telefon']): ?><span>☎ <?= phone_html($c['telefon']) ?></span><?php endif; ?>
-              <?php if ($c['email']): ?><span>✉ <?= email_html($c['email']) ?></span><?php endif; ?>
-            </div>
+            <ul class="kontaktwege">
+              <?php if ($c['mobil']): ?>
+                <li><?= icon('mobil') ?><span class="sr-only">Mobil:</span><?= phone_html($c['mobil']) ?></li>
+              <?php endif; ?>
+              <?php if ($c['telefon']): ?>
+                <li><?= icon('telefon') ?><span class="sr-only">Telefon:</span><?= phone_html($c['telefon']) ?></li>
+              <?php endif; ?>
+              <?php if ($c['email']): ?>
+                <li><?= icon('mail') ?><span class="sr-only">E-Mail:</span><?= email_html($c['email']) ?></li>
+              <?php endif; ?>
+            </ul>
           <?php endif; ?>
           <div class="item__meta">
             <?= badge($c['kategorie_label'] ? ['label' => $c['kategorie_label'], 'color' => $c['kategorie_color']] : null, 'ohne Kategorie') ?>
@@ -121,7 +133,7 @@ foreach ($rows as $r) {
               <span class="badge badge--outline"><?= (int)$c['verteiler'] ?>× Verteiler</span>
             <?php endif; ?>
           </div>
-        </a>
+        </div>
       <?php endforeach; ?>
     </div>
   </div>

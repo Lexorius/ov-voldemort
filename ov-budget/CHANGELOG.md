@@ -1,5 +1,20 @@
 # Änderungsverlauf
 
+## 1.43.2
+
+### Kontakte auf dem Handy
+
+- **Einheitliche Symbole:** Mobil, Telefon und E-Mail haben jetzt eigene,
+  einfarbige Symbole in gleicher Größe und Strichstärke. Vorher standen dort
+  ein buntes Handy-Emoji neben zwei Schriftzeichen, die jedes Handy anders
+  darstellt – mal schwarz, mal farbig, mal größer.
+- **Je Kontaktweg eine Zeile**, die Symbole bündig untereinander. Lange
+  E-Mail-Adressen brechen sauber um statt die Karte zu sprengen.
+- **Karten richtig gebaut:** Die ganze Karte war ein Link, und darin steckten
+  die Links zum Anrufen und Schreiben. Das ist kein gültiges HTML; manche
+  Browser haben die Karte deshalb zerlegt. Jetzt führt der Name zum
+  Bearbeiten, Nummer und Adresse bleiben eigene Tippflächen.
+
 ## 1.43.1
 
 ### Navigation zeigt, dass es weitergeht
