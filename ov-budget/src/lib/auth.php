@@ -179,7 +179,15 @@ function auth_attempt(string $username, string $password): array
     }
 
     $user = db_row('SELECT * FROM users WHERE username = ?', [$username]);
-    $ok = $user && password_verify($password, $user['password_hash']);
+    if ($user) {
+        $ok = password_verify($password, $user['password_hash']);
+    } else {
+        // Auch bei unbekanntem Namen einen Hash prüfen: Sonst antwortet die
+        // Anmeldung hier merklich schneller, und aus der Zeit ließe sich
+        // ablesen, welche Benutzernamen es gibt.
+        password_verify($password, auth_blindhash());
+        $ok = false;
+    }
 
     if (!$ok) {
         db_exec('INSERT INTO login_attempts (username, ip) VALUES (?,?)', [
@@ -205,6 +213,13 @@ function auth_attempt(string $username, string $password): array
     db_exec('DELETE FROM login_attempts WHERE username = ?', [$username]);
 
     return [true, ''];
+}
+
+/** Ein fester Hash nur für den Zeitvergleich – zu keinem Passwort passend */
+function auth_blindhash(): string
+{
+    static $hash = null;
+    return $hash ??= password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT);
 }
 
 function auth_logout(): void

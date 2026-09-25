@@ -37,18 +37,18 @@ $out = fopen('php://output', 'wb');
 fwrite($out, "\xEF\xBB\xBF");   // BOM, damit Excel die Umlaute richtig anzeigt
 
 // Spaltennamen passend für einen Serienbrief – Anschrift zuerst
-fputcsv($out, [
+fputcsv($out, csv_sicher([
     'Anrede', 'Titel', 'Vorname', 'Nachname', 'Name', 'Organisation', 'Position',
     'Strasse', 'PLZ', 'Ort', 'Land', 'Briefanrede',
     'E-Mail', 'Telefon', 'Mobil',
     'Rueckmeldung', 'Begleiter', 'Personen', 'Vertretung', 'Nachricht',
     'Geantwortet am', 'Weg', 'Einladungscode', 'Einladungslink',
-], ';');
+]), ';');
 
 foreach ($gaeste as $g) {
     $status = (string)$g['status'];
     $personen = in_array($status, ['zusage', 'vertretung'], true) ? 1 + (int)$g['begleiter'] : 0;
-    fputcsv($out, [
+    fputcsv($out, csv_sicher([
         (string)($g['anrede'] ?? ''),
         (string)($g['kontakt_titel'] ?? ''),
         (string)($g['vorname'] ?? ''),
@@ -77,7 +77,7 @@ foreach ($gaeste as $g) {
         },
         (string)$g['code'],
         $connector !== null ? event_invite_url($connector, (string)$g['code']) : '',
-    ], ';');
+    ]), ';');
 }
 
 fclose($out);

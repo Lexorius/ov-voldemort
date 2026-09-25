@@ -29,10 +29,10 @@ $head = [
     'Priorität', 'Stimmen', 'Benötigt bis', 'Budget', 'Lieferant', 'Artikelnummer',
     'Antragsteller', 'Quelle', 'Anlagen', 'Angelegt am', 'Begründung',
 ];
-fputcsv($out, $head, ';');
+fputcsv($out, csv_sicher($head), ';');
 
 foreach ($rows as $w) {
-    fputcsv($out, [
+    fputcsv($out, csv_sicher([
         $w['id'],
         $w['bezeichnung'],
         $w['fachgruppe_label'],
@@ -56,7 +56,7 @@ foreach ($rows as $w) {
         $w['anlagen'],
         de_datetime($w['created_at']),
         preg_replace('/\s+/', ' ', (string)$w['begruendung']),
-    ], ';');
+    ]), ';');
 }
 fclose($out);
 audit('wunsch.export', 'wish', null, count($rows) . ' Zeilen');

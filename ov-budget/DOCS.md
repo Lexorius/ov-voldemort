@@ -79,6 +79,26 @@ Das normale Home-Assistant-Backup erfasst diesen Ordner vollständig. Das Add-on
 ist als `backup: cold` eingetragen, wird also für die Dauer der Sicherung
 angehalten, damit die Datenbankdateien in sich stimmig sind.
 
+### Sicherheit im Betrieb
+
+* **`public/install.php` nach der Einrichtung löschen.** Der Assistent
+  verweigert zwar die Arbeit, sobald eine Konfiguration mit erreichbarer
+  Datenbank oder Umgebungsvariablen da sind – aber eine Datei, die es nicht
+  gibt, kann niemand versuchen. Im Add-on ist sie gar nicht erst enthalten.
+* **Nur über HTTPS betreiben.** Das Sitzungscookie wird dann als `secure`
+  gesetzt; dahinter darf ein Proxy stehen, der `X-Forwarded-Proto` setzt.
+* **Der Token für `cron.php` steht in der Adresse** und damit im
+  Zugriffsprotokoll des Webservers. Ihn nur dort verwenden, wo das Protokoll
+  nicht in fremde Hände kommt, oder den Abruf über die Kommandozeile laufen
+  lassen (`php public/cron.php`).
+* **Exporte sind gegen Formeln geschützt.** Eine Zelle, die mit `=`, `+`,
+  `-` oder `@` beginnt und keine Rufnummer oder Zahl ist, bekommt im CSV ein
+  Hochkomma davor. Tabellenkalkulationen führen sie dann nicht aus.
+* **Anmeldesperre:** Nach acht Fehlversuchen (einstellbar) ist ein
+  Benutzername 15 Minuten gesperrt. Wer die Sperre absichtlich auslöst, kann
+  damit eine Person kurz aussperren – die Zahlen lassen sich in den
+  Einstellungen anpassen.
+
 ## Was kann die Anwendung?
 
 * **Wünsch dir was** – Bedarfe mit Bezeichnung, Anzahl, Nettobetrag,

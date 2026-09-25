@@ -1,5 +1,34 @@
 # Änderungsverlauf
 
+## 1.43.3
+
+### Sicherheit
+
+Ergebnis einer Durchsicht der ganzen Anwendung. Nichts davon war offen
+ausnutzbar, aber jede Stelle war eine Lücke im Zaun:
+
+- **Rücksprung nach dem Anmelden:** Eine Adresse wie `//fremd.example/…`
+  begann mit einem Schrägstrich und galt als intern – wer darüber zur
+  Anmeldung kam, wäre danach auf eine fremde Seite geschickt worden. Jetzt
+  gilt nur, was wirklich in dieser Anwendung liegt.
+- **CSV-Exporte gegen Formeln geschützt:** Tabellenkalkulationen führen
+  Zellen aus, die mit `=`, `+`, `-` oder `@` beginnen. Ein so benannter
+  Wunsch hätte beim Öffnen des Exports in Excel etwas anrichten können. Solche
+  Zellen bekommen ein Hochkomma davor; Rufnummern und Beträge bleiben, wie sie
+  sind. Gilt für Kontakte, Wünsche, Ausgaben, SIM-Karten und Gästelisten.
+- **Einrichtungsassistent:** Lief bisher auch dann, wenn eine Konfiguration
+  da war, aber die Datenbank gerade nicht antwortete – und hätte sie dabei
+  überschrieben. Er verweigert das jetzt, ebenso wenn die Datenbank aus der
+  Umgebung kommt (Container, Add-on).
+- **Anmeldung antwortet gleich schnell,** ob es den Benutzernamen gibt oder
+  nicht. Vorher ließ sich aus der Antwortzeit ablesen, welche Namen vergeben
+  sind.
+- **Kopfzeilen** für alle Seiten: kein Erraten des Inhaltstyps
+  (`nosniff`), kein Verweis auf die aufgerufene Adresse nach außen
+  (`Referrer-Policy`), Einbetten nur von der eigenen Adresse – außer hinter
+  dem Ingress von Home Assistant, wo die Anwendung selbst im Rahmen läuft.
+- Die Anleitung hat einen Abschnitt „Sicherheit im Betrieb".
+
 ## 1.43.2
 
 ### Kontakte auf dem Handy

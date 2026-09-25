@@ -31,7 +31,7 @@ fwrite($out, "\xEF\xBB\xBF");   // BOM, damit Excel die Umlaute richtig anzeigt
 
 $istEinnahme = $art === 'einnahme';
 
-fputcsv($out, [
+fputcsv($out, csv_sicher([
     'ID', 'Art', 'Datum', 'Jahr', 'Bezeichnung', 'Kategorie', 'Fachgruppe', 'Budgettopf',
     'Netto', 'MwSt %', 'Brutto',
     $istEinnahme ? 'Auftraggeber' : 'Lieferant',
@@ -39,7 +39,7 @@ fputcsv($out, [
     $istEinnahme ? 'Einsatz-/Auftragsnummer' : 'Referenz',
     $istEinnahme ? 'Eingegangen am' : 'Bezahlt am',
     'Wunsch', 'Erfasst von', 'Erfasst am', 'Notiz',
-], ';');
+]), ';');
 
 $summeNetto = 0.0;
 $summeBrutto = 0.0;
@@ -47,7 +47,7 @@ $summeBrutto = 0.0;
 foreach ($rows as $r) {
     $summeNetto += (float)$r['betrag_netto'];
     $summeBrutto += (float)$r['betrag_brutto'];
-    fputcsv($out, [
+    fputcsv($out, csv_sicher([
         $r['id'],
         $r['art'],
         de_date($r['datum']),
@@ -67,14 +67,14 @@ foreach ($rows as $r) {
         $r['erfasser'],
         de_datetime($r['created_at']),
         preg_replace('/\s+/', ' ', (string)$r['notiz']),
-    ], ';');
+    ]), ';');
 }
 
-fputcsv($out, [
+fputcsv($out, csv_sicher([
     '', '', '', '', 'Summe (' . count($rows) . ' ' . BUCHUNGSARTEN[$art] . ')', '', '', '',
     number_format($summeNetto, 2, ',', ''), '',
     number_format($summeBrutto, 2, ',', ''),
-], ';');
+]), ';');
 
 fclose($out);
 audit($art . '.export', 'expense', null, count($rows) . ' Zeilen');

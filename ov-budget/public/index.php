@@ -3,6 +3,16 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/src/bootstrap.php';
 
+// Kopfzeilen für alle Seiten: keine Inhaltstyp-Raterei, kein Verweis
+// nach außen. Einbetten nur von der eigenen Adresse – hinter dem Ingress
+// von Home Assistant läuft die Anwendung selbst in einem Rahmen, dort
+// entfällt die Regel.
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: same-origin');
+if (!app_config('ingress', false)) {
+    header('X-Frame-Options: SAMEORIGIN');
+}
+
 // Ohne Datenbankkonfiguration (Datei oder OVB_*-Umgebungsvariablen)
 // geht es zum Einrichtungsassistenten.
 if (!app_config('db')) {

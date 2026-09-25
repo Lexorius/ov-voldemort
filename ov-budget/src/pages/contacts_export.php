@@ -45,7 +45,7 @@ $extraFelder = contact_extra_fields();
 foreach ($extraFelder as $def) {
     $kopf[] = $def['label'];
 }
-fputcsv($out, $kopf, ';');
+fputcsv($out, csv_sicher($kopf), ';');
 
 foreach ($rows as $c) {
     $zeile = [
@@ -65,7 +65,7 @@ foreach ($rows as $c) {
         $wert = (string)($werte[$key] ?? '');
         $zeile[] = $def['type'] === 'bool' ? ($wert === '1' ? 'ja' : 'nein') : $wert;
     }
-    fputcsv($out, $zeile, ';');
+    fputcsv($out, csv_sicher($zeile), ';');
 }
 
 fclose($out);

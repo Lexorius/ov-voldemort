@@ -26,15 +26,15 @@ header('Content-Disposition: attachment; filename="simkarten_' . date('Y-m-d') .
 $out = fopen('php://output', 'wb');
 fwrite($out, "\xEF\xBB\xBF");   // BOM, damit Excel die Umlaute richtig anzeigt
 
-fputcsv($out, [
+fputcsv($out, csv_sicher([
     'Kartenwelt', 'Rufnummer', 'ISSI', 'OPTA', 'ICCID', 'Art', 'Status', 'Gehoert zu', 'Zuordnung',
     'Funkgeraet', 'Steckt in',
     'Anbieter', 'Tarif', 'Datenvolumen', 'Kosten je Monat', 'Vertrag bis',
     'Ausgegeben am', 'PIN', 'PUK', 'Im Bestand', 'Notiz',
-], ';');
+]), ';');
 
 foreach ($sims as $s) {
-    fputcsv($out, [
+    fputcsv($out, csv_sicher([
         SIM_ARTEN[(string)$s['karte_art']] ?? '',
         (string)$s['rufnummer'],
         (string)$s['issi'],
@@ -57,7 +57,7 @@ foreach ($sims as $s) {
         (string)$s['puk'],
         (int)$s['is_active'] === 1 ? 'ja' : 'nein',
         preg_replace('/\s+/', ' ', (string)($s['notiz'] ?? '')),
-    ], ';');
+    ]), ';');
 }
 
 fclose($out);

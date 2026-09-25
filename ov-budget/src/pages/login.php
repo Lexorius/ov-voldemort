@@ -15,8 +15,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         audit('login', 'user', (int)($_SESSION['uid'] ?? 0) ?: null);
         $to = $_SESSION['after_login'] ?? null;
         unset($_SESSION['after_login']);
-        if ($to && str_starts_with($to, '/')) {
-            redirect($to);
+        if ($to && url_ist_intern((string)$to)) {
+            redirect((string)$to);
         }
         redirect_route('dashboard');
     }

@@ -49,23 +49,44 @@ $form = [
     'ov_name'    => $_POST['ov_name'] ?? 'THW Ortsverband ',
 ];
 
+/** Abbruch mit Hinweis – der Assistent darf keine bestehende Einrichtung überschreiben */
+function install_abbrechen(string $text): never
+{
+    http_response_code(403);
+    exit('<!doctype html><meta charset="utf-8"><p style="font:16px system-ui;padding:2rem">'
+        . $text . ' <a href="index.php">Zur Anmeldung</a></p>');
+}
+
+// Kommt die Datenbank aus der Umgebung (Container, Add-on), gibt es hier nichts einzurichten
+if (env_config()['db'] ?? null) {
+    install_abbrechen('Die Datenbank ist über Umgebungsvariablen eingerichtet. '
+        . 'Bitte <strong>public/install.php</strong> löschen.');
+}
+
 // Bereits installiert? Dann abbrechen.
 if ($configExists) {
+    $cfg = require $configFile;
     try {
-        $cfg = require $configFile;
         $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4',
             $cfg['db']['host'], (int)$cfg['db']['port'], $cfg['db']['name']);
         $pdo = new PDO($dsn, $cfg['db']['user'], $cfg['db']['pass'],
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-        $hasUsers = (int)$pdo->query('SELECT COUNT(*) FROM users')->fetchColumn() > 0;
-        if ($hasUsers) {
-            http_response_code(403);
-            exit('<!doctype html><meta charset="utf-8"><p style="font:16px system-ui;padding:2rem">'
-                . 'Die Anwendung ist bereits eingerichtet. Bitte <strong>public/install.php</strong> löschen. '
-                . '<a href="index.php">Zur Anmeldung</a></p>');
-        }
     } catch (Throwable) {
-        // Konfiguration vorhanden, aber Datenbank noch leer – Assistent darf weiterlaufen
+        // Die Konfiguration steht, nur die Datenbank antwortet gerade nicht.
+        // Dann darf der Assistent sie erst recht nicht ersetzen – sonst könnte
+        // jeder, der diese Seite erreicht, die Anwendung auf eine eigene
+        // Datenbank umbiegen, solange die richtige nicht erreichbar ist.
+        install_abbrechen('Es gibt bereits eine Konfiguration, aber die Datenbank darin ist gerade '
+            . 'nicht erreichbar. Der Assistent läuft nur ohne <strong>config/config.php</strong>.');
+    }
+    try {
+        $hasUsers = (int)$pdo->query('SELECT COUNT(*) FROM users')->fetchColumn() > 0;
+    } catch (Throwable) {
+        $hasUsers = false;   // Datenbank erreichbar, aber noch leer – der Assistent darf weiterlaufen
+    }
+    if ($hasUsers) {
+        install_abbrechen('Die Anwendung ist bereits eingerichtet. '
+            . 'Bitte <strong>public/install.php</strong> löschen.');
     }
 }
 

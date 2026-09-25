@@ -42,7 +42,7 @@ function base_path(): string
 function current_url(): string
 {
     $uri = (string)($_SERVER['REQUEST_URI'] ?? '');
-    if ($uri === '' || $uri[0] !== '/') {
+    if (!url_ist_intern($uri)) {
         return url('dashboard');
     }
     $bp = base_path();
@@ -50,6 +50,26 @@ function current_url(): string
         $uri = $bp . $uri;
     }
     return $uri;
+}
+
+/**
+ * Führt die Adresse sicher innerhalb dieser Anwendung weiter?
+ *
+ * Ein einzelner Schrägstrich am Anfang reicht nicht: "//fremd.example/…"
+ * ist für den Browser eine vollständige Adresse auf einem anderen Server,
+ * und "/\\fremd.example" macht mancher Browser dazu. Wer nach dem Anmelden
+ * dorthin geschickt würde, landet auf einer fremden Seite. Reine Funktion.
+ */
+function url_ist_intern(string $uri): bool
+{
+    if ($uri === '' || $uri[0] !== '/') {
+        return false;
+    }
+    if (strlen($uri) > 1 && ($uri[1] === '/' || $uri[1] === '\\')) {
+        return false;
+    }
+    // Steuerzeichen haben in einer Adresse nichts verloren (Kopfzeilen-Einschleusung)
+    return !preg_match('/[\x00-\x1f\x7f]/', $uri);
 }
 
 /** Interne URL bauen: url('wishes', ['id' => 3]) */
@@ -518,6 +538,35 @@ function badge(?array $item, string $fallback = '–'): string
     $bg = $item['color'] ?: '#64748b';
     return '<span class="badge" style="background:' . e($bg) . ';color:' . e(contrast_color($bg)) . '">'
         . e($item['label']) . '</span>';
+}
+
+/**
+ * Eine CSV-Zeile so vorbereiten, dass Tabellenkalkulationen nichts davon
+ * als Formel ausführen.
+ *
+ * Excel und LibreOffice werten Zellen aus, die mit =, +, -, @ oder einem
+ * Steuerzeichen beginnen. Ein Wunsch mit dem Titel "=HYPERLINK(…)" könnte
+ * so beim Öffnen des Exports etwas anrichten. Solche Zellen bekommen ein
+ * Hochkomma davor. Rufnummern ("+49 …") und Beträge ("-12,50") bleiben
+ * unangetastet – sie bestehen nur aus Ziffern und Satzzeichen und sind
+ * keine Formeln. Reine Funktion.
+ */
+function csv_sicher(array $zeile): array
+{
+    foreach ($zeile as $k => $wert) {
+        if (!is_string($wert) || $wert === '') {
+            continue;
+        }
+        $erstes = $wert[0];
+        if (!in_array($erstes, ['=', '+', '-', '@', "\t", "\r"], true)) {
+            continue;
+        }
+        if (preg_match('/^[+\-]?[\d\s.,()\/-]*$/', $wert)) {
+            continue;   // Rufnummer oder Betrag
+        }
+        $zeile[$k] = "'" . $wert;
+    }
+    return $zeile;
 }
 
 function bytes_human(int $b): string
