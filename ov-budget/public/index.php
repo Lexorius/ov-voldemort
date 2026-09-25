@@ -119,6 +119,7 @@ $routes = [
     'admin_divera'       => 'admin/divera',
     'admin_divera_form'  => 'admin/divera_form',
     'admin_log'          => 'admin/log',
+    'admin_backup'       => 'admin/backup',
 ];
 
 $route = (string)($_GET['p'] ?? 'dashboard');

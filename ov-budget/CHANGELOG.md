@@ -1,5 +1,28 @@
 # Änderungsverlauf
 
+## 1.44.0
+
+### Sicherung und Wiederherstellung
+
+Neu unter *Verwaltung → Sicherung*, nur für die Administration.
+
+- **Sichern:** Ein Knopf packt die ganze Datenbank und die Dateiablage in
+  eine ZIP-Datei. Sie liegt im Datenordner unter `sicherungen/` und lässt sich
+  herunterladen. Der Datenbankauszug ist gewöhnliches SQL.
+- **Automatisch:** Unter *Einstellungen → Sicherung* alle *n* Tage, nachts
+  mit dem Abruf über `cron.php`. Es bleiben so viele, wie eingestellt; von Hand
+  angelegte werden nie automatisch gelöscht.
+- **Wiederherstellen:** Ersetzt Datenbank und Dateiablage durch den
+  gesicherten Stand. Verlangt das eigene Passwort und das getippte Wort
+  WIEDERHERSTELLEN. Vorher entsteht automatisch eine Sicherung des jetzigen
+  Stands, danach laufen die Wanderungen – auch eine Sicherung aus einer
+  älteren Fassung passt so zur laufenden.
+- **Hochladen:** Eine heruntergeladene Sicherung wieder auf den Server
+  bringen, etwa nach einem Umzug.
+- Jede dieser Handlungen steht im Protokoll.
+- Das Add-on bringt die PHP-Erweiterung `zip` jetzt mit; bei einer
+  Handinstallation muss sie vorhanden sein.
+
 ## 1.43.3
 
 ### Sicherheit

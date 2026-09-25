@@ -38,6 +38,11 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - **QR-Code am Lagerort**: „Gerät ist da" oder „alle 8 Geräte sind da",
   verschlüsselt über den Connector
 
+### Sicherung
+- Datenbank und Dateiablage als **ZIP** sichern, herunterladen, hochladen
+  und **wiederherstellen** – mit Sicherheitskopie vorher
+- auf Wunsch **automatisch** alle *n* Tage, ältere werden ausgedünnt
+
 ### SIM- und TETRA-Karten
 - **Mobilfunk** mit Rufnummer, ICCID und Vertrag oder **TETRA-Sicherheitskarte**
   mit ISSI und OPTA

@@ -417,7 +417,9 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('session_lifetime','43200','Session-Laufzeit in Sekunden','Standard: 12 Stunden','number','Sicherheit',10),
 ('login_max_versuche','8','Fehlversuche bis Sperre','Sperre gilt pro Benutzername für die Sperrdauer','number','Sicherheit',20),
 ('login_sperre_minuten','15','Sperrdauer in Minuten','','number','Sicherheit',30),
-('passwort_min_laenge','10','Mindestlänge Passwort','','number','Sicherheit',40);
+('passwort_min_laenge','10','Mindestlänge Passwort','','number','Sicherheit',40),
+('backup_automatisch_tage','0','Automatische Sicherung alle … Tage','0 = aus. Läuft nachts mit dem Abruf über cron.php (im Add-on eingerichtet). Die Sicherungen liegen im Datenordner unter sicherungen/.','number','Sicherung',10),
+('backup_aufheben_anzahl','7','Automatische Sicherungen aufheben','So viele der automatischen Sicherungen bleiben, ältere werden gelöscht. Von Hand angelegte bleiben immer.','number','Sicherung',20);
 
 -- ---------- Bestellberechtigungen ----------
 -- Nur Vorgaben: vorhandene Zeilen bleiben unberührt, Änderungen in der

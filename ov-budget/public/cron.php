@@ -89,6 +89,10 @@ $abrufe = [
             $res['fehler'] ? ', ' . $res['fehler'] . ' unbrauchbar' : ''
         )]];
     },
+    'Sicherung'         => static function (): array {
+        $m = backup_automatisch();
+        return $m === null ? [] : [['status' => 'ok', 'message' => $m]];
+    },
     'Benachrichtigungen' => static function (): array {
         $n = notify_taeglich();
         $res = notify_flush();

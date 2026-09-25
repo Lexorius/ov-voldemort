@@ -79,6 +79,39 @@ Das normale Home-Assistant-Backup erfasst diesen Ordner vollständig. Das Add-on
 ist als `backup: cold` eingetragen, wird also für die Dauer der Sicherung
 angehalten, damit die Datenbankdateien in sich stimmig sind.
 
+### Sicherung und Wiederherstellung
+
+Unter *Verwaltung → Sicherung* (nur Administration) entsteht auf Knopfdruck
+eine ZIP-Datei mit der ganzen Datenbank und der Dateiablage. Sie lässt sich
+herunterladen, auf dem Server aufheben und jederzeit wiederherstellen.
+
+* **Inhalt:** `datenbank.sql` (alle Tabellen mit Struktur und Inhalt),
+  `dateien/` (Angebote, Fahrzeug- und Veranstaltungsdateien) und
+  `sicherung.json` (Fassung, Zeitpunkt, Anlass, Zahlen). Der Auszug ist
+  gewöhnliches SQL und ließe sich notfalls auch mit dem `mysql`-Befehl
+  einspielen.
+* **Ablage:** im Datenordner unter `sicherungen/` (im Add-on
+  `/data/uploads/sicherungen`). Damit sind die Sicherungen zugleich Teil eines
+  Home-Assistant-Backups.
+* **Automatisch:** unter *Einstellungen → Sicherung* alle *n* Tage, nachts
+  mit dem Abruf über `cron.php`. Es bleiben so viele, wie dort eingestellt;
+  von Hand angelegte Sicherungen werden nie automatisch gelöscht.
+* **Wiederherstellen** ersetzt Datenbank und Dateiablage vollständig durch
+  den gesicherten Stand. Es verlangt das eigene Passwort und ein getipptes
+  Bestätigungswort. Vorher legt die Anwendung selbst eine Sicherung des
+  aktuellen Stands an (*vor-wiederherstellung*), danach laufen die
+  Wanderungen, damit auch eine Sicherung aus einer älteren Fassung passt.
+  Nach dem Einspielen gelten die Benutzer aus der Sicherung – auch der
+  eigene Zugang.
+* **Hochladen:** Eine früher heruntergeladene Sicherung lässt sich wieder auf
+  den Server bringen, etwa nach einem Umzug; sie erscheint dann in der Liste.
+* **Vertraulich behandeln:** Passwörter stehen darin nur als Hash, aber die
+  Zugangsdaten zu Divera, Stein.APP und MQTT sowie PIN und PUK der SIM-Karten
+  im Klartext.
+
+Bei einer Handinstallation braucht PHP die Erweiterung `zip`; im Add-on ist
+sie enthalten.
+
 ### Sicherheit im Betrieb
 
 * **`public/install.php` nach der Einrichtung löschen.** Der Assistent

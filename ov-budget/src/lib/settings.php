@@ -2,16 +2,22 @@
 declare(strict_types=1);
 
 /** Alle Einstellungen (gecacht pro Request) */
-function settings_all(): array
+function settings_all(bool $neu = false): array
 {
     static $cache = null;
-    if ($cache === null) {
+    if ($cache === null || $neu) {
         $cache = [];
         foreach (db_all('SELECT * FROM settings ORDER BY sgroup, sort_order, skey') as $r) {
             $cache[$r['skey']] = $r;
         }
     }
     return $cache;
+}
+
+/** Nach einer Wiederherstellung gelten die eingelesenen Werte nicht mehr */
+function settings_reset_cache(): void
+{
+    settings_all(true);
 }
 
 function setting(string $key, mixed $default = null): mixed

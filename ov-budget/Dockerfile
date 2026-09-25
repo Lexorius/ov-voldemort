@@ -24,7 +24,7 @@ RUN set -eux; \
     for v in 85 84 83 82; do \
         set -- "php$v" "php$v-fpm" "php$v-pdo" "php$v-pdo_mysql" "php$v-mbstring" \
                "php$v-session" "php$v-ctype" "php$v-fileinfo" "php$v-curl" \
-               "php$v-openssl" "php$v-opcache" "php$v-gd" "php$v-exif"; \
+               "php$v-openssl" "php$v-opcache" "php$v-gd" "php$v-exif" "php$v-zip"; \
         if apk add --no-cache --simulate "$@" >/dev/null 2>&1; then \
             echo "Verwende PHP $v"; \
             apk add --no-cache "$@"; \

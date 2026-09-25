@@ -69,6 +69,9 @@
     <p>Zugang einrichten, Formulare abrufen, Felder zuordnen und Einträge als Wünsche übernehmen.</p></div></a>
   <a href="<?= e(url('budget')) ?>"><div class="card"><h3>Budget</h3>
     <p>Haushaltsjahre und Budgettöpfe pflegen.</p></div></a>
+  <a href="<?= e(url('admin_backup')) ?>"><div class="card"><h3>Sicherung</h3>
+    <p>Datenbank und Dateiablage als ZIP sichern, herunterladen, hochladen und wiederherstellen –
+       auf Wunsch automatisch.</p></div></a>
   <a href="<?= e(url('admin_log')) ?>"><div class="card"><h3>Protokoll</h3>
     <p>Wer hat wann was geändert – und was der letzte Divera-Abruf gemeldet hat.</p></div></a>
 </div>

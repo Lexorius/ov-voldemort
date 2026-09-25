@@ -51,6 +51,7 @@ require __DIR__ . '/lib/connector.php';
 require __DIR__ . '/lib/events.php';
 require __DIR__ . '/lib/sims.php';
 require __DIR__ . '/lib/radios.php';
+require __DIR__ . '/lib/backup.php';
 
 /** Ist die Anwendung eingerichtet? */
 function app_installed(): bool
