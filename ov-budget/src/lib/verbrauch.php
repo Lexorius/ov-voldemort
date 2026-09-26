@@ -137,6 +137,7 @@ function meter_save_from_post(?array $existing, array $user): array
         $id = db_insert('meters', $data);
         audit('zaehler.angelegt', 'meter', $id, $data['name']);
     }
+    verbrauch_geaendert();
     return [$id, []];
 }
 
@@ -144,6 +145,7 @@ function meter_delete(array $meter): void
 {
     db_exec('DELETE FROM meters WHERE id = ?', [(int)$meter['id']]);
     audit('zaehler.geloescht', 'meter', (int)$meter['id'], (string)$meter['name']);
+    verbrauch_geaendert();
 }
 
 /** Wie lange ist der letzte Stand her? Reine Funktion. */
@@ -183,6 +185,60 @@ function readings_alle(int $meterId): array
 }
 
 /**
+ * Nur die Stände, die ein Zeitraum braucht: der letzte davor, alle darin,
+ * der erste danach. So bleibt die Rechnung gleich schnell, ob ein Zähler
+ * ein Jahr oder zehn Jahre Geschichte hat. Älteste zuerst.
+ */
+function readings_bereich(int $meterId, int $von, int $bis): array
+{
+    $a = date('Y-m-d H:i:s', $von);
+    $b = date('Y-m-d H:i:s', $bis);
+    $rows = db_all(
+        '(SELECT stand, gelesen_am, quelle FROM meter_readings WHERE meter_id = ? AND gelesen_am < ?
+          ORDER BY gelesen_am DESC, id DESC LIMIT 1)
+         UNION ALL
+         (SELECT stand, gelesen_am, quelle FROM meter_readings WHERE meter_id = ? AND gelesen_am >= ? AND gelesen_am <= ?
+          ORDER BY gelesen_am ASC, id ASC)
+         UNION ALL
+         (SELECT stand, gelesen_am, quelle FROM meter_readings WHERE meter_id = ? AND gelesen_am > ?
+          ORDER BY gelesen_am ASC, id ASC LIMIT 1)',
+        [$meterId, $a, $meterId, $a, $b, $meterId, $b]
+    );
+    usort($rows, static fn($x, $y) => strcmp((string)$x['gelesen_am'], (string)$y['gelesen_am']));
+    return $rows;
+}
+
+/** Zeitraum, den Übersicht und Kennzahlen eines Jahres brauchen: [von, bis] */
+function verbrauch_zeitraum(int $jahr, ?int $jetzt = null): array
+{
+    $jetzt ??= time();
+    return [min(mktime(0, 0, 0, 1, 1, $jahr), $jetzt - 31 * 86400), max($jetzt, mktime(0, 0, 0, 1, 1, $jahr + 1))];
+}
+
+/** Jahre, zu denen es Stände gibt – aus dem ersten und letzten, nicht aus einem Volltext über die Tabelle */
+function verbrauch_jahre(?int $meterId = null): array
+{
+    $r = db_row('SELECT MIN(gelesen_am) AS a, MAX(gelesen_am) AS b FROM meter_readings'
+        . ($meterId !== null ? ' WHERE meter_id = ?' : ''), $meterId !== null ? [$meterId] : []);
+    $jahre = [];
+    if ($r && $r['a'] !== null && $r['b'] !== null) {
+        for ($j = (int)substr((string)$r['b'], 0, 4); $j >= (int)substr((string)$r['a'], 0, 4); $j--) {
+            $jahre[] = $j;
+        }
+    }
+    return $jahre;
+}
+
+/**
+ * Jede Änderung an Ständen, Zählern oder Tarifen erhöht diese Marke.
+ * Kennzahlen im Hintergrund rechnen nur neu, wenn sie sich bewegt hat.
+ */
+function verbrauch_geaendert(): void
+{
+    state_save('verbrauch_marke', (string)((int)state_get('verbrauch_marke', '0') + 1));
+}
+
+/**
  * Einen Stand eintragen. Prüft, dass er zur Kette passt: nicht kleiner als
  * der letzte davor (außer ausdrücklich erlaubt, etwa nach Zählerwechsel).
  * Rückgabe: [id, fehler]
@@ -219,6 +275,7 @@ function reading_add(array $meter, float $stand, string $gelesenAm, string $quel
     ]);
     audit('zaehler.stand', 'meter', (int)$meter['id'],
         sprintf('%s: %s (%s)', $meter['name'], menge($stand, (string)$meter['einheit'], 3), READING_QUELLEN[$quelle] ?? $quelle));
+    verbrauch_geaendert();
     return [$id, null];
 }
 
@@ -227,6 +284,7 @@ function reading_delete(array $meter, int $readingId): bool
     $n = db_exec('DELETE FROM meter_readings WHERE id = ? AND meter_id = ?', [$readingId, (int)$meter['id']]);
     if ($n > 0) {
         audit('zaehler.stand.geloescht', 'meter', (int)$meter['id'], (string)$readingId);
+        verbrauch_geaendert();
     }
     return $n > 0;
 }
@@ -443,6 +501,7 @@ function tarif_save_from_post(?array $existing): array
         $id = db_insert('tariffs', $data);
         audit('tarif.angelegt', 'tariff', $id, $data['name']);
     }
+    verbrauch_geaendert();
     return [$id, []];
 }
 
@@ -450,6 +509,7 @@ function tarif_delete(array $tarif): void
 {
     db_exec('DELETE FROM tariffs WHERE id = ?', [(int)$tarif['id']]);
     audit('tarif.geloescht', 'tariff', (int)$tarif['id'], (string)$tarif['name']);
+    verbrauch_geaendert();
 }
 
 /**
@@ -514,9 +574,10 @@ function verbrauch_stats(array $meters, array $tarife, int $jahr, ?int $jetzt = 
     }
     $jahresanfang = mktime(0, 0, 0, 1, 1, $jahr);
     $jahresende = min($jetzt, mktime(0, 0, 0, 1, 1, $jahr + 1));
+    [$von, $bis] = verbrauch_zeitraum($jahr, $jetzt);
     foreach ($meters as $m) {
         $art = (string)$m['art'];
-        $staende = readings_alle((int)$m['id']);
+        $staende = readings_bereich((int)$m['id'], $von, $bis);
         $out['je_art'][$art]['zaehler']++;
         $out['je_art'][$art]['einheit'] = (string)$m['einheit'];
         $out['je_art'][$art]['jahr'] += (float)(verbrauch_zwischen($staende, $jahresanfang, $jahresende) ?? 0);
@@ -531,6 +592,26 @@ function verbrauch_stats(array $meters, array $tarife, int $jahr, ?int $jetzt = 
     }
     $out['kosten_jahr'] = round($out['kosten_jahr'], 2);
     return $out;
+}
+
+/**
+ * Kennzahlen für den Hintergrund (MQTT): neu gerechnet nur, wenn sich seit
+ * dem letzten Mal ein Stand, ein Zähler oder ein Tarif geändert hat – oder
+ * der Tag gewechselt hat, weil „letzte 30 Tage" und „ohne Stand" wandern.
+ */
+function verbrauch_stats_cached(int $jahr): array
+{
+    $marke = state_get('verbrauch_marke', '0') . '|' . $jahr . '|' . date('Y-m-d');
+    if (state_get('verbrauch_stats_marke', '') === $marke) {
+        $alt = json_decode(state_get('verbrauch_stats_wert', ''), true);
+        if (is_array($alt) && isset($alt['je_art'])) {
+            return $alt;
+        }
+    }
+    $stats = verbrauch_stats(meter_query([]), tarif_query(), $jahr);
+    state_save('verbrauch_stats_wert', (string)json_encode($stats, JSON_PRESERVE_ZERO_FRACTION));
+    state_save('verbrauch_stats_marke', $marke);
+    return $stats;
 }
 
 /* ==================================================================== */

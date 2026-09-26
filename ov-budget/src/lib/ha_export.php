@@ -217,7 +217,7 @@ function ha_werte(): array
         }
     }
     $sicherungen = function_exists('backup_list') && backup_problem() === null ? count(backup_list()) : 0;
-    $verbrauch = verbrauch_stats(meter_query([]), tarif_query(), (int)date('Y'));
+    $verbrauch = verbrauch_stats_cached((int)date('Y'));
 
     return [
         'budget_gesamt'         => round($zahlen['budget'], 2),

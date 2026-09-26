@@ -1186,6 +1186,12 @@ SQL;
         }
     }
     $merken('032_ha_intervall_minuten');
+
+    /* ---------- 033: Index auf den Zeitpunkt der Staende ---------- */
+    if (ovb_table_exists($pdo, 'meter_readings') && !ovb_index_exists($pdo, 'meter_readings', 'idx_reading_zeit')) {
+        $pdo->exec('ALTER TABLE meter_readings ADD KEY idx_reading_zeit (gelesen_am)');
+    }
+    $merken('033_reading_zeit_index');
 }
 
 /**

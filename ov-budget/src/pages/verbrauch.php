@@ -14,9 +14,10 @@ $tarife = tarif_query();
 
 // Je Zähler die Zahlen, die die Karte zeigt
 $jetzt = time();
+[$von, $bis] = verbrauch_zeitraum($jahr, $jetzt);
 $karten = [];
 foreach ($meters as $m) {
-    $staende = readings_alle((int)$m['id']);
+    $staende = readings_bereich((int)$m['id'], $von, $bis);
     $kosten = verbrauch_kosten_jahr($staende, $tarife, $m, $jahr);
     $karten[(int)$m['id']] = [
         'tage30' => verbrauch_zwischen($staende, $jetzt - 30 * 86400, $jetzt),
@@ -28,7 +29,7 @@ foreach ($meters as $m) {
     ];
 }
 
-$jahre = array_map('intval', array_column(db_all('SELECT DISTINCT YEAR(gelesen_am) AS j FROM meter_readings ORDER BY j DESC'), 'j'));
+$jahre = verbrauch_jahre();
 if (!in_array($jahr, $jahre, true)) {
     $jahre[] = $jahr;
     rsort($jahre);

@@ -15,11 +15,11 @@ if (!$meter) {
 }
 
 $jahr = get_int('jahr') ?: (int)date('Y');
-$staende = readings_alle((int)$meter['id']);
+[$von, $bis] = verbrauch_zeitraum($jahr);
+$staende = readings_bereich((int)$meter['id'], $von, $bis);
 $tarife = tarif_query((string)$meter['art']);
 
-$jahre = array_map('intval', array_column(
-    db_all('SELECT DISTINCT YEAR(gelesen_am) AS j FROM meter_readings WHERE meter_id = ? ORDER BY j DESC', [(int)$meter['id']]), 'j'));
+$jahre = verbrauch_jahre((int)$meter['id']);
 if (!in_array($jahr, $jahre, true)) {
     $jahre[] = $jahr;
     rsort($jahre);

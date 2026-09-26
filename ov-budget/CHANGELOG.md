@@ -2,6 +2,13 @@
 
 ## 1.48.1
 
+- **Verbrauch bleibt schnell, auch mit Jahren an Ständen.** Die Rechnung lädt
+  nur noch die Stände des betrachteten Zeitraums (den letzten davor, alle
+  darin, den ersten danach) statt der ganzen Geschichte eines Zählers. Die
+  Jahresliste kommt aus erstem und letztem Stand, dafür gibt es einen neuen
+  Index. Die Kennzahlen für MQTT werden nur neu gerechnet, wenn sich ein
+  Stand, ein Zähler oder ein Tarif geändert hat – sonst kommen sie aus dem
+  Zwischenspeicher.
 - **Abschnitte am Zähler** fassen jetzt je Kalendertag zusammen. Mit
   stündlichen Ständen aus Home Assistant standen dort Zeilen mit null Tagen
   und hochgerechneten Tageswerten; jetzt gibt es je Ablesetag eine Zeile, der

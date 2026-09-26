@@ -839,6 +839,7 @@ CREATE TABLE IF NOT EXISTS meter_readings (
   created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_reading_meter (meter_id, gelesen_am),
+  KEY idx_reading_zeit (gelesen_am),
   CONSTRAINT fk_reading_meter FOREIGN KEY (meter_id)   REFERENCES meters(id) ON DELETE CASCADE,
   CONSTRAINT fk_reading_cb    FOREIGN KEY (created_by) REFERENCES users(id)  ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
