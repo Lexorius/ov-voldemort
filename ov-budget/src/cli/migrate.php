@@ -1168,6 +1168,24 @@ SQL;
         }
     }
     $merken('031_verbrauch');
+
+    /* ---------- 032: Abfrage aus Home Assistant in Minuten statt Stunden ---------- */
+    if (ovb_table_exists($pdo, 'settings')) {
+        $st = $pdo->prepare('SELECT svalue FROM settings WHERE skey = ?');
+        $st->execute(['verbrauch_ha_intervall_stunden']);
+        $alt = $st->fetchColumn();
+        if ($alt !== false) {
+            $minuten = max(5, (int)$alt * 60);
+            $pdo->prepare('INSERT INTO settings (skey, svalue, sgroup, label, stype, sort_order)
+                           VALUES (?, ?, ?, ?, ?, ?)
+                           ON DUPLICATE KEY UPDATE svalue = VALUES(svalue)')
+                ->execute(['verbrauch_ha_intervall_minuten', (string)$minuten, 'Verbrauch',
+                           'Zähler aus Home Assistant lesen alle … Minuten', 'number', 50]);
+            $pdo->prepare('DELETE FROM settings WHERE skey = ?')->execute(['verbrauch_ha_intervall_stunden']);
+            $say("Abfrage aus Home Assistant: $alt Stunden werden $minuten Minuten.");
+        }
+    }
+    $merken('032_ha_intervall_minuten');
 }
 
 /**

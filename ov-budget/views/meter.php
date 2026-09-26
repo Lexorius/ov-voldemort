@@ -75,7 +75,7 @@ $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Se
       <h2>Stand eintragen</h2>
       <?php if ((string)$meter['quelle'] === 'ha'): ?>
         <p class="small muted">Dieser Zähler wird aus Home Assistant gelesen – alle
-          <?= (int)setting_int('verbrauch_ha_intervall_stunden', 24) ?> Stunden mit dem Abruf.</p>
+          <?= (int)max(5, setting_int('verbrauch_ha_intervall_minuten', 60)) ?> Minuten mit dem Abruf.</p>
         <?php if ($darf): ?>
           <form method="post" action="<?= e(url('verbrauch_action')) ?>">
             <?= csrf_field() ?>

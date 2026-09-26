@@ -95,7 +95,7 @@ $quelle = (string)($meter['quelle'] ?? 'manuell');
         <input type="text" inputmode="decimal" id="ha_faktor" name="ha_faktor" value="<?= e(num_input($meter['ha_faktor'] ?? 1, true)) ?>">
         <small>Wert der Entität × Faktor = Zählerstand. Liefert der Sensor Wh statt kWh: 0,001. Sonst 1.</small>
       </div>
-      <p class="small muted">Gelesen wird alle <?= (int)setting_int('verbrauch_ha_intervall_stunden', 24) ?> Stunden
+      <p class="small muted">Gelesen wird alle <?= (int)max(5, setting_int('verbrauch_ha_intervall_minuten', 60)) ?> Minuten
         mit dem Abruf, einstellbar unter Verwaltung → Einstellungen → Verbrauch. Der Sensor muss einen
         Zählerstand liefern (steigend), keinen Momentanwert.</p>
     </div>

@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## 1.48.1
+
+- **Zähler aus Home Assistant** werden jetzt in Minuten statt Stunden
+  abgefragt, Vorgabe 60, mindestens 5 (*Einstellungen → Verbrauch*). Eine
+  bestehende Einstellung in Stunden wird umgerechnet. Gespeichert wird
+  weiterhin nur ein Stand, der sich geändert hat.
+
 ## 1.48.0
 
 ### Ist der Connector sauber?

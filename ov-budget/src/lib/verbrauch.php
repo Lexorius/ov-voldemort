@@ -603,8 +603,8 @@ function meter_ha_lesen(array $meter, ?array $user = null): array
 function verbrauch_ha_sync(): array
 {
     $res = ['gelesen' => 0, 'neu' => 0, 'fehler' => 0];
-    $stunden = max(1, setting_int('verbrauch_ha_intervall_stunden', 24));
-    if (time() - (int)state_get('verbrauch_ha_letzter_abruf', '0') < $stunden * 3600) {
+    $minuten = max(5, setting_int('verbrauch_ha_intervall_minuten', 60));
+    if (time() - (int)state_get('verbrauch_ha_letzter_abruf', '0') < $minuten * 60) {
         return $res;
     }
     state_save('verbrauch_ha_letzter_abruf', (string)time());

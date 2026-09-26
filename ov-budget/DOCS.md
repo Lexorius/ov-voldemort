@@ -367,7 +367,8 @@ Das Modul führt Zähler und ihre Stände und rechnet daraus Verbrauch und Koste
 * **Quelle je Zähler:**
   * **Home Assistant** – eine Entität aus der Liste wählen (Sensoren mit
     Energie-, Gas- oder Wassereinheit) oder die Kennung eintippen. Der Abruf
-    über `cron.php` liest den Stand alle *n* Stunden (Vorgabe 24). Ein
+    über `cron.php` liest den Stand alle *n* Minuten (Vorgabe 60, mindestens
+    5); gespeichert wird nur, was sich geändert hat. Ein
     Faktor rechnet um, wenn der Sensor etwa Wh statt kWh liefert. Der Sensor
     muss einen **Zählerstand** liefern, keinen Momentanwert.
   * **Von Hand** – am Bildschirm (Übersicht oder Zählerseite) oder per

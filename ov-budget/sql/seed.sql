@@ -409,7 +409,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('verbrauch_intro','Zählerstände für Strom, Gas und Wasser – aus Home Assistant, von Hand oder per QR-Code am Zähler.','Einleitungstext im Verbrauchsmodul','','textarea','Verbrauch',20),
 ('verbrauch_user_darf_sehen','0','Alle Mitglieder dürfen den Verbrauch sehen','Sonst nur Leitung und Administration','bool','Verbrauch',30),
 ('verbrauch_user_darf_ablesen','1','Wer sehen darf, darf auch Stände eintragen','Sonst nur die Leitung','bool','Verbrauch',40),
-('verbrauch_ha_intervall_stunden','24','Zähler aus Home Assistant lesen alle … Stunden','Läuft mit dem Abruf über cron.php; ein Stand je Tag reicht für Monatswerte','number','Verbrauch',50),
+('verbrauch_ha_intervall_minuten','60','Zähler aus Home Assistant lesen alle … Minuten','Läuft mit dem Abruf über cron.php, mindestens 5. Ein neuer Stand wird nur gespeichert, wenn er sich geändert hat.','number','Verbrauch',50),
 ('sim_vertrag_warnung_tage','60','Vorwarnung fuer das Vertragsende (Tage)','Ab wann eine Karte als bald faellig gilt','number','SIM-Karten',40),
 ('veranstaltung_modul_name','Veranstaltungen','Bezeichnung des Veranstaltungsmoduls','','text','Veranstaltungen',10),
 ('veranstaltung_intro','Veranstaltungen des Ortsverbands: Termin, Budget, Rechnungen und die Gaesteliste an einer Stelle.','Einleitungstext im Veranstaltungsmodul','','textarea','Veranstaltungen',20),
