@@ -1,7 +1,7 @@
 {
     "programm": "OV-Multitool-Connector",
-    "version": "1.4.1",
-    "erzeugt": "2026-09-26T20:25:07+00:00",
+    "version": "1.5.0",
+    "erzeugt": "2026-09-26T20:42:56+00:00",
     "dateien": {
         "public/.htaccess": {
             "sha256": "75726923baf2ef95ad108fafbe83b626f19802a2e500bd93799b18cc04d7efea",
@@ -24,32 +24,36 @@
             "bytes": 5440
         },
         "public/index.php": {
-            "sha256": "45063efe3a806a3e37c4cc40796a2ceaedc9d44028f1d45cc0e2a69d676a6597",
-            "bytes": 15130
+            "sha256": "483776fe2171301a5dce674984ad5bb6b05b626d29dd6523cb9674f8c39f6166",
+            "bytes": 15702
         },
         "src/connector.php": {
-            "sha256": "e2e3925dfe4546895179c87970039c767c8af2648532982e380300528e0b107c",
-            "bytes": 39510
+            "sha256": "d8ed28efaa9bc12ceb2cef80608fa99797b7ca39071be95a989befc86eaf2423",
+            "bytes": 41117
+        },
+        "src/fuss.php": {
+            "sha256": "e4e80039b3ad186c38d45ea76f0c837c81c712e252a71f9ceb034f6f706ded06",
+            "bytes": 907
         },
         "src/seite_bestand.php": {
-            "sha256": "366716cc46650dd32bd1c43c50ab97127504b3c963a80bbff43324fcf4cce7a0",
-            "bytes": 4928
+            "sha256": "d10c0d6711808641d1325cb70f12d3dfd3a32cd96367c96c02ef383a0ea45772",
+            "bytes": 4968
         },
         "src/seite_einladung.php": {
-            "sha256": "40e07a3988dd76e727cf162aa15badcf351b3716b35704a79d0c60109492caf8",
-            "bytes": 7927
+            "sha256": "23ddcd0bdfa80fb16ed35a55b35db156ab11d74a89ed4c2be2f9708837ac2d96",
+            "bytes": 7967
         },
         "src/seite_melden.php": {
-            "sha256": "5b9cac5edf47589a0d6d2884404ef0dfd61735fdc9a46e9972073a8e802ee2c2",
-            "bytes": 3978
+            "sha256": "e31cd3e8b92a8a0e9649e9a8096c60e26b24d8051efab207b3b12ddd212a8c56",
+            "bytes": 4018
         },
         "src/seite_start.php": {
-            "sha256": "803a9c2db45d42f635bc281273cd2bf6d5dcfdfee3b0ddd55e96f17907d5acdb",
-            "bytes": 3432
+            "sha256": "9b8b7508696d50cc46a27be01e1a7eed6e62704f17835366b41f4586cd8af568",
+            "bytes": 3472
         },
         "src/seite_zaehler.php": {
-            "sha256": "ef58988e3de851524fc2a3fbc120a8fdff8ab1135acd9cb8f6180b4353c5dc78",
-            "bytes": 4626
+            "sha256": "ed4fa810b5e64689b343fb523ea15bdfc59a84a2fa7d909889ed9f2e03b3e36c",
+            "bytes": 4666
         }
     }
 }

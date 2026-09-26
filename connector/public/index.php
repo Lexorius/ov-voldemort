@@ -23,6 +23,7 @@ declare(strict_types=1);
  *   ?p=zaehler_abholen      Zählerstände abholen (POST, signiert)
  *   ?p=zustand              Zahlen für OV-Multitool (POST, signiert)
  *   ?p=pruefung             Selbstprüfung: Dateien und Befunde (POST, signiert)
+ *   ?p=einstellungen        Betreiber, Impressum, Datenschutz setzen (POST, signiert)
  *   sonst                   Startseite: Feld für den Einladungscode
  *
  * Die kurze Adresse (z. B. https://i.example.de/AB23CD) kommt über eine
@@ -286,6 +287,13 @@ try {
         case 'zustand':
             con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'zustand');
             antwort(['ok' => true, 'zustand' => con_status()]);
+
+        /* ---------------- Fußzeile: Betreiber, Impressum, Datenschutz ---------------- */
+        case 'einstellungen':
+            $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'einstellungen');
+            $neu = con_einstellungen_setzen((array)($daten['einstellungen'] ?? []));
+            con_notiz('einstellungen.gesetzt', implode(',', array_keys(array_filter($neu))));
+            antwort(['ok' => true, 'einstellungen' => $neu]);
 
         /* ---------------- Selbstprüfung für OV-Multitool ---------------- */
         case 'pruefung':

@@ -35,6 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($c && connector_taugt($c, 'fahrzeuge')) {
                     connector_push_vehicles($c);
                 }
+                if ($c) {
+                    connector_push_einstellungen($c, true);
+                }
                 break;
 
             case 'zustand':

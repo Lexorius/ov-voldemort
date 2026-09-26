@@ -16,6 +16,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     audit('einstellungen.gespeichert', '', null, $group);
     flash('success', 'Einstellungen gespeichert.');
+    if ($group === 'Connector') {
+        // Fußzeile gleich an die Connectoren bringen – wer nicht erreichbar ist, bekommt sie beim Abruf
+        $res = connector_push_einstellungen_all();
+        if ($res['gesendet'] > 0) {
+            flash('success', sprintf('An %d Connector(en) übertragen.', $res['gesendet']));
+        }
+        foreach ($res['fehler'] as $name => $grund) {
+            flash('warn', 'Connector „' . e((string)$name) . '" nicht erreichbar: ' . e($grund) . ' – wird beim nächsten Abruf nachgeholt.');
+        }
+    }
     redirect_route('admin_settings', ['group' => $group]);
 }
 

@@ -74,5 +74,6 @@ $basis = rtrim(strtr(dirname((string)($_SERVER['SCRIPT_NAME'] ?? '/index.php')),
   </div>
 <?php endif; ?>
 
+<?php require __DIR__ . '/fuss.php'; ?>
 </body>
 </html>

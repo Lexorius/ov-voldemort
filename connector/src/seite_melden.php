@@ -77,5 +77,6 @@ $schluessel = (string)($k['ov_pubkey'] ?? '');
   <script src="assets/melden.js" defer></script>
 <?php endif; ?>
 
+<?php require __DIR__ . '/fuss.php'; ?>
 </body>
 </html>

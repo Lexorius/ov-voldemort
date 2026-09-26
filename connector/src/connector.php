@@ -32,7 +32,7 @@ declare(strict_types=1);
  * Gespeichert wird in Dateien unterhalb von daten/ – keine Datenbank nötig.
  */
 
-const CON_VERSION = '1.4.1';
+const CON_VERSION = '1.5.0';
 
 /** Höchstalter einer signierten Anfrage in Sekunden (gegen Wiedereinspielen) */
 const CON_ZEITFENSTER = 300;
@@ -846,6 +846,44 @@ function con_zaehlerstaende_abholen(int $max = 200): array
 }
 
 /* ==================================================================== */
+/* Einstellungen von OV-Multitool: Betreiber, Impressum, Datenschutz     */
+/* ==================================================================== */
+
+/** Nur eine Web-Adresse durchlassen – kein javascript:, keine Steuerzeichen. Reine Funktion. */
+function con_url_sauber(string $url): string
+{
+    $url = trim($url);
+    if ($url === '' || strlen($url) > 300 || preg_match('/[\x00-\x20\x7f"\'<>]/', $url)) {
+        return '';
+    }
+    return preg_match('#^https?://[^/]+#i', $url) ? $url : '';
+}
+
+/** Angaben für die Fußzeile ablegen. Rückgabe: was übernommen wurde. */
+function con_einstellungen_setzen(array $daten): array
+{
+    $text = static fn(string $t): string => mb_substr(trim((string)preg_replace('/[\x00-\x1f\x7f]/u', ' ', $t)), 0, 120);
+    $neu = [
+        'betreiber'       => $text((string)($daten['betreiber'] ?? '')),
+        'impressum_url'   => con_url_sauber((string)($daten['impressum_url'] ?? '')),
+        'datenschutz_url' => con_url_sauber((string)($daten['datenschutz_url'] ?? '')),
+    ];
+    con_schreiben('einstellungen.json', $neu);
+    return $neu;
+}
+
+/** Angaben für die Fußzeile – leer, solange OV-Multitool nichts geschickt hat */
+function con_einstellungen(): array
+{
+    $e = con_lesen('einstellungen.json');
+    return [
+        'betreiber'       => (string)($e['betreiber'] ?? ''),
+        'impressum_url'   => con_url_sauber((string)($e['impressum_url'] ?? '')),
+        'datenschutz_url' => con_url_sauber((string)($e['datenschutz_url'] ?? '')),
+    ];
+}
+
+/* ==================================================================== */
 /* Prüfung: Sind alle Dateien die, die sie sein sollen?                  */
 /* ==================================================================== */
 
@@ -886,7 +924,7 @@ function con_daten_erwartet(string $name, bool $istOrdner): bool
     if ($istOrdner) {
         return in_array($name, ['meldungen', 'rueckmeldungen', 'bestandsmeldungen', 'zaehlerstaende'], true);
     }
-    if (in_array($name, ['.htaccess', 'index.html', 'kopplung.json', 'kopplungscode.txt', 'fahrzeuge.json',
+    if (in_array($name, ['.htaccess', 'index.html', 'kopplung.json', 'kopplungscode.txt', 'fahrzeuge.json', 'einstellungen.json',
                          'veranstaltungen.json', 'einladungen.json', 'bestand.json', 'zaehler.json',
                          'nonces.json', 'limit.json', 'protokoll.log'], true)) {
         return true;

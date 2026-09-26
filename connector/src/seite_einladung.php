@@ -161,5 +161,6 @@ $zeitpunkt = static function (string $wert, bool $mitZeit = true): string {
   <?php endif; ?>
 <?php endif; ?>
 
+<?php require __DIR__ . '/fuss.php'; ?>
 </body>
 </html>

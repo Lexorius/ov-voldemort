@@ -87,5 +87,6 @@ $art = ['strom' => 'Stromzähler', 'gas' => 'Gaszähler', 'wasser' => 'Wasserzä
   <script src="<?= htmlspecialchars($basis) ?>assets/zaehler.js" defer></script>
 <?php endif; ?>
 
+<?php require __DIR__ . '/fuss.php'; ?>
 </body>
 </html>

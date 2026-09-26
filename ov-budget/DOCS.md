@@ -425,6 +425,16 @@ Eine Rufnummer und eine ISSI können jeweils nur einmal vergeben werden; wer ein
 nimmt sie aus dem Bestand, statt sie zu löschen – dann bleibt sie zum
 Nachschlagen erhalten.
 
+## Impressum und Datenschutz auf dem Connector
+
+Die offenen Seiten des Connectors (Standort melden, Einladung, Lagerort,
+Zählerstand, Startseite) zeigen unten Betreiber, Impressum und Datenschutz.
+Gepflegt wird das unter *Verwaltung → Einstellungen → Connector*: der Name
+des Betreibers und zwei Adressen, etwa die Impressums- und Datenschutzseite
+der Vereins-Website. Beim Speichern gehen die Angaben signiert an alle
+gekoppelten Connectoren; ein gerade nicht erreichbarer bekommt sie beim
+nächsten Abruf. Solange nichts eingetragen ist, bleibt die Fußzeile leer.
+
 ## Ist der Connector sauber?
 
 Ein Connector steht auf einem öffentlichen Webserver – der einzige Teil, der

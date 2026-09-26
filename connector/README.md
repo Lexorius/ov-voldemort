@@ -157,6 +157,16 @@ server {
   Solange die Kopplung aussteht, steht dort die Einrichtungsanleitung – zu dem
   Zeitpunkt gibt es noch nichts zu verraten.
 
+## Impressum und Datenschutz
+
+Jede offene Seite hat eine Fußzeile mit Betreiber, Impressum und
+Datenschutz. Die drei Angaben werden in OV-Multitool gepflegt (*Verwaltung →
+Einstellungen → Connector*) und signiert an jeden gekoppelten Connector
+geschickt – beim Speichern, beim Koppeln und beim Abruf, sobald sie sich
+ändern. Der Connector nimmt nur Web-Adressen an (`http://` oder `https://`)
+und lässt alles andere leer. Solange nichts geschickt wurde, zeigt die
+Fußzeile nichts.
+
 ## Ist der Connector sauber?
 
 OV-Multitool kann das prüfen: *Verwaltung → Connectoren → Connector prüfen*,
@@ -220,7 +230,8 @@ connector/
 │   ├── seite_melden.php
 │   ├── seite_einladung.php
 │   ├── seite_bestand.php   "ist am Lagerort"
-│   └── seite_zaehler.php   "Zählerstand melden"
+│   ├── seite_zaehler.php   "Zählerstand melden"
+│   └── fuss.php            Betreiber, Impressum, Datenschutz
 ├── bin/manifest.php   Prüfsummen festhalten
 ├── manifest.json      Prüfsummen dieser Fassung
 └── daten/             wird beim ersten Aufruf angelegt (nicht ins Web!)

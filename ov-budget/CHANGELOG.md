@@ -1,5 +1,16 @@
 # Änderungsverlauf
 
+## 2.0.1.0
+
+### Impressum und Datenschutz auf dem Connector
+
+- Die offenen Seiten des Connectors haben eine Fußzeile mit Betreiber,
+  Impressum und Datenschutz. Gepflegt unter *Verwaltung → Einstellungen →
+  Connector*, signiert an alle Connectoren geschickt – beim Speichern, beim
+  Koppeln und beim Abruf, sobald sich etwas ändert.
+- Connector Fassung 1.5.0 mit `?p=einstellungen` – die Dateien auf dem
+  Webserver bitte aktualisieren.
+
 ## 2.0.0.0
 
 ### OV-Budget heißt jetzt OV-Multitool

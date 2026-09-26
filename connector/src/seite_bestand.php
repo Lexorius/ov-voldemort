@@ -100,5 +100,6 @@ $anzahl = (int)($eintrag['anzahl'] ?? 0);
   <script src="<?= htmlspecialchars($basis) ?>assets/bestand.js" defer></script>
 <?php endif; ?>
 
+<?php require __DIR__ . '/fuss.php'; ?>
 </body>
 </html>

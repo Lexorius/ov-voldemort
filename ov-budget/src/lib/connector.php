@@ -321,6 +321,53 @@ function connector_zustand(array $c): array
 }
 
 /* ==================================================================== */
+/* Fußzeile des Connectors: Betreiber, Impressum, Datenschutz            */
+/* ==================================================================== */
+
+/** Was auf den Seiten des Connectors unten steht – aus den Einstellungen */
+function connector_einstellungen_paket(): array
+{
+    return [
+        'betreiber'       => trim((string)setting('connector_betreiber', '')),
+        'impressum_url'   => trim((string)setting('connector_impressum_url', '')),
+        'datenschutz_url' => trim((string)setting('connector_datenschutz_url', '')),
+    ];
+}
+
+/** Fußzeile an einen Connector schicken – nur, wenn sich etwas geändert hat */
+function connector_push_einstellungen(array $c, bool $erzwingen = false): bool
+{
+    $paket = connector_einstellungen_paket();
+    $stand = hash('sha256', (string)json_encode($paket));
+    $merker = 'connector_einstellungen_' . (int)$c['id'];
+    if (!$erzwingen && state_get($merker, '') === $stand) {
+        return false;
+    }
+    connector_call($c, 'einstellungen', ['einstellungen' => $paket]);
+    state_save($merker, $stand);
+    return true;
+}
+
+/** An alle gekoppelten Connectoren. Rückgabe: ['gesendet' => n, 'fehler' => [Name => Grund]] */
+function connector_push_einstellungen_all(bool $erzwingen = false): array
+{
+    $res = ['gesendet' => 0, 'fehler' => []];
+    foreach (connector_all(true) as $c) {
+        if (!connector_gekoppelt($c)) {
+            continue;
+        }
+        try {
+            if (connector_push_einstellungen($c, $erzwingen)) {
+                $res['gesendet']++;
+            }
+        } catch (Throwable $ex) {
+            $res['fehler'][(string)$c['name']] = $ex->getMessage();
+        }
+    }
+    return $res;
+}
+
+/* ==================================================================== */
 /* Prüfung: Ist der Connector sauber?                                    */
 /* ==================================================================== */
 

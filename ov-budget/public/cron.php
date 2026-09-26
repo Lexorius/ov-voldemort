@@ -107,6 +107,14 @@ $abrufe = [
         }
         return $aus;
     },
+    'Connector-Fußzeile' => static function (): array {
+        $r = connector_push_einstellungen_all();
+        if ($r['gesendet'] === 0 && !$r['fehler']) {
+            return [];
+        }
+        return [['status' => $r['fehler'] ? 'fehler' : 'ok', 'message' => sprintf('%d Connector(en) versorgt%s',
+            $r['gesendet'], $r['fehler'] ? ', nicht erreichbar: ' . implode(', ', array_keys($r['fehler'])) : '')]];
+    },
     'Connector-Prüfung' => static function (): array {
         $r = connector_pruefung_taeglich();
         if ($r['geprueft'] === 0 && $r['fehler'] === 0) {
