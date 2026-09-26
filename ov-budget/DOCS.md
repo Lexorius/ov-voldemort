@@ -424,6 +424,33 @@ Eine Rufnummer und eine ISSI können jeweils nur einmal vergeben werden; wer ein
 nimmt sie aus dem Bestand, statt sie zu löschen – dann bleibt sie zum
 Nachschlagen erhalten.
 
+## Ist der Connector sauber?
+
+Ein Connector steht auf einem öffentlichen Webserver – der einzige Teil, der
+nicht hinter Home Assistant liegt. Deshalb prüft OV-Budget ihn:
+*Verwaltung → Connectoren → Connector → Connector prüfen*, und ohne Zutun
+einmal täglich mit dem Abruf (abschaltbar unter *Einstellungen → Fahrzeuge*).
+
+* **Maßstab:** OV-Budget bringt die Prüfsummen (SHA-256) aller Dateien der
+  Connector-Fassung mit, die es kennt. Der Connector meldet signiert, was bei
+  ihm liegt. Verglichen wird: geändert, fehlt, fremd.
+* **Über das Netz:** Die Skripte, die Besucher im Browser ausführen
+  (`assets/*.js`), holt OV-Budget zusätzlich selbst ab und vergleicht sie.
+  Ein manipulierter Server kann in der Selbstprüfung lügen – nicht aber
+  darüber, was er tatsächlich ausliefert. Dazu Stichproben: Ist `daten/`
+  erreichbar, nimmt `?p=zustand` unsignierte Anfragen an, fehlen
+  Sicherheitskopfzeilen oder HSTS?
+* **Selbstprüfung dort:** Ausführbares in `daten/`, eine Ablage im
+  Dokumentenverzeichnis, beschreibbare Programmdateien, `display_errors`.
+* **Ergebnis:** *sauber*, *Hinweise* oder *ALARM*, mit jedem Befund im
+  Klartext. Bei Alarm geht eine Nachricht an die Leitung (Ereignis
+  *Connector-Prüfung schlägt an*), und die Seite sagt, was zu tun ist:
+  Dateien ersetzen, `daten/` durchsehen, neu koppeln, QR-Codes neu erzeugen.
+
+Beste Vorsorge: Der Webserver darf `public/` und `src/` des Connectors nicht
+beschreiben, nur `daten/`. Dann kann eine Lücke keine Datei dort ablegen –
+und die Prüfung sagt, ob das so eingerichtet ist.
+
 ## Veranstaltungen und Einladungen
 
 Anlegen und ändern darf die **OV-Leitung**; ob alle Mitglieder Veranstaltungen

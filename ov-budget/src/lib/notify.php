@@ -35,6 +35,8 @@ function notify_ereignisse(): array
                                  'text'  => 'An die Person, die den Punkt eingebracht hat, und alle, die schon mitdiskutiert haben.'],
         'besprechung'        => ['label' => 'Besprechung am nächsten Tag', 'taeglich' => true,
                                  'text'  => 'Einmal am Tag an alle mit Benachrichtigungen, wenn morgen eine Besprechung ansteht.'],
+        'connector_alarm'    => ['label' => 'Connector-Prüfung schlägt an',
+                                 'text'  => 'An die Leitung, wenn die tägliche Prüfung eines Connectors fremde oder veränderte Dateien findet.'],
     ];
 }
 

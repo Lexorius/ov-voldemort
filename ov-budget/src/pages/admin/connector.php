@@ -43,6 +43,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 break;
 
+            case 'pruefen':
+                if ($c) {
+                    $e = connector_pruefen($c);
+                    $hinweis = match ($e['stufe']) {
+                        'sauber'  => 'Geprüft: Der Connector ist sauber.',
+                        'hinweis' => 'Geprüft: keine Manipulation erkennbar, aber Hinweise – siehe unten.',
+                        default   => 'Geprüft: Es gibt Alarm-Befunde – bitte unten ansehen.',
+                    };
+                }
+                break;
+
             case 'trennen':
                 if ($c) {
                     connector_unpair($c);
@@ -92,6 +103,7 @@ render('admin/connector', [
          FROM vehicles WHERE qr_token <> '' AND qr_connector_id = ? ORDER BY bezeichnung",
         [(int)$c['id']]
     ) : [],
+    'pruefung'  => $c ? connector_pruefung_letzte($c) : null,
     'zustand'   => $zustand,
     'fehler'    => $fehler,
     'hinweis'   => $hinweis,

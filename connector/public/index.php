@@ -22,6 +22,7 @@ declare(strict_types=1);
  *   ?p=zaehlerliste         Zugänge setzen (POST, signiert)
  *   ?p=zaehler_abholen      Zählerstände abholen (POST, signiert)
  *   ?p=zustand              Zahlen für OV-Budget (POST, signiert)
+ *   ?p=pruefung             Selbstprüfung: Dateien und Befunde (POST, signiert)
  *   sonst                   Startseite: Feld für den Einladungscode
  *
  * Die kurze Adresse (z. B. https://i.example.de/AB23CD) kommt über eine
@@ -285,6 +286,11 @@ try {
         case 'zustand':
             con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'zustand');
             antwort(['ok' => true, 'zustand' => con_status()]);
+
+        /* ---------------- Selbstprüfung für OV-Budget ---------------- */
+        case 'pruefung':
+            con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'pruefung');
+            antwort(['ok' => true, 'pruefung' => con_pruefung()]);
 
         /* ---------------- Einladungsseite ---------------- */
         case 'einladung':

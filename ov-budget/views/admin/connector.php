@@ -1,5 +1,5 @@
 <?php
-/** @var array|null $c @var bool $aktiv @var array $fahrzeuge @var ?array $zustand
+/** @var array|null $c @var bool $aktiv @var array $fahrzeuge @var ?array $zustand @var ?array $pruefung
  *  @var string $fehler @var string $hinweis */
 $neu = $c === null;
 ?>
@@ -129,6 +129,9 @@ $neu = $c === null;
         <input type="hidden" name="action" value="zustand">
         <button class="btn btn--sec" type="submit">Zustand abfragen</button></form>
       <form method="post" class="inline-form"><?= csrf_field() ?>
+        <input type="hidden" name="action" value="pruefen">
+        <button class="btn btn--sec" type="submit">Connector prüfen</button></form>
+      <form method="post" class="inline-form"><?= csrf_field() ?>
         <input type="hidden" name="action" value="trennen">
         <button class="btn btn--sec" type="submit"
                 data-confirm="Kopplung lösen? Die QR-Codes und Einladungen funktionieren erst nach einer neuen Kopplung wieder."
@@ -136,6 +139,38 @@ $neu = $c === null;
     </div>
   <?php endif; ?>
 </div>
+
+<?php if (!empty($pruefung)): ?>
+<div class="card" id="pruefung">
+  <div class="card__head">
+    <h2>Ist der Connector sauber?</h2>
+    <span><?= badge(['label' => ['sauber' => 'sauber', 'hinweis' => 'Hinweise', 'alarm' => 'ALARM'][$pruefung['stufe']] ?? $pruefung['stufe'],
+        'color' => ['sauber' => '#15803d', 'hinweis' => '#b45309', 'alarm' => '#b91c1c'][$pruefung['stufe']] ?? '#64748b']) ?>
+      <span class="muted small">· <?= e(de_datetime((string)$pruefung['zeit'])) ?></span></span>
+  </div>
+  <p class="small"><?= (int)$pruefung['dateien'] ?> Dateien auf dem Server, <?= (int)$pruefung['geprueft'] ?> im Maßstab
+    (Fassung <?= e((string)$pruefung['erwartet']) ?>), <?= (int)$pruefung['js_geprueft'] ?> Skripte über das Netz
+    unverändert bestätigt.</p>
+  <?php if (!$pruefung['befunde']): ?>
+    <p class="small" style="color:var(--ok)">Alle Dateien entsprechen dem Maßstab, nichts Fremdes, die Ablage ist
+      nicht erreichbar, Signaturen greifen, Kopfzeilen sind gesetzt.</p>
+  <?php else: ?>
+    <ul class="small">
+      <?php foreach ($pruefung['befunde'] as $b): ?>
+        <li style="<?= $b['stufe'] === 'alarm' ? 'color:var(--bad);font-weight:700' : '' ?>"><?= e($b['text']) ?></li>
+      <?php endforeach; ?>
+    </ul>
+    <?php if ($pruefung['stufe'] === 'alarm'): ?>
+      <p class="small"><strong>Was jetzt?</strong> Den Connector nicht weiter benutzen, die Dateien auf dem Webserver
+        mit einer frischen Kopie aus dem Repository ersetzen, <span class="mono">daten/</span> durchsehen, dann neu
+        koppeln und alle QR-Codes neu erzeugen. Wie es dazu kam, steht meist im Zugriffsprotokoll des Webservers.</p>
+    <?php endif; ?>
+  <?php endif; ?>
+  <p class="small muted">Die Selbstprüfung des Connectors kann ein manipulierter Server fälschen. Deshalb vergleicht
+    OV-Budget mit den eigenen Prüfsummen und holt die Skripte, die Besucher ausführen, selbst über das Netz.
+    Läuft täglich mit dem Abruf; bei Alarm bekommt die Leitung eine Nachricht.</p>
+</div>
+<?php endif; ?>
 
 <?php if ($zustand !== null): ?>
 <div class="card">

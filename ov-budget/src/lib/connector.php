@@ -321,6 +321,214 @@ function connector_zustand(array $c): array
 }
 
 /* ==================================================================== */
+/* Prüfung: Ist der Connector sauber?                                    */
+/* ==================================================================== */
+
+/** Die Prüfsummen der Connector-Fassung, die OV-Budget kennt */
+function connector_manifest(): array
+{
+    static $m = null;
+    if ($m === null) {
+        $roh = json_decode((string)@file_get_contents(dirname(__DIR__) . '/connector-manifest.json'), true);
+        $m = is_array($roh) && is_array($roh['dateien'] ?? null) ? $roh : ['version' => '', 'dateien' => []];
+    }
+    return $m;
+}
+
+/** Eine Datei ohne Signatur holen, wie ein Browser. Rückgabe: [code, kopf, inhalt] */
+function connector_http_get(string $url, int $timeout = 10): array
+{
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true, CURLOPT_HEADER => true, CURLOPT_TIMEOUT => $timeout,
+        CURLOPT_CONNECTTIMEOUT => $timeout, CURLOPT_USERAGENT => 'OV-Budget/' . app_version(),
+        CURLOPT_FOLLOWLOCATION => false,
+    ]);
+    $roh = curl_exec($ch);
+    $code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    $kopfLaenge = (int)curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+    curl_close($ch);
+    if ($roh === false) {
+        return [0, '', ''];
+    }
+    return [$code, substr((string)$roh, 0, $kopfLaenge), substr((string)$roh, $kopfLaenge)];
+}
+
+/**
+ * Was OV-Budget selbst über das Netz sieht – unabhängig von der Selbstprüfung.
+ * Rückgabe: ['js' => [pfad => bool|null], 'daten_offen' => ?bool,
+ *            'unsigniert' => ?bool, 'kopfzeilen' => [fehlende], 'hsts' => ?bool]
+ */
+function connector_netzpruefung(array $c, array $manifest): array
+{
+    $basis = connector_url($c);
+    $out = ['js' => [], 'daten_offen' => null, 'unsigniert' => null, 'kopfzeilen' => [], 'hsts' => null];
+
+    foreach ($manifest['dateien'] as $rel => $soll) {
+        if (!str_starts_with($rel, 'public/assets/') || !str_ends_with($rel, '.js')) {
+            continue;
+        }
+        [$code, , $inhalt] = connector_http_get($basis . '/' . substr($rel, 7));
+        $out['js'][$rel] = $code === 200 ? hash('sha256', $inhalt) === (string)$soll['sha256'] : null;
+    }
+
+    [$code, , $inhalt] = connector_http_get($basis . '/../daten/kopplung.json');
+    $out['daten_offen'] = $code === 200 && str_contains($inhalt, 'ov_pubkey');
+
+    [$code, , $inhalt] = connector_http_get($basis . '/index.php?p=zustand');
+    $antwort = json_decode($inhalt, true);
+    $out['unsigniert'] = $code === 200 && is_array($antwort) && !empty($antwort['ok']);
+
+    [$code, $kopf] = connector_http_get($basis . '/');
+    if ($code > 0) {
+        foreach (['Content-Security-Policy', 'X-Frame-Options', 'X-Content-Type-Options'] as $k) {
+            if (!preg_match('/^' . preg_quote($k, '/') . ':/mi', $kopf)) {
+                $out['kopfzeilen'][] = $k;
+            }
+        }
+        $out['hsts'] = (bool)preg_match('/^Strict-Transport-Security:/mi', $kopf);
+    }
+    return $out;
+}
+
+/**
+ * Selbstprüfung, Maßstab und Netzsicht zu einem Urteil zusammenführen.
+ * Reine Funktion. Rückgabe: ['stufe' => sauber|hinweis|alarm, 'befunde' => [[stufe, text]], …]
+ */
+function connector_pruefung_auswerten(array $bericht, array $manifest, array $netz): array
+{
+    $befunde = [];
+    $ist = (array)($bericht['dateien'] ?? []);
+    $soll = (array)($manifest['dateien'] ?? []);
+
+    if ($soll === []) {
+        $befunde[] = ['stufe' => 'hinweis', 'text' => 'OV-Budget hat keinen Maßstab (connector-manifest.json fehlt) – nur die Selbstprüfung zählt.'];
+    }
+    if ((string)($bericht['version'] ?? '') !== (string)($manifest['version'] ?? '') && $soll !== []) {
+        $befunde[] = ['stufe' => 'hinweis', 'text' => sprintf('Der Connector läuft als Fassung %s, OV-Budget erwartet %s – bitte die Dateien auf dem Webserver aktualisieren.',
+            (string)($bericht['version'] ?? '?'), (string)$manifest['version'])];
+    }
+    $veraendert = [];
+    $fehlt = [];
+    foreach ($soll as $rel => $s) {
+        if (!isset($ist[$rel])) {
+            $fehlt[] = $rel;
+        } elseif ((string)$ist[$rel]['sha256'] !== (string)$s['sha256']) {
+            $veraendert[] = $rel;
+        }
+    }
+    $fremd = $soll === [] ? (array)($bericht['fremd'] ?? []) : array_values(array_diff(array_keys($ist), array_keys($soll)));
+    foreach ($veraendert as $f) {
+        $befunde[] = ['stufe' => 'alarm', 'text' => 'Datei weicht vom Maßstab ab: ' . $f];
+    }
+    foreach ($fehlt as $f) {
+        $befunde[] = ['stufe' => 'hinweis', 'text' => 'Datei fehlt auf dem Server: ' . $f];
+    }
+    foreach ($fremd as $f) {
+        $befunde[] = ['stufe' => 'alarm', 'text' => 'Fremde Datei auf dem Server: ' . $f];
+    }
+    foreach ((array)($bericht['befunde'] ?? []) as $b) {
+        $text = (string)($b['text'] ?? '');
+        if ($text !== '' && !str_starts_with($text, 'Datei gehört nicht zum Connector')) {
+            $befunde[] = ['stufe' => ($b['stufe'] ?? '') === 'alarm' ? 'alarm' : 'hinweis', 'text' => 'Selbstprüfung: ' . $text];
+        }
+    }
+    foreach ((array)($netz['js'] ?? []) as $rel => $ok) {
+        if ($ok === false) {
+            $befunde[] = ['stufe' => 'alarm', 'text' => 'Ausgeliefertes Skript weicht ab: ' . $rel . ' – so erreicht es die Browser der Besucher.'];
+        } elseif ($ok === null) {
+            $befunde[] = ['stufe' => 'hinweis', 'text' => 'Skript nicht abrufbar: ' . $rel];
+        }
+    }
+    if (($netz['daten_offen'] ?? null) === true) {
+        $befunde[] = ['stufe' => 'alarm', 'text' => 'daten/kopplung.json ist von außen lesbar.'];
+    }
+    if (($netz['unsigniert'] ?? null) === true) {
+        $befunde[] = ['stufe' => 'alarm', 'text' => '?p=zustand antwortet ohne Signatur – das darf nicht sein.'];
+    }
+    foreach ((array)($netz['kopfzeilen'] ?? []) as $k) {
+        $befunde[] = ['stufe' => 'hinweis', 'text' => 'Kopfzeile fehlt: ' . $k];
+    }
+    if (($netz['hsts'] ?? null) === false) {
+        $befunde[] = ['stufe' => 'hinweis', 'text' => 'Kein Strict-Transport-Security – im Webserver einschalten.'];
+    }
+
+    $stufe = 'sauber';
+    foreach ($befunde as $b) {
+        if ($b['stufe'] === 'alarm') {
+            $stufe = 'alarm';
+            break;
+        }
+        $stufe = 'hinweis';
+    }
+    return [
+        'stufe'      => $stufe,
+        'befunde'    => $befunde,
+        'dateien'    => count($ist),
+        'geprueft'   => count($soll),
+        'version'    => (string)($bericht['version'] ?? ''),
+        'erwartet'   => (string)($manifest['version'] ?? ''),
+        'js_geprueft' => count(array_filter((array)($netz['js'] ?? []), static fn($v) => $v === true)),
+        'zeit'       => date('Y-m-d H:i:s'),
+    ];
+}
+
+/** Prüfung ausführen und das Ergebnis merken */
+function connector_pruefen(array $c): array
+{
+    $manifest = connector_manifest();
+    $bericht = (array)(connector_call($c, 'pruefung')['pruefung'] ?? []);
+    $netz = connector_netzpruefung($c, $manifest);
+    $ergebnis = connector_pruefung_auswerten($bericht, $manifest, $netz);
+    state_save('connector_pruefung_' . (int)$c['id'], (string)json_encode($ergebnis, JSON_UNESCAPED_UNICODE));
+    audit('connector.geprueft', 'connector', (int)$c['id'], $ergebnis['stufe'] . ', ' . count($ergebnis['befunde']) . ' Befund(e)');
+    return $ergebnis;
+}
+
+function connector_pruefung_letzte(array $c): ?array
+{
+    $r = json_decode(state_get('connector_pruefung_' . (int)$c['id'], ''), true);
+    return is_array($r) ? $r : null;
+}
+
+/** Für den Abruf: einmal am Tag alle gekoppelten Connectoren prüfen, bei Alarm die Leitung benachrichtigen */
+function connector_pruefung_taeglich(): array
+{
+    $res = ['geprueft' => 0, 'alarm' => 0, 'fehler' => 0];
+    if (!setting_bool('connector_pruefung_taeglich', true)) {
+        return $res;
+    }
+    if (time() - (int)state_get('connector_pruefung_letzter_lauf', '0') < 86400) {
+        return $res;
+    }
+    state_save('connector_pruefung_letzter_lauf', (string)time());
+    foreach (connector_all(true) as $c) {
+        if (!connector_gekoppelt($c)) {
+            continue;
+        }
+        $vorher = connector_pruefung_letzte($c);
+        try {
+            $e = connector_pruefen($c);
+        } catch (Throwable $ex) {
+            $res['fehler']++;
+            continue;
+        }
+        $res['geprueft']++;
+        if ($e['stufe'] === 'alarm') {
+            $res['alarm']++;
+            if (($vorher['stufe'] ?? '') !== 'alarm') {
+                notify_queue(notify_leitung(), 'connector_alarm',
+                    'Connector „' . $c['name'] . '": Prüfung schlägt an',
+                    implode(' · ', array_map(static fn($b) => $b['text'],
+                        array_slice(array_filter($e['befunde'], static fn($b) => $b['stufe'] === 'alarm'), 0, 3))),
+                    notify_url('?p=admin_connector&id=' . (int)$c['id']));
+            }
+        }
+    }
+    return $res;
+}
+
+/* ==================================================================== */
 /* Zugänge der Fahrzeuge                                                 */
 /* ==================================================================== */
 

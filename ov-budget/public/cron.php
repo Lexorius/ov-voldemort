@@ -107,6 +107,16 @@ $abrufe = [
         }
         return $aus;
     },
+    'Connector-Prüfung' => static function (): array {
+        $r = connector_pruefung_taeglich();
+        if ($r['geprueft'] === 0 && $r['fehler'] === 0) {
+            return [];
+        }
+        return [['status' => $r['alarm'] || $r['fehler'] ? 'fehler' : 'ok', 'message' => sprintf(
+            '%d Connector(en) geprüft%s%s', $r['geprueft'],
+            $r['alarm'] ? ', ' . $r['alarm'] . ' mit ALARM' : '',
+            $r['fehler'] ? ', ' . $r['fehler'] . ' nicht erreichbar' : '')]];
+    },
     'Sicherung'         => static function (): array {
         $m = backup_automatisch();
         return $m === null ? [] : [['status' => 'ok', 'message' => $m]];

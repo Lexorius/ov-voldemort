@@ -1,5 +1,27 @@
 # Änderungsverlauf
 
+## 1.48.0
+
+### Ist der Connector sauber?
+
+Der Connector ist der einzige Teil auf einem öffentlichen Server. OV-Budget
+kann ihn jetzt prüfen – auf Knopfdruck und täglich mit dem Abruf.
+
+- **Maßstab:** OV-Budget kennt die Prüfsummen aller Dateien der
+  Connector-Fassung. Der Connector meldet signiert, was bei ihm liegt;
+  verglichen wird: geändert, fehlt, fremd.
+- **Über das Netz:** Die Skripte für die Besucher holt OV-Budget selbst ab
+  und vergleicht sie – ein manipulierter Server kann in der Selbstprüfung
+  lügen, nicht aber darüber, was er ausliefert. Dazu Stichproben auf offene
+  Ablage, unsignierte Anfragen, fehlende Kopfzeilen und HSTS.
+- **Selbstprüfung** auf dem Connector: Ausführbares in `daten/`, Ablage im
+  Web, beschreibbare Programmdateien, `display_errors`.
+- Ergebnis *sauber*, *Hinweise* oder *ALARM* mit jedem Befund im Klartext
+  und einer Anleitung, was bei Alarm zu tun ist. Bei Alarm Nachricht an die
+  Leitung (neues Ereignis).
+- Connector Fassung 1.4.0 mit `?p=pruefung` und `bin/manifest.php` – die
+  Dateien auf dem Webserver bitte aktualisieren.
+
 ## 1.47.0
 
 ### Verbrauch: Strom, Gas und Wasser

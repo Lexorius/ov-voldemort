@@ -157,6 +157,37 @@ server {
   Solange die Kopplung aussteht, steht dort die Einrichtungsanleitung – zu dem
   Zeitpunkt gibt es noch nichts zu verraten.
 
+## Ist der Connector sauber?
+
+OV-Budget kann das prüfen: *Verwaltung → Connectoren → Connector prüfen*,
+auf Wunsch täglich mit Nachricht an die Leitung. Die Prüfung hat zwei Teile:
+
+* **Selbstprüfung** (signierte Anfrage `?p=pruefung`): Der Connector meldet
+  jede Datei unter `public/` und `src/` mit SHA-256, dazu Befunde – Dateien,
+  die nicht zu ihm gehören, Ausführbares in `daten/`, eine Ablage im
+  Dokumentenverzeichnis, beschreibbare Programmdateien, `display_errors`.
+* **Eigener Maßstab:** OV-Budget bringt die Prüfsummen der Fassung mit, die
+  es kennt (`connector-manifest.json`), und vergleicht: geändert, fehlt,
+  fremd. Zusätzlich holt es die Skripte, die Besucher im Browser ausführen
+  (`assets/*.js`), **selbst über das Netz** und vergleicht sie – ein
+  manipulierter Server kann in der Selbstprüfung lügen, aber nicht darüber,
+  was er ausliefert. Dazu Stichproben: Ist `daten/` von außen erreichbar,
+  nimmt `?p=zustand` unsignierte Anfragen an, fehlen Sicherheitskopfzeilen?
+
+Nach jeder Änderung an `public/` oder `src/` die Prüfsummen neu festhalten:
+
+```
+php bin/manifest.php
+```
+
+Das schreibt `manifest.json` hier und `ov-budget/src/connector-manifest.json`.
+
+Was die Prüfung **nicht** kann: einen Server erkennen, der die Selbstprüfung
+fälscht *und* die Skripte unverändert ausliefert. Deshalb ist die beste
+Vorsorge, dass der Webserver `public/` und `src/` gar nicht beschreiben darf
+– dann kann eine Lücke in PHP keine Datei dort ablegen. Die Prüfung sagt, ob
+das so ist.
+
 ## Was offen bleibt
 
 Drei Dinge lassen sich nicht wegprogrammieren — sie gehören zum Aufbau:
@@ -190,5 +221,7 @@ connector/
 │   ├── seite_einladung.php
 │   ├── seite_bestand.php   "ist am Lagerort"
 │   └── seite_zaehler.php   "Zählerstand melden"
+├── bin/manifest.php   Prüfsummen festhalten
+├── manifest.json      Prüfsummen dieser Fassung
 └── daten/             wird beim ersten Aufruf angelegt (nicht ins Web!)
 ```

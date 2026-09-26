@@ -1,0 +1,55 @@
+{
+    "programm": "OV-Budget-Connector",
+    "version": "1.4.0",
+    "erzeugt": "2026-09-26T16:21:07+00:00",
+    "dateien": {
+        "public/.htaccess": {
+            "sha256": "75726923baf2ef95ad108fafbe83b626f19802a2e500bd93799b18cc04d7efea",
+            "bytes": 595
+        },
+        "public/assets/bestand.js": {
+            "sha256": "4e427a9e3505b9d0cfbf849da15a89faf70157b555bf5fc689391ec15313f6a9",
+            "bytes": 6609
+        },
+        "public/assets/einladung.js": {
+            "sha256": "e4bb08447ecf0d85e1f36d8162f854062b861db4fdee80fe659c6b52565d707d",
+            "bytes": 6002
+        },
+        "public/assets/melden.js": {
+            "sha256": "2f138d19e4baac27a2bee986d2c09da66c64001bb378ddcdcabb6314dc4b3e40",
+            "bytes": 7411
+        },
+        "public/assets/zaehler.js": {
+            "sha256": "1c69b58a2a4a8047a3b172b97dee12c70f5a9e86d2187c677cb817c5743b453d",
+            "bytes": 5437
+        },
+        "public/index.php": {
+            "sha256": "faa6cc82f832e1ecaab0c0e79f24e2a7050aaa837509cd9aee04fe22be8f6eea",
+            "bytes": 15103
+        },
+        "src/connector.php": {
+            "sha256": "d09d6ac5994ed86ce94250fc7712dd3f858113c0a8149c1b31c0347bba014672",
+            "bytes": 39456
+        },
+        "src/seite_bestand.php": {
+            "sha256": "366716cc46650dd32bd1c43c50ab97127504b3c963a80bbff43324fcf4cce7a0",
+            "bytes": 4928
+        },
+        "src/seite_einladung.php": {
+            "sha256": "035ed1dbe00717f858778eba318dba83688ba4b7da6861ad683aa33a1bfa065a",
+            "bytes": 7924
+        },
+        "src/seite_melden.php": {
+            "sha256": "5b9cac5edf47589a0d6d2884404ef0dfd61735fdc9a46e9972073a8e802ee2c2",
+            "bytes": 3978
+        },
+        "src/seite_start.php": {
+            "sha256": "b89e344de47e05338a60eea9e8bb35e20516860bf4ac19e926e288dd2c668665",
+            "bytes": 3426
+        },
+        "src/seite_zaehler.php": {
+            "sha256": "ef58988e3de851524fc2a3fbc120a8fdff8ab1135acd9cb8f6180b4353c5dc78",
+            "bytes": 4626
+        }
+    }
+}

@@ -32,7 +32,7 @@ declare(strict_types=1);
  * Gespeichert wird in Dateien unterhalb von daten/ – keine Datenbank nötig.
  */
 
-const CON_VERSION = '1.3.0';
+const CON_VERSION = '1.4.0';
 
 /** Höchstalter einer signierten Anfrage in Sekunden (gegen Wiedereinspielen) */
 const CON_ZEITFENSTER = 300;
@@ -843,6 +843,140 @@ function con_zaehlerstaende_abholen(int $max = 200): array
         }
     }
     return $out;
+}
+
+/* ==================================================================== */
+/* Prüfung: Sind alle Dateien die, die sie sein sollen?                  */
+/* ==================================================================== */
+
+/** Dateien, die zum Connector gehören: alles unter public/ und src/ */
+function con_dateien_auflisten(string $wurzel): array
+{
+    $out = [];
+    foreach (['public', 'src'] as $ordner) {
+        $basis = $wurzel . '/' . $ordner;
+        if (!is_dir($basis)) {
+            continue;
+        }
+        $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($basis, FilesystemIterator::SKIP_DOTS));
+        foreach ($it as $f) {
+            if ($f->isFile()) {
+                $rel = $ordner . '/' . str_replace('\\', '/', substr($f->getPathname(), strlen($basis) + 1));
+                $out[$rel] = $f->getPathname();
+            }
+        }
+    }
+    ksort($out);
+    return $out;
+}
+
+/** Prüfsummen aller Dateien – Grundlage der manifest.json. Reine Funktion bis aufs Lesen. */
+function con_manifest_erzeugen(string $wurzel): array
+{
+    $dateien = [];
+    foreach (con_dateien_auflisten($wurzel) as $rel => $pfad) {
+        $dateien[$rel] = ['sha256' => hash_file('sha256', $pfad), 'bytes' => (int)filesize($pfad)];
+    }
+    return ['programm' => 'OV-Budget-Connector', 'version' => CON_VERSION, 'erzeugt' => date('c'), 'dateien' => $dateien];
+}
+
+/** Was in daten/ liegen darf – alles andere ist verdächtig. Reine Funktion. */
+function con_daten_erwartet(string $name, bool $istOrdner): bool
+{
+    if ($istOrdner) {
+        return in_array($name, ['meldungen', 'rueckmeldungen', 'bestandsmeldungen', 'zaehlerstaende'], true);
+    }
+    if (in_array($name, ['.htaccess', 'index.html', 'kopplung.json', 'kopplungscode.txt', 'fahrzeuge.json',
+                         'veranstaltungen.json', 'einladungen.json', 'bestand.json', 'zaehler.json',
+                         'nonces.json', 'limit.json', 'protokoll.log'], true)) {
+        return true;
+    }
+    return (bool)preg_match('/^[a-z]+\.json\.(lock|tmp[0-9a-f]{8})$/', $name);
+}
+
+/**
+ * Selbstprüfung: alle Dateien mit Prüfsumme, dazu Befunde. Was hier steht,
+ * hat ein manipulierter Server selbst geschrieben – OV-Budget vergleicht
+ * deshalb mit seinem eigenen Maßstab und prüft die ausgelieferten Dateien
+ * zusätzlich über das Netz.
+ */
+function con_pruefung(?string $wurzel = null): array
+{
+    $wurzel ??= dirname(__DIR__);
+    $dateien = [];
+    $schreibbar = 0;
+    foreach (con_dateien_auflisten($wurzel) as $rel => $pfad) {
+        $dateien[$rel] = [
+            'sha256'     => hash_file('sha256', $pfad),
+            'bytes'      => (int)filesize($pfad),
+            'geaendert'  => date('c', (int)filemtime($pfad)),
+            'schreibbar' => is_writable($pfad),
+        ];
+        if (is_writable($pfad)) {
+            $schreibbar++;
+        }
+    }
+    $befunde = [];
+
+    // Fremde Dateien laut eigener manifest.json (OV-Budget rechnet das selbst noch einmal)
+    $eigenes = json_decode((string)@file_get_contents($wurzel . '/manifest.json'), true);
+    $fremd = [];
+    if (is_array($eigenes) && is_array($eigenes['dateien'] ?? null)) {
+        $fremd = array_values(array_diff(array_keys($dateien), array_keys($eigenes['dateien'])));
+    }
+    foreach ($fremd as $f) {
+        $befunde[] = ['stufe' => 'alarm', 'text' => 'Datei gehört nicht zum Connector: ' . $f];
+    }
+
+    // Ausführbares in der Ablage: dort dürfen nur JSON, Logs und Sperren liegen
+    $daten = con_dir();
+    foreach (scandir($daten) ?: [] as $name) {
+        if ($name === '.' || $name === '..') {
+            continue;
+        }
+        $pfad = $daten . '/' . $name;
+        if (!con_daten_erwartet($name, is_dir($pfad))) {
+            $befunde[] = ['stufe' => 'alarm', 'text' => 'Unerwartet in daten/: ' . $name];
+        }
+    }
+    $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($daten, FilesystemIterator::SKIP_DOTS));
+    foreach ($it as $f) {
+        // Die oberste Ebene ist oben schon geprüft; hier zählen die Unterordner
+        if ($f->isFile() && $f->getPath() !== $daten
+            && preg_match('/\.(php|phtml|phar|pl|py|sh|cgi|htaccess)$/i', $f->getFilename())) {
+            $befunde[] = ['stufe' => 'alarm', 'text' => 'Ausführbare Datei in der Ablage: '
+                . substr($f->getPathname(), strlen($daten) + 1)];
+        }
+    }
+
+    // Liegt die Ablage im Web? Dann würde .htaccess allein sie schützen
+    $docroot = realpath((string)($_SERVER['DOCUMENT_ROOT'] ?? ''));
+    $ablage = realpath($daten);
+    if ($docroot && $ablage && str_starts_with($ablage, $docroot)) {
+        $befunde[] = ['stufe' => 'alarm', 'text' => 'Die Ablage daten/ liegt im Dokumentenverzeichnis des Webservers.'];
+    }
+    if (!is_file($daten . '/.htaccess')) {
+        $befunde[] = ['stufe' => 'hinweis', 'text' => 'In daten/ fehlt die .htaccess.'];
+    }
+    if ($schreibbar > 0) {
+        $befunde[] = ['stufe' => 'hinweis', 'text' => sprintf('%d Programmdatei(en) sind für den Webserver beschreibbar – '
+            . 'besser gehören public/ und src/ einem anderen Benutzer, nur daten/ dem Webserver.', $schreibbar)];
+    }
+    if (filter_var(ini_get('display_errors'), FILTER_VALIDATE_BOOLEAN)) {
+        $befunde[] = ['stufe' => 'hinweis', 'text' => 'display_errors ist eingeschaltet – Fehlermeldungen verraten Pfade.'];
+    }
+    if (filter_var(ini_get('allow_url_include'), FILTER_VALIDATE_BOOLEAN)) {
+        $befunde[] = ['stufe' => 'alarm', 'text' => 'allow_url_include ist eingeschaltet.'];
+    }
+
+    return [
+        'version'  => CON_VERSION,
+        'php'      => PHP_VERSION,
+        'zeit'     => date('c'),
+        'dateien'  => $dateien,
+        'fremd'    => $fremd,
+        'befunde'  => $befunde,
+    ];
 }
 
 /* ==================================================================== */
