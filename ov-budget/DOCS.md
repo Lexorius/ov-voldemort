@@ -357,6 +357,34 @@ Gruppe – dann steht dort „6 von 8 Geräten gemeldet".
 Dafür braucht der Connector die Verwendung **Funkgeräte** (*Verwaltung →
 Connectoren*). Abgeholt wird im Takt des Standort-Intervalls und auf Knopfdruck.
 
+## Verbrauch: Strom, Gas und Wasser
+
+Das Modul führt Zähler und ihre Stände und rechnet daraus Verbrauch und Kosten.
+
+* **Zähler:** Art (Strom, Gas, Wasser), Name, Zählernummer, Standort, Einheit
+  des Zählers. Für Gas zusätzlich eine **Umrechnung** m³ → kWh (Brennwert ×
+  Zustandszahl, meist rund 10), wenn der Tarif je kWh gilt.
+* **Quelle je Zähler:**
+  * **Home Assistant** – eine Entität aus der Liste wählen (Sensoren mit
+    Energie-, Gas- oder Wassereinheit) oder die Kennung eintippen. Der Abruf
+    über `cron.php` liest den Stand alle *n* Stunden (Vorgabe 24). Ein
+    Faktor rechnet um, wenn der Sensor etwa Wh statt kWh liefert. Der Sensor
+    muss einen **Zählerstand** liefern, keinen Momentanwert.
+  * **Von Hand** – am Bildschirm (Übersicht oder Zählerseite) oder per
+    **QR-Code am Zähler**: Wer ihn scannt, tippt den Stand ein – ohne
+    Anmeldung, verschlüsselt über den Connector (Verwendung *Zähler*).
+* **Rechnung:** Zwischen zwei Ablesungen wird der Verbrauch gleichmäßig auf
+  die Tage verteilt; so entstehen Monatswerte auch aus unregelmäßigen
+  Ablesungen. Ein Rücklauf (Zählerwechsel) zählt nicht als Verbrauch.
+* **Tarife** je Art mit Zeitraum von–bis, Arbeitspreis je Einheit und
+  Grundpreis je Monat. Für jeden Monat gilt der Tarif, der am 15. gültig ist.
+  Kosten = Arbeitspreis × Verbrauch (nach Umrechnung) + Grundpreis anteilig.
+* **Übersicht:** je Zähler letzter Stand, Verbrauch in 30 Tagen und im Jahr,
+  Kosten; je Art die Jahressumme. Zähler ohne Stand seit über 35 Tagen werden
+  angemahnt. CSV-Export aller Stände.
+* **Rechte:** Sehen nur Leitung und Administration, per Einstellung alle
+  Mitglieder; wer sieht, darf auch Stände eintragen (abschaltbar).
+
 ## SIM-Karten
 
 Wer im Ortsverband Karten für Router, Tablets und Diensthandys verwaltet,
@@ -547,6 +575,8 @@ Gerät „OV-Budget" zusammen.
     nicht gemeldet
   * SIM- und TETRA-Karten: gesamt, TETRA, ohne Zuordnung, Vertrag läuft aus,
     Kosten je Monat
+  * Verbrauch: Strom, Gas und Wasser im Jahr, Kosten, Zähler ohne aktuellen
+    Stand
   * Diagnose: gekoppelte Connectoren, letzte Abrufe (Connector, Stein.APP,
     Divera), letzte Sicherung und Anzahl der Sicherungen
 * **Je Fahrzeug** (abschaltbar) ein eigenes Gerät mit Status, Funkstatus, HU,

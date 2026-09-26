@@ -38,6 +38,7 @@ const CONNECTOR_ZWECKE = [
     'fahrzeuge'       => 'Fahrzeuge: Standort melden per QR-Code',
     'veranstaltungen' => 'Veranstaltungen: Einladungen und Rückmeldungen',
     'bestand'         => 'Funkgeräte: „ist am Lagerort" per QR-Code',
+    'verbrauch'       => 'Zähler: Zählerstand ablesen per QR-Code',
 ];
 
 /* ==================================================================== */
@@ -68,6 +69,7 @@ function connector_taugt(array $c, string $zweck): bool
     $spalte = match ($zweck) {
         'veranstaltungen' => 'fuer_veranstaltungen',
         'bestand'         => 'fuer_bestand',
+        'verbrauch'       => 'fuer_verbrauch',
         default           => 'fuer_fahrzeuge',
     };
     return (int)($c['is_active'] ?? 0) === 1
@@ -152,6 +154,7 @@ function connector_save_from_post(?array $c): array
         'fuer_fahrzeuge'       => post_bool('fuer_fahrzeuge') ? 1 : 0,
         'fuer_veranstaltungen' => post_bool('fuer_veranstaltungen') ? 1 : 0,
         'fuer_bestand'         => post_bool('fuer_bestand') ? 1 : 0,
+        'fuer_verbrauch'       => post_bool('fuer_verbrauch') ? 1 : 0,
         'is_active'            => post_bool('is_active') ? 1 : 0,
         'notiz'                => post_str('notiz'),
     ];
@@ -693,6 +696,113 @@ function connector_bestand_due(?int $jetzt = null): bool
     }
     $intervall = max(1, setting_int('connector_intervall_minuten', 2)) * 60;
     return $jetzt - (int)state_get('connector_bestand_letzter_abruf', '0') >= $intervall;
+}
+
+/* ==================================================================== */
+/* Zähler: Stände per QR-Code                                            */
+/* ==================================================================== */
+
+/** Adresse im QR-Code am Zähler. Name und Nummer hängen hinter dem #. */
+function connector_qr_zaehler_url(array $c, string $token, string $name = ''): string
+{
+    $url = connector_url($c) . '/index.php?p=zaehler&z=' . rawurlencode($token);
+    $name = trim($name);
+    return $name === '' ? $url : $url . '#n=' . b64u_encode($name);
+}
+
+/** Je Zugang nur Prüfsumme, Art und Einheit – die Seite muss "kWh" schreiben können */
+function connector_zaehler_paket(array $c): array
+{
+    $liste = [];
+    foreach (db_all("SELECT qr_token, art, einheit FROM meters
+                     WHERE qr_token <> '' AND is_active = 1 AND qr_connector_id = ?", [(int)$c['id']]) as $m) {
+        $liste[] = ['kennung' => connector_kennung((string)$m['qr_token']),
+                    'art' => (string)$m['art'], 'einheit' => (string)$m['einheit']];
+    }
+    return $liste;
+}
+
+/** Zugänge anmelden – geschickt wird nur, wenn sich etwas geändert hat */
+function connector_push_zaehler(array $c, bool $erzwingen = false): array
+{
+    $paket = connector_zaehler_paket($c);
+    $stand = hash('sha256', (string)json_encode($paket));
+    $merker = 'connector_zaehler_' . (int)$c['id'];
+    if (!$erzwingen && state_get($merker, '') === $stand) {
+        return ['gesendet' => false, 'zugaenge' => count($paket)];
+    }
+    $antwort = connector_call($c, 'zaehlerliste', ['zaehler' => $paket]);
+    state_save($merker, $stand);
+    return ['gesendet' => true, 'zugaenge' => (int)($antwort['zaehler'] ?? count($paket))];
+}
+
+/** Zählerstände abholen und eintragen. Rückgabe: ['geholt', 'uebernommen', 'fehler'] */
+function connector_fetch_zaehler(array $c): array
+{
+    $res = ['geholt' => 0, 'uebernommen' => 0, 'fehler' => 0];
+    if (!connector_taugt($c, 'verbrauch')) {
+        return $res;
+    }
+    if (state_get('connector_zaehler_' . (int)$c['id'], '') === '') {
+        connector_push_zaehler($c, true);
+    }
+    $antwort = connector_call($c, 'zaehler_abholen', ['max' => 200]);
+    $meldungen = (array)($antwort['meldungen'] ?? []);
+    $res['geholt'] = count($meldungen);
+    if (!$meldungen) {
+        return $res;
+    }
+    $ziele = [];
+    foreach (db_all("SELECT * FROM meters WHERE qr_token <> '' AND qr_connector_id = ?", [(int)$c['id']]) as $m) {
+        $ziele[connector_kennung((string)$m['qr_token'])] = $m;
+    }
+    usort($meldungen, static fn($a, $b) => (int)($a['ts'] ?? 0) <=> (int)($b['ts'] ?? 0));
+    foreach ($meldungen as $m) {
+        $meter = $ziele[(string)($m['zugang'] ?? '')] ?? null;
+        if ($meter === null) {
+            $res['fehler']++;
+            continue;
+        }
+        try {
+            $daten = connector_entschluesseln((string)($m['daten'] ?? ''), (string)$c['pem'], ['stand']);
+        } catch (Throwable $ex) {
+            $res['fehler']++;
+            continue;
+        }
+        if (!is_numeric($daten['stand']) || meter_qr_anwenden($meter, $daten, (int)($m['ts'] ?? time())) !== null) {
+            $res['fehler']++;
+            continue;
+        }
+        $res['uebernommen']++;
+    }
+    return $res;
+}
+
+/** Anmelden und abholen bei allen Connectoren für Zähler */
+function connector_zaehler_sync(): array
+{
+    $res = ['connectoren' => 0, 'gesendet' => 0, 'geholt' => 0, 'uebernommen' => 0, 'fehler' => 0];
+    foreach (connector_liste('verbrauch') as $c) {
+        $res['connectoren']++;
+        $push = connector_push_zaehler($c);
+        $res['gesendet'] += $push['gesendet'] ? 1 : 0;
+        foreach (connector_fetch_zaehler($c) as $k => $v) {
+            $res[$k] += $v;
+        }
+    }
+    state_save('connector_zaehler_letzter_abruf', (string)time());
+    return $res;
+}
+
+/** Ist ein Abgleich der Zählerstände fällig? */
+function connector_zaehler_due(?int $jetzt = null): bool
+{
+    $jetzt ??= time();
+    if (!connector_for('verbrauch')) {
+        return false;
+    }
+    $intervall = max(1, setting_int('connector_intervall_minuten', 2)) * 60;
+    return $jetzt - (int)state_get('connector_zaehler_letzter_abruf', '0') >= $intervall;
 }
 
 /* ==================================================================== */

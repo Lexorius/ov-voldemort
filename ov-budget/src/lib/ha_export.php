@@ -85,6 +85,15 @@ function ha_sensoren(): array
         'ausgaben_jahr'      => ['name' => 'Ausgaben im Haushaltsjahr', 'icon' => 'mdi:cash-minus'] + $geld,
         'einnahmen_jahr'     => ['name' => 'Einnahmen im Haushaltsjahr', 'icon' => 'mdi:cash-plus'] + $geld,
         'saldo_jahr'         => ['name' => 'Saldo im Haushaltsjahr', 'icon' => 'mdi:scale-balance'] + $geld,
+        'verbrauch_strom_jahr' => ['name' => 'Stromverbrauch im Jahr', 'unit' => 'kWh', 'device_class' => 'energy',
+                                   'state_class' => 'total', 'icon' => 'mdi:flash'],
+        'verbrauch_gas_jahr' => ['name' => 'Gasverbrauch im Jahr', 'unit' => 'm³', 'device_class' => 'gas',
+                                 'state_class' => 'total', 'icon' => 'mdi:fire'],
+        'verbrauch_wasser_jahr' => ['name' => 'Wasserverbrauch im Jahr', 'unit' => 'm³', 'device_class' => 'water',
+                                    'state_class' => 'total', 'icon' => 'mdi:water'],
+        'verbrauch_kosten_jahr' => ['name' => 'Energie- und Wasserkosten im Jahr', 'icon' => 'mdi:cash-multiple'] + $geld,
+        'zaehler_ohne_stand' => ['name' => 'Zähler ohne aktuellen Stand', 'unit' => 'Zähler',
+                                 'icon' => 'mdi:counter', 'state_class' => 'measurement'],
         'connectoren_gekoppelt' => ['name' => 'Gekoppelte Connectoren', 'unit' => 'Connectoren',
                                     'icon' => 'mdi:lan-connect', 'state_class' => 'measurement', 'diagnose' => true],
         'connector_letzter_abruf' => ['name' => 'Connector letzter Abruf', 'device_class' => 'timestamp',
@@ -208,6 +217,7 @@ function ha_werte(): array
         }
     }
     $sicherungen = function_exists('backup_list') && backup_problem() === null ? count(backup_list()) : 0;
+    $verbrauch = verbrauch_stats(meter_query([]), tarif_query(), (int)date('Y'));
 
     return [
         'budget_gesamt'         => round($zahlen['budget'], 2),
@@ -250,6 +260,11 @@ function ha_werte(): array
         'ausgaben_jahr'         => round($zahlen['ausgaben'], 2),
         'einnahmen_jahr'        => round($zahlen['einnahmen'], 2),
         'saldo_jahr'            => round($zahlen['einnahmen'] - $zahlen['ausgaben'], 2),
+        'verbrauch_strom_jahr'  => round($verbrauch['je_art']['strom']['jahr'], 1),
+        'verbrauch_gas_jahr'    => round($verbrauch['je_art']['gas']['jahr'], 1),
+        'verbrauch_wasser_jahr' => round($verbrauch['je_art']['wasser']['jahr'], 1),
+        'verbrauch_kosten_jahr' => round($verbrauch['kosten_jahr'], 2),
+        'zaehler_ohne_stand'    => (int)$verbrauch['alt'],
         'connectoren_gekoppelt' => $gekoppelt,
         'connector_letzter_abruf' => ha_zeit(max(
             (int)state_get('connector_letzter_abruf', '0'),

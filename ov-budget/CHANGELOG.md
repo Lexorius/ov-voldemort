@@ -1,5 +1,27 @@
 # Änderungsverlauf
 
+## 1.47.0
+
+### Verbrauch: Strom, Gas und Wasser
+
+Neues Modul für Zählerstände und was daraus folgt.
+
+- **Zähler** je Art mit Nummer, Standort und Einheit; bei Gas eine Umrechnung
+  m³ → kWh für den Tarif.
+- **Quelle wählbar:** aus **Home Assistant** – die passenden Sensoren stehen
+  zur Auswahl, der Abruf liest den Stand alle 24 Stunden (einstellbar) – oder
+  **von Hand**, am Bildschirm oder **per QR-Code am Zähler**. Der QR-Weg läuft
+  verschlüsselt über den Connector; der kennt weder Zähler noch Stand.
+- **Rechnung:** Verbrauch je Monat und Jahr aus der Kette der Stände,
+  gleichmäßig auf die Tage verteilt; Zählerwechsel werden erkannt.
+- **Tarife** für Strom, Gas und Wasser getrennt, jeweils mit Zeitraum
+  von–bis, Arbeitspreis und Grundpreis. Kosten je Monat und Jahr.
+- Übersicht mit Jahressummen, Mahnung für Zähler ohne aktuellen Stand,
+  CSV-Export.
+- MQTT: Verbrauch je Art im Jahr, Kosten, Zähler ohne aktuellen Stand.
+- Connector jetzt Fassung 1.3.0 mit der Verwendung „Zähler" – die Dateien
+  auf dem Webserver bitte aktualisieren.
+
 ## 1.46.0
 
 ### Budget ohne Mehrwertsteuer

@@ -495,6 +495,9 @@ table.data td.num, table.data th.num { text-align: right; font-variant-numeric: 
 }
 .vote.is-on { background: var(--accent); border-color: var(--accent); color: #fff; }
 .inline-form { display: inline; }
+.wahl { display: flex; align-items: flex-start; gap: .5rem; border: 1px solid var(--border); border-radius: 10px;
+        padding: .6rem .75rem; margin-bottom: .4rem; cursor: pointer; }
+.wahl:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 table.data tr.is-muted td { color: var(--ink-mute); }
 table.data tr.zeile-ohne-rand td { border-top: 0; padding-top: 0; }
 table.data details summary { cursor: pointer; color: var(--accent); }

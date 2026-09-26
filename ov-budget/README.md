@@ -38,6 +38,11 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - **QR-Code am Lagerort**: „Gerät ist da" oder „alle 8 Geräte sind da",
   verschlüsselt über den Connector
 
+### Verbrauch
+- **Strom-, Gas- und Wasserzähler** mit Ständen aus **Home Assistant**, von
+  Hand oder **per QR-Code am Zähler**
+- **Tarife** mit Zeitraum, Verbrauch und Kosten je Monat und Jahr
+
 ### Sicherung
 - Datenbank und Dateiablage als **ZIP** sichern, herunterladen, hochladen
   und **wiederherstellen** – mit Sicherheitskopie vorher

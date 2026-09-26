@@ -315,6 +315,24 @@
     });
   });
 
+  // Zähler: Block für Home Assistant nur bei dieser Quelle, Auswahl ins Textfeld
+  var quelleRadios = document.querySelectorAll('[data-schalter-radio="quelle"]');
+  if (quelleRadios.length) {
+    var zeigeQuelle = function () {
+      var gewaehlt = document.querySelector('[data-schalter-radio="quelle"]:checked');
+      document.querySelectorAll('[data-quelle-block]').forEach(function (b) {
+        b.hidden = !gewaehlt || b.getAttribute('data-quelle-block') !== gewaehlt.value;
+      });
+    };
+    quelleRadios.forEach(function (r) { r.addEventListener('change', zeigeQuelle); });
+    zeigeQuelle();
+  }
+  document.querySelectorAll('select[data-ziel]').forEach(function (wahl) {
+    var ziel = document.getElementById(wahl.getAttribute('data-ziel'));
+    if (!ziel) { return; }
+    wahl.addEventListener('change', function () { if (wahl.value) { ziel.value = wahl.value; } });
+  });
+
   // Statusauswahl der Anwesenheit sofort sichtbar machen
   document.querySelectorAll('.chips').forEach(function (gruppe) {
     gruppe.addEventListener('change', function (ev) {

@@ -89,6 +89,24 @@ $abrufe = [
             $res['fehler'] ? ', ' . $res['fehler'] . ' unbrauchbar' : ''
         )]];
     },
+    'Zählerstände'      => static function (): array {
+        $aus = [];
+        $ha = verbrauch_ha_sync();
+        if ($ha['gelesen'] > 0) {
+            $aus[] = ['status' => $ha['fehler'] ? 'fehler' : 'ok', 'message' => sprintf(
+                'Home Assistant: %d gelesen, %d neue Stände%s', $ha['gelesen'], $ha['neu'],
+                $ha['fehler'] ? ', ' . $ha['fehler'] . ' Fehler' : '')];
+        }
+        if (connector_zaehler_due()) {
+            $res = connector_zaehler_sync();
+            if ($res['gesendet'] > 0 || $res['geholt'] > 0 || $res['fehler'] > 0) {
+                $aus[] = ['status' => $res['fehler'] ? 'fehler' : 'ok', 'message' => sprintf(
+                    'QR: %d Meldung(en) geholt, %d übernommen%s', $res['geholt'], $res['uebernommen'],
+                    $res['fehler'] ? ', ' . $res['fehler'] . ' unbrauchbar' : '')];
+            }
+        }
+        return $aus;
+    },
     'Sicherung'         => static function (): array {
         $m = backup_automatisch();
         return $m === null ? [] : [['status' => 'ok', 'message' => $m]];

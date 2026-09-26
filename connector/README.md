@@ -13,6 +13,8 @@ Aufgaben:
 * **Bestand** – „ist am Lagerort". Am Funkgerät oder am Koffer hängt ein
   QR-Code; ein Tipp meldet, dass das Gerät da ist – bei einer Gruppe wahlweise
   „alle 8 Geräte" oder eine kleinere Zahl.
+* **Zähler** – Zählerstand melden. Am Strom-, Gas- oder Wasserzähler hängt
+  ein QR-Code; wer abliest, tippt den Stand ein.
 
 Beides ohne Anmeldung, ohne Zugang zu OV-Budget und ohne Home Assistant.
 Welche der beiden Aufgaben ein Connector übernimmt, steht in OV-Budget unter
@@ -38,6 +40,9 @@ Er weiß auch **nicht, um wen es geht**:
   Klartext hier – die Einladungsseite muss sie zeigen. **Wer eingeladen ist,
   steht nicht hier**: keine Namen, keine Adressen, keine Rückmeldungen im
   Klartext.
+* **Zähler:** Gespeichert sind nur die Prüfsumme des Zugangs, die Art und die
+  Einheit – ohne die ließe sich „kWh" nicht schreiben. Name, Nummer und die
+  gemeldeten Stände kennt der Server nicht.
 * **Bestand:** Gespeichert sind nur die Prüfsumme des Zugangs, ob es ein
   einzelnes Gerät oder eine Gruppe ist und wie viele Geräte dazugehören – ohne
   diese Zahl ließe sich „alle 8 Geräte" nicht schreiben. Bezeichnung und
@@ -130,6 +135,7 @@ server {
   höchstens 500 unabgeholte je Zugang, größere Pakete als 4 KB (Standort) bzw.
   8 KB (Rückmeldung) werden abgewiesen.
 * **Bestandsmeldungen:** 60 je Zugang und Stunde.
+* **Zählerstände:** 30 je Zugang und Stunde.
 * **Durchprobieren:** 60 Fehlgriffe je Anschluss und Stunde, danach 429. Wer
   die richtige Adresse hat, darf sie beliebig oft öffnen — gezählt wird nur,
   was ins Leere greift.
@@ -182,6 +188,7 @@ connector/
 │   ├── seite_start.php     Feld für den Einladungscode
 │   ├── seite_melden.php
 │   ├── seite_einladung.php
-│   └── seite_bestand.php   "ist am Lagerort"
+│   ├── seite_bestand.php   "ist am Lagerort"
+│   └── seite_zaehler.php   "Zählerstand melden"
 └── daten/             wird beim ersten Aufruf angelegt (nicht ins Web!)
 ```

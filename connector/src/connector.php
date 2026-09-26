@@ -10,6 +10,7 @@ declare(strict_types=1);
  *   Fahrzeuge       – Standortmeldungen von Handys (QR-Code im Fahrzeug)
  *   Veranstaltungen – Rückmeldungen auf Einladungen (kurze Adresse mit Code)
  *   Bestand         – "ist am Lagerort" für Funkgeräte und ganze Gruppen
+ *   Zähler          – Zählerstände für Strom, Gas und Wasser
  *
  * Beides nimmt er entgegen und gibt es an OV-Budget weiter – mehr nicht.
  *
@@ -31,7 +32,7 @@ declare(strict_types=1);
  * Gespeichert wird in Dateien unterhalb von daten/ – keine Datenbank nötig.
  */
 
-const CON_VERSION = '1.2.0';
+const CON_VERSION = '1.3.0';
 
 /** Höchstalter einer signierten Anfrage in Sekunden (gegen Wiedereinspielen) */
 const CON_ZEITFENSTER = 300;
@@ -45,6 +46,8 @@ const CON_MAX_MELDUNG = 4096;
 const CON_LIMIT_EINLADUNG = 20;
 /** Bestandsmeldungen je Zugang und Stunde */
 const CON_LIMIT_BESTAND = 60;
+/** Zählerstände je Zugang und Stunde */
+const CON_LIMIT_ZAEHLER = 30;
 /** Fehlgriffe je Anschluss und Stunde (Zugänge oder Codes durchprobieren) */
 const CON_LIMIT_FEHLGRIFF = 60;
 /** So lange hebt der Connector Unabgeholtes auf, dann wirft er es weg (Tage) */
@@ -749,6 +752,100 @@ function con_bestandsmeldungen_abholen(int $max = 200): array
 }
 
 /* ==================================================================== */
+/* Zähler: Stände für Strom, Gas und Wasser                              */
+/* ==================================================================== */
+
+/**
+ * Die Liste kommt komplett von OV-Budget und ersetzt die bisherige.
+ * Je Zugang nur die Prüfsumme, die Art und die Einheit – die Seite muss
+ * "kWh" schreiben können. Keine Namen, keine Nummern, keine Stände.
+ */
+function con_zaehler_setzen(array $liste): int
+{
+    $neu = [];
+    foreach ($liste as $eintrag) {
+        if (!is_array($eintrag)) {
+            continue;
+        }
+        $kennung = strtolower(trim((string)($eintrag['kennung'] ?? '')));
+        if (!preg_match('/^[a-f0-9]{64}$/', $kennung)) {
+            continue;
+        }
+        $art = (string)($eintrag['art'] ?? '');
+        $neu[$kennung] = [
+            'art'     => in_array($art, ['strom', 'gas', 'wasser'], true) ? $art : 'strom',
+            'einheit' => mb_substr(preg_replace('/[^\p{L}\p{N}³\/ ]/u', '', (string)($eintrag['einheit'] ?? '')) ?? '', 0, 10),
+        ];
+    }
+    con_schreiben('zaehler.json', $neu);
+    foreach (glob(con_dir('zaehlerstaende') . '/*') ?: [] as $ordner) {
+        if (!isset($neu[basename($ordner)])) {
+            con_ordner_leeren($ordner);
+            @rmdir($ordner);
+        }
+    }
+    return count($neu);
+}
+
+/** Zu einem Zugang die Angaben – oder null */
+function con_zaehler(string $token): ?array
+{
+    if (!con_token_gueltig($token)) {
+        return null;
+    }
+    $kennung = con_kennung($token);
+    $eintrag = con_lesen('zaehler.json')[$kennung] ?? null;
+    if (!is_array($eintrag)) {
+        return null;
+    }
+    return ['kennung' => $kennung, 'art' => (string)($eintrag['art'] ?? 'strom'),
+            'einheit' => (string)($eintrag['einheit'] ?? '')];
+}
+
+/** Zählerstand ablegen – verschlüsselt, der Connector liest ihn nicht */
+function con_zaehlerstand_ablegen(string $token, string $inhalt): void
+{
+    $eintrag = con_zaehler($token);
+    if ($eintrag === null) {
+        throw new ConException('Dieser QR-Code gilt nicht (mehr).');
+    }
+    if ($inhalt === '' || strlen($inhalt) > CON_MAX_MELDUNG) {
+        throw new ConException('Die Meldung hat eine unerwartete Größe.');
+    }
+    if (!con_limit_frei('z:' . $eintrag['kennung'], CON_LIMIT_ZAEHLER)) {
+        throw new ConException('Für diesen Zähler kamen gerade sehr viele Meldungen. Bitte später erneut.');
+    }
+    $ordner = con_dir('zaehlerstaende/' . $eintrag['kennung']);
+    $offen = glob($ordner . '/*.json') ?: [];
+    if (count($offen) >= CON_MAX_OFFEN) {
+        sort($offen);
+        @unlink($offen[0]);
+    }
+    file_put_contents($ordner . '/' . sprintf('%d-%s.json', time(), bin2hex(random_bytes(5))),
+        json_encode(['ts' => time(), 'daten' => $inhalt], JSON_UNESCAPED_SLASHES));
+}
+
+/** Zählerstände abholen und dabei löschen */
+function con_zaehlerstaende_abholen(int $max = 200): array
+{
+    $out = [];
+    foreach (glob(con_dir('zaehlerstaende') . '/*') ?: [] as $ordner) {
+        $kennung = basename($ordner);
+        foreach (glob($ordner . '/*.json') ?: [] as $datei) {
+            if (count($out) >= $max) {
+                break 2;
+            }
+            $roh = json_decode((string)@file_get_contents($datei), true);
+            @unlink($datei);
+            if (is_array($roh) && isset($roh['daten'])) {
+                $out[] = ['zugang' => $kennung, 'ts' => (int)($roh['ts'] ?? 0), 'daten' => (string)$roh['daten']];
+            }
+        }
+    }
+    return $out;
+}
+
+/* ==================================================================== */
 /* Kleinkram                                                             */
 /* ==================================================================== */
 
@@ -799,6 +896,8 @@ function con_status(): array
         'meldungen'       => $zaehlen('meldungen'),
         'rueckmeldungen'  => $zaehlen('rueckmeldungen'),
         'bestandsmeldungen' => $zaehlen('bestandsmeldungen'),
+        'zaehler'         => count(con_lesen('zaehler.json')),
+        'zaehlerstaende'  => $zaehlen('zaehlerstaende'),
         'schreibbar'      => is_writable(con_dir()),
         'frei'            => (int)max(0, (float)@disk_free_space(con_dir())),
     ];

@@ -121,6 +121,10 @@ function can(string $what, mixed $ctx = null): bool
         'view_radios'    => $leitung || setting_bool('funk_user_darf_sehen', false),
         'manage_sims'    => $leitung,
         'view_sims'      => $leitung || setting_bool('sim_user_darf_sehen', false),
+        'manage_verbrauch' => $leitung,
+        'view_verbrauch' => $leitung || setting_bool('verbrauch_user_darf_sehen', false),
+        'read_meter'     => $leitung || (setting_bool('verbrauch_user_darf_sehen', false)
+                              && setting_bool('verbrauch_user_darf_ablesen', true)),
         'view_events'    => $leitung || setting_bool('veranstaltung_user_darf_sehen', true),
         'manage_meetings' => $leitung,
         'view_meetings'  => $leitung || setting_bool('besprechung_user_darf_sehen', true),

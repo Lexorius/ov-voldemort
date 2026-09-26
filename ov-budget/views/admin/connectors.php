@@ -53,6 +53,12 @@
             if ((int)$c['fuer_veranstaltungen'] === 1) {
                 $zwecke[] = 'Veranstaltungen';
             }
+            if ((int)($c['fuer_bestand'] ?? 0) === 1) {
+                $zwecke[] = 'Funkgeräte';
+            }
+            if ((int)($c['fuer_verbrauch'] ?? 0) === 1) {
+                $zwecke[] = 'Zähler';
+            }
           ?>
           <tr>
             <td><a href="<?= e(url('admin_connector', ['id' => $c['id']])) ?>"><?= e((string)$c['name']) ?></a>

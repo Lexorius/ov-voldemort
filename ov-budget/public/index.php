@@ -88,6 +88,15 @@ $routes = [
     'sim_edit'           => 'sim_edit',
     'sims_export'        => 'sims_export',
 
+    // Verbrauch
+    'verbrauch'          => 'verbrauch',
+    'meter'              => 'meter',
+    'meter_edit'         => 'meter_edit',
+    'verbrauch_action'   => 'verbrauch_action',
+    'verbrauch_export'   => 'verbrauch_export',
+    'tarife'             => 'tarife',
+    'tarif_edit'         => 'tarif_edit',
+
     // Fahrzeuge
     'vehicles'           => 'vehicles',
     'vehicle'            => 'vehicle',

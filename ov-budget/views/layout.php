@@ -66,6 +66,10 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
       <a class="mainnav__item<?= nav_active('sims', 'sim_edit') ?>" href="<?= e(url('sims')) ?>">
         <span class="mainnav__icon">▯</span><span><?= e(setting('sim_modul_name', 'SIM-Karten')) ?></span></a>
     <?php endif; ?>
+    <?php if (can('view_verbrauch')): ?>
+      <a class="mainnav__item<?= nav_active('verbrauch', 'meter', 'meter_edit', 'tarife', 'tarif_edit') ?>" href="<?= e(url('verbrauch')) ?>">
+        <span class="mainnav__icon">⚡</span><span><?= e(setting('verbrauch_modul_name', 'Verbrauch')) ?></span></a>
+    <?php endif; ?>
     <?php if (can('view_contacts')): ?>
       <a class="mainnav__item<?= nav_active('contacts', 'contact_edit', 'contact_groups', 'contact_group', 'contacts_import') ?>" href="<?= e(url('contacts')) ?>">
         <span class="mainnav__icon">✉</span><span><?= e(setting('kontakte_modul_name', 'Kontakte')) ?></span></a>

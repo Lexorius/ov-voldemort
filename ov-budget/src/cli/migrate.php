@@ -1093,6 +1093,81 @@ SQL);
         $pdo->exec("DELETE FROM settings WHERE skey IN ('mwst_satz', 'ausgaben_betragsart')");
     }
     $merken('030_ohne_mwst');
+
+    /* ---------- 031: Verbrauch – Zaehler, Staende, Tarife ---------- */
+    if (ovb_table_exists($pdo, 'connectors') && !ovb_column_exists($pdo, 'connectors', 'fuer_verbrauch')) {
+        $pdo->exec('ALTER TABLE connectors ADD COLUMN fuer_verbrauch TINYINT(1) NOT NULL DEFAULT 0
+                    AFTER fuer_bestand');
+    }
+    $verbrauchSql = <<<'SQL'
+-- ------------------------------------------------------------
+-- Verbrauch: Zaehler fuer Strom, Gas und Wasser, ihre Staende, Tarife
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS meters (
+  id              INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  art             ENUM('strom','gas','wasser') NOT NULL DEFAULT 'strom',
+  name            VARCHAR(150)  NOT NULL,
+  zaehlernummer   VARCHAR(80)   NOT NULL DEFAULT '',
+  standort        VARCHAR(150)  NOT NULL DEFAULT '',
+  einheit         VARCHAR(10)   NOT NULL DEFAULT 'kWh',
+  -- Umrechnung Zaehlereinheit -> Tarifeinheit (Gas: m3 -> kWh)
+  umrechnung      DECIMAL(10,4) NOT NULL DEFAULT 1.0000,
+  quelle          ENUM('manuell','ha') NOT NULL DEFAULT 'manuell',
+  ha_entity       VARCHAR(200)  NOT NULL DEFAULT '',
+  ha_faktor       DECIMAL(12,6) NOT NULL DEFAULT 1.000000,
+  qr_token        VARCHAR(80)   NOT NULL DEFAULT '',
+  qr_connector_id INT UNSIGNED  NULL,
+  notiz           TEXT          NULL,
+  is_active       TINYINT(1)    NOT NULL DEFAULT 1,
+  created_by      INT UNSIGNED  NULL,
+  created_at      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_meter_art (art, is_active),
+  KEY idx_meter_qr (qr_token),
+  CONSTRAINT fk_meter_con FOREIGN KEY (qr_connector_id) REFERENCES connectors(id) ON DELETE SET NULL,
+  CONSTRAINT fk_meter_cb  FOREIGN KEY (created_by)      REFERENCES users(id)      ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS meter_readings (
+  id          INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  meter_id    INT UNSIGNED  NOT NULL,
+  stand       DECIMAL(14,3) NOT NULL,
+  gelesen_am  DATETIME      NOT NULL,
+  quelle      ENUM('manuell','ha','qr') NOT NULL DEFAULT 'manuell',
+  melder      VARCHAR(60)   NOT NULL DEFAULT '',
+  notiz       VARCHAR(255)  NOT NULL DEFAULT '',
+  created_by  INT UNSIGNED  NULL,
+  created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_reading_meter (meter_id, gelesen_am),
+  CONSTRAINT fk_reading_meter FOREIGN KEY (meter_id)   REFERENCES meters(id) ON DELETE CASCADE,
+  CONSTRAINT fk_reading_cb    FOREIGN KEY (created_by) REFERENCES users(id)  ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS tariffs (
+  id               INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  art              ENUM('strom','gas','wasser') NOT NULL DEFAULT 'strom',
+  name             VARCHAR(150)  NOT NULL,
+  anbieter         VARCHAR(150)  NOT NULL DEFAULT '',
+  gueltig_von      DATE          NOT NULL,
+  gueltig_bis      DATE          NULL,
+  arbeitspreis     DECIMAL(10,4) NOT NULL DEFAULT 0,
+  grundpreis_monat DECIMAL(10,2) NOT NULL DEFAULT 0,
+  einheit          VARCHAR(10)   NOT NULL DEFAULT 'kWh',
+  notiz            TEXT          NULL,
+  created_at       DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_tarif (art, gueltig_von)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+SQL;
+    foreach (array_filter(array_map('trim', explode(";\n", $verbrauchSql))) as $anweisung) {
+        if (preg_match('/CREATE TABLE IF NOT EXISTS (\w+)/', $anweisung, $m) && !ovb_table_exists($pdo, $m[1])) {
+            $pdo->exec($anweisung);
+            $say('Tabelle ' . $m[1] . ' angelegt.');
+        }
+    }
+    $merken('031_verbrauch');
 }
 
 /**

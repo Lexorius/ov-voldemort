@@ -17,6 +17,10 @@ declare(strict_types=1);
  *   ?p=bestandsmeldung      Meldung dazu (POST, verschlüsselt)
  *   ?p=bestandsliste        Zugänge setzen (POST, signiert)
  *   ?p=bestand_abholen      Bestandsmeldungen abholen (POST, signiert)
+ *   ?p=zaehler&z=<Zugang>   Seite "Zählerstand melden" (QR am Zähler)
+ *   ?p=zaehlerstand         Meldung dazu (POST, verschlüsselt)
+ *   ?p=zaehlerliste         Zugänge setzen (POST, signiert)
+ *   ?p=zaehler_abholen      Zählerstände abholen (POST, signiert)
  *   ?p=zustand              Zahlen für OV-Budget (POST, signiert)
  *   sonst                   Startseite: Feld für den Einladungscode
  *
@@ -44,6 +48,9 @@ $code = nur_text($_GET['e'] ?? '');
 // Zugang der Bestandsmeldung (QR am Funkgerät oder am Koffer)
 if ($token === '') {
     $token = nur_text($_GET['g'] ?? '');
+}
+if ($token === '') {
+    $token = nur_text($_GET['z'] ?? '');
 }
 if ($code === '' && ($_SERVER['PATH_INFO'] ?? '') !== '') {
     $code = trim(nur_text($_SERVER['PATH_INFO']), '/');
@@ -221,6 +228,46 @@ try {
             $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'bestand_abholen');
             con_alte_wegwerfen('bestandsmeldungen');
             antwort(['ok' => true, 'meldungen' => con_bestandsmeldungen_abholen((int)($daten['max'] ?? 200))]);
+
+        /* ---------------- Zähler: Meldung vom Handy ---------------- */
+        case 'zaehlerstand':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                fehler('Nur POST.', 405);
+            }
+            $daten = json_decode(koerper_lesen(), true);
+            if (!is_array($daten)) {
+                fehler('Kein gültiges JSON.');
+            }
+            if (!con_limit_frei('ip:' . substr(sha1((string)($_SERVER['REMOTE_ADDR'] ?? '')), 0, 16), 300)) {
+                fehler('Zu viele Meldungen von diesem Anschluss. Bitte später erneut.', 429);
+            }
+            con_zaehlerstand_ablegen(nur_text($daten['z'] ?? ''), nur_text($daten['daten'] ?? ''));
+            antwort(['ok' => true]);
+
+        /* ---------------- Zähler: von OV-Budget, signiert ---------------- */
+        case 'zaehlerliste':
+            $daten = con_pruefe_anfrage(koerper_lesen(131072),
+                (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'zaehlerliste');
+            $anzahl = con_zaehler_setzen((array)($daten['zaehler'] ?? []));
+            con_notiz('zaehler.gesetzt', (string)$anzahl);
+            antwort(['ok' => true, 'zaehler' => $anzahl]);
+
+        case 'zaehler_abholen':
+            $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'zaehler_abholen');
+            con_alte_wegwerfen('zaehlerstaende');
+            antwort(['ok' => true, 'meldungen' => con_zaehlerstaende_abholen((int)($daten['max'] ?? 200))]);
+
+        /* ---------------- Zähler: Seite am Zähler ---------------- */
+        case 'zaehler':
+            $eintrag = con_zaehler($token);
+            if ($eintrag === null && !con_fehlgriff()) {
+                seiten_kopf();
+                http_response_code(429);
+                exit("Zu viele Versuche von diesem Anschluss. Bitte später erneut.\n");
+            }
+            seiten_kopf(true);
+            require dirname(__DIR__) . '/src/seite_zaehler.php';
+            exit;
 
         /* ---------------- Bestand: Seite am Lagerort ---------------- */
         case 'bestand':
