@@ -2,6 +2,10 @@
 
 ## 1.48.1
 
+- **Abschnitte am Zähler** fassen jetzt je Kalendertag zusammen. Mit
+  stündlichen Ständen aus Home Assistant standen dort Zeilen mit null Tagen
+  und hochgerechneten Tageswerten; jetzt gibt es je Ablesetag eine Zeile, der
+  Tagesdurchschnitt erscheint nur bei Abschnitten über mehrere Tage.
 - **Zähler aus Home Assistant** werden jetzt in Minuten statt Stunden
   abgefragt, Vorgabe 60, mindestens 5 (*Einstellungen → Verbrauch*). Eine
   bestehende Einstellung in Stunden wird umgerechnet. Gespeichert wird

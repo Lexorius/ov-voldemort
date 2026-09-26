@@ -328,14 +328,28 @@ function verbrauch_monate(array $staende, int $jahr): array
 }
 
 /**
- * Die Abschnitte zwischen zwei Ablesungen mit Tagesdurchschnitt – für die
- * Tabelle am Zähler. Reine Funktion; $staende älteste zuerst.
+ * Je Kalendertag der letzte Stand – aus stündlichen Ständen (Home
+ * Assistant) wird so ein Tageswert. Reine Funktion; $staende älteste zuerst.
+ */
+function verbrauch_tagesstaende(array $staende): array
+{
+    $tage = [];
+    foreach ($staende as $s) {
+        $tage[substr((string)$s['gelesen_am'], 0, 10)] = $s;
+    }
+    return array_values($tage);
+}
+
+/**
+ * Die Abschnitte zwischen zwei Ablesetagen mit Tagesdurchschnitt – für die
+ * Tabelle am Zähler. Mehrere Stände an einem Tag zählen als einer, sonst
+ * stünden dort Zeilen mit null Tagen. Reine Funktion; $staende älteste zuerst.
  */
 function verbrauch_abschnitte(array $staende): array
 {
     $out = [];
     $vor = null;
-    foreach ($staende as $s) {
+    foreach (verbrauch_tagesstaende($staende) as $s) {
         if ($vor !== null) {
             $tage = (strtotime((string)$s['gelesen_am']) - strtotime((string)$vor['gelesen_am'])) / 86400;
             $menge = (float)$s['stand'] - (float)$vor['stand'];

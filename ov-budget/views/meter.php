@@ -147,7 +147,10 @@ $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Se
 
 <?php if ($abschnitte): ?>
 <section class="card">
-  <h2>Abschnitte</h2>
+  <div class="card__head">
+    <h2>Abschnitte</h2>
+    <span class="muted small">von Ablesetag zu Ablesetag</span>
+  </div>
   <div class="tablewrap">
     <table class="data">
       <thead><tr><th>Von</th><th>Bis</th><th class="num">Tage</th><th class="num">Verbrauch</th><th class="num">je Tag</th></tr></thead>
@@ -157,8 +160,8 @@ $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Se
           <td class="small nowrap"><?= e(de_date(substr($ab['von'], 0, 10))) ?></td>
           <td class="small nowrap"><?= e(de_date(substr($ab['bis'], 0, 10))) ?></td>
           <td class="num small"><?= e(number_format($ab['tage'], 1, ',', '.')) ?></td>
-          <td class="num"><?= $ab['menge'] === null ? '<span class="muted">Zählerwechsel</span>' : e(menge($ab['menge'], $einheit)) ?></td>
-          <td class="num small"><?= $ab['je_tag'] === null ? '–' : e(menge($ab['je_tag'], $einheit, 2)) ?></td>
+          <td class="num"><?= $ab['menge'] === null ? '<span class="muted">Zählerwechsel</span>' : e(menge($ab['menge'], $einheit, 2)) ?></td>
+          <td class="num small"><?= $ab['je_tag'] === null || $ab['tage'] < 1.5 ? '–' : e(menge($ab['je_tag'], $einheit, 2)) ?></td>
         </tr>
       <?php endforeach; ?>
       </tbody>
