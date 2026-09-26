@@ -2,7 +2,7 @@
 <div class="login">
   <div class="login__box">
     <div class="login__logo">THW</div>
-    <h1 style="text-align:center"><?= e((string)setting('app_name', 'OV-Budget')) ?></h1>
+    <h1 style="text-align:center"><?= e((string)setting('app_name', 'OV-Multitool')) ?></h1>
     <p class="muted small" style="text-align:center"><?= e((string)setting('ov_name', '')) ?></p>
 
     <?php if ($error !== ''): ?>

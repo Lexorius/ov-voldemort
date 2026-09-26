@@ -1,4 +1,4 @@
-# OV-Budget
+# OV-Multitool
 
 Verwaltung für einen THW-Ortsverband: Wünsche und Budget, Aufgaben, Kontakte,
 Besprechungen und Fahrzeugakten – mit Anbindung an Stein.APP und Divera 24/7.
@@ -12,7 +12,7 @@ sich zuletzt geändert hat.
 
 1. **Einstellungen → Add-ons → Add-on Store → ⋮ → Repositories** und
    `https://github.com/Lexorius/ov-voldemort` hinzufügen.
-2. In der Liste erscheint *OV-Budget*. **Installieren** – der erste Build dauert
+2. In der Liste erscheint *OV-Multitool*. **Installieren** – der erste Build dauert
    je nach Hardware einige Minuten, auf einem Raspberry Pi auch länger.
 3. Optional unter *Konfiguration* den Namen des Ortsverbands und ein
    Wunschpasswort setzen. Man kann aber auch einfach starten.
@@ -349,7 +349,7 @@ nur die Prüfsumme des Zugangs, ob es ein Gerät oder eine Gruppe ist und wie
 viele Geräte dazugehören. Bezeichnung und Lagerort stehen im Anker der Adresse
 (hinter dem `#`) und erreichen ihn nie.
 
-In OV-Budget steht danach je Gerät und Gruppe **zuletzt gesehen** samt Namen,
+In OV-Multitool steht danach je Gerät und Gruppe **zuletzt gesehen** samt Namen,
 wenn er eingetragen wurde. Meldet jemand eine Gruppe **vollzählig**, gelten
 alle Geräte darin als gesehen; bei einer kleineren Zahl bleibt es bei der
 Gruppe – dann steht dort „6 von 8 Geräten gemeldet".
@@ -428,15 +428,15 @@ Nachschlagen erhalten.
 ## Ist der Connector sauber?
 
 Ein Connector steht auf einem öffentlichen Webserver – der einzige Teil, der
-nicht hinter Home Assistant liegt. Deshalb prüft OV-Budget ihn:
+nicht hinter Home Assistant liegt. Deshalb prüft OV-Multitool ihn:
 *Verwaltung → Connectoren → Connector → Connector prüfen*, und ohne Zutun
 einmal täglich mit dem Abruf (abschaltbar unter *Einstellungen → Fahrzeuge*).
 
-* **Maßstab:** OV-Budget bringt die Prüfsummen (SHA-256) aller Dateien der
+* **Maßstab:** OV-Multitool bringt die Prüfsummen (SHA-256) aller Dateien der
   Connector-Fassung mit, die es kennt. Der Connector meldet signiert, was bei
   ihm liegt. Verglichen wird: geändert, fehlt, fremd.
 * **Über das Netz:** Die Skripte, die Besucher im Browser ausführen
-  (`assets/*.js`), holt OV-Budget zusätzlich selbst ab und vergleicht sie.
+  (`assets/*.js`), holt OV-Multitool zusätzlich selbst ab und vergleicht sie.
   Ein manipulierter Server kann in der Selbstprüfung lügen – nicht aber
   darüber, was er tatsächlich ausliefert. Dazu Stichproben: Ist `daten/`
   erreichbar, nimmt `?p=zustand` unsignierte Anfragen an, fehlen
@@ -552,7 +552,7 @@ Was der Connector dabei erfährt und was nicht:
 | Prüfsummen der Einladungscodes | die Codes selbst |
 | verschlüsselte Rückmeldungen | Zusagen, Absagen, Kommentare im Klartext |
 
-OV-Budget meldet Veranstaltungen und Codes von allein an und holt die
+OV-Multitool meldet Veranstaltungen und Codes von allein an und holt die
 Rückmeldungen ab – im Takt von *Rückmeldungen abholen alle (Minuten)*, Vorgabe
 zehn. Dafür muss der automatische Abruf (`cron.php`) laufen; im Add-on tut er
 das ohnehin. Auf der Veranstaltungsseite gibt es beide Knöpfe auch von Hand.
@@ -582,7 +582,7 @@ Verwaltung: Gehen Anwendung und Datenbank auseinander, steht dort ein Hinweis.
 Unter *Verwaltung → Home Assistant* und *Einstellungen → Home Assistant*
 lässt sich der Export einschalten. Die Anwendung meldet die Werte über MQTT;
 Home Assistant legt die Entitäten selbst an (Auto-Discovery) und fasst sie zum
-Gerät „OV-Budget" zusammen.
+Gerät „OV-Multitool" zusammen.
 
 * **Broker:** Ist das Mosquitto-Add-on installiert, holt sich das Add-on die
   Zugangsdaten beim Start automatisch. Sonst Host, Port, Benutzer und Passwort

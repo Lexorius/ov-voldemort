@@ -13,7 +13,7 @@ self.addEventListener('activate', function (ev) {
 });
 
 self.addEventListener('push', function (ev) {
-  var daten = { titel: 'OV-Budget', text: '', url: '' };
+  var daten = { titel: 'OV-Multitool', text: '', url: '' };
   if (ev.data) {
     try {
       daten = Object.assign(daten, ev.data.json());
@@ -21,7 +21,7 @@ self.addEventListener('push', function (ev) {
       daten.text = ev.data.text();
     }
   }
-  ev.waitUntil(self.registration.showNotification(daten.titel || 'OV-Budget', {
+  ev.waitUntil(self.registration.showNotification(daten.titel || 'OV-Multitool', {
     body: daten.text || '',
     tag: daten.tag || undefined,
     data: { url: daten.url || '' }

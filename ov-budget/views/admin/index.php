@@ -69,6 +69,8 @@
     <p>Zugang einrichten, Formulare abrufen, Felder zuordnen und Einträge als Wünsche übernehmen.</p></div></a>
   <a href="<?= e(url('budget')) ?>"><div class="card"><h3>Budget</h3>
     <p>Haushaltsjahre und Budgettöpfe pflegen.</p></div></a>
+  <a href="<?= e(url('admin_nav')) ?>"><div class="card"><h3>Menüleiste</h3>
+    <p>Die Reihenfolge der Module in der Leiste – für alle Benutzer.</p></div></a>
   <a href="<?= e(url('admin_backup')) ?>"><div class="card"><h3>Sicherung</h3>
     <p>Datenbank und Dateiablage als ZIP sichern, herunterladen, hochladen und wiederherstellen –
        auf Wunsch automatisch.</p></div></a>

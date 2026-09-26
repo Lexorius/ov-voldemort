@@ -1,5 +1,35 @@
 # Änderungsverlauf
 
+## 2.0.0.0
+
+### OV-Budget heißt jetzt OV-Multitool
+
+Aus der Budgetliste ist über die Zeit das Werkzeug für den ganzen Ortsverband
+geworden: Wünsche und Budget, Aufgaben, Kontakte, Besprechungen,
+Veranstaltungen, Fahrzeugakten, Funkgeräte, SIM-Karten, Verbrauch. Der Name
+zieht nach.
+
+- Kopfzeile, Anmeldung, Browser-Titel, Home-Assistant-Gerät, Sicherungen,
+  Connector und Anleitung sagen jetzt **OV-Multitool**. Wer den Namen der
+  Anwendung unter *Einstellungen → Allgemein* selbst gesetzt hatte, behält
+  seinen.
+- Was gleich bleibt, damit nichts verloren geht: der Slug des Add-ons, die
+  Datenbank, das Sitzungscookie, der MQTT-Themenbaum, die Kennungen der
+  Entitäten in Home Assistant und das Verschlüsselungsverfahren des
+  Connectors. Ältere Sicherungen lassen sich weiter einspielen.
+
+### Menüleiste in eigener Reihenfolge
+
+- Neu unter *Verwaltung → Menüleiste*: Die Module lassen sich mit Pfeilen
+  nach oben und unten schieben; die Reihenfolge gilt für alle. Wer ein Modul
+  nicht sehen darf, bekommt es weiterhin nicht angezeigt.
+
+### Fassungen
+
+- Ab jetzt hat jede Veröffentlichung eine eigene Fassungsnummer, auch die
+  kleinste – gleiche Nummern für verschiedene Stände gibt es nicht mehr. Die
+  Nummer hat vier Stellen: Hauptfassung, Modul, Ergänzung, Korrektur.
+
 ## 1.48.1
 
 - **Verbrauch bleibt schnell, auch mit Jahren an Ständen.** Die Rechnung lädt

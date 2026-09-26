@@ -4,7 +4,7 @@
  *
  * Der Server weiß, zu welcher Veranstaltung der Code gehört, aber nicht, wer
  * ihn bekommen hat: Von den Codes liegen hier nur Prüfsummen, Namen gar nicht.
- * Die Rückmeldung wird im Browser für OV-Budget verschlüsselt.
+ * Die Rückmeldung wird im Browser für OV-Multitool verschlüsselt.
  *
  * @var ?array $einladung  ['kennung' => …, 'veranstaltung' => […]] oder null
  * @var string $code

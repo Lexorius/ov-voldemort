@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'test':
                 $res = ha_publish(true);
                 $hinweis = sprintf('%d Nachricht(en) gesendet, davon %d Anmeldungen. '
-                    . 'In Home Assistant erscheint das Gerät „OV-Budget".', $res['nachrichten'], $res['entitaeten']);
+                    . 'In Home Assistant erscheint das Gerät „OV-Multitool".', $res['nachrichten'], $res['entitaeten']);
                 audit('ha.gesendet', 'mqtt', null, $hinweis);
                 break;
 
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
 
             case 'push_test':
-                $res = push_to_user((int)$me['id'], 'OV-Budget', 'Testnachricht an diesen Browser.',
+                $res = push_to_user((int)$me['id'], 'OV-Multitool', 'Testnachricht an diesen Browser.',
                     notify_url('?p=dashboard'));
                 if ($res['gesendet'] === 0) {
                     $fehler = $res['fehler'] !== '' ? 'Push fehlgeschlagen: ' . $res['fehler']
@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $fehler = 'In deinem Profil ist kein Benachrichtigungsziel hinterlegt.';
                     break;
                 }
-                ha_notify_send($ziel, 'OV-Budget', 'Testnachricht – die Benachrichtigungen funktionieren.',
+                ha_notify_send($ziel, 'OV-Multitool', 'Testnachricht – die Benachrichtigungen funktionieren.',
                     notify_url('?p=dashboard'));
                 $hinweis = 'Testnachricht an ' . $ziel . ' geschickt.';
                 audit('ha.test', 'notify', null, $ziel);

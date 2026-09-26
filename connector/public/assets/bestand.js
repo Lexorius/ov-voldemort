@@ -1,5 +1,5 @@
 /*
- * "Ist am Lagerort" – verschlüsselt für OV-Budget.
+ * "Ist am Lagerort" – verschlüsselt für OV-Multitool.
  *
  * Gleicher Weg wie bei den Standortmeldungen: flüchtiges Schlüsselpaar,
  * ECDH auf P-256, HKDF, AES-256-GCM. Der Connector bekommt nur Geheimtext;

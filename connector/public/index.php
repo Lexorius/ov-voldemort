@@ -8,7 +8,7 @@ declare(strict_types=1);
  *   ?p=position             Meldung des Handys (POST, verschlüsselt)
  *   /<Code> oder ?e=<Code>  Einladungsseite einer Veranstaltung
  *   ?p=rueckmeldung         Rückmeldung auf eine Einladung (POST, verschlüsselt)
- *   ?p=koppeln              einmalige Kopplung mit OV-Budget (POST)
+ *   ?p=koppeln              einmalige Kopplung mit OV-Multitool (POST)
  *   ?p=fahrzeuge            Liste der Zugänge setzen (POST, signiert)
  *   ?p=veranstaltungen      Veranstaltungen und Einladungen setzen (POST, signiert)
  *   ?p=abholen              Standortmeldungen abholen (POST, signiert)
@@ -21,7 +21,7 @@ declare(strict_types=1);
  *   ?p=zaehlerstand         Meldung dazu (POST, verschlüsselt)
  *   ?p=zaehlerliste         Zugänge setzen (POST, signiert)
  *   ?p=zaehler_abholen      Zählerstände abholen (POST, signiert)
- *   ?p=zustand              Zahlen für OV-Budget (POST, signiert)
+ *   ?p=zustand              Zahlen für OV-Multitool (POST, signiert)
  *   ?p=pruefung             Selbstprüfung: Dateien und Befunde (POST, signiert)
  *   sonst                   Startseite: Feld für den Einladungscode
  *
@@ -157,7 +157,7 @@ try {
             con_meldung_ablegen(nur_text($daten['fz'] ?? ''), nur_text($daten['daten'] ?? ''));
             antwort(['ok' => true]);
 
-        /* ---------------- Von OV-Budget, signiert ---------------- */
+        /* ---------------- Von OV-Multitool, signiert ---------------- */
         case 'fahrzeuge':
             $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'fahrzeuge');
             $anzahl = con_fahrzeuge_setzen((array)($daten['fahrzeuge'] ?? []));
@@ -186,7 +186,7 @@ try {
             con_rueckmeldung_ablegen(nur_text($daten['code'] ?? ''), nur_text($daten['daten'] ?? ''));
             antwort(['ok' => true]);
 
-        /* ---------------- Von OV-Budget, signiert ---------------- */
+        /* ---------------- Von OV-Multitool, signiert ---------------- */
         case 'veranstaltungen':
             $daten = con_pruefe_anfrage(koerper_lesen(131072),
                 (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'veranstaltungen');
@@ -217,7 +217,7 @@ try {
             con_bestandsmeldung_ablegen(nur_text($daten['g'] ?? ''), nur_text($daten['daten'] ?? ''));
             antwort(['ok' => true]);
 
-        /* ---------------- Bestand: von OV-Budget, signiert ---------------- */
+        /* ---------------- Bestand: von OV-Multitool, signiert ---------------- */
         case 'bestandsliste':
             $daten = con_pruefe_anfrage(koerper_lesen(131072),
                 (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'bestandsliste');
@@ -245,7 +245,7 @@ try {
             con_zaehlerstand_ablegen(nur_text($daten['z'] ?? ''), nur_text($daten['daten'] ?? ''));
             antwort(['ok' => true]);
 
-        /* ---------------- Zähler: von OV-Budget, signiert ---------------- */
+        /* ---------------- Zähler: von OV-Multitool, signiert ---------------- */
         case 'zaehlerliste':
             $daten = con_pruefe_anfrage(koerper_lesen(131072),
                 (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'zaehlerliste');
@@ -282,12 +282,12 @@ try {
             require dirname(__DIR__) . '/src/seite_bestand.php';
             exit;
 
-        /* ---------------- Zahlen für OV-Budget ---------------- */
+        /* ---------------- Zahlen für OV-Multitool ---------------- */
         case 'zustand':
             con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'zustand');
             antwort(['ok' => true, 'zustand' => con_status()]);
 
-        /* ---------------- Selbstprüfung für OV-Budget ---------------- */
+        /* ---------------- Selbstprüfung für OV-Multitool ---------------- */
         case 'pruefung':
             con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'pruefung');
             antwort(['ok' => true, 'pruefung' => con_pruefung()]);
@@ -321,7 +321,7 @@ try {
         /* ---------------- Startseite ---------------- */
         default:
             // Hier stehen bewusst keine Zahlen: Wie viele Fahrzeuge oder
-            // Einladungen es gibt, geht nur OV-Budget etwas an (?p=zustand).
+            // Einladungen es gibt, geht nur OV-Multitool etwas an (?p=zustand).
             $gekoppelt = con_gekoppelt();
             $schreibbar = is_writable(con_dir());
             seiten_kopf(true);

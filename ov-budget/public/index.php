@@ -129,6 +129,7 @@ $routes = [
     'admin_divera_form'  => 'admin/divera_form',
     'admin_log'          => 'admin/log',
     'admin_backup'       => 'admin/backup',
+    'admin_nav'          => 'admin/nav',
 ];
 
 $route = (string)($_GET['p'] ?? 'dashboard');
@@ -156,7 +157,7 @@ try {
     if (app_config('debug', false)) {
         throw $ex;
     }
-    error_log('OV-Budget DB-Fehler: ' . $ex->getMessage());
+    error_log('OV-Multitool DB-Fehler: ' . $ex->getMessage());
     render('error', [
         'title'   => 'Datenbankfehler',
         'message' => 'Die Anfrage konnte nicht verarbeitet werden. Bitte später erneut versuchen.',
@@ -166,7 +167,7 @@ try {
     if (app_config('debug', false)) {
         throw $ex;
     }
-    error_log('OV-Budget Fehler: ' . $ex->getMessage());
+    error_log('OV-Multitool Fehler: ' . $ex->getMessage());
     render('error', [
         'title'   => 'Unerwarteter Fehler',
         'message' => 'Da ist etwas schiefgelaufen. Bitte die OV-Leitung informieren.',

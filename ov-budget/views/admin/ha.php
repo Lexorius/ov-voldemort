@@ -247,6 +247,6 @@ $melden = notify_enabled();
     <?= csrf_field() ?>
     <input type="hidden" name="action" value="entfernen">
     <button class="btn btn--sec" type="submit"
-            data-confirm="Alle OV-Budget-Entitäten aus Home Assistant entfernen?">Entitäten entfernen</button>
+            data-confirm="Alle OV-Multitool-Entitäten aus Home Assistant entfernen?">Entitäten entfernen</button>
   </form>
 </div>

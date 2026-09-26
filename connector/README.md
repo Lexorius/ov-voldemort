@@ -1,6 +1,6 @@
-# OV-Budget-Connector
+# OV-Multitool-Connector
 
-Briefkasten für alles, was von außen zu OV-Budget hereinkommt. Er läuft auf
+Briefkasten für alles, was von außen zu OV-Multitool hereinkommt. Er läuft auf
 einem öffentlich erreichbaren Webserver mit PHP 8.1 oder neuer und hat zwei
 Aufgaben:
 
@@ -16,15 +16,15 @@ Aufgaben:
 * **Zähler** – Zählerstand melden. Am Strom-, Gas- oder Wasserzähler hängt
   ein QR-Code; wer abliest, tippt den Stand ein.
 
-Beides ohne Anmeldung, ohne Zugang zu OV-Budget und ohne Home Assistant.
-Welche der beiden Aufgaben ein Connector übernimmt, steht in OV-Budget unter
+Beides ohne Anmeldung, ohne Zugang zu OV-Multitool und ohne Home Assistant.
+Welche der beiden Aufgaben ein Connector übernimmt, steht in OV-Multitool unter
 *Verwaltung → Connectoren*; es können auch beide sein, und es können mehrere
 Connectoren nebeneinander stehen.
 
 ## Was der Connector nicht kann
 
 Er kann die Meldungen **nicht lesen**. Handy und Browser verschlüsseln sie an
-Ort und Stelle für den öffentlichen Schlüssel von OV-Budget (ECDH auf P-256,
+Ort und Stelle für den öffentlichen Schlüssel von OV-Multitool (ECDH auf P-256,
 dann AES-256-GCM). Hier liegt nur Geheimtext, und der wird beim Abholen
 gelöscht.
 
@@ -55,7 +55,7 @@ und für sich genommen sagt er nichts darüber aus, wer ihn bekommen hat.
 Und er **zeigt nichts**: Seine Startseite verrät weder, wie viele Fahrzeuge
 oder Einladungen er kennt, noch ob gerade etwas wartet, noch welche Fassung
 er hat. Dort steht nur ein Feld für den Einladungscode – für alle, die von
-der Einladung nur den Code abgetippt haben. Wie es ihm geht, fragt OV-Budget
+der Einladung nur den Code abgetippt haben. Wie es ihm geht, fragt OV-Multitool
 signiert ab: *Verwaltung → Connectoren → Zustand abfragen*.
 
 ## Einrichten
@@ -68,7 +68,7 @@ signiert ab: *Verwaltung → Connectoren → Zustand abfragen*.
    `daten/` an und schreibt einen Kopplungscode nach
    `daten/kopplungscode.txt`.
 4. Den Code per FTP oder SSH holen — er steht bewusst nicht auf der Webseite.
-5. In OV-Budget unter *Verwaltung → Connectoren* einen Connector anlegen,
+5. In OV-Multitool unter *Verwaltung → Connectoren* einen Connector anlegen,
    Adresse und Code eintragen, die Verwendung ankreuzen und koppeln.
 
 Danach tauschen beide Seiten ihre öffentlichen Schlüssel aus, der Code ist
@@ -84,7 +84,7 @@ Adresse `https://ov.example.de/connector/index.php?e=AB23CD` – das geht, ist
 aber nichts zum Abtippen.
 
 Schöner ist ein eigener Name für dieselbe Installation, etwa
-`https://i.example.de`. In OV-Budget wird er beim Connector als *kurze
+`https://i.example.de`. In OV-Multitool wird er beim Connector als *kurze
 Adresse* eingetragen, dann stehen Einladungen so auf dem Papier:
 
 ```
@@ -125,9 +125,9 @@ server {
 ## Sicherheit in Stichworten
 
 * **Kopplung:** 72 Bit Zufall, zehn Fehlversuche je Stunde, danach Sperre.
-* **Anfragen von OV-Budget:** ECDSA-signiert, höchstens fünf Minuten alt,
+* **Anfragen von OV-Multitool:** ECDSA-signiert, höchstens fünf Minuten alt,
   jede Einmalkennung nur einmal, der Zweck steht mit in der Signatur.
-* **Antworten:** signiert der Connector, damit OV-Budget die Gegenseite prüfen
+* **Antworten:** signiert der Connector, damit OV-Multitool die Gegenseite prüfen
   kann.
 * **Meldungen von außen:** bewusst ohne Anmeldung — wer den QR-Code oder die
   Einladung hat, darf melden. Begrenzt auf 120 Standortmeldungen je Fahrzeug
@@ -147,26 +147,26 @@ server {
   ohne Zugänge, ohne Inhalte.
 * **Rückmeldefrist:** Steht bei der Veranstaltung eine, nimmt der Connector
   danach nichts mehr an.
-* **Zurückziehen:** In OV-Budget den QR-Code oder den Einladungscode neu
+* **Zurückziehen:** In OV-Multitool den QR-Code oder den Einladungscode neu
   erzeugen oder die Person von der Gästeliste nehmen — beim nächsten Abgleich
   verwirft der Connector auch die wartenden Meldungen dazu.
 * **Ablage:** nur Prüfsummen der Zugänge und Codes, verschlüsselte Meldungen,
   Zeitstempel und die Angaben, die auf der Einladungsseite stehen müssen.
 * **Zahlen nur signiert:** Bestand und Wartendes gibt der Connector allein
-  dem gekoppelten OV-Budget heraus (`?p=zustand`), nicht der Startseite.
+  dem gekoppelten OV-Multitool heraus (`?p=zustand`), nicht der Startseite.
   Solange die Kopplung aussteht, steht dort die Einrichtungsanleitung – zu dem
   Zeitpunkt gibt es noch nichts zu verraten.
 
 ## Ist der Connector sauber?
 
-OV-Budget kann das prüfen: *Verwaltung → Connectoren → Connector prüfen*,
+OV-Multitool kann das prüfen: *Verwaltung → Connectoren → Connector prüfen*,
 auf Wunsch täglich mit Nachricht an die Leitung. Die Prüfung hat zwei Teile:
 
 * **Selbstprüfung** (signierte Anfrage `?p=pruefung`): Der Connector meldet
   jede Datei unter `public/` und `src/` mit SHA-256, dazu Befunde – Dateien,
   die nicht zu ihm gehören, Ausführbares in `daten/`, eine Ablage im
   Dokumentenverzeichnis, beschreibbare Programmdateien, `display_errors`.
-* **Eigener Maßstab:** OV-Budget bringt die Prüfsummen der Fassung mit, die
+* **Eigener Maßstab:** OV-Multitool bringt die Prüfsummen der Fassung mit, die
   es kennt (`connector-manifest.json`), und vergleicht: geändert, fehlt,
   fremd. Zusätzlich holt es die Skripte, die Besucher im Browser ausführen
   (`assets/*.js`), **selbst über das Netz** und vergleicht sie – ein

@@ -1,14 +1,17 @@
-# Home-Assistant-Add-on: OV-Budget
+# Home-Assistant-Add-on: OV-Multitool
 # Installation: die Repository-URL im Add-on Store hinzufuegen.
 #
 # Das Add-on ist eigenständig: Datenbank, Webserver und Anwendung stecken im
 # Container, es sind keine weiteren Add-ons nötig.
-name: OV-Budget
+name: OV-Multitool
+# Der Slug bleibt: Home Assistant kennt das Add-on daran, mit ihm bleiben die Daten.
 slug: ov_budget
-version: "1.48.1"
+version: "2.0.0.0"
 description: >-
-  THW-Ortsverband: Wünsche und Budget, Aufgaben, Kontakte, Besprechungen und
-  Fahrzeugakten – mit Stein.APP- und Divera-24/7-Anbindung. Eigene Datenbank inklusive.
+  Das Werkzeug für den THW-Ortsverband: Wünsche und Budget, Aufgaben, Kontakte,
+  Besprechungen, Veranstaltungen, Fahrzeugakten, Funkgeräte, SIM-Karten und
+  Verbrauch – mit Stein.APP-, Divera-24/7- und Home-Assistant-Anbindung.
+  Eigene Datenbank inklusive. Früher OV-Budget.
 url: https://github.com/Lexorius/ov-voldemort
 arch:
   - aarch64
@@ -34,8 +37,8 @@ backup: cold
 # Ingress: erscheint in der Seitenleiste, ohne Port nach außen zu öffnen
 ingress: true
 ingress_port: 8099
-panel_icon: mdi:cash-multiple
-panel_title: OV-Budget
+panel_icon: mdi:toolbox-outline
+panel_title: OV-Multitool
 panel_admin: false
 
 # Optionaler direkter Zugriff, z.B. für das Handy im Heimnetz.

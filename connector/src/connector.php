@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * OV-Budget-Connector: Briefkasten für alles, was von außen hereinkommt.
+ * OV-Multitool-Connector: Briefkasten für alles, was von außen hereinkommt.
  *
  * Der Connector steht auf einem öffentlich erreichbaren Webserver und hat
  * zwei Aufgaben:
@@ -12,12 +12,12 @@ declare(strict_types=1);
  *   Bestand         – "ist am Lagerort" für Funkgeräte und ganze Gruppen
  *   Zähler          – Zählerstände für Strom, Gas und Wasser
  *
- * Beides nimmt er entgegen und gibt es an OV-Budget weiter – mehr nicht.
+ * Beides nimmt er entgegen und gibt es an OV-Multitool weiter – mehr nicht.
  *
  * Zwei Dinge sind wichtig:
  *
  * 1. Er kann die Meldungen nicht lesen. Das Handy verschlüsselt sie im Browser
- *    für den öffentlichen Schlüssel von OV-Budget; hier liegt nur Geheimtext,
+ *    für den öffentlichen Schlüssel von OV-Multitool; hier liegt nur Geheimtext,
  *    und der wird nach dem Abholen gelöscht.
  * 1a. Er kennt die Fahrzeuge nicht. Gespeichert werden nur Prüfsummen der
  *    Zugänge; Bezeichnung und Kennzeichen stehen im Anker der Adresse
@@ -26,13 +26,13 @@ declare(strict_types=1);
  *    muss: Titel, Zeitpunkt, Ort und den Hinweistext. Wer eingeladen ist,
  *    weiß er nicht – von den Einladungscodes liegen nur Prüfsummen hier,
  *    und die Rückmeldungen sind verschlüsselt.
- * 2. Er redet nur mit einem gekoppelten OV-Budget. Die Kopplung passiert
+ * 2. Er redet nur mit einem gekoppelten OV-Multitool. Die Kopplung passiert
  *    einmalig mit einem Code, danach ist jede Anfrage signiert.
  *
  * Gespeichert wird in Dateien unterhalb von daten/ – keine Datenbank nötig.
  */
 
-const CON_VERSION = '1.4.0';
+const CON_VERSION = '1.4.1';
 
 /** Höchstalter einer signierten Anfrage in Sekunden (gegen Wiedereinspielen) */
 const CON_ZEITFENSTER = 300;
@@ -219,7 +219,7 @@ function con_kopplungscode(): string
 }
 
 /**
- * Kopplung durchführen: OV-Budget schickt Code und seinen öffentlichen
+ * Kopplung durchführen: OV-Multitool schickt Code und seinen öffentlichen
  * Schlüssel, bekommt unseren zurück. Danach ist der Code verbraucht.
  */
 function con_koppeln(string $code, string $ovPubkey): array
@@ -259,7 +259,7 @@ function con_koppeln(string $code, string $ovPubkey): array
 /* ==================================================================== */
 
 /**
- * Anfrage von OV-Budget prüfen: Signatur, Alter, Einmaligkeit.
+ * Anfrage von OV-Multitool prüfen: Signatur, Alter, Einmaligkeit.
  * Gibt den entschlüsselten Rumpf als Array zurück.
  */
 function con_pruefe_anfrage(string $koerper, string $signatur, string $pfad = ''): array
@@ -293,7 +293,7 @@ function con_pruefe_anfrage(string $koerper, string $signatur, string $pfad = ''
     return $daten;
 }
 
-/** Antwort signieren, damit OV-Budget sicher ist, mit wem es spricht */
+/** Antwort signieren, damit OV-Multitool sicher ist, mit wem es spricht */
 function con_signiere(string $koerper): string
 {
     $k = con_kopplung();
@@ -350,9 +350,9 @@ function con_kennung(string $token): string
 }
 
 /**
- * Die Liste kommt komplett von OV-Budget und ersetzt die bisherige.
+ * Die Liste kommt komplett von OV-Multitool und ersetzt die bisherige.
  * Übertragen werden nur Prüfsummen – Bezeichnung und Kennzeichen der
- * Fahrzeuge bleiben in OV-Budget und stehen für die Melde-Seite im
+ * Fahrzeuge bleiben in OV-Multitool und stehen für die Melde-Seite im
  * Adressanker, der den Server nie erreicht.
  */
 function con_fahrzeuge_setzen(array $liste): int
@@ -447,7 +447,7 @@ function con_meldungen_abholen(int $max = 200): array
 }
 
 /**
- * Uraltes Unabgeholtes wegwerfen. Holt OV-Budget längere Zeit nichts ab
+ * Uraltes Unabgeholtes wegwerfen. Holt OV-Multitool längere Zeit nichts ab
  * (abgeschaltet, umgezogen), soll das hier nicht ewig liegen bleiben.
  */
 function con_alte_wegwerfen(string $unter): void
@@ -492,7 +492,7 @@ function con_limit_frei(string $schluessel, int $hoechstens = CON_LIMIT_STUNDE):
 /**
  * Was der Connector über eine Veranstaltung wissen darf. Titel, Zeitpunkt
  * und Ort muss die Einladungsseite zeigen – alles andere bleibt in
- * OV-Budget. Reine Funktion.
+ * OV-Multitool. Reine Funktion.
  */
 function con_veranstaltung_saeubern(array $v): ?array
 {
@@ -522,7 +522,7 @@ function con_veranstaltung_saeubern(array $v): ?array
 
 /**
  * Veranstaltungen und Einladungen setzen – beide Listen kommen komplett von
- * OV-Budget und ersetzen die bisherigen. Von den Codes kommen nur Prüfsummen.
+ * OV-Multitool und ersetzen die bisherigen. Von den Codes kommen nur Prüfsummen.
  */
 function con_veranstaltungen_setzen(array $veranstaltungen, array $einladungen): array
 {
@@ -653,7 +653,7 @@ function con_rueckmeldungen_abholen(int $max = 200): array
 /* ==================================================================== */
 
 /**
- * Die Liste kommt komplett von OV-Budget und ersetzt die bisherige.
+ * Die Liste kommt komplett von OV-Multitool und ersetzt die bisherige.
  * Gespeichert wird je Eintrag nur: Prüfsumme des Zugangs, ob es ein
  * einzelnes Gerät oder eine Gruppe ist, und wie viele Geräte dazugehören –
  * die Seite muss "alle 8 Geräte" schreiben können. Keine Bezeichnungen.
@@ -756,7 +756,7 @@ function con_bestandsmeldungen_abholen(int $max = 200): array
 /* ==================================================================== */
 
 /**
- * Die Liste kommt komplett von OV-Budget und ersetzt die bisherige.
+ * Die Liste kommt komplett von OV-Multitool und ersetzt die bisherige.
  * Je Zugang nur die Prüfsumme, die Art und die Einheit – die Seite muss
  * "kWh" schreiben können. Keine Namen, keine Nummern, keine Stände.
  */
@@ -877,7 +877,7 @@ function con_manifest_erzeugen(string $wurzel): array
     foreach (con_dateien_auflisten($wurzel) as $rel => $pfad) {
         $dateien[$rel] = ['sha256' => hash_file('sha256', $pfad), 'bytes' => (int)filesize($pfad)];
     }
-    return ['programm' => 'OV-Budget-Connector', 'version' => CON_VERSION, 'erzeugt' => date('c'), 'dateien' => $dateien];
+    return ['programm' => 'OV-Multitool-Connector', 'version' => CON_VERSION, 'erzeugt' => date('c'), 'dateien' => $dateien];
 }
 
 /** Was in daten/ liegen darf – alles andere ist verdächtig. Reine Funktion. */
@@ -896,7 +896,7 @@ function con_daten_erwartet(string $name, bool $istOrdner): bool
 
 /**
  * Selbstprüfung: alle Dateien mit Prüfsumme, dazu Befunde. Was hier steht,
- * hat ein manipulierter Server selbst geschrieben – OV-Budget vergleicht
+ * hat ein manipulierter Server selbst geschrieben – OV-Multitool vergleicht
  * deshalb mit seinem eigenen Maßstab und prüft die ausgelieferten Dateien
  * zusätzlich über das Netz.
  */
@@ -918,7 +918,7 @@ function con_pruefung(?string $wurzel = null): array
     }
     $befunde = [];
 
-    // Fremde Dateien laut eigener manifest.json (OV-Budget rechnet das selbst noch einmal)
+    // Fremde Dateien laut eigener manifest.json (OV-Multitool rechnet das selbst noch einmal)
     $eigenes = json_decode((string)@file_get_contents($wurzel . '/manifest.json'), true);
     $fremd = [];
     if (is_array($eigenes) && is_array($eigenes['dateien'] ?? null)) {
@@ -1005,7 +1005,7 @@ function con_notiz(string $was, string $dazu = ''): void
  * Zustand des Connectors – Zahlen, keine Geheimnisse.
  *
  * Das steht bewusst auf keiner Webseite: Wie viele Fahrzeuge oder Einladungen
- * hier hängen, geht nur das gekoppelte OV-Budget etwas an. Abgefragt wird es
+ * hier hängen, geht nur das gekoppelte OV-Multitool etwas an. Abgefragt wird es
  * signiert über ?p=zustand.
  */
 function con_status(): array

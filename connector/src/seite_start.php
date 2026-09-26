@@ -7,7 +7,7 @@
  * Hand und nur die Adresse abgetippt – deshalb steht hier ein Feld für den
  * Einladungscode.
  *
- * Wie es dem Connector geht, fragt OV-Budget signiert ab (?p=zustand).
+ * Wie es dem Connector geht, fragt OV-Multitool signiert ab (?p=zustand).
  * Einzige Ausnahme hier: Solange die Kopplung aussteht, steht die Anleitung
  * dafür da. Zu dem Zeitpunkt gibt es noch nichts zu verraten.
  *
@@ -64,7 +64,7 @@ $basis = rtrim(strtr(dirname((string)($_SERVER['SCRIPT_NAME'] ?? '/index.php')),
 <?php if (!$gekoppelt): ?>
   <div class="karte">
     <h2 style="font-size:1rem;margin:0 0 .4rem">Noch einzurichten</h2>
-    <p class="klein">Dieser Connector ist noch mit keinem OV-Budget gekoppelt. Der Kopplungscode
+    <p class="klein">Dieser Connector ist noch mit keinem OV-Multitool gekoppelt. Der Kopplungscode
       steht auf dem Server in <code>daten/kopplungscode.txt</code> – er wird dort in der
       Verwaltung unter „Connectoren" eingetragen.</p>
     <?php if (!$schreibbar): ?>

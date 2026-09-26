@@ -4,7 +4,7 @@ declare(strict_types=1);
 /**
  * Kennzahlen nach Home Assistant melden – über MQTT mit Auto-Discovery.
  *
- * Es entsteht ein Gerät „OV-Budget" mit Sensoren (Budget, Wünsche, Aufgaben,
+ * Es entsteht ein Gerät „OV-Multitool" mit Sensoren (Budget, Wünsche, Aufgaben,
  * Besprechungen, Fahrzeuge) und auf Wunsch je Fahrzeug ein eigenes Gerät mit
  * Status, Funkstatus, Fristen und Standort.
  *
@@ -355,8 +355,8 @@ function ha_device(string $basis, string $ovName, string $version, ?array $fahrz
     if ($fahrzeug === null) {
         return [
             'identifiers'  => [$basis],
-            'name'         => 'OV-Budget',
-            'manufacturer' => 'OV-Budget',
+            'name'         => 'OV-Multitool',
+            'manufacturer' => 'OV-Multitool',
             'model'        => $ovName,
             'sw_version'   => $version,
         ];
@@ -364,7 +364,7 @@ function ha_device(string $basis, string $ovName, string $version, ?array $fahrz
     return [
         'identifiers'  => [$basis . '_fz_' . (int)$fahrzeug['id']],
         'name'         => (string)$fahrzeug['bezeichnung'],
-        'manufacturer' => 'OV-Budget',
+        'manufacturer' => 'OV-Multitool',
         'model'        => trim((string)($fahrzeug['typ_label'] ?? '') ?: 'Fahrzeug'),
         'via_device'   => $basis,
         'sw_version'   => $version,

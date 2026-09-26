@@ -1192,6 +1192,15 @@ SQL;
         $pdo->exec('ALTER TABLE meter_readings ADD KEY idx_reading_zeit (gelesen_am)');
     }
     $merken('033_reading_zeit_index');
+
+    /* ---------- 034: OV-Budget heisst OV-Multitool ---------- */
+    if (ovb_table_exists($pdo, 'settings')) {
+        $n = $pdo->exec("UPDATE settings SET svalue = 'OV-Multitool' WHERE skey = 'app_name' AND svalue = 'OV-Budget'");
+        if ($n > 0) {
+            $say('Die Anwendung heisst jetzt OV-Multitool (Name der Anwendung angepasst).');
+        }
+    }
+    $merken('034_multitool');
 }
 
 /**

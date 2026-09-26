@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Anbindung an die OV-Budget-Connectoren.
+ * Anbindung an die OV-Multitool-Connectoren.
  *
  * Ein Connector steht auf einem öffentlich erreichbaren Webserver und ist
  * Briefkasten für alles, was von außen hereinkommt, ohne dass jemand Zugang
@@ -251,7 +251,7 @@ function connector_http(
         CURLOPT_HEADER         => true,
         CURLOPT_TIMEOUT        => $timeout,
         CURLOPT_CONNECTTIMEOUT => $timeout,
-        CURLOPT_USERAGENT      => 'OV-Budget/' . app_version(),
+        CURLOPT_USERAGENT      => 'OV-Multitool/' . app_version(),
     ]);
     $roh = curl_exec($ch);
     $code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
@@ -313,7 +313,7 @@ function connector_call(array $c, string $pfad, array $daten = []): array
  * Einladungen er kennt und was gerade wartet.
  *
  * Auf seiner eigenen Startseite steht davon nichts – die verrät bewusst
- * nichts über den Ortsverband. Fragen darf nur das gekoppelte OV-Budget.
+ * nichts über den Ortsverband. Fragen darf nur das gekoppelte OV-Multitool.
  */
 function connector_zustand(array $c): array
 {
@@ -324,7 +324,7 @@ function connector_zustand(array $c): array
 /* Prüfung: Ist der Connector sauber?                                    */
 /* ==================================================================== */
 
-/** Die Prüfsummen der Connector-Fassung, die OV-Budget kennt */
+/** Die Prüfsummen der Connector-Fassung, die OV-Multitool kennt */
 function connector_manifest(): array
 {
     static $m = null;
@@ -341,7 +341,7 @@ function connector_http_get(string $url, int $timeout = 10): array
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true, CURLOPT_HEADER => true, CURLOPT_TIMEOUT => $timeout,
-        CURLOPT_CONNECTTIMEOUT => $timeout, CURLOPT_USERAGENT => 'OV-Budget/' . app_version(),
+        CURLOPT_CONNECTTIMEOUT => $timeout, CURLOPT_USERAGENT => 'OV-Multitool/' . app_version(),
         CURLOPT_FOLLOWLOCATION => false,
     ]);
     $roh = curl_exec($ch);
@@ -355,7 +355,7 @@ function connector_http_get(string $url, int $timeout = 10): array
 }
 
 /**
- * Was OV-Budget selbst über das Netz sieht – unabhängig von der Selbstprüfung.
+ * Was OV-Multitool selbst über das Netz sieht – unabhängig von der Selbstprüfung.
  * Rückgabe: ['js' => [pfad => bool|null], 'daten_offen' => ?bool,
  *            'unsigniert' => ?bool, 'kopfzeilen' => [fehlende], 'hsts' => ?bool]
  */
@@ -402,10 +402,10 @@ function connector_pruefung_auswerten(array $bericht, array $manifest, array $ne
     $soll = (array)($manifest['dateien'] ?? []);
 
     if ($soll === []) {
-        $befunde[] = ['stufe' => 'hinweis', 'text' => 'OV-Budget hat keinen Maßstab (connector-manifest.json fehlt) – nur die Selbstprüfung zählt.'];
+        $befunde[] = ['stufe' => 'hinweis', 'text' => 'OV-Multitool hat keinen Maßstab (connector-manifest.json fehlt) – nur die Selbstprüfung zählt.'];
     }
     if ((string)($bericht['version'] ?? '') !== (string)($manifest['version'] ?? '') && $soll !== []) {
-        $befunde[] = ['stufe' => 'hinweis', 'text' => sprintf('Der Connector läuft als Fassung %s, OV-Budget erwartet %s – bitte die Dateien auf dem Webserver aktualisieren.',
+        $befunde[] = ['stufe' => 'hinweis', 'text' => sprintf('Der Connector läuft als Fassung %s, OV-Multitool erwartet %s – bitte die Dateien auf dem Webserver aktualisieren.',
             (string)($bericht['version'] ?? '?'), (string)$manifest['version'])];
     }
     $veraendert = [];

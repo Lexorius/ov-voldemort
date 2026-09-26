@@ -1,4 +1,4 @@
-/* OV-Budget – kleine Helfer, bewusst ohne Framework */
+/* OV-Multitool – kleine Helfer, bewusst ohne Framework */
 (function () {
   'use strict';
 

@@ -2,7 +2,7 @@
 /** @var string $__content */
 /** @var string|null $title */
 $u = current_user();
-$appName = (string)setting('app_name', 'OV-Budget');
+$appName = (string)setting('app_name', 'OV-Multitool');
 $ovName  = (string)setting('ov_name', '');
 $accent  = (string)setting('theme_color', '#003399');
 $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
@@ -46,46 +46,10 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
   <button class="mainnav__pfeil mainnav__pfeil--rechts" type="button"
           data-nav-pfeil="1" aria-label="Weiter nach rechts" tabindex="-1">›</button>
   <div class="mainnav__inner">
-    <a class="mainnav__item<?= nav_active('dashboard') ?>" href="<?= e(url('dashboard')) ?>">
-      <span class="mainnav__icon">▦</span><span>Übersicht</span></a>
-    <a class="mainnav__item<?= nav_active('wishes', 'wish', 'wish_edit') ?>" href="<?= e(url('wishes')) ?>">
-      <span class="mainnav__icon">★</span><span><?= e(setting('wunsch_modul_name', 'Wünsch dir was')) ?></span></a>
-    <a class="mainnav__item<?= nav_active('todos', 'todo', 'todo_edit') ?>" href="<?= e(url('todos')) ?>">
-      <span class="mainnav__icon">☑</span><span><?= e(setting('todo_modul_name', 'Aufgaben')) ?></span></a>
-    <a class="mainnav__item<?= nav_active('budget', 'budget_edit', 'budget_pots', 'budget_year_edit', 'expenses', 'expense_edit') ?>" href="<?= e(url('budget')) ?>">
-      <span class="mainnav__icon">€</span><span>Budget</span></a>
-    <?php if (can('view_vehicles')): ?>
-      <a class="mainnav__item<?= nav_active('vehicles', 'vehicle', 'vehicle_edit', 'vehicle_order', 'vehicle_order_edit') ?>" href="<?= e(url('vehicles')) ?>">
-        <span class="mainnav__icon">⛟</span><span><?= e(setting('fahrzeug_modul_name', 'Fahrzeuge')) ?></span></a>
-    <?php endif; ?>
-    <?php if (can('view_radios')): ?>
-      <a class="mainnav__item<?= nav_active('radios', 'radio', 'radio_edit', 'radio_group', 'radio_group_edit') ?>" href="<?= e(url('radios')) ?>">
-        <span class="mainnav__icon">((•))</span><span><?= e(setting('funk_modul_name', 'Funkgeräte')) ?></span></a>
-    <?php endif; ?>
-    <?php if (can('view_sims')): ?>
-      <a class="mainnav__item<?= nav_active('sims', 'sim_edit') ?>" href="<?= e(url('sims')) ?>">
-        <span class="mainnav__icon">▯</span><span><?= e(setting('sim_modul_name', 'SIM-Karten')) ?></span></a>
-    <?php endif; ?>
-    <?php if (can('view_verbrauch')): ?>
-      <a class="mainnav__item<?= nav_active('verbrauch', 'meter', 'meter_edit', 'tarife', 'tarif_edit') ?>" href="<?= e(url('verbrauch')) ?>">
-        <span class="mainnav__icon">⚡</span><span><?= e(setting('verbrauch_modul_name', 'Verbrauch')) ?></span></a>
-    <?php endif; ?>
-    <?php if (can('view_contacts')): ?>
-      <a class="mainnav__item<?= nav_active('contacts', 'contact_edit', 'contact_groups', 'contact_group', 'contacts_import') ?>" href="<?= e(url('contacts')) ?>">
-        <span class="mainnav__icon">✉</span><span><?= e(setting('kontakte_modul_name', 'Kontakte')) ?></span></a>
-    <?php endif; ?>
-    <?php if (can('view_events')): ?>
-      <a class="mainnav__item<?= nav_active('events', 'event', 'event_edit') ?>" href="<?= e(url('events')) ?>">
-        <span class="mainnav__icon">◍</span><span><?= e(setting('veranstaltung_modul_name', 'Veranstaltungen')) ?></span></a>
-    <?php endif; ?>
-    <?php if (can('view_meetings')): ?>
-      <a class="mainnav__item<?= nav_active('meetings', 'meeting', 'meeting_edit', 'meeting_series_edit', 'talking_points', 'talking_point_edit') ?>" href="<?= e(url('meetings')) ?>">
-        <span class="mainnav__icon">☰</span><span><?= e(setting('besprechung_modul_name', 'Besprechungen')) ?></span></a>
-    <?php endif; ?>
-    <?php if (can('admin')): ?>
-      <a class="mainnav__item<?= nav_active('admin', 'admin_users', 'admin_user_edit', 'admin_lists', 'admin_list_edit', 'admin_settings', 'admin_divera', 'admin_divera_form', 'admin_order_rights', 'admin_stein', 'admin_divera_fahrzeuge', 'admin_connectors', 'admin_connector', 'admin_log') ?>" href="<?= e(url('admin')) ?>">
-        <span class="mainnav__icon">⚙</span><span>Verwaltung</span></a>
-    <?php endif; ?>
+    <?php foreach (nav_leiste() as $m): ?>
+      <a class="mainnav__item<?= nav_active(...$m['aktiv']) ?>" href="<?= e(url($m['route'])) ?>">
+        <span class="mainnav__icon"><?= e($m['icon']) ?></span><span><?= e($m['label']) ?></span></a>
+    <?php endforeach; ?>
   </div>
 </nav>
 <?php endif; ?>
@@ -101,7 +65,7 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
   <div><?= nl2br(e((string)setting('footer_text', ''))) ?></div>
   <div class="footer__meta">
     <?= e($ovName) ?>
-    <?= $ovName !== '' ? ' · ' : '' ?><a href="<?= e(url('neu')) ?>" title="Was ist neu?">OV-Budget <?= e(app_version()) ?></a>
+    <?= $ovName !== '' ? ' · ' : '' ?><a href="<?= e(url('neu')) ?>" title="Was ist neu?">OV-Multitool <?= e(app_version()) ?></a>
   </div>
 </footer>
 

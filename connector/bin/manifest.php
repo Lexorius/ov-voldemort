@@ -8,7 +8,7 @@ declare(strict_types=1);
  *
  * Schreibt connector/manifest.json (liest der Connector selbst, um fremde
  * Dateien zu erkennen) und ov-budget/src/connector-manifest.json (der
- * Maßstab von OV-Budget – unabhängig davon, was der Connector behauptet).
+ * Maßstab von OV-Multitool – unabhängig davon, was der Connector behauptet).
  * Nach jeder Änderung an public/ oder src/ neu ausführen; ein Test in der
  * Entwicklung schlägt an, wenn das vergessen wurde.
  */

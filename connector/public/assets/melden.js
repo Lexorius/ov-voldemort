@@ -1,15 +1,15 @@
 /*
- * Standort melden – verschlüsselt für OV-Budget.
+ * Standort melden – verschlüsselt für OV-Multitool.
  *
  * Ablauf einer Meldung:
  *   1. Standort vom Gerät holen (der Browser fragt um Erlaubnis)
  *   2. flüchtiges Schlüsselpaar erzeugen, gemeinsames Geheimnis mit dem
- *      öffentlichen Schlüssel von OV-Budget aushandeln (ECDH, P-256)
+ *      öffentlichen Schlüssel von OV-Multitool aushandeln (ECDH, P-256)
  *   3. daraus Schlüssel und Zufallswert ableiten (HKDF-SHA256)
  *   4. Angaben mit AES-GCM verschlüsseln und abschicken
  *
  * Der Connector bekommt nur: flüchtiger öffentlicher Schlüssel, Zufallswert
- * und Geheimtext. Entschlüsseln kann das ausschließlich OV-Budget.
+ * und Geheimtext. Entschlüsseln kann das ausschließlich OV-Multitool.
  */
 (function () {
   var box = document.getElementById('box');

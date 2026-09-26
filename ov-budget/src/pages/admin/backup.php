@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } catch (BackupException $ex) {
         $fehler = $ex->getMessage();
     } catch (Throwable $ex) {
-        error_log('OV-Budget Sicherung: ' . $ex->getMessage());
+        error_log('OV-Multitool Sicherung: ' . $ex->getMessage());
         $fehler = 'Das hat nicht geklappt: ' . $ex->getMessage();
     }
 }

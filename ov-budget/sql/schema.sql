@@ -1,5 +1,5 @@
 -- ============================================================
---  OV-Budget / "Wünsch dir was" – Datenbankschema
+--  OV-Multitool / "Wünsch dir was" – Datenbankschema
 --  MySQL 5.7+ / MariaDB 10.3+
 -- ============================================================
 SET NAMES utf8mb4;

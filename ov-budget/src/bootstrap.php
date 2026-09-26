@@ -53,6 +53,7 @@ require __DIR__ . '/lib/sims.php';
 require __DIR__ . '/lib/radios.php';
 require __DIR__ . '/lib/backup.php';
 require __DIR__ . '/lib/verbrauch.php';
+require __DIR__ . '/lib/nav.php';
 
 /** Ist die Anwendung eingerichtet? */
 function app_installed(): bool

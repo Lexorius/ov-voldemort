@@ -47,7 +47,7 @@ stop_all() {
 }
 trap stop_all TERM INT
 
-log "OV-Budget startet ..."
+log "OV-Multitool startet ..."
 
 # ------------------------------------------------------------------
 # Umgebung des Containers einlesen

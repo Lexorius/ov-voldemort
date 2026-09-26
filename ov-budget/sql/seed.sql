@@ -281,7 +281,7 @@ INSERT IGNORE INTO list_items (list_key, label, slug, sort_order, is_default) VA
 --  Einstellungen
 -- ============================================================
 INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_order) VALUES
-('app_name','OV-Budget','Name der Anwendung','Erscheint im Kopf und Browser-Titel','text','Allgemein',10),
+('app_name','OV-Multitool','Name der Anwendung','Erscheint im Kopf und Browser-Titel','text','Allgemein',10),
 ('ov_name','THW Ortsverband Musterstadt','Name des Ortsverbands','','text','Allgemein',20),
 ('telefon_landesvorwahl','+49','Landesvorwahl für Rufnummern','Nummern mit führender 0 werden damit international gespeichert (z. B. 0151… wird +49 151…).','text','Allgemein',35),
 ('ov_kurz','OV Musterstadt','Kurzname','Für die mobile Ansicht','text','Allgemein',30),
@@ -358,8 +358,8 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('fahrzeug_intro','Fahrzeuge des Ortsverbands mit Fahrzeugakte, Journal und Instandsetzungsauftraegen.','Einleitungstext im Fahrzeugmodul','','textarea','Fahrzeuge',20),
 ('fahrzeug_user_darf_sehen','1','Alle Mitglieder duerfen Fahrzeuge sehen','Sonst nur Leitung und Administration','bool','Fahrzeuge',30),
 ('fahrzeug_user_darf_melden','1','Alle Mitglieder duerfen Schaeden melden','Legt einen Auftrag an und schreibt ins Journal','bool','Fahrzeuge',40),
-('connector_aktiv','0','Standortmeldung per QR-Code','Fahrzeuge bekommen einen QR-Code, ueber den jede Person ohne Zugang den Standort melden kann. Braucht den OV-Budget-Connector auf einem oeffentlich erreichbaren Webserver.','bool','Fahrzeuge',80),
-('connector_pruefung_taeglich','1','Connectoren täglich prüfen','Dateien mit den Prüfsummen von OV-Budget vergleichen, Skripte über das Netz holen, Ablage und Signaturen testen. Bei Alarm Nachricht an die Leitung.','bool','Fahrzeuge',83),
+('connector_aktiv','0','Standortmeldung per QR-Code','Fahrzeuge bekommen einen QR-Code, ueber den jede Person ohne Zugang den Standort melden kann. Braucht den OV-Multitool-Connector auf einem oeffentlich erreichbaren Webserver.','bool','Fahrzeuge',80),
+('connector_pruefung_taeglich','1','Connectoren täglich prüfen','Dateien mit den Prüfsummen von OV-Multitool vergleichen, Skripte über das Netz holen, Ablage und Signaturen testen. Bei Alarm Nachricht an die Leitung.','bool','Fahrzeuge',83),
 ('connector_intervall_minuten','2','Meldungen abholen alle (Minuten)','','number','Fahrzeuge',82),
 ('connector_park_minuten','60','Parkposition ab (Minuten)','So lange muss ein Fahrzeug an derselben Stelle stehen, bevor es einen Journaleintrag gibt','number','Fahrzeuge',83),
 ('connector_park_radius_meter','50','Derselbe Ort bis (Meter)','Wie weit sich ein Fahrzeug bewegen darf, ohne dass es als Ortswechsel gilt','number','Fahrzeuge',84),

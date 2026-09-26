@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 #
-# OV-Budget – Home-Assistant-Add-on und normaler Docker-Container.
+# OV-Multitool – Home-Assistant-Add-on und normaler Docker-Container.
 #
 # Basis ist bewusst das Home-Assistant-Basisimage (Alpine): der Supervisor
 # setzt es ohnehin ein. PHP kommt deshalb aus den Alpine-Paketen und nicht
@@ -72,7 +72,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
 CMD ["/run.sh"]
 
 LABEL \
-    io.hass.name="OV-Budget" \
+    io.hass.name="OV-Multitool" \
     io.hass.description="Pseudo-Budgetverwaltung, Wunschliste und Aufgaben für einen THW-Ortsverband" \
     io.hass.type="addon" \
     io.hass.arch="${BUILD_ARCH}"

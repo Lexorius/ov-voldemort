@@ -132,7 +132,7 @@ function stein_request(string $pfad, array $query = []): array
             CURLOPT_TIMEOUT        => $timeout,
             CURLOPT_CONNECTTIMEOUT => $timeout,
             CURLOPT_HTTPHEADER     => $headers,
-            CURLOPT_USERAGENT      => 'OV-Budget Fahrzeugakte',
+            CURLOPT_USERAGENT      => 'OV-Multitool Fahrzeugakte',
         ]);
         $body = curl_exec($ch);
         $errno = curl_errno($ch);

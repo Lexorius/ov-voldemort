@@ -55,7 +55,7 @@ function divera_request(string $path, array $query = [], ?string $key = null, ?a
             CURLOPT_HTTPHEADER     => $headers,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_MAXREDIRS      => 3,
-            CURLOPT_USERAGENT      => 'OV-Budget/1.0',
+            CURLOPT_USERAGENT      => 'OV-Multitool/1.0',
         ]);
         if ($post !== null) {
             curl_setopt($ch, CURLOPT_POST, true);

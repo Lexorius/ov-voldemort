@@ -6,7 +6,7 @@ $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && post_str('action') === 'push_test') {
     // Testnachricht an die eigenen Browser
-    $res = push_to_user((int)$user['id'], 'OV-Budget',
+    $res = push_to_user((int)$user['id'], 'OV-Multitool',
         'Testnachricht – die Benachrichtigungen in diesem Browser funktionieren.', notify_url('?p=dashboard'));
     if ($res['gesendet'] > 0) {
         flash('success', sprintf('An %d Browser geschickt%s. Die Meldung sollte gleich erscheinen.',
@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && post_str('action') === 'notify_test
         if ($ziel === '') {
             throw new RuntimeException('Es ist kein Ziel hinterlegt. Bitte erst eintragen und speichern.');
         }
-        ha_notify_send($ziel, 'OV-Budget', 'Testnachricht – die Benachrichtigungen funktionieren.',
+        ha_notify_send($ziel, 'OV-Multitool', 'Testnachricht – die Benachrichtigungen funktionieren.',
             notify_url('?p=dashboard'));
         flash('success', 'Testnachricht an ' . e($ziel) . ' geschickt.');
     } catch (Throwable $ex) {

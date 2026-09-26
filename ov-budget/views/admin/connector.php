@@ -167,7 +167,7 @@ $neu = $c === null;
     <?php endif; ?>
   <?php endif; ?>
   <p class="small muted">Die Selbstprüfung des Connectors kann ein manipulierter Server fälschen. Deshalb vergleicht
-    OV-Budget mit den eigenen Prüfsummen und holt die Skripte, die Besucher ausführen, selbst über das Netz.
+    OV-Multitool mit den eigenen Prüfsummen und holt die Skripte, die Besucher ausführen, selbst über das Netz.
     Läuft täglich mit dem Abruf; bei Alarm bekommt die Leitung eine Nachricht.</p>
 </div>
 <?php endif; ?>

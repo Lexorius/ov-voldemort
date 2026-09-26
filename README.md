@@ -1,4 +1,6 @@
-# OV-Budget – Pseudo-Budgetverwaltung für einen THW-Ortsverband
+# OV-Multitool – das Werkzeug für den THW-Ortsverband
+
+*Bis Fassung 1.48 hieß die Anwendung OV-Budget.*
 
 Kleine, handytaugliche Webanwendung (PHP + MySQL, ohne Framework) für die interne
 Beschaffungsplanung eines Ortsverbands:
@@ -29,7 +31,7 @@ Container.** Es sind keine weiteren Add-ons und keine Vorarbeiten nötig.
 https://github.com/Lexorius/ov-voldemort
 ```
 
-2. In der Liste erscheint *OV-Budget*. Installieren – der erste Build dauert je
+2. In der Liste erscheint *OV-Multitool*. Installieren – der erste Build dauert je
    nach Hardware einige Minuten.
 3. Optional unter *Konfiguration* den Namen des Ortsverbands und ein
    Wunschpasswort setzen. Man kann aber auch einfach starten.
@@ -271,7 +273,7 @@ abgestellt hat, oder die Rückmeldung auf eine Einladung. Dafür gibt es den
 [connector/README.md](connector/README.md).
 
 ```
-Handy / Browser  --verschluesselt-->  Connector  <--holt ab--  OV-Budget (Add-on)
+Handy / Browser  --verschluesselt-->  Connector  <--holt ab--  OV-Multitool (Add-on)
 ```
 
 Unter *Verwaltung → Connectoren* lassen sich beliebig viele anlegen. Jeder
@@ -281,7 +283,7 @@ bekommt eine eigene Kopplung und trägt, wofür er zuständig ist: **Fahrzeuge**
 ### Standortmeldung per QR-Code
 
 In jedem Fahrzeug kann ein QR-Code hängen. Wer ihn scannt, meldet den Standort
-des Fahrzeugs – ohne Anmeldung, ohne Zugang zu OV-Budget und ohne Home
+des Fahrzeugs – ohne Anmeldung, ohne Zugang zu OV-Multitool und ohne Home
 Assistant. Gedacht für Helferinnen und Helfer, die ein Fahrzeug irgendwo
 abstellen oder wiederfinden.
 
@@ -290,17 +292,17 @@ PHP-Anwendung für einen öffentlich erreichbaren Webserver. Die Anleitung steht
 in [connector/README.md](connector/README.md).
 
 ```
-Handy (QR)  --verschluesselt-->  Connector  <--holt ab--  OV-Budget (Add-on)
+Handy (QR)  --verschluesselt-->  Connector  <--holt ab--  OV-Multitool (Add-on)
 ```
 
 * Das Handy verschlüsselt die Position **im Browser** für den öffentlichen
-  Schlüssel von OV-Budget (ECDH P-256, AES-256-GCM). Der Connector speichert
+  Schlüssel von OV-Multitool (ECDH P-256, AES-256-GCM). Der Connector speichert
   nur Geheimtext und löscht ihn beim Abholen – er kann die Standorte nicht
   lesen.
 * Er kennt auch die Fahrzeuge nicht: gespeichert werden nur **Prüfsummen** der
   Zugänge; Bezeichnung und Kennzeichen stehen im Anker der Adresse (hinter dem
   `#`) und erreichen den Server nie.
-* Connector und OV-Budget koppeln sich einmalig mit einem Code und tauschen
+* Connector und OV-Multitool koppeln sich einmalig mit einem Code und tauschen
   dabei ihre öffentlichen Schlüssel aus. Danach ist jede Anfrage signiert.
 * Die Melde-Seite bietet drei Möglichkeiten: einmal senden, alle 60 Sekunden
   oder alle 500 Sekunden – jeweils nur, solange die Seite offen ist. Ein
@@ -330,7 +332,7 @@ https://i.example.de/AB23CD
   weder Namen noch Antworten.
 * Von den Einladungscodes liegen dort nur Prüfsummen. Ein Code lässt sich
   jederzeit neu erzeugen; der alte gilt dann nicht mehr.
-* OV-Budget meldet Veranstaltungen und Codes selbstständig an und holt die
+* OV-Multitool meldet Veranstaltungen und Codes selbstständig an und holt die
   Rückmeldungen ab (Vorgabe: alle zehn Minuten). Beides geht auch von Hand.
 * Ohne Connector funktioniert das Modul trotzdem – Rückmeldungen werden dann
   von Hand eingetragen.

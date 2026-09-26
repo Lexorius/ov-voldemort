@@ -1,51 +1,51 @@
 {
-    "programm": "OV-Budget-Connector",
-    "version": "1.4.0",
-    "erzeugt": "2026-09-26T16:21:07+00:00",
+    "programm": "OV-Multitool-Connector",
+    "version": "1.4.1",
+    "erzeugt": "2026-09-26T20:25:07+00:00",
     "dateien": {
         "public/.htaccess": {
             "sha256": "75726923baf2ef95ad108fafbe83b626f19802a2e500bd93799b18cc04d7efea",
             "bytes": 595
         },
         "public/assets/bestand.js": {
-            "sha256": "4e427a9e3505b9d0cfbf849da15a89faf70157b555bf5fc689391ec15313f6a9",
-            "bytes": 6609
+            "sha256": "d75aa1b109b23e6f3d63cb1e4d82cd04ac93e974e2365c879e8864a64b9759a8",
+            "bytes": 6612
         },
         "public/assets/einladung.js": {
-            "sha256": "e4bb08447ecf0d85e1f36d8162f854062b861db4fdee80fe659c6b52565d707d",
-            "bytes": 6002
+            "sha256": "51d13549a01b22bc8f17f848807156f010507302dd4db7018c87614c526b11ec",
+            "bytes": 6011
         },
         "public/assets/melden.js": {
-            "sha256": "2f138d19e4baac27a2bee986d2c09da66c64001bb378ddcdcabb6314dc4b3e40",
-            "bytes": 7411
+            "sha256": "a17b2e2cb3bb7d0ed69144cae5b15b928d252fd766f37eaf44470744b225b169",
+            "bytes": 7420
         },
         "public/assets/zaehler.js": {
-            "sha256": "1c69b58a2a4a8047a3b172b97dee12c70f5a9e86d2187c677cb817c5743b453d",
-            "bytes": 5437
+            "sha256": "2cf2bcc409515d6e82766d22ce0a1035d4d003e0a32c0f5094f4328c1ea0ab02",
+            "bytes": 5440
         },
         "public/index.php": {
-            "sha256": "faa6cc82f832e1ecaab0c0e79f24e2a7050aaa837509cd9aee04fe22be8f6eea",
-            "bytes": 15103
+            "sha256": "45063efe3a806a3e37c4cc40796a2ceaedc9d44028f1d45cc0e2a69d676a6597",
+            "bytes": 15130
         },
         "src/connector.php": {
-            "sha256": "d09d6ac5994ed86ce94250fc7712dd3f858113c0a8149c1b31c0347bba014672",
-            "bytes": 39456
+            "sha256": "e2e3925dfe4546895179c87970039c767c8af2648532982e380300528e0b107c",
+            "bytes": 39510
         },
         "src/seite_bestand.php": {
             "sha256": "366716cc46650dd32bd1c43c50ab97127504b3c963a80bbff43324fcf4cce7a0",
             "bytes": 4928
         },
         "src/seite_einladung.php": {
-            "sha256": "035ed1dbe00717f858778eba318dba83688ba4b7da6861ad683aa33a1bfa065a",
-            "bytes": 7924
+            "sha256": "40e07a3988dd76e727cf162aa15badcf351b3716b35704a79d0c60109492caf8",
+            "bytes": 7927
         },
         "src/seite_melden.php": {
             "sha256": "5b9cac5edf47589a0d6d2884404ef0dfd61735fdc9a46e9972073a8e802ee2c2",
             "bytes": 3978
         },
         "src/seite_start.php": {
-            "sha256": "b89e344de47e05338a60eea9e8bb35e20516860bf4ac19e926e288dd2c668665",
-            "bytes": 3426
+            "sha256": "803a9c2db45d42f635bc281273cd2bf6d5dcfdfee3b0ddd55e96f17907d5acdb",
+            "bytes": 3432
         },
         "src/seite_zaehler.php": {
             "sha256": "ef58988e3de851524fc2a3fbc120a8fdff8ab1135acd9cb8f6180b4353c5dc78",

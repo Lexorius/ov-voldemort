@@ -158,7 +158,7 @@ function backup_dump_schreiben(PDO $pdo, string $ziel): array
         throw new BackupException('Der Datenbankauszug lässt sich nicht schreiben.');
     }
     $zeilen = [];
-    fwrite($h, "-- OV-Budget " . app_version() . " – Datenbankauszug vom " . date('c') . "\n");
+    fwrite($h, "-- OV-Multitool " . app_version() . " – Datenbankauszug vom " . date('c') . "\n");
     fwrite($h, "SET NAMES utf8mb4;\nSET FOREIGN_KEY_CHECKS=0;\nSET SQL_MODE='NO_AUTO_VALUE_ON_ZERO';\n\n");
 
     foreach (backup_tabellen($pdo) as $tabelle) {
@@ -337,8 +337,8 @@ function backup_inspect(string $pfad): array
     try {
         $metaRoh = $zip->getFromName('sicherung.json');
         $meta = is_string($metaRoh) ? json_decode($metaRoh, true) : null;
-        if (!is_array($meta) || ($meta['programm'] ?? '') !== 'OV-Budget') {
-            throw new BackupException('Das ist keine Sicherung von OV-Budget (sicherung.json fehlt oder passt nicht).');
+        if (!is_array($meta) || !in_array($meta['programm'] ?? '', ['OV-Multitool', 'OV-Budget'], true)) {
+            throw new BackupException('Das ist keine Sicherung von OV-Multitool (sicherung.json fehlt oder passt nicht).');
         }
         $sqlStat = $zip->statName('datenbank.sql');
         if ($sqlStat === false || (int)$sqlStat['size'] === 0) {
@@ -400,7 +400,7 @@ function backup_create(string $grund = 'manuell', ?array $user = null): array
         $zeilen = backup_dump_schreiben(db(), $sqlTmp);
         $dateien = backup_dateien(upload_dir());
         $meta = [
-            'programm'  => 'OV-Budget',
+            'programm'  => 'OV-Multitool',
             'fassung'   => app_version(),
             'format'    => 1,
             'zeit'      => date('c'),

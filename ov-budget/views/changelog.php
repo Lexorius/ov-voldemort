@@ -4,7 +4,7 @@
 <div class="pagehead">
   <div>
     <h1>Was ist neu</h1>
-    <p>Es läuft <strong>OV-Budget <?= e($version) ?></strong>.</p>
+    <p>Es läuft <strong>OV-Multitool <?= e($version) ?></strong>.</p>
   </div>
 </div>
 

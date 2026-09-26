@@ -194,13 +194,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Einrichtung · OV-Budget</title>
+<title>Einrichtung · OV-Multitool</title>
 <link rel="stylesheet" href="assets/css/app.css">
 </head>
 <body>
 <header class="topbar">
   <div class="topbar__brand"><span class="topbar__logo">THW</span>
-    <span class="topbar__names"><strong>OV-Budget</strong><small>Einrichtung</small></span></div>
+    <span class="topbar__names"><strong>OV-Multitool</strong><small>Einrichtung</small></span></div>
 </header>
 
 <main class="page" style="max-width:760px">

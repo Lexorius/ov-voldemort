@@ -1,14 +1,14 @@
 /*
- * Rückmeldung auf eine Einladung – verschlüsselt für OV-Budget.
+ * Rückmeldung auf eine Einladung – verschlüsselt für OV-Multitool.
  *
  * Ablauf, genau wie bei den Standortmeldungen (melden.js):
  *   1. flüchtiges Schlüsselpaar erzeugen, gemeinsames Geheimnis mit dem
- *      öffentlichen Schlüssel von OV-Budget aushandeln (ECDH, P-256)
+ *      öffentlichen Schlüssel von OV-Multitool aushandeln (ECDH, P-256)
  *   2. daraus Schlüssel und Zufallswert ableiten (HKDF-SHA256)
  *   3. Angaben mit AES-GCM verschlüsseln und abschicken
  *
  * Der Connector bekommt nur den Geheimtext. Er weiß, zu welcher Veranstaltung
- * die Einladung gehört – wer geantwortet hat und was, erfährt nur OV-Budget.
+ * die Einladung gehört – wer geantwortet hat und was, erfährt nur OV-Multitool.
  */
 (function () {
   var box = document.getElementById('box');
