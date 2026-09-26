@@ -91,13 +91,13 @@ $isNew = empty($order['id']);
           danach lässt sich der Auftrag darüber finden.</small>
       </div>
       <div class="field">
-        <label for="kosten_geschaetzt">Kosten geschätzt (netto)</label>
+        <label for="kosten_geschaetzt">Kosten geschätzt</label>
         <input type="text" inputmode="decimal" id="kosten_geschaetzt" name="kosten_geschaetzt"
                value="<?= e(num_input($order['kosten_geschaetzt'] ?? null)) ?>">
       </div>
       <?php if (can('manage_vehicles')): ?>
         <div class="field">
-          <label for="kosten_netto">Kosten tatsächlich (netto)</label>
+          <label for="kosten_netto">Kosten tatsächlich</label>
           <input type="text" inputmode="decimal" id="kosten_netto" name="kosten_netto"
                  value="<?= e(num_input($order['kosten_netto'] ?? null)) ?>">
         </div>

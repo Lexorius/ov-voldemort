@@ -40,8 +40,8 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
 
 <div class="stats">
   <div class="stat"><div class="stat__label">Angezeigt</div><div class="stat__value"><?= (int)$stats['anzahl'] ?></div>
-    <div class="stat__hint"><?= e(money($stats['brutto'], false)) ?> brutto</div></div>
-  <div class="stat"><div class="stat__label">Davon netto</div><div class="stat__value"><?= e(money($stats['netto'], false)) ?></div></div>
+    <div class="stat__hint">Buchungen</div></div>
+  <div class="stat"><div class="stat__label">Summe angezeigt</div><div class="stat__value"><?= e(money($stats['summe'], false)) ?></div></div>
   <div class="stat"><div class="stat__label"><?= e($titel) ?> <?= (int)$jahr ?></div>
     <div class="stat__value" style="<?= $istEinnahme ? 'color:var(--ok)' : '' ?>"><?= e(money($jahresSumme, false)) ?></div>
     <div class="stat__hint">gesamtes Jahr</div></div>
@@ -126,7 +126,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
         <thead>
           <tr><th>Datum</th><th>Bezeichnung</th><th>Kategorie</th><th>Fachgruppe</th>
               <th><?= $istEinnahme ? 'Einsatz-Nr.' : 'Topf' ?></th><th>Beleg</th>
-              <th class="num">Netto</th><th class="num">Brutto</th><th></th></tr>
+              <th class="num">Betrag</th><th></th></tr>
         </thead>
         <tbody>
         <?php foreach ($rows as $r): ?>
@@ -146,7 +146,6 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
             <td class="small"><?= e($r['fachgruppe_label'] ?: '–') ?></td>
             <td class="small"><?= e(($istEinnahme ? $r['referenz'] : $r['budget_name']) ?: '–') ?></td>
             <td class="small mono"><?= e($r['beleg_nr'] ?: '–') ?></td>
-            <td class="num"><?= e(money((float)$r['betrag_netto'], false)) ?></td>
             <td class="num" style="<?= $istEinnahme ? 'color:var(--ok)' : '' ?>">
               <strong><?= e(money((float)$r['betrag_brutto'], false)) ?></strong></td>
             <td><?php if (can('manage_budget')): ?>
@@ -158,8 +157,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
         <tfoot>
           <tr>
             <td colspan="6"><strong>Summe (<?= (int)$stats['anzahl'] ?>)</strong></td>
-            <td class="num"><strong><?= e(money($stats['netto'], false)) ?></strong></td>
-            <td class="num"><strong><?= e(money($stats['brutto'], false)) ?></strong></td>
+            <td class="num"><strong><?= e(money($stats['summe'], false)) ?></strong></td>
             <td></td>
           </tr>
         </tfoot>

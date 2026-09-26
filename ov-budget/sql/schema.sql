@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS wishes (
   einheit_id      INT UNSIGNED NULL,
   netto_einzel    DECIMAL(12,2) NOT NULL DEFAULT 0,
   netto_gesamt    DECIMAL(12,2) NOT NULL DEFAULT 0,
-  mwst_satz       DECIMAL(5,2)  NOT NULL DEFAULT 19.00,
+  mwst_satz       DECIMAL(5,2)  NOT NULL DEFAULT 0.00,
   fachgruppe_id   INT UNSIGNED NULL,
   kategorie_id    INT UNSIGNED NULL,
   dringlichkeit_id INT UNSIGNED NULL,
@@ -331,7 +331,7 @@ CREATE TABLE IF NOT EXISTS expenses (
   -- weil events erst weiter unten angelegt wird
   event_id      INT UNSIGNED  NULL,
   betrag_brutto DECIMAL(12,2) NOT NULL DEFAULT 0,
-  mwst_satz     DECIMAL(5,2)  NOT NULL DEFAULT 19.00,
+  mwst_satz     DECIMAL(5,2)  NOT NULL DEFAULT 0.00,
   betrag_netto  DECIMAL(12,2) NOT NULL DEFAULT 0,
   lieferant     VARCHAR(150)  NOT NULL DEFAULT '',
   beleg_nr      VARCHAR(100)  NOT NULL DEFAULT '',

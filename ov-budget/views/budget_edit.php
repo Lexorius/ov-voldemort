@@ -24,7 +24,7 @@ $isNew = empty($budget['id']);
       <input type="number" id="jahr" name="jahr" required value="<?= (int)$budget['jahr'] ?>" min="2000" max="2100">
     </div>
     <div class="field">
-      <label for="betrag_netto">Betrag netto</label>
+      <label for="betrag_netto">Betrag</label>
       <input type="text" inputmode="decimal" id="betrag_netto" name="betrag_netto"
              value="<?= e(num_input($budget['betrag_netto'])) ?>"
              placeholder="0,00">

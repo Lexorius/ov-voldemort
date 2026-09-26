@@ -502,7 +502,7 @@ $arten = [
   <?php else: ?>
     <div class="tablewrap">
       <table class="data">
-        <thead><tr><th>Wunsch</th><th>Status</th><th>Dringlichkeit</th><th class="num">Netto gesamt</th></tr></thead>
+        <thead><tr><th>Wunsch</th><th>Status</th><th>Dringlichkeit</th><th class="num">Betrag</th></tr></thead>
         <tbody>
         <?php foreach ($wuensche as $w): ?>
           <tr>

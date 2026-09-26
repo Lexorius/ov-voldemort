@@ -1,9 +1,11 @@
 <?php
 /** @var array $user @var int $jahr @var array $wuensche @var array $statsW
- *  @var array $budgets @var float $budgetSumme @var float $budgetVerplant
+ *  @var array $budgets @var array $zahlen @var float $budgetVerplant
  *  @var array $todos @var int $todosGesamt @var int $ueberfaellig @var array $zuBestellen @var array $fahrzeuge */
 $warnProzent = setting_int('budget_warn_prozent', 90);
-$auslastung = $budgetSumme > 0 ? ($budgetVerplant / $budgetSumme) * 100 : 0;
+$quote = (float)$zahlen['quote'];
+$quoteCls = ($zahlen['verfuegbar'] > 0 && $zahlen['ausgaben'] > $zahlen['verfuegbar']) ? 'is-over'
+    : ($quote >= $warnProzent ? 'is-warn' : '');
 ?>
 <div class="pagehead">
   <div>
@@ -21,7 +23,7 @@ $auslastung = $budgetSumme > 0 ? ($budgetVerplant / $budgetSumme) * 100 : 0;
 <?php if ($zuBestellen): ?>
   <div class="alert alert--info">
     <strong><?= count($zuBestellen) ?> <?= count($zuBestellen) === 1 ? 'Wunsch ist' : 'Wünsche sind' ?> freigegeben – bitte bestellen</strong>
-    (<?= e(money(array_sum(array_map(static fn($w) => (float)$w['netto_gesamt'], $zuBestellen)))) ?> netto).
+    (<?= e(money(array_sum(array_map(static fn($w) => (float)$w['netto_gesamt'], $zuBestellen)))) ?>).
     <a href="<?= e(url('budget')) ?>#bestellung">Zur Liste</a>
   </div>
 <?php endif; ?>
@@ -30,17 +32,17 @@ $auslastung = $budgetSumme > 0 ? ($budgetVerplant / $budgetSumme) * 100 : 0;
   <div class="stat">
     <div class="stat__label">Offene Wünsche</div>
     <div class="stat__value"><?= (int)$statsW['anzahl'] ?></div>
-    <div class="stat__hint"><?= e(money($statsW['netto_offen'])) ?> netto</div>
+    <div class="stat__hint"><?= e(money($statsW['netto_offen'])) ?></div>
   </div>
   <div class="stat">
     <div class="stat__label">Davon "nice to have"</div>
     <div class="stat__value"><?= e(money($statsW['nice'], false)) ?></div>
-    <div class="stat__hint">netto, verzichtbar</div>
+    <div class="stat__hint">verzichtbar</div>
   </div>
   <div class="stat">
-    <div class="stat__label">Budget <?= (int)$jahr ?></div>
-    <div class="stat__value"><?= e(money($budgetSumme, false)) ?></div>
-    <div class="stat__hint"><?= e(money($budgetVerplant, false)) ?> verplant (<?= number_format($auslastung, 0) ?>&nbsp;%)</div>
+    <div class="stat__label"><?= $zahlen['frei'] >= 0 ? 'Budget frei' : 'Budget überzogen' ?> <?= (int)$jahr ?></div>
+    <div class="stat__value" style="<?= $zahlen['frei'] < 0 ? 'color:var(--bad)' : '' ?>"><?= e(money(abs($zahlen['frei']), false)) ?></div>
+    <div class="stat__hint">von <?= e(money($zahlen['verfuegbar'], false)) ?> verfügbar (<?= number_format($quote, 0) ?>&nbsp;% ausgegeben)</div>
   </div>
   <div class="stat">
     <div class="stat__label">Meine Aufgaben</div>
@@ -121,16 +123,33 @@ $auslastung = $budgetSumme > 0 ? ($budgetVerplant / $budgetSumme) * 100 : 0;
 
 <section class="card">
   <div class="card__head">
-    <h2>Budgettöpfe <?= (int)$jahr ?></h2>
+    <h2>Budget <?= (int)$jahr ?></h2>
     <a class="btn btn--sec btn--sm" href="<?= e(url('budget')) ?>">Budget</a>
   </div>
-  <?php if (!$budgets): ?>
-    <div class="empty">Für <?= (int)$jahr ?> ist noch kein Budget hinterlegt.
+  <?php if ($zahlen['verfuegbar'] <= 0): ?>
+    <div class="empty">Für <?= (int)$jahr ?> ist noch kein Jahresbudget hinterlegt.
       <?php if (can('manage_budget')): ?>
-        <br><a href="<?= e(url('budget_edit')) ?>">Topf anlegen</a>
+        <br><a href="<?= e(url('budget_year_edit', ['jahr' => $jahr])) ?>">Jahresbudget eintragen</a>
       <?php endif; ?>
     </div>
   <?php else: ?>
+    <div style="display:flex;justify-content:space-between;gap:.6rem;flex-wrap:wrap">
+      <span class="small">
+        <?= e(money($zahlen['budget'], false)) ?> Budget
+        <?php if ($zahlen['einnahmen'] > 0): ?>+ <?= e(money($zahlen['einnahmen'], false)) ?> Einnahmen<?php endif; ?>
+        = <strong><?= e(money($zahlen['verfuegbar'])) ?></strong>
+      </span>
+      <span class="small nowrap"><?= e(money($zahlen['ausgaben'], false)) ?> ausgegeben ·
+        <strong><?= e(money($zahlen['frei'])) ?></strong> <?= $zahlen['frei'] >= 0 ? 'frei' : 'überzogen' ?></span>
+    </div>
+    <div class="bar" style="height:14px"><div class="bar__fill <?= $quoteCls ?>" style="width:<?= number_format($quote, 1, '.', '') ?>%"></div></div>
+    <?php if ($budgetVerplant > 0): ?>
+      <p class="small muted" style="margin:.5rem 0 0">Dazu <?= e(money($budgetVerplant)) ?> in offenen Wünschen verplant.</p>
+    <?php endif; ?>
+  <?php endif; ?>
+
+  <?php if (count($budgets) > 1): ?>
+    <h3 class="mt">Budgettöpfe</h3>
     <?php foreach ($budgets as $b):
         $soll = (float)$b['betrag_netto'];
         $ist = (float)$b['verplant'];

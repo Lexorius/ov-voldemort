@@ -34,7 +34,7 @@ render('expenses', [
     'jahr'         => $jahr,
     'jahre'        => $jahre,
     'jahresbudget' => budget_year_betrag($jahr),
-    'jahresSumme'  => expense_total($jahr, 'betrag_brutto', $art),
-    'gegenSumme'   => expense_total($jahr, 'betrag_brutto', $art === 'einnahme' ? 'ausgabe' : 'einnahme'),
+    'jahresSumme'  => expense_total($jahr, $art),
+    'gegenSumme'   => expense_total($jahr, $art === 'einnahme' ? 'ausgabe' : 'einnahme'),
     'budgets'      => db_all('SELECT id, jahr, name FROM budgets WHERE jahr = ? ORDER BY name', [$jahr]),
 ]);

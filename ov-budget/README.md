@@ -11,7 +11,7 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 ## Funktionen
 
 ### Wünsch dir was
-- Bedarfe mit Bezeichnung, Anzahl, Nettobetrag, Dringlichkeit, Fachgruppe,
+- Bedarfe mit Bezeichnung, Anzahl, Betrag, Dringlichkeit, Fachgruppe,
   Kategorie, Status, „nice to have", Frist und eigenen Zusatzfeldern
 - Angebote als Anlage, Abstimmung, Kommentare, CSV-Export
 - Übernahme aus **Divera-24/7-Formularen** mit frei zuordenbaren Feldern

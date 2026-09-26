@@ -254,7 +254,7 @@ function wish_save_from_post(?array $existing, array $user): array
         'einheit_id'       => post_int('einheit_id'),
         'netto_einzel'     => $einzel,
         'netto_gesamt'     => $gesamt,
-        'mwst_satz'        => post_dec('mwst_satz', setting_float('mwst_satz', 19.0)),
+        'mwst_satz'        => 0,
         'fachgruppe_id'    => post_int('fachgruppe_id'),
         'vehicle_id'       => post_int('vehicle_id') ?: null,
         'kategorie_id'     => post_int('kategorie_id'),
@@ -300,7 +300,7 @@ function wish_save_from_post(?array $existing, array $user): array
         $uploadNow = !empty($_FILES['anlagen']['name'][0]);
         if (!$hasFile && !$uploadNow) {
             $errors[] = sprintf(
-                'Ab einem Nettobetrag von %s muss mindestens ein Angebot hochgeladen werden.',
+                'Ab einem Betrag von %s muss mindestens ein Angebot hochgeladen werden.',
                 money($pflichtAb)
             );
         }

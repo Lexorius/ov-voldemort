@@ -96,7 +96,7 @@ function order_rights_for_user(?array $u = null): array
 /** Eine Freigabegrenze lesbar machen */
 function order_limit_text(?float $grenze): string
 {
-    return $grenze === null ? 'unbegrenzt' : 'bis ' . money($grenze) . ' netto';
+    return $grenze === null ? 'unbegrenzt' : 'bis ' . money($grenze);
 }
 
 /**
@@ -119,7 +119,7 @@ function wish_release_denied(array $wish, ?array $u = null, ?bool $eigeneErlaubt
     }
     $betrag = (float)($wish['netto_gesamt'] ?? 0);
     if ($rechte['grenze'] !== null && $betrag > $rechte['grenze'] + 0.004) {
-        return sprintf('Deine Freigabegrenze liegt bei %s netto, dieser Wunsch kostet %s.',
+        return sprintf('Deine Freigabegrenze liegt bei %s, dieser Wunsch kostet %s.',
             money($rechte['grenze']), money($betrag));
     }
     $eigeneErlaubt ??= setting_bool('bestell_eigene_freigeben', true);

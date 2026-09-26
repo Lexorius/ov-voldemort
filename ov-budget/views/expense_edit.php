@@ -4,16 +4,12 @@ $isNew = empty($expense['id']);
 $istEinnahme = $art === 'einnahme';
 $wort = $istEinnahme ? 'Einnahme' : 'Ausgabe';
 
-$betragsart = (string)setting('ausgaben_betragsart', 'brutto');
-// Angezeigt wird der Betrag in der Erfassungsart aus den Einstellungen
-$betragWert = $betragsart === 'netto' ? ($expense['betrag_netto'] ?? '') : ($expense['betrag_brutto'] ?? '');
+$betragWert = $expense['betrag_brutto'] ?? '';
 $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art' => $art]);
 ?>
 <div class="pagehead">
   <div>
     <h1><?= e($wort) ?> <?= $isNew ? 'erfassen' : 'bearbeiten' ?></h1>
-    <p class="muted small">Beträge werden <strong><?= e($betragsart) ?></strong> erfasst –
-      umstellbar unter Verwaltung → Einstellungen → Budget.</p>
   </div>
   <a class="btn btn--sec" href="<?= e($zurueck) ?>">Abbrechen</a>
 </div>
@@ -38,15 +34,10 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
         <small>Weicht nur selten vom Datum ab.</small>
       </div>
       <div class="field">
-        <label for="betrag">Betrag <?= e($betragsart) ?> *</label>
+        <label for="betrag">Betrag *</label>
         <input type="text" inputmode="decimal" id="betrag" name="betrag" required placeholder="0,00"
                value="<?= e(num_input($betragWert)) ?>">
-      </div>
-      <div class="field">
-        <label for="mwst_satz">MwSt (%)</label>
-        <input type="text" inputmode="decimal" id="mwst_satz" name="mwst_satz"
-               value="<?= e(num_input($expense['mwst_satz'] ?? 19, true)) ?>">
-        <small>Der jeweils andere Betrag wird daraus berechnet.</small>
+        <small>Der Betrag, der tatsächlich <?= $istEinnahme ? 'eingegangen ist' : 'bezahlt wurde' ?>.</small>
       </div>
     </div>
 

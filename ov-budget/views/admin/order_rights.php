@@ -36,7 +36,7 @@ $zeile = static function (string $key, string $label, ?array $r, string $hinweis
   <div class="tablewrap">
     <table class="data">
       <thead>
-        <tr><th>Rolle / Funktion</th><th>Darf freigeben</th><th>bis Nettobetrag (€)</th><th>Darf bestellen</th></tr>
+        <tr><th>Rolle / Funktion</th><th>Darf freigeben</th><th>bis Betrag (€)</th><th>Darf bestellen</th></tr>
       </thead>
       <tbody>
         <tr><td colspan="4" class="small muted"><strong>Rollen</strong> – gelten für alle Benutzer mit dieser Rolle</td></tr>
@@ -52,7 +52,7 @@ $zeile = static function (string $key, string $label, ?array $r, string $hinweis
       </tbody>
     </table>
   </div>
-  <p class="small muted">Leeres Betragsfeld = unbegrenzt. Die Grenze gilt für den Nettobetrag des Wunsches; 0 heißt, nichts freigeben.</p>
+  <p class="small muted">Leeres Betragsfeld = unbegrenzt. Die Grenze gilt für den Gesamtbetrag des Wunsches; 0 heißt, nichts freigeben.</p>
 
   <div class="field field--check">
     <input type="checkbox" id="eigene_freigeben" name="eigene_freigeben" value="1"<?= $eigene ? ' checked' : '' ?>>

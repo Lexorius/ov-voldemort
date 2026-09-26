@@ -290,7 +290,6 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('login_hinweis','Zugang erhältst du von der OV-Leitung.','Hinweistext auf der Anmeldeseite','','textarea','Allgemein',60),
 ('waehrung','EUR','Währung','ISO-Code, z.B. EUR','text','Allgemein',70),
 ('haushaltsjahr','2026','Aktuelles Haushaltsjahr','Vorbelegung für neue Budgets und Wünsche','number','Budget',10),
-('mwst_satz','19','Standard-MwSt-Satz (%)','','number','Budget',20),
 ('budget_warn_prozent','90','Warnschwelle Budgetauslastung (%)','Ab diesem Wert wird der Topf rot dargestellt','number','Budget',30),
 
 ('wunsch_modul_name','Wünsch dir was','Bezeichnung des Wunsch-Moduls','','text','Wünsche',10),
@@ -381,7 +380,6 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('budget_modul_name','Budget','Bezeichnung des Budget-Moduls','','text','Budget',5),
 ('budget_intro','Gesamtbudget des Haushaltsjahres, laufende Ausgaben und die daraus entstehende Uebersicht.','Einleitungstext im Budget-Modul','','textarea','Budget',6),
 ('budget_rundung','0','Betraege in der Uebersicht runden','0 = centgenau, sonst auf 10, 100 oder 1000 runden. Betrifft nur die Budgetuebersicht, nicht die Listen.','select','Budget',35),
-('ausgaben_betragsart','brutto','Betraege werden erfasst als','brutto oder netto - gilt fuer Ausgaben und Einnahmen','text','Budget',40),
 ('bestell_eigene_freigeben','1','Eigene Wünsche selbst freigeben erlaubt','Aus = Vier-Augen-Prinzip: Wer einen Wunsch angelegt hat, darf ihn nicht selbst zur Bestellung freigeben','bool','Budget',60),
 ('ausgaben_user_darf_sehen','1','Alle Mitglieder duerfen Buchungen sehen','Ausgaben und Einnahmen. Sonst nur Leitung und Administration','bool','Budget',50),
 ('kontakte_modul_name','Kontakte','Bezeichnung des Kontakt-Moduls','','text','Kontakte',10),

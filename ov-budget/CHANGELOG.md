@@ -1,5 +1,33 @@
 # Änderungsverlauf
 
+## 1.46.0
+
+### Budget ohne Mehrwertsteuer
+
+- **Ein Betrag je Buchung und je Wunsch.** MwSt-Satz, Netto und Brutto sind
+  aus allen Formularen, Listen, Exporten und der Übersicht verschwunden. Bei
+  Ausgaben und Einnahmen zählt der Betrag, der tatsächlich fließt. Bestehende
+  Buchungen werden beim Aktualisieren angeglichen: Der bisherige Bruttobetrag
+  ist der Betrag.
+- Die Einstellungen *Standard-MwSt-Satz* und *Beträge werden erfasst als*
+  entfallen.
+
+### Übersicht zeigt das Jahr, nicht einen Topf
+
+- Die Startseite zeigt jetzt das **Jahresbudget**: Zuweisung plus Einnahmen,
+  davon ausgegeben, was frei ist – mit Balken, wie auf der Budgetseite. Die
+  Kennzahl oben heißt „Budget frei" und rechnet ebenso.
+- Budgettöpfe erscheinen dort nur noch, wenn es mehr als einen gibt. Ein
+  einzelner Topf sagt nichts, was das Jahr nicht schon sagt.
+
+### MQTT rechnet mit dem Jahresbudget
+
+- **Jahresbudget** (bisher: Summe der Töpfe), neu **verfügbar** (mit
+  Einnahmen) und **Budgettöpfe gesamt**. **Frei** und **Auslastung** gehen
+  jetzt von Zuweisung plus Einnahmen abzüglich Ausgaben aus – dieselben
+  Zahlen wie auf der Budgetseite. **Verplant** sind alle offenen Wünsche,
+  nicht nur die in Töpfen.
+
 ## 1.45.0
 
 ### MQTT: alle Module melden Kennzahlen

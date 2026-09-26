@@ -52,7 +52,6 @@ if (!$expense) {
         'budget_id' => get_int('budget_id'), 'wish_id' => get_int('wish_id'),
         'event_id' => get_int('event_id'),
         'betrag_brutto' => '', 'betrag_netto' => '',
-        'mwst_satz' => setting_float('mwst_satz', 19.0),
         'lieferant' => '', 'beleg_nr' => '', 'referenz' => '',
         'bezahlt_am' => null, 'notiz' => '',
     ];

@@ -24,8 +24,8 @@ $budgets = db_all(
      ORDER BY b.name',
     [$jahr]
 );
-$budgetSumme = array_sum(array_map(static fn($b) => (float)$b['betrag_netto'], $budgets));
 $budgetVerplant = array_sum(array_map(static fn($b) => (float)$b['verplant'], $budgets));
+$zahlen = budget_jahr_zahlen($jahr);
 
 // Meine Aufgaben
 $meineTodos = todo_query(['mine' => $user, 'offen' => 1]);
@@ -59,7 +59,7 @@ render('dashboard', [
     'wuensche'       => array_slice($offeneWuensche, 0, 6),
     'statsW'         => $statsW,
     'budgets'        => $budgets,
-    'budgetSumme'    => $budgetSumme,
+    'zahlen'         => $zahlen,
     'budgetVerplant' => $budgetVerplant,
     'todos'          => array_slice($meineTodos, 0, 8),
     'todosGesamt'    => count($meineTodos),

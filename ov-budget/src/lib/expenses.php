@@ -198,10 +198,9 @@ function expense_query(array $f = []): array
 
 function expense_stats(array $rows): array
 {
-    $s = ['anzahl' => count($rows), 'brutto' => 0.0, 'netto' => 0.0];
+    $s = ['anzahl' => count($rows), 'summe' => 0.0];
     foreach ($rows as $r) {
-        $s['brutto'] += (float)$r['betrag_brutto'];
-        $s['netto'] += (float)$r['betrag_netto'];
+        $s['summe'] += (float)$r['betrag_brutto'];
     }
     return $s;
 }
@@ -215,13 +214,12 @@ function expense_by_category(int $jahr, string $art = 'ausgabe'): array
     return db_all(
         'SELECT ka.id, ka.label, ka.color,
                 COUNT(*) AS anzahl,
-                SUM(e.betrag_brutto) AS brutto,
-                SUM(e.betrag_netto) AS netto
+                SUM(e.betrag_brutto) AS betrag
          FROM expenses e
          LEFT JOIN list_items ka ON ka.id = e.kategorie_id
          WHERE e.jahr = ? AND e.art = ?
          GROUP BY ka.id, ka.label, ka.color
-         ORDER BY brutto DESC',
+         ORDER BY betrag DESC',
         [$jahr, buchungsart($art)]
     );
 }
@@ -231,30 +229,50 @@ function expense_by_month(int $jahr, string $art = 'ausgabe'): array
 {
     $out = array_fill(1, 12, 0.0);
     foreach (db_all(
-        'SELECT MONTH(datum) AS m, SUM(betrag_brutto) AS brutto
+        'SELECT MONTH(datum) AS m, SUM(betrag_brutto) AS betrag
          FROM expenses WHERE jahr = ? AND art = ? GROUP BY MONTH(datum)',
         [$jahr, buchungsart($art)]
     ) as $r) {
-        $out[(int)$r['m']] = (float)$r['brutto'];
+        $out[(int)$r['m']] = (float)$r['betrag'];
     }
     return $out;
 }
 
-/** Summe der Ausgaben eines Jahres */
-function expense_total(int $jahr, string $feld = 'betrag_brutto', string $art = 'ausgabe'): float
+/** Summe der Buchungen eines Jahres in einer Richtung */
+function expense_total(int $jahr, string $art = 'ausgabe'): float
 {
-    $feld = $feld === 'betrag_netto' ? 'betrag_netto' : 'betrag_brutto';
     return (float)db_val(
-        'SELECT COALESCE(SUM(' . $feld . '),0) FROM expenses WHERE jahr = ? AND art = ?',
+        'SELECT COALESCE(SUM(betrag_brutto),0) FROM expenses WHERE jahr = ? AND art = ?',
         [$jahr, buchungsart($art)],
         0
     );
 }
 
 /** Einnahmen eines Jahres */
-function income_total(int $jahr, string $feld = 'betrag_brutto'): float
+function income_total(int $jahr): float
 {
-    return expense_total($jahr, $feld, 'einnahme');
+    return expense_total($jahr, 'einnahme');
+}
+
+/**
+ * Die Zahlen des Haushaltsjahres, wie sie überall gezeigt werden:
+ * Zuweisung, Einnahmen, Ausgaben, daraus verfügbar und frei. Töpfe und
+ * verplante Wünsche kommen getrennt dazu.
+ */
+function budget_jahr_zahlen(int $jahr): array
+{
+    $budget = budget_year_betrag($jahr);
+    $einnahmen = income_total($jahr);
+    $ausgaben = expense_total($jahr);
+    $verfuegbar = $budget + $einnahmen;
+    return [
+        'budget'     => $budget,
+        'einnahmen'  => $einnahmen,
+        'ausgaben'   => $ausgaben,
+        'verfuegbar' => $verfuegbar,
+        'frei'       => $verfuegbar - $ausgaben,
+        'quote'      => $verfuegbar > 0 ? min(100.0, $ausgaben / $verfuegbar * 100) : 0.0,
+    ];
 }
 
 /** Bereits verbuchte Ausgaben je Budgettopf */
@@ -262,11 +280,11 @@ function expense_by_budget(int $jahr): array
 {
     $out = [];
     foreach (db_all(
-        'SELECT budget_id, SUM(betrag_brutto) AS brutto, SUM(betrag_netto) AS netto
+        'SELECT budget_id, SUM(betrag_brutto) AS betrag
          FROM expenses WHERE jahr = ? AND art = ? AND budget_id IS NOT NULL GROUP BY budget_id',
         [$jahr, 'ausgabe']
     ) as $r) {
-        $out[(int)$r['budget_id']] = ['brutto' => (float)$r['brutto'], 'netto' => (float)$r['netto']];
+        $out[(int)$r['budget_id']] = ['betrag' => (float)$r['betrag']];
     }
     return $out;
 }
@@ -289,23 +307,15 @@ function expense_save_from_post(?array $existing, array $user): array
         $errors[] = 'Bitte ein gültiges Datum angeben.';
     }
 
-    $mwst = post_dec('mwst_satz', setting_float('mwst_satz', 19.0));
-    if ($mwst < 0 || $mwst > 100) {
-        $mwst = setting_float('mwst_satz', 19.0);
-    }
-
-    // Erfasst wird je nach Einstellung brutto oder netto, gespeichert immer beides
-    $eingabe = post_dec('betrag');
-    if ($eingabe <= 0) {
+    // Ein Betrag, keine Mehrwertsteuer: Beide Spalten tragen denselben Wert,
+    // damit ältere Auswertungen und Sicherungen weiter passen.
+    $betrag = round(post_dec('betrag'), 2);
+    if ($betrag <= 0) {
         $errors[] = 'Bitte einen Betrag größer als null angeben.';
     }
-    if (setting('ausgaben_betragsart', 'brutto') === 'netto') {
-        $netto = $eingabe;
-        $brutto = round($netto * (1 + $mwst / 100), 2);
-    } else {
-        $brutto = $eingabe;
-        $netto = round($brutto / (1 + $mwst / 100), 2);
-    }
+    $brutto = $betrag;
+    $netto = $betrag;
+    $mwst = 0.0;
 
     if ($errors) {
         return [null, $errors];

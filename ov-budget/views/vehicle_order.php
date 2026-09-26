@@ -76,7 +76,7 @@ $fertig = (int)$order['status_final'] === 1;
                     placeholder="z.B. Termin in der Werkstatt am 24.09., Ersatzteil bestellt"></textarea>
         </div>
         <div class="field">
-          <label for="kosten_netto">Kosten netto (nur bei Abschluss nötig)</label>
+          <label for="kosten_netto">Kosten (nur bei Abschluss nötig)</label>
           <input type="text" inputmode="decimal" id="kosten_netto" name="kosten_netto"
                  value="<?= e(num_input($order['kosten_netto'])) ?>">
         </div>

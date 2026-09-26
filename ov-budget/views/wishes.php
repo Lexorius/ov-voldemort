@@ -17,7 +17,7 @@ $mine = get_str('mine') === '1';
 
 <div class="stats">
   <div class="stat"><div class="stat__label">Wünsche</div><div class="stat__value"><?= (int)$stats['anzahl'] ?></div></div>
-  <div class="stat"><div class="stat__label">Summe netto</div><div class="stat__value"><?= e(money($stats['netto'], false)) ?></div></div>
+  <div class="stat"><div class="stat__label">Summe</div><div class="stat__value"><?= e(money($stats['netto'], false)) ?></div></div>
   <div class="stat"><div class="stat__label">Noch offen</div><div class="stat__value"><?= e(money($stats['netto_offen'], false)) ?></div></div>
   <div class="stat"><div class="stat__label">Nice to have</div><div class="stat__value"><?= e(money($stats['nice'], false)) ?></div></div>
 </div>

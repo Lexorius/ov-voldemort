@@ -70,7 +70,7 @@ $rest = $gesamt - $summe;
       <table class="data">
         <thead><tr>
           <th>Topf</th><th>Gilt für</th>
-          <th style="text-align:right">Betrag netto</th>
+          <th style="text-align:right">Betrag</th>
           <th style="text-align:right">verplant</th>
           <th style="text-align:right">ausgegeben</th>
           <th></th>

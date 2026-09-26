@@ -22,8 +22,10 @@ function ha_sensoren(): array
 {
     $geld = ['unit' => 'EUR', 'device_class' => 'monetary', 'state_class' => 'total'];
     return [
-        'budget_gesamt'      => ['name' => 'Budget gesamt', 'icon' => 'mdi:cash'] + $geld,
-        'budget_verplant'    => ['name' => 'Budget verplant', 'icon' => 'mdi:cash-clock'] + $geld,
+        'budget_gesamt'      => ['name' => 'Jahresbudget', 'icon' => 'mdi:cash'] + $geld,
+        'budget_verfuegbar'  => ['name' => 'Budget verfügbar (mit Einnahmen)', 'icon' => 'mdi:cash-plus'] + $geld,
+        'budget_toepfe'      => ['name' => 'Budgettöpfe gesamt', 'icon' => 'mdi:cash-register'] + $geld,
+        'budget_verplant'    => ['name' => 'Budget verplant (offene Wünsche)', 'icon' => 'mdi:cash-clock'] + $geld,
         'budget_frei'        => ['name' => 'Budget frei', 'icon' => 'mdi:cash-check'] + $geld,
         'budget_auslastung'  => ['name' => 'Budget-Auslastung', 'unit' => '%', 'icon' => 'mdi:percent',
                                  'state_class' => 'measurement'],
@@ -136,16 +138,11 @@ function ha_werte(): array
     $jahr = setting_int('haushaltsjahr', (int)date('Y'));
     $heute = date('Y-m-d');
 
-    $budget = db_row(
-        'SELECT COALESCE(SUM(b.betrag_netto), 0) AS gesamt,
-                COALESCE(SUM((SELECT COALESCE(SUM(w.netto_gesamt), 0) FROM wishes w
-                               LEFT JOIN list_items s ON s.id = w.status_id
-                              WHERE w.budget_id = b.id AND COALESCE(s.is_final, 0) = 0)), 0) AS verplant
-         FROM budgets b WHERE b.jahr = ? AND b.is_active = 1',
-        [$jahr]
-    ) ?: ['gesamt' => 0, 'verplant' => 0];
-    $gesamt = (float)$budget['gesamt'];
-    $verplant = (float)$budget['verplant'];
+    // Das Jahresbudget ist die Zuweisung; Töpfe unterteilen es nur.
+    // Frei ist, was von Zuweisung plus Einnahmen nach den Ausgaben bleibt.
+    $zahlen = budget_jahr_zahlen($jahr);
+    $toepfe = (float)db_val('SELECT COALESCE(SUM(betrag_netto), 0) FROM budgets WHERE jahr = ? AND is_active = 1',
+        [$jahr], 0);
 
     $wuensche = wish_query(['offen' => 1]);
     $statsW = wish_stats($wuensche);
@@ -204,8 +201,6 @@ function ha_werte(): array
         event_query(['zeit' => 'kommend', 'sort' => 'alt']),
         static fn(array $e): array => event_stats(event_guests((int)$e['id']))
     );
-    $ausgaben = expense_total($jahr, 'betrag_brutto', 'ausgabe');
-    $einnahmen = expense_total($jahr, 'betrag_brutto', 'einnahme');
     $gekoppelt = 0;
     foreach (connector_all(true) as $c) {
         if (connector_gekoppelt($c)) {
@@ -215,10 +210,12 @@ function ha_werte(): array
     $sicherungen = function_exists('backup_list') && backup_problem() === null ? count(backup_list()) : 0;
 
     return [
-        'budget_gesamt'         => round($gesamt, 2),
-        'budget_verplant'       => round($verplant, 2),
-        'budget_frei'           => round($gesamt - $verplant, 2),
-        'budget_auslastung'     => $gesamt > 0 ? round($verplant / $gesamt * 100, 1) : 0,
+        'budget_gesamt'         => round($zahlen['budget'], 2),
+        'budget_verfuegbar'     => round($zahlen['verfuegbar'], 2),
+        'budget_toepfe'         => round($toepfe, 2),
+        'budget_verplant'       => round((float)$statsW['netto_offen'], 2),
+        'budget_frei'           => round($zahlen['frei'], 2),
+        'budget_auslastung'     => round($zahlen['quote'], 1),
         'wuensche_offen'        => count($wuensche),
         'wuensche_freigegeben'  => $freigegeben,
         'wuensche_summe'        => round((float)$statsW['netto_offen'], 2),
@@ -250,9 +247,9 @@ function ha_werte(): array
         'sim_ohne_zuordnung'    => (int)$sim['ohne_zuordnung'],
         'sim_vertrag_bald'      => (int)$sim['vertrag_bald'],
         'sim_kosten_monat'      => round((float)$sim['kosten'], 2),
-        'ausgaben_jahr'         => round($ausgaben, 2),
-        'einnahmen_jahr'        => round($einnahmen, 2),
-        'saldo_jahr'            => round($einnahmen - $ausgaben, 2),
+        'ausgaben_jahr'         => round($zahlen['ausgaben'], 2),
+        'einnahmen_jahr'        => round($zahlen['einnahmen'], 2),
+        'saldo_jahr'            => round($zahlen['einnahmen'] - $zahlen['ausgaben'], 2),
         'connectoren_gekoppelt' => $gekoppelt,
         'connector_letzter_abruf' => ha_zeit(max(
             (int)state_get('connector_letzter_abruf', '0'),

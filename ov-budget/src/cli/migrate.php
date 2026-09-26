@@ -1073,6 +1073,26 @@ SQL);
                     AFTER fuer_veranstaltungen');
     }
     $merken('029_funkgeraete');
+
+    /* ---------- 030: keine Mehrwertsteuer mehr ---------- */
+    // Der Betrag ist, was tatsächlich geflossen ist. Beide Spalten tragen
+    // denselben Wert, damit ältere Auswertungen und Sicherungen weiter passen.
+    if (ovb_table_exists($pdo, 'expenses')) {
+        $n = $pdo->exec('UPDATE expenses SET betrag_netto = betrag_brutto, mwst_satz = 0
+                         WHERE betrag_netto <> betrag_brutto OR mwst_satz <> 0');
+        if ($n > 0) {
+            $say("Buchungen ohne Mehrwertsteuer: $n Zeile(n) angeglichen.");
+        }
+        $pdo->exec('ALTER TABLE expenses ALTER COLUMN mwst_satz SET DEFAULT 0');
+    }
+    if (ovb_table_exists($pdo, 'wishes')) {
+        $pdo->exec('UPDATE wishes SET mwst_satz = 0 WHERE mwst_satz <> 0');
+        $pdo->exec('ALTER TABLE wishes ALTER COLUMN mwst_satz SET DEFAULT 0');
+    }
+    if (ovb_table_exists($pdo, 'settings')) {
+        $pdo->exec("DELETE FROM settings WHERE skey IN ('mwst_satz', 'ausgaben_betragsart')");
+    }
+    $merken('030_ohne_mwst');
 }
 
 /**

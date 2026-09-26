@@ -33,7 +33,7 @@ $istEinnahme = $art === 'einnahme';
 
 fputcsv($out, csv_sicher([
     'ID', 'Art', 'Datum', 'Jahr', 'Bezeichnung', 'Kategorie', 'Fachgruppe', 'Budgettopf',
-    'Netto', 'MwSt %', 'Brutto',
+    'Betrag',
     $istEinnahme ? 'Auftraggeber' : 'Lieferant',
     $istEinnahme ? 'Rechnungsnummer' : 'Belegnummer',
     $istEinnahme ? 'Einsatz-/Auftragsnummer' : 'Referenz',
@@ -41,12 +41,10 @@ fputcsv($out, csv_sicher([
     'Wunsch', 'Erfasst von', 'Erfasst am', 'Notiz',
 ]), ';');
 
-$summeNetto = 0.0;
-$summeBrutto = 0.0;
+$summe = 0.0;
 
 foreach ($rows as $r) {
-    $summeNetto += (float)$r['betrag_netto'];
-    $summeBrutto += (float)$r['betrag_brutto'];
+    $summe += (float)$r['betrag_brutto'];
     fputcsv($out, csv_sicher([
         $r['id'],
         $r['art'],
@@ -56,8 +54,6 @@ foreach ($rows as $r) {
         $r['kategorie_label'],
         $r['fachgruppe_label'],
         $r['budget_name'],
-        number_format((float)$r['betrag_netto'], 2, ',', ''),
-        number_format((float)$r['mwst_satz'], 2, ',', ''),
         number_format((float)$r['betrag_brutto'], 2, ',', ''),
         $r['lieferant'],
         $r['beleg_nr'],
@@ -72,8 +68,7 @@ foreach ($rows as $r) {
 
 fputcsv($out, csv_sicher([
     '', '', '', '', 'Summe (' . count($rows) . ' ' . BUCHUNGSARTEN[$art] . ')', '', '', '',
-    number_format($summeNetto, 2, ',', ''), '',
-    number_format($summeBrutto, 2, ',', ''),
+    number_format($summe, 2, ',', ''),
 ]), ';');
 
 fclose($out);

@@ -23,7 +23,7 @@
       <label for="betrag">Gesamtbudget</label>
       <input type="text" inputmode="decimal" id="betrag" name="betrag" placeholder="0,00"
              value="<?= e(num_input($eintrag['betrag'])) ?>">
-      <small>So erfasst wie die Ausgaben (<?= e((string)setting('ausgaben_betragsart', 'brutto')) ?>).</small>
+      <small>Die Zuweisung für das Jahr. Einnahmen kommen in der Übersicht dazu.</small>
     </div>
     <div class="field field--check">
       <input type="checkbox" id="is_active" name="is_active" value="1" <?= !empty($eintrag['is_active']) ? 'checked' : '' ?>>

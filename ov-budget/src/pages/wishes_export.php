@@ -25,7 +25,7 @@ fwrite($out, "\xEF\xBB\xBF");
 
 $head = [
     'ID', 'Bezeichnung', 'Fachgruppe', 'Kategorie', 'Dringlichkeit', 'Status',
-    'Anzahl', 'Einheit', 'Netto Einzel', 'Netto Gesamt', 'MwSt %', 'Nice to have',
+    'Anzahl', 'Einheit', 'Betrag je Einheit', 'Betrag gesamt', 'Nice to have',
     'Priorität', 'Stimmen', 'Benötigt bis', 'Budget', 'Lieferant', 'Artikelnummer',
     'Antragsteller', 'Quelle', 'Anlagen', 'Angelegt am', 'Begründung',
 ];
@@ -43,7 +43,6 @@ foreach ($rows as $w) {
         $w['einheit_label'],
         number_format((float)$w['netto_einzel'], 2, ',', ''),
         number_format((float)$w['netto_gesamt'], 2, ',', ''),
-        number_format((float)$w['mwst_satz'], 2, ',', ''),
         (int)$w['nice_to_have'] ? 'ja' : 'nein',
         $w['prioritaet'],
         $w['votes'],

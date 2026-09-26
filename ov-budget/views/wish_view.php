@@ -3,7 +3,6 @@
  *  @var array $freigabeDurch */
 $extra = wish_extra($wish);
 $extraFields = wish_extra_fields();
-$brutto = (float)$wish['netto_gesamt'] * (1 + ((float)$wish['mwst_satz'] / 100));
 ?>
 <div class="pagehead">
   <div>
@@ -49,16 +48,12 @@ $brutto = (float)$wish['netto_gesamt'] * (1 + ((float)$wish['mwst_satz'] / 100))
         <?= e($wish['einheit_label'] ?: '') ?></div>
     </div>
     <div class="dl__item">
-      <div class="dl__label">Nettobetrag je Einheit</div>
+      <div class="dl__label">Betrag je Einheit</div>
       <div class="dl__value"><?= e(money((float)$wish['netto_einzel'])) ?></div>
     </div>
     <div class="dl__item">
-      <div class="dl__label">Nettobetrag gesamt</div>
+      <div class="dl__label">Betrag gesamt</div>
       <div class="dl__value"><?= e(money((float)$wish['netto_gesamt'])) ?></div>
-    </div>
-    <div class="dl__item">
-      <div class="dl__label">Bruttobetrag (<?= e(rtrim(rtrim(number_format((float)$wish['mwst_satz'], 2, ',', '.'), '0'), ',')) ?>&nbsp;% MwSt)</div>
-      <div class="dl__value"><?= e(money($brutto)) ?></div>
     </div>
     <?php if ($wish['benoetigt_bis']): ?>
       <div class="dl__item"><div class="dl__label">Benötigt bis</div>
@@ -134,7 +129,7 @@ $verweigert = $freigebbar ? wish_release_denied($wish) : null;
           <input type="hidden" name="id" value="<?= (int)$wish['id'] ?>">
           <?php if ($freigebbar): ?>
             <button class="btn btn--ok" type="submit" name="action" value="freigeben"
-                    data-confirm="<?= e('„' . $wish['bezeichnung'] . '“ für ' . money((float)$wish['netto_gesamt']) . ' netto zur Bestellung freigeben?') ?>">
+                    data-confirm="<?= e('„' . $wish['bezeichnung'] . '“ für ' . money((float)$wish['netto_gesamt']) . ' zur Bestellung freigeben?') ?>">
               Freigegeben, bitte bestellen</button>
           <?php else: ?>
             <button class="btn" type="submit" name="action" value="bestellt">Ist bestellt</button>

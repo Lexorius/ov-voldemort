@@ -159,7 +159,7 @@ $targets = divera_map_targets($ziel);
     <div class="tablewrap">
       <table class="data">
         <thead><tr><th>Bezeichnung</th><th>Fachgruppe</th><th>Dringlichkeit</th><th class="num">Anzahl</th>
-                   <th class="num">Netto gesamt</th><th>nice to have</th></tr></thead>
+                   <th class="num">Betrag gesamt</th><th>nice to have</th></tr></thead>
         <tbody>
         <?php foreach ($vorschau as $v): ?>
           <tr>

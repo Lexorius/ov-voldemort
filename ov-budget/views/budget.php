@@ -1,18 +1,18 @@
 <?php
 /** @var int $jahr @var array $jahre @var array $budgets @var array $ohneTopf
- *  @var ?array $jahresbudget @var float $ausgabenBrutto @var float $ausgabenNetto
- *  @var float $einnahmenBrutto @var float $einnahmenNetto
+ *  @var array $zahlen
  *  @var array $kategorien @var array $einnahmeKategorien
  *  @var array $monate @var array $monateEin @var array $jeTopf @var array $letzte
  *  @var array $zuBestellen @var array $zurFreigabe */
 $warn = setting_int('budget_warn_prozent', 90);
-$gesamt = (float)($jahresbudget['betrag'] ?? 0);
-
+$gesamt = $zahlen['budget'];
+$einnahmen = $zahlen['einnahmen'];
+$ausgaben = $zahlen['ausgaben'];
 // Verfügbar ist die Zuweisung plus alles, was der OV selbst eingenommen hat
-$verfuegbar = $gesamt + $einnahmenBrutto;
-$rest = $verfuegbar - $ausgabenBrutto;
-$quote = $verfuegbar > 0 ? min(100, $ausgabenBrutto / $verfuegbar * 100) : 0;
-$quoteCls = ($verfuegbar > 0 && $ausgabenBrutto > $verfuegbar) ? 'is-over' : ($quote >= $warn ? 'is-warn' : '');
+$verfuegbar = $zahlen['verfuegbar'];
+$rest = $zahlen['frei'];
+$quote = $zahlen['quote'];
+$quoteCls = ($verfuegbar > 0 && $ausgaben > $verfuegbar) ? 'is-over' : ($quote >= $warn ? 'is-warn' : '');
 
 $summeToepfe = array_sum(array_map(static fn($b) => (float)$b['betrag_netto'], $budgets));
 $verplant = array_sum(array_map(static fn($b) => (float)$b['verplant'], $budgets));
@@ -44,7 +44,7 @@ $freigabeZeile = static function (array $w, string $aktion): string {
         $grund = wish_release_denied($w);
         if ($grund === null) {
             $knopf = '<button class="btn btn--ok btn--sm" type="submit" name="action" value="freigeben" data-confirm="'
-                . e('„' . $w['bezeichnung'] . '“ für ' . money((float)$w['netto_gesamt']) . ' netto zur Bestellung freigeben?')
+                . e('„' . $w['bezeichnung'] . '“ für ' . money((float)$w['netto_gesamt']) . ' zur Bestellung freigeben?')
                 . '">Freigegeben, bitte bestellen</button>';
         } elseif (order_rights_for_user()['freigeben']) {
             // Grundsätzlich berechtigt, aber nicht für diesen Wunsch – kurz sagen, warum
@@ -75,10 +75,10 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
     if (!$liste) {
         return '<div class="empty">Nichts erfasst.</div>';
     }
-    $max = max(array_map(static fn($k) => (float)$k['brutto'], $liste));
+    $max = max(array_map(static fn($k) => (float)$k['betrag'], $liste));
     $html = '';
     foreach ($liste as $k) {
-        $b = (float)$k['brutto'];
+        $b = (float)$k['betrag'];
         $breite = $max > 0 ? $b / $max * 100 : 0;
         $anteil = $summe > 0 ? $b / $summe * 100 : 0;
         $name = $k['id']
@@ -124,7 +124,7 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
   <?php endforeach; ?>
 </div>
 
-<?php if ($gesamt <= 0 && $einnahmenBrutto <= 0): ?>
+<?php if ($gesamt <= 0 && $einnahmen <= 0): ?>
   <div class="alert alert--info">
     Für <?= (int)$jahr ?> ist noch kein Gesamtbudget hinterlegt.
     <?php if (can('manage_budget')): ?>
@@ -141,13 +141,13 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
   </div>
   <div class="stat">
     <div class="stat__label">Einnahmen</div>
-    <div class="stat__value" style="color:var(--ok)">+<?= e(money_rounded($einnahmenBrutto, false)) ?></div>
+    <div class="stat__value" style="color:var(--ok)">+<?= e(money_rounded($einnahmen, false)) ?></div>
     <div class="stat__hint">Einsätze, THG und Übriges</div>
   </div>
   <div class="stat">
     <div class="stat__label">Ausgaben</div>
-    <div class="stat__value">−<?= e(money_rounded($ausgabenBrutto, false)) ?></div>
-    <div class="stat__hint"><?= e(money_rounded($ausgabenNetto, false)) ?> netto</div>
+    <div class="stat__value">−<?= e(money_rounded($ausgaben, false)) ?></div>
+    <div class="stat__hint">gebucht in <?= (int)$jahr ?></div>
   </div>
   <div class="stat">
     <div class="stat__label"><?= $rest >= 0 ? 'Noch frei' : 'Überzogen um' ?></div>
@@ -161,7 +161,7 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
     <h2>Mittel <?= (int)$jahr ?></h2>
     <span class="small">
       <?= e(money_rounded($gesamt, false)) ?> Budget
-      <?php if ($einnahmenBrutto > 0): ?>+ <?= e(money_rounded($einnahmenBrutto, false)) ?> Einnahmen<?php endif; ?>
+      <?php if ($einnahmen > 0): ?>+ <?= e(money_rounded($einnahmen, false)) ?> Einnahmen<?php endif; ?>
       = <strong><?= e(money_rounded($verfuegbar)) ?></strong>
     </span>
   </div>
@@ -170,9 +170,9 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
       <div class="bar__fill <?= $quoteCls ?>" style="width:<?= number_format($quote, 1, '.', '') ?>%"></div>
     </div>
     <p class="small muted" style="margin:.5rem 0 0">
-      <?= e(money_rounded($ausgabenBrutto, false)) ?> ausgegeben (<?= number_format($quote, 0) ?>&nbsp;%).
+      <?= e(money_rounded($ausgaben, false)) ?> ausgegeben (<?= number_format($quote, 0) ?>&nbsp;%).
       Wenn zusätzlich alle offenen Wünsche beschafft würden, kämen
-      <strong><?= e(money_rounded($verplant + $offenOhne)) ?></strong> netto hinzu.
+      <strong><?= e(money_rounded($verplant + $offenOhne)) ?></strong> hinzu.
     </p>
   <?php else: ?>
     <div class="empty">Weder Budget noch Einnahmen erfasst.</div>
@@ -183,7 +183,7 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
   <div class="card__head">
     <h2>Freigegeben – bitte bestellen</h2>
     <?php if ($zuBestellen): ?>
-      <span class="badge" style="background:#ea580c"><?= count($zuBestellen) ?> · <?= e(money($summeBestellen)) ?> netto</span>
+      <span class="badge" style="background:#ea580c"><?= count($zuBestellen) ?> · <?= e(money($summeBestellen)) ?></span>
     <?php endif; ?>
   </div>
   <?php if (!$zuBestellen): ?>
@@ -220,7 +220,7 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
         <a class="btn btn--sec btn--sm" href="<?= e(url('expenses', ['jahr' => $jahr, 'art' => 'ausgabe'])) ?>">Alle</a>
       <?php endif; ?>
     </div>
-    <?= $kategorieBlock($kategorien, $ausgabenBrutto, 'ausgabe') ?>
+    <?= $kategorieBlock($kategorien, $ausgaben, 'ausgabe') ?>
   </section>
 
   <section class="card">
@@ -230,7 +230,7 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
         <a class="btn btn--sec btn--sm" href="<?= e(url('expenses', ['jahr' => $jahr, 'art' => 'einnahme'])) ?>">Alle</a>
       <?php endif; ?>
     </div>
-    <?= $kategorieBlock($einnahmeKategorien, $einnahmenBrutto, 'einnahme') ?>
+    <?= $kategorieBlock($einnahmeKategorien, $einnahmen, 'einnahme') ?>
   </section>
 </div>
 
@@ -312,7 +312,7 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
     <?php foreach ($budgets as $b):
         $soll = (float)$b['betrag_netto'];
         $ist = (float)$b['verplant'];
-        $ausgegeben = (float)($jeTopf[(int)$b['id']]['netto'] ?? 0);
+        $ausgegeben = (float)($jeTopf[(int)$b['id']]['betrag'] ?? 0);
         $pct = $soll > 0 ? min(100, ($ist + $ausgegeben) / $soll * 100) : 0;
         $cls = ($soll > 0 && ($ist + $ausgegeben) > $soll) ? 'is-over' : ($pct >= $warn ? 'is-warn' : '');
     ?>
@@ -347,7 +347,7 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
   <?php else: ?>
     <div class="tablewrap">
       <table class="data">
-        <thead><tr><th>Wunsch</th><th>Fachgruppe</th><th>Dringlichkeit</th><th class="num">Netto</th></tr></thead>
+        <thead><tr><th>Wunsch</th><th>Fachgruppe</th><th>Dringlichkeit</th><th class="num">Betrag</th></tr></thead>
         <tbody>
         <?php foreach ($ohneTopf as $w): ?>
           <tr>

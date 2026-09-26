@@ -57,20 +57,15 @@ $pflichtAb = setting_float('wunsch_angebot_pflicht_ab', 0);
         <select id="einheit_id" name="einheit_id"><?= list_options('einheit', (int)($wish['einheit_id'] ?? 0), '') ?></select>
       </div>
       <div class="field">
-        <label for="f-netto-einzel">Nettobetrag je Einheit</label>
+        <label for="f-netto-einzel">Betrag je Einheit</label>
         <input type="text" inputmode="decimal" id="f-netto-einzel" name="netto_einzel"
                value="<?= e(num_input($wish['netto_einzel'] ?? '')) ?>" placeholder="0,00">
       </div>
       <div class="field">
-        <label for="f-netto-gesamt">Nettobetrag gesamt</label>
+        <label for="f-netto-gesamt">Betrag gesamt</label>
         <input type="text" inputmode="decimal" id="f-netto-gesamt" name="netto_gesamt"
                value="<?= e(num_input($wish['netto_gesamt'] ?? '')) ?>" placeholder="0,00">
         <small id="f-gesamt-hinweis"></small>
-      </div>
-      <div class="field">
-        <label for="mwst_satz">MwSt (%)</label>
-        <input type="text" inputmode="decimal" id="mwst_satz" name="mwst_satz"
-               value="<?= e(num_input($wish['mwst_satz'] ?: 19, true)) ?>">
       </div>
       <div class="field">
         <label for="benoetigt_bis">Benötigt bis</label>
@@ -185,7 +180,7 @@ $pflichtAb = setting_float('wunsch_angebot_pflicht_ab', 0);
   <section class="card">
     <h2>Angebote und Anlagen</h2>
     <?php if ($pflichtAb > 0): ?>
-      <p class="small muted">Ab einem Nettobetrag von <?= e(money($pflichtAb)) ?> ist mindestens ein Angebot verpflichtend.</p>
+      <p class="small muted">Ab einem Betrag von <?= e(money($pflichtAb)) ?> ist mindestens ein Angebot verpflichtend.</p>
     <?php endif; ?>
 
     <?php if ($anlagen): ?>
@@ -216,7 +211,7 @@ $pflichtAb = setting_float('wunsch_angebot_pflicht_ab', 0);
         </select>
       </div>
       <div class="field">
-        <label for="anlage_betrag">Angebotssumme netto (optional)</label>
+        <label for="anlage_betrag">Angebotssumme (optional)</label>
         <input type="text" inputmode="decimal" id="anlage_betrag" name="anlage_betrag" placeholder="0,00">
       </div>
     </div>

@@ -46,7 +46,6 @@ if (!$wish) {
         'bezeichnung' => '', 'beschreibung' => '', 'begruendung' => '',
         'anzahl' => 1, 'einheit_id' => list_default_id('einheit'),
         'netto_einzel' => '', 'netto_gesamt' => '',
-        'mwst_satz' => setting_float('mwst_satz', 19.0),
         'fachgruppe_id' => $user['fachgruppe_id'],
         'kategorie_id' => null,
         'dringlichkeit_id' => list_default_id('dringlichkeit'),

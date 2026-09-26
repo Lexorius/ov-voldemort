@@ -71,7 +71,7 @@
         gesamt.value = total > 0 ? euro.format(total) : '';
       }
       if (hinweis) {
-        hinweis.textContent = total > 0 ? 'Rechnerisch: ' + euro.format(total) + ' € netto' : '';
+        hinweis.textContent = total > 0 ? 'Rechnerisch: ' + euro.format(total) + ' €' : '';
       }
     }
     anzahl.addEventListener('input', recalc);

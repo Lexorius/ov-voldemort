@@ -134,7 +134,7 @@ sie enthalten.
 
 ## Was kann die Anwendung?
 
-* **Wünsch dir was** – Bedarfe mit Bezeichnung, Anzahl, Nettobetrag,
+* **Wünsch dir was** – Bedarfe mit Bezeichnung, Anzahl, Betrag,
   Dringlichkeit, Fachgruppe, Kategorie, Status, „nice to have", Frist,
   Angebots-Uploads, Abstimmung und Kommentaren. CSV-Export inklusive.
 * **Aufgaben** – für den Ortsverband, einzelne Fachgruppen, Funktionen oder
@@ -144,12 +144,13 @@ sie enthalten.
   Getränke, Tanken ...) und **Einnahmen** (Kostenerstattung für Einsätze,
   technische Hilfeleistung, Spenden ...) mit Einsatz- oder Auftragsnummer.
   Die Übersicht rechnet Budget plus Einnahmen minus Ausgaben und schlüsselt
-  nach Kategorie und Monat auf. Optional unterteilen **Budgettöpfe** das Jahr;
+  nach Kategorie und Monat auf. Mehrwertsteuer spielt dabei keine Rolle: Es
+  gibt je Buchung und je Wunsch einen Betrag – den, der tatsächlich fließt. Optional unterteilen **Budgettöpfe** das Jahr;
   sie werden unter *Budget → Budgettöpfe verwalten* gepflegt – anlegen,
   ändern, stilllegen und zum Jahreswechsel aus dem Vorjahr übernehmen.
   Mit **„Freigegeben, bitte bestellen"** wird ein Wunsch zur Bestellung
   freigegeben; die Übersicht listet alles Freigegebene, bis es als bestellt
-  markiert ist. Wer freigeben (optional bis zu einem Nettobetrag) und wer
+  markiert ist. Wer freigeben (optional bis zu einem Betrag) und wer
   bestellen darf, wird unter *Verwaltung → Bestellberechtigungen* je Rolle und
   je Funktion festgelegt – etwa Ortsbeauftragte:r unbegrenzt, Zugführer:in bis
   500 €, Verwaltungsbeauftragte:r bestellt.
@@ -531,8 +532,9 @@ Gerät „OV-Budget" zusammen.
   Zugangsdaten beim Start automatisch. Sonst Host, Port, Benutzer und Passwort
   in den Einstellungen eintragen.
 * **Gemeldet werden:**
-  * Budget: gesamt, verplant, frei, Auslastung; Ausgaben, Einnahmen und Saldo
-    im Haushaltsjahr
+  * Budget: Jahresbudget (Zuweisung), verfügbar (mit Einnahmen), Töpfe
+    gesamt, verplant (offene Wünsche), frei, Auslastung; Ausgaben, Einnahmen
+    und Saldo im Haushaltsjahr
   * Wünsche: offen, zur Bestellung freigegeben, Summe der offenen
   * Aufgaben: offen, überfällig; Themen im Themenspeicher
   * Besprechungen: die nächste als Zeitstempel mit Titel und Ort
