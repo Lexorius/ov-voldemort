@@ -18,6 +18,8 @@ declare(strict_types=1);
 
 /** Wem ein Gerät gehören kann – dieselben Ziele wie bei den Karten */
 const RADIO_ZIELE = SIM_ZIELE;
+/** Arten, die üblicherweise fest verbaut sind (Vorgabe für das Kennzeichen) */
+const RADIO_FEST_VERBAUT = ['mrt', 'frt'];
 
 function radio_ziel_typ(string $typ): string
 {
@@ -36,6 +38,7 @@ function radio_select(): string
                    t.label AS typ_label, t.color AS typ_color,
                    st.label AS status_label, st.color AS status_color, st.slug AS status_slug,
                    v.bezeichnung AS fahrzeug_label, v.kennzeichen AS fahrzeug_kennzeichen,
+                   v.geo_at AS fahrzeug_geo_at,
                    fg.label AS fachgruppe_label,
                    u.display_name AS person_label,
                    (SELECT COUNT(*) FROM sims s WHERE s.radio_id = r.id) AS karten,
@@ -181,7 +184,8 @@ function radio_group_select(): string
                    v.bezeichnung AS fahrzeug_label, v.kennzeichen AS fahrzeug_kennzeichen,
                    fg.label AS fachgruppe_label,
                    u.display_name AS person_label,
-                   (SELECT COUNT(*) FROM radios r WHERE r.group_id = g.id AND r.is_active = 1) AS geraete
+                   (SELECT COUNT(*) FROM radios r WHERE r.group_id = g.id AND r.is_active = 1) AS geraete,
+                   (SELECT COUNT(*) FROM radios r WHERE r.group_id = g.id AND r.is_active = 1 AND r.fest_verbaut = 0) AS meldbar
             FROM radio_groups g
             LEFT JOIN vehicles   v  ON v.id  = g.ziel_id AND g.ziel_typ = \'fahrzeug\'
             LEFT JOIN list_items fg ON fg.id = g.ziel_id AND g.ziel_typ = \'fachgruppe\'
@@ -265,7 +269,7 @@ function radio_qr_name(array $radio): string
 
 function radio_group_qr_name(array $gruppe): string
 {
-    $anzahl = (int)($gruppe['geraete'] ?? 0);
+    $anzahl = (int)($gruppe['meldbar'] ?? $gruppe['geraete'] ?? 0);
     return trim((string)($gruppe['name'] ?? ''))
         . ($anzahl > 0 ? ' · ' . $anzahl . ' Geräte' : '');
 }
@@ -277,12 +281,22 @@ function radio_group_qr_name(array $gruppe): string
 function radio_gesehen(array $ziel, int $frischTage = 30, ?string $jetzt = null): array
 {
     $wann = trim((string)($ziel['zuletzt_gesehen'] ?? ''));
+    $ueber = 'meldung';
+    // Ein fest verbautes Gerät ist da, wo sein Fahrzeug ist: Dessen letzter
+    // Standort zählt, wenn er jünger ist als die letzte Meldung am Gerät.
+    if ((int)($ziel['fest_verbaut'] ?? 0) === 1 && (string)($ziel['ziel_typ'] ?? '') === 'fahrzeug') {
+        $fz = trim((string)($ziel['fahrzeug_geo_at'] ?? ''));
+        if ($fz !== '' && ($wann === '' || $fz > $wann)) {
+            $wann = $fz;
+            $ueber = 'fahrzeug';
+        }
+    }
     if ($wann === '') {
-        return ['tage' => null, 'stufe' => 'nie'];
+        return ['tage' => null, 'stufe' => 'nie', 'ueber' => $ueber, 'wann' => ''];
     }
     $jetzt ??= date('Y-m-d H:i:s');
     $tage = (int)floor((strtotime($jetzt) - strtotime($wann)) / 86400);
-    return ['tage' => $tage, 'stufe' => $tage <= $frischTage ? 'frisch' : 'alt'];
+    return ['tage' => $tage, 'stufe' => $tage <= $frischTage ? 'frisch' : 'alt', 'ueber' => $ueber, 'wann' => $wann];
 }
 
 /**
@@ -295,7 +309,8 @@ function radio_bestand_anwenden(string $art, array $ziel, array $daten, int $ts)
     $melder = mb_substr(trim((string)($daten['melder'] ?? '')), 0, 60);
 
     if ($art === 'gruppe') {
-        $gesamt = (int)($ziel['geraete'] ?? 0);
+        // Gezählt werden nur Geräte, die im Regal liegen können – fest verbaute nicht
+        $gesamt = (int)($ziel['meldbar'] ?? $ziel['geraete'] ?? 0);
         $anzahl = $daten['anzahl'] ?? null;
         $anzahl = $anzahl === null || $anzahl === '' ? $gesamt : max(0, min(9999, (int)$anzahl));
         db_update('radio_groups', [
@@ -304,10 +319,10 @@ function radio_bestand_anwenden(string $art, array $ziel, array $daten, int $ts)
             'zuletzt_melder'  => $melder,
         ], 'id = ?', [(int)$ziel['id']]);
 
-        // Vollzählig? Dann gelten alle Geräte der Gruppe als gesehen
+        // Vollzählig? Dann gelten alle meldbaren Geräte der Gruppe als gesehen
         if ($anzahl >= $gesamt && $gesamt > 0) {
             db_update('radios', ['zuletzt_gesehen' => $wann, 'zuletzt_melder' => $melder],
-                'group_id = ?', [(int)$ziel['id']]);
+                'group_id = ? AND fest_verbaut = 0', [(int)$ziel['id']]);
         }
         $text = sprintf('%s: %d von %d Geräten am Lagerort', (string)$ziel['name'], $anzahl, $gesamt);
     } else {
@@ -366,6 +381,7 @@ function radio_save_from_post(?array $radio, array $user): array
         'beschafft_am'   => post_date('beschafft_am'),
         'pruefung_bis'   => post_date('pruefung_bis'),
         'notiz'          => post_str('notiz'),
+        'fest_verbaut'   => post_bool('fest_verbaut'),
         'is_active'      => post_bool('is_active'),
         'updated_by'     => (int)$user['id'],
     ];

@@ -1,5 +1,28 @@
 # Änderungsverlauf
 
+## 2.0.2.0
+
+### Funkgeräte: fest verbaute Geräte zählen nicht mit
+
+In der Praxis wurden Gruppen als Fachgruppen angelegt, mit allen Geräten –
+auch den MRTs in den Fahrzeugen. Dann war „alle 9 Geräte sind da" am Regal
+nie erreichbar, weil zwei davon im Auto stecken.
+
+- **Neues Kennzeichen „fest verbaut"** am Gerät, vorbelegt aus der Art
+  (MRT und Feststation ja, HRT und Meldeempfänger nein), im Formular
+  änderbar. Ein verbautes Gerät bleibt in seiner Gruppe, zählt beim
+  QR-Code aber nicht mit: Der Code sagt jetzt „Alle 7 Geräte sind da", die
+  Gruppenseite zeigt „9 Geräte, davon 2 fest verbaut".
+- Gehört ein verbautes Gerät zu einem Fahrzeug, gilt es als gesehen, sobald
+  das Fahrzeug einen Standort meldet – es ist da, wo das Auto ist.
+- **Bestand nachgezogen:** Beim Aktualisieren werden vorhandene MRTs und
+  Feststationen einmalig als fest verbaut gekennzeichnet. Bestehende Gruppen
+  bleiben, wie sie sind, und stimmen damit sofort.
+- Formular und Anleitung sagen jetzt klar, dass eine Gruppe eine
+  Lagereinheit ist und die Fachgruppe am Gerät steht.
+- Die Zugänge beim Connector werden mit den neuen Zahlen neu angemeldet;
+  gedruckte QR-Codes bleiben gültig.
+
 ## 2.0.1.0
 
 ### Impressum und Datenschutz auf dem Connector

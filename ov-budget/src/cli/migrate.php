@@ -1201,6 +1201,19 @@ SQL;
         }
     }
     $merken('034_multitool');
+
+    /* ---------- 035: fest verbaute Funkgeraete ---------- */
+    if (ovb_table_exists($pdo, 'radios') && !ovb_column_exists($pdo, 'radios', 'fest_verbaut')) {
+        $pdo->exec('ALTER TABLE radios ADD COLUMN fest_verbaut TINYINT(1) NOT NULL DEFAULT 0 AFTER is_active');
+        // Bestand nachziehen: Fahrzeugfunk und Feststationen sind fest verbaut
+        $n = $pdo->exec("UPDATE radios r JOIN list_items t ON t.id = r.typ_id
+                         SET r.fest_verbaut = 1
+                         WHERE t.list_key = 'funk_typ' AND t.slug IN ('mrt', 'frt')");
+        if ($n > 0) {
+            $say("Funkgeraete: $n Geraet(e) als fest verbaut gekennzeichnet (MRT, FRT).");
+        }
+    }
+    $merken('035_funk_fest_verbaut');
 }
 
 /**

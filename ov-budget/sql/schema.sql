@@ -736,6 +736,8 @@ CREATE TABLE IF NOT EXISTS radios (
   pruefung_bis   DATE         NULL,
   notiz          TEXT         NULL,
   is_active      TINYINT(1)   NOT NULL DEFAULT 1,
+  -- fest verbaut (MRT, Feststation): zaehlt bei der Gruppenmeldung nicht mit
+  fest_verbaut   TINYINT(1)   NOT NULL DEFAULT 0,
   created_by     INT UNSIGNED NULL,
   updated_by     INT UNSIGNED NULL,
   created_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,

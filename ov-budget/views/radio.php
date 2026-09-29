@@ -46,6 +46,10 @@ $pruefung = radio_pruefung($radio, $warn);
           <div class="dl__value"><?= e($wert) ?></div></div>
       <?php endif; ?>
     <?php endforeach; ?>
+    <?php if ((int)($radio['fest_verbaut'] ?? 0) === 1): ?>
+      <div class="dl__item"><div class="dl__label">Einbau</div>
+        <div class="dl__value">fest verbaut – zählt bei der Gruppenmeldung nicht mit</div></div>
+    <?php endif; ?>
     <div class="dl__item"><div class="dl__label">Gehört zu</div>
       <div class="dl__value">
         <?php if ((string)$radio['ziel_typ'] === 'fahrzeug' && $radio['fahrzeug_label'] && can('view_vehicles')): ?>

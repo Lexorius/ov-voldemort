@@ -62,7 +62,8 @@ $darf = can('manage_radios');
             <div class="small muted"><?= e(sim_ziel_text($g)) ?></div>
           </td>
           <td class="small"><?= e((string)$g['lagerort']) ?: '<span class="muted">–</span>' ?></td>
-          <td class="small"><?= (int)$g['geraete'] ?></td>
+          <td class="small"><?= (int)$g['geraete'] ?><?= (int)$g['geraete'] > (int)($g['meldbar'] ?? $g['geraete'])
+              ? ' <span class="muted">(' . (int)$g['meldbar'] . ' meldbar)</span>' : '' ?></td>
           <td class="small">
             <?php if ($gesehen['stufe'] === 'nie'): ?>
               <span class="muted">noch nie gemeldet</span>
@@ -70,7 +71,7 @@ $darf = can('manage_radios');
               <span<?= $gesehen['stufe'] === 'alt' ? ' style="color:var(--warn)"' : '' ?>>
                 <?= e(de_datetime((string)$g['zuletzt_gesehen'])) ?></span>
               <?php if ($g['zuletzt_anzahl'] !== null): ?>
-                <div class="muted"><?= (int)$g['zuletzt_anzahl'] ?> von <?= (int)$g['geraete'] ?> da</div>
+                <div class="muted"><?= (int)$g['zuletzt_anzahl'] ?> von <?= (int)($g['meldbar'] ?? $g['geraete']) ?> da</div>
               <?php endif; ?>
             <?php endif; ?>
           </td>

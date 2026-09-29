@@ -28,7 +28,13 @@ $zielId = (int)($radio['ziel_id'] ?? 0);
     <div class="grid2">
       <div class="field">
         <label for="typ_id">Art</label>
-        <select id="typ_id" name="typ_id"><?= list_options('funk_typ', (int)($radio['typ_id'] ?? 0)) ?></select>
+        <select id="typ_id" name="typ_id" data-fest-vorgabe>
+          <option value="">– bitte wählen –</option>
+          <?php foreach (list_items('funk_typ') as $t): ?>
+            <option value="<?= (int)$t['id'] ?>"<?= (int)$t['id'] === (int)($radio['typ_id'] ?? 0) ? ' selected' : '' ?>
+                    data-fest="<?= in_array((string)$t['slug'], RADIO_FEST_VERBAUT, true) ? '1' : '0' ?>"><?= e((string)$t['label']) ?></option>
+          <?php endforeach; ?>
+        </select>
       </div>
       <div class="field">
         <label for="status_id">Status</label>
@@ -149,6 +155,14 @@ $zielId = (int)($radio['ziel_id'] ?? 0);
       <input type="checkbox" id="is_active" name="is_active" value="1"
              <?= (int)($radio['is_active'] ?? 1) === 1 ? 'checked' : '' ?>>
       <label for="is_active">Im Bestand</label>
+    </div>
+    <div class="field field--check">
+      <input type="checkbox" id="fest_verbaut" name="fest_verbaut" value="1"
+             <?= (int)($radio['fest_verbaut'] ?? 0) === 1 ? 'checked' : '' ?>>
+      <label for="fest_verbaut">Fest verbaut – liegt nie im Regal</label>
+      <small>Ein verbautes Gerät (MRT im Fahrzeug, Feststation) darf in einer Gruppe stehen, zählt
+        bei „alle Geräte sind da" aber nicht mit. Gehört es zu einem Fahrzeug, gilt es als gesehen,
+        sobald das Fahrzeug einen Standort meldet.</small>
     </div>
     <div class="btnrow">
       <button class="btn" type="submit">Speichern</button>

@@ -6,9 +6,12 @@ $zielId = (int)($gruppe['ziel_id'] ?? 0);
 ?>
 <div class="pagehead">
   <div><h1><?= $isNew ? 'Gruppe anlegen' : 'Gruppe bearbeiten' ?></h1>
-    <p>Eine Gruppe fasst Geräte zusammen, die zusammen liegen: ein HRT-Koffer, eine Ladeschale,
+    <p>Eine Gruppe ist eine <strong>Lagereinheit</strong>: ein HRT-Koffer, eine Ladeschale, ein Regal,
        der Satz im Fahrzeug. Sie kann einen eigenen QR-Code bekommen – dann meldet ein Tipp alle
-       Geräte auf einmal als „am Lagerort".</p>
+       Geräte darin auf einmal als „am Lagerort". Fest verbaute Geräte (MRT, Feststation) dürfen
+       dazugehören, zählen bei der Meldung aber nicht mit.</p>
+    <p class="small muted">Zu welcher Fachgruppe ein Gerät gehört, steht am Gerät unter „Gehört zu" –
+       dafür braucht es keine Gruppe.</p>
   </div>
   <div class="btnrow">
     <a class="btn btn--sec" href="<?= e($isNew ? url('radios') : url('radio_group', ['id' => $gruppe['id']])) ?>">Abbrechen</a>

@@ -331,8 +331,15 @@ Das Modul führt die Geräte selbst – die Karten darin stehen im Kartenmodul.
   „Steckt in einem Funkgerät".
 * **Zuordnung:** wie bei den Karten zu Fahrzeug, Fachgruppe, Person oder zum
   Ortsverband. Die Fahrzeugakte zeigt die Geräte des Fahrzeugs.
-* **Gruppen:** Koffer, Ladeschale, Satz. Ein Gerät gehört zu höchstens einer
-  Gruppe; die Gruppenseite zeigt alle Geräte darin.
+* **Gruppen** sind Lagereinheiten: Koffer, Ladeschale, Regal, der Satz im
+  Fahrzeug. Ein Gerät gehört zu höchstens einer Gruppe; die Gruppenseite zeigt
+  alle Geräte darin. Die Fachgruppe steht am Gerät unter „Gehört zu" – dafür
+  braucht es keine Gruppe.
+* **Fest verbaut:** Ein MRT im Fahrzeug oder eine Feststation liegt nie im
+  Regal. Das Kennzeichen (Vorgabe aus der Art, änderbar) lässt das Gerät in
+  seiner Gruppe stehen, nimmt es aber aus der Zählung „alle Geräte sind da"
+  heraus. Gehört es zu einem Fahrzeug, gilt es als gesehen, sobald das
+  Fahrzeug einen Standort meldet.
 
 ### „Ist am Lagerort" per QR-Code
 
@@ -341,7 +348,8 @@ Wer ihn scannt, bekommt eine kleine Seite mit einem Knopf:
 
 * am Gerät: **„Gerät ist am Lagerort"**
 * an der Gruppe: **„Alle 8 Geräte sind da"** – oder *Nicht alle*, dann trägt
-  man die Zahl ein.
+  man die Zahl ein. Gezählt werden nur die meldbaren Geräte, fest verbaute
+  nicht.
 
 Die Meldung geht über den **Connector** und ist im Browser verschlüsselt: Der
 Server weiß, dass jemand gemeldet hat, aber weder was noch von wem. Er kennt

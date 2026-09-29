@@ -315,6 +315,19 @@
     });
   });
 
+  // Funkgerät: "fest verbaut" aus der Art vorbelegen, solange das Häkchen nicht von Hand gesetzt wurde
+  var festArt = document.querySelector('select[data-fest-vorgabe]');
+  var festHaken = document.getElementById('fest_verbaut');
+  if (festArt && festHaken) {
+    var angefasst = false;
+    festHaken.addEventListener('change', function () { angefasst = true; });
+    festArt.addEventListener('change', function () {
+      if (angefasst) { return; }
+      var opt = festArt.options[festArt.selectedIndex];
+      festHaken.checked = !!(opt && opt.getAttribute('data-fest') === '1');
+    });
+  }
+
   // Zähler: Block für Home Assistant nur bei dieser Quelle, Auswahl ins Textfeld
   var quelleRadios = document.querySelectorAll('[data-schalter-radio="quelle"]');
   if (quelleRadios.length) {

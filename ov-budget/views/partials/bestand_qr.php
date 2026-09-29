@@ -40,10 +40,10 @@ if ($token !== '' && $connector !== null) {
             <span class="muted small">· <?= e((string)$ziel['zuletzt_melder']) ?></span>
           <?php endif; ?>
           <?php if ($art === 'gruppe' && ($ziel['zuletzt_anzahl'] ?? null) !== null): ?>
-            <div class="small<?= (int)$ziel['zuletzt_anzahl'] < (int)$ziel['geraete']
-                ? ' ' : '' ?>"<?= (int)$ziel['zuletzt_anzahl'] < (int)$ziel['geraete']
+            <?php $meldbar = (int)($ziel['meldbar'] ?? $ziel['geraete']); ?>
+            <div class="small"<?= (int)$ziel['zuletzt_anzahl'] < $meldbar
                 ? ' style="color:var(--warn);font-weight:700"' : '' ?>>
-              <?= (int)$ziel['zuletzt_anzahl'] ?> von <?= (int)$ziel['geraete'] ?> Geräten gemeldet</div>
+              <?= (int)$ziel['zuletzt_anzahl'] ?> von <?= $meldbar ?> meldbaren Geräten gemeldet</div>
           <?php endif; ?>
         <?php endif; ?>
       </div></div>
@@ -56,8 +56,9 @@ if ($token !== '' && $connector !== null) {
       <div>
         <p class="small">Am Lagerort aufhängen<?= $art === 'gruppe' ? ' – am Koffer oder am Regal' : '' ?>:
           Wer den Code scannt, meldet mit einem Tipp, dass
-          <?= $art === 'gruppe' ? 'alle Geräte da sind' : 'das Gerät da ist' ?> – ohne Anmeldung
-          und ohne Zugang zu dieser Anwendung.</p>
+          <?= $art === 'gruppe' ? 'alle ' . (int)($ziel['meldbar'] ?? $ziel['geraete']) . ' meldbaren Geräte da sind' : 'das Gerät da ist' ?> – ohne Anmeldung
+          und ohne Zugang zu dieser Anwendung.<?= $art === 'gruppe' && (int)$ziel['geraete'] > (int)($ziel['meldbar'] ?? $ziel['geraete'])
+              ? ' Fest verbaute Geräte der Gruppe zählen nicht mit.' : '' ?></p>
         <p class="small muted mono" style="word-break:break-all"><?= e($qrAdresse) ?></p>
         <p class="small muted">Der Teil hinter dem <span class="mono">#</span> bleibt im Browser –
           der Connector erfährt nie, worum es geht. Läuft über

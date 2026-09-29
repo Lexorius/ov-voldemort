@@ -838,15 +838,14 @@ function connector_bestand_paket(array $c): array
                      WHERE qr_token <> '' AND is_active = 1 AND qr_connector_id = ?", [(int)$c['id']]) as $r) {
         $liste[] = ['kennung' => connector_kennung((string)$r['qr_token']), 'art' => 'geraet', 'anzahl' => 1];
     }
-    foreach (db_all("SELECT g.qr_token,
-                            (SELECT COUNT(*) FROM radios r WHERE r.group_id = g.id AND r.is_active = 1) AS geraete
+    foreach (db_all("SELECT g.qr_token, (SELECT COUNT(*) FROM radios r WHERE r.group_id = g.id AND r.is_active = 1 AND r.fest_verbaut = 0) AS meldbar
                      FROM radio_groups g
                      WHERE g.qr_token <> '' AND g.is_active = 1 AND g.qr_connector_id = ?",
                     [(int)$c['id']]) as $g) {
         $liste[] = [
             'kennung' => connector_kennung((string)$g['qr_token']),
             'art'     => 'gruppe',
-            'anzahl'  => (int)$g['geraete'],
+            'anzahl'  => (int)$g['meldbar'],
         ];
     }
     return $liste;
@@ -893,8 +892,7 @@ function connector_fetch_bestand(array $c): array
     foreach (db_all("SELECT * FROM radios WHERE qr_token <> '' AND qr_connector_id = ?", [(int)$c['id']]) as $r) {
         $ziele[connector_kennung((string)$r['qr_token'])] = ['art' => 'geraet', 'ziel' => $r];
     }
-    foreach (db_all("SELECT g.*,
-                            (SELECT COUNT(*) FROM radios r WHERE r.group_id = g.id AND r.is_active = 1) AS geraete
+    foreach (db_all("SELECT g.*, (SELECT COUNT(*) FROM radios r WHERE r.group_id = g.id AND r.is_active = 1 AND r.fest_verbaut = 0) AS meldbar
                      FROM radio_groups g WHERE g.qr_token <> '' AND g.qr_connector_id = ?",
                     [(int)$c['id']]) as $g) {
         $ziele[connector_kennung((string)$g['qr_token'])] = ['art' => 'gruppe', 'ziel' => $g];
