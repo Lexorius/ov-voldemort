@@ -308,7 +308,7 @@ function event_kosten(int $eventId): array
     $res = ['ausgaben' => 0.0, 'einnahmen' => 0.0, 'buchungen' => 0];
     foreach (db_all(
         'SELECT art, COUNT(*) AS anzahl, COALESCE(SUM(betrag_brutto),0) AS brutto
-         FROM expenses WHERE event_id = ? GROUP BY art',
+         FROM expenses WHERE event_id = ? AND status <> \'geplant\' GROUP BY art',
         [$eventId]
     ) as $r) {
         $res['buchungen'] += (int)$r['anzahl'];
@@ -319,6 +319,43 @@ function event_kosten(int $eventId): array
         }
     }
     return $res;
+}
+
+/**
+ * Was die Veranstaltungen eines Jahres noch kosten werden: geplante Kosten
+ * plus kalkulierte Verpflegung, abzüglich dessen, was schon gebucht ist –
+ * je Veranstaltung nie unter null. Abgesagte und abgeschlossene zählen nicht.
+ */
+function events_geplante_kosten(int $jahr): array
+{
+    $out = ['gesamt' => 0.0, 'verpflegung' => 0.0, 'anzahl' => 0, 'liste' => []];
+    $saetze = null;
+    foreach (event_query(['jahr' => $jahr]) as $e) {
+        if (!in_array((string)$e['status'], ['geplant', 'laeuft'], true)) {
+            continue;
+        }
+        $verpflegung = 0.0;
+        if ((int)($e['verpflegung'] ?? 0) === 1) {
+            $saetze ??= tagessatz_query();
+            $satz = tagessatz_am($saetze, substr((string)$e['beginn'], 0, 10));
+            $personen = verpflegung_personen($e, event_stats(event_guests((int)$e['id'])));
+            $verpflegung = verpflegung_kalkulation($e, tagessatz_mahlzeiten($satz), $personen)['gesamt'];
+        }
+        $geplant = (float)$e['kosten_geplant'] + $verpflegung;
+        $gebucht = event_kosten((int)$e['id'])['ausgaben'];
+        $rest = max(0.0, round($geplant - $gebucht, 2));
+        if ($geplant <= 0) {
+            continue;
+        }
+        $out['anzahl']++;
+        $out['gesamt'] += $rest;
+        $out['verpflegung'] += min($rest, $verpflegung);
+        $out['liste'][] = ['id' => (int)$e['id'], 'titel' => (string)$e['titel'], 'beginn' => (string)$e['beginn'],
+            'geplant' => $geplant, 'verpflegung' => $verpflegung, 'gebucht' => $gebucht, 'rest' => $rest];
+    }
+    $out['gesamt'] = round($out['gesamt'], 2);
+    $out['verpflegung'] = round($out['verpflegung'], 2);
+    return $out;
 }
 
 /** Buchungen einer Veranstaltung */

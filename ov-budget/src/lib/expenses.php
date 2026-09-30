@@ -13,6 +13,32 @@ declare(strict_types=1);
  */
 
 const BUCHUNGSARTEN = ['ausgabe' => 'Ausgaben', 'einnahme' => 'Einnahmen'];
+/**
+ * Stand einer Buchung. bezahlt und offen zählen in den Ist-Zahlen (das Geld
+ * ist geflossen oder die Rechnung liegt vor), geplant nur in der Planung.
+ */
+const BUCHUNG_STATUS = [
+    'bezahlt' => 'bezahlt / eingegangen',
+    'offen'   => 'Rechnung gestellt bzw. erhalten – noch offen',
+    'geplant' => 'geplant – noch keine Rechnung',
+];
+/** Bedingung für alles, was als Ist zählt */
+const BUCHUNG_IST = "status <> 'geplant'";
+
+function buchung_status(string $status): string
+{
+    return array_key_exists($status, BUCHUNG_STATUS) ? $status : 'bezahlt';
+}
+
+/** Kennzeichen in Listen – bezahlt bleibt unmarkiert, das ist der Normalfall */
+function buchung_status_badge(string $status): string
+{
+    return match (buchung_status($status)) {
+        'offen'   => '<span class="badge" style="background:#b45309" title="Rechnung gestellt bzw. erhalten, noch nicht bezahlt">offen</span>',
+        'geplant' => '<span class="badge badge--outline" title="geplant, noch keine Rechnung">geplant</span>',
+        default   => '',
+    };
+}
 
 /** Nur bekannte Richtungen zulassen */
 function buchungsart(string $art): string
@@ -78,7 +104,9 @@ function budget_pots(int $jahr): array
                 (SELECT COUNT(*) FROM wishes w WHERE w.budget_id = b.id) AS wuensche,
                 (SELECT COUNT(*) FROM expenses e WHERE e.budget_id = b.id) AS buchungen,
                 (SELECT COALESCE(SUM(e.betrag_netto),0) FROM expenses e
-                 WHERE e.budget_id = b.id AND e.art = \'ausgabe\') AS ausgegeben
+                 WHERE e.budget_id = b.id AND e.art = \'ausgabe\' AND e.' . BUCHUNG_IST . ') AS ausgegeben,
+                (SELECT COALESCE(SUM(e.betrag_netto),0) FROM expenses e
+                 WHERE e.budget_id = b.id AND e.art = \'ausgabe\' AND e.status = \'geplant\') AS geplant
          FROM budgets b
          LEFT JOIN list_items k ON k.id = b.kategorie_id
          LEFT JOIN list_items f ON f.id = b.fachgruppe_id
@@ -156,6 +184,10 @@ function expense_query(array $f = []): array
             $p[] = (int)$f[$col];
         }
     }
+    if (!empty($f['status'])) {
+        $w[] = 'e.status = ?';
+        $p[] = buchung_status((string)$f['status']);
+    }
     if (!empty($f['von'])) {
         $w[] = 'e.datum >= ?';
         $p[] = $f['von'];
@@ -217,7 +249,7 @@ function expense_by_category(int $jahr, string $art = 'ausgabe'): array
                 SUM(e.betrag_brutto) AS betrag
          FROM expenses e
          LEFT JOIN list_items ka ON ka.id = e.kategorie_id
-         WHERE e.jahr = ? AND e.art = ?
+         WHERE e.jahr = ? AND e.art = ? AND e.' . BUCHUNG_IST . '
          GROUP BY ka.id, ka.label, ka.color
          ORDER BY betrag DESC',
         [$jahr, buchungsart($art)]
@@ -230,7 +262,7 @@ function expense_by_month(int $jahr, string $art = 'ausgabe'): array
     $out = array_fill(1, 12, 0.0);
     foreach (db_all(
         'SELECT MONTH(datum) AS m, SUM(betrag_brutto) AS betrag
-         FROM expenses WHERE jahr = ? AND art = ? GROUP BY MONTH(datum)',
+         FROM expenses WHERE jahr = ? AND art = ? AND ' . BUCHUNG_IST . ' GROUP BY MONTH(datum)',
         [$jahr, buchungsart($art)]
     ) as $r) {
         $out[(int)$r['m']] = (float)$r['betrag'];
@@ -242,9 +274,33 @@ function expense_by_month(int $jahr, string $art = 'ausgabe'): array
 function expense_total(int $jahr, string $art = 'ausgabe'): float
 {
     return (float)db_val(
-        'SELECT COALESCE(SUM(betrag_brutto),0) FROM expenses WHERE jahr = ? AND art = ?',
+        'SELECT COALESCE(SUM(betrag_brutto),0) FROM expenses WHERE jahr = ? AND art = ? AND ' . BUCHUNG_IST,
         [$jahr, buchungsart($art)],
         0
+    );
+}
+
+/** Summe der Buchungen eines Jahres mit einem bestimmten Stand */
+function expense_total_status(int $jahr, string $art, string $status): float
+{
+    return (float)db_val(
+        'SELECT COALESCE(SUM(betrag_brutto),0) FROM expenses WHERE jahr = ? AND art = ? AND status = ?',
+        [$jahr, buchungsart($art), buchung_status($status)],
+        0
+    );
+}
+
+/** Offene und geplante Buchungen eines Jahres – für die Übersicht */
+function expense_offen_geplant(int $jahr): array
+{
+    return db_all(
+        'SELECT e.*, ka.label AS kategorie_label, ka.color AS kategorie_color, ev.titel AS veranstaltung_titel
+         FROM expenses e
+         LEFT JOIN list_items ka ON ka.id = e.kategorie_id
+         LEFT JOIN events ev ON ev.id = e.event_id
+         WHERE e.jahr = ? AND e.status <> \'bezahlt\'
+         ORDER BY e.status, e.datum, e.id',
+        [$jahr]
     );
 }
 
@@ -265,6 +321,9 @@ function budget_jahr_zahlen(int $jahr): array
     $einnahmen = income_total($jahr);
     $ausgaben = expense_total($jahr);
     $verfuegbar = $budget + $einnahmen;
+    $geplantBuchungen = expense_total_status($jahr, 'ausgabe', 'geplant');
+    $veranstaltungen = function_exists('events_geplante_kosten') ? events_geplante_kosten($jahr) : ['gesamt' => 0.0, 'verpflegung' => 0.0, 'anzahl' => 0];
+    $geplant = $geplantBuchungen + (float)$veranstaltungen['gesamt'];
     return [
         'budget'     => $budget,
         'einnahmen'  => $einnahmen,
@@ -272,6 +331,16 @@ function budget_jahr_zahlen(int $jahr): array
         'verfuegbar' => $verfuegbar,
         'frei'       => $verfuegbar - $ausgaben,
         'quote'      => $verfuegbar > 0 ? min(100.0, $ausgaben / $verfuegbar * 100) : 0.0,
+        // Rechnung gestellt bzw. erhalten, Geld noch nicht geflossen – steckt schon in einnahmen/ausgaben
+        'einnahmen_offen' => expense_total_status($jahr, 'einnahme', 'offen'),
+        'ausgaben_offen'  => expense_total_status($jahr, 'ausgabe', 'offen'),
+        // Planung: geplante Buchungen plus Veranstaltungen (Kosten und Verpflegung abzüglich schon Gebuchtem)
+        'geplant_buchungen'       => $geplantBuchungen,
+        'geplant_veranstaltungen' => (float)$veranstaltungen['gesamt'],
+        'geplant_verpflegung'     => (float)$veranstaltungen['verpflegung'],
+        'geplant_anzahl'          => (int)$veranstaltungen['anzahl'],
+        'geplant'                 => $geplant,
+        'frei_nach_planung'       => $verfuegbar - $ausgaben - $geplant,
     ];
 }
 
@@ -281,7 +350,7 @@ function expense_by_budget(int $jahr): array
     $out = [];
     foreach (db_all(
         'SELECT budget_id, SUM(betrag_brutto) AS betrag
-         FROM expenses WHERE jahr = ? AND art = ? AND budget_id IS NOT NULL GROUP BY budget_id',
+         FROM expenses WHERE jahr = ? AND art = ? AND budget_id IS NOT NULL AND ' . BUCHUNG_IST . ' GROUP BY budget_id',
         [$jahr, 'ausgabe']
     ) as $r) {
         $out[(int)$r['budget_id']] = ['betrag' => (float)$r['betrag']];
@@ -342,6 +411,8 @@ function expense_save_from_post(?array $existing, array $user): array
         'notiz'         => post_str('notiz'),
         'updated_by'    => (int)$user['id'],
     ];
+    // Ein Zahlungsdatum heißt bezahlt, egal was der Stand sagt
+    $data['status'] = $data['bezahlt_am'] ? 'bezahlt' : buchung_status(post_str('status', (string)($existing['status'] ?? 'bezahlt')));
 
     if ($existing) {
         db_update('expenses', $data, 'id = ?', [$existing['id']]);

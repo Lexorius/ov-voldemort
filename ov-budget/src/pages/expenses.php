@@ -18,6 +18,7 @@ $filters = [
     'kategorie_id'  => get_int('kategorie_id'),
     'fachgruppe_id' => get_int('fachgruppe_id'),
     'budget_id'     => get_int('budget_id'),
+    'status'        => get_str('status'),
     'von'           => get_str('von'),
     'bis'           => get_str('bis'),
     'sort'          => get_str('sort', 'datum'),

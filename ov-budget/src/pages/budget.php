@@ -57,4 +57,7 @@ render('budget', [
     'monateEin'       => expense_by_month($jahr, 'einnahme'),
     'jeTopf'          => expense_by_budget($jahr),
     'letzte'          => expense_query(['jahr' => $jahr, 'limit' => 6]),
+    'offenGeplant'    => can('view_expenses') ? expense_offen_geplant($jahr) : [],
+    'veranstaltungen' => can('view_expenses') && function_exists('events_geplante_kosten') ? events_geplante_kosten($jahr) : ['liste' => [], 'gesamt' => 0.0, 'verpflegung' => 0.0, 'anzahl' => 0],
+    'verbrauchHinweis' => function_exists('verbrauch_kostenhinweis') && can('view_verbrauch') ? verbrauch_kostenhinweis($jahr) : null,
 ]);

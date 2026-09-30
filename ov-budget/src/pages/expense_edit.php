@@ -54,7 +54,19 @@ if (!$expense) {
         'betrag_brutto' => '', 'betrag_netto' => '',
         'lieferant' => '', 'beleg_nr' => '', 'referenz' => '',
         'bezahlt_am' => null, 'notiz' => '',
+        'status' => buchung_status(get_str('status', 'bezahlt')),
     ];
+    // Vorbelegung aus der Adresse, etwa „Verpflegung als geplante Ausgabe" von der Veranstaltung
+    if (get_str('bezeichnung') !== '') {
+        $expense['bezeichnung'] = mb_substr(get_str('bezeichnung'), 0, 200);
+    }
+    if (get_str('betrag') !== '') {
+        $expense['betrag_brutto'] = round((float)str_replace(',', '.', get_str('betrag')), 2);
+    }
+    if (get_str('datum') !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', get_str('datum'))) {
+        $expense['datum'] = get_str('datum');
+        $expense['jahr'] = (int)substr(get_str('datum'), 0, 4);
+    }
 }
 
 $wort = $art === 'einnahme' ? 'Einnahme' : 'Ausgabe';

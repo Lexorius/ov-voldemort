@@ -143,8 +143,12 @@ $quoteCls = ($zahlen['verfuegbar'] > 0 && $zahlen['ausgaben'] > $zahlen['verfueg
         <strong><?= e(money($zahlen['frei'])) ?></strong> <?= $zahlen['frei'] >= 0 ? 'frei' : 'überzogen' ?></span>
     </div>
     <div class="bar" style="height:14px"><div class="bar__fill <?= $quoteCls ?>" style="width:<?= number_format($quote, 1, '.', '') ?>%"></div></div>
-    <?php if ($budgetVerplant > 0): ?>
-      <p class="small muted" style="margin:.5rem 0 0">Dazu <?= e(money($budgetVerplant)) ?> in offenen Wünschen verplant.</p>
+    <?php if ($budgetVerplant > 0 || ($zahlen['geplant'] ?? 0) > 0 || ($zahlen['einnahmen_offen'] ?? 0) > 0): ?>
+      <p class="small muted" style="margin:.5rem 0 0">
+        <?php if ($budgetVerplant > 0): ?>Dazu <?= e(money($budgetVerplant)) ?> in offenen Wünschen verplant.<?php endif; ?>
+        <?php if (($zahlen['geplant'] ?? 0) > 0): ?><?= e(money($zahlen['geplant'])) ?> geplant<?= ($zahlen['geplant_veranstaltungen'] ?? 0) > 0 ? ' (Veranstaltungen, Verpflegung)' : '' ?>.<?php endif; ?>
+        <?php if (($zahlen['einnahmen_offen'] ?? 0) > 0): ?><?= e(money($zahlen['einnahmen_offen'])) ?> in Rechnung gestellt, noch nicht eingegangen.<?php endif; ?>
+      </p>
     <?php endif; ?>
   <?php endif; ?>
 

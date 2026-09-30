@@ -1,4 +1,4 @@
-<?php /** @var array $eintrag @var array $errors @var float $ausgaben */ ?>
+<?php /** @var array $eintrag @var array $errors @var float $ausgaben @var ?array $verbrauchHinweis */ ?>
 <div class="pagehead">
   <div>
     <h1>Jahresbudget <?= (int)$eintrag['jahr'] ?></h1>
@@ -36,6 +36,11 @@
   </div>
   <?php if ($ausgaben > 0): ?>
     <p class="small muted mb0">Bereits erfasste Ausgaben in <?= (int)$eintrag['jahr'] ?>: <strong><?= e(money($ausgaben)) ?></strong></p>
+  <?php endif; ?>
+  <?php if ($verbrauchHinweis && ($verbrauchHinweis['kosten'] > 0 || $verbrauchHinweis['hochrechnung'])): $vh = $verbrauchHinweis; ?>
+    <p class="small muted">Nebenkosten aus dem Verbrauch <?= (int)$vh['vorjahr'] ?>: <strong><?= e(money($vh['kosten'])) ?></strong><?= $vh['laeuft'] ? ' bis heute' : '' ?><?php
+      if ($vh['hochrechnung'] !== null): ?>, aufs Jahr hochgerechnet etwa <strong><?= e(money($vh['hochrechnung'])) ?></strong><?php endif; ?>
+      – als Anhalt für Strom, Gas und Wasser in <?= (int)$eintrag['jahr'] ?>.</p>
   <?php endif; ?>
   <div class="btnrow">
     <button class="btn" type="submit">Speichern</button>

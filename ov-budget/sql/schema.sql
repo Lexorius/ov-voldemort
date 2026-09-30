@@ -343,6 +343,8 @@ CREATE TABLE IF NOT EXISTS expenses (
   beleg_nr      VARCHAR(100)  NOT NULL DEFAULT '',
   referenz      VARCHAR(100)  NOT NULL DEFAULT '',
   bezahlt_am    DATE          NULL,
+  -- bezahlt und offen zaehlen als Ist, geplant nur in der Planung
+  status        ENUM('bezahlt','offen','geplant') NOT NULL DEFAULT 'bezahlt',
   notiz         TEXT          NULL,
   created_by    INT UNSIGNED  NULL,
   updated_by    INT UNSIGNED  NULL,
@@ -350,6 +352,7 @@ CREATE TABLE IF NOT EXISTS expenses (
   updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_jahr (jahr, art, datum),
+  KEY idx_exp_status (jahr, status),
   KEY idx_kat (kategorie_id),
   CONSTRAINT fk_exp_kat  FOREIGN KEY (kategorie_id)  REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_exp_fg   FOREIGN KEY (fachgruppe_id) REFERENCES list_items(id) ON DELETE SET NULL,

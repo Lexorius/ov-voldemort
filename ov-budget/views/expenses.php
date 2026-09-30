@@ -70,6 +70,15 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
       <select id="fachgruppe_id" name="fachgruppe_id"><?= list_options('fachgruppe', $filters['fachgruppe_id'], 'alle') ?></select>
     </div>
     <div class="field">
+      <label for="status">Stand</label>
+      <select id="status" name="status">
+        <option value="">alle</option>
+        <?php foreach (BUCHUNG_STATUS as $key => $label): ?>
+          <option value="<?= e($key) ?>"<?= (string)($filters['status'] ?? '') === $key ? ' selected' : '' ?>><?= e(explode(' –', $label)[0]) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+    <div class="field">
       <label for="von">Von</label>
       <input type="date" id="von" name="von" value="<?= e((string)$filters['von']) ?>">
     </div>
@@ -82,7 +91,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
       <button class="btn btn--sec" type="submit">Filtern</button>
     </div>
   </div>
-  <?php if ($filters['q'] || $filters['kategorie_id'] || $filters['fachgruppe_id'] || $filters['von'] || $filters['bis']): ?>
+  <?php if ($filters['q'] || $filters['kategorie_id'] || $filters['fachgruppe_id'] || $filters['von'] || $filters['bis'] || !empty($filters['status'])): ?>
     <div class="chips mt"><a class="chip" href="<?= e(url('expenses', $linkArgs)) ?>">Filter zurücksetzen</a></div>
   <?php endif; ?>
 </form>
@@ -111,6 +120,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
               <?= $istEinnahme ? '+' : '−' ?><?= e(money((float)$r['betrag_brutto'])) ?></div>
           </div>
           <div class="item__meta">
+            <?= buchung_status_badge((string)($r['status'] ?? 'bezahlt')) ?>
             <?= badge($r['kategorie_label'] ? ['label' => $r['kategorie_label'], 'color' => $r['kategorie_color']] : null, 'ohne Kategorie') ?>
             <?php if ($r['fachgruppe_label']): ?><span class="badge badge--outline"><?= e($r['fachgruppe_label']) ?></span><?php endif; ?>
             <?php if ($r['budget_name']): ?><span class="badge badge--outline"><?= e($r['budget_name']) ?></span><?php endif; ?>
@@ -133,7 +143,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
           <tr>
             <td class="nowrap small"><?= e(de_date($r['datum'])) ?></td>
             <td>
-              <strong><?= e($r['bezeichnung']) ?></strong>
+              <strong><?= e($r['bezeichnung']) ?></strong> <?= buchung_status_badge((string)($r['status'] ?? 'bezahlt')) ?>
               <?php if ($r['lieferant']): ?><div class="small muted"><?= e($r['lieferant']) ?></div><?php endif; ?>
               <?php if ($r['wunsch_bezeichnung']): ?>
                 <div class="small muted">zu Wunsch: <?= e($r['wunsch_bezeichnung']) ?></div>

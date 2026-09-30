@@ -33,4 +33,5 @@ render('budget_year_edit', [
     'eintrag'  => $eintrag,
     'errors'   => $errors,
     'ausgaben' => expense_total($jahr),
+    'verbrauchHinweis' => function_exists('verbrauch_kostenhinweis') ? verbrauch_kostenhinweis($jahr) : null,
 ]);

@@ -120,6 +120,18 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
       </div>
     </div>
     <div class="field">
+      <label>Stand</label>
+      <?php $stand = buchung_status((string)($expense['status'] ?? 'bezahlt')); ?>
+      <div>
+        <?php foreach (BUCHUNG_STATUS as $key => $label): ?>
+          <label class="wahl"><input type="radio" name="status" value="<?= e($key) ?>"<?= $stand === $key ? ' checked' : '' ?>>
+            <?= e($istEinnahme && $key === 'offen' ? 'Rechnung gestellt – Geld noch nicht eingegangen' : ($istEinnahme && $key === 'geplant' ? 'erwartet – noch keine Rechnung gestellt' : $label)) ?></label>
+        <?php endforeach; ?>
+      </div>
+      <small>Bezahlt und offen zählen in den Ist-Zahlen des Jahres, geplant nur in der Planung. Ein
+        <?= $istEinnahme ? 'Eingangsdatum' : 'Zahlungsdatum' ?> setzt den Stand auf bezahlt.</small>
+    </div>
+    <div class="field">
       <label for="notiz">Notiz</label>
       <textarea id="notiz" name="notiz"><?= e((string)($expense['notiz'] ?? '')) ?></textarea>
     </div>

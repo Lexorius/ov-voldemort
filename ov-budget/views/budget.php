@@ -1,6 +1,6 @@
 <?php
 /** @var int $jahr @var array $jahre @var array $budgets @var array $ohneTopf
- *  @var array $zahlen
+ *  @var array $zahlen @var array $offenGeplant @var array $veranstaltungen @var ?array $verbrauchHinweis
  *  @var array $kategorien @var array $einnahmeKategorien
  *  @var array $monate @var array $monateEin @var array $jeTopf @var array $letzte
  *  @var array $zuBestellen @var array $zurFreigabe */
@@ -142,19 +142,95 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
   <div class="stat">
     <div class="stat__label">Einnahmen</div>
     <div class="stat__value" style="color:var(--ok)">+<?= e(money_rounded($einnahmen, false)) ?></div>
-    <div class="stat__hint">Einsätze, THG und Übriges</div>
+    <div class="stat__hint"><?= $zahlen['einnahmen_offen'] > 0
+        ? 'davon <span style="color:#b45309">' . e(money_rounded($zahlen['einnahmen_offen'], false)) . ' in Rechnung gestellt</span>, noch nicht eingegangen'
+        : 'Einsätze, THG und Übriges' ?></div>
   </div>
   <div class="stat">
     <div class="stat__label">Ausgaben</div>
     <div class="stat__value">−<?= e(money_rounded($ausgaben, false)) ?></div>
-    <div class="stat__hint">gebucht in <?= (int)$jahr ?></div>
+    <div class="stat__hint"><?= $zahlen['ausgaben_offen'] > 0
+        ? 'davon <span style="color:#b45309">' . e(money_rounded($zahlen['ausgaben_offen'], false)) . ' offene Rechnungen</span>'
+        : 'gebucht in ' . (int)$jahr ?></div>
   </div>
   <div class="stat">
     <div class="stat__label"><?= $rest >= 0 ? 'Noch frei' : 'Überzogen um' ?></div>
     <div class="stat__value" style="<?= $rest < 0 ? 'color:var(--bad)' : '' ?>"><?= e(money_rounded(abs($rest), false)) ?></div>
-    <div class="stat__hint">von <?= e(money_rounded($verfuegbar, false)) ?> verfügbar</div>
+    <div class="stat__hint"><?= $zahlen['geplant'] > 0
+        ? 'nach Planung noch <strong' . ($zahlen['frei_nach_planung'] < 0 ? ' style="color:var(--bad)"' : '') . '>' . e(money_rounded($zahlen['frei_nach_planung'], false)) . '</strong> von ' . e(money_rounded($verfuegbar, false))
+        : 'von ' . e(money_rounded($verfuegbar, false)) . ' verfügbar' ?></div>
   </div>
 </div>
+
+<?php if ($zahlen['geplant'] > 0 || $offenGeplant): ?>
+<section class="card" id="planung">
+  <div class="card__head">
+    <h2>Offen und geplant</h2>
+    <span class="small muted">geplant <strong><?= e(money_rounded($zahlen['geplant'])) ?></strong>
+      <?php if ($zahlen['geplant_veranstaltungen'] > 0): ?>· davon <?= e(money_rounded($zahlen['geplant_veranstaltungen'])) ?> aus <?= (int)$zahlen['geplant_anzahl'] ?> Veranstaltung(en)<?= $zahlen['geplant_verpflegung'] > 0 ? ', Verpflegung ' . e(money_rounded($zahlen['geplant_verpflegung'])) : '' ?><?php endif; ?></span>
+  </div>
+  <?php if (!empty($veranstaltungen['liste'])): ?>
+    <h3>Veranstaltungen <?= (int)$jahr ?></h3>
+    <div class="tablewrap">
+      <table class="data">
+        <thead><tr><th>Veranstaltung</th><th class="num">geplant</th><th class="num">davon Verpflegung</th><th class="num">schon gebucht</th><th class="num">noch zu erwarten</th></tr></thead>
+        <tbody>
+        <?php foreach ($veranstaltungen['liste'] as $v): ?>
+          <tr>
+            <td><a href="<?= e(url('event', ['id' => $v['id']])) ?>"><?= e($v['titel']) ?></a> <span class="small muted"><?= e(de_date(substr($v['beginn'], 0, 10))) ?></span></td>
+            <td class="num"><?= e(money_rounded($v['geplant'], false)) ?></td>
+            <td class="num"><?= $v['verpflegung'] > 0 ? e(money_rounded($v['verpflegung'], false)) : '<span class="muted">–</span>' ?></td>
+            <td class="num"><?= $v['gebucht'] > 0 ? e(money_rounded($v['gebucht'], false)) : '<span class="muted">–</span>' ?></td>
+            <td class="num"><strong><?= e(money_rounded($v['rest'], false)) ?></strong></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  <?php endif; ?>
+  <?php if ($offenGeplant): ?>
+    <h3 class="mt">Buchungen ohne Zahlung</h3>
+    <div class="tablewrap">
+      <table class="data">
+        <tbody>
+        <?php foreach ($offenGeplant as $b): $ein = $b['art'] === 'einnahme'; ?>
+          <tr>
+            <td class="nowrap small"><?= e(de_date($b['datum'])) ?></td>
+            <td>
+              <?php if (can('manage_budget')): ?>
+                <a href="<?= e(url('expense_edit', ['id' => $b['id']])) ?>"><?= e($b['bezeichnung']) ?></a>
+              <?php else: ?><?= e($b['bezeichnung']) ?><?php endif; ?>
+              <?= buchung_status_badge((string)$b['status']) ?>
+              <?php if (!empty($b['veranstaltung_titel'])): ?><span class="small muted">· <?= e((string)$b['veranstaltung_titel']) ?></span><?php endif; ?>
+            </td>
+            <td class="small"><?= e($b['kategorie_label'] ?: '–') ?></td>
+            <td class="num nowrap" style="<?= $ein ? 'color:var(--ok)' : '' ?>">
+              <?= $ein ? '+' : '−' ?><?= e(money_rounded((float)$b['betrag_brutto'], false)) ?></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  <?php endif; ?>
+  <p class="small muted" style="margin:.6rem 0 0">Offene Rechnungen stecken schon in Einnahmen und Ausgaben. Geplante
+    Buchungen und noch nicht gebuchte Veranstaltungskosten kommen erst beim Buchen dazu.</p>
+</section>
+<?php endif; ?>
+
+<?php if ($verbrauchHinweis && ($verbrauchHinweis['kosten'] > 0 || $verbrauchHinweis['hochrechnung'])): $vh = $verbrauchHinweis; ?>
+  <div class="alert alert--info">
+    <strong>Nebenkosten aus dem Verbrauch:</strong>
+    <?= (int)$vh['vorjahr'] ?> kosteten Strom, Gas und Wasser nach den Tarifen <?= e(money_rounded($vh['kosten'])) ?><?= $vh['laeuft'] ? ' bis heute' : '' ?><?php
+      $teile = [];
+      foreach ($vh['je_art'] as $art => $k) { $teile[] = METER_ARTEN[$art]['label'] . ' ' . money_rounded($k, false); }
+      ?><?= $teile ? ' (' . e(implode(', ', $teile)) . ')' : '' ?>.
+    <?php if ($vh['hochrechnung'] !== null): ?>
+      Aufs ganze Jahr hochgerechnet etwa <strong><?= e(money_rounded($vh['hochrechnung'])) ?></strong> – ein Anhalt für die Töpfe <?= (int)$jahr ?>.
+    <?php endif; ?>
+    <?php if ($vh['ohne_tarif'] > 0): ?><span class="muted">(<?= (int)$vh['ohne_tarif'] ?> Zähler ohne vollständigen Tarif)</span><?php endif; ?>
+    <a href="<?= e(url('verbrauch', ['jahr' => $vh['vorjahr']])) ?>">Zum Verbrauch</a>
+  </div>
+<?php endif; ?>
 
 <section class="card">
   <div class="card__head">

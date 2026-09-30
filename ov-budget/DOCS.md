@@ -145,7 +145,19 @@ sie enthalten.
   technische Hilfeleistung, Spenden ...) mit Einsatz- oder Auftragsnummer.
   Die Übersicht rechnet Budget plus Einnahmen minus Ausgaben und schlüsselt
   nach Kategorie und Monat auf. Mehrwertsteuer spielt dabei keine Rolle: Es
-  gibt je Buchung und je Wunsch einen Betrag – den, der tatsächlich fließt. Optional unterteilen **Budgettöpfe** das Jahr;
+  gibt je Buchung und je Wunsch einen Betrag – den, der tatsächlich fließt.
+  Jede Buchung hat einen **Stand**: *bezahlt* (Geld ist geflossen), *offen*
+  (Rechnung gestellt oder erhalten, Geld noch nicht geflossen – zählt schon
+  als Ist und wird in den Kacheln gesondert genannt) oder *geplant* (noch
+  keine Rechnung – zählt nur in der Planung). Ein Zahlungs- oder
+  Eingangsdatum setzt den Stand auf bezahlt. Der Abschnitt **Offen und
+  geplant** der Übersicht listet alles ohne Zahlung, dazu die
+  **Veranstaltungen des Jahres** mit geplanten Kosten und kalkulierter
+  Verpflegung abzüglich dessen, was schon gebucht ist; die Kachel „Noch frei"
+  sagt, was nach dieser Planung bleibt. Gibt es Zähler im Verbrauchsmodul,
+  zeigen Übersicht und Jahresbudget die **Nebenkosten des Vorjahres** – im
+  laufenden Jahr aufs ganze Jahr hochgerechnet – als Anhalt für Strom, Gas
+  und Wasser. Optional unterteilen **Budgettöpfe** das Jahr;
   sie werden unter *Budget → Budgettöpfe verwalten* gepflegt – anlegen,
   ändern, stilllegen und zum Jahreswechsel aus dem Vorjahr übernehmen.
   Mit **„Freigegeben, bitte bestellen"** wird ein Wunsch zur Bestellung
@@ -622,7 +634,10 @@ Vom 1.10. 17:00 bis 3.10. 11:00 sind das ein Abendessen, ein voller Tag und
 ein Frühstück – jedes Häkchen lässt sich ändern. Gerechnet wird für die Teilnehmer, also die
 Zusagen der Gästeliste oder die geplante Zahl; eine eigene Personenzahl geht
 auch. Die Veranstaltungsseite zeigt die Rechnung je Mahlzeit, die Summe und
-daneben, was für die Veranstaltung schon gebucht ist.
+daneben, was für die Veranstaltung schon gebucht ist. Im Budget zählt die
+Kalkulation als **geplante Ausgabe**, bis sie gebucht ist; „Als geplante
+Buchung vormerken" legt sie als Buchung mit Stand *geplant* an, die nach der
+Rechnung auf *bezahlt* gesetzt wird.
 
 ## Zeitzone
 
@@ -647,7 +662,8 @@ Gerät „OV-Multitool" zusammen.
   in den Einstellungen eintragen.
 * **Gemeldet werden:**
   * Budget: Jahresbudget (Zuweisung), verfügbar (mit Einnahmen), Töpfe
-    gesamt, verplant (offene Wünsche), frei, Auslastung; Ausgaben, Einnahmen
+    gesamt, verplant (offene Wünsche), frei, Auslastung; Ausgaben, Einnahmen,
+    in Rechnung gestellte Einnahmen, offene Rechnungen, geplante Ausgaben
     und Saldo im Haushaltsjahr
   * Wünsche: offen, zur Bestellung freigegeben, Summe der offenen
   * Aufgaben: offen, überfällig; Themen im Themenspeicher

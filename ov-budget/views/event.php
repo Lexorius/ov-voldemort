@@ -205,6 +205,15 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
       </tr></tfoot>
     </table>
   </div>
+  <?php if ($verpflegung['gesamt'] > 0): ?>
+    <p class="small muted" style="margin:.6rem 0 0">Die Kalkulation zählt im Budget als geplante Ausgabe, bis sie gebucht ist.
+      <?php if (can('manage_budget')): ?>
+        <a href="<?= e(url('expense_edit', ['art' => 'ausgabe', 'event_id' => $event['id'], 'budget_id' => $event['budget_id'],
+            'status' => 'geplant', 'betrag' => number_format($verpflegung['gesamt'], 2, '.', ''),
+            'bezeichnung' => 'Verpflegung ' . $event['titel'], 'datum' => substr((string)$event['beginn'], 0, 10)])) ?>">Als geplante Buchung vormerken</a>
+        – dann steht sie in den Buchungen und wird nach der Rechnung auf bezahlt gesetzt.
+      <?php endif; ?></p>
+  <?php endif; ?>
   <?php if (trim((string)($event['verpflegung_notiz'] ?? '')) !== ''): ?>
     <p class="small muted"><?= e((string)$event['verpflegung_notiz']) ?></p>
   <?php endif; ?>

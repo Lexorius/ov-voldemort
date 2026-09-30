@@ -1305,6 +1305,17 @@ SQL);
         }
     }
     $merken('040_totp');
+
+    /* ---------- 041: Stand einer Buchung (bezahlt, offen, geplant) ---------- */
+    if (ovb_table_exists($pdo, 'expenses')) {
+        if (!ovb_column_exists($pdo, 'expenses', 'status')) {
+            $pdo->exec("ALTER TABLE expenses ADD COLUMN status ENUM('bezahlt','offen','geplant') NOT NULL DEFAULT 'bezahlt' AFTER bezahlt_am");
+        }
+        if (!ovb_index_exists($pdo, 'expenses', 'idx_exp_status')) {
+            $pdo->exec('ALTER TABLE expenses ADD KEY idx_exp_status (jahr, status)');
+        }
+    }
+    $merken('041_buchung_status');
 }
 
 /**

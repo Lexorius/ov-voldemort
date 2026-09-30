@@ -1,5 +1,26 @@
 # Änderungsverlauf
 
+## 2.0.11.0
+
+### Budget: offen, geplant und die Nebenkosten von morgen
+
+- Jede Buchung hat einen **Stand**: bezahlt, **offen** (Rechnung gestellt
+  bzw. erhalten, Geld noch nicht geflossen) oder **geplant** (noch keine
+  Rechnung). Offen zählt als Ist und wird in den Kacheln gesondert genannt –
+  etwa „davon 1.200 € in Rechnung gestellt, noch nicht eingegangen".
+  Geplant zählt nur in der Planung. Listen filtern nach Stand.
+- **Veranstaltungen im Budget:** Geplante Kosten und kalkulierte
+  Verpflegung der Veranstaltungen des Jahres erscheinen als geplante
+  Ausgaben, abzüglich dessen, was schon gebucht ist. Die Kachel „Noch frei"
+  sagt, was nach der Planung bleibt; ein neuer Abschnitt listet alles Offene
+  und Geplante. Von der Veranstaltung aus lässt sich die Verpflegung als
+  geplante Buchung vormerken.
+- **Nebenkosten aus dem Verbrauch:** Übersicht und Jahresbudget zeigen, was
+  Strom, Gas und Wasser im Vorjahr gekostet haben – im laufenden Jahr
+  hochgerechnet – als Anhalt für die Töpfe des nächsten Jahres.
+- MQTT: in Rechnung gestellte Einnahmen, offene Rechnungen, geplante
+  Ausgaben. Startseite nennt Geplantes und Offenes.
+
 ## 2.0.10.0
 
 ### Zweiter Faktor mit Authenticator-App

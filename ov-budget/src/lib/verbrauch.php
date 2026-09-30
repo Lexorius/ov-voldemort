@@ -702,6 +702,45 @@ function verbrauch_stats(array $meters, array $tarife, int $jahr, ?int $jetzt = 
 }
 
 /**
+ * Hinweis für die Haushaltsplanung: Was der Verbrauch im Vorjahr gekostet
+ * hat – und, wenn das Vorjahr noch läuft, hochgerechnet aufs ganze Jahr.
+ * null ohne Zähler. Nutzt $stats, wenn übergeben (Prüfungen).
+ */
+function verbrauch_kostenhinweis(int $jahr, ?int $jetzt = null, ?array $statsVorjahr = null): ?array
+{
+    $jetzt ??= time();
+    $vorjahr = $jahr - 1;
+    if ($statsVorjahr === null) {
+        $meters = meter_query([]);
+        if (!$meters) {
+            return null;
+        }
+        $statsVorjahr = verbrauch_stats($meters, tarif_query(), $vorjahr, $jetzt);
+    }
+    if ((int)$statsVorjahr['zaehler'] === 0) {
+        return null;
+    }
+    $kosten = (float)$statsVorjahr['kosten_jahr'] - (float)($statsVorjahr['erloes_jahr'] ?? 0);
+    $out = ['vorjahr' => $vorjahr, 'kosten' => round($kosten, 2), 'hochrechnung' => null, 'tage' => null,
+            'je_art' => [], 'ohne_tarif' => (int)$statsVorjahr['ohne_tarif'], 'laeuft' => false];
+    foreach ($statsVorjahr['je_art'] as $art => $s) {
+        if ((int)$s['zaehler'] > 0) {
+            $out['je_art'][$art] = round((float)$s['kosten'], 2);
+        }
+    }
+    $anfang = mktime(0, 0, 0, 1, 1, $vorjahr);
+    $ende = mktime(0, 0, 0, 1, 1, $vorjahr + 1);
+    if ($jetzt < $ende) {
+        $tage = max(1, (int)floor(($jetzt - $anfang) / 86400));
+        $out['laeuft'] = true;
+        $out['tage'] = $tage;
+        $imJahr = (int)round(($ende - $anfang) / 86400);
+        $out['hochrechnung'] = $tage >= 30 ? round($kosten / $tage * $imJahr, 2) : null;
+    }
+    return $out;
+}
+
+/**
  * Solarbilanz: Eigenverbrauch = Erzeugung − Einspeisung, Gesamtverbrauch =
  * Bezug + Eigenverbrauch, Autarkie = Eigenverbrauch / Gesamtverbrauch.
  * Reine Funktion.
