@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## 2.0.5.1
+
+- Tagesraster der Verpflegung: Beim Ändern von Datum oder Uhrzeit folgen
+  jetzt nur die Häkchen dem Zeitraum, die niemand selbst gesetzt hat. Vorher
+  behielt der bisher letzte Tag seine alten Häkchen, statt zum vollen Tag zu
+  werden, wenn das Ende nach hinten rückte.
+
 ## 2.0.5.0
 
 ### Verpflegung: Dauer und Mahlzeiten je Tag

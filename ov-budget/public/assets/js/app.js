@@ -321,6 +321,11 @@
     var vtGespeichert = {};
     try { vtGespeichert = JSON.parse(vtTabelle.getAttribute('data-tage') || '{}') || {}; } catch (e) { vtGespeichert = {}; }
     var vtDauer = document.getElementById('verpflegung-dauer');
+    var vtAngefasst = {};
+    vtTabelle.addEventListener('change', function (ev) {
+      var m = ev.target && ev.target.name ? ev.target.name.match(/^vt\[(\d{4}-\d{2}-\d{2})\]\[(\w+)\]$/) : null;
+      if (m) { vtAngefasst[m[1]] = vtAngefasst[m[1]] || {}; vtAngefasst[m[1]][m[2]] = ev.target.checked; }
+    });
     var feld = function (id) { return document.getElementById(id); };
     var iso = function (d) {
       return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
@@ -336,22 +341,20 @@
       var b = new Date(endeDatum + 'T' + ((feld('ende_zeit') && feld('ende_zeit').value) || '23:59') + ':00');
       if (isNaN(a.getTime())) { return; }
       if (isNaN(b.getTime()) || b < a) { b = new Date(datum + 'T23:59:00'); }
-      // Häkchen, die schon im Raster stehen, behalten
-      var aktuell = {};
-      vtTabelle.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
-        var m = cb.name.match(/^vt\[(\d{4}-\d{2}-\d{2})\]\[(\w+)\]$/);
-        if (m) { aktuell[m[1]] = aktuell[m[1]] || {}; aktuell[m[1]][m[2]] = cb.checked; }
-      });
+      // Nur Häkchen behalten, die jemand selbst gesetzt hat – der Rest folgt dem Zeitraum
+      var aktuell = vtAngefasst;
       var zeilen = '';
       var tag = new Date(a.getFullYear(), a.getMonth(), a.getDate());
       var n = 0;
       while (tag <= b && n < 60) {
         var key = iso(tag);
-        var bekannt = aktuell[key] || vtGespeichert[key] || null;
+        var eigene = aktuell[key] || {};
+        var gespeichert = vtGespeichert[key] || null;
         zeilen += '<tr><td>' + lesbar(tag) + '</td>';
         [['fruehstueck', 8, 0], ['mittag', 12, 30], ['abend', 18, 30]].forEach(function (mz) {
           var t = new Date(tag.getFullYear(), tag.getMonth(), tag.getDate(), mz[1], mz[2]);
-          var an = bekannt ? !!bekannt[mz[0]] : (t >= a && t <= b);
+          var an = Object.prototype.hasOwnProperty.call(eigene, mz[0]) ? !!eigene[mz[0]]
+            : (gespeichert ? !!gespeichert[mz[0]] : (t >= a && t <= b));
           zeilen += '<td><input type="checkbox" name="vt[' + key + '][' + mz[0] + ']" value="1"' + (an ? ' checked' : '') + '></td>';
         });
         zeilen += '</tr>';
