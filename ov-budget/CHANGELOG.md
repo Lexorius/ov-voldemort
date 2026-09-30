@@ -1,5 +1,15 @@
 # Änderungsverlauf
 
+## 2.0.9.0
+
+### Prüfungen im Repository
+
+- Die rund 1.900 Prüfungen (Verbrauch, Veranstaltungen, Funkgeräte, Karten,
+  Fahrzeuge, Divera, Stein.APP, MQTT, Sicherung, Connector, Rechte …) liegen
+  jetzt unter `tests/` und laufen mit `php tests/alle.php` ohne Datenbank.
+- GitHub Actions führt sie bei jedem Push mit PHP 8.2 und 8.4 aus, davor
+  einen Syntaxlauf über Anwendung und Connector.
+
 ## 2.0.8.1
 
 - **README** auf den Stand der Anwendung gebracht: Verbrauch mit

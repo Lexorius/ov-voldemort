@@ -891,6 +891,17 @@ die Dateien enthalten alle Fahrzeugdaten im Klartext.
 | Leitung | zusätzlich: alle Wünsche bearbeiten, Status und Priorität setzen, Budgettöpfe pflegen, alle Aufgaben verwalten, Veranstaltungen anlegen und die Gästeliste führen |
 | Administration | zusätzlich: Benutzerverwaltung, Auswahllisten, Einstellungen, Divera-Anbindung, Protokoll |
 
+## Prüfungen für Entwickler
+
+Im Ordner `tests/` liegen rund 1.900 Prüfungen ohne Datenbank: jede
+`t_*.php` prüft ein Modul mit Attrappen für die Datenbank und schreibt am
+Ende „N bestanden, M fehlgeschlagen". `php tests/alle.php` führt alle aus,
+`php tests/alle.php verbrauch` nur die passenden. Braucht PHP 8.2 oder neuer
+mit mbstring, openssl, zip und gd; auf Rechnern ohne mbstring hilft
+`OVB_PHP_ARGS="-d auto_prepend_file=tests/mb_shim.php"`. Bei jedem Push
+laufen die Prüfungen auf GitHub (Actions → Prüfungen), dazu ein
+Syntaxlauf über alle PHP-Dateien der Anwendung und des Connectors.
+
 ## Wenn etwas klemmt
 
 Das Protokoll des Add-ons zeigt jeden Schritt an. Zeilen mit `[run]` kommen vom
