@@ -46,6 +46,8 @@ $rollen = ['admin' => 'Administration', 'leitung' => 'Leitung', 'user' => 'Mitgl
             <strong><?= e($u2['display_name'] ?: '–') ?></strong>
             <?php if (!(int)$u2['is_active']): ?> <span class="badge" style="background:#b91c1c">gesperrt</span><?php endif; ?>
             <?php if ((int)$u2['must_change_pw']): ?> <span class="badge badge--muted">PW ändern</span><?php endif; ?>
+            <?php if (totp_aktiv($u2)): ?> <span class="badge" style="background:#15803d" title="Zweiter Faktor eingeschaltet">2FA</span>
+            <?php elseif (totp_pflichtig($u2)): ?> <span class="badge" style="background:#b45309" title="Zweiter Faktor Pflicht, noch nicht eingerichtet">ohne 2FA</span><?php endif; ?>
           </td>
           <td class="mono"><?= e($u2['username']) ?></td>
           <td><?= e($rollen[$u2['role']] ?? $u2['role']) ?></td>

@@ -40,7 +40,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && post_str('action') === 'notify_test
     redirect_route('profile');
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Zweiter Faktor: einrichten, bestätigen, Backup-Codes, abschalten
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && str_starts_with(post_str('action'), 'totp_')) {
+    $action = post_str('action');
+    if ($action === 'totp_start') {
+        $_SESSION['totp_setup'] = totp_secret_neu();
+    } elseif ($action === 'totp_abbrechen') {
+        unset($_SESSION['totp_setup']);
+    } elseif ($action === 'totp_aktivieren') {
+        $secret = (string)($_SESSION['totp_setup'] ?? '');
+        if ($secret === '' || totp_pruefen($secret, (string)post('code', ''), time()) === null) {
+            $errors[] = 'Der Code passt nicht. Bitte den aktuellen Code aus der App eingeben – die Uhr des Handys muss stimmen.';
+        } else {
+            $_SESSION['totp_codes_zeigen'] = totp_aktivieren((int)$user['id'], $secret);
+            unset($_SESSION['totp_setup']);
+            audit('totp.eingeschaltet', 'user', (int)$user['id']);
+            flash('success', 'Zweiter Faktor eingeschaltet. Ab jetzt fragt die Anmeldung nach dem Code aus der App.');
+        }
+    } elseif ($action === 'totp_codes_neu' || $action === 'totp_aus') {
+        if (!password_verify((string)post('passwort', ''), $user['password_hash'])) {
+            $errors[] = 'Das Passwort stimmt nicht.';
+        } elseif (!totp_aktiv($user)) {
+            $errors[] = 'Der zweite Faktor ist nicht eingeschaltet.';
+        } elseif ($action === 'totp_codes_neu') {
+            $_SESSION['totp_codes_zeigen'] = totp_backup_erneuern((int)$user['id'], (string)$user['totp_secret']);
+            audit('totp.backup_codes', 'user', (int)$user['id']);
+            flash('success', 'Neue Backup-Codes erzeugt – die alten gelten nicht mehr.');
+        } elseif (totp_pflichtig($user)) {
+            $errors[] = 'Für deine Rolle ist der zweite Faktor Pflicht.';
+        } else {
+            totp_abschalten((int)$user['id']);
+            audit('totp.abgeschaltet', 'user', (int)$user['id']);
+            flash('success', 'Zweiter Faktor abgeschaltet.');
+        }
+    }
+    if (!$errors) {
+        redirect(url('profile') . '#zweiter-faktor');
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !str_starts_with(post_str('action'), 'totp_')) {
     if (post_str('action') === 'password') {
         $alt = (string)post('alt', '');
         $neu = (string)post('neu', '');
@@ -93,8 +132,19 @@ if (setting_bool('ha_benachrichtigung_aktiv', false)) {
     }
 }
 
+$setup = (string)($_SESSION['totp_setup'] ?? '');
+$codes = $_SESSION['totp_codes_zeigen'] ?? [];
+unset($_SESSION['totp_codes_zeigen']);
+
 render('profile', [
     'title'  => 'Mein Profil',
+    'totp'   => [
+        'status' => totp_status($user),
+        'setup'  => $setup,
+        'uri'    => $setup !== '' ? totp_uri($setup, (string)$user['username'], (string)setting('app_name', 'OV-Multitool')
+            . ((string)setting('ov_name', '') !== '' ? ' ' . setting('ov_name', '') : '')) : '',
+        'codes'  => is_array($codes) ? $codes : [],
+    ],
     'push'      => webpush_enabled(),
     'pushAbos'  => webpush_enabled() ? push_subscriptions((int)$user['id']) : [],
     'dienste' => $dienste,

@@ -883,6 +883,33 @@ durch `***` ersetzt. Aufbewahrt werden die letzten 20 Dateien; sie lassen sich
 dort auch alle löschen. Der Mitschnitt ist für den Dauerbetrieb nicht gedacht –
 die Dateien enthalten alle Fahrzeugdaten im Klartext.
 
+## Zweiter Faktor (Authenticator-App)
+
+Zusätzlich zum Passwort fragt die Anmeldung einen sechsstelligen Code aus
+einer Authenticator-App ab (TOTP nach RFC 6238 – Aegis, 2FAS, Google oder
+Microsoft Authenticator, Bitwarden, 1Password …). Ein gestohlenes Passwort
+allein reicht dann nicht mehr.
+
+* **Einrichten** im eigenen Profil unter *Zweiter Faktor*: QR-Code mit der
+  App scannen (oder den Schlüssel abtippen), den ersten Code eintragen. Dann
+  erscheinen einmalig **acht Backup-Codes** – ausdrucken oder sicher
+  ablegen. Jeder gilt einmal und ersetzt die App, wenn das Handy fehlt.
+* **Anmelden:** erst Benutzername und Passwort, dann der Code. Fehlversuche
+  zählen wie falsche Passwörter und führen zur selben Sperre. Ein Code gilt
+  nur einmal; eine Uhr, die bis 30 Sekunden abweicht, geht noch.
+* **Pflicht** unter *Verwaltung → Einstellungen → Sicherheit → Zweiter
+  Faktor*: freiwillig, Pflicht für die Administration, für Administration und
+  Leitung (Vorgabe) oder für alle. Wer pflichtig ist und ihn noch nicht hat,
+  kommt nach der Anmeldung nur ins Profil, bis er eingerichtet ist – wie beim
+  Startpasswort. Pflichtige können ihn nicht selbst abschalten.
+* **Handy verloren:** Backup-Code verwenden und im Profil neue Codes erzeugen
+  oder die App neu einrichten. Sind Handy und Codes weg, setzt die
+  Administration unter *Verwaltung → Benutzer* den zweiten Faktor zurück –
+  am besten nach Rückruf, danach gilt vorübergehend nur das Passwort. Die
+  Benutzerliste zeigt, wer ihn hat und wem er noch fehlt.
+* Das Geheimnis liegt in der Datenbank des Add-ons und wandert mit der
+  Sicherung; Backup-Codes sind nur als Hash gespeichert.
+
 ## Rollen
 
 | Rolle | Darf |

@@ -210,13 +210,78 @@ function auth_attempt(string $username, string $password): array
         db_update('users', ['password_hash' => password_hash($password, PASSWORD_DEFAULT)], 'id = ?', [$user['id']]);
     }
 
+    // Zweiter Faktor: Passwort stimmt, die Sitzung gibt es erst nach dem Code
+    if (totp_aktiv($user)) {
+        $_SESSION['totp_pending'] = ['uid' => (int)$user['id'], 'username' => $username, 'seit' => time()];
+        return [true, '', true];
+    }
+
+    auth_sitzung_starten($user, $username);
+    return [true, '', false];
+}
+
+/** Die angemeldete Sitzung anlegen – nach Passwort oder nach Passwort und Code */
+function auth_sitzung_starten(array $user, string $username): void
+{
+    unset($_SESSION['totp_pending']);
     session_regenerate_id(true);
     $_SESSION['uid'] = (int)$user['id'];
     $_SESSION['last_seen'] = time();
     db_exec('UPDATE users SET last_login = NOW() WHERE id = ?', [$user['id']]);
     db_exec('DELETE FROM login_attempts WHERE username = ?', [$username]);
+}
 
-    return [true, ''];
+/** Wartet die Anmeldung gerade auf den zweiten Faktor? */
+function auth_zweiter_faktor_offen(): bool
+{
+    $p = $_SESSION['totp_pending'] ?? null;
+    if (!is_array($p) || (time() - (int)($p['seit'] ?? 0)) > TOTP_ANMELDUNG_SEKUNDEN) {
+        unset($_SESSION['totp_pending']);
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Zweiter Schritt der Anmeldung: Code aus der App oder Backup-Code.
+ * Fehlversuche zählen wie falsche Passwörter und führen zur selben Sperre.
+ * Liefert [ok, Meldung, Art] mit Art 'app' oder 'backup'.
+ */
+function auth_zweiter_faktor(string $eingabe): array
+{
+    if (!auth_zweiter_faktor_offen()) {
+        return [false, 'Die Anmeldung ist abgelaufen. Bitte noch einmal von vorn.', ''];
+    }
+    $p = $_SESSION['totp_pending'];
+    $username = (string)$p['username'];
+    $maxTries = setting_int('login_max_versuche', 8);
+    $blockMin = setting_int('login_sperre_minuten', 15);
+    if ($maxTries > 0) {
+        $fails = (int)db_val(
+            'SELECT COUNT(*) FROM login_attempts WHERE username = ? AND created_at > (NOW() - INTERVAL ? MINUTE)',
+            [$username, $blockMin],
+            0
+        );
+        if ($fails >= $maxTries) {
+            unset($_SESSION['totp_pending']);
+            return [false, sprintf('Zu viele Fehlversuche. Bitte in %d Minuten erneut probieren.', $blockMin), ''];
+        }
+    }
+    $user = db_row('SELECT * FROM users WHERE id = ? AND is_active = 1', [(int)$p['uid']]);
+    if (!$user || !totp_aktiv($user)) {
+        unset($_SESSION['totp_pending']);
+        return [false, 'Die Anmeldung ist abgelaufen. Bitte noch einmal von vorn.', ''];
+    }
+    $art = totp_zweiter_faktor_pruefen($user, $eingabe);
+    if ($art === null) {
+        db_exec('INSERT INTO login_attempts (username, ip) VALUES (?,?)', [
+            mb_substr($username, 0, 60),
+            substr((string)($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45),
+        ]);
+        return [false, 'Der Code ist nicht richtig. Bitte den aktuellen Code aus der App eingeben – oder einen Backup-Code.', ''];
+    }
+    auth_sitzung_starten($user, $username);
+    return [true, '', $art];
 }
 
 /** Ein fester Hash nur für den Zeitvergleich – zu keinem Passwort passend */

@@ -150,6 +150,11 @@ if (!in_array($route, $publicRoutes, true)) {
         flash('warn', 'Bitte vergib zuerst ein eigenes Passwort.');
         redirect_route('profile');
     }
+    // Zweiter Faktor ist für die Rolle Pflicht: erst einrichten
+    if ($route !== 'profile' && !totp_aktiv($currentUser) && totp_pflichtig($currentUser)) {
+        flash('warn', 'Für deine Rolle ist der zweite Faktor Pflicht. Bitte richte ihn jetzt ein.');
+        redirect_route('profile');
+    }
 }
 
 csrf_check();

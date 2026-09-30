@@ -16,6 +16,7 @@ function render(string $v, array $vars = []): void {}
 $app = dirname(__DIR__);
 require $app . '/src/lib/util.php';
 require $app . '/src/lib/auth.php';
+require $app . '/src/lib/totp.php';
 
 $ok = 0; $fail = 0;
 $check = function (string $n, bool $c) use (&$ok, &$fail) { if ($c) { $ok++; } else { $fail++; echo "FAIL: $n\n"; } };

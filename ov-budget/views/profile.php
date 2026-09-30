@@ -141,3 +141,5 @@ $rollen = ['admin' => 'Administration', 'leitung' => 'Leitung', 'user' => 'Mitgl
     </form>
   </div>
 </div>
+
+<?= render_partial('partials/profil_totp', ['totp' => $totp]) ?>

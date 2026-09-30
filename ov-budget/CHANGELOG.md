@@ -1,5 +1,20 @@
 # Änderungsverlauf
 
+## 2.0.10.0
+
+### Zweiter Faktor mit Authenticator-App
+
+- Im Profil lässt sich ein **zweiter Faktor** einrichten: QR-Code mit einer
+  Authenticator-App scannen (TOTP nach RFC 6238), ersten Code bestätigen,
+  acht **Backup-Codes** einmalig ausdrucken. Die Anmeldung fragt danach
+  Passwort und Code ab; Fehlversuche zählen wie falsche Passwörter.
+- **Pflicht je Rolle** unter *Einstellungen → Sicherheit*: Vorgabe ist
+  Pflicht für Administration und Leitung. Wer pflichtig ist und ihn noch
+  nicht hat, kommt nach der Anmeldung nur ins Profil, bis er eingerichtet ist.
+- Die Administration kann den zweiten Faktor einer Person zurücksetzen,
+  wenn Handy und Backup-Codes verloren sind; die Benutzerliste zeigt, wer
+  ihn hat.
+
 ## 2.0.9.0
 
 ### Prüfungen im Repository

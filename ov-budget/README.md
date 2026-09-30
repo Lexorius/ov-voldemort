@@ -178,6 +178,8 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 
 ### Verwaltung
 - Benutzer mit Rollen (Mitglied, Leitung, Administration) und Funktionen
+- **Zweiter Faktor** mit Authenticator-App und Backup-Codes, als Pflicht je
+  Rolle einstellbar
 - Alle Auswahllisten, Texte und Regeln frei einstellbar; **Menüleiste in
   eigener Reihenfolge**
 - Protokoll aller Änderungen; unten auf jeder Seite steht die laufende

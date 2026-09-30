@@ -118,6 +118,25 @@ $isNew = empty($edit['id']);
               data-confirm="Passwort wirklich zurücksetzen?">Zurücksetzen</button></div>
     </form>
 
+    <div class="card">
+      <h2>Zweiter Faktor</h2>
+      <?php if (totp_aktiv($edit)): ?>
+        <p><span class="badge" style="background:#15803d">eingeschaltet</span>
+          <span class="small muted">seit <?= e(de_datetime((string)$edit['totp_seit'])) ?></span></p>
+        <p class="small muted">Zurücksetzen nur, wenn die Person Handy und Backup-Codes verloren hat – am besten
+          nach Rückruf. Danach gilt vorübergehend nur das Passwort.</p>
+        <form method="post" action="<?= e(url('admin_user_edit', ['id' => $edit['id']])) ?>">
+          <?= csrf_field() ?>
+          <input type="hidden" name="action" value="reset_totp">
+          <button class="btn btn--sec" type="submit" data-confirm="Zweiten Faktor wirklich zurücksetzen?">Zurücksetzen</button>
+        </form>
+      <?php else: ?>
+        <p><span class="badge badge--muted">nicht eingerichtet</span>
+          <?php if (totp_pflichtig($edit)): ?><span class="small" style="color:var(--warn)">für diese Rolle Pflicht – wird bei der nächsten Anmeldung verlangt</span><?php endif; ?></p>
+        <p class="small muted">Einrichten kann nur die Person selbst in ihrem Profil.</p>
+      <?php endif; ?>
+    </div>
+
     <?php if (!$istIchSelbst): ?>
       <form method="post" class="card" action="<?= e(url('admin_user_edit', ['id' => $edit['id']])) ?>">
         <?= csrf_field() ?>

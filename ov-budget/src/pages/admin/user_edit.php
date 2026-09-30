@@ -30,6 +30,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    if ($action === 'reset_totp' && $edit) {
+        totp_abschalten((int)$edit['id']);
+        db_exec('DELETE FROM login_attempts WHERE username = ?', [$edit['username']]);
+        audit('benutzer.totp_zurueckgesetzt', 'user', (int)$edit['id'], $edit['username']);
+        flash('success', 'Zweiter Faktor zurückgesetzt. ' . e((string)$edit['username'])
+            . ' meldet sich nur mit dem Passwort an und richtet die App im Profil neu ein.');
+        redirect_route('admin_user_edit', ['id' => $edit['id']]);
+    }
+
     if ($action === 'reset_pw' && $edit) {
         $neu = (string)post('neues_passwort', '');
         if ($neu === '') {

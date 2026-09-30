@@ -57,6 +57,12 @@ CREATE TABLE IF NOT EXISTS users (
   notify_aktiv  TINYINT(1)   NOT NULL DEFAULT 1,
   is_active     TINYINT(1)   NOT NULL DEFAULT 1,
   must_change_pw TINYINT(1)  NOT NULL DEFAULT 0,
+  -- Zweiter Faktor: Base32-Geheimnis, letzter verbrauchter Zeitschritt, Backup-Codes als Hashes (JSON)
+  totp_secret   VARCHAR(64)  NOT NULL DEFAULT '',
+  totp_aktiv    TINYINT(1)   NOT NULL DEFAULT 0,
+  totp_seit     DATETIME     NULL,
+  totp_letzter  INT UNSIGNED NOT NULL DEFAULT 0,
+  totp_backup   TEXT         NULL,
   last_login    DATETIME     NULL,
   created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),

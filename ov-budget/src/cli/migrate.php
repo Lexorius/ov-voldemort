@@ -1291,6 +1291,20 @@ SQL);
         $pdo->exec("ALTER TABLE tariffs MODIFY art ENUM('strom','gas','wasser','einspeisung') NOT NULL DEFAULT 'strom'");
     }
     $merken('039_zaehler_rollen');
+
+    /* ---------- 040: Zweiter Faktor (TOTP) ---------- */
+    foreach ([
+        'totp_secret'  => "VARCHAR(64) NOT NULL DEFAULT '' AFTER must_change_pw",
+        'totp_aktiv'   => 'TINYINT(1) NOT NULL DEFAULT 0 AFTER totp_secret',
+        'totp_seit'    => 'DATETIME NULL AFTER totp_aktiv',
+        'totp_letzter' => 'INT UNSIGNED NOT NULL DEFAULT 0 AFTER totp_seit',
+        'totp_backup'  => 'TEXT NULL AFTER totp_letzter',
+    ] as $spalte => $def) {
+        if (!ovb_column_exists($pdo, 'users', $spalte)) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN $spalte $def");
+        }
+    }
+    $merken('040_totp');
 }
 
 /**
