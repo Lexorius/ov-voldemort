@@ -57,6 +57,17 @@ $darfAblesen = can('read_meter');
   <div class="alert alert--warn"><strong><?= (int)$stats['alt'] ?> Zähler</strong> seit über
     <?= METER_WARN_TAGE ?> Tagen ohne Stand – bitte ablesen.</div>
 <?php endif; ?>
+<?php if (!empty($anomalien)): ?>
+  <div class="alert alert--warn">
+    <strong>Auffälliger Verbrauch</strong>
+    <ul style="margin:.3rem 0 0 1.1rem">
+      <?php foreach ($anomalien as $a): ?>
+        <li><a href="<?= e(url('meter', ['id' => $a['meter']['id']])) ?>"><?= e((string)$a['meter']['name']) ?></a><?= e(substr(verbrauch_anomalie_text($a), strlen((string)$a['meter']['name']))) ?></li>
+      <?php endforeach; ?>
+    </ul>
+    <div class="small muted" style="margin-top:.3rem">Verglichen wird die letzte Woche mit den Wochen davor; ein Übungswochenende kann das auslösen.</div>
+  </div>
+<?php endif; ?>
 
 <form class="card card--tight" method="get" data-autosubmit>
   <input type="hidden" name="p" value="verbrauch">

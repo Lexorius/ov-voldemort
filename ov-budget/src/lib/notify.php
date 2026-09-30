@@ -37,6 +37,12 @@ function notify_ereignisse(): array
                                  'text'  => 'Einmal am Tag an alle mit Benachrichtigungen, wenn morgen eine Besprechung ansteht.'],
         'connector_alarm'    => ['label' => 'Connector-Prüfung schlägt an',
                                  'text'  => 'An die Leitung, wenn die tägliche Prüfung eines Connectors fremde oder veränderte Dateien findet.'],
+        'connector_offline'  => ['label' => 'Connector nicht erreichbar',
+                                 'text'  => 'An die Leitung, wenn ein Connector länger als die eingestellte Karenz nicht antwortet – und einmal, wenn er wieder da ist.'],
+        'zaehler_ablesen'    => ['label' => 'Zähler bitte ablesen', 'taeglich' => true,
+                                 'text'  => 'An die Leitung, wenn ein Handzähler lange keinen Stand hat oder Home Assistant keinen Wert liefert – je Zähler höchstens wöchentlich.'],
+        'verbrauch_anomalie' => ['label' => 'Auffälliger Verbrauch', 'taeglich' => true,
+                                 'text'  => 'An die Leitung, wenn ein Zähler in der letzten Woche deutlich mehr verbraucht hat als davor oder nachts durchgehend Wasser lief.'],
     ];
 }
 
@@ -480,6 +486,12 @@ function notify_taeglich(?int $jetzt = null): int
             $n += notify_queue(notify_leitung(), 'fristen', 'Fristen bei den Fahrzeugen',
                 implode("\n", array_slice($treffer, 0, 8)), '?p=vehicles');
         }
+    }
+
+    // Zähler: ablesen und Auffälligkeiten
+    if (function_exists('verbrauch_erinnerungen_taeglich')) {
+        $n += verbrauch_erinnerungen_taeglich($jetzt);
+        $n += verbrauch_anomalien_taeglich($jetzt);
     }
 
     // Besprechung am nächsten Tag

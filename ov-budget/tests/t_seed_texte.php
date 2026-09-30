@@ -38,7 +38,7 @@ $check('leerer Text', ovb_seed_settings('') === []);
 // Die echte Datei
 $echt = ovb_seed_settings((string)file_get_contents(dirname(__DIR__) . '/sql/seed.sql'));
 $keys = array_column($echt, 'skey');
-$check('alle Einstellungen der Anwendung', count($echt) === 144);
+$check('alle Einstellungen der Anwendung', count($echt) === 149);
 $check('keine Dubletten', count($keys) === count(array_unique($keys)));
 $check('Fahrzeugeinstellung dabei', in_array('fahrzeug_user_darf_melden', $keys, true));
 $check('Stein-Einstellung dabei', in_array('stein_intervall_minuten', $keys, true));

@@ -1,5 +1,25 @@
 # Änderungsverlauf
 
+## 2.0.12.0
+
+### Warnen statt nachschauen
+
+- **Connector nicht erreichbar:** Schlägt ein Aufruf fehl, merkt sich die
+  Anwendung die Störung mit Grund. Dauert sie länger als die Karenz
+  (*Einstellungen → Connector*, Vorgabe 15 Minuten), geht eine Meldung an
+  die Leitung – einmal je Ausfall, dazu eine Entwarnung mit Dauer, sobald er
+  wieder antwortet. Die Connector-Seiten zeigen die Störung, MQTT die Zahl
+  gestörter Connectoren.
+- **Zähler bitte ablesen:** Tägliche Erinnerung an die Leitung für
+  Handzähler ohne frischen Stand und Zähler, für die Home Assistant keinen
+  Wert liefert – je Zähler höchstens wöchentlich.
+- **Auffälliger Verbrauch:** Die Übersicht warnt, wenn ein Zähler in den
+  letzten sieben Tagen je Tag mehr als das Eineinhalbfache (einstellbar)
+  der Wochen davor verbraucht hat – schon ab 14 Tagen Vergleich, also auch
+  bei neuen Zählern – und bei Wasser, wenn nachts zwischen 1 und 5 Uhr
+  durchgehend etwas lief. Beides auch als Meldung, je Zähler höchstens alle
+  drei Tage.
+
 ## 2.0.11.0
 
 ### Budget: offen, geplant und die Nebenkosten von morgen

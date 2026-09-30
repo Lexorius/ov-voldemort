@@ -112,7 +112,10 @@ $neu = $c === null;
           <?= trim((string)$c['version']) !== '' ? '<span class="muted small">· Fassung '
               . e((string)$c['version']) . '</span>' : '' ?></div></div>
       <div class="dl__item"><div class="dl__label">Zuletzt abgeholt</div>
-        <div class="dl__value"><?= $c['letzter_abruf'] ? e(de_datetime((string)$c['letzter_abruf'])) : 'noch nie' ?></div></div>
+        <div class="dl__value"><?= $c['letzter_abruf'] ? e(de_datetime((string)$c['letzter_abruf'])) : 'noch nie' ?>
+          <?php if ($st = connector_stoerung($c)): ?>
+            <div class="small" style="color:var(--bad)"><strong>Störung</strong> seit <?= e(de_datetime(date('Y-m-d H:i:s', $st['seit']))) ?><?= $st['text'] !== '' ? ': ' . e($st['text']) : '' ?><?= $st['gemeldet'] ? ' · Leitung benachrichtigt' : '' ?></div>
+          <?php endif; ?></div></div>
       <div class="dl__item"><div class="dl__label">Unser Schlüssel</div>
         <div class="dl__value mono small" style="word-break:break-all"><?= e(substr((string)$c['pubkey'], 0, 24)) ?>…</div></div>
     </dl>

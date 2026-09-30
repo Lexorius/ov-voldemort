@@ -43,7 +43,10 @@ if (!in_array($jahr, $jahre, true)) {
     rsort($jahre);
 }
 
+$anomalien = can('manage_verbrauch') ? verbrauch_anomalien($meters) : [];
+
 render('verbrauch', [
+    'anomalien' => $anomalien,
     'title'  => (string)setting('verbrauch_modul_name', 'Verbrauch'),
     'meters' => $meters,
     'karten' => $karten,

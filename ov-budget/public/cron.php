@@ -125,6 +125,10 @@ $abrufe = [
             $r['alarm'] ? ', ' . $r['alarm'] . ' mit ALARM' : '',
             $r['fehler'] ? ', ' . $r['fehler'] . ' nicht erreichbar' : '')]];
     },
+    'Connector-Störungen' => static function (): array {
+        $n = connector_ausfall_melden();
+        return $n === 0 ? [] : [['status' => 'fehler', 'message' => sprintf('Ausfall gemeldet an %d Empfänger', $n)]];
+    },
     'Sicherung'         => static function (): array {
         $m = backup_automatisch();
         return $m === null ? [] : [['status' => 'ok', 'message' => $m]];

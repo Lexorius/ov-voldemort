@@ -36,7 +36,7 @@ foreach ($dateien as $datei) {
     }
     $gesamtOk += (int)$m[1];
     $gesamtFehl += (int)$m[2];
-    $fails = array_filter($zeilen, static fn($z) => str_starts_with($z, 'FAIL:') || str_contains($z, 'Warning:') || str_contains($z, 'Deprecated:'));
+    $fails = array_filter($zeilen, static fn($z) => str_starts_with($z, 'FAIL:') || str_starts_with($z, 'FEHL') || str_contains($z, 'Warning:') || str_contains($z, 'Deprecated:'));
     printf("%-32s %3d ok%s\n", $name, (int)$m[1], (int)$m[2] > 0 ? ', ' . (int)$m[2] . ' FEHLER' : '');
     foreach ($fails as $f) {
         echo "    $f\n";

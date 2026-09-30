@@ -106,6 +106,8 @@ function ha_sensoren(): array
                                     'icon' => 'mdi:lan-connect', 'state_class' => 'measurement', 'diagnose' => true],
         'connector_letzter_abruf' => ['name' => 'Connector letzter Abruf', 'device_class' => 'timestamp',
                                       'icon' => 'mdi:lan-check', 'diagnose' => true],
+        'connectoren_gestoert' => ['name' => 'Connectoren mit Störung', 'unit' => 'Connectoren',
+                                   'icon' => 'mdi:lan-disconnect', 'state_class' => 'measurement', 'diagnose' => true],
         'sicherung_letzte'   => ['name' => 'Letzte Sicherung', 'device_class' => 'timestamp',
                                  'icon' => 'mdi:backup-restore', 'diagnose' => true],
         'sicherungen'        => ['name' => 'Sicherungen vorhanden', 'unit' => 'Sicherungen',
@@ -280,6 +282,7 @@ function ha_werte(): array
         'solar_autarkie'        => (int)($verbrauch['solar']['autarkie'] ?? 0),
         'zaehler_ohne_stand'    => (int)$verbrauch['alt'],
         'connectoren_gekoppelt' => $gekoppelt,
+        'connectoren_gestoert'  => count(array_filter(connector_all(true), static fn($c) => connector_stoerung($c) !== null)),
         'connector_letzter_abruf' => ha_zeit(max(
             (int)state_get('connector_letzter_abruf', '0'),
             (int)state_get('veranstaltung_letzter_abruf', '0'),

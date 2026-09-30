@@ -701,6 +701,215 @@ function verbrauch_stats(array $meters, array $tarife, int $jahr, ?int $jetzt = 
     return $out;
 }
 
+/* ==================================================================== */
+/* Auffälligkeiten: Sprung gegenüber den Wochen davor, nachts laufendes   */
+/* Wasser. Ein Hinweis, kein Urteil – Übungswochenenden gibt es auch.     */
+/* ==================================================================== */
+
+/** Vergleich: letzte Woche gegen bis zu acht Wochen davor */
+const VERBRAUCH_ANOMALIE_FENSTER_TAGE = 7;
+const VERBRAUCH_ANOMALIE_BASIS_TAGE = 56;
+/** So viele Tage Vergleichszeitraum braucht es mindestens – auch bei neuen Zählern */
+const VERBRAUCH_ANOMALIE_MIN_BASIS_TAGE = 14;
+const VERBRAUCH_ANOMALIE_NACHT = [1, 5];
+
+/**
+ * Alle Auffälligkeiten der Zähler. $laden(id, von, bis) liefert die Stände
+ * (Vorgabe: readings_bereich), $faktor ab wann ein Sprung zählt (Einstellung).
+ */
+function verbrauch_anomalien(array $meters, ?int $jetzt = null, ?callable $laden = null, ?float $faktor = null): array
+{
+    $jetzt ??= time();
+    $laden ??= static fn(int $id, int $von, int $bis): array => readings_bereich($id, $von, $bis);
+    $faktor ??= max(1.1, setting_float('verbrauch_anomalie_faktor', 1.5));
+    $out = [];
+    foreach ($meters as $m) {
+        if ((int)($m['is_active'] ?? 1) !== 1 || !in_array((string)($m['rolle'] ?? 'bezug'), ['bezug', 'unter'], true)) {
+            continue;
+        }
+        $von = $jetzt - (VERBRAUCH_ANOMALIE_BASIS_TAGE + VERBRAUCH_ANOMALIE_FENSTER_TAGE) * 86400;
+        $staende = $laden((int)$m['id'], $von, $jetzt);
+        if (count($staende) < 2) {
+            continue;
+        }
+        $sprung = verbrauch_anomalie_sprung($staende, $jetzt, $faktor);
+        if ($sprung !== null) {
+            $out[] = ['meter' => $m, 'art' => 'sprung'] + $sprung;
+        }
+        if ((string)$m['art'] === 'wasser') {
+            $nacht = verbrauch_anomalie_nacht($staende, $jetzt);
+            if ($nacht !== null) {
+                $out[] = ['meter' => $m, 'art' => 'nacht'] + $nacht;
+            }
+        }
+    }
+    return $out;
+}
+
+/**
+ * Sprung: Der Tagesdurchschnitt der letzten sieben Tage liegt um den Faktor
+ * über dem Durchschnitt der Wochen davor. Braucht mindestens 14 Tage
+ * Vergleich und einen Stand aus den letzten sieben Tagen. Reine Funktion.
+ */
+function verbrauch_anomalie_sprung(array $staende, int $jetzt, float $faktor): ?array
+{
+    $letzte = end($staende);
+    $erste = reset($staende);
+    if (!$letzte || $jetzt - strtotime((string)$letzte['gelesen_am']) > VERBRAUCH_ANOMALIE_FENSTER_TAGE * 86400) {
+        return null;   // ohne frischen Stand keine Aussage
+    }
+    $fensterVon = $jetzt - VERBRAUCH_ANOMALIE_FENSTER_TAGE * 86400;
+    $basisVon = max(strtotime((string)$erste['gelesen_am']), $jetzt - (VERBRAUCH_ANOMALIE_BASIS_TAGE + VERBRAUCH_ANOMALIE_FENSTER_TAGE) * 86400);
+    $basisTage = ($fensterVon - $basisVon) / 86400;
+    if ($basisTage < VERBRAUCH_ANOMALIE_MIN_BASIS_TAGE) {
+        return null;
+    }
+    $basis = (float)(verbrauch_zwischen($staende, $basisVon, $fensterVon) ?? 0);
+    $woche = (float)(verbrauch_zwischen($staende, $fensterVon, $jetzt) ?? 0);
+    $basisProTag = $basis / $basisTage;
+    $wocheProTag = $woche / VERBRAUCH_ANOMALIE_FENSTER_TAGE;
+    if ($wocheProTag <= 0 || ($basisProTag > 0 && $wocheProTag < $basisProTag * $faktor)) {
+        return null;
+    }
+    return [
+        'woche_pro_tag' => round($wocheProTag, 3),
+        'basis_pro_tag' => round($basisProTag, 3),
+        'basis_tage'    => (int)round($basisTage),
+        'faktor'        => $basisProTag > 0 ? round($wocheProTag / $basisProTag, 1) : null,
+    ];
+}
+
+/**
+ * Nachts laufendes Wasser: In jeder Stunde zwischen 1 und 5 Uhr der letzten
+ * Nacht wurde verbraucht. Braucht mindestens drei Stände in diesem Fenster,
+ * sonst wäre es nur Interpolation. Reine Funktion.
+ */
+function verbrauch_anomalie_nacht(array $staende, int $jetzt): ?array
+{
+    [$ab, $bisStunde] = VERBRAUCH_ANOMALIE_NACHT;
+    $tag = (int)date('G', $jetzt) >= $bisStunde ? strtotime(date('Y-m-d', $jetzt)) : strtotime(date('Y-m-d', $jetzt - 86400));
+    $von = $tag + $ab * 3600;
+    $bis = $tag + $bisStunde * 3600;
+    $imFenster = 0;
+    foreach ($staende as $s) {
+        $t = strtotime((string)$s['gelesen_am']);
+        if ($t >= $von && $t <= $bis) {
+            $imFenster++;
+        }
+    }
+    if ($imFenster < 3) {
+        return null;
+    }
+    $summe = 0.0;
+    for ($h = $ab; $h < $bisStunde; $h++) {
+        $v = verbrauch_zwischen($staende, $tag + $h * 3600, $tag + ($h + 1) * 3600);
+        if ($v === null || $v <= 0) {
+            return null;
+        }
+        $summe += $v;
+    }
+    return ['menge' => round($summe, 3), 'von' => $von, 'bis' => $bis];
+}
+
+/** Lesbarer Satz zu einer Auffälligkeit. Reine Funktion. */
+function verbrauch_anomalie_text(array $a): string
+{
+    $m = $a['meter'];
+    $einheit = (string)($m['einheit'] ?? '');
+    if ($a['art'] === 'nacht') {
+        return sprintf('%s: zwischen %d und %d Uhr lief durchgehend Wasser (%s) – Leck, tropfender Hahn oder laufende Spülung?',
+            (string)$m['name'], VERBRAUCH_ANOMALIE_NACHT[0], VERBRAUCH_ANOMALIE_NACHT[1], menge($a['menge'], $einheit, 3));
+    }
+    if ($a['faktor'] === null) {
+        return sprintf('%s: bisher kein Verbrauch, in den letzten 7 Tagen %s je Tag.',
+            (string)$m['name'], menge($a['woche_pro_tag'], $einheit, 1));
+    }
+    return sprintf('%s: in den letzten 7 Tagen %s je Tag, in den %d Tagen davor im Schnitt %s – das %s-Fache.',
+        (string)$m['name'], menge($a['woche_pro_tag'], $einheit, 1), (int)$a['basis_tage'],
+        menge($a['basis_pro_tag'], $einheit, 1), number_format((float)$a['faktor'], 1, ',', '.'));
+}
+
+/* ==================================================================== */
+/* Tägliche Meldungen an die Leitung                                      */
+/* ==================================================================== */
+
+/**
+ * Zähler bitte ablesen: Handzähler ohne frischen Stand und Zähler aus Home
+ * Assistant, die keinen Wert liefern. Je Zähler höchstens alle sieben Tage.
+ */
+function verbrauch_erinnerungen_taeglich(?int $jetzt = null, ?array $meters = null): int
+{
+    if (!function_exists('notify_ereignis_aktiv') || !notify_ereignis_aktiv('zaehler_ablesen')) {
+        return 0;
+    }
+    $jetzt ??= time();
+    $heute = date('Y-m-d', $jetzt);
+    $zeilen = [];
+    $ids = [];
+    foreach ($meters ?? meter_query([]) as $m) {
+        if ((int)($m['is_active'] ?? 1) !== 1) {
+            continue;
+        }
+        $alter = meter_stand_alter($m, date('Y-m-d H:i:s', $jetzt));
+        $haFehler = (string)$m['quelle'] === 'ha' ? state_get('verbrauch_ha_fehler_' . (int)$m['id'], '') : '';
+        if ($alter['stufe'] === 'frisch' && $haFehler === '') {
+            continue;
+        }
+        $zuletzt = state_get('verbrauch_erinnerung_' . (int)$m['id'], '');
+        if ($zuletzt !== '' && (strtotime($heute) - strtotime($zuletzt)) < 7 * 86400) {
+            continue;
+        }
+        $ids[] = (int)$m['id'];
+        if ($haFehler !== '') {
+            $zeilen[] = sprintf('%s: Home Assistant liefert keinen Stand (%s)', (string)$m['name'], $haFehler);
+        } elseif ($alter['stufe'] === 'nie') {
+            $zeilen[] = sprintf('%s: noch nie abgelesen', (string)$m['name']);
+        } else {
+            $zeilen[] = sprintf('%s: letzter Stand vor %d Tagen', (string)$m['name'], (int)$alter['tage']);
+        }
+    }
+    if (!$zeilen) {
+        return 0;
+    }
+    $n = notify_queue(notify_leitung(), 'zaehler_ablesen', count($zeilen) === 1 ? 'Zähler bitte ablesen' : count($zeilen) . ' Zähler bitte ablesen',
+        implode("
+", array_slice($zeilen, 0, 8)), '?p=verbrauch');
+    foreach ($ids as $id) {
+        state_save('verbrauch_erinnerung_' . $id, $heute);
+    }
+    return $n;
+}
+
+/** Auffälliger Verbrauch: je Zähler höchstens alle drei Tage. */
+function verbrauch_anomalien_taeglich(?int $jetzt = null, ?array $meters = null, ?callable $laden = null): int
+{
+    if (!function_exists('notify_ereignis_aktiv') || !notify_ereignis_aktiv('verbrauch_anomalie')) {
+        return 0;
+    }
+    $jetzt ??= time();
+    $heute = date('Y-m-d', $jetzt);
+    $zeilen = [];
+    $ids = [];
+    foreach (verbrauch_anomalien($meters ?? meter_query([]), $jetzt, $laden) as $a) {
+        $id = (int)$a['meter']['id'];
+        $zuletzt = state_get('verbrauch_anomalie_gemeldet_' . $id, '');
+        if ($zuletzt !== '' && (strtotime($heute) - strtotime($zuletzt)) < 3 * 86400) {
+            continue;
+        }
+        $ids[] = $id;
+        $zeilen[] = verbrauch_anomalie_text($a);
+    }
+    if (!$zeilen) {
+        return 0;
+    }
+    $n = notify_queue(notify_leitung(), 'verbrauch_anomalie', 'Auffälliger Verbrauch', implode("
+", array_slice($zeilen, 0, 6)), '?p=verbrauch');
+    foreach (array_unique($ids) as $id) {
+        state_save('verbrauch_anomalie_gemeldet_' . $id, $heute);
+    }
+    return $n;
+}
+
 /**
  * Hinweis für die Haushaltsplanung: Was der Verbrauch im Vorjahr gekostet
  * hat – und, wenn das Vorjahr noch läuft, hochgerechnet aufs ganze Jahr.

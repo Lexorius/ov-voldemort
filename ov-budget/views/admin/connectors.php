@@ -75,7 +75,10 @@
                 : '<span style="color:var(--warn)">nicht gekoppelt</span>' ?></td>
             <td class="small"><?= $c['letzter_abruf']
                 ? e(de_datetime((string)$c['letzter_abruf']))
-                : '<span class="muted">noch nie</span>' ?></td>
+                : '<span class="muted">noch nie</span>' ?>
+              <?php if ($st = connector_stoerung($c)): ?>
+                <div style="color:var(--bad)"><strong>Störung</strong> seit <?= e(de_datetime(date('Y-m-d H:i:s', $st['seit']))) ?><?= $st['text'] !== '' ? ': ' . e($st['text']) : '' ?></div>
+              <?php endif; ?></td>
           </tr>
         <?php endforeach; ?>
         </tbody>

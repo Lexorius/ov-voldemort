@@ -305,7 +305,100 @@ function connector_call(array $c, string $pfad, array $daten = []): array
     $daten['zweck'] = $pfad;
     $daten['ts'] = time();
     $daten['nonce'] = bin2hex(random_bytes(12));
-    return connector_http(connector_url($c), $pfad, $daten, (string)$c['pem'], (string)$c['server_pub']);
+    try {
+        $antwort = connector_http(connector_url($c), $pfad, $daten, (string)$c['pem'], (string)$c['server_pub']);
+    } catch (Throwable $ex) {
+        connector_stoerung_merken($c, $ex->getMessage());
+        throw $ex;
+    }
+    connector_stoerung_beendet($c);
+    return $antwort;
+}
+
+/* ==================================================================== */
+/* Störungen: antwortet ein Connector nicht, merken wir uns das und      */
+/* melden es nach einer Karenz an die Leitung – einmal je Ausfall, dazu  */
+/* einmal, wenn er wieder da ist.                                        */
+/* ==================================================================== */
+
+/** Laufende Störung eines Connectors oder null */
+function connector_stoerung(array|int $c): ?array
+{
+    $id = is_array($c) ? (int)$c['id'] : $c;
+    $seit = state_get('connector_fehler_seit_' . $id, '');
+    if ($seit === '') {
+        return null;
+    }
+    return ['seit' => (int)$seit, 'text' => state_get('connector_fehler_' . $id, ''),
+            'gemeldet' => state_get('connector_ausfall_gemeldet_' . $id, '') !== ''];
+}
+
+function connector_stoerung_merken(array $c, string $text, ?int $jetzt = null): void
+{
+    $id = (int)$c['id'];
+    if (state_get('connector_fehler_seit_' . $id, '') === '') {
+        state_save('connector_fehler_seit_' . $id, (string)($jetzt ?? time()));
+    }
+    state_save('connector_fehler_' . $id, mb_substr(trim($text), 0, 200));
+}
+
+function connector_stoerung_beendet(array $c, ?int $jetzt = null): void
+{
+    $id = (int)$c['id'];
+    $seit = state_get('connector_fehler_seit_' . $id, '');
+    if ($seit === '') {
+        return;
+    }
+    $gemeldet = state_get('connector_ausfall_gemeldet_' . $id, '') !== '';
+    state_save('connector_fehler_seit_' . $id, '');
+    state_save('connector_fehler_' . $id, '');
+    state_save('connector_ausfall_gemeldet_' . $id, '');
+    if ($gemeldet && function_exists('notify_queue')) {
+        $dauer = ($jetzt ?? time()) - (int)$seit;
+        notify_queue(notify_leitung(), 'connector_offline', 'Connector wieder erreichbar',
+            sprintf('„%s" antwortet wieder – nach %s.', (string)$c['name'], connector_dauer_text($dauer)),
+            '?p=admin_connector&id=' . $id);
+    }
+}
+
+/** „12 Minuten", „3 Stunden", „2 Tagen" – reine Funktion */
+function connector_dauer_text(int $sekunden): string
+{
+    if ($sekunden < 3600) {
+        $n = max(1, (int)round($sekunden / 60));
+        return $n . ' Minute' . ($n === 1 ? '' : 'n');
+    }
+    if ($sekunden < 86400) {
+        $n = (int)round($sekunden / 3600);
+        return $n . ' Stunde' . ($n === 1 ? '' : 'n');
+    }
+    $n = (int)round($sekunden / 86400);
+    return $n . ' Tag' . ($n === 1 ? '' : 'en');
+}
+
+/**
+ * Aus dem Minutenlauf: Störungen, die länger als die Karenz dauern und
+ * noch nicht gemeldet sind, an die Leitung melden. Rückgabe: Empfänger.
+ */
+function connector_ausfall_melden(?int $jetzt = null, ?array $connectoren = null): int
+{
+    $jetzt ??= time();
+    $karenz = max(1, setting_int('connector_warn_minuten', 15)) * 60;
+    $n = 0;
+    foreach ($connectoren ?? connector_all(true) as $c) {
+        $st = connector_stoerung($c);
+        if ($st === null || $st['gemeldet'] || $jetzt - $st['seit'] < $karenz) {
+            continue;
+        }
+        state_save('connector_ausfall_gemeldet_' . (int)$c['id'], (string)$jetzt);
+        if (function_exists('notify_queue')) {
+            $n += notify_queue(notify_leitung(), 'connector_offline', 'Connector nicht erreichbar',
+                sprintf('„%s" antwortet seit %s nicht: %s Einladungen, Standort- und Zählermeldungen laufen so lange ins Leere.',
+                    (string)$c['name'], connector_dauer_text($jetzt - $st['seit']), $st['text'] !== '' ? $st['text'] . ' –' : ''),
+                '?p=admin_connector&id=' . (int)$c['id']);
+        }
+    }
+    return $n;
 }
 
 /**

@@ -134,7 +134,7 @@ $alle = array_map(static fn($m) => json_decode($m[1], true), $d);
 $ids = array_column($alle, 'unique_id');
 $ist('keine doppelten Kennungen', count($ids), count(array_unique($ids)));
 $diag = array_values(array_filter($alle, static fn($c) => ($c['entity_category'] ?? '') === 'diagnostic'));
-$ist('sieben Diagnose-Entitäten', count($diag), 7);
+$ist('acht Diagnose-Entitäten', count($diag), 8);
 $zeit = array_values(array_filter($alle, static fn($c) => ($c['device_class'] ?? '') === 'timestamp'));
 $ist('sieben Zeitstempel', count($zeit), 7);
 $fz = array_values(array_filter($alle, static fn($c) => ($c['unique_id'] ?? '') === 'ovbudget_fz3_status'))[0];

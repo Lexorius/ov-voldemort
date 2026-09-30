@@ -56,6 +56,9 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - **Solaranlage**: Erzeugung und Einspeisung als eigene Zähler, daraus
   Eigenverbrauch, Gesamtverbrauch und Autarkie; Erlös über die
   **Einspeisevergütung**
+- **Auffälliger Verbrauch**: Sprung gegenüber den Wochen davor oder nachts
+  laufendes Wasser, als Warnung und als Meldung; Erinnerung „Zähler bitte
+  ablesen"
 - **Berichte zum Drucken**: je Zähler mit Vorjahresvergleich und fürs ganze
   Jahr für Präsentationen; **Verbrauchsprofil** je Wochentag und Tagesstunde
   mit den stärksten Zeiten
@@ -153,6 +156,8 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
   Einstellungen der Anwendung an alle Connectoren verteilt
 - **„Ist der Connector sauber?"**: Prüfsummen aller Dateien und Suche nach
   fremden Dateien, täglich geprüft, Meldung an Home Assistant bei Befund
+- **Störungsmeldung**, wenn ein Connector länger nicht antwortet, und
+  Entwarnung, wenn er wieder da ist
 
 ### Home Assistant
 - **Kennzahlen über MQTT** mit Auto-Discovery aus jedem Modul: Budget mit

@@ -395,6 +395,13 @@ Das Modul führt Zähler und ihre Stände und rechnet daraus Verbrauch und Koste
   Eigenverbrauch / Gesamtverbrauch. Mit einem Tarif der Art
   **Einspeisevergütung** wird der Erlös ausgewiesen und von den Kosten
   abgezogen.
+* **Auffälligkeiten:** Die Übersicht warnt, wenn ein Zähler in den letzten
+  sieben Tagen je Tag mehr als das Eineinhalbfache (einstellbar) der bis zu
+  acht Wochen davor verbraucht hat – das geht schon mit 14 Tagen Vergleich,
+  also auch bei neuen Zählern – und bei Wasser, wenn zwischen 1 und 5 Uhr in
+  jeder Stunde etwas lief (das braucht stündliche Stände, etwa aus Home
+  Assistant). Beides geht auch als Meldung an die Leitung, dazu die
+  Erinnerung „Zähler bitte ablesen" für Handzähler ohne frischen Stand.
 * **Quelle je Zähler:**
   * **Home Assistant** – eine Entität aus der Liste wählen (Sensoren mit
     Energie-, Gas- oder Wassereinheit) oder die Kennung eintippen. Der Abruf
@@ -477,6 +484,15 @@ des Betreibers und zwei Adressen, etwa die Impressums- und Datenschutzseite
 der Vereins-Website. Beim Speichern gehen die Angaben signiert an alle
 gekoppelten Connectoren; ein gerade nicht erreichbarer bekommt sie beim
 nächsten Abruf. Solange nichts eingetragen ist, bleibt die Fußzeile leer.
+
+## Wenn der Connector nicht antwortet
+
+Jeder Aufruf eines Connectors, der fehlschlägt, wird als Störung gemerkt –
+mit Zeitpunkt und Grund, zu sehen unter *Verwaltung → Connectoren*. Dauert
+sie länger als die Karenz (*Einstellungen → Connector*, Vorgabe 15 Minuten),
+geht eine Meldung an die Leitung, einmal je Ausfall; antwortet der Connector
+wieder, kommt eine zweite Meldung mit der Dauer. Home Assistant sieht die
+Zahl gestörter Connectoren als Diagnose-Entität.
 
 ## Ist der Connector sauber?
 
@@ -734,6 +750,10 @@ Gemeldet wird:
 | Fahrzeug steht still | Leitung |
 | Fristen HU, SP, UVV | Leitung, einmal täglich |
 | Besprechung am nächsten Tag | Alle mit eingeschalteten Meldungen, einmal täglich |
+| Connector-Prüfung schlägt an | Leitung |
+| Connector nicht erreichbar | Leitung, nach der Karenz (Vorgabe 15 Minuten) einmal je Ausfall – und einmal, wenn er wieder antwortet |
+| Zähler bitte ablesen | Leitung, einmal täglich; je Zähler höchstens wöchentlich |
+| Auffälliger Verbrauch | Leitung, einmal täglich; je Zähler höchstens alle drei Tage |
 
 Jedes Ereignis lässt sich einzeln abschalten, jede Person kann Meldungen für
 sich ganz ausschalten. Die tägliche Runde läuft ab der eingestellten Stunde
