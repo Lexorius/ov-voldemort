@@ -14,6 +14,7 @@ $darfAblesen = can('read_meter');
       <a class="btn" href="<?= e(url('meter_edit')) ?>">+ Zähler</a>
     <?php endif; ?>
     <a class="btn btn--sec" href="<?= e(url('tarife')) ?>">Tarife</a>
+    <a class="btn btn--sec" href="<?= e(url('verbrauch_bericht', ['jahr' => $jahr])) ?>">Jahresbericht</a>
     <a class="btn btn--sec" href="<?= e(url('verbrauch_export')) ?>">CSV</a>
   </div>
 </div>

@@ -1,5 +1,18 @@
 # Änderungsverlauf
 
+## 2.0.6.0
+
+### Verbrauch: Berichte je Zähler und fürs Jahr
+
+- **Jahresbericht** (Übersicht → Jahresbericht): Kennzahlen je Art mit
+  Veränderung zum Vorjahr und Kosten, Monatsbalken für Jahr und Vorjahr je
+  Art, Tabelle aller Zähler. Querformat, für Beamer und Ausdruck.
+- **Bericht je Zähler** (Zählerseite → Bericht): Verbrauch, Vorjahr,
+  Kosten, Tagesdurchschnitt, stärkster Monat, Ablesungen, Monatsbalken und
+  Monatstabelle mit Veränderung und Kosten.
+- Im laufenden Jahr wird das Vorjahr bis zum selben Tag verglichen, damit
+  die Prozentzahl nicht schief liegt. „Drucken / PDF" nutzt den Browserdruck.
+
 ## 2.0.5.1
 
 - Tagesraster der Verpflegung: Beim Ändern von Datum oder Uhrzeit folgen

@@ -27,6 +27,7 @@ $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Se
     <?php if ($darf): ?>
       <a class="btn" href="<?= e(url('meter_edit', ['id' => $id])) ?>">Bearbeiten</a>
     <?php endif; ?>
+    <a class="btn btn--sec" href="<?= e(url('meter_bericht', ['id' => $id, 'jahr' => $jahr])) ?>">Bericht</a>
     <a class="btn btn--sec" href="<?= e(url('verbrauch_export', ['id' => $id])) ?>">CSV</a>
     <a class="btn btn--sec" href="<?= e(url('verbrauch')) ?>">Alle Zähler</a>
   </div>

@@ -391,6 +391,13 @@ Das Modul führt Zähler und ihre Stände und rechnet daraus Verbrauch und Koste
 * **Übersicht:** je Zähler letzter Stand, Verbrauch in 30 Tagen und im Jahr,
   Kosten; je Art die Jahressumme. Zähler ohne Stand seit über 35 Tagen werden
   angemahnt. CSV-Export aller Stände.
+* **Berichte** zum Drucken und für Präsentationen: der **Jahresbericht**
+  (Knopf in der Übersicht) mit Kennzahlen je Art, Monatsbalken für Jahr und
+  Vorjahr und einer Tabelle aller Zähler; der **Bericht je Zähler** (Knopf
+  auf der Zählerseite) mit Verbrauch, Vorjahr, Kosten, Tagesdurchschnitt,
+  stärkstem Monat und der Monatstabelle. Im laufenden Jahr wird das Vorjahr
+  bis zum selben Tag verglichen. Beide Seiten drucken sich sauber auf A4 –
+  „Drucken / PDF" nutzt den Browserdruck.
 * **Rechte:** Sehen nur Leitung und Administration, per Einstellung alle
   Mitglieder; wer sieht, darf auch Stände eintragen (abschaltbar).
 

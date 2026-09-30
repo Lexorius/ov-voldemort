@@ -351,7 +351,7 @@ function verbrauch_zwischen(array $staende, int $von, int $bis): ?float
         $startStand = (float)$staende[0]['stand'];
         $von = strtotime((string)$staende[0]['gelesen_am']);
         if ($von >= $bis) {
-            return 0.0;
+            return null;   // der Zeitraum liegt ganz vor der ersten Ablesung
         }
     }
     // Rückläufe innerhalb des Zeitraums herausrechnen
@@ -612,6 +612,107 @@ function verbrauch_stats_cached(int $jahr): array
     state_save('verbrauch_stats_wert', (string)json_encode($stats, JSON_PRESERVE_ZERO_FRACTION));
     state_save('verbrauch_stats_marke', $marke);
     return $stats;
+}
+
+/* ==================================================================== */
+/* Berichte: je Zähler und für das ganze Jahr                            */
+/* ==================================================================== */
+
+/** Ein Jahr mit Vorjahr aus einer Kette von Ständen. Reine Funktion. */
+function verbrauch_jahr_mit_vorjahr(array $staende, int $jahr, ?int $jetzt = null): array
+{
+    $jetzt ??= time();
+    $anfang = mktime(0, 0, 0, 1, 1, $jahr);
+    $ende = mktime(0, 0, 0, 1, 1, $jahr + 1);
+    $bisHeute = $jetzt < $ende;
+    $stichtag = $bisHeute ? $jetzt : $ende;
+    // Im laufenden Jahr wird das Vorjahr nur bis zum selben Tag gezählt
+    $vorjahrEnde = $bisHeute ? mktime((int)date('G', $jetzt), (int)date('i', $jetzt), 0, (int)date('n', $jetzt), (int)date('j', $jetzt), $jahr - 1) : $anfang;
+    $summe = verbrauch_zwischen($staende, $anfang, $stichtag);
+    $vorjahr = verbrauch_zwischen($staende, mktime(0, 0, 0, 1, 1, $jahr - 1), $vorjahrEnde);
+    $monate = verbrauch_monate($staende, $jahr);
+    $vorMonate = verbrauch_monate($staende, $jahr - 1);
+    $tage = max(1, (int)floor(($stichtag - $anfang) / 86400));
+    $spitze = null;
+    $namen = ['', 'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+    foreach ($monate as $m => $v) {
+        if ($v !== null && $v > 0 && ($spitze === null || $v > $spitze['wert'])) {
+            $spitze = ['monat' => $m, 'name' => $namen[$m], 'wert' => $v];
+        }
+    }
+    $s = (float)($summe ?? 0);
+    return [
+        'summe'          => $s,
+        'summe_vorjahr'  => $vorjahr,
+        'delta_prozent'  => $vorjahr !== null && $vorjahr > 0 ? round(($s - $vorjahr) / $vorjahr * 100, 1) : null,
+        'monate'         => $monate,
+        'monate_vorjahr' => $vorMonate,
+        'bis_heute'      => $bisHeute,
+        'tage'           => $tage,
+        'je_tag'         => $s / $tage,
+        'spitze'         => $spitze,
+    ];
+}
+
+/** Bericht zu einem Zähler: Jahr, Vorjahr, Monate, Kosten, Kennzahlen */
+function verbrauch_zaehlerbericht(array $meter, array $tarife, int $jahr, ?int $jetzt = null): array
+{
+    $jetzt ??= time();
+    $staende = readings_bereich((int)$meter['id'], mktime(0, 0, 0, 1, 1, $jahr - 1), max($jetzt, mktime(0, 0, 0, 1, 1, $jahr + 1)));
+    $b = verbrauch_jahr_mit_vorjahr($staende, $jahr, $jetzt);
+    $b['kosten'] = verbrauch_kosten_jahr($staende, $tarife, $meter, $jahr);
+    $b['kosten_vorjahr'] = verbrauch_kosten_jahr($staende, $tarife, $meter, $jahr - 1)['gesamt'];
+    $b['tarif'] = tarif_am($tarife, (string)$meter['art'], sprintf('%04d-06-15', $jahr));
+    $b['ablesungen'] = count(array_filter($staende, static fn($s) => substr((string)$s['gelesen_am'], 0, 4) === (string)$jahr));
+    $letzter = $staende ? end($staende) : null;
+    $b['letzter_stand'] = $letzter ? (float)$letzter['stand'] : null;
+    return $b;
+}
+
+/** Jahresbericht über alle Zähler: je Art zusammengefasst, dazu jeder Zähler */
+function verbrauch_jahresbericht(array $meters, array $tarife, int $jahr, ?int $jetzt = null): array
+{
+    $jetzt ??= time();
+    $out = ['zaehler' => [], 'je_art' => [], 'kosten' => 0.0, 'kosten_vorjahr' => 0.0, 'ohne_tarif' => 0, 'bis_heute' => $jetzt < mktime(0, 0, 0, 1, 1, $jahr + 1)];
+    foreach (METER_ARTEN as $key => $a) {
+        $out['je_art'][$key] = ['zaehler' => 0, 'einheit' => $a['einheit'], 'summe' => 0.0, 'summe_vorjahr' => null,
+            'delta_prozent' => null, 'kosten' => 0.0, 'monate' => array_fill(1, 12, null), 'monate_vorjahr' => array_fill(1, 12, null)];
+    }
+    foreach ($meters as $m) {
+        $b = verbrauch_zaehlerbericht($m, $tarife, $jahr, $jetzt);
+        $art = (string)$m['art'];
+        $s = &$out['je_art'][$art];
+        $s['zaehler']++;
+        $s['einheit'] = (string)$m['einheit'];
+        $s['summe'] += $b['summe'];
+        if ($b['summe_vorjahr'] !== null) {
+            $s['summe_vorjahr'] = (float)($s['summe_vorjahr'] ?? 0) + $b['summe_vorjahr'];
+        }
+        $s['kosten'] += $b['kosten']['gesamt'];
+        for ($i = 1; $i <= 12; $i++) {
+            if ($b['monate'][$i] !== null) {
+                $s['monate'][$i] = (float)($s['monate'][$i] ?? 0) + $b['monate'][$i];
+            }
+            if ($b['monate_vorjahr'][$i] !== null) {
+                $s['monate_vorjahr'][$i] = (float)($s['monate_vorjahr'][$i] ?? 0) + $b['monate_vorjahr'][$i];
+            }
+        }
+        unset($s);
+        $out['kosten'] += $b['kosten']['gesamt'];
+        $out['kosten_vorjahr'] += (float)$b['kosten_vorjahr'];
+        $out['ohne_tarif'] += $b['kosten']['ohne_tarif'] > 0 ? 1 : 0;
+        $out['zaehler'][] = $m + ['summe' => $b['summe'], 'summe_vorjahr' => $b['summe_vorjahr'], 'delta_prozent' => $b['delta_prozent'],
+            'kosten' => $b['kosten']['gesamt'], 'ohne_tarif' => $b['kosten']['ohne_tarif'], 'ablesungen' => $b['ablesungen']];
+    }
+    foreach ($out['je_art'] as &$s) {
+        $s['delta_prozent'] = $s['summe_vorjahr'] !== null && $s['summe_vorjahr'] > 0
+            ? round(($s['summe'] - $s['summe_vorjahr']) / $s['summe_vorjahr'] * 100, 1) : null;
+        $s['kosten'] = round($s['kosten'], 2);
+    }
+    unset($s);
+    $out['kosten'] = round($out['kosten'], 2);
+    $out['kosten_vorjahr'] = $out['kosten_vorjahr'] > 0 ? round($out['kosten_vorjahr'], 2) : null;
+    return $out;
 }
 
 /* ==================================================================== */
