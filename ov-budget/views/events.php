@@ -59,6 +59,7 @@ $karte = static function (array $e): string {
     <?php if (can('manage_events')): ?>
       <a class="btn" href="<?= e(url('event_edit')) ?>">+ Veranstaltung</a>
     <?php endif; ?>
+    <a class="btn btn--sec" href="<?= e(url('verpflegung_saetze')) ?>">Tagessätze</a>
   </div>
 </div>
 

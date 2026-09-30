@@ -147,9 +147,8 @@ $endeZeit = substr((string)($event['ende'] ?? ''), 11, 5);
              <?= (int)($event['verpflegung'] ?? 0) === 1 ? 'checked' : '' ?>>
       <label for="verpflegung">Verpflegung kalkulieren</label>
     </div>
-    <small class="muted" style="margin-top:-.6rem">Je Mahlzeit gilt ein Satz je Person aus den
-      Einstellungen (<?= e(implode(' · ', array_map(static fn($k, $v) => VERPFLEGUNG_MAHLZEITEN[$k] . ' ' . money($v),
-          array_keys(verpflegung_saetze()), verpflegung_saetze()))) ?>).
+    <small class="muted" style="margin-top:-.6rem">Gerechnet wird mit dem <a href="<?= e(url('verpflegung_saetze')) ?>">Tagessatz</a>,
+      der am Beginn der Veranstaltung gilt, verteilt auf Frühstück, Mittag- und Abendessen.
       Trägst du keine Mahlzeit ein, schlägt die Anwendung sie aus dem Zeitraum vor.</small>
     <div class="grid2" data-verpflegung-felder<?= (int)($event['verpflegung'] ?? 0) === 1 ? '' : ' hidden' ?>>
       <div class="field">

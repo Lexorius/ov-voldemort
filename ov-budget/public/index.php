@@ -74,6 +74,8 @@ $routes = [
     'event_print'        => 'event_print',
     'event_export'       => 'event_export',
     'event_invites'      => 'event_invites',
+    'verpflegung_saetze' => 'verpflegung_saetze',
+    'verpflegung_satz_edit' => 'verpflegung_satz_edit',
 
     // Funkgeräte
     'radios'             => 'radios',

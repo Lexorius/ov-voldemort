@@ -163,9 +163,13 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
     <span class="muted small">für <?= (int)$verpflegung['personen'] ?> Personen
       <?= ($event['verpflegung_personen'] ?? null) === null ? '(wie Teilnehmer)' : '' ?></span>
   </div>
-  <?php if ($verpflegung['ohne_satz']): ?>
-    <div class="alert alert--warn small">Für mindestens eine Mahlzeit ist kein Satz hinterlegt –
-      <?php if (can('admin')): ?><a href="<?= e(url('admin_settings', ['group' => 'Veranstaltungen'])) ?>">Einstellungen → Veranstaltungen</a><?php else: ?>bitte die Verwaltung fragen<?php endif; ?>.</div>
+  <?php if (empty($tagessatz)): ?>
+    <div class="alert alert--warn small">Für den <?= e(de_date(substr((string)$event['beginn'], 0, 10))) ?> gilt kein Tagessatz –
+      <a href="<?= e(url('verpflegung_saetze')) ?>">Tagessätze pflegen</a>.</div>
+  <?php else: ?>
+    <p class="small muted">Tagessatz <?= e(money((float)$tagessatz['tagessatz'])) ?> je Person
+      (<?= (int)$tagessatz['anteil_fruehstueck'] ?> / <?= (int)$tagessatz['anteil_mittag'] ?> / <?= (int)$tagessatz['anteil_abend'] ?> %),
+      gültig ab <?= e(de_date((string)$tagessatz['gueltig_von'])) ?>.</p>
   <?php endif; ?>
   <div class="tablewrap">
     <table class="data">

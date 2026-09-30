@@ -1231,6 +1231,43 @@ SQL;
         }
     }
     $merken('036_verpflegung');
+
+    /* ---------- 037: Tagessatz statt dreier Einzelsaetze ---------- */
+    if (!ovb_table_exists($pdo, 'verpflegung_saetze')) {
+        $pdo->exec(<<<'SQL'
+CREATE TABLE IF NOT EXISTS verpflegung_saetze (
+  id                 INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  gueltig_von        DATE          NOT NULL,
+  gueltig_bis        DATE          NULL,
+  tagessatz          DECIMAL(8,2)  NOT NULL DEFAULT 0,
+  anteil_fruehstueck TINYINT UNSIGNED NOT NULL DEFAULT 20,
+  anteil_mittag      TINYINT UNSIGNED NOT NULL DEFAULT 40,
+  anteil_abend       TINYINT UNSIGNED NOT NULL DEFAULT 40,
+  notiz              VARCHAR(150)  NOT NULL DEFAULT '',
+  created_at         DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_tagessatz (gueltig_von)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+SQL);
+        // Bisherige Einzelsaetze (falls schon eingetragen) als ersten Tagessatz uebernehmen
+        $st = $pdo->prepare('SELECT skey, svalue FROM settings WHERE skey IN (?, ?, ?)');
+        $st->execute(['verpflegung_satz_fruehstueck', 'verpflegung_satz_mittag', 'verpflegung_satz_abend']);
+        $alt = ['verpflegung_satz_fruehstueck' => 0.0, 'verpflegung_satz_mittag' => 0.0, 'verpflegung_satz_abend' => 0.0];
+        foreach ($st->fetchAll() as $r) {
+            $alt[$r['skey']] = (float)str_replace(',', '.', (string)$r['svalue']);
+        }
+        $summe = array_sum($alt);
+        if ($summe > 0) {
+            $f = (int)round($alt['verpflegung_satz_fruehstueck'] / $summe * 100);
+            $m = (int)round($alt['verpflegung_satz_mittag'] / $summe * 100);
+            $pdo->prepare('INSERT INTO verpflegung_saetze (gueltig_von, tagessatz, anteil_fruehstueck, anteil_mittag, anteil_abend, notiz)
+                           VALUES (?, ?, ?, ?, ?, ?)')
+                ->execute([date('Y-01-01'), round($summe, 2), $f, $m, 100 - $f - $m, 'aus den bisherigen Einzelsaetzen']);
+            $say('Verpflegung: bisherige Einzelsaetze als Tagessatz ' . number_format($summe, 2, ',', '.') . ' EUR uebernommen.');
+        }
+        $pdo->exec("DELETE FROM settings WHERE skey IN ('verpflegung_satz_fruehstueck', 'verpflegung_satz_mittag', 'verpflegung_satz_abend')");
+    }
+    $merken('037_tagessatz');
 }
 
 /**

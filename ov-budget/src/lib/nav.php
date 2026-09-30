@@ -38,7 +38,7 @@ function nav_module(): array
                         'aktiv' => ['contacts', 'contact_edit', 'contact_groups', 'contact_group', 'contacts_import'],
                         'darf' => can('view_contacts')],
         'events'    => ['label' => (string)setting('veranstaltung_modul_name', 'Veranstaltungen'), 'icon' => '◍',
-                        'route' => 'events', 'aktiv' => ['events', 'event', 'event_edit'], 'darf' => can('view_events')],
+                        'route' => 'events', 'aktiv' => ['events', 'event', 'event_edit', 'verpflegung_saetze', 'verpflegung_satz_edit'], 'darf' => can('view_events')],
         'meetings'  => ['label' => (string)setting('besprechung_modul_name', 'Besprechungen'), 'icon' => '☰',
                         'route' => 'meetings',
                         'aktiv' => ['meetings', 'meeting', 'meeting_edit', 'meeting_series_edit', 'talking_points', 'talking_point_edit'],

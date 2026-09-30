@@ -587,9 +587,12 @@ seinen Zugang ebenso.
 ### Verpflegung kalkulieren
 
 Für Ausbildungen, Übungen und Einsätze (einstellbar, welche Arten) lässt sich
-je Veranstaltung die Verpflegung rechnen. Unter *Einstellungen →
-Veranstaltungen* stehen die Sätze je Person für Frühstück, Mittagessen und
-Abendessen. Im Formular der Veranstaltung trägt man ein, wie viele Mahlzeiten
+je Veranstaltung die Verpflegung rechnen. Grundlage ist ein **Tagessatz** je
+Person (*Veranstaltungen → Tagessätze*), gültig von–bis wie ein Tarif und
+prozentual auf Frühstück, Mittag- und Abendessen verteilt, üblich 20/40/40.
+Ändert sich der Satz im Jahr, bekommt der alte ein Ende und der neue beginnt
+am Tag danach; eine Veranstaltung rechnet mit dem Satz, der an ihrem Beginn
+gilt. Im Formular der Veranstaltung trägt man ein, wie viele Mahlzeiten
 je Person anfallen – lässt man die Felder leer, schlägt die Anwendung sie aus
 dem Zeitraum vor (Frühstück, wenn es um 8 Uhr schon läuft, Mittag um 12:30,
 Abend um 18:30, je Kalendertag). Gerechnet wird für die Teilnehmer, also die

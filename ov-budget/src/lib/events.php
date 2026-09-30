@@ -748,14 +748,104 @@ function efile_path(array $datei, bool $vorschau = false): ?string
 
 const VERPFLEGUNG_MAHLZEITEN = ['fruehstueck' => 'Frühstück', 'mittag' => 'Mittagessen', 'abend' => 'Abendessen'];
 
-/** Sätze je Person und Mahlzeit aus den Einstellungen */
-function verpflegung_saetze(): array
+/* ---------- Tagessätze: je Person und Tag, prozentual verteilt ---------- */
+
+function tagessatz_query(): array
 {
+    return db_all('SELECT * FROM verpflegung_saetze ORDER BY gueltig_von DESC, id DESC');
+}
+
+function tagessatz_find(int $id): ?array
+{
+    return $id > 0 ? db_row('SELECT * FROM verpflegung_saetze WHERE id = ?', [$id]) : null;
+}
+
+/** Der Tagessatz, der an einem Tag gilt – der jüngste passende. Reine Funktion. */
+function tagessatz_am(array $saetze, string $datum): ?array
+{
+    $treffer = null;
+    foreach ($saetze as $s) {
+        if ((string)$s['gueltig_von'] > $datum) {
+            continue;
+        }
+        $bis = (string)($s['gueltig_bis'] ?? '');
+        if ($bis !== '' && $bis < $datum) {
+            continue;
+        }
+        if ($treffer === null || (string)$s['gueltig_von'] > (string)$treffer['gueltig_von']) {
+            $treffer = $s;
+        }
+    }
+    return $treffer;
+}
+
+/** Aus Tagessatz und Anteilen die Beträge je Mahlzeit. Reine Funktion. */
+function tagessatz_mahlzeiten(?array $satz): array
+{
+    $tag = (float)($satz['tagessatz'] ?? 0);
     return [
-        'fruehstueck' => max(0.0, setting_float('verpflegung_satz_fruehstueck', 0.0)),
-        'mittag'      => max(0.0, setting_float('verpflegung_satz_mittag', 0.0)),
-        'abend'       => max(0.0, setting_float('verpflegung_satz_abend', 0.0)),
+        'fruehstueck' => round($tag * (int)($satz['anteil_fruehstueck'] ?? 0) / 100, 2),
+        'mittag'      => round($tag * (int)($satz['anteil_mittag'] ?? 0) / 100, 2),
+        'abend'       => round($tag * (int)($satz['anteil_abend'] ?? 0) / 100, 2),
     ];
+}
+
+/** Sätze je Mahlzeit für eine Veranstaltung: der Tagessatz am Beginn */
+function verpflegung_saetze(?string $datum = null): array
+{
+    return tagessatz_mahlzeiten(tagessatz_am(tagessatz_query(), substr($datum ?? date('Y-m-d'), 0, 10)));
+}
+
+/** Tagessatz aus dem Formular speichern. Rückgabe: [id, fehler[]] */
+function tagessatz_save_from_post(?array $existing): array
+{
+    $errors = [];
+    $von = post_date('gueltig_von');
+    if (!$von) {
+        $errors[] = 'Bitte angeben, ab wann der Tagessatz gilt.';
+    }
+    $bis = post_date('gueltig_bis');
+    if ($von && $bis && $bis < $von) {
+        $errors[] = 'Das Ende liegt vor dem Anfang.';
+    }
+    $tag = post_dec('tagessatz');
+    if ($tag <= 0) {
+        $errors[] = 'Bitte einen Tagessatz größer als null angeben.';
+    }
+    $anteile = [];
+    foreach (['fruehstueck', 'mittag', 'abend'] as $k) {
+        $anteile[$k] = max(0, min(100, post_int('anteil_' . $k, 0) ?? 0));
+    }
+    if (array_sum($anteile) !== 100) {
+        $errors[] = sprintf('Die drei Anteile ergeben %d %% – sie müssen zusammen 100 %% ergeben.', array_sum($anteile));
+    }
+    if ($errors) {
+        return [null, $errors];
+    }
+    $data = [
+        'gueltig_von'        => $von,
+        'gueltig_bis'        => $bis,
+        'tagessatz'          => round($tag, 2),
+        'anteil_fruehstueck' => $anteile['fruehstueck'],
+        'anteil_mittag'      => $anteile['mittag'],
+        'anteil_abend'       => $anteile['abend'],
+        'notiz'              => mb_substr(post_str('notiz'), 0, 150),
+    ];
+    if ($existing) {
+        db_update('verpflegung_saetze', $data, 'id = ?', [(int)$existing['id']]);
+        $id = (int)$existing['id'];
+        audit('tagessatz.bearbeitet', 'tagessatz', $id, money($data['tagessatz']));
+    } else {
+        $id = db_insert('verpflegung_saetze', $data);
+        audit('tagessatz.angelegt', 'tagessatz', $id, money($data['tagessatz']));
+    }
+    return [$id, []];
+}
+
+function tagessatz_delete(array $satz): void
+{
+    db_exec('DELETE FROM verpflegung_saetze WHERE id = ?', [(int)$satz['id']]);
+    audit('tagessatz.geloescht', 'tagessatz', (int)$satz['id'], money((float)$satz['tagessatz']));
 }
 
 /** Arten, bei denen Verpflegung von vornherein angehakt ist (Slugs) */

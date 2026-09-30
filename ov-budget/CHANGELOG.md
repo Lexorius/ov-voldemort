@@ -1,5 +1,19 @@
 # Änderungsverlauf
 
+## 2.0.4.0
+
+### Verpflegung: Tagessatz statt Einzelsätze
+
+- Die drei festen Sätze je Mahlzeit sind ersetzt durch einen **Tagessatz je
+  Person**, gültig von–bis wie ein Tarif und prozentual auf Frühstück,
+  Mittag- und Abendessen verteilt (Vorgabe 20/40/40). Gepflegt unter
+  *Veranstaltungen → Tagessätze*; ein neuer Satz übernimmt die Verteilung
+  des bisherigen.
+- Eine Veranstaltung rechnet mit dem Satz, der an ihrem Beginn gilt – so
+  bleiben alte Kalkulationen richtig, wenn sich der Satz im Jahr ändert.
+- Waren die Einzelsätze schon eingetragen, entstehen daraus beim
+  Aktualisieren ein Tagessatz und die passende Verteilung.
+
 ## 2.0.3.0
 
 ### Verpflegung bei Veranstaltungen

@@ -38,8 +38,10 @@ render('event', [
     'buchungen' => can('view_expenses') ? event_expenses($id) : [],
     'kosten'    => event_kosten($id),
     'verpflegung' => (int)($event['verpflegung'] ?? 0) === 1
-        ? verpflegung_kalkulation($event, verpflegung_saetze(), verpflegung_personen($event, event_stats($gaeste)))
+        ? verpflegung_kalkulation($event, verpflegung_saetze((string)$event['beginn']), verpflegung_personen($event, event_stats($gaeste)))
         : null,
+    'tagessatz' => (int)($event['verpflegung'] ?? 0) === 1
+        ? tagessatz_am(tagessatz_query(), substr((string)$event['beginn'], 0, 10)) : null,
     'connector' => connector_find((int)($event['connector_id'] ?? 0)),
     'kandidaten' => $kandidaten,
     'kontaktSuche' => $suche,
