@@ -156,6 +156,48 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
 </div>
 <?php endif; ?>
 
+<?php if (!empty($verpflegung)): ?>
+<div class="card" id="verpflegung">
+  <div class="card__head">
+    <h2>Verpflegung</h2>
+    <span class="muted small">für <?= (int)$verpflegung['personen'] ?> Personen
+      <?= ($event['verpflegung_personen'] ?? null) === null ? '(wie Teilnehmer)' : '' ?></span>
+  </div>
+  <?php if ($verpflegung['ohne_satz']): ?>
+    <div class="alert alert--warn small">Für mindestens eine Mahlzeit ist kein Satz hinterlegt –
+      <?php if (can('admin')): ?><a href="<?= e(url('admin_settings', ['group' => 'Veranstaltungen'])) ?>">Einstellungen → Veranstaltungen</a><?php else: ?>bitte die Verwaltung fragen<?php endif; ?>.</div>
+  <?php endif; ?>
+  <div class="tablewrap">
+    <table class="data">
+      <thead><tr><th>Mahlzeit</th><th class="num">je Person</th><th class="num">Satz</th><th class="num">Betrag</th></tr></thead>
+      <tbody>
+      <?php foreach ($verpflegung['zeilen'] as $z): if ($z['anzahl'] === 0) { continue; } ?>
+        <tr>
+          <td><?= e($z['label']) ?></td>
+          <td class="num"><?= (int)$z['anzahl'] ?>×</td>
+          <td class="num small"><?= e(money($z['satz'])) ?></td>
+          <td class="num"><?= e(money($z['betrag'])) ?></td>
+        </tr>
+      <?php endforeach; ?>
+      <?php if (array_sum(array_column($verpflegung['zeilen'], 'anzahl')) === 0): ?>
+        <tr><td colspan="4" class="muted">Noch keine Mahlzeit eingetragen – im Formular unter „Verpflegung".</td></tr>
+      <?php endif; ?>
+      </tbody>
+      <tfoot><tr>
+        <th colspan="3">Kalkuliert
+          <?php if (can('view_expenses') && (float)$kosten['ausgaben'] > 0): ?>
+            <span class="muted small">· gebucht <?= e(money((float)$kosten['ausgaben'])) ?> für die ganze Veranstaltung</span>
+          <?php endif; ?></th>
+        <th class="num"><?= e(money($verpflegung['gesamt'])) ?></th>
+      </tr></tfoot>
+    </table>
+  </div>
+  <?php if (trim((string)($event['verpflegung_notiz'] ?? '')) !== ''): ?>
+    <p class="small muted"><?= e((string)$event['verpflegung_notiz']) ?></p>
+  <?php endif; ?>
+</div>
+<?php endif; ?>
+
 <?php if (!event_mit_gaesteliste($event)): ?>
 <div class="card" id="teilnehmer">
   <h2>Teilnehmer</h2>

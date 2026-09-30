@@ -37,6 +37,9 @@ render('event', [
     'dateien'   => efile_list($id),
     'buchungen' => can('view_expenses') ? event_expenses($id) : [],
     'kosten'    => event_kosten($id),
+    'verpflegung' => (int)($event['verpflegung'] ?? 0) === 1
+        ? verpflegung_kalkulation($event, verpflegung_saetze(), verpflegung_personen($event, event_stats($gaeste)))
+        : null,
     'connector' => connector_find((int)($event['connector_id'] ?? 0)),
     'kandidaten' => $kandidaten,
     'kontaktSuche' => $suche,

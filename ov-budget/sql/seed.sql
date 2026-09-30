@@ -253,6 +253,7 @@ INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_defa
 INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default) VALUES
 ('veranstaltung_typ','Ausbildung',            'ausbildung',      '#0369a1',10,0),
 ('veranstaltung_typ','Übung',                 'uebung',          '#b45309',20,0),
+('veranstaltung_typ','Einsatz',               'einsatz',         '#b91c1c',25,0),
 ('veranstaltung_typ','Helferversammlung',     'helferversammlung','#15803d',30,0),
 ('veranstaltung_typ','Empfang',               'empfang',         '#7c3aed',40,0),
 ('veranstaltung_typ','Grillabend',            'grillabend',      '#be123c',50,0),
@@ -421,6 +422,10 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('veranstaltung_begleiter_max','0','Begleiter je eingeladener Person (Vorgabe)','0 = niemand bringt jemanden mit. Je Veranstaltung aenderbar.','number','Veranstaltungen',50),
 ('veranstaltung_kommentare','1','Kommentare auf der Einladungsseite (Vorgabe)','Eingeladene koennen der Rueckmeldung eine Nachricht mitgeben. Je Veranstaltung aenderbar.','bool','Veranstaltungen',60),
 ('veranstaltung_ohne_gaesteliste','ausbildung,uebung','Arten ohne Gaesteliste','Kurznamen der Veranstaltungsarten, durch Komma getrennt (siehe Verwaltung - Auswahllisten - Veranstaltungsarten). Bei diesen Arten wird beim Anlegen nur die Teilnehmerzahl erfasst, keine Einladungen. Je Veranstaltung umschaltbar.','text','Veranstaltungen',65),
+('veranstaltung_verpflegung','ausbildung,uebung,einsatz','Arten mit Verpflegung','Bei diesen Arten ist „Verpflegung kalkulieren" von vornherein angehakt. Kurznamen der Arten, mit Komma getrennt.','text','Veranstaltungen',60),
+('verpflegung_satz_fruehstueck','0','Satz Frühstück je Person (€)','Was je Person und Frühstück zur Verfügung steht','number','Veranstaltungen',61),
+('verpflegung_satz_mittag','0','Satz Mittagessen je Person (€)','','number','Veranstaltungen',62),
+('verpflegung_satz_abend','0','Satz Abendessen je Person (€)','','number','Veranstaltungen',63),
 ('veranstaltung_intervall_minuten','10','Rueckmeldungen abholen alle (Minuten)','Wie oft der automatische Abruf beim Connector nach neuen Rueckmeldungen sieht','number','Veranstaltungen',70),
 ('session_lifetime','43200','Session-Laufzeit in Sekunden','Standard: 12 Stunden','number','Sicherheit',10),
 ('login_max_versuche','8','Fehlversuche bis Sperre','Sperre gilt pro Benutzername für die Sperrdauer','number','Sicherheit',20),

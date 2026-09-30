@@ -315,6 +315,25 @@
     });
   });
 
+  // Veranstaltung: Verpflegungsfelder nur mit Häkchen; bei neuer Veranstaltung Vorgabe aus der Art
+  var verpflegung = document.getElementById('verpflegung');
+  var verpflegungFelder = document.querySelector('[data-verpflegung-felder]');
+  var typWahl = document.getElementById('typ_id');
+  if (verpflegung && verpflegungFelder) {
+    var verpflegungAngefasst = false;
+    var zeigeVerpflegung = function () { verpflegungFelder.hidden = !verpflegung.checked; };
+    verpflegung.addEventListener('change', function () { verpflegungAngefasst = true; zeigeVerpflegung(); });
+    if (typWahl && typWahl.getAttribute('data-neu') === '1') {
+      var passende = (typWahl.getAttribute('data-verpflegung') || '').split(',');
+      typWahl.addEventListener('change', function () {
+        if (verpflegungAngefasst) { return; }
+        verpflegung.checked = passende.indexOf(typWahl.value) !== -1;
+        zeigeVerpflegung();
+      });
+    }
+    zeigeVerpflegung();
+  }
+
   // Funkgerät: "fest verbaut" aus der Art vorbelegen, solange das Häkchen nicht von Hand gesetzt wurde
   var festArt = document.querySelector('select[data-fest-vorgabe]');
   var festHaken = document.getElementById('fest_verbaut');

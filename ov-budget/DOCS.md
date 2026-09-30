@@ -584,6 +584,19 @@ nichts mehr an. Ist die Veranstaltung abgesagt, sagt sie das.
 nächsten Abgleich ins Leere. Wer ganz von der Liste genommen wird, verliert
 seinen Zugang ebenso.
 
+### Verpflegung kalkulieren
+
+Für Ausbildungen, Übungen und Einsätze (einstellbar, welche Arten) lässt sich
+je Veranstaltung die Verpflegung rechnen. Unter *Einstellungen →
+Veranstaltungen* stehen die Sätze je Person für Frühstück, Mittagessen und
+Abendessen. Im Formular der Veranstaltung trägt man ein, wie viele Mahlzeiten
+je Person anfallen – lässt man die Felder leer, schlägt die Anwendung sie aus
+dem Zeitraum vor (Frühstück, wenn es um 8 Uhr schon läuft, Mittag um 12:30,
+Abend um 18:30, je Kalendertag). Gerechnet wird für die Teilnehmer, also die
+Zusagen der Gästeliste oder die geplante Zahl; eine eigene Personenzahl geht
+auch. Die Veranstaltungsseite zeigt die Rechnung je Mahlzeit, die Summe und
+daneben, was für die Veranstaltung schon gebucht ist.
+
 ## Zeitzone
 
 Das Add-on stellt die Zeitzone selbst ein: zuerst die Option `zeitzone` der

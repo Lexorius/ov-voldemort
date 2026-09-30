@@ -1,5 +1,19 @@
 # Änderungsverlauf
 
+## 2.0.3.0
+
+### Verpflegung bei Veranstaltungen
+
+- Je Veranstaltung lässt sich die **Verpflegung kalkulieren**: Frühstück,
+  Mittagessen und Abendessen je Person, mit Sätzen aus den Einstellungen
+  (*Einstellungen → Veranstaltungen*). Bei Ausbildungen, Übungen und
+  Einsätzen ist das von vornherein angehakt – welche Arten, ist einstellbar.
+- Lässt man die Mahlzeiten leer, schlägt die Anwendung sie aus dem Zeitraum
+  vor. Gerechnet wird für die Teilnehmer, wahlweise für eine eigene Zahl.
+- Die Veranstaltungsseite zeigt die Rechnung je Mahlzeit, die Summe und die
+  für die Veranstaltung schon gebuchten Ausgaben daneben.
+- Neue Veranstaltungsart **Einsatz**.
+
 ## 2.0.2.0
 
 ### Funkgeräte: fest verbaute Geräte zählen nicht mit

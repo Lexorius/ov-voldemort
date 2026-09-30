@@ -69,7 +69,10 @@ $endeZeit = substr((string)($event['ende'] ?? ''), 11, 5);
         <select id="typ_id" name="typ_id" data-neu="<?= $isNew ? '1' : '' ?>"
                 data-ohne-liste="<?= e(implode(',', array_map(
             static fn($slug) => (string)(list_id_by_slug('veranstaltung_typ', $slug) ?? 0),
-            $ohneListe))) ?>"><?= list_options('veranstaltung_typ', (int)($event['typ_id'] ?? 0)) ?></select>
+            $ohneListe))) ?>"
+                data-verpflegung="<?= e(implode(',', array_map(
+            static fn($slug) => (string)(list_id_by_slug('veranstaltung_typ', $slug) ?? 0),
+            verpflegung_typen()))) ?>"><?= list_options('veranstaltung_typ', (int)($event['typ_id'] ?? 0)) ?></select>
       </div>
       <div class="field">
         <label for="fachgruppe_id">Fachgruppe</label>
@@ -134,6 +137,39 @@ $endeZeit = substr((string)($event['ende'] ?? ''), 11, 5);
         <small class="muted">Nach der Veranstaltung nachtragen – geht auch direkt auf der
           Veranstaltungsseite.</small>
       </div>
+    </div>
+  </section>
+
+  <section class="card" id="verpflegung-block">
+    <h2>Verpflegung</h2>
+    <div class="field field--check">
+      <input type="checkbox" id="verpflegung" name="verpflegung" value="1"
+             <?= (int)($event['verpflegung'] ?? 0) === 1 ? 'checked' : '' ?>>
+      <label for="verpflegung">Verpflegung kalkulieren</label>
+    </div>
+    <small class="muted" style="margin-top:-.6rem">Je Mahlzeit gilt ein Satz je Person aus den
+      Einstellungen (<?= e(implode(' · ', array_map(static fn($k, $v) => VERPFLEGUNG_MAHLZEITEN[$k] . ' ' . money($v),
+          array_keys(verpflegung_saetze()), verpflegung_saetze()))) ?>).
+      Trägst du keine Mahlzeit ein, schlägt die Anwendung sie aus dem Zeitraum vor.</small>
+    <div class="grid2" data-verpflegung-felder<?= (int)($event['verpflegung'] ?? 0) === 1 ? '' : ' hidden' ?>>
+      <div class="field">
+        <label for="verpflegung_personen">Personen</label>
+        <input type="number" id="verpflegung_personen" name="verpflegung_personen" min="0" max="65000"
+               value="<?= ($event['verpflegung_personen'] ?? null) !== null && $event['verpflegung_personen'] !== '' ? (int)$event['verpflegung_personen'] : '' ?>">
+        <small class="muted">Leer = wie die Teilnehmer (Zusagen der Gästeliste oder geplante Zahl).</small>
+      </div>
+      <div class="field">
+        <label for="verpflegung_notiz">Notiz</label>
+        <input type="text" id="verpflegung_notiz" name="verpflegung_notiz" maxlength="255"
+               value="<?= e((string)($event['verpflegung_notiz'] ?? '')) ?>" placeholder="z. B. Mittag durch Feldküche">
+      </div>
+      <?php foreach (VERPFLEGUNG_MAHLZEITEN as $key => $label): ?>
+        <div class="field">
+          <label for="verpflegung_<?= e($key) ?>"><?= e($label) ?> je Person</label>
+          <input type="number" id="verpflegung_<?= e($key) ?>" name="verpflegung_<?= e($key) ?>" min="0" max="99"
+                 value="<?= ($event['verpflegung_' . $key] ?? null) !== null && $event['verpflegung_' . $key] !== '' ? (int)$event['verpflegung_' . $key] : '' ?>">
+        </div>
+      <?php endforeach; ?>
     </div>
   </section>
 

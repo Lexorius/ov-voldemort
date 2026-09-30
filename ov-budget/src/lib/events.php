@@ -57,7 +57,7 @@ function event_find(?int $id): ?array
     }
     return db_row(
         'SELECT e.*, b.name AS budget_name, b.betrag_netto AS budget_betrag,
-                fg.label AS fachgruppe_label, t.label AS typ_label, t.color AS typ_color,
+                fg.label AS fachgruppe_label, t.label AS typ_label, t.color AS typ_color, t.slug AS typ_slug,
                 c.name AS connector_name, u.display_name AS ersteller
          FROM events e
          LEFT JOIN budgets    b  ON b.id  = e.budget_id
@@ -208,10 +208,24 @@ function event_save_from_post(?array $e, array $user): array
         'gaesteliste'        => post_bool('gaesteliste'),
         'teilnehmer_geplant' => post_int('teilnehmer_geplant'),
         'teilnehmer_ist'     => post_int('teilnehmer_ist'),
+        'verpflegung'        => post_bool('verpflegung'),
+        'verpflegung_personen' => post_int('verpflegung_personen'),
+        'verpflegung_fruehstueck' => max(0, min(99, post_int('verpflegung_fruehstueck', 0) ?? 0)),
+        'verpflegung_mittag' => max(0, min(99, post_int('verpflegung_mittag', 0) ?? 0)),
+        'verpflegung_abend'  => max(0, min(99, post_int('verpflegung_abend', 0) ?? 0)),
+        'verpflegung_notiz'  => mb_substr(post_str('verpflegung_notiz'), 0, 255),
         'hinweis'            => post_str('hinweis'),
         'notiz'              => post_str('notiz'),
         'updated_by'         => (int)$user['id'],
     ];
+    // Verpflegung gewünscht, aber keine Mahlzeit eingetragen: aus dem Zeitraum vorschlagen
+    if ($daten['verpflegung'] === 1 && post_str('verpflegung_fruehstueck') === ''
+        && post_str('verpflegung_mittag') === '' && post_str('verpflegung_abend') === '') {
+        $v = verpflegung_vorschlag((string)$beginn, $ende);
+        $daten['verpflegung_fruehstueck'] = $v['fruehstueck'];
+        $daten['verpflegung_mittag'] = $v['mittag'];
+        $daten['verpflegung_abend'] = $v['abend'];
+    }
 
     if ($e) {
         db_update('events', $daten, 'id = ?', [(int)$e['id']]);
@@ -726,4 +740,93 @@ function efile_path(array $datei, bool $vorschau = false): ?string
     $name = $vorschau && ($datei['thumb_name'] ?? null) ? $datei['thumb_name'] : $datei['stored_name'];
     $pfad = efile_dir() . DIRECTORY_SEPARATOR . basename((string)$name);
     return is_file($pfad) ? $pfad : null;
+}
+
+/* ==================================================================== */
+/* Verpflegung: Frühstück, Mittag- und Abendessen je Person              */
+/* ==================================================================== */
+
+const VERPFLEGUNG_MAHLZEITEN = ['fruehstueck' => 'Frühstück', 'mittag' => 'Mittagessen', 'abend' => 'Abendessen'];
+
+/** Sätze je Person und Mahlzeit aus den Einstellungen */
+function verpflegung_saetze(): array
+{
+    return [
+        'fruehstueck' => max(0.0, setting_float('verpflegung_satz_fruehstueck', 0.0)),
+        'mittag'      => max(0.0, setting_float('verpflegung_satz_mittag', 0.0)),
+        'abend'       => max(0.0, setting_float('verpflegung_satz_abend', 0.0)),
+    ];
+}
+
+/** Arten, bei denen Verpflegung von vornherein angehakt ist (Slugs) */
+function verpflegung_typen(): array
+{
+    return event_typen_ohne_liste((string)setting('veranstaltung_verpflegung', 'ausbildung,uebung,einsatz'));
+}
+
+function event_typ_verpflegung(?int $typId): bool
+{
+    if (!$typId) {
+        return false;
+    }
+    $slug = (string)(list_item($typId)['slug'] ?? '');
+    return $slug !== '' && in_array($slug, verpflegung_typen(), true);
+}
+
+/**
+ * Wie viele Mahlzeiten je Person der Zeitraum nahelegt: je Kalendertag ein
+ * Frühstück, wenn die Veranstaltung um 8 Uhr schon läuft, ein Mittagessen,
+ * wenn sie 12:30 Uhr umfasst, ein Abendessen bei 18:30 Uhr. Reine Funktion.
+ */
+function verpflegung_vorschlag(string $beginn, ?string $ende): array
+{
+    $a = strtotime($beginn);
+    $b = $ende ? strtotime($ende) : false;
+    if ($a === false) {
+        return ['fruehstueck' => 0, 'mittag' => 0, 'abend' => 0];
+    }
+    if ($b === false || $b < $a) {
+        $b = strtotime(date('Y-m-d', $a) . ' 23:59:00');
+    }
+    $out = ['fruehstueck' => 0, 'mittag' => 0, 'abend' => 0];
+    for ($tag = strtotime(date('Y-m-d', $a)); $tag <= $b; $tag += 86400) {
+        foreach (['fruehstueck' => '08:00', 'mittag' => '12:30', 'abend' => '18:30'] as $key => $uhr) {
+            $t = strtotime(date('Y-m-d', $tag) . ' ' . $uhr);
+            if ($t >= $a && $t <= $b) {
+                $out[$key]++;
+            }
+        }
+    }
+    return $out;
+}
+
+/** Für wie viele Personen gerechnet wird: eigene Zahl, sonst wie die Teilnehmer. Reine Funktion. */
+function verpflegung_personen(array $e, array $stats): int
+{
+    $eigene = $e['verpflegung_personen'] ?? null;
+    if ($eigene !== null && $eigene !== '') {
+        return max(0, (int)$eigene);
+    }
+    return event_personen($e, $stats);
+}
+
+/**
+ * Die Rechnung: je Mahlzeit Anzahl × Satz × Personen, dazu die Summe.
+ * Reine Funktion. Rückgabe: ['personen', 'zeilen' => [key => [label, anzahl, satz, betrag]], 'gesamt', 'ohne_satz']
+ */
+function verpflegung_kalkulation(array $e, array $saetze, int $personen): array
+{
+    $out = ['personen' => $personen, 'zeilen' => [], 'gesamt' => 0.0, 'ohne_satz' => false];
+    foreach (VERPFLEGUNG_MAHLZEITEN as $key => $label) {
+        $anzahl = max(0, (int)($e['verpflegung_' . $key] ?? 0));
+        $satz = (float)($saetze[$key] ?? 0);
+        $betrag = round($anzahl * $satz * $personen, 2);
+        if ($anzahl > 0 && $satz <= 0) {
+            $out['ohne_satz'] = true;
+        }
+        $out['zeilen'][$key] = ['label' => $label, 'anzahl' => $anzahl, 'satz' => $satz, 'betrag' => $betrag];
+        $out['gesamt'] += $betrag;
+    }
+    $out['gesamt'] = round($out['gesamt'], 2);
+    return $out;
 }

@@ -1214,6 +1214,23 @@ SQL;
         }
     }
     $merken('035_funk_fest_verbaut');
+
+    /* ---------- 036: Verpflegung bei Veranstaltungen ---------- */
+    if (ovb_table_exists($pdo, 'events')) {
+        foreach ([
+            'verpflegung'             => 'TINYINT(1) NOT NULL DEFAULT 0',
+            'verpflegung_personen'    => 'SMALLINT UNSIGNED NULL',
+            'verpflegung_fruehstueck' => 'TINYINT UNSIGNED NOT NULL DEFAULT 0',
+            'verpflegung_mittag'      => 'TINYINT UNSIGNED NOT NULL DEFAULT 0',
+            'verpflegung_abend'       => 'TINYINT UNSIGNED NOT NULL DEFAULT 0',
+            'verpflegung_notiz'       => "VARCHAR(255) NOT NULL DEFAULT ''",
+        ] as $spalte => $art) {
+            if (!ovb_column_exists($pdo, 'events', $spalte)) {
+                $pdo->exec("ALTER TABLE events ADD COLUMN $spalte $art");
+            }
+        }
+    }
+    $merken('036_verpflegung');
 }
 
 /**

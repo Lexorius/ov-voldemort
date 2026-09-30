@@ -621,6 +621,13 @@ CREATE TABLE IF NOT EXISTS events (
   gaesteliste        TINYINT(1)   NOT NULL DEFAULT 1,
   teilnehmer_geplant SMALLINT UNSIGNED NULL,
   teilnehmer_ist     SMALLINT UNSIGNED NULL,
+  -- Verpflegung: Mahlzeiten je Person, Saetze stehen in den Einstellungen
+  verpflegung        TINYINT(1)   NOT NULL DEFAULT 0,
+  verpflegung_personen SMALLINT UNSIGNED NULL,
+  verpflegung_fruehstueck TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  verpflegung_mittag TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  verpflegung_abend  TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  verpflegung_notiz  VARCHAR(255) NOT NULL DEFAULT '',
   einladung_aktiv    TINYINT(1)   NOT NULL DEFAULT 0,
   angemeldet_am      DATETIME     NULL,
   notiz              TEXT         NULL,
