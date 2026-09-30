@@ -615,6 +615,115 @@ function verbrauch_stats_cached(int $jahr): array
 }
 
 /* ==================================================================== */
+/* Profil: wann wird verbraucht?                                         */
+/* ==================================================================== */
+
+/**
+ * Verbrauch je Wochentag und je Tagesstunde im Durchschnitt, aus der Kette
+ * der Stände zwischen $von und $bis. Jeder Abschnitt zwischen zwei
+ * Ablesungen wird gleichmäßig auf seine Stunden verteilt – bei stündlichen
+ * Ständen entsteht so eine echte Tageskurve, bei täglichen ein
+ * Wochenprofil, bei seltenen Ablesungen nur ein Mittelwert. Was davon
+ * aussagekräftig ist, sagt das Ergebnis mit. Reine Funktion.
+ */
+function verbrauch_profil(array $staende, int $von, int $bis): array
+{
+    $wochentage = array_fill(0, 7, 0.0);      // Mo = 0 … So = 6
+    $wtSekunden = array_fill(0, 7, 0.0);
+    $stunden = array_fill(0, 24, 0.0);
+    $stSekunden = array_fill(0, 24, 0.0);
+    $woche = [];                               // "tag-stunde" => Menge
+    $wocheSekunden = [];
+    $abschnitte = 0;
+    $abstaende = [];
+    $gesamtSekunden = 0.0;
+
+    $vor = null;
+    foreach ($staende as $s) {
+        $t = strtotime((string)$s['gelesen_am']);
+        if ($vor !== null) {
+            $t1 = max($vor['t'], $von);
+            $t2 = min($t, $bis);
+            $menge = (float)$s['stand'] - (float)$vor['stand'];
+            if ($t2 > $t1 && $t > $vor['t'] && $menge >= 0) {
+                $rate = $menge / ($t - $vor['t']);    // Menge je Sekunde, gleichmäßig
+                $abschnitte++;
+                $abstaende[] = (float)(($t - $vor['t']) / 3600);
+                // Stunde für Stunde durch den Abschnitt gehen (höchstens ein Jahr je Abschnitt)
+                $cursor = $t1;
+                $schritte = 0;
+                while ($cursor < $t2 && $schritte < 9000) {
+                    $stundenEnde = min($t2, (intdiv($cursor, 3600) + 1) * 3600);
+                    $dauer = $stundenEnde - $cursor;
+                    $h = (int)date('G', $cursor);
+                    $wt = ((int)date('N', $cursor)) - 1;
+                    $anteil = $rate * $dauer;
+                    $stunden[$h] += $anteil;
+                    $stSekunden[$h] += $dauer;
+                    $wochentage[$wt] += $anteil;
+                    $wtSekunden[$wt] += $dauer;
+                    $key = $wt . '-' . $h;
+                    $woche[$key] = ($woche[$key] ?? 0.0) + $anteil;
+                    $wocheSekunden[$key] = ($wocheSekunden[$key] ?? 0.0) + $dauer;
+                    $gesamtSekunden += $dauer;
+                    $cursor = $stundenEnde;
+                    $schritte++;
+                }
+            }
+        }
+        $vor = ['t' => $t, 'stand' => $s['stand']];
+    }
+    if ($abschnitte === 0) {
+        return ['abschnitte' => 0, 'tage' => 0.0, 'abstand_stunden' => 0.0, 'wochentage' => $wochentage, 'stunden' => $stunden,
+                'wochentage_aussagekraeftig' => false, 'stunden_aussagekraeftig' => false, 'spitze_tag' => 0, 'schwach_tag' => 0,
+                'spitzen_stunden' => [], 'spitzen_woche' => [], 'nacht_anteil' => 0];
+    }
+    // Durchschnitt: je Wochentag pro Tag, je Stunde pro Stunde
+    foreach ($wochentage as $i => $v) {
+        $wochentage[$i] = $wtSekunden[$i] > 0 ? $v / ($wtSekunden[$i] / 86400) : 0.0;
+    }
+    foreach ($stunden as $i => $v) {
+        $stunden[$i] = $stSekunden[$i] > 0 ? $v / ($stSekunden[$i] / 3600) : 0.0;
+    }
+    $wocheMittel = [];
+    foreach ($woche as $key => $v) {
+        [$wt, $h] = array_map('intval', explode('-', $key));
+        $wocheMittel[] = ['tag' => $wt, 'stunde' => $h, 'wert' => $wocheSekunden[$key] > 0 ? $v / ($wocheSekunden[$key] / 3600) : 0.0];
+    }
+    usort($wocheMittel, static fn($a, $b) => $b['wert'] <=> $a['wert']);
+    sort($abstaende);
+    $median = (float)$abstaende[intdiv(count($abstaende), 2)];
+
+    $stundenSortiert = [];
+    foreach ($stunden as $i => $v) {
+        $stundenSortiert[] = ['stunde' => $i, 'wert' => $v];
+    }
+    usort($stundenSortiert, static fn($a, $b) => $b['wert'] <=> $a['wert']);
+    $tagesSumme = array_sum($stunden);
+    $nacht = 0.0;
+    foreach ([22, 23, 0, 1, 2, 3, 4, 5] as $h) {
+        $nacht += $stunden[$h];
+    }
+    $spitzeTag = (int)array_search(max($wochentage), $wochentage, true);
+    $schwachTag = (int)array_search(min($wochentage), $wochentage, true);
+
+    return [
+        'abschnitte'      => $abschnitte,
+        'tage'            => $gesamtSekunden / 86400,
+        'abstand_stunden' => $median,
+        'wochentage'      => $wochentage,
+        'stunden'         => $stunden,
+        'wochentage_aussagekraeftig' => $median <= 26,
+        'stunden_aussagekraeftig'    => $median <= 2,
+        'spitze_tag'      => $spitzeTag,
+        'schwach_tag'     => $schwachTag,
+        'spitzen_stunden' => array_slice($stundenSortiert, 0, 3),
+        'spitzen_woche'   => array_slice($wocheMittel, 0, 3),
+        'nacht_anteil'    => $tagesSumme > 0 ? (int)round($nacht / $tagesSumme * 100) : 0,
+    ];
+}
+
+/* ==================================================================== */
 /* Berichte: je Zähler und für das ganze Jahr                            */
 /* ==================================================================== */
 
@@ -666,6 +775,7 @@ function verbrauch_zaehlerbericht(array $meter, array $tarife, int $jahr, ?int $
     $b['ablesungen'] = count(array_filter($staende, static fn($s) => substr((string)$s['gelesen_am'], 0, 4) === (string)$jahr));
     $letzter = $staende ? end($staende) : null;
     $b['letzter_stand'] = $letzter ? (float)$letzter['stand'] : null;
+    $b['profil'] = verbrauch_profil($staende, mktime(0, 0, 0, 1, 1, $jahr), min($jetzt, mktime(0, 0, 0, 1, 1, $jahr + 1)));
     return $b;
 }
 

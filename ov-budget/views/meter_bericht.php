@@ -57,6 +57,11 @@ echo render_partial('partials/bericht_kopf', [
 </div>
 
 <div class="abschnitt">
+  <h2>Wann wird verbraucht?</h2>
+  <?= render_partial('partials/verbrauch_profil', ['profil' => $b['profil'], 'einheit' => $einheit, 'farbe' => $a['color'], 'bericht' => true]) ?>
+</div>
+
+<div class="abschnitt">
   <h2>Monate im Einzelnen</h2>
   <table class="liste">
     <thead><tr><th>Monat</th><th class="num"><?= (int)$jahr ?></th><th class="num"><?= (int)$jahr - 1 ?></th>

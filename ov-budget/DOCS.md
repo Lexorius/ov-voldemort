@@ -395,7 +395,12 @@ Das Modul führt Zähler und ihre Stände und rechnet daraus Verbrauch und Koste
   (Knopf in der Übersicht) mit Kennzahlen je Art, Monatsbalken für Jahr und
   Vorjahr und einer Tabelle aller Zähler; der **Bericht je Zähler** (Knopf
   auf der Zählerseite) mit Verbrauch, Vorjahr, Kosten, Tagesdurchschnitt,
-  stärkstem Monat und der Monatstabelle. Im laufenden Jahr wird das Vorjahr
+  stärkstem Monat, der Monatstabelle und dem **Verbrauchsprofil**: der
+  Durchschnitt je Wochentag und je Tagesstunde, dazu der stärkste Wochentag,
+  die stärksten Stunden am Tag und die stärksten Zeiten in der Woche. Das
+  Profil steht auch auf der Zählerseite. Eine Tageskurve entsteht erst mit
+  stündlichen Ständen (Home Assistant), ein Wochenprofil ab einem Stand je
+  Tag; bei selteneren Ablesungen sagt die Seite das dazu. Im laufenden Jahr wird das Vorjahr
   bis zum selben Tag verglichen. Beide Seiten drucken sich sauber auf A4 –
   „Drucken / PDF" nutzt den Browserdruck.
 * **Rechte:** Sehen nur Leitung und Administration, per Einstellung alle

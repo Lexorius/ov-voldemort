@@ -51,6 +51,19 @@ $ovName = (string)setting('ov_name', '');
   table.liste .num, table.liste th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   tfoot td { border-top: 1.5px solid #003399; border-bottom: 0; font-weight: 700; }
   .klein { font-size: 8.5pt; color: #64748b; }
+  .profil { display: grid; grid-template-columns: 1fr 2fr; gap: 1.2rem; }
+  .profil__titel { font-size: 9pt; font-weight: 700; color: #475569; margin-bottom: .3rem; }
+  .profil__einheit { font-weight: 400; }
+  .profil__balken { display: grid; gap: 3px; height: 90px; align-items: end; border-bottom: 1px solid #cbd5e1; }
+  .profil__balken--tage { grid-template-columns: repeat(7, 1fr); }
+  .profil__balken--stunden { grid-template-columns: repeat(24, 1fr); gap: 1px; }
+  .profil__spalte { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; min-width: 0; }
+  .profil__stab { width: 70%; border-radius: 2px 2px 0 0; }
+  .profil__wert { font-size: 7pt; color: #475569; white-space: nowrap; }
+  .profil__name { font-size: 7.5pt; color: #64748b; margin-top: 2px; }
+  .profil__name--spitze { font-weight: 700; color: #111827; }
+  table.eck, dl.eck { font-size: 9.5pt; }
+  dl.eck .dl__item { margin: .25rem 0; } dl.eck .dl__label { font-size: 8pt; text-transform: uppercase; color: #64748b; }
   .abschnitt { break-inside: avoid; }
   .fuss { margin-top: 1.4rem; font-size: 8.5pt; color: #64748b; display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: .4rem; }
   .leiste { position: fixed; top: 1rem; right: 7.5rem; font-size: 9pt; }

@@ -1,5 +1,18 @@
 # Änderungsverlauf
 
+## 2.0.7.0
+
+### Verbrauch: Wann wird verbraucht?
+
+- Je Zähler ein **Profil**: Durchschnitt je Wochentag und je Tagesstunde
+  als Balken, dazu der stärkste und schwächste Wochentag, die drei stärksten
+  Stunden am Tag, der Nachtanteil und die drei stärksten Zeiten in der Woche
+  (etwa „Di 18–19 Uhr"). Auf der Zählerseite und im Bericht.
+- Jeder Abschnitt zwischen zwei Ablesungen wird gleichmäßig auf seine
+  Stunden verteilt. Stündliche Stände aus Home Assistant ergeben eine echte
+  Tageskurve, tägliche ein Wochenprofil; bei selteneren Ablesungen sagt die
+  Seite, dass innerhalb des Tages oder der Woche nur gemittelt wird.
+
 ## 2.0.6.0
 
 ### Verbrauch: Berichte je Zähler und fürs Jahr

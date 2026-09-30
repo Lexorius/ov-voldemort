@@ -34,6 +34,7 @@ render('meter', [
     'monate'     => verbrauch_monate($staende, $jahr),
     'kosten'     => verbrauch_kosten_jahr($staende, $tarife, $meter, $jahr),
     'abschnitte' => array_reverse(array_slice(verbrauch_abschnitte($staende), -12)),
+    'profil'     => verbrauch_profil($staende, mktime(0, 0, 0, 1, 1, $jahr), min(time(), mktime(0, 0, 0, 1, 1, $jahr + 1))),
     'tarifHeute' => tarif_am($tarife, (string)$meter['art'], date('Y-m-d')),
     'alter'      => meter_stand_alter($meter),
     'haFehler'   => (string)$meter['quelle'] === 'ha' ? state_get('verbrauch_ha_fehler_' . (int)$meter['id'], '') : '',

@@ -1,6 +1,6 @@
 <?php
 /** @var array $meter @var int $jahr @var array $jahre @var array $staende @var array $monate
- *  @var array $kosten @var array $abschnitte @var ?array $tarifHeute @var array $alter
+ *  @var array $kosten @var array $abschnitte @var ?array $tarifHeute @var array $alter @var array $profil
  *  @var string $haFehler @var ?array $connector @var array $zaehlerConnectoren */
 $darf = can('manage_verbrauch');
 $darfAblesen = can('read_meter');
@@ -145,6 +145,14 @@ $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Se
     <?php endif; ?>
   </section>
 </div>
+
+<section class="card">
+  <div class="card__head">
+    <h2>Wann wird verbraucht?</h2>
+    <span class="muted small"><?= (int)$jahr ?></span>
+  </div>
+  <?= render_partial('partials/verbrauch_profil', ['profil' => $profil, 'einheit' => $einheit, 'farbe' => $a['color'], 'bericht' => false]) ?>
+</section>
 
 <?php if ($abschnitte): ?>
 <section class="card">
