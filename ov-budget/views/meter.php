@@ -1,6 +1,6 @@
 <?php
 /** @var array $meter @var int $jahr @var array $jahre @var array $staende @var array $monate
- *  @var array $kosten @var array $abschnitte @var ?array $tarifHeute @var array $alter @var array $profil
+ *  @var array $kosten @var array $abschnitte @var ?array $tarifHeute @var array $alter @var array $profil @var array $unterzaehler
  *  @var string $haFehler @var ?array $connector @var array $zaehlerConnectoren */
 $darf = can('manage_verbrauch');
 $darfAblesen = can('read_meter');
@@ -19,6 +19,11 @@ $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Se
       <?php if ((int)$meter['is_active'] !== 1): ?><span class="badge badge--muted">stillgelegt</span><?php endif; ?>
       <?= trim((string)$meter['zaehlernummer']) !== '' ? ' · Nr. ' . e((string)$meter['zaehlernummer']) : '' ?>
       <?= trim((string)$meter['standort']) !== '' ? ' · ' . e((string)$meter['standort']) : '' ?>
+      <?php $rolle = (string)($meter['rolle'] ?? 'bezug'); if ($rolle === 'unter'): ?>
+        · Unterzähler von <?php if ($meter['parent_id']): ?><a href="<?= e(url('meter', ['id' => $meter['parent_id'], 'jahr' => $jahr])) ?>"><?= e((string)$meter['parent_name']) ?></a><?php else: ?>–<?php endif; ?>
+      <?php elseif ($rolle !== 'bezug'): ?>
+        · <?= e(explode(' – ', METER_ROLLEN[$rolle])[0]) ?>
+      <?php endif; ?>
       · Quelle: <?= e(METER_QUELLEN[(string)$meter['quelle']] ?? '') ?>
       <?= (string)$meter['quelle'] === 'ha' ? '<span class="mono small">(' . e((string)$meter['ha_entity']) . ')</span>' : '' ?>
     </p>
@@ -52,15 +57,23 @@ $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Se
     <div class="stat__value"><?= e(menge($summeJahr, '', 0)) ?> <span class="small muted"><?= e($einheit) ?></span></div>
     <div class="stat__hint"><?= (int)$meter['ablesungen'] ?> Ablesungen gesamt</div>
   </div>
+  <?php $tarifArt = meter_tarif_art($meter); if ($tarifArt === null): ?>
   <div class="stat">
-    <div class="stat__label">Kosten <?= (int)$jahr ?></div>
+    <div class="stat__label">Kosten</div>
+    <div class="stat__value muted">–</div>
+    <div class="stat__hint"><?= (string)$meter['rolle'] === 'unter' ? 'steckt im Hauptzähler' : 'Erzeugung trägt keine Kosten' ?></div>
+  </div>
+  <?php else: ?>
+  <div class="stat">
+    <div class="stat__label"><?= $tarifArt === 'einspeisung' ? 'Erlös' : 'Kosten' ?> <?= (int)$jahr ?></div>
     <div class="stat__value"><?= e(money($kosten['gesamt'], false)) ?></div>
     <div class="stat__hint"><?= $kosten['ohne_tarif'] > 0
         ? '<span style="color:var(--warn)">' . (int)$kosten['ohne_tarif'] . ' Monat(e) ohne Tarif</span>'
-        : ($tarifHeute ? 'Tarif: ' . e((string)$tarifHeute['name']) : '<a href="' . e(url('tarif_edit', ['art' => $meter['art']])) . '">Tarif anlegen</a>') ?></div>
+        : ($tarifHeute ? 'Tarif: ' . e((string)$tarifHeute['name']) : '<a href="' . e(url('tarif_edit', ['art' => $tarifArt])) . '">Tarif anlegen</a>') ?></div>
   </div>
+  <?php endif; ?>
   <div class="stat">
-    <div class="stat__label">Tarif heute</div>
+    <div class="stat__label"><?= $tarifArt === 'einspeisung' ? 'Vergütung heute' : 'Tarif heute' ?></div>
     <div class="stat__value" style="font-size:1.1rem"><?= $tarifHeute
         ? e(number_format((float)$tarifHeute['arbeitspreis'], 4, ',', '.')) . ' €/' . e((string)$tarifHeute['einheit'])
         : '–' ?></div>
@@ -145,6 +158,36 @@ $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Se
     <?php endif; ?>
   </section>
 </div>
+
+<?php if (!empty($unterzaehler['liste'])): ?>
+<section class="card">
+  <div class="card__head">
+    <h2>Aufteilung auf Unterzähler</h2>
+    <span class="muted small"><?= (int)$jahr ?></span>
+  </div>
+  <div class="tablewrap">
+    <table class="data">
+      <thead><tr><th>Unterzähler</th><th>Standort</th><th class="num">Verbrauch</th><th class="num">Anteil</th></tr></thead>
+      <tbody>
+      <?php foreach ($unterzaehler['liste'] as $u): ?>
+        <tr<?= (int)$u['is_active'] !== 1 ? ' class="is-muted"' : '' ?>>
+          <td><a href="<?= e(url('meter', ['id' => $u['id'], 'jahr' => $jahr])) ?>"><?= e((string)$u['name']) ?></a></td>
+          <td class="small"><?= e((string)$u['standort']) ?></td>
+          <td class="num"><?= e(menge($u['jahr'], $einheit)) ?></td>
+          <td class="num"><?= $u['anteil'] === null ? '–' : e(number_format($u['anteil'], 1, ',', '.')) . ' %' ?></td>
+        </tr>
+      <?php endforeach; ?>
+        <tr>
+          <td class="muted">nicht zugeordnet</td><td></td>
+          <td class="num muted"><?= e(menge($unterzaehler['rest'], $einheit)) ?></td>
+          <td class="num muted"><?= $unterzaehler['hauptzaehler'] > 0 ? e(number_format($unterzaehler['rest'] / $unterzaehler['hauptzaehler'] * 100, 1, ',', '.')) . ' %' : '–' ?></td>
+        </tr>
+      </tbody>
+      <tfoot><tr><th>Hauptzähler</th><th></th><th class="num"><?= e(menge($unterzaehler['hauptzaehler'], $einheit)) ?></th><th class="num">100 %</th></tr></tfoot>
+    </table>
+  </div>
+</section>
+<?php endif; ?>
 
 <section class="card">
   <div class="card__head">

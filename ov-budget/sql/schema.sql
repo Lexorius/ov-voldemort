@@ -830,6 +830,9 @@ CREATE TABLE IF NOT EXISTS sims (
 CREATE TABLE IF NOT EXISTS meters (
   id              INT UNSIGNED  NOT NULL AUTO_INCREMENT,
   art             ENUM('strom','gas','wasser') NOT NULL DEFAULT 'strom',
+  -- bezug = Hauptzaehler, unter = Teil eines Hauptzaehlers, erzeugung/einspeisung = Solar
+  rolle           ENUM('bezug','unter','erzeugung','einspeisung') NOT NULL DEFAULT 'bezug',
+  parent_id       INT UNSIGNED  NULL,
   name            VARCHAR(150)  NOT NULL,
   zaehlernummer   VARCHAR(80)   NOT NULL DEFAULT '',
   standort        VARCHAR(150)  NOT NULL DEFAULT '',
@@ -850,6 +853,7 @@ CREATE TABLE IF NOT EXISTS meters (
   KEY idx_meter_art (art, is_active),
   KEY idx_meter_qr (qr_token),
   CONSTRAINT fk_meter_con FOREIGN KEY (qr_connector_id) REFERENCES connectors(id) ON DELETE SET NULL,
+  CONSTRAINT fk_meter_parent FOREIGN KEY (parent_id)   REFERENCES meters(id)     ON DELETE SET NULL,
   CONSTRAINT fk_meter_cb  FOREIGN KEY (created_by)      REFERENCES users(id)      ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -872,7 +876,7 @@ CREATE TABLE IF NOT EXISTS meter_readings (
 
 CREATE TABLE IF NOT EXISTS tariffs (
   id               INT UNSIGNED  NOT NULL AUTO_INCREMENT,
-  art              ENUM('strom','gas','wasser') NOT NULL DEFAULT 'strom',
+  art              ENUM('strom','gas','wasser','einspeisung') NOT NULL DEFAULT 'strom',
   name             VARCHAR(150)  NOT NULL,
   anbieter         VARCHAR(150)  NOT NULL DEFAULT '',
   gueltig_von      DATE          NOT NULL,

@@ -34,7 +34,7 @@ if (!$meter) {
     $art = meter_art(get_str('art', 'strom'));
     $meter = [
         'id' => null, 'art' => $art, 'name' => '', 'zaehlernummer' => '', 'standort' => '',
-        'einheit' => METER_ARTEN[$art]['einheit'], 'umrechnung' => 1, 'quelle' => 'manuell',
+        'einheit' => METER_ARTEN[$art]['einheit'], 'umrechnung' => 1, 'quelle' => 'manuell', 'rolle' => 'bezug', 'parent_id' => null,
         'ha_entity' => '', 'ha_faktor' => 1, 'notiz' => '', 'is_active' => 1,
     ];
 }
@@ -54,4 +54,6 @@ render('meter_edit', [
     'errors'     => $errors,
     'entitaeten' => $entitaeten,
     'haHinweis'  => $haHinweis,
+    'hauptzaehler' => array_values(array_filter(meter_query(['aktiv' => 'alle']),
+        static fn($h) => (string)($h['rolle'] ?? 'bezug') === 'bezug' && (int)$h['id'] !== (int)($meter['id'] ?? 0))),
 ]);

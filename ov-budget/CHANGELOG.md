@@ -1,5 +1,21 @@
 # Änderungsverlauf
 
+## 2.0.8.0
+
+### Verbrauch: Unterzähler und Solaranlage
+
+- Jeder Zähler hat eine **Rolle**: Hauptzähler (Bezug), **Unterzähler**
+  eines Hauptzählers, **Erzeugung** oder **Einspeisung** einer Solaranlage.
+- **Unterzähler** messen Stockwerke oder Hallen, tragen keine eigenen
+  Kosten und zählen nicht doppelt. Die Übersicht zeigt ihren Anteil am
+  Hauptzähler, die Seite des Hauptzählers die Aufteilung samt Rest.
+- **Solar:** Aus Erzeugung und Einspeisung rechnet die Übersicht
+  Eigenverbrauch, Gesamtverbrauch und Autarkie. Ein Tarif der neuen Art
+  **Einspeisevergütung** weist den Erlös aus und zieht ihn von den Kosten
+  ab. Jahresbericht und MQTT (Erzeugung, Einspeisung, Autarkie) ziehen mit.
+- **Verbrauchsprofil:** Die Achsenbeschriftung liegt jetzt unter der
+  Grundlinie, alle Balken stehen auf derselben Höhe.
+
 ## 2.0.7.0
 
 ### Verbrauch: Wann wird verbraucht?

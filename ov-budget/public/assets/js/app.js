@@ -408,6 +408,18 @@
     });
   }
 
+  // Zähler: Hauptzähler-Feld nur bei der Rolle Unterzähler
+  var rolleWahl = document.querySelector('select[data-rolle]');
+  if (rolleWahl) {
+    var zeigeRolle = function () {
+      document.querySelectorAll('[data-rolle-block]').forEach(function (b) {
+        b.hidden = b.getAttribute('data-rolle-block') !== rolleWahl.value;
+      });
+    };
+    rolleWahl.addEventListener('change', zeigeRolle);
+    zeigeRolle();
+  }
+
   // Zähler: Block für Home Assistant nur bei dieser Quelle, Auswahl ins Textfeld
   var quelleRadios = document.querySelectorAll('[data-schalter-radio="quelle"]');
   if (quelleRadios.length) {

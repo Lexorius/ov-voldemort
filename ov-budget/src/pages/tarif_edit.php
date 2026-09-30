@@ -31,14 +31,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if (!$tarif) {
-    $art = meter_art(get_str('art', 'strom'));
+    $art = tarif_art(get_str('art', 'strom'));
     // Ein neuer Tarif beginnt meist, wo der bisherige endet
     $letzter = tarif_am(tarif_query($art), $art, date('Y-m-d'));
     $tarif = [
         'id' => null, 'art' => $art, 'name' => '', 'anbieter' => (string)($letzter['anbieter'] ?? ''),
         'gueltig_von' => date('Y-01-01'), 'gueltig_bis' => null,
         'arbeitspreis' => $letzter['arbeitspreis'] ?? '', 'grundpreis_monat' => $letzter['grundpreis_monat'] ?? '',
-        'einheit' => (string)($letzter['einheit'] ?? ($art === 'gas' ? 'kWh' : METER_ARTEN[$art]['einheit'])),
+        'einheit' => (string)($letzter['einheit'] ?? TARIF_ARTEN[$art]['einheit']),
         'notiz' => '',
     ];
 }

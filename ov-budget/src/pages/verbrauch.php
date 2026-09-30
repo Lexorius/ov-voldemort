@@ -28,6 +28,14 @@ foreach ($meters as $m) {
         'ha_fehler' => (string)$m['quelle'] === 'ha' ? state_get('verbrauch_ha_fehler_' . (int)$m['id'], '') : '',
     ];
 }
+// Anteil der Unterzähler an ihrem Hauptzähler
+$mengen = [];
+foreach ($karten as $mid => $k) {
+    $mengen[$mid] = (float)($k['jahr'] ?? 0);
+}
+foreach (verbrauch_anteile($meters, $mengen) as $mid => $anteil) {
+    $karten[$mid]['anteil'] = $anteil;
+}
 
 $jahre = verbrauch_jahre();
 if (!in_array($jahr, $jahre, true)) {

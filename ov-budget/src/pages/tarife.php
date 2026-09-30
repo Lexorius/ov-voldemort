@@ -10,7 +10,7 @@ if (!can('view_verbrauch')) {
 $heute = date('Y-m-d');
 $tarife = tarif_query();
 $jeArt = [];
-foreach (METER_ARTEN as $key => $a) {
+foreach (TARIF_ARTEN as $key => $a) {
     $jeArt[$key] = ['aktuell' => tarif_am($tarife, $key, $heute), 'liste' => []];
 }
 foreach ($tarife as $t) {

@@ -60,7 +60,10 @@ $ovName = (string)setting('ov_name', '');
   .profil__spalte { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; min-width: 0; }
   .profil__stab { width: 70%; border-radius: 2px 2px 0 0; }
   .profil__wert { font-size: 7pt; color: #475569; white-space: nowrap; }
-  .profil__name { font-size: 7.5pt; color: #64748b; margin-top: 2px; }
+  .profil__achse { display: grid; gap: 3px; margin-top: 2px; }
+  .profil__achse--tage { grid-template-columns: repeat(7, 1fr); }
+  .profil__achse--stunden { grid-template-columns: repeat(24, 1fr); gap: 1px; }
+  .profil__name { font-size: 7.5pt; color: #64748b; text-align: center; min-height: 1em; }
   .profil__name--spitze { font-weight: 700; color: #111827; }
   table.eck, dl.eck { font-size: 9.5pt; }
   dl.eck .dl__item { margin: .25rem 0; } dl.eck .dl__label { font-size: 8pt; text-transform: uppercase; color: #64748b; }

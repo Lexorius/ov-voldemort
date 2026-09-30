@@ -1274,6 +1274,23 @@ SQL);
         $pdo->exec('ALTER TABLE events ADD COLUMN verpflegung_tage TEXT NULL AFTER verpflegung_notiz');
     }
     $merken('038_verpflegung_tage');
+
+    /* ---------- 039: Zaehlerrollen (Unterzaehler, Solar) und Einspeiseverguetung ---------- */
+    if (ovb_table_exists($pdo, 'meters')) {
+        if (!ovb_column_exists($pdo, 'meters', 'rolle')) {
+            $pdo->exec("ALTER TABLE meters ADD COLUMN rolle ENUM('bezug','unter','erzeugung','einspeisung') NOT NULL DEFAULT 'bezug' AFTER art");
+        }
+        if (!ovb_column_exists($pdo, 'meters', 'parent_id')) {
+            $pdo->exec('ALTER TABLE meters ADD COLUMN parent_id INT UNSIGNED NULL AFTER rolle');
+        }
+        if (!ovb_constraint_exists($pdo, 'meters', 'fk_meter_parent')) {
+            $pdo->exec('ALTER TABLE meters ADD CONSTRAINT fk_meter_parent FOREIGN KEY (parent_id) REFERENCES meters(id) ON DELETE SET NULL');
+        }
+    }
+    if (ovb_table_exists($pdo, 'tariffs')) {
+        $pdo->exec("ALTER TABLE tariffs MODIFY art ENUM('strom','gas','wasser','einspeisung') NOT NULL DEFAULT 'strom'");
+    }
+    $merken('039_zaehler_rollen');
 }
 
 /**

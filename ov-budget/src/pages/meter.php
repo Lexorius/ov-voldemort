@@ -35,9 +35,10 @@ render('meter', [
     'kosten'     => verbrauch_kosten_jahr($staende, $tarife, $meter, $jahr),
     'abschnitte' => array_reverse(array_slice(verbrauch_abschnitte($staende), -12)),
     'profil'     => verbrauch_profil($staende, mktime(0, 0, 0, 1, 1, $jahr), min(time(), mktime(0, 0, 0, 1, 1, $jahr + 1))),
-    'tarifHeute' => tarif_am($tarife, (string)$meter['art'], date('Y-m-d')),
+    'tarifHeute' => meter_tarif_art($meter) ? tarif_am($tarife, (string)meter_tarif_art($meter), date('Y-m-d')) : null,
     'alter'      => meter_stand_alter($meter),
     'haFehler'   => (string)$meter['quelle'] === 'ha' ? state_get('verbrauch_ha_fehler_' . (int)$meter['id'], '') : '',
     'connector'  => connector_find((int)($meter['qr_connector_id'] ?? 0)),
+    'unterzaehler' => (int)($meter['unterzaehler'] ?? 0) > 0 ? meter_unterzaehler_mit_anteil($meter, $jahr) : [],
     'zaehlerConnectoren' => can('manage_verbrauch') ? connector_liste('verbrauch') : [],
 ]);

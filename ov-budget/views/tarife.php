@@ -13,7 +13,7 @@ $darf = can('manage_verbrauch');
   </div>
 </div>
 
-<?php foreach (METER_ARTEN as $key => $a): $block = $jeArt[$key]; ?>
+<?php foreach (TARIF_ARTEN as $key => $a): $block = $jeArt[$key]; ?>
   <section class="card" style="border-left:4px solid <?= e($a['color']) ?>">
     <div class="card__head">
       <h2><?= e($a['label']) ?></h2>

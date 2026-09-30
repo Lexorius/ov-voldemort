@@ -36,12 +36,20 @@ $darfAblesen = can('read_meter');
           : 'kein Zähler' ?></div>
     </div>
   <?php endforeach; ?>
+  <?php if ($stats['solar']['vorhanden']): $so = $stats['solar']; ?>
+    <div class="stat">
+      <div class="stat__label">Solar <?= (int)$jahr ?></div>
+      <div class="stat__value" style="color:#ca8a04"><?= e(menge($so['erzeugung'], '', 0)) ?> <span class="small muted">kWh erzeugt</span></div>
+      <div class="stat__hint"><?= e(menge($so['einspeisung'], 'kWh', 0)) ?> eingespeist · <?= e(menge($so['eigenverbrauch'], 'kWh', 0)) ?> selbst genutzt
+        · Autarkie <?= (int)$so['autarkie'] ?> %<?= $so['erloes'] > 0 ? ' · Erlös ' . e(money($so['erloes'])) : '' ?></div>
+    </div>
+  <?php endif; ?>
   <div class="stat">
     <div class="stat__label">Kosten <?= (int)$jahr ?></div>
     <div class="stat__value"><?= e(money($stats['kosten_jahr'], false)) ?></div>
     <div class="stat__hint"><?= $stats['ohne_tarif'] > 0
         ? '<span style="color:var(--warn)">' . (int)$stats['ohne_tarif'] . ' Zähler ohne Tarif</span>'
-        : 'nach den hinterlegten Tarifen' ?></div>
+        : ($stats['erloes_jahr'] > 0 ? 'abzüglich Erlös ' . e(money($stats['erloes_jahr'])) . ' = ' . e(money($stats['kosten_jahr'] - $stats['erloes_jahr'])) : 'nach den hinterlegten Tarifen') ?></div>
   </div>
 </div>
 
@@ -90,6 +98,10 @@ $darfAblesen = can('read_meter');
         <h2><a href="<?= e(url('meter', ['id' => $m['id']])) ?>"><?= e((string)$m['name']) ?></a></h2>
         <span class="small">
           <?= badge(['label' => $a['label'], 'color' => $a['color']]) ?>
+          <?php $rolle = (string)($m['rolle'] ?? 'bezug'); if ($rolle === 'unter'): ?>
+            <span class="badge badge--outline">Unterzähler<?= !empty($m['parent_name']) ? ' von ' . e((string)$m['parent_name']) : '' ?></span>
+          <?php elseif ($rolle === 'erzeugung'): ?><span class="badge" style="background:#ca8a04">Erzeugung</span>
+          <?php elseif ($rolle === 'einspeisung'): ?><span class="badge" style="background:#ca8a04">Einspeisung</span><?php endif; ?>
           <?php if ((int)$m['is_active'] !== 1): ?><span class="badge badge--muted">stillgelegt</span><?php endif; ?>
           <?php if ((string)$m['quelle'] === 'ha'): ?><span class="badge badge--outline">Home Assistant</span><?php endif; ?>
           <?php if (trim((string)$m['qr_token']) !== ''): ?><span class="badge badge--outline">QR</span><?php endif; ?>
@@ -116,7 +128,8 @@ $darfAblesen = can('read_meter');
           <div class="dl__value"><?= $k['tage30'] === null ? '<span class="muted">–</span>' : e(menge($k['tage30'], (string)$m['einheit'])) ?></div></div>
         <div class="dl__item"><div class="dl__label"><?= (int)$jahr ?></div>
           <div class="dl__value"><?= $k['jahr'] === null ? '<span class="muted">–</span>' : e(menge($k['jahr'], (string)$m['einheit'])) ?>
-            <?php if ($k['kosten'] > 0): ?><span class="muted small">· <?= e(money($k['kosten'])) ?></span><?php endif; ?>
+            <?php if (isset($k['anteil']) && $k['anteil'] !== null): ?><span class="muted small">· <?= e(number_format($k['anteil'], 1, ',', '.')) ?> % des Hauptzählers</span><?php endif; ?>
+            <?php if ($k['kosten'] > 0): ?><span class="muted small">· <?= (string)($m['rolle'] ?? '') === 'einspeisung' ? 'Erlös ' : '' ?><?= e(money($k['kosten'])) ?></span><?php endif; ?>
             <?php if ($k['ohne_tarif'] > 0): ?><span class="small" style="color:var(--warn)">· Monate ohne Tarif</span><?php endif; ?>
           </div></div>
       </dl>

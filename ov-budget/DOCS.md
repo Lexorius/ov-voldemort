@@ -372,6 +372,17 @@ Das Modul führt Zähler und ihre Stände und rechnet daraus Verbrauch und Koste
 * **Zähler:** Art (Strom, Gas, Wasser), Name, Zählernummer, Standort, Einheit
   des Zählers. Für Gas zusätzlich eine **Umrechnung** m³ → kWh (Brennwert ×
   Zustandszahl, meist rund 10), wenn der Tarif je kWh gilt.
+* **Rolle je Zähler:** Ein **Hauptzähler** misst den Bezug vom Versorger.
+  Ein **Unterzähler** misst einen Teil davon (Stockwerk, Halle) – er hat
+  keine eigenen Kosten und zählt nicht doppelt; die Zählerseite des
+  Hauptzählers zeigt die Aufteilung mit Anteilen und dem nicht zugeordneten
+  Rest. Für eine **Solaranlage** gibt es die Rollen **Erzeugung** (was der
+  Wechselrichter liefert) und **Einspeisung** (was ins Netz zurückgeht,
+  Zählwerk 2.8.0). Daraus rechnet die Übersicht: Eigenverbrauch = Erzeugung
+  − Einspeisung, Gesamtverbrauch = Bezug + Eigenverbrauch, Autarkie =
+  Eigenverbrauch / Gesamtverbrauch. Mit einem Tarif der Art
+  **Einspeisevergütung** wird der Erlös ausgewiesen und von den Kosten
+  abgezogen.
 * **Quelle je Zähler:**
   * **Home Assistant** – eine Entität aus der Liste wählen (Sensoren mit
     Energie-, Gas- oder Wassereinheit) oder die Kennung eintippen. Der Abruf

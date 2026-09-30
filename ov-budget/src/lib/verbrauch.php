@@ -20,6 +20,20 @@ const METER_ARTEN = [
     'wasser' => ['label' => 'Wasser', 'einheit' => 'm³',  'color' => '#0e7490', 'icon' => 'wasser'],
 ];
 const METER_QUELLEN = ['manuell' => 'von Hand', 'ha' => 'Home Assistant'];
+/** Was ein Zähler misst: den Bezug (Hauptzähler), einen Teil davon, die Solarerzeugung, die Einspeisung */
+const METER_ROLLEN = [
+    'bezug'       => 'Hauptzähler – Bezug vom Versorger',
+    'unter'       => 'Unterzähler – misst einen Teil eines Hauptzählers (Stockwerk, Halle …)',
+    'erzeugung'   => 'Erzeugung – was die Solaranlage liefert (Wechselrichter)',
+    'einspeisung' => 'Einspeisung – was ins Netz zurückgeht (Zählwerk 2.8.0)',
+];
+/** Tarife gibt es je Art, dazu die Einspeisevergütung */
+const TARIF_ARTEN = [
+    'strom'       => ['label' => 'Strom', 'einheit' => 'kWh', 'color' => '#b45309'],
+    'gas'         => ['label' => 'Gas', 'einheit' => 'kWh', 'color' => '#0369a1'],
+    'wasser'      => ['label' => 'Wasser', 'einheit' => 'm³', 'color' => '#0e7490'],
+    'einspeisung' => ['label' => 'Einspeisevergütung', 'einheit' => 'kWh', 'color' => '#ca8a04'],
+];
 const READING_QUELLEN = ['manuell' => 'von Hand', 'ha' => 'Home Assistant', 'qr' => 'QR-Code'];
 /** Tage ohne Stand, ab denen ein Zähler als vernachlässigt gilt */
 const METER_WARN_TAGE = 35;
@@ -28,6 +42,32 @@ const METER_WARN_TAGE = 35;
 function meter_art(string $art): string
 {
     return array_key_exists($art, METER_ARTEN) ? $art : 'strom';
+}
+
+function meter_rolle(string $rolle): string
+{
+    return array_key_exists($rolle, METER_ROLLEN) ? $rolle : 'bezug';
+}
+
+function tarif_art(string $art): string
+{
+    return array_key_exists($art, TARIF_ARTEN) ? $art : 'strom';
+}
+
+/** Welcher Tarif für einen Zähler gilt – oder null, wenn er keine Kosten trägt. Reine Funktion. */
+function meter_tarif_art(array $meter): ?string
+{
+    return match ((string)($meter['rolle'] ?? 'bezug')) {
+        'unter', 'erzeugung' => null,
+        'einspeisung'        => 'einspeisung',
+        default              => meter_art((string)($meter['art'] ?? 'strom')),
+    };
+}
+
+/** Zählt der Zähler zum Verbrauch der Art? Unterzähler und Solar nicht – sonst wäre es doppelt. Reine Funktion. */
+function meter_zaehlt(array $meter): bool
+{
+    return (string)($meter['rolle'] ?? 'bezug') === 'bezug';
 }
 
 /** Menge lesbar: 1.234,5 kWh. Reine Funktion. */
@@ -46,7 +86,8 @@ function menge(float|int|string|null $v, string $einheit = '', int $dezimal = 1)
 
 function meter_select(): string
 {
-    return 'SELECT m.*, c.name AS connector_name,
+    return 'SELECT m.*, c.name AS connector_name, p.name AS parent_name,
+                   (SELECT COUNT(*) FROM meters u WHERE u.parent_id = m.id AND u.is_active = 1) AS unterzaehler,
                    (SELECT r.stand FROM meter_readings r WHERE r.meter_id = m.id
                      ORDER BY r.gelesen_am DESC, r.id DESC LIMIT 1) AS letzter_stand,
                    (SELECT r.gelesen_am FROM meter_readings r WHERE r.meter_id = m.id
@@ -55,7 +96,8 @@ function meter_select(): string
                      ORDER BY r.gelesen_am DESC, r.id DESC LIMIT 1) AS letzte_quelle,
                    (SELECT COUNT(*) FROM meter_readings r WHERE r.meter_id = m.id) AS ablesungen
             FROM meters m
-            LEFT JOIN connectors c ON c.id = m.qr_connector_id';
+            LEFT JOIN connectors c ON c.id = m.qr_connector_id
+            LEFT JOIN meters p ON p.id = m.parent_id';
 }
 
 /** $f: art, aktiv ('alle'), q */
@@ -76,7 +118,7 @@ function meter_query(array $f = []): array
         array_push($p, $like, $like, $like);
     }
     return db_all(meter_select() . ($w ? ' WHERE ' . implode(' AND ', $w) : '')
-        . ' ORDER BY m.is_active DESC, m.art, m.name', $p);
+        . ' ORDER BY m.is_active DESC, m.art, COALESCE(m.parent_id, m.id), m.parent_id IS NOT NULL, m.name', $p);
 }
 
 function meter_find(int $id): ?array
@@ -102,6 +144,25 @@ function meter_save_from_post(?array $existing, array $user): array
             $errors[] = 'Die Entität sieht nicht richtig aus – erwartet wird etwa sensor.strom_gesamt.';
         }
     }
+    $rolle = meter_rolle(post_str('rolle', (string)($existing['rolle'] ?? 'bezug')));
+    if (in_array($rolle, ['erzeugung', 'einspeisung'], true)) {
+        $art = 'strom';   // Solar gibt es nur bei Strom
+    }
+    $parentId = null;
+    if ($rolle === 'unter') {
+        $parent = meter_find(post_int('parent_id', 0) ?? 0);
+        if (!$parent) {
+            $errors[] = 'Ein Unterzähler braucht einen Hauptzähler, dessen Teil er misst.';
+        } elseif ($existing && (int)$parent['id'] === (int)$existing['id']) {
+            $errors[] = 'Ein Zähler kann nicht sein eigener Hauptzähler sein.';
+        } elseif ((string)$parent['rolle'] !== 'bezug') {
+            $errors[] = 'Der Hauptzähler muss selbst ein Hauptzähler sein – kein Unterzähler, keine Solarzählung.';
+        } elseif ((string)$parent['art'] !== $art) {
+            $errors[] = 'Haupt- und Unterzähler müssen dieselbe Art haben.';
+        } else {
+            $parentId = (int)$parent['id'];
+        }
+    }
     $einheit = mb_substr(post_str('einheit') ?: METER_ARTEN[$art]['einheit'], 0, 10);
     $umrechnung = post_dec('umrechnung', 1.0);
     if ($umrechnung <= 0) {
@@ -117,6 +178,8 @@ function meter_save_from_post(?array $existing, array $user): array
 
     $data = [
         'art'           => $art,
+        'rolle'         => $rolle,
+        'parent_id'     => $parentId,
         'name'          => mb_substr($name, 0, 150),
         'zaehlernummer' => mb_substr(post_str('zaehlernummer'), 0, 80),
         'standort'      => mb_substr(post_str('standort'), 0, 150),
@@ -157,6 +220,32 @@ function meter_stand_alter(array $meter, ?string $jetzt = null): array
     }
     $tage = (int)floor((strtotime($jetzt ?? date('Y-m-d H:i:s')) - strtotime($letzte)) / 86400);
     return ['stufe' => $tage > METER_WARN_TAGE ? 'alt' : 'frisch', 'tage' => $tage];
+}
+
+/** Unterzähler eines Hauptzählers mit ihrem Anteil im Jahr */
+function meter_unterzaehler_mit_anteil(array $parent, int $jahr): array
+{
+    $kinder = db_all(meter_select() . ' WHERE m.parent_id = ? ORDER BY m.is_active DESC, m.name', [(int)$parent['id']]);
+    if (!$kinder) {
+        return [];
+    }
+    $jetzt = time();
+    $anfang = mktime(0, 0, 0, 1, 1, $jahr);
+    $ende = min($jetzt, mktime(0, 0, 0, 1, 1, $jahr + 1));
+    [$von, $bis] = verbrauch_zeitraum($jahr, $jetzt);
+    $mengen = [(int)$parent['id'] => (float)(verbrauch_zwischen(readings_bereich((int)$parent['id'], $von, $bis), $anfang, $ende) ?? 0)];
+    foreach ($kinder as $k) {
+        $mengen[(int)$k['id']] = (float)(verbrauch_zwischen(readings_bereich((int)$k['id'], $von, $bis), $anfang, $ende) ?? 0);
+    }
+    $anteile = verbrauch_anteile($kinder, $mengen);
+    $rest = $mengen[(int)$parent['id']];
+    foreach ($kinder as &$k) {
+        $k['jahr'] = $mengen[(int)$k['id']];
+        $k['anteil'] = $anteile[(int)$k['id']] ?? null;
+        $rest -= $k['jahr'];
+    }
+    unset($k);
+    return ['liste' => $kinder, 'hauptzaehler' => $mengen[(int)$parent['id']], 'rest' => max(0.0, $rest)];
 }
 
 /* ==================================================================== */
@@ -431,7 +520,7 @@ function verbrauch_abschnitte(array $staende): array
 function tarif_query(?string $art = null): array
 {
     return db_all('SELECT * FROM tariffs' . ($art ? ' WHERE art = ?' : '')
-        . ' ORDER BY art, gueltig_von DESC, id DESC', $art ? [meter_art($art)] : []);
+        . ' ORDER BY art, gueltig_von DESC, id DESC', $art ? [tarif_art($art)] : []);
 }
 
 function tarif_find(int $id): ?array
@@ -462,7 +551,7 @@ function tarif_am(array $tarife, string $art, string $datum): ?array
 function tarif_save_from_post(?array $existing): array
 {
     $errors = [];
-    $art = meter_art(post_str('art', (string)($existing['art'] ?? 'strom')));
+    $art = tarif_art(post_str('art', (string)($existing['art'] ?? 'strom')));
     $name = post_str('name');
     if ($name === '') {
         $errors[] = 'Bitte einen Namen angeben, z. B. „Stadtwerke Grundversorgung 2026".';
@@ -490,7 +579,7 @@ function tarif_save_from_post(?array $existing): array
         'gueltig_bis'      => $bis,
         'arbeitspreis'     => round($arbeitspreis, 4),
         'grundpreis_monat' => round(max(0.0, post_dec('grundpreis_monat')), 2),
-        'einheit'          => mb_substr(post_str('einheit') ?: ($art === 'gas' ? 'kWh' : METER_ARTEN[$art]['einheit']), 0, 10),
+        'einheit'          => mb_substr(post_str('einheit') ?: TARIF_ARTEN[$art]['einheit'], 0, 10),
         'notiz'            => post_str('notiz'),
     ];
     if ($existing) {
@@ -535,14 +624,15 @@ function verbrauch_kosten(?float $menge, float $umrechnung, ?array $tarif, float
 function verbrauch_kosten_jahr(array $staende, array $tarife, array $meter, int $jahr): array
 {
     $monate = verbrauch_monate($staende, $jahr);
-    $out = ['monate' => [], 'gesamt' => 0.0, 'ohne_tarif' => 0];
+    $tarifArt = meter_tarif_art($meter);
+    $out = ['monate' => [], 'gesamt' => 0.0, 'ohne_tarif' => 0, 'erloes' => $tarifArt === 'einspeisung'];
     foreach ($monate as $m => $mengeMonat) {
-        if ($mengeMonat === null) {
+        if ($mengeMonat === null || $tarifArt === null) {
             $out['monate'][$m] = null;
             continue;
         }
         $tag = sprintf('%04d-%02d-15', $jahr, $m);
-        $tarif = tarif_am($tarife, (string)$meter['art'], $tag);
+        $tarif = tarif_am($tarife, $tarifArt, $tag);
         if ($tarif === null) {
             $out['monate'][$m] = null;
             $out['ohne_tarif']++;
@@ -568,7 +658,9 @@ function verbrauch_kosten_jahr(array $staende, array $tarife, array $meter, int 
 function verbrauch_stats(array $meters, array $tarife, int $jahr, ?int $jetzt = null): array
 {
     $jetzt ??= time();
-    $out = ['zaehler' => count($meters), 'alt' => 0, 'kosten_jahr' => 0.0, 'ohne_tarif' => 0, 'je_art' => []];
+    $out = ['zaehler' => count($meters), 'alt' => 0, 'kosten_jahr' => 0.0, 'erloes_jahr' => 0.0, 'ohne_tarif' => 0, 'je_art' => [],
+            'solar' => ['vorhanden' => false, 'erzeugung' => 0.0, 'einspeisung' => 0.0, 'eigenverbrauch' => 0.0,
+                        'bezug' => 0.0, 'gesamt' => 0.0, 'autarkie' => 0, 'erloes' => 0.0]];
     foreach (METER_ARTEN as $key => $a) {
         $out['je_art'][$key] = ['jahr' => 0.0, 'tage30' => 0.0, 'einheit' => $a['einheit'], 'zaehler' => 0, 'kosten' => 0.0];
     }
@@ -577,20 +669,68 @@ function verbrauch_stats(array $meters, array $tarife, int $jahr, ?int $jetzt = 
     [$von, $bis] = verbrauch_zeitraum($jahr, $jetzt);
     foreach ($meters as $m) {
         $art = (string)$m['art'];
+        $rolle = (string)($m['rolle'] ?? 'bezug');
         $staende = readings_bereich((int)$m['id'], $von, $bis);
+        $jahrMenge = (float)(verbrauch_zwischen($staende, $jahresanfang, $jahresende) ?? 0);
+        if (meter_stand_alter($m, date('Y-m-d H:i:s', $jetzt))['stufe'] !== 'frisch') {
+            $out['alt']++;
+        }
+        if ($rolle === 'erzeugung' || $rolle === 'einspeisung') {
+            $out['solar']['vorhanden'] = true;
+            $out['solar'][$rolle] += $jahrMenge;
+            if ($rolle === 'einspeisung') {
+                $out['solar']['erloes'] += verbrauch_kosten_jahr($staende, $tarife, $m, $jahr)['gesamt'];
+            }
+            continue;
+        }
+        if ($rolle === 'unter') {
+            continue;   // steckt schon im Hauptzähler
+        }
         $out['je_art'][$art]['zaehler']++;
         $out['je_art'][$art]['einheit'] = (string)$m['einheit'];
-        $out['je_art'][$art]['jahr'] += (float)(verbrauch_zwischen($staende, $jahresanfang, $jahresende) ?? 0);
+        $out['je_art'][$art]['jahr'] += $jahrMenge;
         $out['je_art'][$art]['tage30'] += (float)(verbrauch_zwischen($staende, $jetzt - 30 * 86400, $jetzt) ?? 0);
         $k = verbrauch_kosten_jahr($staende, $tarife, $m, $jahr);
         $out['je_art'][$art]['kosten'] += $k['gesamt'];
         $out['kosten_jahr'] += $k['gesamt'];
         $out['ohne_tarif'] += $k['ohne_tarif'] > 0 ? 1 : 0;
-        if (meter_stand_alter($m, date('Y-m-d H:i:s', $jetzt))['stufe'] !== 'frisch') {
-            $out['alt']++;
-        }
     }
     $out['kosten_jahr'] = round($out['kosten_jahr'], 2);
+    $out['erloes_jahr'] = round($out['solar']['erloes'], 2);
+    $out['solar'] = verbrauch_solar_bilanz($out['solar'], $out['je_art']['strom']['jahr']);
+    return $out;
+}
+
+/**
+ * Solarbilanz: Eigenverbrauch = Erzeugung − Einspeisung, Gesamtverbrauch =
+ * Bezug + Eigenverbrauch, Autarkie = Eigenverbrauch / Gesamtverbrauch.
+ * Reine Funktion.
+ */
+function verbrauch_solar_bilanz(array $solar, float $bezug): array
+{
+    $solar['bezug'] = $bezug;
+    $solar['eigenverbrauch'] = max(0.0, (float)$solar['erzeugung'] - (float)$solar['einspeisung']);
+    $solar['gesamt'] = $bezug + $solar['eigenverbrauch'];
+    $solar['autarkie'] = $solar['gesamt'] > 0 ? (int)round($solar['eigenverbrauch'] / $solar['gesamt'] * 100) : 0;
+    $solar['erloes'] = round((float)$solar['erloes'], 2);
+    return $solar;
+}
+
+/**
+ * Anteile der Unterzähler an ihrem Hauptzähler: [id => Prozent|null].
+ * $mengen: [id => Jahresmenge]. Reine Funktion.
+ */
+function verbrauch_anteile(array $meters, array $mengen): array
+{
+    $out = [];
+    foreach ($meters as $m) {
+        $parent = (int)($m['parent_id'] ?? 0);
+        if ((string)($m['rolle'] ?? 'bezug') !== 'unter' || $parent === 0) {
+            continue;
+        }
+        $basis = (float)($mengen[$parent] ?? 0);
+        $out[(int)$m['id']] = $basis > 0 ? round((float)($mengen[(int)$m['id']] ?? 0) / $basis * 100, 1) : null;
+    }
     return $out;
 }
 
@@ -771,7 +911,8 @@ function verbrauch_zaehlerbericht(array $meter, array $tarife, int $jahr, ?int $
     $b = verbrauch_jahr_mit_vorjahr($staende, $jahr, $jetzt);
     $b['kosten'] = verbrauch_kosten_jahr($staende, $tarife, $meter, $jahr);
     $b['kosten_vorjahr'] = verbrauch_kosten_jahr($staende, $tarife, $meter, $jahr - 1)['gesamt'];
-    $b['tarif'] = tarif_am($tarife, (string)$meter['art'], sprintf('%04d-06-15', $jahr));
+    $tarifArt = meter_tarif_art($meter);
+    $b['tarif'] = $tarifArt ? tarif_am($tarife, $tarifArt, sprintf('%04d-06-15', $jahr)) : null;
     $b['ablesungen'] = count(array_filter($staende, static fn($s) => substr((string)$s['gelesen_am'], 0, 4) === (string)$jahr));
     $letzter = $staende ? end($staende) : null;
     $b['letzter_stand'] = $letzter ? (float)$letzter['stand'] : null;
@@ -783,14 +924,37 @@ function verbrauch_zaehlerbericht(array $meter, array $tarife, int $jahr, ?int $
 function verbrauch_jahresbericht(array $meters, array $tarife, int $jahr, ?int $jetzt = null): array
 {
     $jetzt ??= time();
-    $out = ['zaehler' => [], 'je_art' => [], 'kosten' => 0.0, 'kosten_vorjahr' => 0.0, 'ohne_tarif' => 0, 'bis_heute' => $jetzt < mktime(0, 0, 0, 1, 1, $jahr + 1)];
+    $out = ['zaehler' => [], 'je_art' => [], 'kosten' => 0.0, 'kosten_vorjahr' => 0.0, 'erloes' => 0.0, 'ohne_tarif' => 0,
+            'bis_heute' => $jetzt < mktime(0, 0, 0, 1, 1, $jahr + 1),
+            'solar' => ['vorhanden' => false, 'erzeugung' => 0.0, 'einspeisung' => 0.0, 'erzeugung_vorjahr' => null, 'einspeisung_vorjahr' => null, 'erloes' => 0.0]];
     foreach (METER_ARTEN as $key => $a) {
         $out['je_art'][$key] = ['zaehler' => 0, 'einheit' => $a['einheit'], 'summe' => 0.0, 'summe_vorjahr' => null,
             'delta_prozent' => null, 'kosten' => 0.0, 'monate' => array_fill(1, 12, null), 'monate_vorjahr' => array_fill(1, 12, null)];
     }
+    $mengen = [];
     foreach ($meters as $m) {
         $b = verbrauch_zaehlerbericht($m, $tarife, $jahr, $jetzt);
         $art = (string)$m['art'];
+        $rolle = (string)($m['rolle'] ?? 'bezug');
+        $mengen[(int)$m['id']] = $b['summe'];
+        $out['zaehler'][] = $m + ['summe' => $b['summe'], 'summe_vorjahr' => $b['summe_vorjahr'], 'delta_prozent' => $b['delta_prozent'],
+            'kosten' => $b['kosten']['gesamt'], 'erloes' => $b['kosten']['erloes'], 'ohne_tarif' => $b['kosten']['ohne_tarif'],
+            'ablesungen' => $b['ablesungen'], 'anteil' => null];
+        if ($rolle === 'erzeugung' || $rolle === 'einspeisung') {
+            $out['solar']['vorhanden'] = true;
+            $out['solar'][$rolle] += $b['summe'];
+            if ($b['summe_vorjahr'] !== null) {
+                $out['solar'][$rolle . '_vorjahr'] = (float)($out['solar'][$rolle . '_vorjahr'] ?? 0) + $b['summe_vorjahr'];
+            }
+            if ($rolle === 'einspeisung') {
+                $out['solar']['erloes'] += $b['kosten']['gesamt'];
+                $out['erloes'] += $b['kosten']['gesamt'];
+            }
+            continue;
+        }
+        if ($rolle === 'unter') {
+            continue;
+        }
         $s = &$out['je_art'][$art];
         $s['zaehler']++;
         $s['einheit'] = (string)$m['einheit'];
@@ -811,9 +975,14 @@ function verbrauch_jahresbericht(array $meters, array $tarife, int $jahr, ?int $
         $out['kosten'] += $b['kosten']['gesamt'];
         $out['kosten_vorjahr'] += (float)$b['kosten_vorjahr'];
         $out['ohne_tarif'] += $b['kosten']['ohne_tarif'] > 0 ? 1 : 0;
-        $out['zaehler'][] = $m + ['summe' => $b['summe'], 'summe_vorjahr' => $b['summe_vorjahr'], 'delta_prozent' => $b['delta_prozent'],
-            'kosten' => $b['kosten']['gesamt'], 'ohne_tarif' => $b['kosten']['ohne_tarif'], 'ablesungen' => $b['ablesungen']];
     }
+    $anteile = verbrauch_anteile($meters, $mengen);
+    foreach ($out['zaehler'] as &$z) {
+        $z['anteil'] = $anteile[(int)$z['id']] ?? null;
+    }
+    unset($z);
+    $out['solar'] = verbrauch_solar_bilanz($out['solar'], $out['je_art']['strom']['summe']);
+    $out['erloes'] = round($out['erloes'], 2);
     foreach ($out['je_art'] as &$s) {
         $s['delta_prozent'] = $s['summe_vorjahr'] !== null && $s['summe_vorjahr'] > 0
             ? round(($s['summe'] - $s['summe_vorjahr']) / $s['summe_vorjahr'] * 100, 1) : null;

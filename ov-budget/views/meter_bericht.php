@@ -6,7 +6,7 @@ $b = $bericht;
 $delta = $b['delta_prozent'];
 echo render_partial('partials/bericht_kopf', [
     'titel'      => (string)$meter['name'],
-    'untertitel' => $a['label'] . ' · Verbrauchsbericht ' . $jahr
+    'untertitel' => $a['label'] . ((string)($meter['rolle'] ?? 'bezug') !== 'bezug' ? ' · ' . explode(' – ', METER_ROLLEN[(string)$meter['rolle']])[0] : '') . ' · Verbrauchsbericht ' . $jahr
         . (trim((string)$meter['zaehlernummer']) !== '' ? ' · Zähler Nr. ' . $meter['zaehlernummer'] : '')
         . (trim((string)$meter['standort']) !== '' ? ' · ' . $meter['standort'] : ''),
     'rueck'      => url('meter', ['id' => $meter['id'], 'jahr' => $jahr]),
@@ -27,12 +27,20 @@ echo render_partial('partials/bericht_kopf', [
         : '<span class="' . ($delta > 0 ? 'plus' : 'minus') . '">' . ($delta > 0 ? '+' : '') . e(number_format($delta, 1, ',', '.')) . ' %</span> gegenüber dem Vorjahr'
           . ($b['bis_heute'] ? ', gleicher Zeitraum' : '') ?></div>
   </div>
+  <?php $tarifArt = meter_tarif_art($meter); if ($tarifArt !== null): ?>
   <div class="kachel">
-    <div class="kachel__label">Kosten <?= (int)$jahr ?></div>
+    <div class="kachel__label"><?= $tarifArt === 'einspeisung' ? 'Erlös' : 'Kosten' ?> <?= (int)$jahr ?></div>
     <div class="kachel__wert"><?= e(money($b['kosten']['gesamt'], false)) ?> <small>€</small></div>
     <div class="kachel__hinweis"><?= $b['kosten']['ohne_tarif'] > 0 ? (int)$b['kosten']['ohne_tarif'] . ' Monat(e) ohne Tarif'
         : ($b['tarif'] ? e((string)$b['tarif']['name']) : 'kein Tarif hinterlegt') ?></div>
   </div>
+  <?php elseif ((string)($meter['rolle'] ?? 'bezug') === 'unter'): ?>
+  <div class="kachel">
+    <div class="kachel__label">Unterzähler</div>
+    <div class="kachel__wert" style="font-size:13pt"><?= e((string)($meter['parent_name'] ?? '')) ?></div>
+    <div class="kachel__hinweis">Kosten stecken im Hauptzähler</div>
+  </div>
+  <?php endif; ?>
   <div class="kachel">
     <div class="kachel__label">Je Tag</div>
     <div class="kachel__wert"><?= e(menge($b['je_tag'], '', 1)) ?> <small><?= e($einheit) ?></small></div>
@@ -65,7 +73,7 @@ echo render_partial('partials/bericht_kopf', [
   <h2>Monate im Einzelnen</h2>
   <table class="liste">
     <thead><tr><th>Monat</th><th class="num"><?= (int)$jahr ?></th><th class="num"><?= (int)$jahr - 1 ?></th>
-               <th class="num">Veränderung</th><th class="num">Kosten <?= (int)$jahr ?></th></tr></thead>
+               <th class="num">Veränderung</th><th class="num"><?= !empty($b['kosten']['erloes']) ? 'Erlös' : 'Kosten' ?> <?= (int)$jahr ?></th></tr></thead>
     <tbody>
     <?php $namen = ['', 'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
     for ($m = 1; $m <= 12; $m++): $x = $b['monate'][$m]; $y = $b['monate_vorjahr'][$m]; ?>

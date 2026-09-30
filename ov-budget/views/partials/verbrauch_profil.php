@@ -25,8 +25,12 @@ $bericht = !empty($bericht);
             <div class="profil__wert"><?= e(menge($v, '', $v >= 100 ? 0 : 1)) ?></div>
             <div class="profil__stab" style="height:<?= number_format($h, 1, '.', '') ?>%;background:<?= e($farbe) ?>"
                  title="<?= e($tage[$i] . ': ' . menge($v, $einheit, 2)) ?>"></div>
-            <div class="profil__name<?= $profil['spitze_tag'] === $i ? ' profil__name--spitze' : '' ?>"><?= e($tage[$i]) ?></div>
           </div>
+        <?php endforeach; ?>
+      </div>
+      <div class="profil__achse profil__achse--tage">
+        <?php foreach ($tage as $i => $t): ?>
+          <div class="profil__name<?= $profil['spitze_tag'] === $i ? ' profil__name--spitze' : '' ?>"><?= e($t) ?></div>
         <?php endforeach; ?>
       </div>
       <?php if (!$profil['wochentage_aussagekraeftig']): ?>
@@ -43,9 +47,13 @@ $bericht = !empty($bericht);
           <div class="profil__spalte">
             <div class="profil__stab" style="height:<?= number_format($h, 1, '.', '') ?>%;background:<?= e($farbe) ?>"
                  title="<?= e(sprintf('%02d–%02d Uhr: %s', $i, $i + 1, menge($v, $einheit, 3))) ?>"></div>
-            <div class="profil__name<?= in_array($i, array_column($profil['spitzen_stunden'], 'stunde'), true) ? ' profil__name--spitze' : '' ?>"><?= $i % 3 === 0 ? (int)$i : '' ?></div>
           </div>
         <?php endforeach; ?>
+      </div>
+      <div class="profil__achse profil__achse--stunden">
+        <?php $spitzen = array_column($profil['spitzen_stunden'], 'stunde'); for ($i = 0; $i < 24; $i++): ?>
+          <div class="profil__name<?= in_array($i, $spitzen, true) ? ' profil__name--spitze' : '' ?>"><?= $i % 3 === 0 || in_array($i, $spitzen, true) ? (int)$i : '' ?></div>
+        <?php endfor; ?>
       </div>
       <?php if (!$profil['stunden_aussagekraeftig']): ?>
         <div class="<?= $bericht ? 'klein' : 'small muted' ?>">Die Stände liegen im Schnitt <?= e(number_format($profil['abstand_stunden'], 1, ',', '.')) ?> Stunden

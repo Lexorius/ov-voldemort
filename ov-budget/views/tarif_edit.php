@@ -22,7 +22,7 @@ $isNew = empty($tarif['id']);
       <div class="field">
         <label for="art">Art</label>
         <select id="art" name="art">
-          <?php foreach (METER_ARTEN as $key => $a): ?>
+          <?php foreach (TARIF_ARTEN as $key => $a): ?>
             <option value="<?= e($key) ?>"<?= (string)$tarif['art'] === $key ? ' selected' : '' ?>><?= e($a['label']) ?></option>
           <?php endforeach; ?>
         </select>

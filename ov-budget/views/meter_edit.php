@@ -38,6 +38,27 @@ $quelle = (string)($meter['quelle'] ?? 'manuell');
                placeholder="z. B. Strom Unterkunft">
       </div>
       <div class="field">
+        <label for="rolle">Was misst der Zähler?</label>
+        <select id="rolle" name="rolle" data-rolle>
+          <?php foreach (METER_ROLLEN as $key => $label): ?>
+            <option value="<?= e($key) ?>"<?= (string)($meter['rolle'] ?? 'bezug') === $key ? ' selected' : '' ?>><?= e($label) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <small>Unterzähler und Solarzählungen tragen keine eigenen Kosten und zählen nicht doppelt.
+          Erzeugung und Einspeisung gibt es nur bei Strom.</small>
+      </div>
+      <div class="field" data-rolle-block="unter"<?= (string)($meter['rolle'] ?? 'bezug') === 'unter' ? '' : ' hidden' ?>>
+        <label for="parent_id">Hauptzähler</label>
+        <select id="parent_id" name="parent_id">
+          <option value="">– bitte wählen –</option>
+          <?php foreach ($hauptzaehler as $h): ?>
+            <option value="<?= (int)$h['id'] ?>" data-art="<?= e((string)$h['art']) ?>"<?= (int)$h['id'] === (int)($meter['parent_id'] ?? 0) ? ' selected' : '' ?>>
+              <?= e((string)$h['name']) ?> (<?= e(METER_ARTEN[(string)$h['art']]['label']) ?>)</option>
+          <?php endforeach; ?>
+        </select>
+        <small>Der Zähler, dessen Teil hier gemessen wird – gleiche Art.</small>
+      </div>
+      <div class="field">
         <label for="zaehlernummer">Zählernummer</label>
         <input type="text" id="zaehlernummer" name="zaehlernummer" maxlength="80" value="<?= e((string)$meter['zaehlernummer']) ?>">
       </div>
