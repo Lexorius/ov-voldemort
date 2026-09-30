@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## 2.0.8.1
+
+- **README** auf den Stand der Anwendung gebracht: Verbrauch mit
+  Unterzählern, Solar, Berichten und Profil, Verpflegung, fest verbaute
+  Funkgeräte, Connector mit Fußzeile und Prüfung, MQTT aus allen Modulen,
+  Menüleiste und Fassungsnummern.
+
 ## 2.0.8.0
 
 ### Verbrauch: Unterzähler und Solaranlage

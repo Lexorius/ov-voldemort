@@ -1,8 +1,9 @@
 # OV-Multitool
 
 Verwaltung für einen THW-Ortsverband: Wünsche und Budget, Aufgaben, Kontakte,
-Besprechungen und Fahrzeuge – mit Anbindung an **Stein.APP** und
-**Divera 24/7**. Läuft auf dem Handy wie am PC.
+Besprechungen, Veranstaltungen, Fahrzeuge, Funkgeräte, SIM-Karten und
+Verbrauch – mit Anbindung an **Stein.APP**, **Divera 24/7** und
+**Home Assistant**. Läuft auf dem Handy wie am PC.
 
 Das Add-on bringt **alles mit**: Datenbank (MariaDB), Webserver und Anwendung
 stecken im Container. Weitere Add-ons sind nicht nötig. Erreichbar über die
@@ -37,11 +38,23 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - **Gruppen** für Koffer, Ladeschalen und Sätze
 - **QR-Code am Lagerort**: „Gerät ist da" oder „alle 8 Geräte sind da",
   verschlüsselt über den Connector
+- **Fest verbaute Geräte** (MRT, Feststation) zählen am Lagerort nicht mit
+  und gelten als gesehen, sobald ihr Fahrzeug einen Standort meldet
 
 ### Verbrauch
-- **Strom-, Gas- und Wasserzähler** mit Ständen aus **Home Assistant**, von
-  Hand oder **per QR-Code am Zähler**
-- **Tarife** mit Zeitraum, Verbrauch und Kosten je Monat und Jahr
+- **Strom-, Gas- und Wasserzähler** mit Ständen aus **Home Assistant**
+  (Abfrage im einstellbaren Takt), von Hand oder **per QR-Code am Zähler**
+- **Tarife** mit Zeitraum, Verbrauch und Kosten je Monat und Jahr; Warnung,
+  wenn ein Zähler lange keinen Stand hat oder ein Monat ohne Tarif ist
+- **Unterzähler** für Stockwerke oder Hallen mit Anteil am Hauptzähler,
+  ohne doppelte Kosten
+- **Solaranlage**: Erzeugung und Einspeisung als eigene Zähler, daraus
+  Eigenverbrauch, Gesamtverbrauch und Autarkie; Erlös über die
+  **Einspeisevergütung**
+- **Berichte zum Drucken**: je Zähler mit Vorjahresvergleich und fürs ganze
+  Jahr für Präsentationen; **Verbrauchsprofil** je Wochentag und Tagesstunde
+  mit den stärksten Zeiten
+- CSV-Export aller Stände
 
 ### Sicherung
 - Datenbank und Dateiablage als **ZIP** sichern, herunterladen, hochladen
@@ -102,6 +115,10 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - Je Veranstaltung einstellbar: wie viele Begleiter erlaubt sind, ob
   Kommentare und Vertretungen erlaubt sind, bis wann zurückgemeldet wird und
   wie lang der Einladungscode ist
+- **Verpflegung kalkulieren** für Ausbildung, Übung und Einsatz: **Tagessatz**
+  je Person mit Gültigkeit von–bis, prozentual auf Frühstück, Mittag- und
+  Abendessen verteilt; Dauer und Mahlzeiten je Kalendertag aus dem Zeitraum
+  vorbelegt, Rechnung neben dem schon Gebuchten
 
 ### Fahrzeuge
 - **Fahrzeugakte** mit Funkrufname, Kennzeichen, ISSI, OPTA, RIC und den
@@ -121,9 +138,23 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - **Fotogalerie je Auftrag**: Fotos beim Melden direkt aus der Kamera anhängen,
   Dokumente getrennt davon; Fotos verlieren beim Speichern den Aufnahmeort
 
+### Connector
+- Kleines PHP-Skript auf einem öffentlichen Webserver für alles, was ohne
+  Anmeldung erreichbar sein muss: Einladungen, Standortmeldung, „Gerät ist
+  da", Zählerstand per QR-Code
+- Ende-zu-Ende verschlüsselt (ECDH, AES-GCM), der Connector sieht nur
+  Chiffrate; die Anwendung holt die Meldungen alle zwei Minuten ab
+- **Fußzeile mit Betreiber, Impressum und Datenschutz**, aus den
+  Einstellungen der Anwendung an alle Connectoren verteilt
+- **„Ist der Connector sauber?"**: Prüfsummen aller Dateien und Suche nach
+  fremden Dateien, täglich geprüft, Meldung an Home Assistant bei Befund
+
 ### Home Assistant
-- **Kennzahlen über MQTT** mit Auto-Discovery: Budget, Wünsche, Aufgaben,
-  Themen, nächste Besprechung, Fahrzeuge, Fristen
+- **Kennzahlen über MQTT** mit Auto-Discovery aus jedem Modul: Budget mit
+  Jahresbudget, Ausgaben und Einnahmen, Wünsche, Aufgaben, Themen, nächste
+  Besprechung und Veranstaltung, Fahrzeuge und Fristen, Funkgeräte,
+  SIM-Karten, Verbrauch und Solar, Sicherungen und Connectoren
+- Nur Zahlen, Zeitpunkte und Beträge – keine Namen, Kennungen oder Rufnummern
 - Optional **je Fahrzeug eigene Entitäten** samt Standort auf der Karte
 - Zugang kommt vom Mosquitto-Add-on oder aus den Einstellungen
 - **Web Push im Browser** – ohne Companion-App, auch bei geschlossener Seite
@@ -147,9 +178,11 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 
 ### Verwaltung
 - Benutzer mit Rollen (Mitglied, Leitung, Administration) und Funktionen
-- Alle Auswahllisten, Texte und Regeln frei einstellbar
+- Alle Auswahllisten, Texte und Regeln frei einstellbar; **Menüleiste in
+  eigener Reihenfolge**
 - Protokoll aller Änderungen; unten auf jeder Seite steht die laufende
   Version, ein Klick zeigt, was neu ist
+- Jede Veröffentlichung hat eine eigene vierstellige Fassungsnummer
 
 Die ausführliche Anleitung steht im Reiter **Dokumentation**.
 
