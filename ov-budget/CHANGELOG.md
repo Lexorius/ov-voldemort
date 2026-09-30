@@ -1,5 +1,19 @@
 # Änderungsverlauf
 
+## 2.0.5.0
+
+### Verpflegung: Dauer und Mahlzeiten je Tag
+
+- Das Formular zeigt die **Dauer** der Veranstaltung und ein **Tagesraster**:
+  je Kalendertag drei Häkchen für Frühstück, Mittag- und Abendessen,
+  vorbelegt aus Beginn und Ende. Vom 1.10. 17:00 bis 3.10. 11:00 ergibt das
+  ein Abendessen, einen vollen Tag und ein Frühstück.
+- Das Raster baut sich sofort um, wenn Datum oder Uhrzeit geändert werden;
+  gesetzte Häkchen bleiben dabei erhalten. Die Tage werden mit der
+  Veranstaltung gespeichert, die Rechnung folgt daraus.
+- Die Veranstaltungsseite nennt die Kalendertage mit ihren Mahlzeiten
+  (F Frühstück, M Mittag, A Abend) über der Rechnung.
+
 ## 2.0.4.0
 
 ### Verpflegung: Tagessatz statt Einzelsätze

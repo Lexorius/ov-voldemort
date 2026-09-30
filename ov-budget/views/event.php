@@ -171,6 +171,15 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
       (<?= (int)$tagessatz['anteil_fruehstueck'] ?> / <?= (int)$tagessatz['anteil_mittag'] ?> / <?= (int)$tagessatz['anteil_abend'] ?> %),
       gültig ab <?= e(de_date((string)$tagessatz['gueltig_von'])) ?>.</p>
   <?php endif; ?>
+  <?php if (!empty($verpflegungTage)): ?>
+    <p class="small"><?= count($verpflegungTage) ?> Kalendertag(e)<?= $dauer !== '' ? ', ' . e($dauer) : '' ?>:
+      <?php $teile = []; foreach ($verpflegungTage as $datum => $t) {
+          $m = array_keys(array_filter($t));
+          $teile[] = de_date($datum) . ' ' . ($m ? implode('+', array_map(static fn($k) => ['fruehstueck' => 'F', 'mittag' => 'M', 'abend' => 'A'][$k], $m)) : '–');
+      } ?>
+      <?= e(implode(' · ', $teile)) ?>
+      <span class="muted">(F Frühstück, M Mittag, A Abend)</span></p>
+  <?php endif; ?>
   <div class="tablewrap">
     <table class="data">
       <thead><tr><th>Mahlzeit</th><th class="num">je Person</th><th class="num">Satz</th><th class="num">Betrag</th></tr></thead>

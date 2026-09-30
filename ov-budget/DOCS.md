@@ -592,10 +592,11 @@ Person (*Veranstaltungen → Tagessätze*), gültig von–bis wie ein Tarif und
 prozentual auf Frühstück, Mittag- und Abendessen verteilt, üblich 20/40/40.
 Ändert sich der Satz im Jahr, bekommt der alte ein Ende und der neue beginnt
 am Tag danach; eine Veranstaltung rechnet mit dem Satz, der an ihrem Beginn
-gilt. Im Formular der Veranstaltung trägt man ein, wie viele Mahlzeiten
-je Person anfallen – lässt man die Felder leer, schlägt die Anwendung sie aus
-dem Zeitraum vor (Frühstück, wenn es um 8 Uhr schon läuft, Mittag um 12:30,
-Abend um 18:30, je Kalendertag). Gerechnet wird für die Teilnehmer, also die
+gilt. Das Formular zeigt die Dauer und je Kalendertag drei Häkchen für
+Frühstück, Mittag- und Abendessen, vorbelegt aus dem Zeitraum: Frühstück,
+wenn die Veranstaltung um 8 Uhr schon läuft, Mittag um 12:30, Abend um 18:30.
+Vom 1.10. 17:00 bis 3.10. 11:00 sind das ein Abendessen, ein voller Tag und
+ein Frühstück – jedes Häkchen lässt sich ändern. Gerechnet wird für die Teilnehmer, also die
 Zusagen der Gästeliste oder die geplante Zahl; eine eigene Personenzahl geht
 auch. Die Veranstaltungsseite zeigt die Rechnung je Mahlzeit, die Summe und
 daneben, was für die Veranstaltung schon gebucht ist.

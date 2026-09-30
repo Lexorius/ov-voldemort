@@ -210,21 +210,26 @@ function event_save_from_post(?array $e, array $user): array
         'teilnehmer_ist'     => post_int('teilnehmer_ist'),
         'verpflegung'        => post_bool('verpflegung'),
         'verpflegung_personen' => post_int('verpflegung_personen'),
-        'verpflegung_fruehstueck' => max(0, min(99, post_int('verpflegung_fruehstueck', 0) ?? 0)),
-        'verpflegung_mittag' => max(0, min(99, post_int('verpflegung_mittag', 0) ?? 0)),
-        'verpflegung_abend'  => max(0, min(99, post_int('verpflegung_abend', 0) ?? 0)),
+        'verpflegung_fruehstueck' => 0,
+        'verpflegung_mittag' => 0,
+        'verpflegung_abend'  => 0,
         'verpflegung_notiz'  => mb_substr(post_str('verpflegung_notiz'), 0, 255),
         'hinweis'            => post_str('hinweis'),
         'notiz'              => post_str('notiz'),
         'updated_by'         => (int)$user['id'],
     ];
-    // Verpflegung gewünscht, aber keine Mahlzeit eingetragen: aus dem Zeitraum vorschlagen
-    if ($daten['verpflegung'] === 1 && post_str('verpflegung_fruehstueck') === ''
-        && post_str('verpflegung_mittag') === '' && post_str('verpflegung_abend') === '') {
-        $v = verpflegung_vorschlag((string)$beginn, $ende);
-        $daten['verpflegung_fruehstueck'] = $v['fruehstueck'];
-        $daten['verpflegung_mittag'] = $v['mittag'];
-        $daten['verpflegung_abend'] = $v['abend'];
+    // Mahlzeiten je Kalendertag: aus dem Tagesraster, sonst aus dem Zeitraum vorgeschlagen
+    if ($daten['verpflegung'] === 1) {
+        $tage = isset($_POST['vt']) || isset($_POST['vt_da'])
+            ? verpflegung_tage_aus_post($_POST['vt'] ?? [], (string)$beginn, $ende)
+            : verpflegung_tage_abgleichen(verpflegung_tage_von($e ?? []), (string)$beginn, $ende);
+        $summen = verpflegung_summen($tage);
+        $daten['verpflegung_tage'] = (string)json_encode($tage);
+        $daten['verpflegung_fruehstueck'] = $summen['fruehstueck'];
+        $daten['verpflegung_mittag'] = $summen['mittag'];
+        $daten['verpflegung_abend'] = $summen['abend'];
+    } else {
+        $daten['verpflegung_tage'] = null;
     }
 
     if ($e) {
@@ -888,6 +893,118 @@ function verpflegung_vorschlag(string $beginn, ?string $ende): array
         }
     }
     return $out;
+}
+
+/**
+ * Die Kalendertage der Veranstaltung mit den Mahlzeiten, die der Zeitraum
+ * nahelegt – je Tag Frühstück (8:00), Mittag (12:30), Abend (18:30), wenn
+ * die Veranstaltung zu der Zeit läuft. Reine Funktion.
+ * Rückgabe: [datum => ['fruehstueck' => bool, 'mittag' => bool, 'abend' => bool]]
+ */
+function verpflegung_tage(string $beginn, ?string $ende): array
+{
+    $a = strtotime($beginn);
+    if ($a === false) {
+        return [];
+    }
+    $b = $ende ? strtotime($ende) : false;
+    if ($b === false || $b < $a) {
+        $b = strtotime(date('Y-m-d', $a) . ' 23:59:00');
+    }
+    $out = [];
+    for ($tag = strtotime(date('Y-m-d', $a)); $tag <= $b && count($out) < 60; $tag += 86400) {
+        $datum = date('Y-m-d', $tag);
+        $zeile = [];
+        foreach (['fruehstueck' => '08:00', 'mittag' => '12:30', 'abend' => '18:30'] as $key => $uhr) {
+            $t = strtotime($datum . ' ' . $uhr);
+            $zeile[$key] = $t >= $a && $t <= $b;
+        }
+        $out[$datum] = $zeile;
+    }
+    return $out;
+}
+
+/**
+ * Gespeicherte Tage mit dem Zeitraum abgleichen: Tage außerhalb fallen weg,
+ * neue Tage bekommen den Vorschlag. Reine Funktion.
+ */
+function verpflegung_tage_abgleichen(array $gespeichert, string $beginn, ?string $ende): array
+{
+    $out = [];
+    foreach (verpflegung_tage($beginn, $ende) as $datum => $vorschlag) {
+        $out[$datum] = isset($gespeichert[$datum]) && is_array($gespeichert[$datum])
+            ? ['fruehstueck' => !empty($gespeichert[$datum]['fruehstueck']),
+               'mittag' => !empty($gespeichert[$datum]['mittag']),
+               'abend' => !empty($gespeichert[$datum]['abend'])]
+            : $vorschlag;
+    }
+    return $out;
+}
+
+/** Aus dem Formular (vt[datum][mahlzeit]) die Tage lesen. Reine Funktion. */
+function verpflegung_tage_aus_post(mixed $vt, string $beginn, ?string $ende): array
+{
+    $roh = [];
+    foreach (is_array($vt) ? $vt : [] as $datum => $mahlzeiten) {
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$datum) && is_array($mahlzeiten)) {
+            $roh[(string)$datum] = $mahlzeiten;
+        }
+    }
+    // Ein Tag, den das Formular kennt, aber ohne Häkchen schickt, ist bewusst leer
+    $out = [];
+    foreach (verpflegung_tage($beginn, $ende) as $datum => $vorschlag) {
+        $out[$datum] = isset($roh[$datum])
+            ? ['fruehstueck' => !empty($roh[$datum]['fruehstueck']), 'mittag' => !empty($roh[$datum]['mittag']),
+               'abend' => !empty($roh[$datum]['abend'])]
+            : $vorschlag;
+    }
+    return $out;
+}
+
+/** Summen je Mahlzeit aus den Tagen. Reine Funktion. */
+function verpflegung_summen(array $tage): array
+{
+    $out = ['fruehstueck' => 0, 'mittag' => 0, 'abend' => 0];
+    foreach ($tage as $t) {
+        foreach ($out as $k => $n) {
+            if (!empty($t[$k])) {
+                $out[$k]++;
+            }
+        }
+    }
+    return $out;
+}
+
+/** Gespeicherte Tage einer Veranstaltung (JSON) */
+function verpflegung_tage_von(array $e): array
+{
+    $roh = json_decode((string)($e['verpflegung_tage'] ?? ''), true);
+    return is_array($roh) ? $roh : [];
+}
+
+/** "1 Tag 18 Std." – wie lange die Veranstaltung geht. Reine Funktion. */
+function event_dauer_text(string $beginn, ?string $ende): string
+{
+    $a = strtotime($beginn);
+    $b = $ende ? strtotime($ende) : false;
+    if ($a === false || $b === false || $b <= $a) {
+        return '';
+    }
+    $minuten = (int)round(($b - $a) / 60);
+    $tage = intdiv($minuten, 1440);
+    $stunden = intdiv($minuten % 1440, 60);
+    $rest = $minuten % 60;
+    $teile = [];
+    if ($tage > 0) {
+        $teile[] = $tage . ($tage === 1 ? ' Tag' : ' Tage');
+    }
+    if ($stunden > 0) {
+        $teile[] = $stunden . ' Std.';
+    }
+    if ($rest > 0 && $tage === 0) {
+        $teile[] = $rest . ' Min.';
+    }
+    return implode(' ', $teile);
 }
 
 /** Für wie viele Personen gerechnet wird: eigene Zahl, sonst wie die Teilnehmer. Reine Funktion. */

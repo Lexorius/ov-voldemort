@@ -1268,6 +1268,12 @@ SQL);
         $pdo->exec("DELETE FROM settings WHERE skey IN ('verpflegung_satz_fruehstueck', 'verpflegung_satz_mittag', 'verpflegung_satz_abend')");
     }
     $merken('037_tagessatz');
+
+    /* ---------- 038: Mahlzeiten je Kalendertag ---------- */
+    if (ovb_table_exists($pdo, 'events') && !ovb_column_exists($pdo, 'events', 'verpflegung_tage')) {
+        $pdo->exec('ALTER TABLE events ADD COLUMN verpflegung_tage TEXT NULL AFTER verpflegung_notiz');
+    }
+    $merken('038_verpflegung_tage');
 }
 
 /**

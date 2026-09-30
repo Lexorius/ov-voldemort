@@ -628,6 +628,8 @@ CREATE TABLE IF NOT EXISTS events (
   verpflegung_mittag TINYINT UNSIGNED NOT NULL DEFAULT 0,
   verpflegung_abend  TINYINT UNSIGNED NOT NULL DEFAULT 0,
   verpflegung_notiz  VARCHAR(255) NOT NULL DEFAULT '',
+  -- Mahlzeiten je Kalendertag als JSON {"2026-10-01":{"abend":true}, ...}
+  verpflegung_tage   TEXT         NULL,
   einladung_aktiv    TINYINT(1)   NOT NULL DEFAULT 0,
   angemeldet_am      DATETIME     NULL,
   notiz              TEXT         NULL,

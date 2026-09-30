@@ -162,13 +162,19 @@ $endeZeit = substr((string)($event['ende'] ?? ''), 11, 5);
         <input type="text" id="verpflegung_notiz" name="verpflegung_notiz" maxlength="255"
                value="<?= e((string)($event['verpflegung_notiz'] ?? '')) ?>" placeholder="z. B. Mittag durch Feldküche">
       </div>
-      <?php foreach (VERPFLEGUNG_MAHLZEITEN as $key => $label): ?>
-        <div class="field">
-          <label for="verpflegung_<?= e($key) ?>"><?= e($label) ?> je Person</label>
-          <input type="number" id="verpflegung_<?= e($key) ?>" name="verpflegung_<?= e($key) ?>" min="0" max="99"
-                 value="<?= ($event['verpflegung_' . $key] ?? null) !== null && $event['verpflegung_' . $key] !== '' ? (int)$event['verpflegung_' . $key] : '' ?>">
-        </div>
-      <?php endforeach; ?>
+    </div>
+    <div data-verpflegung-felder<?= (int)($event['verpflegung'] ?? 0) === 1 ? '' : ' hidden' ?>>
+      <p class="small" id="verpflegung-dauer"></p>
+      <input type="hidden" name="vt_da" value="1">
+      <div class="tablewrap">
+        <table class="data" id="verpflegung-tage"
+               data-tage="<?= e((string)json_encode(verpflegung_tage_von($event))) ?>">
+          <thead><tr><th>Tag</th><th>Frühstück</th><th>Mittagessen</th><th>Abendessen</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <small class="muted">Vorbelegt aus dem Zeitraum: Frühstück, wenn es um 8 Uhr schon läuft, Mittag um 12:30,
+        Abend um 18:30. Jedes Häkchen lässt sich ändern.</small>
     </div>
   </section>
 

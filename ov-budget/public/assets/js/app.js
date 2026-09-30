@@ -315,6 +315,64 @@
     });
   });
 
+  // Veranstaltung: Tagesraster der Verpflegung aus Datum und Uhrzeit, Dauer dazu
+  var vtTabelle = document.getElementById('verpflegung-tage');
+  if (vtTabelle) {
+    var vtGespeichert = {};
+    try { vtGespeichert = JSON.parse(vtTabelle.getAttribute('data-tage') || '{}') || {}; } catch (e) { vtGespeichert = {}; }
+    var vtDauer = document.getElementById('verpflegung-dauer');
+    var feld = function (id) { return document.getElementById(id); };
+    var iso = function (d) {
+      return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+    };
+    var lesbar = function (d) {
+      return ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][d.getDay()] + ' ' + ('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.';
+    };
+    var bauen = function () {
+      var datum = feld('datum') ? feld('datum').value : '';
+      if (!datum) { vtTabelle.querySelector('tbody').innerHTML = ''; return; }
+      var a = new Date(datum + 'T' + ((feld('beginn_zeit') && feld('beginn_zeit').value) || '00:00') + ':00');
+      var endeDatum = (feld('ende_datum') && feld('ende_datum').value) || datum;
+      var b = new Date(endeDatum + 'T' + ((feld('ende_zeit') && feld('ende_zeit').value) || '23:59') + ':00');
+      if (isNaN(a.getTime())) { return; }
+      if (isNaN(b.getTime()) || b < a) { b = new Date(datum + 'T23:59:00'); }
+      // Häkchen, die schon im Raster stehen, behalten
+      var aktuell = {};
+      vtTabelle.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
+        var m = cb.name.match(/^vt\[(\d{4}-\d{2}-\d{2})\]\[(\w+)\]$/);
+        if (m) { aktuell[m[1]] = aktuell[m[1]] || {}; aktuell[m[1]][m[2]] = cb.checked; }
+      });
+      var zeilen = '';
+      var tag = new Date(a.getFullYear(), a.getMonth(), a.getDate());
+      var n = 0;
+      while (tag <= b && n < 60) {
+        var key = iso(tag);
+        var bekannt = aktuell[key] || vtGespeichert[key] || null;
+        zeilen += '<tr><td>' + lesbar(tag) + '</td>';
+        [['fruehstueck', 8, 0], ['mittag', 12, 30], ['abend', 18, 30]].forEach(function (mz) {
+          var t = new Date(tag.getFullYear(), tag.getMonth(), tag.getDate(), mz[1], mz[2]);
+          var an = bekannt ? !!bekannt[mz[0]] : (t >= a && t <= b);
+          zeilen += '<td><input type="checkbox" name="vt[' + key + '][' + mz[0] + ']" value="1"' + (an ? ' checked' : '') + '></td>';
+        });
+        zeilen += '</tr>';
+        tag.setDate(tag.getDate() + 1);
+        n++;
+      }
+      vtTabelle.querySelector('tbody').innerHTML = zeilen;
+      if (vtDauer) {
+        var min = Math.round((b - a) / 60000);
+        var tage = Math.floor(min / 1440), std = Math.floor((min % 1440) / 60);
+        vtDauer.textContent = min > 0
+          ? 'Dauer: ' + (tage ? tage + (tage === 1 ? ' Tag ' : ' Tage ') : '') + (std ? std + ' Std.' : '') + ' – ' + n + ' Kalendertag' + (n === 1 ? '' : 'e')
+          : '';
+      }
+    };
+    ['datum', 'beginn_zeit', 'ende_datum', 'ende_zeit'].forEach(function (id) {
+      if (feld(id)) { feld(id).addEventListener('change', bauen); }
+    });
+    bauen();
+  }
+
   // Veranstaltung: Verpflegungsfelder nur mit Häkchen; bei neuer Veranstaltung Vorgabe aus der Art
   var verpflegung = document.getElementById('verpflegung');
   var verpflegungFelder = document.querySelector('[data-verpflegung-felder]');

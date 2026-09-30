@@ -42,6 +42,9 @@ render('event', [
         : null,
     'tagessatz' => (int)($event['verpflegung'] ?? 0) === 1
         ? tagessatz_am(tagessatz_query(), substr((string)$event['beginn'], 0, 10)) : null,
+    'verpflegungTage' => (int)($event['verpflegung'] ?? 0) === 1
+        ? verpflegung_tage_abgleichen(verpflegung_tage_von($event), (string)$event['beginn'], $event['ende'] ?: null) : [],
+    'dauer' => event_dauer_text((string)$event['beginn'], $event['ende'] ?: null),
     'connector' => connector_find((int)($event['connector_id'] ?? 0)),
     'kandidaten' => $kandidaten,
     'kontaktSuche' => $suche,
