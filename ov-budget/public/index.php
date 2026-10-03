@@ -55,6 +55,10 @@ $routes = [
     'contacts_export'    => 'contacts_export',
     'contacts_import'    => 'contacts_import',
 
+    'kalender'           => 'kalender',
+    'kalender_edit'      => 'kalender_edit',
+    'admin_kalender'     => 'admin/kalender',
+
     'meetings'           => 'meetings',
     'meeting'            => 'meeting',
     'meeting_edit'       => 'meeting_edit',

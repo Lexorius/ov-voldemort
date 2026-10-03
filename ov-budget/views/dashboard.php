@@ -79,6 +79,27 @@ $quoteCls = ($zahlen['verfuegbar'] > 0 && $zahlen['ausgaben'] > $zahlen['verfueg
 
   <section class="card">
     <div class="card__head">
+      <h2>Nächste Termine</h2>
+      <a class="btn btn--sec btn--sm" href="<?= e(url('kalender')) ?>">Kalender</a>
+    </div>
+    <?php if (empty($termine)): ?>
+      <div class="empty">In den nächsten 14 Tagen steht nichts an.</div>
+    <?php else: ?>
+      <div class="itemlist">
+        <?php foreach ($termine as $e): $tag = substr($e['beginn'], 0, 10); $zeit = kalender_zeit($e);
+          $inner = '<div class="item__top"><div style="min-width:0"><div class="item__title">' . e($e['titel']) . '</div><div class="item__sub">'
+              . e(de_date($tag) . ($zeit !== '' ? ', ' . $zeit . ' Uhr' : '') . ($e['ort'] !== '' ? ' · ' . $e['ort'] : '') . ($e['untertitel'] !== '' ? ' · ' . $e['untertitel'] : ''))
+              . '</div></div><span class="badge" style="background:' . e($e['farbe']) . '">' . e(KALENDER_QUELLEN[$e['quelle']]['label'] ?? $e['quelle']) . '</span></div>'; ?>
+          <?php if ($e['url'] !== ''): ?><a class="item" href="<?= e($e['url']) ?>" style="border-left-color:<?= e($e['farbe']) ?>"><?= $inner ?></a>
+          <?php else: ?><div class="item" style="border-left-color:<?= e($e['farbe']) ?>"><?= $inner ?></div><?php endif; ?>
+        <?php endforeach; ?>
+      </div>
+      <?php if (($termineGesamt ?? 0) > count($termine)): ?><p class="small muted" style="margin:.5rem 0 0"><?= (int)$termineGesamt ?> Termine in 14 Tagen – <a href="<?= e(url('kalender', ['ansicht' => 'liste'])) ?>">alle</a></p><?php endif; ?>
+    <?php endif; ?>
+  </section>
+
+  <section class="card">
+    <div class="card__head">
       <h2>Meine Aufgaben</h2>
       <a class="btn btn--sec btn--sm" href="<?= e(url('todos')) ?>">Alle</a>
     </div>

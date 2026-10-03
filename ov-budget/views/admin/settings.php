@@ -63,6 +63,12 @@
               <option value="<?= e($wert) ?>"<?= $val === $wert ? ' selected' : '' ?>><?= e($text) ?></option>
             <?php endforeach; ?>
           </select>
+        <?php elseif ($s['stype'] === 'select' && $s['skey'] === 'kalender_bundesland'): ?>
+          <select id="<?= e($id) ?>" name="<?= e($id) ?>">
+            <?php foreach (KALENDER_BUNDESLAENDER as $wert => $text): ?>
+              <option value="<?= e($wert) ?>"<?= $val === $wert ? ' selected' : '' ?>><?= e($text) ?></option>
+            <?php endforeach; ?>
+          </select>
         <?php elseif ($s['stype'] === 'select' && $s['skey'] === 'totp_pflicht'): ?>
           <select id="<?= e($id) ?>" name="<?= e($id) ?>">
             <?php foreach (TOTP_PFLICHT as $wert => $text): ?>

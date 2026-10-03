@@ -25,13 +25,13 @@ $ok = 0; $fail = 0;
 $check = function (string $n, bool $c) use (&$ok, &$fail) { if ($c) { $ok++; } else { $fail++; echo "FAIL: $n\n"; } };
 
 $module = nav_module();
-$check('zwölf Module, Übersicht zuerst, Verwaltung zuletzt', count($module) === 12
+$check('dreizehn Module, Übersicht zuerst, Verwaltung zuletzt', count($module) === 13
     && array_key_first($module) === 'dashboard' && array_key_last($module) === 'admin');
 $check('Modulnamen aus den Einstellungen', $module['wishes']['label'] === 'Wünsche' && $module['radios']['label'] === 'Funk');
 
 $sortiert = nav_sortieren($module, 'vehicles, admin, unbekannt, vehicles');
 $check('Reihenfolge: genannte zuerst, Rest in Vorgabe, Unbekanntes und Doppeltes übergangen',
-    array_slice(array_keys($sortiert), 0, 3) === ['vehicles', 'admin', 'dashboard'] && count($sortiert) === 12);
+    array_slice(array_keys($sortiert), 0, 3) === ['vehicles', 'admin', 'dashboard'] && count($sortiert) === 13);
 $check('leere Reihenfolge = Vorgabe', array_keys(nav_sortieren($module, '')) === array_keys($module));
 
 $keys = ['a', 'b', 'c'];
@@ -47,7 +47,7 @@ $GLOBALS['state']['nav_reihenfolge'] = 'admin,dashboard';
 $check('gespeicherte Reihenfolge wirkt', array_keys(nav_leiste())[0] === 'admin');
 
 $html = render_partial('admin/nav', ['module' => nav_sortieren($module, 'admin'), 'eigene' => true]);
-$check('Verwaltungsseite rendert mit Pfeilen und Rücksetzen', substr_count($html, 'value="hoch"') === 12
+$check('Verwaltungsseite rendert mit Pfeilen und Rücksetzen', substr_count($html, 'value="hoch"') === 13
     && str_contains($html, 'Vorgabereihenfolge wiederherstellen') && str_contains($html, 'Verwaltung'));
 
 echo "$ok bestanden, $fail fehlgeschlagen\n";

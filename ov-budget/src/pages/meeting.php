@@ -26,6 +26,7 @@ render('meeting', [
     'zeiten'   => meeting_agenda_times($meeting['beginn'], $dauern, $vorgabe),
     'gesamt'   => meeting_total_minutes($dauern, $vorgabe),
     'speicher' => can('manage_meetings') && $meeting['status'] === 'geplant' ? tp_backlog() : [],
+    'termine'  => can('manage_meetings') && $meeting['status'] === 'geplant' ? kalender_fuer_besprechung($meeting, current_user()) : [],
     'teilnehmer'  => $teilnehmer,
     'anwesenheit' => attendance_stats($teilnehmer),
     'kandidaten'  => can('manage_meetings') ? attendance_candidate_users((int)$meeting['id']) : [],

@@ -308,6 +308,48 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 -- ------------------------------------------------------------
 -- Gesamtbudget je Haushaltsjahr
 -- ------------------------------------------------------------
+-- ------------------------------------------------------------
+-- Kalender: eigene Termine (fuer OV, Fachgruppe, Funktion, Person) und der
+-- Zwischenspeicher der Kalender aus Home Assistant
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS calendar_entries (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  titel         VARCHAR(200)  NOT NULL,
+  beschreibung  TEXT          NULL,
+  ort           VARCHAR(150)  NOT NULL DEFAULT '',
+  beginn        DATETIME      NOT NULL,
+  ende          DATETIME      NULL,
+  ganztag       TINYINT(1)    NOT NULL DEFAULT 0,
+  ziel          ENUM('ov','fachgruppe','funktion','user') NOT NULL DEFAULT 'user',
+  ziel_id       INT UNSIGNED  NULL,
+  farbe         VARCHAR(7)    NOT NULL DEFAULT '',
+  created_by    INT UNSIGNED  NULL,
+  updated_by    INT UNSIGNED  NULL,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_cal_beginn (beginn),
+  KEY idx_cal_ziel (ziel, ziel_id),
+  CONSTRAINT fk_cal_cb FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_cal_ub FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS calendar_ha (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  entity_id     VARCHAR(120)  NOT NULL,
+  kalender_name VARCHAR(100)  NOT NULL DEFAULT '',
+  uid           VARCHAR(190)  NOT NULL DEFAULT '',
+  titel         VARCHAR(200)  NOT NULL,
+  beschreibung  TEXT          NULL,
+  ort           VARCHAR(150)  NOT NULL DEFAULT '',
+  beginn        DATETIME      NOT NULL,
+  ende          DATETIME      NULL,
+  ganztag       TINYINT(1)    NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  KEY idx_calha_beginn (beginn),
+  KEY idx_calha_entity (entity_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS budget_years (
   jahr          SMALLINT      NOT NULL,
   betrag        DECIMAL(12,2) NOT NULL DEFAULT 0,

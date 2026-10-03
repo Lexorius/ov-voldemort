@@ -125,6 +125,14 @@ $abrufe = [
             $r['alarm'] ? ', ' . $r['alarm'] . ' mit ALARM' : '',
             $r['fehler'] ? ', ' . $r['fehler'] . ' nicht erreichbar' : '')]];
     },
+    'Kalender'          => static function (): array {
+        if (!kalender_ha_due()) {
+            return [];
+        }
+        $r = kalender_ha_sync();
+        return [['status' => $r['fehler'] ? 'fehler' : 'ok', 'message' => sprintf('%d Kalender aus Home Assistant, %d Einträge%s',
+            $r['kalender'], $r['eintraege'], $r['fehler'] ? ', Fehler: ' . implode(', ', array_keys($r['fehler'])) : '')]];
+    },
     'Connector-Störungen' => static function (): array {
         $n = connector_ausfall_melden();
         return $n === 0 ? [] : [['status' => 'fehler', 'message' => sprintf('Ausfall gemeldet an %d Empfänger', $n)]];

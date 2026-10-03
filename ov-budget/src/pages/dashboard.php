@@ -52,8 +52,15 @@ if (can('view_vehicles')) {
     }
 }
 
+$termine = array_values(array_filter(
+    kalender_sammeln(date('Y-m-d'), date('Y-m-d', time() + 14 * 86400), $user),
+    static fn($e) => $e['quelle'] !== 'feiertag'
+));
+
 render('dashboard', [
     'title'          => 'Übersicht',
+    'termine'        => array_slice($termine, 0, 6),
+    'termineGesamt'  => count($termine),
     'user'           => $user,
     'jahr'           => $jahr,
     'wuensche'       => array_slice($offeneWuensche, 0, 6),

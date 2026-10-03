@@ -408,6 +408,16 @@
     });
   }
 
+  // Kalender: ganztägig schaltet die Uhrzeiten ab
+  var ganztag = document.querySelector('input[data-ganztag]');
+  if (ganztag) {
+    var zeiten = function () {
+      document.querySelectorAll('input[data-zeitfeld]').forEach(function (f) { f.disabled = ganztag.checked; });
+    };
+    ganztag.addEventListener('change', zeiten);
+    zeiten();
+  }
+
   // Zähler: Hauptzähler-Feld nur bei der Rolle Unterzähler
   var rolleWahl = document.querySelector('select[data-rolle]');
   if (rolleWahl) {

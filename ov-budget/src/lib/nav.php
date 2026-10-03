@@ -39,6 +39,8 @@ function nav_module(): array
                         'darf' => can('view_contacts')],
         'events'    => ['label' => (string)setting('veranstaltung_modul_name', 'Veranstaltungen'), 'icon' => '◍',
                         'route' => 'events', 'aktiv' => ['events', 'event', 'event_edit', 'verpflegung_saetze', 'verpflegung_satz_edit'], 'darf' => can('view_events')],
+        'kalender'  => ['label' => (string)setting('kalender_modul_name', 'Kalender'), 'icon' => '▤',
+                        'route' => 'kalender', 'aktiv' => ['kalender', 'kalender_edit'], 'darf' => true],
         'meetings'  => ['label' => (string)setting('besprechung_modul_name', 'Besprechungen'), 'icon' => '☰',
                         'route' => 'meetings',
                         'aktiv' => ['meetings', 'meeting', 'meeting_edit', 'meeting_series_edit', 'talking_points', 'talking_point_edit'],
@@ -47,7 +49,7 @@ function nav_module(): array
                         'aktiv' => ['admin', 'admin_users', 'admin_user_edit', 'admin_lists', 'admin_list_edit',
                                     'admin_settings', 'admin_divera', 'admin_divera_form', 'admin_order_rights',
                                     'admin_stein', 'admin_divera_fahrzeuge', 'admin_connectors', 'admin_connector',
-                                    'admin_log', 'admin_backup', 'admin_ha', 'admin_nav'],
+                                    'admin_log', 'admin_backup', 'admin_ha', 'admin_nav', 'admin_kalender'],
                         'darf' => can('admin')],
     ];
 }

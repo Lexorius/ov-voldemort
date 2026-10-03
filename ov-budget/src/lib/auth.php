@@ -135,6 +135,8 @@ function can(string $what, mixed $ctx = null): bool
         'vote'           => setting_bool('wunsch_voting_aktiv', true),
         'change_status'  => $leitung || setting_bool('wunsch_user_darf_status', false),
         'create_todo'    => $leitung || setting_bool('todo_user_darf_anlegen', true),
+        'manage_kalender' => $leitung,
+        'create_kalender' => $leitung || setting_bool('kalender_user_darf_anlegen', true),
 
         'edit_wish'      => $leitung || (is_array($ctx) && (int)($ctx['created_by'] ?? 0) === (int)$u['id']
                               && (int)(list_item((int)($ctx['status_id'] ?? 0))['is_final'] ?? 0) === 0),

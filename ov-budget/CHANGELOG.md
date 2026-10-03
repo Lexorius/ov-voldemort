@@ -1,5 +1,24 @@
 # Änderungsverlauf
 
+## 2.1.0.0
+
+### Kalender
+
+- Neues Modul **Kalender**: Monat oder die nächsten 60 Tage als Liste, Quellen
+  einzeln ein- und ausblendbar. Eigene Termine legt jede Person für sich,
+  die eigene Fachgruppe und die eigenen Funktionen an, die Leitung für alle;
+  sichtbar sind sie für die, für die sie gelten.
+- **Aus den Modulen** ohne Kopie: Besprechungen, Veranstaltungen, fällige
+  Aufgaben, Fristen (HU, SP, UVV, Funkprüfung, SIM-Vertrag) und der Stichtag
+  des Jahresbudgets – ein Klick führt zum Vorgang.
+- **Feiertage** des Bundeslands werden gerechnet (*Verwaltung → Kalender*),
+  **Kalender aus Home Assistant** lassen sich dort auswählen und werden
+  regelmäßig geholt.
+- **Besprechungen:** Eine geplante Besprechung bietet die Termine der
+  nächsten Wochen an – ausgewählte kommen als Punkt auf die Tagesordnung.
+- Startseite mit den nächsten Terminen. Menüleiste: neues Modul, Reihenfolge
+  wie gewohnt einstellbar.
+
 ## 2.0.16.1
 
 - **Budgetseite zeigt das aktuelle Jahr.** Bisher sprang sie auf das neueste

@@ -2,7 +2,8 @@
 /** @var array $meeting @var array $punkte @var array $zeiten @var int $gesamt @var array $speicher
  *  @var array $teilnehmer @var array $anwesenheit @var array $kandidaten @var array $kontakte
  *  @var string $kontaktSuche @var array $verteiler @var ?array $quelle
- *  @var array $aufgaben @var array $personen */
+ *  @var array $aufgaben @var array $personen @var array $termine */
+$termine ??= [];
 $verwalten = can('manage_meetings');
 $aufgabenAnlegen = $verwalten && can('create_todo');
 $aufgaben ??= [];
@@ -325,6 +326,38 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
               <td class="small"><?= e($s['fachgruppe_label'] ?: '') ?></td>
               <td><?= $s['prio_label'] ? badge(['label' => $s['prio_label'], 'color' => $s['prio_color']]) : '' ?></td>
               <td class="small muted"><?= e($s['einbringer'] ?: '') ?></td>
+            </tr>
+          <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <div class="btnrow mt"><button class="btn" type="submit">Ausgewählte auf die Tagesordnung</button></div>
+    </form>
+  </section>
+<?php endif; ?>
+
+<?php if ($verwalten && $geplant && $termine): ?>
+  <section class="card" id="termine">
+    <div class="card__head">
+      <h2>Anstehende Termine mitnehmen</h2>
+      <span class="small muted"><?= max(1, setting_int('kalender_besprechung_wochen', 6)) ?> Wochen ab dem <?= e(de_date((string)$meeting['datum'])) ?></span>
+    </div>
+    <p class="small muted">Was in den Wochen nach der Besprechung ansteht – ausgewählte Termine kommen als Punkt auf die Tagesordnung,
+      damit sie besprochen werden und im Protokoll stehen.</p>
+    <form method="post" action="<?= e(url('meeting_action')) ?>">
+      <?= csrf_field() ?>
+      <input type="hidden" name="action" value="termine">
+      <input type="hidden" name="meeting_id" value="<?= (int)$meeting['id'] ?>">
+      <div class="tablewrap">
+        <table class="data">
+          <tbody>
+          <?php foreach ($termine as $i => $e): $key = kalender_schluessel($e); $zeit = kalender_zeit($e); ?>
+            <tr>
+              <td style="width:2.5rem"><input type="checkbox" name="termine[]" value="<?= e($key) ?>" id="te<?= $i ?>"></td>
+              <td class="nowrap small"><?= e(de_date(substr($e['beginn'], 0, 10))) ?><?= $zeit !== '' ? ' ' . e($zeit) : '' ?></td>
+              <td><label for="te<?= $i ?>"><strong><?= e($e['titel']) ?></strong></label>
+                <?php if ($e['ort'] !== '' || $e['untertitel'] !== ''): ?><div class="small muted"><?= e(trim($e['untertitel'] . ($e['ort'] !== '' ? ' · ' . $e['ort'] : ''), ' ·')) ?></div><?php endif; ?></td>
+              <td><span class="badge" style="background:<?= e($e['farbe']) ?>"><?= e(KALENDER_QUELLEN[$e['quelle']]['label'] ?? $e['quelle']) ?></span></td>
             </tr>
           <?php endforeach; ?>
           </tbody>

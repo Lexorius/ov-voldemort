@@ -140,6 +140,8 @@ sie enthalten.
 * **Aufgaben** – für den Ortsverband, einzelne Fachgruppen, Funktionen oder
   Personen. Wer angemeldet ist, sieht unter „Für mich" alles aus dem eigenen
   Zuständigkeitsbereich.
+* **Kalender** – alle Termine an einem Ort, siehe den eigenen Abschnitt
+  unten.
 * **Budget** – Gesamtbudget je Haushaltsjahr, **Ausgaben** (Haus, Nebenkosten,
   Getränke, Tanken ...) und **Einnahmen** (Kostenerstattung für Einsätze,
   technische Hilfeleistung, Spenden ...) mit Einsatz- oder Auftragsnummer.
@@ -400,6 +402,38 @@ Gruppe – dann steht dort „6 von 8 Geräten gemeldet".
 
 Dafür braucht der Connector die Verwendung **Funkgeräte** (*Verwaltung →
 Connectoren*). Abgeholt wird im Takt des Standort-Intervalls und auf Knopfdruck.
+
+## Kalender
+
+Ein Monat auf einen Blick oder die nächsten 60 Tage als Liste – mit allem,
+was im Ortsverband ein Datum hat. Die Quellen lassen sich oben einzeln ein-
+und ausblenden:
+
+* **Eigene Termine:** Jede Person legt Termine **für sich**, für die **eigene
+  Fachgruppe** und für die **eigenen Funktionen** an (abschaltbar in den
+  Einstellungen); die Leitung auch für den ganzen **Ortsverband** und für
+  andere. Ein Termin hat Datum, Uhrzeit oder „ganztägig", optional ein Ende
+  (auch mehrtägig), Ort, Beschreibung und Farbe. Sichtbar ist er für die, für
+  die er gilt – und für die Leitung. Ein Klick auf eine Tageszahl legt einen
+  Termin an diesem Tag an.
+* **Aus den Modulen:** Besprechungen, Veranstaltungen (in der Farbe ihrer
+  Art), fällige Aufgaben aus dem eigenen Bereich, Fristen (HU, SP, UVV der
+  Fahrzeuge, Prüfungen der Funkgeräte, Vertragsenden der SIM-Karten) und der
+  Stichtag des Jahresbudgets. Nichts davon wird kopiert – ein Klick führt
+  zum Vorgang.
+* **Feiertage:** Die gesetzlichen Feiertage des Bundeslands (*Verwaltung →
+  Kalender*) werden gerechnet, auch für kommende Jahre, und markieren den Tag
+  wie ein Wochenende.
+* **Kalender aus Home Assistant:** Unter *Verwaltung → Kalender* stehen alle
+  Kalender, die Home Assistant kennt – lokale Kalender, CalDAV, Google,
+  Schulferien-Integrationen. Ausgewählte werden im eingestellten Takt geholt
+  (30 Tage zurück, ein Jahr voraus) und erscheinen für alle; ohne Home
+  Assistant lassen sich Entitäten auch von Hand eintragen.
+* **In Besprechungen mitnehmen:** Eine geplante Besprechung zeigt die
+  Termine der nächsten Wochen (Einstellung, Vorgabe sechs). Ausgewählte
+  kommen als Punkt „Termin: … (Datum)" auf die Tagesordnung – mit Quelle und
+  Ort in der Beschreibung –, werden besprochen und stehen im Protokoll.
+* Die Startseite zeigt die nächsten Termine der kommenden 14 Tage.
 
 ## Verbrauch: Strom, Gas und Wasser
 

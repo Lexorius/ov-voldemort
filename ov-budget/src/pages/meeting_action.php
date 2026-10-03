@@ -27,6 +27,23 @@ switch (post_str('action')) {
         flash('success', sprintf('%d Thema/Themen auf die Tagesordnung gesetzt.', $anzahl));
         break;
 
+    case 'termine':
+        // Termine aus dem Kalender als Punkte auf die Tagesordnung
+        if (!$meeting || $meeting['status'] !== 'geplant') {
+            flash('error', 'Termine lassen sich nur auf geplante Besprechungen setzen.');
+            break;
+        }
+        $gewuenscht = array_filter((array)post('termine', []), 'is_string');
+        $anzahl = 0;
+        foreach (kalender_fuer_besprechung($meeting, $user) as $e) {
+            if (in_array(kalender_schluessel($e), $gewuenscht, true)) {
+                kalender_in_besprechung($e, $meetingId, $user);
+                $anzahl++;
+            }
+        }
+        flash('success', sprintf('%d Termin(e) auf die Tagesordnung gesetzt.', $anzahl));
+        break;
+
     case 'unassign':
         $tp = tp_find(post_int('tp_id', 0) ?? 0);
         if ($tp && (int)$tp['meeting_id'] === $meetingId) {

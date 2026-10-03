@@ -495,6 +495,30 @@ table.data td.num, table.data th.num { text-align: right; font-variant-numeric: 
 }
 .vote.is-on { background: var(--accent); border-color: var(--accent); color: #fff; }
 .inline-form { display: inline; }
+/* Kalender: Monatsraster */
+.kal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-top: .6rem; }
+.kal__kopf { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-mute); text-align: center; padding: .2rem 0; }
+.kal__tag { min-height: 5.5rem; border: 1px solid var(--border); border-radius: 8px; padding: .25rem .3rem; background: var(--card); min-width: 0; }
+.kal__tag--aussen { opacity: .45; }
+.kal__tag--frei { background: var(--bg); }
+.kal__tag--heute { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.kal__nr { font-size: .8rem; font-weight: 700; display: flex; justify-content: space-between; gap: .3rem; align-items: baseline; }
+.kal__nr a { color: inherit; text-decoration: none; }
+.kal__tag--heute .kal__nr { color: var(--accent); }
+.kal__feiertag { font-size: .62rem; font-weight: 400; color: var(--ink-mute); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kal__e { display: block; font-size: .72rem; line-height: 1.25; margin-top: 2px; padding: 1px .25rem; border-left: 3px solid var(--accent);
+          border-radius: 3px; background: var(--bg); color: var(--ink); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kal__e:hover { background: var(--border); }
+.kal__zeit { color: var(--ink-mute); margin-right: .2rem; font-variant-numeric: tabular-nums; }
+.kal__datum { font-size: .8rem; font-weight: 700; color: var(--ink-soft); margin: .8rem 0 .3rem; }
+.kal__datum--heute { color: var(--accent); }
+@media (max-width: 719px) {
+  .kal { gap: 1px; }
+  .kal__tag { min-height: 3.6rem; padding: .15rem .2rem; border-radius: 4px; }
+  .kal__e { font-size: .6rem; padding: 0 .15rem; }
+  .kal__zeit, .kal__feiertag { display: none; }
+}
+
 /* Verbrauchsprofil: Wochentage und Tagesstunden */
 .profil { display: grid; gap: 1rem; }
 @media (min-width: 720px) { .profil { grid-template-columns: 1fr 2fr; } }

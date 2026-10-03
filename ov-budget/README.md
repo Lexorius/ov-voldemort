@@ -41,6 +41,15 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 ### Aufgaben
 - Für den Ortsverband, Fachgruppen, Funktionen oder einzelne Personen
 
+### Kalender
+- **Alle Termine an einem Ort**: eigene Termine für sich, die Fachgruppe,
+  eine Funktion oder den Ortsverband, dazu Besprechungen, Veranstaltungen,
+  Fristen, fällige Aufgaben und Budget-Stichtage aus den Modulen
+- **Feiertage** des Bundeslands gerechnet, **Kalender aus Home Assistant**
+  eingebunden
+- **In Besprechungen mitnehmen**: anstehende Termine mit einem Klick auf die
+  Tagesordnung
+
 ### Funkgeräte
 - HRT, MRT, Feststationen und Meldeempfänger mit Seriennummer, Inventarnummer,
   Funkrufname und Prüffrist
