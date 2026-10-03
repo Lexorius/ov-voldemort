@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $event = array_merge($event ?? [], $_POST);
 }
 
-$jahr = (int)($event['jahr'] ?? setting_int('haushaltsjahr', (int)date('Y')));
+$jahr = (int)($event['jahr'] ?? haushaltsjahr());
 
 render('event_edit', [
     'title'  => $event && !empty($event['id']) ? 'Veranstaltung bearbeiten' : 'Veranstaltung anlegen',

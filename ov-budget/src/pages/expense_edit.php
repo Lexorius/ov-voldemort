@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if (!$expense) {
-    $jahr = get_int('jahr') ?: setting_int('haushaltsjahr', (int)date('Y'));
+    $jahr = get_int('jahr') ?: haushaltsjahr();
     $expense = [
         'id' => null,
         'art' => $art,

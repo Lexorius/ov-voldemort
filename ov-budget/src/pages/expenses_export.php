@@ -7,7 +7,7 @@ if (!can('view_expenses')) {
     return;
 }
 
-$jahr = get_int('jahr') ?: setting_int('haushaltsjahr', (int)date('Y'));
+$jahr = get_int('jahr') ?: haushaltsjahr();
 $art = buchungsart(get_str('art', 'ausgabe'));
 
 $rows = expense_query([

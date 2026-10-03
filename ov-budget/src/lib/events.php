@@ -132,7 +132,7 @@ function event_query(array $f = []): array
 function event_years(): array
 {
     $jahre = array_map(static fn($r) => (int)$r['jahr'], db_all('SELECT DISTINCT jahr FROM events ORDER BY jahr DESC'));
-    $aktuell = setting_int('haushaltsjahr', (int)date('Y'));
+    $aktuell = haushaltsjahr();
     if (!in_array($aktuell, $jahre, true)) {
         $jahre[] = $aktuell;
         rsort($jahre);

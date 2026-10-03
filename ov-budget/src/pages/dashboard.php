@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 $user = current_user();
-$jahr = setting_int('haushaltsjahr', (int)date('Y'));
+$jahr = haushaltsjahr();
 
 // Offene Wünsche
 $offeneWuensche = wish_query(['offen' => 1, 'sort' => 'prio']);

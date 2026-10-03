@@ -1344,6 +1344,12 @@ SQL);
         $pdo->exec('ALTER TABLE budget_years ADD COLUMN stichtag DATE NULL AFTER is_active');
     }
     $merken('043_budget_stichtag');
+
+    /* ---------- 044: Haushaltsjahr automatisch (0 = Kalenderjahr) ---------- */
+    if (ovb_table_exists($pdo, 'settings')) {
+        $pdo->exec("UPDATE settings SET svalue = '0' WHERE skey = 'haushaltsjahr' AND svalue = '2026'");
+    }
+    $merken('044_haushaltsjahr_automatisch');
 }
 
 /**

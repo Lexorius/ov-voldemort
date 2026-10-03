@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_role('admin', 'leitung');
 
-$jahr = get_int('jahr') ?: setting_int('haushaltsjahr', (int)date('Y'));
+$jahr = get_int('jahr') ?: haushaltsjahr();
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

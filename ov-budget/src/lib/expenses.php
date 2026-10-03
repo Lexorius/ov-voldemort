@@ -400,7 +400,7 @@ function budget_years_known(): array
          ORDER BY jahr DESC'
     );
     $jahre = array_map(static fn($r) => (int)$r['jahr'], $rows);
-    $aktuell = setting_int('haushaltsjahr', (int)date('Y'));
+    $aktuell = haushaltsjahr();
     if (!in_array($aktuell, $jahre, true)) {
         $jahre[] = $aktuell;
         rsort($jahre);

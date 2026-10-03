@@ -157,7 +157,7 @@ function ha_basis(): string
 /** Kennzahlen zusammentragen */
 function ha_werte(): array
 {
-    $jahr = setting_int('haushaltsjahr', (int)date('Y'));
+    $jahr = haushaltsjahr();
     $heute = date('Y-m-d');
 
     // Das Jahresbudget ist die Zuweisung; Töpfe unterteilen es nur.

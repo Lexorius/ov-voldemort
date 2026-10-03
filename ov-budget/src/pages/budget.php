@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 $jahre = budget_years_known();
-$jahr = get_int('jahr') ?: ($jahre[0] ?? setting_int('haushaltsjahr', (int)date('Y')));
+$jahr = get_int('jahr') ?: haushaltsjahr();
 if (!in_array($jahr, $jahre, true)) {
     $jahre[] = $jahr;
     rsort($jahre);

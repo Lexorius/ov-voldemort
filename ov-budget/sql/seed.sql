@@ -290,7 +290,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('footer_text','Interne Planungshilfe – keine offizielle Beschaffungsplattform.','Fußzeile','','textarea','Allgemein',50),
 ('login_hinweis','Zugang erhältst du von der OV-Leitung.','Hinweistext auf der Anmeldeseite','','textarea','Allgemein',60),
 ('waehrung','EUR','Währung','ISO-Code, z.B. EUR','text','Allgemein',70),
-('haushaltsjahr','2026','Aktuelles Haushaltsjahr','Vorbelegung für neue Budgets und Wünsche','number','Budget',10),
+('haushaltsjahr','0','Aktuelles Haushaltsjahr','0 = automatisch das Kalenderjahr. Nur setzen, wenn Budget und Wünsche bewusst in einem anderen Jahr laufen sollen.','number','Budget',10),
 ('budget_warn_prozent','90','Warnschwelle Budgetauslastung (%)','Ab diesem Wert wird der Topf rot dargestellt','number','Budget',30),
 
 ('wunsch_modul_name','Wünsch dir was','Bezeichnung des Wunsch-Moduls','','text','Wünsche',10),

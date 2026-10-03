@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 2.0.16.1
+
+- **Budgetseite zeigt das aktuelle Jahr.** Bisher sprang sie auf das neueste
+  Jahr mit Daten, etwa ein schon angelegtes Folgejahr. Jetzt gilt überall
+  das Kalenderjahr; die Einstellung „Aktuelles Haushaltsjahr" steht auf 0 =
+  automatisch und wird nur gebraucht, wenn bewusst ein anderes Jahr laufen
+  soll. Beim Aktualisieren wird das fest eingetragene 2026 auf automatisch
+  gesetzt.
+
 ## 2.0.16.0
 
 ### Stichtag fürs Jahresbudget, Ausgaben gebucht und geplant

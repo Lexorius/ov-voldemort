@@ -36,6 +36,17 @@ function setting_bool(string $key, bool $default = false): bool
     return in_array((string)$v, ['1', 'true', 'ja', 'yes', 'on'], true);
 }
 
+/**
+ * Das aktuelle Haushaltsjahr: die Einstellung, wenn sie gesetzt ist, sonst
+ * das Kalenderjahr. 0 heißt „automatisch" – so springt die Anwendung zum
+ * Jahreswechsel von selbst weiter.
+ */
+function haushaltsjahr(): int
+{
+    $fest = setting_int('haushaltsjahr', 0);
+    return $fest > 0 ? $fest : (int)date('Y');
+}
+
 function setting_int(string $key, int $default = 0): int
 {
     return (int)setting($key, $default);

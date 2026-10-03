@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (!$budget) {
     $budget = [
         'id' => null,
-        'jahr' => get_int('jahr') ?: setting_int('haushaltsjahr', (int)date('Y')),
+        'jahr' => get_int('jahr') ?: haushaltsjahr(),
         'name' => '', 'kategorie_id' => null, 'fachgruppe_id' => null,
         'betrag_netto' => '', 'beschreibung' => '', 'is_active' => 1,
     ];
