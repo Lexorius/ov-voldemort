@@ -292,6 +292,8 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('waehrung','EUR','Währung','ISO-Code, z.B. EUR','text','Allgemein',70),
 ('haushaltsjahr','0','Aktuelles Haushaltsjahr','0 = automatisch das Kalenderjahr. Nur setzen, wenn Budget und Wünsche bewusst in einem anderen Jahr laufen sollen.','number','Budget',10),
 ('budget_warn_prozent','90','Warnschwelle Budgetauslastung (%)','Ab diesem Wert wird der Topf rot dargestellt','number','Budget',30),
+('regionalstelle_name','Regionalstelle','Regionalstelle (Anrede in der Anfrage)','z. B. „Regionalstelle Heilbronn" – erscheint in der Anfrage zu offenen Abrechnungen','text','Budget',60),
+('regionalstelle_email','','E-Mail der Regionalstelle','Empfänger der Anfrage zu offenen Abrechnungen (Knopf „Im Mailprogramm öffnen")','text','Budget',61),
 
 ('wunsch_modul_name','Wünsch dir was','Bezeichnung des Wunsch-Moduls','','text','Wünsche',10),
 ('wunsch_intro','Trage hier ein, was deine Fachgruppe braucht. Je besser die Begründung und je konkreter das Angebot, desto einfacher die Priorisierung.','Einleitungstext im Wunsch-Modul','','textarea','Wünsche',20),

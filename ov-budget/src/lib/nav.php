@@ -18,7 +18,7 @@ function nav_module(): array
         'todos'     => ['label' => (string)setting('todo_modul_name', 'Aufgaben'), 'icon' => '☑',
                         'route' => 'todos', 'aktiv' => ['todos', 'todo', 'todo_edit'], 'darf' => true],
         'budget'    => ['label' => (string)setting('budget_modul_name', 'Budget'), 'icon' => '€', 'route' => 'budget',
-                        'aktiv' => ['budget', 'budget_edit', 'budget_pots', 'budget_year_edit', 'expenses', 'expense_edit'],
+                        'aktiv' => ['budget', 'budget_edit', 'budget_pots', 'budget_year_edit', 'expenses', 'expense_edit', 'einnahmen_anfrage'],
                         'darf' => true],
         'vehicles'  => ['label' => (string)setting('fahrzeug_modul_name', 'Fahrzeuge'), 'icon' => '⛟',
                         'route' => 'vehicles',

@@ -143,6 +143,28 @@ $html = render_partial('expense_edit', ['art' => 'ausgabe', 'expense' => ['id' =
     'lieferant' => '', 'beleg_nr' => '', 'referenz' => '', 'notiz' => '', 'bezahlt_am' => null, 'status' => 'bezahlt'], 'errors' => [], 'budgets' => [], 'wishes' => [], 'events' => []]);
 $check('Ausgaben-Formular unverändert', !str_contains($html, 'Weg der Einnahme') && str_contains($html, 'name="status" value="offen"') && str_contains($html, 'name="bezahlt_am"'));
 
+/* ---------- Anfrage an die Regionalstelle ---------- */
+$rows = [
+    ['id' => 1, 'bezeichnung' => 'Einsatz Hochwasser', 'betrag_brutto' => 1100, 'datum' => '2026-03-12', 'abgerechnet_am' => '2026-03-12', 'abgerechnet_betrag' => 1250,
+     'gestellt_am' => '2026-04-05', 'gestellt_betrag' => 1100, 'gestellt_nr' => 'GB-4711', 'referenz' => 'E-2026-014', 'beleg_nr' => 'Az 12/26', 'status' => 'gestellt', 'zugesagt_am' => null, 'lieferant' => 'Landkreis', 'alter' => ['tage' => 95, 'stufe' => 'rot', 'seit' => '2026-03-12']],
+    ['id' => 2, 'bezeichnung' => 'Sturm Mai', 'betrag_brutto' => 400, 'datum' => '2026-06-01', 'abgerechnet_am' => null, 'abgerechnet_betrag' => null,
+     'gestellt_am' => null, 'gestellt_betrag' => null, 'gestellt_nr' => '', 'referenz' => '', 'beleg_nr' => '', 'status' => 'zugesagt', 'zugesagt_am' => '2026-08-01', 'lieferant' => '', 'alter' => ['tage' => 1, 'stufe' => 'gruen', 'seit' => '2026-06-01']],
+];
+$ctx = ['ov' => 'THW Ortsverband Musterstadt', 'name' => 'Anna Beispiel', 'funktion' => 'Verwaltungsbeauftragte', 'empfaenger' => 'Regionalstelle Heilbronn', 'email' => 'anna@example.org', 'telefon' => ''];
+$t = einnahmen_anfrage_text($rows, $ctx);
+$check('Anfrage: Anrede, Bitte, beide Abrechnungen nummeriert', str_starts_with($t, 'Sehr geehrte Damen und Herren der Regionalstelle Heilbronn,') && str_contains($t, 'folgenden 2 Einsatzabrechnungen')
+    && str_contains($t, '1. Einsatz Hochwasser – 1.100,00 €') && str_contains($t, '2. Sturm Mai – 400,00 €') && str_contains($t, 'Bearbeitungsstand'));
+$check('Anfrage: Daten, Nummern, Bescheid, Wartezeit', str_contains($t, 'abgerechnet am 12.03.2026 über 1.250,00 €') && str_contains($t, 'Einsatz-/Auftragsnummer E-2026-014')
+    && str_contains($t, 'Aktenzeichen Az 12/26') && str_contains($t, 'Bescheid/Rechnung Nr. GB-4711 vom 05.04.2026 über 1.100,00 €') && str_contains($t, 'offen seit 95 Tagen') && str_contains($t, 'offen seit 1 Tag'));
+$check('Anfrage: Zusage genannt, Summe, Gruß mit Funktion und OV', str_contains($t, 'Mittel zugesagt am 01.08.2026, noch nicht zugewiesen') && str_contains($t, 'Insgesamt: 2 Abrechnungen über 1.500,00 € (davon 400,00 € bereits zugesagt)')
+    && str_contains($t, "Anna Beispiel\nVerwaltungsbeauftragte\nTHW Ortsverband Musterstadt\nanna@example.org"));
+$check('Anfrage ohne Empfängername und ohne Zeilen', str_starts_with(einnahmen_anfrage_text([], ['ov' => 'OV', 'name' => 'A']), "Sehr geehrte Damen und Herren,\n\nderzeit warten wir auf keine"));
+$check('Betreff', einnahmen_anfrage_betreff('THW OV Musterstadt', 2) === 'Bearbeitungsstand unserer Einsatzabrechnungen (2 offen) – THW OV Musterstadt');
+$html = render_partial('einnahmen_anfrage', ['jahr' => 2026, 'ab' => 30, 'kandidaten' => $rows, 'gewaehlt' => [1], 'text' => $t, 'betreff' => 'Betreff X', 'an' => 'rst@example.org', 'summe' => 1100.0]);
+$check('Seite: Auswahl, Mail-Link mit Betreff, Text im Feld', str_contains($html, 'value="1" id="s1" checked') && str_contains($html, 'value="2" id="s2">') && str_contains($html, 'mailto:rst%40example.org?subject=Betreff%20X')
+    && str_contains($html, 'data-kopieren="#anfrage-text"') && str_contains($html, '1. Einsatz Hochwasser'));
+$check('Seite ohne Kandidaten', str_contains(render_partial('einnahmen_anfrage', ['jahr' => 2026, 'ab' => 30, 'kandidaten' => [], 'gewaehlt' => [], 'text' => '', 'betreff' => '', 'an' => '', 'summe' => 0.0]), 'Nichts offen'));
+
 /* ---------- Seite: Art beim Speichern aus dem Formular ---------- */
 $src = (string)file_get_contents($app . '/src/pages/expense_edit.php');
 $check('Seite nimmt die Art beim Speichern aus dem Formular', str_contains($src, "post_str('art', get_str('art', 'ausgabe'))"));

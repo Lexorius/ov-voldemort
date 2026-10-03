@@ -166,6 +166,81 @@ function einnahmen_wartend_aus(array $rows, ?int $jetzt = null): array
     return $out;
 }
 
+/** Betreff der Anfrage an die Regionalstelle. Reine Funktion. */
+function einnahmen_anfrage_betreff(string $ov, int $anzahl): string
+{
+    return sprintf('Bearbeitungsstand unserer Einsatzabrechnungen (%d offen) – %s', $anzahl, $ov !== '' ? $ov : 'Ortsverband');
+}
+
+/**
+ * Der Text der Anfrage: jede wartende Abrechnung mit Datum, Betrag,
+ * Nummern und Stand, dazu Summe und Gruß. $ctx: ov, name, funktion,
+ * empfaenger, email, telefon. Reine Funktion.
+ */
+function einnahmen_anfrage_text(array $rows, array $ctx): string
+{
+    $ov = (string)($ctx['ov'] ?? '');
+    $z = [];
+    $z[] = ($ctx['empfaenger'] ?? '') !== '' ? 'Sehr geehrte Damen und Herren der ' . $ctx['empfaenger'] . ',' : 'Sehr geehrte Damen und Herren,';
+    $z[] = '';
+    if (!$rows) {
+        $z[] = 'derzeit warten wir auf keine Einsatzabrechnung.';
+    } else {
+        $z[] = count($rows) === 1
+            ? 'für die folgende Einsatzabrechnung unseres Ortsverbands liegt uns noch kein Eingang vor. Wir bitten um eine kurze Rückmeldung zum Bearbeitungsstand – ob und wann mit der Zuweisung zu rechnen ist oder ob noch Unterlagen fehlen:'
+            : sprintf('für die folgenden %d Einsatzabrechnungen unseres Ortsverbands liegt uns noch kein Eingang vor. Wir bitten um eine kurze Rückmeldung zum Bearbeitungsstand – ob und wann mit der Zuweisung zu rechnen ist oder ob noch Unterlagen fehlen:', count($rows));
+        $z[] = '';
+        $summe = 0.0;
+        $zugesagt = 0.0;
+        foreach (array_values($rows) as $i => $e) {
+            $summe += (float)$e['betrag_brutto'];
+            $teile = [];
+            if (!empty($e['abgerechnet_am'])) {
+                $teile[] = 'abgerechnet am ' . de_date((string)$e['abgerechnet_am']) . (($e['abgerechnet_betrag'] ?? null) !== null && $e['abgerechnet_betrag'] !== '' ? ' über ' . money((float)$e['abgerechnet_betrag']) : '');
+            } else {
+                $teile[] = 'vom ' . de_date((string)$e['datum']);
+            }
+            if (trim((string)($e['referenz'] ?? '')) !== '') {
+                $teile[] = 'Einsatz-/Auftragsnummer ' . $e['referenz'];
+            }
+            if (trim((string)($e['beleg_nr'] ?? '')) !== '') {
+                $teile[] = 'Aktenzeichen ' . $e['beleg_nr'];
+            }
+            if (!empty($e['gestellt_am'])) {
+                $teile[] = (trim((string)($e['gestellt_nr'] ?? '')) !== '' ? 'Bescheid/Rechnung Nr. ' . $e['gestellt_nr'] : 'Bescheid/Rechnung') . ' vom ' . de_date((string)$e['gestellt_am'])
+                    . (($e['gestellt_betrag'] ?? null) !== null && $e['gestellt_betrag'] !== '' ? ' über ' . money((float)$e['gestellt_betrag']) : '');
+            }
+            if ((string)$e['status'] === 'zugesagt') {
+                $zugesagt += (float)$e['betrag_brutto'];
+                $teile[] = 'Mittel zugesagt' . (!empty($e['zugesagt_am']) ? ' am ' . de_date((string)$e['zugesagt_am']) : '') . ', noch nicht zugewiesen';
+            }
+            $tage = (int)($e['alter']['tage'] ?? 0);
+            $teile[] = 'offen seit ' . $tage . ' Tag' . ($tage === 1 ? '' : 'en');
+            $z[] = sprintf('%d. %s – %s', $i + 1, (string)$e['bezeichnung'], money((float)$e['betrag_brutto']));
+            $z[] = '   ' . implode(', ', $teile);
+        }
+        $z[] = '';
+        $z[] = sprintf('Insgesamt: %d Abrechnung%s über %s%s.', count($rows), count($rows) === 1 ? '' : 'en', money($summe),
+            $zugesagt > 0 ? ' (davon ' . money($zugesagt) . ' bereits zugesagt)' : '');
+        $z[] = '';
+        $z[] = 'Falls zu einer Abrechnung noch etwas fehlt, reichen wir es gern umgehend nach.';
+    }
+    $z[] = '';
+    $z[] = 'Vielen Dank und freundliche Grüße';
+    $z[] = (string)($ctx['name'] ?? '');
+    if (($ctx['funktion'] ?? '') !== '') {
+        $z[] = (string)$ctx['funktion'];
+    }
+    if ($ov !== '') {
+        $z[] = $ov;
+    }
+    $kontakt = array_filter([(string)($ctx['telefon'] ?? ''), (string)($ctx['email'] ?? '')]);
+    if ($kontakt) {
+        $z[] = implode(' · ', $kontakt);
+    }
+    return implode("\n", $z);
+}
+
 /** „2 rot, 1 orange" – reine Funktion */
 function einnahmen_wartend_text(array $w): string
 {

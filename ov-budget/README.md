@@ -36,7 +36,8 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - **Einnahmen planen**: Einsatz abgerechnet → Rechnung oder Gebührenbescheid
   der Regionalstelle → Mittel zugesagt → eingegangen, je Stufe mit Datum,
   Betrag und Nummer; Übersicht nach Stufen, Forderungen und Kürzungen;
-  Ampel für Abrechnungen, die 30, 60 oder 90 Tage auf Geld warten
+  Ampel für Abrechnungen, die 30, 60 oder 90 Tage auf Geld warten, und eine
+  fertige **Anfrage an die Regionalstelle** zum Bearbeitungsstand
 - **Nebenkosten-Anhalt** aus dem Verbrauchsmodul für die Planung des
   nächsten Jahres
 - Auf Wunsch „unscharf" gerundet auf 10, 100 oder 1.000

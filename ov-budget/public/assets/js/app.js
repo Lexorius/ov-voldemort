@@ -408,6 +408,27 @@
     });
   }
 
+  // Text eines Feldes in die Zwischenablage (data-kopieren="#feld")
+  document.querySelectorAll('[data-kopieren]').forEach(function (knopf) {
+    knopf.addEventListener('click', function () {
+      var feld = document.querySelector(knopf.getAttribute('data-kopieren'));
+      if (!feld) return;
+      var text = 'value' in feld ? feld.value : feld.textContent;
+      var fertig = function () {
+        var alt = knopf.textContent;
+        knopf.textContent = 'Kopiert';
+        setTimeout(function () { knopf.textContent = alt; }, 1500);
+      };
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(fertig);
+      } else if ('select' in feld) {
+        feld.select();
+        document.execCommand('copy');
+        fertig();
+      }
+    });
+  });
+
   // Kalender: ganztägig schaltet die Uhrzeiten ab
   var ganztag = document.querySelector('input[data-ganztag]');
   if (ganztag) {

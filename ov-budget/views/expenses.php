@@ -55,6 +55,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
 <section class="card" id="einnahmen-stand">
   <div class="card__head">
     <h2>Stand der Einnahmen <?= (int)$jahr ?></h2>
+    <a class="btn btn--sec btn--sm" href="<?= e(url('einnahmen_anfrage', ['jahr' => $jahr])) ?>">Anfrage an die Regionalstelle</a>
     <span class="small muted">Forderungen <strong><?= e(money($es['forderungen'])) ?></strong> · zugesagt
       <strong><?= e(money($es['zugesagt'])) ?></strong> · eingegangen <strong><?= e(money($es['eingegangen'])) ?></strong></span>
   </div>

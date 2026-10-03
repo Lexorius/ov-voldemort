@@ -1,5 +1,17 @@
 # Änderungsverlauf
 
+## 2.1.2.0
+
+### Anfrage an die Regionalstelle
+
+- Neuer Knopf im Stand der Einnahmen: **Anfrage an die Regionalstelle**. Die
+  Seite zählt alle wartenden Abrechnungen auf – mit Abrechnungsdatum, Betrag,
+  Einsatz-/Auftragsnummer, Aktenzeichen, Bescheidnummer und Wartezeit –
+  und formuliert die Bitte um den Bearbeitungsstand als fertige E-Mail.
+  Wahlweise nur Abrechnungen über 30 Tage, einzelne lassen sich abwählen.
+- Text anpassen, kopieren, drucken oder direkt im Mailprogramm öffnen.
+  Anrede und E-Mail-Adresse der Regionalstelle unter *Einstellungen → Budget*.
+
 ## 2.1.1.2
 
 - Prüfung ergänzt, die den Einnahmen-Fehler aus 2.1.1.1 künftig abfängt.

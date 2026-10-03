@@ -176,7 +176,12 @@ sie enthalten.
   Bescheid, sonst Buchung) noch nicht eingegangen ist, wird gelb, ab 60
   Tagen orange, ab 90 rot – in der Liste, im Stand der Einnahmen, in der
   Budgetübersicht und auf der Startseite. Die Leitung bekommt je Stufe eine
-  Meldung. Der Abschnitt **Offen und
+  Meldung. **Anfrage an die Regionalstelle:** Der Knopf im Stand der
+  Einnahmen baut eine E-Mail, die alle wartenden Abrechnungen mit Datum,
+  Betrag, Einsatz- und Bescheidnummer aufzählt und um den Bearbeitungsstand
+  bittet – wahlweise nur die über 30 Tage, einzelne lassen sich abwählen.
+  Text kopieren, drucken oder im Mailprogramm öffnen; Anrede und Adresse der
+  Regionalstelle stehen unter *Einstellungen → Budget*. Der Abschnitt **Offen und
   geplant** der Übersicht listet alles ohne Zahlung, dazu die
   **Veranstaltungen des Jahres** mit geplanten Kosten und kalkulierter
   Verpflegung abzüglich dessen, was schon gebucht ist; die Kachel „Noch frei"

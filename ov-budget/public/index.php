@@ -50,6 +50,7 @@ $routes = [
     'expenses'           => 'expenses',
     'expense_edit'       => 'expense_edit',
     'expenses_export'    => 'expenses_export',
+    'einnahmen_anfrage'  => 'einnahmen_anfrage',
 
     'contacts'           => 'contacts',
     'contact_edit'       => 'contact_edit',
