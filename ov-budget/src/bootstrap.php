@@ -33,6 +33,7 @@ require __DIR__ . '/lib/wishes.php';
 require __DIR__ . '/lib/order_rights.php';
 require __DIR__ . '/lib/todos.php';
 require __DIR__ . '/lib/expenses.php';
+require __DIR__ . '/lib/bestellungen.php';
 require __DIR__ . '/lib/import.php';
 require __DIR__ . '/lib/contacts.php';
 require __DIR__ . '/lib/meetings.php';

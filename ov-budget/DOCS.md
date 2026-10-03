@@ -188,7 +188,14 @@ sie enthalten.
   ändern, stilllegen und zum Jahreswechsel aus dem Vorjahr übernehmen.
   Mit **„Freigegeben, bitte bestellen"** wird ein Wunsch zur Bestellung
   freigegeben; die Übersicht listet alles Freigegebene, bis es als bestellt
-  markiert ist. Wer freigeben (optional bis zu einem Betrag) und wer
+  markiert ist. Mehrere freigegebene Wünsche beim selben Lieferanten werden
+  angehakt und als **eine Bestellung** zusammengefasst (*Budget →
+  Bestellungen*): Sie bekommt eine Nummer (B-2026-003), Lieferant, Datum und
+  Auftragsnummer, die Wünsche werden „bestellt". „Rechnung erfassen" legt
+  die Buchung mit allen Wünschen und ihren Fahrzeugen vor; „geliefert" setzt
+  die Wünsche auf beschafft, „storniert" gibt sie wieder frei. Jede Buchung
+  lässt sich außerdem **mehreren Wünschen und mehreren Fahrzeugen** zuordnen
+  – Wunsch und Fahrzeugakte zeigen ihre Buchungen samt Summe. Wer freigeben (optional bis zu einem Betrag) und wer
   bestellen darf, wird unter *Verwaltung → Bestellberechtigungen* je Rolle und
   je Funktion festgelegt – etwa Ortsbeauftragte:r unbegrenzt, Zugführer:in bis
   500 €, Verwaltungsbeauftragte:r bestellt.

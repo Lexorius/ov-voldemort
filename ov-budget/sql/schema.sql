@@ -309,6 +309,49 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 -- Gesamtbudget je Haushaltsjahr
 -- ------------------------------------------------------------
 -- ------------------------------------------------------------
+-- Bestellungen: mehrere freigegebene Wuensche bei einem Lieferanten; dazu
+-- die Verknuepfung einer Buchung mit mehreren Wuenschen und Fahrzeugen
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS bestellungen (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  nummer        VARCHAR(30)   NOT NULL,
+  lieferant     VARCHAR(150)  NOT NULL DEFAULT '',
+  bestellt_am   DATE          NOT NULL,
+  bestell_nr    VARCHAR(100)  NOT NULL DEFAULT '',
+  status        ENUM('bestellt','geliefert','abgerechnet','storniert') NOT NULL DEFAULT 'bestellt',
+  notiz         TEXT          NULL,
+  created_by    INT UNSIGNED  NULL,
+  updated_by    INT UNSIGNED  NULL,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_bestellung_nummer (nummer),
+  KEY idx_bestellung_status (status, bestellt_am),
+  CONSTRAINT fk_best_cb FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_best_ub FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS bestellung_wuensche (
+  bestellung_id INT UNSIGNED NOT NULL,
+  wish_id       INT UNSIGNED NOT NULL,
+  PRIMARY KEY (bestellung_id, wish_id),
+  KEY idx_bw_wish (wish_id),
+  CONSTRAINT fk_bw_best FOREIGN KEY (bestellung_id) REFERENCES bestellungen(id) ON DELETE CASCADE,
+  CONSTRAINT fk_bw_wish FOREIGN KEY (wish_id)       REFERENCES wishes(id)       ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS expense_links (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  expense_id    INT UNSIGNED NOT NULL,
+  typ           ENUM('wish','vehicle') NOT NULL,
+  ziel_id       INT UNSIGNED NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_link (expense_id, typ, ziel_id),
+  KEY idx_link_ziel (typ, ziel_id),
+  CONSTRAINT fk_link_exp FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- Kalender: eigene Termine (fuer OV, Fachgruppe, Funktion, Person) und der
 -- Zwischenspeicher der Kalender aus Home Assistant
 -- ------------------------------------------------------------
@@ -388,6 +431,8 @@ CREATE TABLE IF NOT EXISTS expenses (
   referenz      VARCHAR(100)  NOT NULL DEFAULT '',
   bezahlt_am    DATE          NULL,
   -- bezahlt und offen zaehlen als Ist, geplant nur in der Planung
+  -- Rechnung zu einer Bestellung (mehrere Wuensche); der Fremdschluessel kommt in der Wanderung
+  bestellung_id INT UNSIGNED  NULL,
   -- Einnahmen gehen den Weg geplant -> abgerechnet -> gestellt -> zugesagt -> bezahlt
   status        ENUM('bezahlt','offen','geplant','abgerechnet','gestellt','zugesagt') NOT NULL DEFAULT 'bezahlt',
   -- Stufen einer Einnahme: Einsatzabrechnung, Rechnung/Gebuehrenbescheid der Regionalstelle, Zusage

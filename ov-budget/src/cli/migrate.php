@@ -1393,6 +1393,60 @@ SQL);
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
     $merken('045_kalender');
+
+    /* ---------- 046: Bestellungen und Buchungen mit mehreren Bezuegen ---------- */
+    if (!ovb_table_exists($pdo, 'bestellungen')) {
+        $pdo->exec("CREATE TABLE bestellungen (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            nummer VARCHAR(30) NOT NULL,
+            lieferant VARCHAR(150) NOT NULL DEFAULT '',
+            bestellt_am DATE NOT NULL,
+            bestell_nr VARCHAR(100) NOT NULL DEFAULT '',
+            status ENUM('bestellt','geliefert','abgerechnet','storniert') NOT NULL DEFAULT 'bestellt',
+            notiz TEXT NULL,
+            created_by INT UNSIGNED NULL,
+            updated_by INT UNSIGNED NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY uq_bestellung_nummer (nummer),
+            KEY idx_bestellung_status (status, bestellt_am),
+            CONSTRAINT fk_best_cb FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+            CONSTRAINT fk_best_ub FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    }
+    if (!ovb_table_exists($pdo, 'bestellung_wuensche')) {
+        $pdo->exec("CREATE TABLE bestellung_wuensche (
+            bestellung_id INT UNSIGNED NOT NULL,
+            wish_id INT UNSIGNED NOT NULL,
+            PRIMARY KEY (bestellung_id, wish_id),
+            KEY idx_bw_wish (wish_id),
+            CONSTRAINT fk_bw_best FOREIGN KEY (bestellung_id) REFERENCES bestellungen(id) ON DELETE CASCADE,
+            CONSTRAINT fk_bw_wish FOREIGN KEY (wish_id) REFERENCES wishes(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    }
+    if (!ovb_table_exists($pdo, 'expense_links')) {
+        $pdo->exec("CREATE TABLE expense_links (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            expense_id INT UNSIGNED NOT NULL,
+            typ ENUM('wish','vehicle') NOT NULL,
+            ziel_id INT UNSIGNED NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY uq_link (expense_id, typ, ziel_id),
+            KEY idx_link_ziel (typ, ziel_id),
+            CONSTRAINT fk_link_exp FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        // Bisherige Einzelbezuege uebernehmen
+        $pdo->exec("INSERT IGNORE INTO expense_links (expense_id, typ, ziel_id)
+                    SELECT id, 'wish', wish_id FROM expenses WHERE wish_id IS NOT NULL");
+    }
+    if (ovb_table_exists($pdo, 'expenses') && !ovb_column_exists($pdo, 'expenses', 'bestellung_id')) {
+        $pdo->exec('ALTER TABLE expenses ADD COLUMN bestellung_id INT UNSIGNED NULL AFTER event_id');
+    }
+    if (ovb_table_exists($pdo, 'expenses') && !ovb_constraint_exists($pdo, 'expenses', 'fk_exp_best')) {
+        $pdo->exec('ALTER TABLE expenses ADD CONSTRAINT fk_exp_best FOREIGN KEY (bestellung_id) REFERENCES bestellungen(id) ON DELETE SET NULL');
+    }
+    $merken('046_bestellungen');
 }
 
 /**

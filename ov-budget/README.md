@@ -18,6 +18,9 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - Übernahme aus **Divera-24/7-Formularen** mit frei zuordenbaren Feldern
 - **„Freigegeben, bitte bestellen"** mit **Bestellberechtigungen** je Rolle und
   Funktion, auch mit Betragsgrenze und Vier-Augen-Prinzip
+- **Bestellungen** fassen mehrere Wünsche zusammen – eine Nummer, ein
+  Lieferant, eine Rechnung; Buchungen gehören zu mehreren Wünschen und
+  Fahrzeugen
 
 ### Budget
 - Jahresbudget, **Ausgaben** (Haus, Nebenkosten, Getränke, Tanken …) und

@@ -21,6 +21,8 @@ render('wish_view', [
             setting_bool('bestell_eigene_freigeben', true) ? null : (int)$wish['created_by'])
         : [],
     'meinVote' => isset(wish_votes_of_user((int)$user['id'])[$id]),
+    'bestellung' => function_exists('bestellung_zu_wunsch') ? bestellung_zu_wunsch($id) : null,
+    'buchungen'  => can('view_expenses') && function_exists('expenses_fuer') ? expenses_fuer('wish', $id) : [],
     'todos'    => db_all(
         'SELECT t.*, st.label AS status_label, st.color AS status_color, st.is_final AS status_final,
                 pr.label AS prio_label, pr.color AS prio_color,

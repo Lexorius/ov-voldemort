@@ -11,6 +11,8 @@ $listeAktiv = in_array($cur, ['expenses', 'expense_edit'], true);
     <a class="tab<?= in_array($cur, ['budget_pots', 'budget_edit'], true) ? ' is-active' : '' ?>"
        href="<?= e(url('budget_pots', ['jahr' => $jahr])) ?>">Töpfe</a>
   <?php endif; ?>
+  <a class="tab<?= in_array($cur, ['bestellungen', 'bestellung', 'bestellung_edit'], true) ? ' is-active' : '' ?>"
+     href="<?= e(url('bestellungen')) ?>">Bestellungen</a>
   <?php if (can('view_expenses')): ?>
     <a class="tab<?= ($listeAktiv && $curArt !== 'einnahme') ? ' is-active' : '' ?>"
        href="<?= e(url('expenses', ['jahr' => $jahr, 'art' => 'ausgabe'])) ?>">Ausgaben</a>

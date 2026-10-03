@@ -1,5 +1,9 @@
 <?php
-/** @var string $art @var array $expense @var array $errors @var array $budgets @var array $wishes @var array $stichtag */
+/** @var string $art @var array $expense @var array $errors @var array $budgets @var array $wishes @var array $stichtag
+ *  @var array $vehicles @var array $bestellungen @var array $links */
+$vehicles ??= [];
+$bestellungen ??= [];
+$links ??= ['wish' => [], 'vehicle' => []];
 $isNew = empty($expense['id']);
 $istEinnahme = $art === 'einnahme';
 $wort = $istEinnahme ? 'Einnahme' : 'Ausgabe';
@@ -96,16 +100,44 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
           <?php endforeach; ?>
         </select>
       </div>
+      <?php if (!$istEinnahme): ?>
       <div class="field">
-        <label for="wish_id">Gehört zu Wunsch</label>
-        <select id="wish_id" name="wish_id">
-          <option value="">– kein Bezug –</option>
-          <?php foreach ($wishes as $w): ?>
-            <option value="<?= (int)$w['id'] ?>"<?= (int)($expense['wish_id'] ?? 0) === (int)$w['id'] ? ' selected' : '' ?>>
-              #<?= (int)$w['id'] ?> · <?= e(mb_substr($w['bezeichnung'], 0, 60)) ?></option>
+        <label for="bestellung_id">Gehört zu Bestellung</label>
+        <select id="bestellung_id" name="bestellung_id">
+          <option value="">– keine –</option>
+          <?php foreach ($bestellungen as $bs): ?>
+            <option value="<?= (int)$bs['id'] ?>"<?= (int)($expense['bestellung_id'] ?? 0) === (int)$bs['id'] ? ' selected' : '' ?>>
+              <?= e($bs['nummer'] . ' · ' . $bs['lieferant'] . ' · ' . money((float)$bs['summe'])) ?></option>
           <?php endforeach; ?>
         </select>
       </div>
+      <?php endif; ?>
+    </div>
+    <input type="hidden" name="bezuege" value="1">
+    <div class="grid2 mt">
+      <div class="field">
+        <label>Gehört zu Wünschen <span class="muted small">(mehrere möglich)</span></label>
+        <?php if (!$wishes): ?><p class="small muted">Kein freigegebener, bestellter oder beschaffter Wunsch.</p>
+        <?php else: ?>
+        <div class="wahlliste">
+          <?php foreach ($wishes as $w): ?>
+            <label class="wahl"><input type="checkbox" name="wishes[]" value="<?= (int)$w['id'] ?>"<?= in_array((int)$w['id'], $links['wish'], true) ? ' checked' : '' ?>>
+              <?= e(mb_substr((string)$w['bezeichnung'], 0, 70)) ?> <span class="muted small">· <?= e(money((float)($w['netto_gesamt'] ?? 0), false)) ?><?= !empty($w['status_label']) ? ' · ' . e((string)$w['status_label']) : '' ?></span></label>
+          <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+      </div>
+      <?php if ($vehicles): ?>
+      <div class="field">
+        <label>Gehört zu Fahrzeugen <span class="muted small">(mehrere möglich)</span></label>
+        <div class="wahlliste">
+          <?php foreach ($vehicles as $v): ?>
+            <label class="wahl"><input type="checkbox" name="vehicles[]" value="<?= (int)$v['id'] ?>"<?= in_array((int)$v['id'], $links['vehicle'], true) ? ' checked' : '' ?>>
+              <?= e((string)$v['bezeichnung']) ?><?= $v['kennzeichen'] ? ' <span class="muted small mono">' . e((string)$v['kennzeichen']) . '</span>' : '' ?></label>
+          <?php endforeach; ?>
+        </div>
+      </div>
+      <?php endif; ?>
     </div>
   </section>
 

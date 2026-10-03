@@ -116,7 +116,7 @@ $GLOBALS['tabellen'] = [
     'FROM todos' => [['id' => 5, 'titel' => 'Bericht', 'faellig_am' => '2026-10-20', 'target_type' => 'user', 'target_id' => 3], ['id' => 6, 'titel' => 'Fremd', 'faellig_am' => '2026-10-21', 'target_type' => 'user', 'target_id' => 4]],
     'FROM vehicles' => [['id' => 2, 'bezeichnung' => 'GKW 1', 'hu_bis' => '2026-10-25', 'sp_bis' => '2027-01-01', 'uvv_bis' => null]],
     'FROM radios' => [['id' => 3, 'bezeichnung' => 'HRT 12', 'pruefung_bis' => '2026-10-28']],
-    'FROM sims' => [['id' => 7, 'bezeichnung' => 'Router GKW', 'vertrag_bis' => '2026-10-30']],
+    'FROM sims' => [['id' => 7, 'rufnummer' => '0171 1234567', 'issi' => '', 'karte_art' => 'mobilfunk', 'vertrag_bis' => '2026-10-30']],
     'FROM budget_years' => [['jahr' => 2026, 'stichtag' => '2026-10-31']],
     'FROM calendar_ha' => [['id' => 1, 'titel' => 'Ferien', 'beginn' => '2026-10-26 00:00:00', 'ende' => '2026-10-30 23:59:59', 'ganztag' => 1, 'ort' => '', 'kalender_name' => 'Schulferien']],
 ];
@@ -126,7 +126,7 @@ $check('alle Quellen, nach Beginn sortiert', $titel[0] === 'Feiertag' || true);
 $check('eigener Termin ja, fremder nicht', in_array('Eigener', $titel, true) && !in_array('Fremder', $titel, true));
 $check('Besprechung, Veranstaltung, eigene Aufgabe, Fristen, Stichtag, HA, Feiertag', in_array('OV-Runde', $titel, true) && in_array('Übung', $titel, true)
     && in_array('Fällig: Bericht', $titel, true) && !in_array('Fällig: Fremd', $titel, true) && in_array('HU fällig: GKW 1', $titel, true)
-    && in_array('Prüfung fällig: HRT 12', $titel, true) && in_array('Vertrag endet: Router GKW', $titel, true) && in_array('Stichtag Jahresbudget 2026', $titel, true)
+    && in_array('Prüfung fällig: HRT 12', $titel, true) && in_array('Vertrag endet: 0171 1234567', $titel, true) && in_array('Stichtag Jahresbudget 2026', $titel, true)
     && in_array('Ferien', $titel, true) && in_array('Tag der Deutschen Einheit', $titel, true));
 $check('nur zwei Fristen im Fenster (SP 2027 nicht)', count(array_filter($alle, static fn($e) => $e['quelle'] === 'frist')) === 3 && !in_array('SP fällig: GKW 1', $titel, true));
 $check('sortiert nach Beginn', $alle === (static function ($a) { usort($a, static fn($x, $y) => $x['beginn'] <=> $y['beginn']); return $a; })($alle) || array_column($alle, 'beginn') === (static function ($b) { sort($b); return $b; })(array_column($alle, 'beginn')));

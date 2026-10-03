@@ -493,7 +493,7 @@ function expense_query(array $f = []): array
         $like = '%' . $f['q'] . '%';
         array_push($p, $like, $like, $like, $like, $like);
     }
-    foreach (['kategorie_id', 'fachgruppe_id', 'budget_id', 'event_id'] as $col) {
+    foreach (['kategorie_id', 'fachgruppe_id', 'budget_id', 'event_id', 'bestellung_id'] as $col) {
         if (!empty($f[$col])) {
             $w[] = 'e.' . $col . ' = ?';
             $p[] = (int)$f[$col];
@@ -525,8 +525,14 @@ function expense_query(array $f = []): array
                    b.name AS budget_name,
                    w.bezeichnung AS wunsch_bezeichnung,
                    ev.titel AS veranstaltung_titel,
-                   u.display_name AS erfasser
+                   u.display_name AS erfasser,
+                   bs.nummer AS bestellung_nummer,
+                   (SELECT GROUP_CONCAT(lw.bezeichnung ORDER BY lw.bezeichnung SEPARATOR \' · \') FROM expense_links l JOIN wishes lw ON lw.id = l.ziel_id
+                     WHERE l.expense_id = e.id AND l.typ = \'wish\') AS wuensche_namen,
+                   (SELECT GROUP_CONCAT(lv.bezeichnung ORDER BY lv.bezeichnung SEPARATOR \' · \') FROM expense_links l JOIN vehicles lv ON lv.id = l.ziel_id
+                     WHERE l.expense_id = e.id AND l.typ = \'vehicle\') AS fahrzeuge_namen
             FROM expenses e
+            LEFT JOIN bestellungen bs ON bs.id = e.bestellung_id
             LEFT JOIN list_items ka ON ka.id = e.kategorie_id
             LEFT JOIN list_items fg ON fg.id = e.fachgruppe_id
             LEFT JOIN budgets    b  ON b.id  = e.budget_id
@@ -764,6 +770,9 @@ function expense_save_from_post(?array $existing, array $user): array
     if ($betrag <= 0) {
         $errors[] = 'Bitte einen Betrag größer als null angeben.';
     }
+    // Mehrere Wünsche und Fahrzeuge je Buchung
+    $wishIds = array_values(array_filter(array_map('intval', (array)post('wishes', [])), static fn($i) => $i > 0));
+    $vehicleIds = array_values(array_filter(array_map('intval', (array)post('vehicles', [])), static fn($i) => $i > 0));
     if ($art === 'ausgabe' && $datum) {
         $gewaehltVorab = buchung_status(post_str('status', (string)($existing['status'] ?? 'bezahlt')));
         $jahrVorab = post_int('jahr') ?: (int)substr((string)$datum, 0, 4);
@@ -789,8 +798,9 @@ function expense_save_from_post(?array $existing, array $user): array
         'kategorie_id'  => post_int('kategorie_id'),
         'fachgruppe_id' => post_int('fachgruppe_id'),
         'budget_id'     => post_int('budget_id'),
-        'wish_id'       => post_int('wish_id'),
+        'wish_id'       => $wishIds[0] ?? post_int('wish_id'),
         'event_id'      => post_int('event_id'),
+        'bestellung_id' => post_int('bestellung_id'),
         'betrag_brutto' => $brutto,
         'mwst_satz'     => $mwst,
         'betrag_netto'  => $netto,
@@ -819,6 +829,9 @@ function expense_save_from_post(?array $existing, array $user): array
         $data['created_by'] = (int)$user['id'];
         $id = db_insert('expenses', $data);
         audit($art . '.erfasst', 'expense', $id, $data['bezeichnung'] . ' / ' . money($brutto));
+    }
+    if ((isset($_POST['wishes']) || isset($_POST['vehicles']) || isset($_POST['bezuege'])) && function_exists('expense_links_speichern')) {
+        expense_links_speichern($id, $wishIds, $vehicleIds);
     }
 
     return [$id, []];

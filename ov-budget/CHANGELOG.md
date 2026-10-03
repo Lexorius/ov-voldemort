@@ -1,5 +1,27 @@
 # Änderungsverlauf
 
+## 2.1.1.0
+
+### Bestellungen mit mehreren Wünschen, Buchungen mit mehreren Bezügen
+
+- **Bestellungen** (*Budget → Bestellungen*): In der Budgetübersicht werden
+  mehrere freigegebene Wünsche angehakt und als eine Bestellung angelegt –
+  Nummer B-JJJJ-NNN, Lieferant, Datum, Auftragsnummer. Die Wünsche werden
+  „bestellt"; „geliefert" setzt sie auf beschafft, „storniert" gibt sie
+  wieder frei. Die Bestellung zeigt Bestellwert, Gebuchtes und offenen Rest.
+- **Rechnung erfassen** von der Bestellung aus: Buchung mit Lieferant,
+  Betrag, Auftragsnummer und allen Wünschen samt ihren Fahrzeugen vorbelegt.
+- **Mehrere Bezüge je Buchung:** Ausgaben und Einnahmen lassen sich mehreren
+  Wünschen und mehreren Fahrzeugen zuordnen. Wunsch und Fahrzeugakte zeigen
+  ihre Buchungen mit Summe; die Buchungsliste nennt alle Bezüge.
+
+### Korrektur
+
+- Übersicht und Kalender brachen in 2.1.0.0 mit „Datenbankfehler" ab, wenn
+  SIM-Karten vorhanden waren (Vertragsende-Fristen fragten eine Spalte ab,
+  die es nicht gibt). Behoben; dazu hält eine einzelne kaputte Quelle den
+  Kalender nicht mehr auf.
+
 ## 2.1.0.0
 
 ### Kalender

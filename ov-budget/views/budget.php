@@ -53,6 +53,9 @@ $freigabeZeile = static function (array $w, string $aktion): string {
         }
     } elseif (can('order_wish')) {
         $knopf = '<button class="btn btn--sec btn--sm" type="submit" name="action" value="bestellt">Ist bestellt</button>';
+        // Auswahlkästchen hängt am Sammelformular unter der Tabelle (form=…), damit es nicht in der Zeilenform steckt
+        $html = '<tr><td style="width:2rem"><input type="checkbox" name="wishes[]" value="' . (int)$w['id'] . '" form="bestellform" aria-label="auswählen"></td>'
+            . substr($html, strlen('<tr>'));
     }
 
     if ($knopf !== '' && str_starts_with($knopf, '<button')) {
@@ -342,6 +345,14 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
         <tbody><?php foreach ($zuBestellen as $w): ?><?= $freigabeZeile($w, 'bestellt') ?><?php endforeach; ?></tbody>
       </table>
     </div>
+    <?php if (can('order_wish')): ?>
+      <form id="bestellform" method="get" class="btnrow mt">
+        <input type="hidden" name="p" value="bestellung_edit">
+        <button class="btn" type="submit">Ausgewählte als eine Bestellung</button>
+        <a class="btn btn--sec" href="<?= e(url('bestellungen')) ?>">Bestellungen</a>
+        <span class="small muted">Mehrere Wünsche beim selben Lieferanten anhaken – eine Bestellung, eine Rechnung.</span>
+      </form>
+    <?php endif; ?>
   <?php endif; ?>
 
   <?php if ($zurFreigabe): ?>

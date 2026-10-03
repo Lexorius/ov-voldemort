@@ -14,7 +14,7 @@ function nav_module(): array
         'dashboard' => ['label' => 'Übersicht', 'icon' => '▦', 'route' => 'dashboard',
                         'aktiv' => ['dashboard'], 'darf' => true],
         'wishes'    => ['label' => (string)setting('wunsch_modul_name', 'Wünsch dir was'), 'icon' => '★',
-                        'route' => 'wishes', 'aktiv' => ['wishes', 'wish', 'wish_edit'], 'darf' => true],
+                        'route' => 'wishes', 'aktiv' => ['wishes', 'wish', 'wish_edit', 'bestellungen', 'bestellung', 'bestellung_edit'], 'darf' => true],
         'todos'     => ['label' => (string)setting('todo_modul_name', 'Aufgaben'), 'icon' => '☑',
                         'route' => 'todos', 'aktiv' => ['todos', 'todo', 'todo_edit'], 'darf' => true],
         'budget'    => ['label' => (string)setting('budget_modul_name', 'Budget'), 'icon' => '€', 'route' => 'budget',

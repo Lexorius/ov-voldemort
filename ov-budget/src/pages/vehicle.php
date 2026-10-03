@@ -19,6 +19,7 @@ $art = get_str('art');
 
 render('vehicle', [
     'wuensche'   => wish_query(['vehicle_id' => $id, 'sort' => 'prio']),
+    'buchungen'  => can('view_expenses') && function_exists('expenses_fuer') ? expenses_fuer('vehicle', $id) : [],
     'favorit'    => vehicle_is_favorite((int)current_user()['id'], $id),
     'title'    => $vehicle['bezeichnung'],
     'vehicle'  => $vehicle,

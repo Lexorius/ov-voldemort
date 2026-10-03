@@ -519,6 +519,37 @@ $arten = [
   <?php endif; ?>
 </section>
 
+<?php $buchungen ??= []; if ($buchungen || can('manage_budget')): ?>
+<section class="card" id="buchungen">
+  <div class="card__head">
+    <h2>Buchungen für dieses Fahrzeug</h2>
+    <div class="btnrow">
+      <?php if ($buchungen): ?><span class="muted small">gebucht <strong><?= e(money(expenses_summe($buchungen))) ?></strong></span><?php endif; ?>
+      <?php if (can('manage_budget')): ?><a class="btn btn--sm btn--sec" href="<?= e(url('expense_edit', ['art' => 'ausgabe', 'vehicle_id' => $vehicle['id']])) ?>">+ Ausgabe</a><?php endif; ?>
+    </div>
+  </div>
+  <?php if (!$buchungen): ?>
+    <div class="empty">Noch keine Buchung mit Bezug zu diesem Fahrzeug – Rechnungen lassen sich im Budget mehreren Fahrzeugen zuordnen.</div>
+  <?php else: ?>
+    <div class="tablewrap">
+      <table class="data">
+        <tbody>
+        <?php foreach ($buchungen as $r): ?>
+          <tr>
+            <td class="nowrap small"><?= e(de_date((string)$r['datum'])) ?></td>
+            <td><?php if (can('manage_budget')): ?><a href="<?= e(url('expense_edit', ['id' => $r['id']])) ?>"><?= e((string)$r['bezeichnung']) ?></a><?php else: ?><?= e((string)$r['bezeichnung']) ?><?php endif; ?>
+              <?= buchung_status_badge((string)($r['status'] ?? 'bezahlt')) ?>
+              <?php if ($r['kategorie_label']): ?><span class="small muted">· <?= e((string)$r['kategorie_label']) ?></span><?php endif; ?></td>
+            <td class="num nowrap"><?= (string)$r['art'] === 'einnahme' ? '+' : '−' ?><?= e(money((float)$r['betrag_brutto'], false)) ?></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  <?php endif; ?>
+</section>
+<?php endif; ?>
+
 <section class="card" id="journal">
   <div class="card__head">
     <h2>Journal der Fahrzeugakte</h2>

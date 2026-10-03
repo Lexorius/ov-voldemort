@@ -201,6 +201,38 @@ $verweigert = $freigebbar ? wish_release_denied($wish) : null;
   <?php endif; ?>
 </div>
 
+<?php $bestellung ??= null; $buchungen ??= []; ?>
+<?php if ($bestellung || $buchungen): ?>
+  <div class="card">
+    <div class="card__head">
+      <h2>Bestellung und Buchungen</h2>
+      <?php if ($buchungen): ?><span class="small muted">gebucht <strong><?= e(money(expenses_summe($buchungen))) ?></strong></span><?php endif; ?>
+    </div>
+    <?php if ($bestellung): ?>
+      <p>Bestellung <a href="<?= e(url('bestellung', ['id' => $bestellung['id']])) ?>"><strong class="mono"><?= e((string)$bestellung['nummer']) ?></strong></a>
+        <?= bestellung_badge((string)$bestellung['status']) ?> · <?= e((string)$bestellung['lieferant']) ?>, bestellt am <?= e(de_date((string)$bestellung['bestellt_am'])) ?>
+        <?php if ((int)$bestellung['wuensche'] > 1): ?>· zusammen mit <?= (int)$bestellung['wuensche'] - 1 ?> weiteren Wunsch/Wünschen<?php endif; ?></p>
+    <?php endif; ?>
+    <?php if ($buchungen): ?>
+      <div class="tablewrap">
+        <table class="data">
+          <tbody>
+          <?php foreach ($buchungen as $r): ?>
+            <tr>
+              <td class="nowrap small"><?= e(de_date((string)$r['datum'])) ?></td>
+              <td><?php if (can('manage_budget')): ?><a href="<?= e(url('expense_edit', ['id' => $r['id']])) ?>"><?= e((string)$r['bezeichnung']) ?></a><?php else: ?><?= e((string)$r['bezeichnung']) ?><?php endif; ?>
+                <?= buchung_status_badge((string)($r['status'] ?? 'bezahlt')) ?>
+                <?php if (!empty($r['bestellung_nummer'])): ?><span class="small muted mono">· <?= e((string)$r['bestellung_nummer']) ?></span><?php endif; ?></td>
+              <td class="num nowrap"><?= (string)$r['art'] === 'einnahme' ? '+' : '−' ?><?= e(money((float)$r['betrag_brutto'], false)) ?></td>
+            </tr>
+          <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
+  </div>
+<?php endif; ?>
+
 <?php if ($todos): ?>
   <div class="card">
     <h2>Verknüpfte Aufgaben</h2>

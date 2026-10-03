@@ -316,6 +316,23 @@ function kalender_sammeln(string $von, string $bis, array $u, ?array $quellen = 
 {
     $quellen ??= kalender_quellen_fuer($u);
     $out = [];
+    foreach ($quellen as $q) {
+        try {
+            $out = array_merge($out, kalender_quelle($q, $von, $bis, $u));
+        } catch (Throwable $ex) {
+            // Eine Quelle (etwa eine fehlende Tabelle vor der Wanderung) hält den Kalender nicht auf
+            error_log('OV-Multitool Kalender, Quelle ' . $q . ': ' . $ex->getMessage());
+        }
+    }
+    usort($out, static fn($a, $b) => [$a['beginn'], $a['quelle'], $a['titel']] <=> [$b['beginn'], $b['quelle'], $b['titel']]);
+    return $out;
+}
+
+/** Einträge einer einzelnen Quelle */
+function kalender_quelle(string $quelle, string $von, string $bis, array $u): array
+{
+    $quellen = [$quelle];
+    $out = [];
 
     if (in_array('termin', $quellen, true)) {
         foreach (kalender_termine($von, $bis, $u) as $t) {
@@ -371,8 +388,9 @@ function kalender_sammeln(string $von, string $bis, array $u, ?array $quellen = 
             }
         }
         if (can('view_sims')) {
-            foreach (db_all('SELECT id, bezeichnung, vertrag_bis FROM sims WHERE is_active = 1 AND vertrag_bis BETWEEN ? AND ?', [$von, $bis]) as $s) {
-                $out[] = kalender_eintrag('frist', 'Vertrag endet: ' . $s['bezeichnung'], (string)$s['vertrag_bis'], null,
+            foreach (db_all('SELECT * FROM sims WHERE is_active = 1 AND vertrag_bis BETWEEN ? AND ?', [$von, $bis]) as $s) {
+                $name = function_exists('sim_bezeichnung') ? sim_bezeichnung($s) : (string)(($s['rufnummer'] ?? '') ?: (($s['issi'] ?? '') ?: 'SIM-Karte'));
+                $out[] = kalender_eintrag('frist', 'Vertrag endet: ' . $name, (string)$s['vertrag_bis'], null,
                     ['id' => $s['id'], 'url' => url('sim_edit', ['id' => $s['id']]), 'untertitel' => 'SIM-Karte']);
             }
         }
@@ -399,7 +417,6 @@ function kalender_sammeln(string $von, string $bis, array $u, ?array $quellen = 
                 'ort' => $h['ort'], 'untertitel' => (string)$h['kalender_name']]);
         }
     }
-    usort($out, static fn($a, $b) => [$a['beginn'], $a['quelle'], $a['titel']] <=> [$b['beginn'], $b['quelle'], $b['titel']]);
     return $out;
 }
 

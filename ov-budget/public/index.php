@@ -34,6 +34,9 @@ $routes = [
     'wish_edit'          => 'wish_edit',
     'wish_action'        => 'wish_action',
     'wishes_export'      => 'wishes_export',
+    'bestellungen'       => 'bestellungen',
+    'bestellung'         => 'bestellung',
+    'bestellung_edit'    => 'bestellung_edit',
 
     'todos'              => 'todos',
     'todo'               => 'todo_view',

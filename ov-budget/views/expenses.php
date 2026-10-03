@@ -186,9 +186,13 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
               <strong><?= e($r['bezeichnung']) ?></strong> <?= buchung_status_badge((string)($r['status'] ?? 'bezahlt')) ?><?= $istEinnahme ? ' ' . einnahme_alter_badge(einnahme_alter($r)) : '' ?>
               <?php if ($r['lieferant']): ?><div class="small muted"><?= e($r['lieferant']) ?></div><?php endif; ?>
               <?php if ($istEinnahme && ($weg = einnahme_weg($r)) !== ''): ?><div class="small muted"><?= e($weg) ?></div><?php endif; ?>
-              <?php if ($r['wunsch_bezeichnung']): ?>
+              <?php if (!empty($r['wuensche_namen'])): ?>
+                <div class="small muted">zu Wunsch: <?= e((string)$r['wuensche_namen']) ?></div>
+              <?php elseif ($r['wunsch_bezeichnung']): ?>
                 <div class="small muted">zu Wunsch: <?= e($r['wunsch_bezeichnung']) ?></div>
               <?php endif; ?>
+              <?php if (!empty($r['fahrzeuge_namen'])): ?><div class="small muted">Fahrzeug: <?= e((string)$r['fahrzeuge_namen']) ?></div><?php endif; ?>
+              <?php if (!empty($r['bestellung_nummer'])): ?><div class="small muted">Bestellung <span class="mono"><?= e((string)$r['bestellung_nummer']) ?></span></div><?php endif; ?>
               <?php if (!empty($r['veranstaltung_titel'])): ?>
                 <div class="small muted">zu Veranstaltung: <?= e((string)$r['veranstaltung_titel']) ?></div>
               <?php endif; ?>
