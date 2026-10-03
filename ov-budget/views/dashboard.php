@@ -136,8 +136,8 @@ $quoteCls = ($zahlen['verfuegbar'] > 0 && $zahlen['ausgaben'] > $zahlen['verfueg
     <div style="display:flex;justify-content:space-between;gap:.6rem;flex-wrap:wrap">
       <span class="small">
         <?= e(money($zahlen['budget'], false)) ?> Budget
-        <?php if ($zahlen['einnahmen'] > 0): ?>+ <?= e(money($zahlen['einnahmen'], false)) ?> Einnahmen<?php endif; ?>
-        = <strong><?= e(money($zahlen['verfuegbar'])) ?></strong>
+        <?php if ($zahlen['einnahmen'] > 0): ?>+ <?= e(money($zahlen['einnahmen'], false)) ?> eingegangen<?php endif; ?>
+        = <strong><?= e(money($zahlen['verfuegbar'])) ?></strong><?= ($zahlen['einnahmen_zugesagt'] ?? 0) > 0 ? ' <span class="muted">· mit Zusagen ' . e(money($zahlen['verfuegbar_mit_zusagen'] ?? 0)) . '</span>' : '' ?>
       </span>
       <span class="small nowrap"><?= e(money($zahlen['ausgaben'], false)) ?> ausgegeben ·
         <strong><?= e(money($zahlen['frei'])) ?></strong> <?= $zahlen['frei'] >= 0 ? 'frei' : 'überzogen' ?></span>

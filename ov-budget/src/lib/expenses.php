@@ -42,11 +42,11 @@ const EINNAHME_STUFEN_FELDER = [
     'bezahlt'     => ['datum' => 'bezahlt_am', 'label' => 'Eingegangen / zugewiesen'],
 ];
 /**
- * Bedingung für alles, was als Ist zählt: bezahlt, erhaltene Rechnungen und
- * zugesagte Mittel – mit Letzteren darf der OV planen. Abgerechnet und
- * gestellt sind Forderungen, geplant ist Planung.
+ * Bedingung für alles, was als Ist zählt: bezahlt und erhaltene Rechnungen.
+ * Zugesagte Mittel stehen daneben – verfügbar ist nur, was da ist.
+ * Abgerechnet und gestellt sind Forderungen, geplant ist Planung.
  */
-const BUCHUNG_IST = "status IN ('bezahlt','offen','zugesagt')";
+const BUCHUNG_IST = "status IN ('bezahlt','offen')";
 /** Forderungen: Einnahmen, die dem OV zustehen, aber weder zugesagt noch da sind */
 const EINNAHME_FORDERUNG = ['abgerechnet', 'gestellt'];
 /** Stufen, in denen eine Abrechnung wartet – vom Einreichen bis zum Geld */
@@ -496,17 +496,45 @@ function expense_by_category(int $jahr, string $art = 'ausgabe'): array
 }
 
 /** Ausgaben eines Jahres je Monat, immer zwölf Werte */
-function expense_by_month(int $jahr, string $art = 'ausgabe'): array
+function expense_by_month(int $jahr, string $art = 'ausgabe', ?array $status = null): array
 {
     $out = array_fill(1, 12, 0.0);
+    $p = [$jahr, buchungsart($art)];
+    if ($status === null) {
+        $bedingung = BUCHUNG_IST;
+    } else {
+        $bedingung = 'status IN (' . implode(',', array_fill(0, count($status), '?')) . ')';
+        $p = array_merge($p, array_map('buchung_status', $status));
+    }
     foreach (db_all(
         'SELECT MONTH(datum) AS m, SUM(betrag_brutto) AS betrag
-         FROM expenses WHERE jahr = ? AND art = ? AND ' . BUCHUNG_IST . ' GROUP BY MONTH(datum)',
-        [$jahr, buchungsart($art)]
+         FROM expenses WHERE jahr = ? AND art = ? AND ' . $bedingung . ' GROUP BY MONTH(datum)',
+        $p
     ) as $r) {
         $out[(int)$r['m']] = (float)$r['betrag'];
     }
     return $out;
+}
+
+/**
+ * Der Verlauf fürs Diagramm: je Monat Einnahmen (eingegangen, zugesagt,
+ * Forderungen) und Ausgaben (bezahlt, offene Rechnungen).
+ */
+function budget_verlauf(int $jahr): array
+{
+    $ausgaben = expense_by_month($jahr);
+    $offen = expense_by_month($jahr, 'ausgabe', ['offen']);
+    $bezahlt = [];
+    foreach ($ausgaben as $m => $v) {
+        $bezahlt[$m] = $v - (float)($offen[$m] ?? 0);
+    }
+    return [
+        'eingegangen' => expense_by_month($jahr, 'einnahme', ['bezahlt']),
+        'zugesagt'    => expense_by_month($jahr, 'einnahme', ['zugesagt']),
+        'forderungen' => expense_by_month($jahr, 'einnahme', EINNAHME_FORDERUNG),
+        'bezahlt'     => $bezahlt,
+        'offen'       => $offen,
+    ];
 }
 
 /** Summe der Buchungen eines Jahres in einer Richtung */
@@ -560,6 +588,7 @@ function budget_jahr_zahlen(int $jahr): array
     $einnahmen = income_total($jahr);
     $ausgaben = expense_total($jahr);
     $verfuegbar = $budget + $einnahmen;
+    $zugesagt = expense_total_status($jahr, 'einnahme', 'zugesagt');
     $geplantBuchungen = expense_total_status($jahr, 'ausgabe', 'geplant');
     $veranstaltungen = function_exists('events_geplante_kosten') ? events_geplante_kosten($jahr) : ['gesamt' => 0.0, 'verpflegung' => 0.0, 'anzahl' => 0];
     $geplant = $geplantBuchungen + (float)$veranstaltungen['gesamt'];
@@ -570,8 +599,10 @@ function budget_jahr_zahlen(int $jahr): array
         'verfuegbar' => $verfuegbar,
         'frei'       => $verfuegbar - $ausgaben,
         'quote'      => $verfuegbar > 0 ? min(100.0, $ausgaben / $verfuegbar * 100) : 0.0,
-        // Einnahmen: zugesagt steckt schon in einnahmen, Forderungen (abgerechnet, gestellt) nicht
-        'einnahmen_zugesagt'    => expense_total_status($jahr, 'einnahme', 'zugesagt'),
+        // Einnahmen: zugesagt und Forderungen (abgerechnet, gestellt) stecken nicht in einnahmen
+        'einnahmen_zugesagt'    => $zugesagt,
+        'verfuegbar_mit_zusagen' => $verfuegbar + $zugesagt,
+        'frei_mit_zusagen'       => $verfuegbar + $zugesagt - $ausgaben,
         'einnahmen_forderungen' => expense_total_status($jahr, 'einnahme', 'abgerechnet') + expense_total_status($jahr, 'einnahme', 'gestellt'),
         'abrechnungen_wartend'  => einnahmen_wartend($jahr),
         'einnahmen_offen'       => expense_total_status($jahr, 'einnahme', 'abgerechnet') + expense_total_status($jahr, 'einnahme', 'gestellt'),

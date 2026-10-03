@@ -156,9 +156,11 @@ sie enthalten.
   Gebührenbescheid gestellt) → *zugesagt* (Mittel sind dem OV versprochen)
   → *eingegangen / zugewiesen*. Je Stufe lassen sich Datum, Betrag und beim
   Bescheid die Nummer eintragen; jedes Datum hebt den Stand auf seine Stufe.
-  Eingegangen und zugesagt zählen als Einnahme des Jahres – mit Zusagen darf
-  der OV planen –, abgerechnet und gestellt sind **Forderungen**, erwartet
-  ist Planung. Die Einnahmenliste zeigt oben den **Stand der Einnahmen**: je
+  Nur Eingegangenes zählt als Einnahme und ins verfügbare Budget; Zugesagtes
+  steht darunter getrennt („mit Zusagen … verfügbar"), abgerechnet und
+  gestellt sind **Forderungen**, erwartet ist Planung. Der Verlauf über das
+  Jahr stapelt je Monat eingegangen, zugesagt und Forderungen sowie bezahlt
+  und offene Rechnungen. Die Einnahmenliste zeigt oben den **Stand der Einnahmen**: je
   Stufe Anzahl und Summe (Klick filtert), was der OV haben sollte, und wo
   Beträge bekannt sind, um wie viel die Bescheide hinter den Abrechnungen
   zurückbleiben. Jede Zeile nennt ihren Weg mit Daten, Nummer und Beträgen.

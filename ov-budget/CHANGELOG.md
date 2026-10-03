@@ -1,5 +1,18 @@
 # Änderungsverlauf
 
+## 2.0.15.0
+
+### Budgetseite: Zusagen und Rechnungen getrennt
+
+- **Verfügbar** ist nur noch Budget plus eingegangene Einnahmen. Zugesagte
+  Mittel stehen darunter getrennt, mit eigenem Balken und „mit Zusagen …
+  verfügbar"; Forderungen (abgerechnet, gestellt) daneben.
+- Der Mittel-Balken zeigt bezahlte Ausgaben und **offene Rechnungen**
+  schraffiert getrennt.
+- Der **Verlauf über das Jahr** stapelt je Monat eingegangen, zugesagt und
+  Forderungen bei den Einnahmen sowie bezahlt und offene Rechnungen bei den
+  Ausgaben – mit Legende.
+
 ## 2.0.14.0
 
 ### Ampel für wartende Abrechnungen

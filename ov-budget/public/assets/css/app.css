@@ -565,6 +565,27 @@ pre.raw {
   .months__bar--ein { background: #4ade80; }
   .months__bar--aus { background: #6f9dff; }
 }
+/* Gestapelte Balken: eingegangen / zugesagt / Forderungen, bezahlt / offene Rechnungen */
+.months__stack {
+  flex: 1 1 0; min-width: 0; height: 100%;
+  display: flex; flex-direction: column; justify-content: flex-end;
+}
+.months__seg { min-height: 1px; flex: 0 0 auto; }
+.months__seg:first-child { border-radius: 3px 3px 0 0; }
+.months__seg--ein { background: var(--ok); }
+.months__seg--zusage { background: #86efac; }
+.months__seg--forderung { background: repeating-linear-gradient(135deg, #b45309 0 3px, #fcd34d 3px 6px); }
+.months__seg--aus { background: var(--accent); }
+.months__seg--offen { background: repeating-linear-gradient(135deg, #b45309 0 3px, #f59e0b 3px 6px); }
+@media (prefers-color-scheme: dark) {
+  .months__seg--ein { background: #4ade80; }
+  .months__seg--zusage { background: #166534; }
+  .months__seg--aus { background: #6f9dff; }
+}
+.legend--zusage { background: #86efac; }
+.legend--forderung { background: repeating-linear-gradient(135deg, #b45309 0 3px, #fcd34d 3px 6px); }
+.legend--offen { background: repeating-linear-gradient(135deg, #b45309 0 3px, #f59e0b 3px 6px); }
+@media (prefers-color-scheme: dark) { .legend--zusage { background: #166534; } }
 .months__label { font-size: .62rem; color: var(--ink-mute); text-align: center; }
 @media (min-width: 620px) { .months__label { font-size: .7rem; } }
 

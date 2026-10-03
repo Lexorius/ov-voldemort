@@ -41,7 +41,7 @@ $check('unbekannte Wahl wird eingegangen', einnahme_stufe([], 'offen') === 'beza
 $check('Status kennt alle Stufen', buchung_status('zugesagt') === 'zugesagt' && buchung_status('offen') === 'offen' && buchung_status('x') === 'bezahlt');
 $check('Kennzeichen je Stufe', str_contains(buchung_status_badge('abgerechnet'), 'abgerechnet') && str_contains(buchung_status_badge('zugesagt'), 'zugesagt')
     && str_contains(buchung_status_badge('gestellt'), 'gestellt') && buchung_status_badge('bezahlt') === '');
-$check('Ist-Regel', str_contains(BUCHUNG_IST, "'zugesagt'") && !str_contains(BUCHUNG_IST, "'gestellt'") && !str_contains(BUCHUNG_IST, "'geplant'"));
+$check('Ist-Regel: nur bezahlt und erhaltene Rechnungen', !str_contains(BUCHUNG_IST, "'zugesagt'") && str_contains(BUCHUNG_IST, "'offen'") && !str_contains(BUCHUNG_IST, "'gestellt'") && !str_contains(BUCHUNG_IST, "'geplant'"));
 
 /* ---------- Weg als Zeile ---------- */
 $e = ['abgerechnet_am' => '2026-03-12', 'abgerechnet_betrag' => 1250, 'gestellt_am' => '2026-04-05', 'gestellt_betrag' => 1100, 'gestellt_nr' => 'GB-4711',

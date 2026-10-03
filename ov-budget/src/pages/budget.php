@@ -55,6 +55,7 @@ render('budget', [
     'einnahmeKategorien' => expense_by_category($jahr, 'einnahme'),
     'monate'          => expense_by_month($jahr),
     'monateEin'       => expense_by_month($jahr, 'einnahme'),
+    'verlauf'         => budget_verlauf($jahr),
     'jeTopf'          => expense_by_budget($jahr),
     'letzte'          => expense_query(['jahr' => $jahr, 'limit' => 6]),
     'offenGeplant'    => can('view_expenses') ? expense_offen_geplant($jahr) : [],

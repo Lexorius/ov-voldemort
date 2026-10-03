@@ -95,20 +95,42 @@ $h = verbrauch_kostenhinweis(2027, strtotime('2026-01-10'), $stats);
 $check('unter 30 Tagen keine Hochrechnung', $h['laeuft'] && $h['hochrechnung'] === null);
 $check('ohne Zähler nichts', verbrauch_kostenhinweis(2027, null, ['zaehler' => 0, 'kosten_jahr' => 0, 'ohne_tarif' => 0, 'je_art' => []]) === null);
 
+/* ---------- Verlauf fürs Diagramm ---------- */
+$GLOBALS['tabellen'] = ['GROUP BY MONTH' => static fn(array $p) => match (implode(',', array_slice($p, 1))) {
+    'einnahme,bezahlt'  => [['m' => 3, 'betrag' => 1000]],
+    'einnahme,zugesagt' => [['m' => 3, 'betrag' => 400]],
+    'einnahme,abgerechnet,gestellt' => [['m' => 5, 'betrag' => 800]],
+    'ausgabe,offen'     => [['m' => 2, 'betrag' => 150]],
+    'ausgabe'           => [['m' => 2, 'betrag' => 500], ['m' => 4, 'betrag' => 200]],
+    default => [],
+}] + $GLOBALS['tabellen'];
+$v = budget_verlauf(2026);
+$check('Verlauf: Einnahmen nach Stufe', $v['eingegangen'][3] === 1000.0 && $v['zugesagt'][3] === 400.0 && $v['forderungen'][5] === 800.0 && $v['eingegangen'][5] === 0.0);
+$check('Verlauf: bezahlt = Ausgaben ohne offene', $v['bezahlt'][2] === 350.0 && $v['offen'][2] === 150.0 && $v['bezahlt'][4] === 200.0 && count($v['bezahlt']) === 12);
+unset($GLOBALS['tabellen']['GROUP BY MONTH']);
+$verlaufLeer = ['eingegangen' => array_fill(1, 12, 0.0), 'zugesagt' => array_fill(1, 12, 0.0), 'forderungen' => array_fill(1, 12, 0.0), 'bezahlt' => array_fill(1, 12, 0.0), 'offen' => array_fill(1, 12, 0.0)];
+
 /* ---------- Übersicht rendert die neuen Abschnitte ---------- */
 $z = ['budget' => 10000.0, 'einnahmen' => 2500.0, 'ausgaben' => 4000.0, 'verfuegbar' => 12500.0, 'frei' => 8500.0, 'quote' => 32.0,
       'einnahmen_offen' => 500.0, 'einnahmen_forderungen' => 500.0, 'einnahmen_zugesagt' => 250.0, 'abrechnungen_wartend' => ['liste' => [], 'gelb' => 0, 'orange' => 0, 'rot' => 0, 'ueber30' => 0, 'summe_ueber30' => 0.0], 'ausgaben_offen' => 300.0, 'geplant_buchungen' => 200.0, 'geplant_veranstaltungen' => 1236.0,
-      'geplant_verpflegung' => 336.0, 'geplant_anzahl' => 3, 'geplant' => 1436.0, 'frei_nach_planung' => 7064.0];
+      'geplant_verpflegung' => 336.0, 'geplant_anzahl' => 3, 'geplant' => 1436.0, 'frei_nach_planung' => 7064.0,
+      'verfuegbar_mit_zusagen' => 12750.0, 'frei_mit_zusagen' => 8750.0];
+$verlaufVoll = $verlaufLeer;
+$verlaufVoll['eingegangen'][3] = 1000.0; $verlaufVoll['zugesagt'][3] = 250.0; $verlaufVoll['forderungen'][5] = 500.0; $verlaufVoll['bezahlt'][2] = 350.0; $verlaufVoll['offen'][2] = 300.0;
 $html = render_partial('budget', ['jahr' => 2026, 'jahre' => [2026], 'budgets' => [], 'ohneTopf' => [], 'zuBestellen' => [], 'zurFreigabe' => [], 'zahlen' => $z,
     'kategorien' => [], 'einnahmeKategorien' => [], 'monate' => array_fill(1, 12, 0.0), 'monateEin' => array_fill(1, 12, 0.0), 'jeTopf' => [], 'letzte' => [],
     'offenGeplant' => [['id' => 9, 'art' => 'einnahme', 'datum' => '2026-05-02', 'bezeichnung' => 'Rechnung Landkreis', 'status' => 'offen', 'kategorie_label' => 'Einsatz', 'betrag_brutto' => 500, 'veranstaltung_titel' => null]],
-    'veranstaltungen' => $g, 'verbrauchHinweis' => verbrauch_kostenhinweis(2027, strtotime('2026-07-01'), $stats)]);
-$check('Kacheln nennen offen und Planung', str_contains($html, 'abgerechnet oder gestellt') && str_contains($html, 'zugesagt, noch nicht da') && str_contains($html, 'offene Rechnungen') && str_contains($html, 'nach Planung noch') && str_contains($html, '7.064'));
+    'veranstaltungen' => $g, 'verbrauchHinweis' => verbrauch_kostenhinweis(2027, strtotime('2026-07-01'), $stats), 'verlauf' => $verlaufVoll]);
+$check('Mittel: offene Rechnungen schraffiert, Zusagen darunter', str_contains($html, 'offene Rechnungen: 300,00') && str_contains($html, 'Zugesagt, noch nicht da:</strong> 250,00')
+    && str_contains($html, 'mit Zusagen <strong>12.750,00 €</strong> verfügbar') && str_contains($html, 'Forderungen: 500,00'));
+$check('Verlauf gestapelt mit Legende', str_contains($html, 'months__seg--zusage') && str_contains($html, 'months__seg--forderung') && str_contains($html, 'months__seg--offen')
+    && str_contains($html, 'legend--zusage') && str_contains($html, 'zugesagt 250,00'));
+$check('Kacheln nennen offen und Planung', str_contains($html, 'abgerechnet oder gestellt') && str_contains($html, 'zugesagt</span>, noch nicht da') && str_contains($html, 'offene Rechnungen') && str_contains($html, 'nach Planung noch') && str_contains($html, '7.064'));
 $check('Abschnitt Offen und geplant', str_contains($html, 'Offen und geplant') && str_contains($html, 'Übung Hochwasser') && str_contains($html, 'Rechnung Landkreis') && str_contains($html, '>offen<'));
 $check('Nebenkosten-Hinweis', str_contains($html, 'Nebenkosten aus dem Verbrauch') && str_contains($html, 'hochgerechnet'));
 $html = render_partial('budget', ['jahr' => 2026, 'jahre' => [2026], 'budgets' => [], 'ohneTopf' => [], 'zuBestellen' => [], 'zurFreigabe' => [], 'zahlen' => ['geplant' => 0.0] + $z,
     'kategorien' => [], 'einnahmeKategorien' => [], 'monate' => array_fill(1, 12, 0.0), 'monateEin' => array_fill(1, 12, 0.0), 'jeTopf' => [], 'letzte' => [],
-    'offenGeplant' => [], 'veranstaltungen' => ['liste' => [], 'gesamt' => 0.0, 'verpflegung' => 0.0, 'anzahl' => 0], 'verbrauchHinweis' => null]);
+    'offenGeplant' => [], 'veranstaltungen' => ['liste' => [], 'gesamt' => 0.0, 'verpflegung' => 0.0, 'anzahl' => 0], 'verbrauchHinweis' => null, 'verlauf' => $verlaufLeer]);
 $check('ohne Planung kein Abschnitt', !str_contains($html, 'Offen und geplant') && !str_contains($html, 'Nebenkosten'));
 $html = render_partial('budget_year_edit', ['eintrag' => ['jahr' => 2027, 'betrag' => '', 'beschreibung' => '', 'is_active' => 1], 'errors' => [], 'ausgaben' => 0.0,
     'verbrauchHinweis' => verbrauch_kostenhinweis(2027, strtotime('2026-07-01'), $stats)]);

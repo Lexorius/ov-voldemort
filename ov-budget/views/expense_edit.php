@@ -154,7 +154,7 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
             <label class="wahl"><input type="radio" name="status" value="<?= e($key) ?>"<?= $stand === $key ? ' checked' : '' ?>> <?= e($label) ?></label>
           <?php endforeach; ?>
         </div>
-        <small>Eingegangen und zugesagt zählen als Einnahme des Jahres – mit Zusagen darf der OV planen. Abgerechnet und
+        <small>Nur Eingegangenes zählt als Einnahme und ins Verfügbare. Zugesagtes steht daneben, abgerechnet und
           gestellt sind Forderungen, erwartet ist Planung. Ein Datum unten kann den Stand nur anheben.</small>
       </div>
     <?php else: ?>

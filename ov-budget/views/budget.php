@@ -1,6 +1,6 @@
 <?php
 /** @var int $jahr @var array $jahre @var array $budgets @var array $ohneTopf
- *  @var array $zahlen @var array $offenGeplant @var array $veranstaltungen @var ?array $verbrauchHinweis
+ *  @var array $zahlen @var array $offenGeplant @var array $veranstaltungen @var ?array $verbrauchHinweis @var array $verlauf
  *  @var array $kategorien @var array $einnahmeKategorien
  *  @var array $monate @var array $monateEin @var array $jeTopf @var array $letzte
  *  @var array $zuBestellen @var array $zurFreigabe */
@@ -68,6 +68,18 @@ $freigabeZeile = static function (array $w, string $aktion): string {
 };
 
 $maxMonat = max(array_merge([0.0], array_values($monate), array_values($monateEin)));
+$zugesagt = (float)($zahlen['einnahmen_zugesagt'] ?? 0);
+$forderungen = (float)($zahlen['einnahmen_forderungen'] ?? 0);
+$ausgabenOffen = (float)($zahlen['ausgaben_offen'] ?? 0);
+$mitZusagen = (float)($zahlen['verfuegbar_mit_zusagen'] ?? $verfuegbar);
+// Höchster Monat über alle Stapel – Einnahmen samt Zusagen und Forderungen
+$stapelEin = [];
+$stapelAus = [];
+for ($m = 1; $m <= 12; $m++) {
+    $stapelEin[$m] = (float)($verlauf['eingegangen'][$m] ?? 0) + (float)($verlauf['zugesagt'][$m] ?? 0) + (float)($verlauf['forderungen'][$m] ?? 0);
+    $stapelAus[$m] = (float)($verlauf['bezahlt'][$m] ?? 0) + (float)($verlauf['offen'][$m] ?? 0);
+}
+$maxMonat = max(array_merge([0.0], array_values($stapelEin), array_values($stapelAus)));
 $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 
 /** Kategorieblock für eine Richtung */
@@ -144,7 +156,7 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
     <div class="stat__value" style="color:var(--ok)">+<?= e(money_rounded($einnahmen, false)) ?></div>
     <div class="stat__hint"><?php
       $teile = [];
-      if (($zahlen['einnahmen_zugesagt'] ?? 0) > 0) { $teile[] = 'davon ' . e(money_rounded($zahlen['einnahmen_zugesagt'], false)) . ' zugesagt, noch nicht da'; }
+      if ($zugesagt > 0) { $teile[] = 'dazu <span style="color:#15803d">' . e(money_rounded($zugesagt, false)) . ' zugesagt</span>, noch nicht da'; }
       if (($zahlen['einnahmen_forderungen'] ?? 0) > 0) { $teile[] = '<span style="color:#b45309">' . e(money_rounded($zahlen['einnahmen_forderungen'], false)) . ' abgerechnet oder gestellt</span>, zählt noch nicht'; }
       $w = $zahlen['abrechnungen_wartend'] ?? null;
       if ($w && $w['ueber30'] > 0) {
@@ -167,7 +179,7 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
     <div class="stat__value" style="<?= $rest < 0 ? 'color:var(--bad)' : '' ?>"><?= e(money_rounded(abs($rest), false)) ?></div>
     <div class="stat__hint"><?= $zahlen['geplant'] > 0
         ? 'nach Planung noch <strong' . ($zahlen['frei_nach_planung'] < 0 ? ' style="color:var(--bad)"' : '') . '>' . e(money_rounded($zahlen['frei_nach_planung'], false)) . '</strong> von ' . e(money_rounded($verfuegbar, false))
-        : 'von ' . e(money_rounded($verfuegbar, false)) . ' verfügbar' ?></div>
+        : 'von ' . e(money_rounded($verfuegbar, false)) . ' verfügbar' ?><?= $zugesagt > 0 ? ' · mit Zusagen ' . e(money_rounded($zahlen['frei_mit_zusagen'] ?? ($rest + $zugesagt), false)) : '' ?></div>
   </div>
 </div>
 
@@ -246,19 +258,44 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
     <h2>Mittel <?= (int)$jahr ?></h2>
     <span class="small">
       <?= e(money_rounded($gesamt, false)) ?> Budget
-      <?php if ($einnahmen > 0): ?>+ <?= e(money_rounded($einnahmen, false)) ?> Einnahmen<?php endif; ?>
-      = <strong><?= e(money_rounded($verfuegbar)) ?></strong>
+      <?php if ($einnahmen > 0): ?>+ <?= e(money_rounded($einnahmen, false)) ?> eingegangen<?php endif; ?>
+      = <strong><?= e(money_rounded($verfuegbar)) ?></strong> verfügbar
     </span>
   </div>
   <?php if ($verfuegbar > 0): ?>
-    <div class="bar" style="height:14px">
-      <div class="bar__fill <?= $quoteCls ?>" style="width:<?= number_format($quote, 1, '.', '') ?>%"></div>
+    <?php
+      $bezahltAnteil = $verfuegbar > 0 ? min(100.0, max(0.0, $ausgaben - $ausgabenOffen) / $verfuegbar * 100) : 0.0;
+      $offenAnteil = $verfuegbar > 0 ? min(100.0 - $bezahltAnteil, $ausgabenOffen / $verfuegbar * 100) : 0.0;
+    ?>
+    <div class="bar" style="height:14px;display:flex">
+      <div class="bar__fill <?= $quoteCls ?>" style="width:<?= number_format($bezahltAnteil, 1, '.', '') ?>%;border-radius:0"
+           title="<?= e('bezahlt: ' . money_rounded($ausgaben - $ausgabenOffen)) ?>"></div>
+      <?php if ($offenAnteil > 0): ?>
+        <div style="width:<?= number_format($offenAnteil, 1, '.', '') ?>%;background:repeating-linear-gradient(135deg,#b45309 0 4px,#f59e0b 4px 8px)"
+             title="<?= e('offene Rechnungen: ' . money_rounded($ausgabenOffen)) ?>"></div>
+      <?php endif; ?>
     </div>
     <p class="small muted" style="margin:.5rem 0 0">
-      <?= e(money_rounded($ausgaben, false)) ?> ausgegeben (<?= number_format($quote, 0) ?>&nbsp;%).
+      <?= e(money_rounded($ausgaben, false)) ?> ausgegeben (<?= number_format($quote, 0) ?>&nbsp;%)<?= $ausgabenOffen > 0
+          ? ', davon <span style="color:#b45309">' . e(money_rounded($ausgabenOffen, false)) . ' offene Rechnungen</span>' : '' ?>.
       Wenn zusätzlich alle offenen Wünsche beschafft würden, kämen
       <strong><?= e(money_rounded($verplant + $offenOhne)) ?></strong> hinzu.
     </p>
+    <?php if ($zugesagt > 0 || $forderungen > 0): ?>
+      <div style="margin-top:.8rem;padding-top:.6rem;border-top:1px dashed var(--border)">
+        <div style="display:flex;justify-content:space-between;gap:.6rem;flex-wrap:wrap" class="small">
+          <span><strong>Zugesagt, noch nicht da:</strong> <?= e(money_rounded($zugesagt)) ?>
+            <?php if ($forderungen > 0): ?>· <span style="color:#b45309">abgerechnet oder gestellt: <?= e(money_rounded($forderungen)) ?></span><?php endif; ?></span>
+          <span>mit Zusagen <strong><?= e(money_rounded($mitZusagen)) ?></strong> verfügbar</span>
+        </div>
+        <?php $z = $mitZusagen > 0 ? $zugesagt / $mitZusagen * 100 : 0; $f = $mitZusagen > 0 ? min(100 - $z, $forderungen / $mitZusagen * 100) : 0; ?>
+        <div class="bar" style="height:8px;display:flex;margin-top:.3rem">
+          <div style="width:<?= number_format(max(0, 100 - $z - $f), 1, '.', '') ?>%;background:var(--border)" title="<?= e('verfügbar: ' . money_rounded($verfuegbar)) ?>"></div>
+          <div style="width:<?= number_format($z, 1, '.', '') ?>%;background:#15803d" title="<?= e('zugesagt: ' . money_rounded($zugesagt)) ?>"></div>
+          <?php if ($f > 0): ?><div style="width:<?= number_format($f, 1, '.', '') ?>%;background:repeating-linear-gradient(135deg,#b45309 0 4px,#fcd34d 4px 8px)" title="<?= e('Forderungen: ' . money_rounded($forderungen)) ?>"></div><?php endif; ?>
+        </div>
+      </div>
+    <?php endif; ?>
   <?php else: ?>
     <div class="empty">Weder Budget noch Einnahmen erfasst.</div>
   <?php endif; ?>
@@ -323,29 +360,38 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
   <div class="card__head">
     <h2>Verlauf über das Jahr</h2>
     <span class="small muted">
-      <span class="legend legend--ein"></span> Einnahmen
-      <span class="legend legend--aus"></span> Ausgaben
+      <span class="legend legend--ein"></span> eingegangen
+      <span class="legend legend--zusage"></span> zugesagt
+      <span class="legend legend--forderung"></span> abgerechnet / gestellt
+      <span class="legend legend--aus"></span> bezahlt
+      <span class="legend legend--offen"></span> offene Rechnungen
     </span>
   </div>
   <?php if ($maxMonat <= 0): ?>
     <div class="empty">Noch nichts erfasst.</div>
   <?php else: ?>
     <div class="months">
-      <?php foreach ($monate as $m => $aus):
-          $ein = (float)($monateEin[$m] ?? 0);
-          $hAus = $maxMonat > 0 ? max(1, $aus / $maxMonat * 100) : 1;
-          $hEin = $maxMonat > 0 ? max(1, $ein / $maxMonat * 100) : 1;
+      <?php
+      $h = static fn(float $v): string => number_format($maxMonat > 0 ? $v / $maxMonat * 100 : 0, 1, '.', '');
+      for ($m = 1; $m <= 12; $m++):
+          $e1 = (float)($verlauf['eingegangen'][$m] ?? 0); $e2 = (float)($verlauf['zugesagt'][$m] ?? 0); $e3 = (float)($verlauf['forderungen'][$m] ?? 0);
+          $a1 = (float)($verlauf['bezahlt'][$m] ?? 0); $a2 = (float)($verlauf['offen'][$m] ?? 0);
       ?>
         <div class="months__col">
           <div class="months__pair">
-            <div class="months__bar months__bar--ein" style="height:<?= number_format($hEin, 1, '.', '') ?>%"
-                 title="<?= e($monatsnamen[$m] . ' Einnahmen: ' . money_rounded($ein)) ?>"></div>
-            <div class="months__bar months__bar--aus" style="height:<?= number_format($hAus, 1, '.', '') ?>%"
-                 title="<?= e($monatsnamen[$m] . ' Ausgaben: ' . money_rounded($aus)) ?>"></div>
+            <div class="months__stack" title="<?= e($monatsnamen[$m] . ' – eingegangen ' . money_rounded($e1) . ($e2 > 0 ? ', zugesagt ' . money_rounded($e2) : '') . ($e3 > 0 ? ', abgerechnet/gestellt ' . money_rounded($e3) : '')) ?>">
+              <?php if ($e3 > 0): ?><div class="months__seg months__seg--forderung" style="height:<?= $h($e3) ?>%"></div><?php endif; ?>
+              <?php if ($e2 > 0): ?><div class="months__seg months__seg--zusage" style="height:<?= $h($e2) ?>%"></div><?php endif; ?>
+              <div class="months__seg months__seg--ein" style="height:<?= $h($e1) ?>%"></div>
+            </div>
+            <div class="months__stack" title="<?= e($monatsnamen[$m] . ' – bezahlt ' . money_rounded($a1) . ($a2 > 0 ? ', offene Rechnungen ' . money_rounded($a2) : '')) ?>">
+              <?php if ($a2 > 0): ?><div class="months__seg months__seg--offen" style="height:<?= $h($a2) ?>%"></div><?php endif; ?>
+              <div class="months__seg months__seg--aus" style="height:<?= $h($a1) ?>%"></div>
+            </div>
           </div>
           <div class="months__label"><?= e($monatsnamen[$m]) ?></div>
         </div>
-      <?php endforeach; ?>
+      <?php endfor; ?>
     </div>
     <p class="small muted" style="margin:.6rem 0 0">Höchster Monatswert: <?= e(money_rounded($maxMonat)) ?></p>
   <?php endif; ?>
