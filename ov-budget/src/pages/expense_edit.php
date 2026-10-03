@@ -72,8 +72,10 @@ if (!$expense) {
 }
 
 $wort = $art === 'einnahme' ? 'Einnahme' : 'Ausgabe';
+$stichtag = $art === 'ausgabe' ? budget_stichtag_info(budget_year((int)$expense['jahr'])['stichtag'] ?? null) : ['stichtag' => null, 'tage' => null, 'gesperrt' => false];
 
 render('expense_edit', [
+    'stichtag' => $stichtag,
     'title'   => $wort . ($expense['id'] ? ' bearbeiten' : ' erfassen'),
     'art'     => $art,
     'expense' => $expense,

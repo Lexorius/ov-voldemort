@@ -1338,6 +1338,12 @@ SQL);
                     WHERE art = 'einnahme' AND status = 'offen'");
     }
     $merken('042_einnahme_stufen');
+
+    /* ---------- 043: Stichtag des Jahresbudgets ---------- */
+    if (ovb_table_exists($pdo, 'budget_years') && !ovb_column_exists($pdo, 'budget_years', 'stichtag')) {
+        $pdo->exec('ALTER TABLE budget_years ADD COLUMN stichtag DATE NULL AFTER is_active');
+    }
+    $merken('043_budget_stichtag');
 }
 
 /**

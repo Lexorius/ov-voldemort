@@ -17,15 +17,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Der Betrag darf nicht negativ sein.';
     }
 
+    $stichtag = post_date('stichtag');
+    if (post_str('stichtag') !== '' && !$stichtag) {
+        $errors[] = 'Der Stichtag ist kein gültiges Datum.';
+    }
     if (!$errors) {
-        budget_year_save($jahr, $betrag, post_str('beschreibung'), post_bool('is_active'));
+        budget_year_save($jahr, $betrag, post_str('beschreibung'), post_bool('is_active'), $stichtag);
         flash('success', 'Jahresbudget gespeichert.');
         redirect_route('budget', ['jahr' => $jahr]);
     }
 }
 
 $eintrag = budget_year($jahr) ?? [
-    'jahr' => $jahr, 'betrag' => '', 'beschreibung' => '', 'is_active' => 1,
+    'jahr' => $jahr, 'betrag' => '', 'beschreibung' => '', 'is_active' => 1, 'stichtag' => null,
 ];
 
 render('budget_year_edit', [

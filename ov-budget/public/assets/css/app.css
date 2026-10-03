@@ -577,6 +577,8 @@ pre.raw {
 .months__seg--forderung { background: repeating-linear-gradient(135deg, #b45309 0 3px, #fcd34d 3px 6px); }
 .months__seg--aus { background: var(--accent); }
 .months__seg--offen { background: repeating-linear-gradient(135deg, #b45309 0 3px, #f59e0b 3px 6px); }
+.months__seg--geplant { background: repeating-linear-gradient(135deg, #94a3b8 0 3px, transparent 3px 6px); border: 1px dashed #94a3b8; box-sizing: border-box; }
+.legend--geplant { background: repeating-linear-gradient(135deg, #94a3b8 0 3px, transparent 3px 6px); border: 1px dashed #94a3b8; box-sizing: border-box; }
 @media (prefers-color-scheme: dark) {
   .months__seg--ein { background: #4ade80; }
   .months__seg--zusage { background: #166534; }

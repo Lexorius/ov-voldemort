@@ -313,6 +313,8 @@ CREATE TABLE IF NOT EXISTS budget_years (
   betrag        DECIMAL(12,2) NOT NULL DEFAULT 0,
   beschreibung  TEXT          NULL,
   is_active     TINYINT(1)    NOT NULL DEFAULT 1,
+  -- Stichtag: bis einschliesslich diesem Tag darf auf das Jahresbudget ausgegeben werden
+  stichtag      DATE          NULL,
   created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (jahr)

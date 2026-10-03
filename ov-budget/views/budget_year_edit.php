@@ -31,6 +31,12 @@
     </div>
   </div>
   <div class="field">
+    <label for="stichtag">Stichtag – letzter Tag für Ausgaben</label>
+    <input type="date" id="stichtag" name="stichtag" value="<?= e((string)($eintrag['stichtag'] ?? '')) ?>" style="max-width:14rem">
+    <small>Bis einschließlich diesem Tag darf Geld auf das Jahresbudget ausgegeben werden. Spätere Ausgaben lehnt die
+      Anwendung ab, nur geplante lassen sich noch vormerken. Die Leitung wird 30, 14, 7 und 1 Tag vorher erinnert. Leer = kein Stichtag.</small>
+  </div>
+  <div class="field">
     <label for="beschreibung">Notiz</label>
     <textarea id="beschreibung" name="beschreibung" placeholder="Woher stammt der Betrag, was ist enthalten?"><?= e((string)$eintrag['beschreibung']) ?></textarea>
   </div>

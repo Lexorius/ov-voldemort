@@ -25,9 +25,11 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - Übersicht nach Kategorie und Monat mit Grafik
 - **Budgettöpfe verwalten**: anlegen, ändern, stilllegen und zum Jahreswechsel
   aus dem Vorjahr übernehmen
-- **Stand je Buchung**: bezahlt, offen (Rechnung erhalten) oder geplant; die
-  Übersicht zeigt offene Rechnungen, geplante Ausgaben und die Kosten der
+- **Stand je Ausgabe**: bezahlt, gebucht (Rechnung liegt vor) oder geplant;
+  die Übersicht zeigt Gebuchtes und Geplantes getrennt, dazu die Kosten der
   Veranstaltungen samt Verpflegung
+- **Stichtag** fürs Jahresbudget: danach lehnt die Anwendung Ausgaben ab,
+  mit Countdown und Erinnerung an die Leitung
 - **Einnahmen planen**: Einsatz abgerechnet → Rechnung oder Gebührenbescheid
   der Regionalstelle → Mittel zugesagt → eingegangen, je Stufe mit Datum,
   Betrag und Nummer; Übersicht nach Stufen, Forderungen und Kürzungen;

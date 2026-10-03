@@ -1,5 +1,5 @@
 <?php
-/** @var string $art @var array $expense @var array $errors @var array $budgets @var array $wishes */
+/** @var string $art @var array $expense @var array $errors @var array $budgets @var array $wishes @var array $stichtag */
 $isNew = empty($expense['id']);
 $istEinnahme = $art === 'einnahme';
 $wort = $istEinnahme ? 'Einnahme' : 'Ausgabe';
@@ -16,6 +16,18 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
 
 <?php if ($errors): ?>
   <div class="alert alert--error"><ul><?php foreach ($errors as $er): ?><li><?= e($er) ?></li><?php endforeach; ?></ul></div>
+<?php endif; ?>
+
+<?php if (!$istEinnahme && !empty($stichtag['stichtag'])): ?>
+  <div class="alert <?= $stichtag['gesperrt'] ? 'alert--error' : ($stichtag['tage'] <= 30 ? 'alert--warn' : 'alert--info') ?>">
+    <?php if ($stichtag['gesperrt']): ?>
+      <strong>Haushaltsjahr <?= (int)$expense['jahr'] ?> ist seit dem <?= e(de_date($stichtag['stichtag'])) ?> geschlossen.</strong>
+      Ausgaben mit späterem Datum werden abgelehnt – nur „geplant" lässt sich noch vormerken.
+    <?php else: ?>
+      Stichtag des Haushaltsjahres <?= (int)$expense['jahr'] ?>: <strong><?= e(de_date($stichtag['stichtag'])) ?></strong>
+      (noch <?= (int)$stichtag['tage'] ?> Tag<?= (int)$stichtag['tage'] === 1 ? '' : 'e' ?>). Danach dürfen keine Ausgaben mehr auf das Jahresbudget.
+    <?php endif; ?>
+  </div>
 <?php endif; ?>
 
 <form method="post" class="form" action="<?= e(url('expense_edit', $isNew ? [] : ['id' => $expense['id']])) ?>">
@@ -166,7 +178,7 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
           <label class="wahl"><input type="radio" name="status" value="<?= e($key) ?>"<?= $stand === $key ? ' checked' : '' ?>> <?= e($label) ?></label>
         <?php endforeach; ?>
       </div>
-      <small>Bezahlt und offen zählen in den Ist-Zahlen des Jahres, geplant nur in der Planung. Ein
+      <small>Bezahlt und gebucht zählen als Ausgaben des Jahres, geplant nur in der Planung. Ein
         Zahlungsdatum setzt den Stand auf bezahlt.</small>
     </div>
     <?php endif; ?>

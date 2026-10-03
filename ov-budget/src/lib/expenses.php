@@ -19,9 +19,11 @@ const BUCHUNGSARTEN = ['ausgabe' => 'Ausgaben', 'einnahme' => 'Einnahmen'];
  */
 const BUCHUNG_STATUS = [
     'bezahlt' => 'bezahlt',
-    'offen'   => 'Rechnung erhalten – noch nicht bezahlt',
+    'offen'   => 'gebucht – Rechnung liegt vor oder ist bestellt, noch nicht bezahlt',
     'geplant' => 'geplant – noch keine Rechnung',
 ];
+/** Wie viele Tage vor dem Stichtag die Leitung erinnert wird */
+const BUDGET_STICHTAG_ERINNERUNG = [30, 14, 7, 1, 0];
 /**
  * Einnahmen gehen einen längeren Weg: Der OV rechnet den Einsatz ab, die
  * Regionalstelle stellt Rechnung oder Gebührenbescheid, sagt dem OV Mittel
@@ -87,7 +89,7 @@ function einnahme_stufe(array $e, string $gewaehlt = 'bezahlt'): string
 function buchung_status_badge(string $status): string
 {
     return match (buchung_status($status)) {
-        'offen'       => '<span class="badge" style="background:#b45309" title="Rechnung erhalten, noch nicht bezahlt">offen</span>',
+        'offen'       => '<span class="badge" style="background:#b45309" title="gebucht – Rechnung liegt vor oder ist bestellt, noch nicht bezahlt">gebucht</span>',
         'geplant'     => '<span class="badge badge--outline" title="geplant, noch keine Rechnung">geplant</span>',
         'abgerechnet' => '<span class="badge" style="background:#0369a1" title="Einsatzabrechnung eingereicht">abgerechnet</span>',
         'gestellt'    => '<span class="badge" style="background:#b45309" title="Rechnung oder Gebührenbescheid gestellt, Geld noch nicht da">gestellt</span>',
@@ -303,15 +305,89 @@ function budget_year_betrag(int $jahr): float
     return (float)(budget_year($jahr)['betrag'] ?? 0);
 }
 
-function budget_year_save(int $jahr, float $betrag, string $beschreibung, int $aktiv): void
+function budget_year_save(int $jahr, float $betrag, string $beschreibung, int $aktiv, ?string $stichtag = null): void
 {
     db_exec(
-        'INSERT INTO budget_years (jahr, betrag, beschreibung, is_active) VALUES (?,?,?,?)
+        'INSERT INTO budget_years (jahr, betrag, beschreibung, is_active, stichtag) VALUES (?,?,?,?,?)
          ON DUPLICATE KEY UPDATE betrag = VALUES(betrag), beschreibung = VALUES(beschreibung),
-                                 is_active = VALUES(is_active)',
-        [$jahr, $betrag, $beschreibung, $aktiv]
+                                 is_active = VALUES(is_active), stichtag = VALUES(stichtag)',
+        [$jahr, $betrag, $beschreibung, $aktiv, $stichtag]
     );
-    audit('jahresbudget.gespeichert', 'budget_year', $jahr, money($betrag));
+    audit('jahresbudget.gespeichert', 'budget_year', $jahr, money($betrag) . ($stichtag ? ', Stichtag ' . de_date($stichtag) : ''));
+}
+
+/**
+ * Der Stichtag eines Haushaltsjahres: ab diesem Tag darf nichts mehr auf das
+ * Jahresbudget ausgegeben werden. Liefert Tage bis dahin (negativ: vorbei)
+ * und ob gesperrt ist. Reine Funktion.
+ */
+function budget_stichtag_info(?string $stichtag, ?int $jetzt = null): array
+{
+    $stichtag = trim((string)$stichtag);
+    if ($stichtag === '' || str_starts_with($stichtag, '0000')) {
+        return ['stichtag' => null, 'tage' => null, 'gesperrt' => false];
+    }
+    $heute = strtotime(date('Y-m-d', $jetzt ?? time()));
+    $tage = (int)round((strtotime($stichtag) - $heute) / 86400);
+    return ['stichtag' => $stichtag, 'tage' => $tage, 'gesperrt' => $tage < 0];
+}
+
+/**
+ * Darf eine Ausgabe mit diesem Datum noch auf das Jahresbudget? Nein, wenn
+ * das Datum nach dem Stichtag liegt – geplante Ausgaben sind davon frei.
+ * Rückgabe: Fehlertext oder null.
+ */
+function budget_sperre_pruefen(int $jahr, string $datum, string $status, ?array $eintrag = null): ?string
+{
+    if ($status === 'geplant') {
+        return null;
+    }
+    $eintrag ??= budget_year($jahr);
+    $stichtag = trim((string)($eintrag['stichtag'] ?? ''));
+    if ($stichtag === '' || str_starts_with($stichtag, '0000') || $datum <= $stichtag) {
+        return null;
+    }
+    return sprintf('Das Haushaltsjahr %d ist seit dem Stichtag %s geschlossen – danach dürfen keine Ausgaben mehr auf das Jahresbudget gebucht werden. '
+        . 'Als „geplant" lässt sich die Ausgabe trotzdem vormerken.', $jahr, de_date($stichtag));
+}
+
+/**
+ * Tägliche Erinnerung an die Leitung: 30, 14, 7 und 1 Tag vor dem Stichtag
+ * und am Tag selbst – je Schwelle einmal, mit dem, was noch frei ist.
+ */
+function budget_stichtag_taeglich(?int $jetzt = null, ?array $eintrag = null, ?float $frei = null): int
+{
+    if (!function_exists('notify_ereignis_aktiv') || !notify_ereignis_aktiv('budget_stichtag')) {
+        return 0;
+    }
+    $jetzt ??= time();
+    $jahr = (int)date('Y', $jetzt);
+    $eintrag ??= budget_year($jahr);
+    $info = budget_stichtag_info($eintrag['stichtag'] ?? null, $jetzt);
+    if ($info['tage'] === null || $info['tage'] < 0) {
+        return 0;
+    }
+    $schwelle = null;
+    foreach (BUDGET_STICHTAG_ERINNERUNG as $s) {
+        if ($info['tage'] <= $s) {
+            $schwelle = $s;   // die kleinste Schwelle, die schon erreicht ist
+        }
+    }
+    if ($schwelle === null) {
+        return 0;
+    }
+    $marke = $jahr . ':' . $schwelle;
+    if (state_get('budget_stichtag_gemeldet', '') === $marke) {
+        return 0;
+    }
+    $frei ??= budget_jahr_zahlen($jahr)['frei'];
+    $text = $info['tage'] === 0
+        ? sprintf('Heute ist der Stichtag des Jahresbudgets %d. Ab morgen dürfen keine Ausgaben mehr darauf gebucht werden – noch frei: %s.', $jahr, money($frei))
+        : sprintf('Noch %d Tag%s bis zum Stichtag des Jahresbudgets %d (%s). Danach dürfen keine Ausgaben mehr darauf gebucht werden – noch frei: %s.',
+            $info['tage'], $info['tage'] === 1 ? '' : 'e', $jahr, de_date($info['stichtag']), money($frei));
+    $n = notify_queue(notify_leitung(), 'budget_stichtag', 'Stichtag des Jahresbudgets', $text, '?p=budget&jahr=' . $jahr);
+    state_save('budget_stichtag_gemeldet', $marke);
+    return $n;
 }
 
 /** Alle Jahre, zu denen es irgendetwas gibt */
@@ -534,6 +610,7 @@ function budget_verlauf(int $jahr): array
         'forderungen' => expense_by_month($jahr, 'einnahme', EINNAHME_FORDERUNG),
         'bezahlt'     => $bezahlt,
         'offen'       => $offen,
+        'geplant'     => expense_by_month($jahr, 'ausgabe', ['geplant']),
     ];
 }
 
@@ -584,7 +661,9 @@ function income_total(int $jahr): float
  */
 function budget_jahr_zahlen(int $jahr): array
 {
-    $budget = budget_year_betrag($jahr);
+    $eintrag = budget_year($jahr);
+    $budget = (float)($eintrag['betrag'] ?? 0);
+    $stichtag = budget_stichtag_info($eintrag['stichtag'] ?? null);
     $einnahmen = income_total($jahr);
     $ausgaben = expense_total($jahr);
     $verfuegbar = $budget + $einnahmen;
@@ -608,6 +687,10 @@ function budget_jahr_zahlen(int $jahr): array
         'einnahmen_offen'       => expense_total_status($jahr, 'einnahme', 'abgerechnet') + expense_total_status($jahr, 'einnahme', 'gestellt'),
         // Ausgaben: Rechnung erhalten, noch nicht bezahlt – steckt schon in ausgaben
         'ausgaben_offen'  => expense_total_status($jahr, 'ausgabe', 'offen'),
+        // Stichtag: ab dann keine Ausgaben mehr auf das Jahresbudget
+        'stichtag'        => $stichtag['stichtag'],
+        'stichtag_tage'   => $stichtag['tage'],
+        'gesperrt'        => $stichtag['gesperrt'],
         // Planung: geplante Buchungen plus Veranstaltungen (Kosten und Verpflegung abzüglich schon Gebuchtem)
         'geplant_buchungen'       => $geplantBuchungen,
         'geplant_veranstaltungen' => (float)$veranstaltungen['gesamt'],
@@ -680,6 +763,14 @@ function expense_save_from_post(?array $existing, array $user): array
     }
     if ($betrag <= 0) {
         $errors[] = 'Bitte einen Betrag größer als null angeben.';
+    }
+    if ($art === 'ausgabe' && $datum) {
+        $gewaehltVorab = buchung_status(post_str('status', (string)($existing['status'] ?? 'bezahlt')));
+        $jahrVorab = post_int('jahr') ?: (int)substr((string)$datum, 0, 4);
+        $sperre = budget_sperre_pruefen($jahrVorab, (string)$datum, post_date('bezahlt_am') ? 'bezahlt' : $gewaehltVorab);
+        if ($sperre !== null) {
+            $errors[] = $sperre;
+        }
     }
     $brutto = $betrag;
     $netto = $betrag;

@@ -71,13 +71,15 @@ $maxMonat = max(array_merge([0.0], array_values($monate), array_values($monateEi
 $zugesagt = (float)($zahlen['einnahmen_zugesagt'] ?? 0);
 $forderungen = (float)($zahlen['einnahmen_forderungen'] ?? 0);
 $ausgabenOffen = (float)($zahlen['ausgaben_offen'] ?? 0);
+$ausgabenGeplant = (float)($zahlen['geplant_buchungen'] ?? 0);
+$stichtagInfo = ['stichtag' => $zahlen['stichtag'] ?? null, 'tage' => $zahlen['stichtag_tage'] ?? null, 'gesperrt' => $zahlen['gesperrt'] ?? false];
 $mitZusagen = (float)($zahlen['verfuegbar_mit_zusagen'] ?? $verfuegbar);
 // Höchster Monat über alle Stapel – Einnahmen samt Zusagen und Forderungen
 $stapelEin = [];
 $stapelAus = [];
 for ($m = 1; $m <= 12; $m++) {
     $stapelEin[$m] = (float)($verlauf['eingegangen'][$m] ?? 0) + (float)($verlauf['zugesagt'][$m] ?? 0) + (float)($verlauf['forderungen'][$m] ?? 0);
-    $stapelAus[$m] = (float)($verlauf['bezahlt'][$m] ?? 0) + (float)($verlauf['offen'][$m] ?? 0);
+    $stapelAus[$m] = (float)($verlauf['bezahlt'][$m] ?? 0) + (float)($verlauf['offen'][$m] ?? 0) + (float)($verlauf['geplant'][$m] ?? 0);
 }
 $maxMonat = max(array_merge([0.0], array_values($stapelEin), array_values($stapelAus)));
 $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
@@ -149,7 +151,10 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
   <div class="stat">
     <div class="stat__label">Jahresbudget</div>
     <div class="stat__value"><?= e(money_rounded($gesamt, false)) ?></div>
-    <div class="stat__hint">Zuweisung für <?= (int)$jahr ?></div>
+    <div class="stat__hint"><?php if ($stichtagInfo['stichtag']): ?>
+        <?php if ($stichtagInfo['gesperrt']): ?><span style="color:var(--bad);font-weight:700">geschlossen seit <?= e(de_date($stichtagInfo['stichtag'])) ?></span>
+        <?php else: ?>Stichtag <?= e(de_date($stichtagInfo['stichtag'])) ?> · <span<?= $stichtagInfo['tage'] <= 14 ? ' style="color:var(--bad);font-weight:700"' : ($stichtagInfo['tage'] <= 30 ? ' style="color:#b45309;font-weight:700"' : '') ?>>noch <?= (int)$stichtagInfo['tage'] ?> Tag<?= (int)$stichtagInfo['tage'] === 1 ? '' : 'e' ?></span><?php endif; ?>
+      <?php else: ?>Zuweisung für <?= (int)$jahr ?><?php endif; ?></div>
   </div>
   <div class="stat">
     <div class="stat__label">Einnahmen</div>
@@ -168,11 +173,14 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
     ?></div>
   </div>
   <div class="stat">
-    <div class="stat__label">Ausgaben</div>
+    <div class="stat__label">Ausgaben gebucht</div>
     <div class="stat__value">−<?= e(money_rounded($ausgaben, false)) ?></div>
-    <div class="stat__hint"><?= $zahlen['ausgaben_offen'] > 0
-        ? 'davon <span style="color:#b45309">' . e(money_rounded($zahlen['ausgaben_offen'], false)) . ' offene Rechnungen</span>'
-        : 'gebucht in ' . (int)$jahr ?></div>
+    <div class="stat__hint"><?php
+      $teile = [];
+      if ($ausgabenOffen > 0) { $teile[] = 'davon <span style="color:#b45309">' . e(money_rounded($ausgabenOffen, false)) . ' noch nicht bezahlt</span>'; }
+      if ($ausgabenGeplant > 0) { $teile[] = 'dazu ' . e(money_rounded($ausgabenGeplant, false)) . ' geplant'; }
+      echo $teile ? implode(' · ', $teile) : 'bezahlt oder Rechnung liegt vor';
+    ?></div>
   </div>
   <div class="stat">
     <div class="stat__label"><?= $rest >= 0 ? 'Noch frei' : 'Überzogen um' ?></div>
@@ -182,6 +190,18 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
         : 'von ' . e(money_rounded($verfuegbar, false)) . ' verfügbar' ?><?= $zugesagt > 0 ? ' · mit Zusagen ' . e(money_rounded($zahlen['frei_mit_zusagen'] ?? ($rest + $zugesagt), false)) : '' ?></div>
   </div>
 </div>
+
+<?php if ($stichtagInfo['stichtag'] && ($stichtagInfo['gesperrt'] || $stichtagInfo['tage'] <= 30)): ?>
+  <div class="alert <?= $stichtagInfo['gesperrt'] ? 'alert--error' : 'alert--warn' ?>">
+    <?php if ($stichtagInfo['gesperrt']): ?>
+      <strong>Das Haushaltsjahr <?= (int)$jahr ?> ist seit dem <?= e(de_date($stichtagInfo['stichtag'])) ?> geschlossen.</strong>
+      Neue Ausgaben lassen sich nur noch als geplant vormerken.
+    <?php else: ?>
+      <strong>Noch <?= (int)$stichtagInfo['tage'] ?> Tag<?= (int)$stichtagInfo['tage'] === 1 ? '' : 'e' ?> bis zum Stichtag <?= e(de_date($stichtagInfo['stichtag'])) ?>.</strong>
+      Danach darf kein Geld mehr auf das Jahresbudget ausgegeben werden – noch frei: <?= e(money_rounded($rest)) ?><?= $zahlen['geplant'] > 0 ? ', nach Planung ' . e(money_rounded($zahlen['frei_nach_planung'])) : '' ?>.
+    <?php endif; ?>
+  </div>
+<?php endif; ?>
 
 <?php if ($zahlen['geplant'] > 0 || $offenGeplant): ?>
 <section class="card" id="planung">
@@ -266,18 +286,24 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
     <?php
       $bezahltAnteil = $verfuegbar > 0 ? min(100.0, max(0.0, $ausgaben - $ausgabenOffen) / $verfuegbar * 100) : 0.0;
       $offenAnteil = $verfuegbar > 0 ? min(100.0 - $bezahltAnteil, $ausgabenOffen / $verfuegbar * 100) : 0.0;
+      $geplantAnteil = $verfuegbar > 0 ? min(100.0 - $bezahltAnteil - $offenAnteil, $zahlen['geplant'] / $verfuegbar * 100) : 0.0;
     ?>
     <div class="bar" style="height:14px;display:flex">
       <div class="bar__fill <?= $quoteCls ?>" style="width:<?= number_format($bezahltAnteil, 1, '.', '') ?>%;border-radius:0"
            title="<?= e('bezahlt: ' . money_rounded($ausgaben - $ausgabenOffen)) ?>"></div>
       <?php if ($offenAnteil > 0): ?>
         <div style="width:<?= number_format($offenAnteil, 1, '.', '') ?>%;background:repeating-linear-gradient(135deg,#b45309 0 4px,#f59e0b 4px 8px)"
-             title="<?= e('offene Rechnungen: ' . money_rounded($ausgabenOffen)) ?>"></div>
+             title="<?= e('gebucht, noch nicht bezahlt: ' . money_rounded($ausgabenOffen)) ?>"></div>
+      <?php endif; ?>
+      <?php if ($geplantAnteil > 0): ?>
+        <div style="width:<?= number_format($geplantAnteil, 1, '.', '') ?>%;background:repeating-linear-gradient(135deg,#94a3b8 0 3px,transparent 3px 6px);border:1px dashed #94a3b8;box-sizing:border-box"
+             title="<?= e('geplant: ' . money_rounded($zahlen['geplant'])) ?>"></div>
       <?php endif; ?>
     </div>
     <p class="small muted" style="margin:.5rem 0 0">
-      <?= e(money_rounded($ausgaben, false)) ?> ausgegeben (<?= number_format($quote, 0) ?>&nbsp;%)<?= $ausgabenOffen > 0
-          ? ', davon <span style="color:#b45309">' . e(money_rounded($ausgabenOffen, false)) . ' offene Rechnungen</span>' : '' ?>.
+      <?= e(money_rounded($ausgaben, false)) ?> gebucht (<?= number_format($quote, 0) ?>&nbsp;%)<?= $ausgabenOffen > 0
+          ? ', davon <span style="color:#b45309">' . e(money_rounded($ausgabenOffen, false)) . ' noch nicht bezahlt</span>' : '' ?><?= $zahlen['geplant'] > 0
+          ? ', dazu ' . e(money_rounded($zahlen['geplant'], false)) . ' geplant' : '' ?>.
       Wenn zusätzlich alle offenen Wünsche beschafft würden, kämen
       <strong><?= e(money_rounded($verplant + $offenOhne)) ?></strong> hinzu.
     </p>
@@ -364,7 +390,8 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
       <span class="legend legend--zusage"></span> zugesagt
       <span class="legend legend--forderung"></span> abgerechnet / gestellt
       <span class="legend legend--aus"></span> bezahlt
-      <span class="legend legend--offen"></span> offene Rechnungen
+      <span class="legend legend--offen"></span> gebucht, noch nicht bezahlt
+      <span class="legend legend--geplant"></span> geplant
     </span>
   </div>
   <?php if ($maxMonat <= 0): ?>
@@ -375,7 +402,7 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
       $h = static fn(float $v): string => number_format($maxMonat > 0 ? $v / $maxMonat * 100 : 0, 1, '.', '');
       for ($m = 1; $m <= 12; $m++):
           $e1 = (float)($verlauf['eingegangen'][$m] ?? 0); $e2 = (float)($verlauf['zugesagt'][$m] ?? 0); $e3 = (float)($verlauf['forderungen'][$m] ?? 0);
-          $a1 = (float)($verlauf['bezahlt'][$m] ?? 0); $a2 = (float)($verlauf['offen'][$m] ?? 0);
+          $a1 = (float)($verlauf['bezahlt'][$m] ?? 0); $a2 = (float)($verlauf['offen'][$m] ?? 0); $a3 = (float)($verlauf['geplant'][$m] ?? 0);
       ?>
         <div class="months__col">
           <div class="months__pair">
@@ -384,7 +411,8 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
               <?php if ($e2 > 0): ?><div class="months__seg months__seg--zusage" style="height:<?= $h($e2) ?>%"></div><?php endif; ?>
               <div class="months__seg months__seg--ein" style="height:<?= $h($e1) ?>%"></div>
             </div>
-            <div class="months__stack" title="<?= e($monatsnamen[$m] . ' – bezahlt ' . money_rounded($a1) . ($a2 > 0 ? ', offene Rechnungen ' . money_rounded($a2) : '')) ?>">
+            <div class="months__stack" title="<?= e($monatsnamen[$m] . ' – bezahlt ' . money_rounded($a1) . ($a2 > 0 ? ', gebucht ' . money_rounded($a2) : '') . ($a3 > 0 ? ', geplant ' . money_rounded($a3) : '')) ?>">
+              <?php if ($a3 > 0): ?><div class="months__seg months__seg--geplant" style="height:<?= $h($a3) ?>%"></div><?php endif; ?>
               <?php if ($a2 > 0): ?><div class="months__seg months__seg--offen" style="height:<?= $h($a2) ?>%"></div><?php endif; ?>
               <div class="months__seg months__seg--aus" style="height:<?= $h($a1) ?>%"></div>
             </div>

@@ -45,6 +45,8 @@ function notify_ereignisse(): array
                                  'text'  => 'An die Leitung, wenn ein Zähler in der letzten Woche deutlich mehr verbraucht hat als davor oder nachts durchgehend Wasser lief.'],
         'abrechnung_wartet'  => ['label' => 'Abrechnung wartet auf Geld', 'taeglich' => true,
                                  'text'  => 'An die Leitung, wenn eine Einnahme 30, 60 oder 90 Tage nach der Abrechnung noch nicht eingegangen ist – je Stufe einmal.'],
+        'budget_stichtag'    => ['label' => 'Stichtag des Jahresbudgets', 'taeglich' => true,
+                                 'text'  => 'An die Leitung 30, 14, 7 und 1 Tag vor dem Stichtag und am Tag selbst – mit dem, was noch frei ist.'],
     ];
 }
 
@@ -490,9 +492,10 @@ function notify_taeglich(?int $jetzt = null): int
         }
     }
 
-    // Abrechnungen, die auf Geld warten
+    // Abrechnungen, die auf Geld warten; Stichtag des Jahresbudgets
     if (function_exists('einnahmen_warnungen_taeglich')) {
         $n += einnahmen_warnungen_taeglich($jetzt);
+        $n += budget_stichtag_taeglich($jetzt);
     }
 
     // Zähler: ablesen und Auffälligkeiten

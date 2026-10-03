@@ -42,7 +42,10 @@ $quoteCls = ($zahlen['verfuegbar'] > 0 && $zahlen['ausgaben'] > $zahlen['verfueg
   <div class="stat">
     <div class="stat__label"><?= $zahlen['frei'] >= 0 ? 'Budget frei' : 'Budget überzogen' ?> <?= (int)$jahr ?></div>
     <div class="stat__value" style="<?= $zahlen['frei'] < 0 ? 'color:var(--bad)' : '' ?>"><?= e(money(abs($zahlen['frei']), false)) ?></div>
-    <div class="stat__hint">von <?= e(money($zahlen['verfuegbar'], false)) ?> verfügbar (<?= number_format($quote, 0) ?>&nbsp;% ausgegeben)</div>
+    <div class="stat__hint">von <?= e(money($zahlen['verfuegbar'], false)) ?> verfügbar (<?= number_format($quote, 0) ?>&nbsp;% ausgegeben)<?php
+      if (!empty($zahlen['stichtag'])): ?><br><?= !empty($zahlen['gesperrt'])
+          ? '<span style="color:var(--bad);font-weight:700">Jahr geschlossen seit ' . e(de_date($zahlen['stichtag'])) . '</span>'
+          : '<span' . ((int)$zahlen['stichtag_tage'] <= 30 ? ' style="color:#b45309;font-weight:700"' : '') . '>Stichtag ' . e(de_date($zahlen['stichtag'])) . ', noch ' . (int)$zahlen['stichtag_tage'] . ' Tag' . ((int)$zahlen['stichtag_tage'] === 1 ? '' : 'e') . '</span>' ?><?php endif; ?></div>
   </div>
   <div class="stat">
     <div class="stat__label">Meine Aufgaben</div>
@@ -139,7 +142,7 @@ $quoteCls = ($zahlen['verfuegbar'] > 0 && $zahlen['ausgaben'] > $zahlen['verfueg
         <?php if ($zahlen['einnahmen'] > 0): ?>+ <?= e(money($zahlen['einnahmen'], false)) ?> eingegangen<?php endif; ?>
         = <strong><?= e(money($zahlen['verfuegbar'])) ?></strong><?= ($zahlen['einnahmen_zugesagt'] ?? 0) > 0 ? ' <span class="muted">· mit Zusagen ' . e(money($zahlen['verfuegbar_mit_zusagen'] ?? 0)) . '</span>' : '' ?>
       </span>
-      <span class="small nowrap"><?= e(money($zahlen['ausgaben'], false)) ?> ausgegeben ·
+      <span class="small nowrap"><?= e(money($zahlen['ausgaben'], false)) ?> gebucht ·
         <strong><?= e(money($zahlen['frei'])) ?></strong> <?= $zahlen['frei'] >= 0 ? 'frei' : 'überzogen' ?></span>
     </div>
     <div class="bar" style="height:14px"><div class="bar__fill <?= $quoteCls ?>" style="width:<?= number_format($quote, 1, '.', '') ?>%"></div></div>

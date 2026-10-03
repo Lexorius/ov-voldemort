@@ -18,7 +18,7 @@ function db_all(string $sql, array $p = []): array {
     return [];
 }
 function db_row(string $sql, array $p = []): ?array {
-    if (str_contains($sql, 'FROM budget_years')) { return ['jahr' => 2026, 'betrag' => 10000, 'beschreibung' => '', 'is_active' => 1]; }
+    if (str_contains($sql, 'FROM budget_years')) { return ['jahr' => 2026, 'betrag' => 10000, 'beschreibung' => '', 'is_active' => 1, 'stichtag' => '2026-11-30']; }
     return null;
 }
 function db_val(string $sql, array $p = [], mixed $d = null) {
@@ -70,7 +70,22 @@ $check('Zahlungsdatum macht bezahlt', end($GLOBALS['inserts'])[1]['status'] === 
 $_POST = ['bezeichnung' => 'Verpflegung', 'datum' => '2026-05-02', 'betrag' => '80', 'art' => 'ausgabe', 'status' => 'unsinn'];
 [$id] = expense_save_from_post(null, ['id' => 1]);
 $check('unbekannter Stand wird bezahlt', end($GLOBALS['inserts'])[1]['status'] === 'bezahlt');
-$check('Kennzeichen nur für offen und geplant', buchung_status_badge('bezahlt') === '' && str_contains(buchung_status_badge('offen'), 'offen') && str_contains(buchung_status_badge('geplant'), 'geplant'));
+$check('Kennzeichen nur für gebucht und geplant', buchung_status_badge('bezahlt') === '' && str_contains(buchung_status_badge('offen'), 'gebucht') && str_contains(buchung_status_badge('geplant'), 'geplant'));
+
+/* ---------- Stichtag ---------- */
+$check('Stichtag in den Jahreszahlen', $z['stichtag'] === '2026-11-30' && is_int($z['stichtag_tage']));
+$_POST = ['bezeichnung' => 'Nach dem Stichtag', 'datum' => '2026-12-05', 'betrag' => '50', 'art' => 'ausgabe', 'status' => 'bezahlt'];
+[$id, $fehler] = expense_save_from_post(null, ['id' => 1]);
+$check('Ausgabe nach dem Stichtag abgelehnt', $id === null && str_contains($fehler[0], 'Stichtag 30.11.2026'));
+$_POST['status'] = 'geplant';
+[$id] = expense_save_from_post(null, ['id' => 1]);
+$check('geplant geht trotzdem', $id === 5 && end($GLOBALS['inserts'])[1]['status'] === 'geplant');
+$_POST = ['bezeichnung' => 'Am Stichtag', 'datum' => '2026-11-30', 'betrag' => '50', 'art' => 'ausgabe', 'status' => 'offen'];
+[$id] = expense_save_from_post(null, ['id' => 1]);
+$check('am Stichtag selbst noch erlaubt', $id === 5);
+$_POST = ['bezeichnung' => 'Einnahme danach', 'datum' => '2026-12-05', 'betrag' => '50', 'art' => 'einnahme', 'status' => 'bezahlt'];
+[$id] = expense_save_from_post(null, ['id' => 1]);
+$check('Einnahmen kennen keinen Stichtag', $id === 5);
 $check('Summe hat nur noch einen Wert', expense_stats([['betrag_brutto' => 10], ['betrag_brutto' => 5.5]]) === ['anzahl' => 2, 'summe' => 15.5]);
 
 /* ---------- Ansichten ohne Mehrwertsteuer ---------- */

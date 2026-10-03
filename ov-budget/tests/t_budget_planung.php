@@ -20,8 +20,8 @@ function db_all(string $sql, array $p = []): array {
     return [];
 }
 function db_row(string $sql, array $p = []): ?array { return null; }
-function db_val(string $sql, array $p = [], mixed $d = null) { return $d; }
-function db_exec(string $sql, array $p = []): int { return 1; }
+function db_val(string $sql, array $p = [], mixed $d = null) { return str_contains($sql, 'FROM settings') ? ($GLOBALS['state'][$p[0] ?? ''] ?? $d) : $d; }
+function db_exec(string $sql, array $p = []): int { if (str_contains($sql, 'INSERT INTO settings')) { $GLOBALS['state'][$p[0]] = (string)$p[1]; } return 1; }
 function db_insert(string $t, array $d): int { return 1; }
 function db_update(string $t, array $d, string $w, array $p): int { return 1; }
 function can(string $was, mixed $ctx = null): bool { return true; }
@@ -108,25 +108,51 @@ $v = budget_verlauf(2026);
 $check('Verlauf: Einnahmen nach Stufe', $v['eingegangen'][3] === 1000.0 && $v['zugesagt'][3] === 400.0 && $v['forderungen'][5] === 800.0 && $v['eingegangen'][5] === 0.0);
 $check('Verlauf: bezahlt = Ausgaben ohne offene', $v['bezahlt'][2] === 350.0 && $v['offen'][2] === 150.0 && $v['bezahlt'][4] === 200.0 && count($v['bezahlt']) === 12);
 unset($GLOBALS['tabellen']['GROUP BY MONTH']);
-$verlaufLeer = ['eingegangen' => array_fill(1, 12, 0.0), 'zugesagt' => array_fill(1, 12, 0.0), 'forderungen' => array_fill(1, 12, 0.0), 'bezahlt' => array_fill(1, 12, 0.0), 'offen' => array_fill(1, 12, 0.0)];
+$verlaufLeer = ['eingegangen' => array_fill(1, 12, 0.0), 'zugesagt' => array_fill(1, 12, 0.0), 'forderungen' => array_fill(1, 12, 0.0), 'bezahlt' => array_fill(1, 12, 0.0), 'offen' => array_fill(1, 12, 0.0), 'geplant' => array_fill(1, 12, 0.0)];
+
+/* ---------- Stichtag ---------- */
+$heute = strtotime('2026-10-03 12:00:00');
+$check('ohne Stichtag nichts', budget_stichtag_info(null, $heute) === ['stichtag' => null, 'tage' => null, 'gesperrt' => false] && budget_stichtag_info('', $heute)['stichtag'] === null);
+$check('Tage bis zum Stichtag', budget_stichtag_info('2026-11-30', $heute)['tage'] === 58 && !budget_stichtag_info('2026-11-30', $heute)['gesperrt']);
+$check('am Tag selbst noch offen, danach gesperrt', budget_stichtag_info('2026-10-03', $heute)['tage'] === 0 && !budget_stichtag_info('2026-10-03', $heute)['gesperrt']
+    && budget_stichtag_info('2026-10-02', $heute)['gesperrt'] && budget_stichtag_info('2026-10-02', $heute)['tage'] === -1);
+$e = ['stichtag' => '2026-11-30'];
+$check('Sperre nur nach dem Stichtag und nicht für geplant', budget_sperre_pruefen(2026, '2026-12-01', 'bezahlt', $e) !== null && budget_sperre_pruefen(2026, '2026-11-30', 'offen', $e) === null
+    && budget_sperre_pruefen(2026, '2026-12-01', 'geplant', $e) === null && budget_sperre_pruefen(2026, '2026-12-01', 'bezahlt', ['stichtag' => null]) === null);
+function notify_ereignis_aktiv(string $k): bool { return true; }
+function notify_leitung(): array { return [1, 2]; }
+function notify_queue(array $ids, string $ereignis, string $titel, string $text, string $url = ''): int { $GLOBALS['queue'][] = compact('ereignis', 'titel', 'text', 'url'); return count($ids); }
+$GLOBALS['queue'] = [];
+$GLOBALS['state'] = [];
+$t = static fn(string $tag) => strtotime($tag . ' 08:00:00');
+$check('45 Tage vorher noch nichts', budget_stichtag_taeglich($t('2026-10-16'), $e, 1234.0) === 0);
+$check('30 Tage vorher Meldung mit Restbetrag', budget_stichtag_taeglich($t('2026-10-31'), $e, 1234.0) === 2 && str_contains($GLOBALS['queue'][0]['text'], 'Noch 30 Tage') && str_contains($GLOBALS['queue'][0]['text'], '1.234,00 €'));
+$check('am nächsten Tag nicht noch einmal', budget_stichtag_taeglich($t('2026-11-01'), $e, 1234.0) === 0);
+$check('14, 7, 1 und 0 Tage je einmal', budget_stichtag_taeglich($t('2026-11-16'), $e, 1.0) === 2 && budget_stichtag_taeglich($t('2026-11-17'), $e, 1.0) === 0
+    && budget_stichtag_taeglich($t('2026-11-23'), $e, 1.0) === 2 && budget_stichtag_taeglich($t('2026-11-29'), $e, 1.0) === 2 && budget_stichtag_taeglich($t('2026-11-30'), $e, 1.0) === 2
+    && str_contains(end($GLOBALS['queue'])['text'], 'Heute ist der Stichtag'));
+$check('danach Ruhe', budget_stichtag_taeglich($t('2026-12-01'), $e, 1.0) === 0 && count($GLOBALS['queue']) === 5);
+$check('ohne Stichtag keine Meldung', budget_stichtag_taeglich($t('2026-11-29'), ['stichtag' => null], 1.0) === 0);
 
 /* ---------- Übersicht rendert die neuen Abschnitte ---------- */
 $z = ['budget' => 10000.0, 'einnahmen' => 2500.0, 'ausgaben' => 4000.0, 'verfuegbar' => 12500.0, 'frei' => 8500.0, 'quote' => 32.0,
       'einnahmen_offen' => 500.0, 'einnahmen_forderungen' => 500.0, 'einnahmen_zugesagt' => 250.0, 'abrechnungen_wartend' => ['liste' => [], 'gelb' => 0, 'orange' => 0, 'rot' => 0, 'ueber30' => 0, 'summe_ueber30' => 0.0], 'ausgaben_offen' => 300.0, 'geplant_buchungen' => 200.0, 'geplant_veranstaltungen' => 1236.0,
       'geplant_verpflegung' => 336.0, 'geplant_anzahl' => 3, 'geplant' => 1436.0, 'frei_nach_planung' => 7064.0,
-      'verfuegbar_mit_zusagen' => 12750.0, 'frei_mit_zusagen' => 8750.0];
+      'verfuegbar_mit_zusagen' => 12750.0, 'frei_mit_zusagen' => 8750.0, 'stichtag' => '2026-11-30', 'stichtag_tage' => 12, 'gesperrt' => false];
 $verlaufVoll = $verlaufLeer;
-$verlaufVoll['eingegangen'][3] = 1000.0; $verlaufVoll['zugesagt'][3] = 250.0; $verlaufVoll['forderungen'][5] = 500.0; $verlaufVoll['bezahlt'][2] = 350.0; $verlaufVoll['offen'][2] = 300.0;
+$verlaufVoll['eingegangen'][3] = 1000.0; $verlaufVoll['zugesagt'][3] = 250.0; $verlaufVoll['forderungen'][5] = 500.0; $verlaufVoll['bezahlt'][2] = 350.0; $verlaufVoll['offen'][2] = 300.0; $verlaufVoll['geplant'][6] = 200.0;
 $html = render_partial('budget', ['jahr' => 2026, 'jahre' => [2026], 'budgets' => [], 'ohneTopf' => [], 'zuBestellen' => [], 'zurFreigabe' => [], 'zahlen' => $z,
     'kategorien' => [], 'einnahmeKategorien' => [], 'monate' => array_fill(1, 12, 0.0), 'monateEin' => array_fill(1, 12, 0.0), 'jeTopf' => [], 'letzte' => [],
     'offenGeplant' => [['id' => 9, 'art' => 'einnahme', 'datum' => '2026-05-02', 'bezeichnung' => 'Rechnung Landkreis', 'status' => 'offen', 'kategorie_label' => 'Einsatz', 'betrag_brutto' => 500, 'veranstaltung_titel' => null]],
     'veranstaltungen' => $g, 'verbrauchHinweis' => verbrauch_kostenhinweis(2027, strtotime('2026-07-01'), $stats), 'verlauf' => $verlaufVoll]);
-$check('Mittel: offene Rechnungen schraffiert, Zusagen darunter', str_contains($html, 'offene Rechnungen: 300,00') && str_contains($html, 'Zugesagt, noch nicht da:</strong> 250,00')
+$check('Stichtag: Countdown und Warnung', str_contains($html, 'noch 12 Tage') && str_contains($html, 'Noch 12 Tage bis zum Stichtag 30.11.2026'));
+$check('Ausgaben gebucht mit Unbezahltem und Geplantem', str_contains($html, 'Ausgaben gebucht') && str_contains($html, '300,00 noch nicht bezahlt') && str_contains($html, 'dazu 200,00 geplant'));
+$check('Mittel: Gebuchtes und Geplantes im Balken, Zusagen darunter', str_contains($html, 'gebucht, noch nicht bezahlt: 300,00') && str_contains($html, 'geplant: 1.436,00') && str_contains($html, 'Zugesagt, noch nicht da:</strong> 250,00')
     && str_contains($html, 'mit Zusagen <strong>12.750,00 €</strong> verfügbar') && str_contains($html, 'Forderungen: 500,00'));
-$check('Verlauf gestapelt mit Legende', str_contains($html, 'months__seg--zusage') && str_contains($html, 'months__seg--forderung') && str_contains($html, 'months__seg--offen')
+$check('Verlauf gestapelt mit Legende', str_contains($html, 'months__seg--zusage') && str_contains($html, 'months__seg--forderung') && str_contains($html, 'months__seg--offen') && str_contains($html, 'months__seg--geplant')
     && str_contains($html, 'legend--zusage') && str_contains($html, 'zugesagt 250,00'));
-$check('Kacheln nennen offen und Planung', str_contains($html, 'abgerechnet oder gestellt') && str_contains($html, 'zugesagt</span>, noch nicht da') && str_contains($html, 'offene Rechnungen') && str_contains($html, 'nach Planung noch') && str_contains($html, '7.064'));
-$check('Abschnitt Offen und geplant', str_contains($html, 'Offen und geplant') && str_contains($html, 'Übung Hochwasser') && str_contains($html, 'Rechnung Landkreis') && str_contains($html, '>offen<'));
+$check('Kacheln nennen offen und Planung', str_contains($html, 'abgerechnet oder gestellt') && str_contains($html, 'zugesagt</span>, noch nicht da') && str_contains($html, 'noch nicht bezahlt') && str_contains($html, 'nach Planung noch') && str_contains($html, '7.064'));
+$check('Abschnitt Offen und geplant', str_contains($html, 'Offen und geplant') && str_contains($html, 'Übung Hochwasser') && str_contains($html, 'Rechnung Landkreis') && str_contains($html, '>gebucht<'));
 $check('Nebenkosten-Hinweis', str_contains($html, 'Nebenkosten aus dem Verbrauch') && str_contains($html, 'hochgerechnet'));
 $html = render_partial('budget', ['jahr' => 2026, 'jahre' => [2026], 'budgets' => [], 'ohneTopf' => [], 'zuBestellen' => [], 'zurFreigabe' => [], 'zahlen' => ['geplant' => 0.0] + $z,
     'kategorien' => [], 'einnahmeKategorien' => [], 'monate' => array_fill(1, 12, 0.0), 'monateEin' => array_fill(1, 12, 0.0), 'jeTopf' => [], 'letzte' => [],

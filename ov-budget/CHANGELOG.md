@@ -1,5 +1,21 @@
 # Änderungsverlauf
 
+## 2.0.16.0
+
+### Stichtag fürs Jahresbudget, Ausgaben gebucht und geplant
+
+- Das **Jahresbudget** hat einen **Stichtag**: Bis einschließlich diesem Tag
+  darf Geld darauf ausgegeben werden. Ausgaben mit späterem Datum lehnt die
+  Anwendung ab – nur „geplant" lässt sich noch vormerken. Übersicht,
+  Startseite und Ausgabenformular zählen die Tage herunter; die Leitung
+  wird 30, 14, 7 und 1 Tag vorher und am Tag selbst erinnert, mit dem noch
+  freien Betrag.
+- **Ausgaben als gebucht und geplant:** Der Stand „offen" heißt jetzt
+  *gebucht* (Rechnung liegt vor oder ist bestellt, noch nicht bezahlt). Die
+  Kachel „Ausgaben gebucht" nennt Unbezahltes und Geplantes, der
+  Mittel-Balken zeigt bezahlt, gebucht und geplant getrennt, der Verlauf
+  stapelt geplante Ausgaben als eigene Stufe.
+
 ## 2.0.15.0
 
 ### Budgetseite: Zusagen und Rechnungen getrennt

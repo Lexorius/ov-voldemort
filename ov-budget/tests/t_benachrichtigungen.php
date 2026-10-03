@@ -74,7 +74,7 @@ $ist = function (string $name, mixed $got, mixed $want) use (&$ok, &$fail) {
 
 /* ---------- Ereignisse und Einstellungen ---------- */
 $ereignisse = notify_ereignisse();
-$check('vierzehn Ereignisse', count($ereignisse) === 14);
+$check('fünfzehn Ereignisse', count($ereignisse) === 15);
 $seed = (string)file_get_contents($app . '/sql/seed.sql');
 $fehlend = [];
 foreach (array_keys($ereignisse) as $key) {
