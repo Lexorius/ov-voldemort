@@ -39,4 +39,5 @@ render('expenses', [
     'gegenSumme'   => expense_total($jahr, $art === 'einnahme' ? 'ausgabe' : 'einnahme'),
     'budgets'      => db_all('SELECT id, jahr, name FROM budgets WHERE jahr = ? ORDER BY name', [$jahr]),
     'einnahmenStand' => $art === 'einnahme' ? einnahmen_stand($jahr) : null,
+    'wartend'        => $art === 'einnahme' ? einnahmen_wartend($jahr) : null,
 ]);

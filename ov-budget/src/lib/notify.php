@@ -43,6 +43,8 @@ function notify_ereignisse(): array
                                  'text'  => 'An die Leitung, wenn ein Handzähler lange keinen Stand hat oder Home Assistant keinen Wert liefert – je Zähler höchstens wöchentlich.'],
         'verbrauch_anomalie' => ['label' => 'Auffälliger Verbrauch', 'taeglich' => true,
                                  'text'  => 'An die Leitung, wenn ein Zähler in der letzten Woche deutlich mehr verbraucht hat als davor oder nachts durchgehend Wasser lief.'],
+        'abrechnung_wartet'  => ['label' => 'Abrechnung wartet auf Geld', 'taeglich' => true,
+                                 'text'  => 'An die Leitung, wenn eine Einnahme 30, 60 oder 90 Tage nach der Abrechnung noch nicht eingegangen ist – je Stufe einmal.'],
     ];
 }
 
@@ -486,6 +488,11 @@ function notify_taeglich(?int $jetzt = null): int
             $n += notify_queue(notify_leitung(), 'fristen', 'Fristen bei den Fahrzeugen',
                 implode("\n", array_slice($treffer, 0, 8)), '?p=vehicles');
         }
+    }
+
+    // Abrechnungen, die auf Geld warten
+    if (function_exists('einnahmen_warnungen_taeglich')) {
+        $n += einnahmen_warnungen_taeglich($jetzt);
     }
 
     // Zähler: ablesen und Auffälligkeiten

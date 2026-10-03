@@ -325,6 +325,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('notify_connector_offline','1','Melden: Connector nicht erreichbar','An die Leitung nach der Karenz aus den Connector-Einstellungen, und einmal, wenn er wieder antwortet','bool','Home Assistant',139),
 ('notify_zaehler_ablesen','1','Melden: Zaehler bitte ablesen','Handzaehler ohne frischen Stand und Zaehler, fuer die Home Assistant keinen Wert liefert – je Zaehler hoechstens woechentlich','bool','Home Assistant',140),
 ('notify_verbrauch_anomalie','1','Melden: auffaelliger Verbrauch','Sprung gegenueber den Wochen davor oder nachts durchgehend laufendes Wasser','bool','Home Assistant',141),
+('notify_abrechnung_wartet','1','Melden: Abrechnung wartet auf Geld','Nach 30, 60 und 90 Tagen ohne Eingang, je Stufe einmal','bool','Home Assistant',142),
 ('push_aktiv','0','Benachrichtigungen im Browser (Web Push)','Meldungen erscheinen auch bei geschlossener Seite. Braucht HTTPS; auf dem iPhone muss die Seite zum Home-Bildschirm hinzugefügt sein.','bool','Home Assistant',140),
 ('push_kontakt','','Kontaktadresse für die Push-Dienste','E-Mail-Adresse, die Google und Mozilla bei Problemen anschreiben können','text','Home Assistant',141),
 ('ha_mqtt_aktiv','0','Kennzahlen an Home Assistant melden','Über MQTT mit Auto-Discovery. Ohne eigene Angaben unten wird der Broker des Mosquitto-Add-ons genutzt.','bool','Home Assistant',10),

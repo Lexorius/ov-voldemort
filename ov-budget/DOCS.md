@@ -161,7 +161,12 @@ sie enthalten.
   ist Planung. Die Einnahmenliste zeigt oben den **Stand der Einnahmen**: je
   Stufe Anzahl und Summe (Klick filtert), was der OV haben sollte, und wo
   Beträge bekannt sind, um wie viel die Bescheide hinter den Abrechnungen
-  zurückbleiben. Jede Zeile nennt ihren Weg mit Daten, Nummer und Beträgen. Der Abschnitt **Offen und
+  zurückbleiben. Jede Zeile nennt ihren Weg mit Daten, Nummer und Beträgen.
+  **Ampel:** Eine Abrechnung, die 30 Tage nach dem Abrechnungsdatum (sonst
+  Bescheid, sonst Buchung) noch nicht eingegangen ist, wird gelb, ab 60
+  Tagen orange, ab 90 rot – in der Liste, im Stand der Einnahmen, in der
+  Budgetübersicht und auf der Startseite. Die Leitung bekommt je Stufe eine
+  Meldung. Der Abschnitt **Offen und
   geplant** der Übersicht listet alles ohne Zahlung, dazu die
   **Veranstaltungen des Jahres** mit geplanten Kosten und kalkulierter
   Verpflegung abzüglich dessen, was schon gebucht ist; die Kachel „Noch frei"
@@ -765,6 +770,7 @@ Gemeldet wird:
 | Connector nicht erreichbar | Leitung, nach der Karenz (Vorgabe 15 Minuten) einmal je Ausfall – und einmal, wenn er wieder antwortet |
 | Zähler bitte ablesen | Leitung, einmal täglich; je Zähler höchstens wöchentlich |
 | Auffälliger Verbrauch | Leitung, einmal täglich; je Zähler höchstens alle drei Tage |
+| Abrechnung wartet auf Geld | Leitung, wenn eine Einnahme 30, 60 oder 90 Tage wartet – je Stufe einmal |
 
 Jedes Ereignis lässt sich einzeln abschalten, jede Person kann Meldungen für
 sich ganz ausschalten. Die tägliche Runde läuft ab der eingestellten Stunde

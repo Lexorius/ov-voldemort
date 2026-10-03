@@ -97,7 +97,7 @@ $check('ohne Zähler nichts', verbrauch_kostenhinweis(2027, null, ['zaehler' => 
 
 /* ---------- Übersicht rendert die neuen Abschnitte ---------- */
 $z = ['budget' => 10000.0, 'einnahmen' => 2500.0, 'ausgaben' => 4000.0, 'verfuegbar' => 12500.0, 'frei' => 8500.0, 'quote' => 32.0,
-      'einnahmen_offen' => 500.0, 'einnahmen_forderungen' => 500.0, 'einnahmen_zugesagt' => 250.0, 'ausgaben_offen' => 300.0, 'geplant_buchungen' => 200.0, 'geplant_veranstaltungen' => 1236.0,
+      'einnahmen_offen' => 500.0, 'einnahmen_forderungen' => 500.0, 'einnahmen_zugesagt' => 250.0, 'abrechnungen_wartend' => ['liste' => [], 'gelb' => 0, 'orange' => 0, 'rot' => 0, 'ueber30' => 0, 'summe_ueber30' => 0.0], 'ausgaben_offen' => 300.0, 'geplant_buchungen' => 200.0, 'geplant_veranstaltungen' => 1236.0,
       'geplant_verpflegung' => 336.0, 'geplant_anzahl' => 3, 'geplant' => 1436.0, 'frei_nach_planung' => 7064.0];
 $html = render_partial('budget', ['jahr' => 2026, 'jahre' => [2026], 'budgets' => [], 'ohneTopf' => [], 'zuBestellen' => [], 'zurFreigabe' => [], 'zahlen' => $z,
     'kategorien' => [], 'einnahmeKategorien' => [], 'monate' => array_fill(1, 12, 0.0), 'monateEin' => array_fill(1, 12, 0.0), 'jeTopf' => [], 'letzte' => [],

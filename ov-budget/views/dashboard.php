@@ -148,6 +148,9 @@ $quoteCls = ($zahlen['verfuegbar'] > 0 && $zahlen['ausgaben'] > $zahlen['verfueg
         <?php if ($budgetVerplant > 0): ?>Dazu <?= e(money($budgetVerplant)) ?> in offenen Wünschen verplant.<?php endif; ?>
         <?php if (($zahlen['geplant'] ?? 0) > 0): ?><?= e(money($zahlen['geplant'])) ?> geplant<?= ($zahlen['geplant_veranstaltungen'] ?? 0) > 0 ? ' (Veranstaltungen, Verpflegung)' : '' ?>.<?php endif; ?>
         <?php if (($zahlen['einnahmen_offen'] ?? 0) > 0): ?><?= e(money($zahlen['einnahmen_offen'])) ?> abgerechnet oder in Rechnung gestellt, noch nicht zugesagt.<?php endif; ?>
+        <?php $w = $zahlen['abrechnungen_wartend'] ?? null; if ($w && $w['ueber30'] > 0): ?>
+          <a href="<?= e(url('expenses', ['art' => 'einnahme'])) ?>#einnahmen-stand" style="color:<?= EINNAHME_WARN_FARBEN[$w['rot'] > 0 ? 'rot' : ($w['orange'] > 0 ? 'orange' : 'gelb')] ?>;font-weight:700"><?= (int)$w['ueber30'] ?> Abrechnung<?= $w['ueber30'] === 1 ? '' : 'en' ?> wartet über 30 Tage auf Geld</a> (<?= e(einnahmen_wartend_text($w)) ?>).
+        <?php endif; ?>
       </p>
     <?php endif; ?>
   <?php endif; ?>

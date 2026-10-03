@@ -49,6 +49,11 @@ const EINNAHME_STUFEN_FELDER = [
 const BUCHUNG_IST = "status IN ('bezahlt','offen','zugesagt')";
 /** Forderungen: Einnahmen, die dem OV zustehen, aber weder zugesagt noch da sind */
 const EINNAHME_FORDERUNG = ['abgerechnet', 'gestellt'];
+/** Stufen, in denen eine Abrechnung wartet – vom Einreichen bis zum Geld */
+const EINNAHME_WARTEND = ['abgerechnet', 'gestellt', 'zugesagt'];
+/** Ampel: ab so vielen Tagen Warten wird es gelb, orange, rot */
+const EINNAHME_WARN_TAGE = ['gelb' => 30, 'orange' => 60, 'rot' => 90];
+const EINNAHME_WARN_FARBEN = ['gelb' => '#ca8a04', 'orange' => '#ea580c', 'rot' => '#b91c1c'];
 
 function buchung_status(string $status): string
 {
@@ -89,6 +94,125 @@ function buchung_status_badge(string $status): string
         'zugesagt'    => '<span class="badge" style="background:#15803d" title="Mittel zugesagt, noch nicht zugewiesen">zugesagt</span>',
         default       => '',
     };
+}
+
+/**
+ * Wie lange eine Abrechnung schon wartet – ab dem Tag der Abrechnung, sonst
+ * des Bescheids, sonst der Buchung. null, wenn sie nicht wartet (erwartet,
+ * eingegangen). Reine Funktion.
+ */
+function einnahme_alter(array $e, ?int $jetzt = null): ?array
+{
+    if ((string)($e['art'] ?? 'einnahme') !== 'einnahme' || !in_array((string)($e['status'] ?? ''), EINNAHME_WARTEND, true)) {
+        return null;
+    }
+    $seit = (string)($e['abgerechnet_am'] ?: ($e['gestellt_am'] ?: ($e['datum'] ?? '')));
+    if ($seit === '') {
+        return null;
+    }
+    $tage = (int)floor((($jetzt ?? time()) - strtotime($seit)) / 86400);
+    $stufe = 'gruen';
+    foreach (EINNAHME_WARN_TAGE as $farbe => $ab) {
+        if ($tage >= $ab) {
+            $stufe = $farbe;
+        }
+    }
+    return ['tage' => max(0, $tage), 'stufe' => $stufe, 'seit' => $seit];
+}
+
+/** Kennzeichen „wartet seit 45 Tagen" in Ampelfarbe – leer unter 30 Tagen. Reine Funktion. */
+function einnahme_alter_badge(?array $alter): string
+{
+    if ($alter === null || $alter['stufe'] === 'gruen') {
+        return '';
+    }
+    return '<span class="badge" style="background:' . EINNAHME_WARN_FARBEN[$alter['stufe']] . '" title="seit '
+        . e(de_date($alter['seit'])) . ' ohne Geld">wartet seit ' . (int)$alter['tage'] . ' Tagen</span>';
+}
+
+/**
+ * Wartende Abrechnungen eines Jahres mit Alter, älteste zuerst; dazu die
+ * Zählung je Ampelstufe.
+ */
+function einnahmen_wartend(int $jahr, ?int $jetzt = null): array
+{
+    $in = implode(',', array_fill(0, count(EINNAHME_WARTEND), '?'));
+    return einnahmen_wartend_aus(
+        db_all("SELECT * FROM expenses WHERE jahr = ? AND art = 'einnahme' AND status IN ($in)", array_merge([$jahr], EINNAHME_WARTEND)),
+        $jetzt
+    );
+}
+
+/** Dasselbe aus einer Liste – reine Funktion */
+function einnahmen_wartend_aus(array $rows, ?int $jetzt = null): array
+{
+    $out = ['liste' => [], 'gelb' => 0, 'orange' => 0, 'rot' => 0, 'ueber30' => 0, 'summe_ueber30' => 0.0];
+    foreach ($rows as $e) {
+        $a = einnahme_alter($e, $jetzt);
+        if ($a === null) {
+            continue;
+        }
+        $e['alter'] = $a;
+        $out['liste'][] = $e;
+        if ($a['stufe'] !== 'gruen') {
+            $out[$a['stufe']]++;
+            $out['ueber30']++;
+            $out['summe_ueber30'] += (float)$e['betrag_brutto'];
+        }
+    }
+    usort($out['liste'], static fn($x, $y) => $y['alter']['tage'] <=> $x['alter']['tage']);
+    return $out;
+}
+
+/** „2 rot, 1 orange" – reine Funktion */
+function einnahmen_wartend_text(array $w): string
+{
+    $teile = [];
+    foreach (['rot', 'orange', 'gelb'] as $f) {
+        if ($w[$f] > 0) {
+            $teile[] = $w[$f] . ' über ' . EINNAHME_WARN_TAGE[$f] . ' Tage';
+        }
+    }
+    return implode(', ', $teile);
+}
+
+/**
+ * Tägliche Meldung an die Leitung: Abrechnungen, die eine neue Ampelstufe
+ * erreicht haben – je Abrechnung und Stufe nur einmal.
+ */
+function einnahmen_warnungen_taeglich(?int $jetzt = null, ?array $wartend = null): int
+{
+    if (!function_exists('notify_ereignis_aktiv') || !notify_ereignis_aktiv('abrechnung_wartet')) {
+        return 0;
+    }
+    $jetzt ??= time();
+    $jahr = (int)date('Y', $jetzt);
+    $zeilen = [];
+    $merken = [];
+    $rang = ['gruen' => 0, 'gelb' => 1, 'orange' => 2, 'rot' => 3];
+    foreach ($wartend ?? array_merge(einnahmen_wartend($jahr, $jetzt)['liste'], einnahmen_wartend($jahr - 1, $jetzt)['liste']) as $e) {
+        $stufe = $e['alter']['stufe'];
+        if ($stufe === 'gruen') {
+            continue;
+        }
+        $gemeldet = state_get('einnahme_warn_' . (int)$e['id'], 'gruen');
+        if (($rang[$gemeldet] ?? 0) >= $rang[$stufe]) {
+            continue;
+        }
+        $merken[(int)$e['id']] = $stufe;
+        $zeilen[] = sprintf('%s: %s, wartet seit %d Tagen (%s)', (string)$e['bezeichnung'], money((float)$e['betrag_brutto']),
+            (int)$e['alter']['tage'], EINNAHME_STUFEN[(string)$e['status']] !== '' ? explode(' –', EINNAHME_STUFEN[(string)$e['status']])[0] : (string)$e['status']);
+    }
+    if (!$zeilen) {
+        return 0;
+    }
+    $n = notify_queue(notify_leitung(), 'abrechnung_wartet', count($zeilen) === 1 ? 'Abrechnung wartet auf Geld' : count($zeilen) . ' Abrechnungen warten auf Geld',
+        implode("
+", array_slice($zeilen, 0, 8)), '?p=expenses&art=einnahme&status=abgerechnet');
+    foreach ($merken as $id => $stufe) {
+        state_save('einnahme_warn_' . $id, $stufe);
+    }
+    return $n;
 }
 
 /** Der Weg einer Einnahme als kurze Zeile: „abgerechnet 12.03. 1.250 € · Bescheid 05.04. Nr. 4711 1.100 €". Reine Funktion. */
@@ -449,6 +573,7 @@ function budget_jahr_zahlen(int $jahr): array
         // Einnahmen: zugesagt steckt schon in einnahmen, Forderungen (abgerechnet, gestellt) nicht
         'einnahmen_zugesagt'    => expense_total_status($jahr, 'einnahme', 'zugesagt'),
         'einnahmen_forderungen' => expense_total_status($jahr, 'einnahme', 'abgerechnet') + expense_total_status($jahr, 'einnahme', 'gestellt'),
+        'abrechnungen_wartend'  => einnahmen_wartend($jahr),
         'einnahmen_offen'       => expense_total_status($jahr, 'einnahme', 'abgerechnet') + expense_total_status($jahr, 'einnahme', 'gestellt'),
         // Ausgaben: Rechnung erhalten, noch nicht bezahlt – steckt schon in ausgaben
         'ausgaben_offen'  => expense_total_status($jahr, 'ausgabe', 'offen'),

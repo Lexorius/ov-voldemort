@@ -1,7 +1,7 @@
 <?php
 /** @var string $art @var array $rows @var array $stats @var array $filters
  *  @var int $jahr @var array $jahre @var float $jahresbudget
- *  @var float $jahresSumme @var float $gegenSumme @var array $budgets @var ?array $einnahmenStand */
+ *  @var float $jahresSumme @var float $gegenSumme @var array $budgets @var ?array $einnahmenStand @var ?array $wartend */
 $istEinnahme = $art === 'einnahme';
 $titel = BUCHUNGSARTEN[$art];
 
@@ -67,6 +67,18 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
       </a>
     <?php endforeach; ?>
   </div>
+  <?php if (!empty($wartend['ueber30'])): $w = $wartend; $schlimmste = $w['rot'] > 0 ? 'rot' : ($w['orange'] > 0 ? 'orange' : 'gelb'); ?>
+    <div class="alert" style="margin:.8rem 0 0;border-left:4px solid <?= EINNAHME_WARN_FARBEN[$schlimmste] ?>">
+      <strong><?= (int)$w['ueber30'] ?> Abrechnung<?= (int)$w['ueber30'] === 1 ? ' wartet' : 'en warten' ?> länger als 30 Tage auf Geld</strong>
+      (<?= e(money($w['summe_ueber30'])) ?>): <?= e(einnahmen_wartend_text($w)) ?>.
+      <?php foreach (array_slice(array_filter($w['liste'], static fn($x) => $x['alter']['stufe'] !== 'gruen'), 0, 5) as $x): ?>
+        <div class="small"><span style="color:<?= EINNAHME_WARN_FARBEN[$x['alter']['stufe']] ?>">●</span>
+          <?php if (can('manage_budget')): ?><a href="<?= e(url('expense_edit', ['id' => $x['id']])) ?>"><?= e((string)$x['bezeichnung']) ?></a><?php else: ?><?= e((string)$x['bezeichnung']) ?><?php endif; ?>
+          · <?= e(money((float)$x['betrag_brutto'])) ?> · <?= e(explode(' –', EINNAHME_STUFEN[(string)$x['status']])[0]) ?> · seit <?= (int)$x['alter']['tage'] ?> Tagen</div>
+      <?php endforeach; ?>
+      <div class="small muted" style="margin-top:.3rem">Gezählt ab dem Tag der Abrechnung, sonst des Bescheids. Gelb ab 30, orange ab 60, rot ab 90 Tagen.</div>
+    </div>
+  <?php endif; ?>
   <p class="small muted" style="margin:.6rem 0 0">
     Haben sollten wir <strong><?= e(money($es['forderungen'] + $es['zugesagt'] + $es['eingegangen'])) ?></strong>
     (abgerechnet, gestellt, zugesagt und eingegangen)<?= $es['erwartet'] > 0 ? ', dazu ' . e(money($es['erwartet'])) . ' erwartet ohne Abrechnung' : '' ?>.
@@ -139,7 +151,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
            href="<?= can('manage_budget') ? e(url('expense_edit', ['id' => $r['id']])) : '#' ?>">
           <div class="item__top">
             <div style="min-width:0">
-              <div class="item__title"><?= e($r['bezeichnung']) ?></div>
+              <div class="item__title"><?= e($r['bezeichnung']) ?><?= $istEinnahme ? ' ' . einnahme_alter_badge(einnahme_alter($r)) : '' ?></div>
               <div class="item__sub"><?= e(de_date($r['datum'])) ?>
                 <?php if ($r['lieferant']): ?> · <?= e($r['lieferant']) ?><?php endif; ?>
                 <?php if ($r['referenz']): ?> · <?= e($r['referenz']) ?><?php endif; ?></div>
@@ -171,7 +183,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
           <tr>
             <td class="nowrap small"><?= e(de_date($r['datum'])) ?></td>
             <td>
-              <strong><?= e($r['bezeichnung']) ?></strong> <?= buchung_status_badge((string)($r['status'] ?? 'bezahlt')) ?>
+              <strong><?= e($r['bezeichnung']) ?></strong> <?= buchung_status_badge((string)($r['status'] ?? 'bezahlt')) ?><?= $istEinnahme ? ' ' . einnahme_alter_badge(einnahme_alter($r)) : '' ?>
               <?php if ($r['lieferant']): ?><div class="small muted"><?= e($r['lieferant']) ?></div><?php endif; ?>
               <?php if ($istEinnahme && ($weg = einnahme_weg($r)) !== ''): ?><div class="small muted"><?= e($weg) ?></div><?php endif; ?>
               <?php if ($r['wunsch_bezeichnung']): ?>

@@ -1,5 +1,17 @@
 # Änderungsverlauf
 
+## 2.0.14.0
+
+### Ampel für wartende Abrechnungen
+
+- Eine Einnahme, die 30 Tage nach der Abrechnung (sonst dem Bescheid, sonst
+  der Buchung) noch nicht eingegangen ist, trägt ein gelbes Kennzeichen
+  „wartet seit … Tagen", ab 60 Tagen orange, ab 90 rot – in der
+  Einnahmenliste, im Stand der Einnahmen mit den ältesten Fällen, in der
+  Budgetübersicht und auf der Startseite.
+- Die Leitung bekommt je Abrechnung und Stufe einmal eine Meldung;
+  Home Assistant zählt die Abrechnungen über 30 Tage.
+
 ## 2.0.13.0
 
 ### Einnahmen planen

@@ -146,6 +146,12 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
       $teile = [];
       if (($zahlen['einnahmen_zugesagt'] ?? 0) > 0) { $teile[] = 'davon ' . e(money_rounded($zahlen['einnahmen_zugesagt'], false)) . ' zugesagt, noch nicht da'; }
       if (($zahlen['einnahmen_forderungen'] ?? 0) > 0) { $teile[] = '<span style="color:#b45309">' . e(money_rounded($zahlen['einnahmen_forderungen'], false)) . ' abgerechnet oder gestellt</span>, zählt noch nicht'; }
+      $w = $zahlen['abrechnungen_wartend'] ?? null;
+      if ($w && $w['ueber30'] > 0) {
+          $farbe = EINNAHME_WARN_FARBEN[$w['rot'] > 0 ? 'rot' : ($w['orange'] > 0 ? 'orange' : 'gelb')];
+          $teile[] = '<a href="' . e(url('expenses', ['jahr' => $jahr, 'art' => 'einnahme']) . '#einnahmen-stand') . '" style="color:' . $farbe . ';font-weight:700">'
+              . (int)$w['ueber30'] . ' Abrechnung' . ($w['ueber30'] === 1 ? '' : 'en') . ' wartet über 30 Tage</a> (' . e(einnahmen_wartend_text($w)) . ')';
+      }
       echo $teile ? implode(' · ', $teile) : 'Einsätze, THG und Übriges';
     ?></div>
   </div>
