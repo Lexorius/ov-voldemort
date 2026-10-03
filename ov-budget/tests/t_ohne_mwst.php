@@ -22,7 +22,9 @@ function db_row(string $sql, array $p = []): ?array {
     return null;
 }
 function db_val(string $sql, array $p = [], mixed $d = null) {
-    if (str_contains($sql, "FROM expenses WHERE jahr = ? AND art = ? AND status = ?")) { return $p[2] === 'offen' ? ($p[1] === 'einnahme' ? 500 : 300) : ($p[1] === 'einnahme' ? 0 : 700); }
+    if (str_contains($sql, "FROM expenses WHERE jahr = ? AND art = ? AND status = ?")) {
+        return match ($p[1] . '/' . $p[2]) { 'ausgabe/offen' => 300, 'ausgabe/geplant' => 700, 'einnahme/zugesagt' => 500, 'einnahme/abgerechnet' => 800, 'einnahme/gestellt' => 400, default => 0 };
+    }
     if (str_contains($sql, "FROM expenses WHERE jahr = ? AND art = ?")) { return $p[1] === 'einnahme' ? 2500 : 4000; }
     if (str_contains($sql, 'FROM budgets')) { return 6000; }
     return $d;
@@ -56,14 +58,14 @@ $check('Zuweisung', $z['budget'] === 10000.0);
 $check('verfügbar = Zuweisung + Einnahmen', $z['verfuegbar'] === 12500.0);
 $check('frei = verfügbar - Ausgaben', $z['frei'] === 8500.0);
 $check('Quote = Ausgaben / verfügbar', abs($z['quote'] - 32.0) < 0.01);
-$check('offen steckt im Ist und wird genannt', $z['einnahmen_offen'] === 500.0 && $z['ausgaben_offen'] === 300.0);
+$check('Zusagen im Ist, Forderungen daneben', $z['einnahmen_zugesagt'] === 500.0 && $z['einnahmen_forderungen'] === 1200.0 && $z['einnahmen_offen'] === 1200.0 && $z['ausgaben_offen'] === 300.0);
 $check('geplant nur in der Planung', $z['geplant_buchungen'] === 700.0 && $z['geplant'] === 700.0 && $z['frei_nach_planung'] === 7800.0);
-$_POST = ['bezeichnung' => 'Rechnung Landkreis', 'datum' => '2026-05-02', 'betrag' => '1200', 'art' => 'einnahme', 'status' => 'offen'];
+$_POST = ['bezeichnung' => 'Rechnung Landkreis', 'datum' => '2026-05-02', 'betrag' => '1200', 'art' => 'ausgabe', 'status' => 'offen'];
 [$id] = expense_save_from_post(null, ['id' => 1]);
 $check('Stand offen gespeichert', $id === 5 && end($GLOBALS['inserts'])[1]['status'] === 'offen');
 $_POST['bezahlt_am'] = '2026-06-01';
 [$id] = expense_save_from_post(null, ['id' => 1]);
-$check('Eingangsdatum macht bezahlt', end($GLOBALS['inserts'])[1]['status'] === 'bezahlt');
+$check('Zahlungsdatum macht bezahlt', end($GLOBALS['inserts'])[1]['status'] === 'bezahlt');
 $_POST = ['bezeichnung' => 'Verpflegung', 'datum' => '2026-05-02', 'betrag' => '80', 'art' => 'ausgabe', 'status' => 'unsinn'];
 [$id] = expense_save_from_post(null, ['id' => 1]);
 $check('unbekannter Stand wird bezahlt', end($GLOBALS['inserts'])[1]['status'] === 'bezahlt');

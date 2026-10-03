@@ -146,11 +146,22 @@ sie enthalten.
   Die Übersicht rechnet Budget plus Einnahmen minus Ausgaben und schlüsselt
   nach Kategorie und Monat auf. Mehrwertsteuer spielt dabei keine Rolle: Es
   gibt je Buchung und je Wunsch einen Betrag – den, der tatsächlich fließt.
-  Jede Buchung hat einen **Stand**: *bezahlt* (Geld ist geflossen), *offen*
-  (Rechnung gestellt oder erhalten, Geld noch nicht geflossen – zählt schon
-  als Ist und wird in den Kacheln gesondert genannt) oder *geplant* (noch
-  keine Rechnung – zählt nur in der Planung). Ein Zahlungs- oder
-  Eingangsdatum setzt den Stand auf bezahlt. Der Abschnitt **Offen und
+  Jede Ausgabe hat einen **Stand**: *bezahlt*, *offen* (Rechnung erhalten,
+  noch nicht bezahlt – zählt schon als Ist und wird in den Kacheln gesondert
+  genannt) oder *geplant* (noch keine Rechnung – zählt nur in der Planung).
+  Ein Zahlungsdatum setzt den Stand auf bezahlt.
+  **Einnahmen gehen einen längeren Weg:** *erwartet* (Einsatz gelaufen,
+  Abrechnung noch nicht erstellt) → *abgerechnet* (Einsatzabrechnung
+  eingereicht) → *gestellt* (die Regionalstelle hat Rechnung oder
+  Gebührenbescheid gestellt) → *zugesagt* (Mittel sind dem OV versprochen)
+  → *eingegangen / zugewiesen*. Je Stufe lassen sich Datum, Betrag und beim
+  Bescheid die Nummer eintragen; jedes Datum hebt den Stand auf seine Stufe.
+  Eingegangen und zugesagt zählen als Einnahme des Jahres – mit Zusagen darf
+  der OV planen –, abgerechnet und gestellt sind **Forderungen**, erwartet
+  ist Planung. Die Einnahmenliste zeigt oben den **Stand der Einnahmen**: je
+  Stufe Anzahl und Summe (Klick filtert), was der OV haben sollte, und wo
+  Beträge bekannt sind, um wie viel die Bescheide hinter den Abrechnungen
+  zurückbleiben. Jede Zeile nennt ihren Weg mit Daten, Nummer und Beträgen. Der Abschnitt **Offen und
   geplant** der Übersicht listet alles ohne Zahlung, dazu die
   **Veranstaltungen des Jahres** mit geplanten Kosten und kalkulierter
   Verpflegung abzüglich dessen, was schon gebucht ist; die Kachel „Noch frei"

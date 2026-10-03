@@ -1316,6 +1316,28 @@ SQL);
         }
     }
     $merken('041_buchung_status');
+
+    /* ---------- 042: Weg einer Einnahme (abgerechnet, gestellt, zugesagt) ---------- */
+    if (ovb_table_exists($pdo, 'expenses')) {
+        $pdo->exec("ALTER TABLE expenses MODIFY status ENUM('bezahlt','offen','geplant','abgerechnet','gestellt','zugesagt') NOT NULL DEFAULT 'bezahlt'");
+        foreach ([
+            'abgerechnet_am'     => 'DATE NULL AFTER status',
+            'abgerechnet_betrag' => 'DECIMAL(12,2) NULL AFTER abgerechnet_am',
+            'gestellt_am'        => 'DATE NULL AFTER abgerechnet_betrag',
+            'gestellt_betrag'    => 'DECIMAL(12,2) NULL AFTER gestellt_am',
+            'gestellt_nr'        => "VARCHAR(100) NOT NULL DEFAULT '' AFTER gestellt_betrag",
+            'zugesagt_am'        => 'DATE NULL AFTER gestellt_nr',
+            'zugesagt_betrag'    => 'DECIMAL(12,2) NULL AFTER zugesagt_am',
+        ] as $spalte => $def) {
+            if (!ovb_column_exists($pdo, 'expenses', $spalte)) {
+                $pdo->exec("ALTER TABLE expenses ADD COLUMN $spalte $def");
+            }
+        }
+        // Bisher „offen" bei Einnahmen hiess: Rechnung gestellt
+        $pdo->exec("UPDATE expenses SET status = 'gestellt', gestellt_am = COALESCE(gestellt_am, datum)
+                    WHERE art = 'einnahme' AND status = 'offen'");
+    }
+    $merken('042_einnahme_stufen');
 }
 
 /**

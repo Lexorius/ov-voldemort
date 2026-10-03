@@ -55,6 +55,8 @@ if (!$expense) {
         'lieferant' => '', 'beleg_nr' => '', 'referenz' => '',
         'bezahlt_am' => null, 'notiz' => '',
         'status' => buchung_status(get_str('status', 'bezahlt')),
+        'abgerechnet_am' => null, 'abgerechnet_betrag' => null, 'gestellt_am' => null, 'gestellt_betrag' => null,
+        'gestellt_nr' => '', 'zugesagt_am' => null, 'zugesagt_betrag' => null,
     ];
     // Vorbelegung aus der Adresse, etwa „Verpflegung als geplante Ausgabe" von der Veranstaltung
     if (get_str('bezeichnung') !== '') {

@@ -142,9 +142,12 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
   <div class="stat">
     <div class="stat__label">Einnahmen</div>
     <div class="stat__value" style="color:var(--ok)">+<?= e(money_rounded($einnahmen, false)) ?></div>
-    <div class="stat__hint"><?= $zahlen['einnahmen_offen'] > 0
-        ? 'davon <span style="color:#b45309">' . e(money_rounded($zahlen['einnahmen_offen'], false)) . ' in Rechnung gestellt</span>, noch nicht eingegangen'
-        : 'Einsätze, THG und Übriges' ?></div>
+    <div class="stat__hint"><?php
+      $teile = [];
+      if (($zahlen['einnahmen_zugesagt'] ?? 0) > 0) { $teile[] = 'davon ' . e(money_rounded($zahlen['einnahmen_zugesagt'], false)) . ' zugesagt, noch nicht da'; }
+      if (($zahlen['einnahmen_forderungen'] ?? 0) > 0) { $teile[] = '<span style="color:#b45309">' . e(money_rounded($zahlen['einnahmen_forderungen'], false)) . ' abgerechnet oder gestellt</span>, zählt noch nicht'; }
+      echo $teile ? implode(' · ', $teile) : 'Einsätze, THG und Übriges';
+    ?></div>
   </div>
   <div class="stat">
     <div class="stat__label">Ausgaben</div>

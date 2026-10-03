@@ -1,7 +1,7 @@
 <?php
 /** @var string $art @var array $rows @var array $stats @var array $filters
  *  @var int $jahr @var array $jahre @var float $jahresbudget
- *  @var float $jahresSumme @var float $gegenSumme @var array $budgets */
+ *  @var float $jahresSumme @var float $gegenSumme @var array $budgets @var ?array $einnahmenStand */
 $istEinnahme = $art === 'einnahme';
 $titel = BUCHUNGSARTEN[$art];
 
@@ -51,6 +51,34 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
       abzüglich Ausgaben</div></div>
 </div>
 
+<?php if ($istEinnahme && $einnahmenStand !== null): $es = $einnahmenStand; ?>
+<section class="card" id="einnahmen-stand">
+  <div class="card__head">
+    <h2>Stand der Einnahmen <?= (int)$jahr ?></h2>
+    <span class="small muted">Forderungen <strong><?= e(money($es['forderungen'])) ?></strong> · zugesagt
+      <strong><?= e(money($es['zugesagt'])) ?></strong> · eingegangen <strong><?= e(money($es['eingegangen'])) ?></strong></span>
+  </div>
+  <div class="stats">
+    <?php foreach ($es['stufen'] as $key => $st): ?>
+      <a class="stat" href="<?= e(url('expenses', $linkArgs + ['status' => $key])) ?>" style="text-decoration:none<?= ($filters['status'] ?? '') === $key ? ';outline:2px solid var(--accent)' : '' ?>">
+        <div class="stat__label"><?= e(explode(' –', $st['label'])[0]) ?></div>
+        <div class="stat__value" style="<?= $key === 'bezahlt' ? 'color:var(--ok)' : ($key === 'zugesagt' ? 'color:#15803d' : (in_array($key, EINNAHME_FORDERUNG, true) ? 'color:#b45309' : '')) ?>"><?= e(money($st['summe'], false)) ?></div>
+        <div class="stat__hint"><?= (int)$st['anzahl'] ?> Buchung<?= (int)$st['anzahl'] === 1 ? '' : 'en' ?></div>
+      </a>
+    <?php endforeach; ?>
+  </div>
+  <p class="small muted" style="margin:.6rem 0 0">
+    Haben sollten wir <strong><?= e(money($es['forderungen'] + $es['zugesagt'] + $es['eingegangen'])) ?></strong>
+    (abgerechnet, gestellt, zugesagt und eingegangen)<?= $es['erwartet'] > 0 ? ', dazu ' . e(money($es['erwartet'])) . ' erwartet ohne Abrechnung' : '' ?>.
+    <?php if ($es['kuerzung_anzahl'] > 0): ?>
+      Bei <?= (int)$es['kuerzung_anzahl'] ?> Abrechnung<?= $es['kuerzung_anzahl'] === 1 ? '' : 'en' ?> mit Bescheid:
+      abgerechnet <?= e(money($es['abgerechnet_summe'])) ?>, gestellt <?= e(money($es['gestellt_summe'])) ?> –
+      <?= $es['kuerzung'] > 0 ? '<span style="color:var(--bad)">' . e(money($es['kuerzung'])) . ' gekürzt</span>' : ($es['kuerzung'] < 0 ? e(money(-$es['kuerzung'])) . ' mehr als abgerechnet' : 'ohne Abweichung') ?>.
+    <?php endif; ?>
+  </p>
+</section>
+<?php endif; ?>
+
 <form class="card card--tight" method="get" data-autosubmit>
   <input type="hidden" name="p" value="expenses">
   <input type="hidden" name="jahr" value="<?= (int)$jahr ?>">
@@ -73,7 +101,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
       <label for="status">Stand</label>
       <select id="status" name="status">
         <option value="">alle</option>
-        <?php foreach (BUCHUNG_STATUS as $key => $label): ?>
+        <?php foreach ($istEinnahme ? EINNAHME_STUFEN : BUCHUNG_STATUS as $key => $label): ?>
           <option value="<?= e($key) ?>"<?= (string)($filters['status'] ?? '') === $key ? ' selected' : '' ?>><?= e(explode(' –', $label)[0]) ?></option>
         <?php endforeach; ?>
       </select>
@@ -145,6 +173,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
             <td>
               <strong><?= e($r['bezeichnung']) ?></strong> <?= buchung_status_badge((string)($r['status'] ?? 'bezahlt')) ?>
               <?php if ($r['lieferant']): ?><div class="small muted"><?= e($r['lieferant']) ?></div><?php endif; ?>
+              <?php if ($istEinnahme && ($weg = einnahme_weg($r)) !== ''): ?><div class="small muted"><?= e($weg) ?></div><?php endif; ?>
               <?php if ($r['wunsch_bezeichnung']): ?>
                 <div class="small muted">zu Wunsch: <?= e($r['wunsch_bezeichnung']) ?></div>
               <?php endif; ?>

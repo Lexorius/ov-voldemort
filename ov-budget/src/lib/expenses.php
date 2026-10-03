@@ -18,26 +18,141 @@ const BUCHUNGSARTEN = ['ausgabe' => 'Ausgaben', 'einnahme' => 'Einnahmen'];
  * ist geflossen oder die Rechnung liegt vor), geplant nur in der Planung.
  */
 const BUCHUNG_STATUS = [
-    'bezahlt' => 'bezahlt / eingegangen',
-    'offen'   => 'Rechnung gestellt bzw. erhalten – noch offen',
+    'bezahlt' => 'bezahlt',
+    'offen'   => 'Rechnung erhalten – noch nicht bezahlt',
     'geplant' => 'geplant – noch keine Rechnung',
 ];
-/** Bedingung für alles, was als Ist zählt */
-const BUCHUNG_IST = "status <> 'geplant'";
+/**
+ * Einnahmen gehen einen längeren Weg: Der OV rechnet den Einsatz ab, die
+ * Regionalstelle stellt Rechnung oder Gebührenbescheid, sagt dem OV Mittel
+ * zu und weist sie schließlich zu. Reihenfolge = Rangfolge.
+ */
+const EINNAHME_STUFEN = [
+    'geplant'     => 'erwartet – Abrechnung noch nicht erstellt',
+    'abgerechnet' => 'abgerechnet – Einsatzabrechnung eingereicht',
+    'gestellt'    => 'gestellt – Rechnung oder Gebührenbescheid ist raus',
+    'zugesagt'    => 'zugesagt – Mittel sind dem OV versprochen',
+    'bezahlt'     => 'eingegangen / zugewiesen',
+];
+/** Felder je Stufe: Datum, Betrag, Nummer */
+const EINNAHME_STUFEN_FELDER = [
+    'abgerechnet' => ['datum' => 'abgerechnet_am', 'betrag' => 'abgerechnet_betrag', 'label' => 'Abgerechnet'],
+    'gestellt'    => ['datum' => 'gestellt_am', 'betrag' => 'gestellt_betrag', 'nr' => 'gestellt_nr', 'label' => 'Rechnung / Bescheid'],
+    'zugesagt'    => ['datum' => 'zugesagt_am', 'betrag' => 'zugesagt_betrag', 'label' => 'Budget zugesagt'],
+    'bezahlt'     => ['datum' => 'bezahlt_am', 'label' => 'Eingegangen / zugewiesen'],
+];
+/**
+ * Bedingung für alles, was als Ist zählt: bezahlt, erhaltene Rechnungen und
+ * zugesagte Mittel – mit Letzteren darf der OV planen. Abgerechnet und
+ * gestellt sind Forderungen, geplant ist Planung.
+ */
+const BUCHUNG_IST = "status IN ('bezahlt','offen','zugesagt')";
+/** Forderungen: Einnahmen, die dem OV zustehen, aber weder zugesagt noch da sind */
+const EINNAHME_FORDERUNG = ['abgerechnet', 'gestellt'];
 
 function buchung_status(string $status): string
 {
-    return array_key_exists($status, BUCHUNG_STATUS) ? $status : 'bezahlt';
+    return array_key_exists($status, BUCHUNG_STATUS) || array_key_exists($status, EINNAHME_STUFEN) ? $status : 'bezahlt';
+}
+
+/** Die Stufen in der Reihenfolge des Weges, zum Vergleichen. Reine Funktion. */
+function einnahme_rang(string $stufe): int
+{
+    $rang = array_flip(array_keys(EINNAHME_STUFEN));
+    return $rang[$stufe] ?? $rang['bezahlt'];
+}
+
+/**
+ * Stufe einer Einnahme aus dem gewählten Stand und den Daten: Ein Datum
+ * hebt auf seine Stufe, der gewählte Stand kann höher sein, nie tiefer als
+ * das späteste Datum. Reine Funktion.
+ */
+function einnahme_stufe(array $e, string $gewaehlt = 'bezahlt'): string
+{
+    $stufe = array_key_exists($gewaehlt, EINNAHME_STUFEN) ? $gewaehlt : 'bezahlt';
+    foreach (EINNAHME_STUFEN_FELDER as $key => $f) {
+        if (!empty($e[$f['datum']]) && einnahme_rang($key) > einnahme_rang($stufe)) {
+            $stufe = $key;
+        }
+    }
+    return $stufe;
 }
 
 /** Kennzeichen in Listen – bezahlt bleibt unmarkiert, das ist der Normalfall */
 function buchung_status_badge(string $status): string
 {
     return match (buchung_status($status)) {
-        'offen'   => '<span class="badge" style="background:#b45309" title="Rechnung gestellt bzw. erhalten, noch nicht bezahlt">offen</span>',
-        'geplant' => '<span class="badge badge--outline" title="geplant, noch keine Rechnung">geplant</span>',
-        default   => '',
+        'offen'       => '<span class="badge" style="background:#b45309" title="Rechnung erhalten, noch nicht bezahlt">offen</span>',
+        'geplant'     => '<span class="badge badge--outline" title="geplant, noch keine Rechnung">geplant</span>',
+        'abgerechnet' => '<span class="badge" style="background:#0369a1" title="Einsatzabrechnung eingereicht">abgerechnet</span>',
+        'gestellt'    => '<span class="badge" style="background:#b45309" title="Rechnung oder Gebührenbescheid gestellt, Geld noch nicht da">gestellt</span>',
+        'zugesagt'    => '<span class="badge" style="background:#15803d" title="Mittel zugesagt, noch nicht zugewiesen">zugesagt</span>',
+        default       => '',
     };
+}
+
+/** Der Weg einer Einnahme als kurze Zeile: „abgerechnet 12.03. 1.250 € · Bescheid 05.04. Nr. 4711 1.100 €". Reine Funktion. */
+function einnahme_weg(array $e): string
+{
+    $teile = [];
+    foreach (EINNAHME_STUFEN_FELDER as $key => $f) {
+        if (empty($e[$f['datum']])) {
+            continue;
+        }
+        $t = ($key === 'bezahlt' ? 'eingegangen' : $f['label']) . ' ' . de_date((string)$e[$f['datum']]);
+        if (!empty($f['nr']) && trim((string)($e[$f['nr']] ?? '')) !== '') {
+            $t .= ' Nr. ' . $e[$f['nr']];
+        }
+        if (!empty($f['betrag']) && $e[$f['betrag']] !== null && $e[$f['betrag']] !== '') {
+            $t .= ' ' . money((float)$e[$f['betrag']]);
+        }
+        $teile[] = $t;
+    }
+    return implode(' · ', $teile);
+}
+
+/**
+ * Stand der Einnahmen eines Jahres je Stufe: Anzahl und Summe, dazu die
+ * Forderungen, das Zugesagte, das Eingegangene und der Verlust zwischen
+ * Abrechnung und Bescheid (wo beide Beträge bekannt sind).
+ */
+function einnahmen_stand(int $jahr): array
+{
+    $out = ['stufen' => [], 'forderungen' => 0.0, 'zugesagt' => 0.0, 'eingegangen' => 0.0, 'erwartet' => 0.0,
+            'abgerechnet_summe' => 0.0, 'gestellt_summe' => 0.0, 'kuerzung' => 0.0, 'kuerzung_anzahl' => 0];
+    foreach (EINNAHME_STUFEN as $key => $label) {
+        $out['stufen'][$key] = ['label' => $label, 'anzahl' => 0, 'summe' => 0.0];
+    }
+    foreach (db_all(
+        'SELECT status, COUNT(*) AS anzahl, COALESCE(SUM(betrag_brutto),0) AS summe
+         FROM expenses WHERE jahr = ? AND art = ? GROUP BY status',
+        [$jahr, 'einnahme']
+    ) as $r) {
+        $s = buchung_status((string)$r['status']);
+        if (!isset($out['stufen'][$s])) {
+            continue;
+        }
+        $out['stufen'][$s]['anzahl'] += (int)$r['anzahl'];
+        $out['stufen'][$s]['summe'] += (float)$r['summe'];
+    }
+    foreach (EINNAHME_FORDERUNG as $s) {
+        $out['forderungen'] += $out['stufen'][$s]['summe'];
+    }
+    $out['zugesagt'] = $out['stufen']['zugesagt']['summe'];
+    $out['eingegangen'] = $out['stufen']['bezahlt']['summe'];
+    $out['erwartet'] = $out['stufen']['geplant']['summe'];
+    $k = db_row(
+        'SELECT COUNT(*) AS anzahl, COALESCE(SUM(abgerechnet_betrag),0) AS abgerechnet, COALESCE(SUM(gestellt_betrag),0) AS gestellt
+         FROM expenses WHERE jahr = ? AND art = ? AND abgerechnet_betrag IS NOT NULL AND gestellt_betrag IS NOT NULL',
+        [$jahr, 'einnahme']
+    );
+    if ($k && (int)$k['anzahl'] > 0) {
+        $out['kuerzung_anzahl'] = (int)$k['anzahl'];
+        $out['abgerechnet_summe'] = (float)$k['abgerechnet'];
+        $out['gestellt_summe'] = (float)$k['gestellt'];
+        $out['kuerzung'] = round((float)$k['abgerechnet'] - (float)$k['gestellt'], 2);
+    }
+    return $out;
 }
 
 /** Nur bekannte Richtungen zulassen */
@@ -331,8 +446,11 @@ function budget_jahr_zahlen(int $jahr): array
         'verfuegbar' => $verfuegbar,
         'frei'       => $verfuegbar - $ausgaben,
         'quote'      => $verfuegbar > 0 ? min(100.0, $ausgaben / $verfuegbar * 100) : 0.0,
-        // Rechnung gestellt bzw. erhalten, Geld noch nicht geflossen – steckt schon in einnahmen/ausgaben
-        'einnahmen_offen' => expense_total_status($jahr, 'einnahme', 'offen'),
+        // Einnahmen: zugesagt steckt schon in einnahmen, Forderungen (abgerechnet, gestellt) nicht
+        'einnahmen_zugesagt'    => expense_total_status($jahr, 'einnahme', 'zugesagt'),
+        'einnahmen_forderungen' => expense_total_status($jahr, 'einnahme', 'abgerechnet') + expense_total_status($jahr, 'einnahme', 'gestellt'),
+        'einnahmen_offen'       => expense_total_status($jahr, 'einnahme', 'abgerechnet') + expense_total_status($jahr, 'einnahme', 'gestellt'),
+        // Ausgaben: Rechnung erhalten, noch nicht bezahlt – steckt schon in ausgaben
         'ausgaben_offen'  => expense_total_status($jahr, 'ausgabe', 'offen'),
         // Planung: geplante Buchungen plus Veranstaltungen (Kosten und Verpflegung abzüglich schon Gebuchtem)
         'geplant_buchungen'       => $geplantBuchungen,
@@ -376,9 +494,34 @@ function expense_save_from_post(?array $existing, array $user): array
         $errors[] = 'Bitte ein gültiges Datum angeben.';
     }
 
+    // Einnahmen: Daten und Beträge je Stufe
+    $stufen = [];
+    if ($art === 'einnahme') {
+        foreach (EINNAHME_STUFEN_FELDER as $key => $f) {
+            if ($key === 'bezahlt') {
+                continue;
+            }
+            $stufen[$f['datum']] = post_date($f['datum']);
+            $wert = trim(post_str($f['betrag']));
+            $stufen[$f['betrag']] = $wert === '' ? null : round(post_dec($f['betrag']), 2);
+            if (!empty($f['nr'])) {
+                $stufen[$f['nr']] = mb_substr(post_str($f['nr']), 0, 100);
+            }
+        }
+    }
+
     // Ein Betrag, keine Mehrwertsteuer: Beide Spalten tragen denselben Wert,
-    // damit ältere Auswertungen und Sicherungen weiter passen.
+    // damit ältere Auswertungen und Sicherungen weiter passen. Bei Einnahmen
+    // ohne eigenen Betrag gilt der der letzten Stufe.
     $betrag = round(post_dec('betrag'), 2);
+    if ($betrag <= 0) {
+        foreach (['zugesagt_betrag', 'gestellt_betrag', 'abgerechnet_betrag'] as $feld) {
+            if (($stufen[$feld] ?? null) !== null && $stufen[$feld] > 0) {
+                $betrag = $stufen[$feld];
+                break;
+            }
+        }
+    }
     if ($betrag <= 0) {
         $errors[] = 'Bitte einen Betrag größer als null angeben.';
     }
@@ -411,8 +554,15 @@ function expense_save_from_post(?array $existing, array $user): array
         'notiz'         => post_str('notiz'),
         'updated_by'    => (int)$user['id'],
     ];
-    // Ein Zahlungsdatum heißt bezahlt, egal was der Stand sagt
-    $data['status'] = $data['bezahlt_am'] ? 'bezahlt' : buchung_status(post_str('status', (string)($existing['status'] ?? 'bezahlt')));
+    // Ein Zahlungsdatum heißt bezahlt, egal was der Stand sagt; bei Einnahmen
+    // hebt jedes Stufendatum auf seine Stufe
+    $gewaehlt = buchung_status(post_str('status', (string)($existing['status'] ?? 'bezahlt')));
+    if ($art === 'einnahme') {
+        $data += $stufen;
+        $data['status'] = einnahme_stufe($data, array_key_exists($gewaehlt, EINNAHME_STUFEN) ? $gewaehlt : 'bezahlt');
+    } else {
+        $data['status'] = $data['bezahlt_am'] ? 'bezahlt' : (array_key_exists($gewaehlt, BUCHUNG_STATUS) ? $gewaehlt : 'bezahlt');
+    }
 
     if ($existing) {
         db_update('expenses', $data, 'id = ?', [$existing['id']]);

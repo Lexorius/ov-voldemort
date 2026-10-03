@@ -97,13 +97,13 @@ $check('ohne Zähler nichts', verbrauch_kostenhinweis(2027, null, ['zaehler' => 
 
 /* ---------- Übersicht rendert die neuen Abschnitte ---------- */
 $z = ['budget' => 10000.0, 'einnahmen' => 2500.0, 'ausgaben' => 4000.0, 'verfuegbar' => 12500.0, 'frei' => 8500.0, 'quote' => 32.0,
-      'einnahmen_offen' => 500.0, 'ausgaben_offen' => 300.0, 'geplant_buchungen' => 200.0, 'geplant_veranstaltungen' => 1236.0,
+      'einnahmen_offen' => 500.0, 'einnahmen_forderungen' => 500.0, 'einnahmen_zugesagt' => 250.0, 'ausgaben_offen' => 300.0, 'geplant_buchungen' => 200.0, 'geplant_veranstaltungen' => 1236.0,
       'geplant_verpflegung' => 336.0, 'geplant_anzahl' => 3, 'geplant' => 1436.0, 'frei_nach_planung' => 7064.0];
 $html = render_partial('budget', ['jahr' => 2026, 'jahre' => [2026], 'budgets' => [], 'ohneTopf' => [], 'zuBestellen' => [], 'zurFreigabe' => [], 'zahlen' => $z,
     'kategorien' => [], 'einnahmeKategorien' => [], 'monate' => array_fill(1, 12, 0.0), 'monateEin' => array_fill(1, 12, 0.0), 'jeTopf' => [], 'letzte' => [],
     'offenGeplant' => [['id' => 9, 'art' => 'einnahme', 'datum' => '2026-05-02', 'bezeichnung' => 'Rechnung Landkreis', 'status' => 'offen', 'kategorie_label' => 'Einsatz', 'betrag_brutto' => 500, 'veranstaltung_titel' => null]],
     'veranstaltungen' => $g, 'verbrauchHinweis' => verbrauch_kostenhinweis(2027, strtotime('2026-07-01'), $stats)]);
-$check('Kacheln nennen offen und Planung', str_contains($html, 'in Rechnung gestellt') && str_contains($html, 'offene Rechnungen') && str_contains($html, 'nach Planung noch') && str_contains($html, '7.064'));
+$check('Kacheln nennen offen und Planung', str_contains($html, 'abgerechnet oder gestellt') && str_contains($html, 'zugesagt, noch nicht da') && str_contains($html, 'offene Rechnungen') && str_contains($html, 'nach Planung noch') && str_contains($html, '7.064'));
 $check('Abschnitt Offen und geplant', str_contains($html, 'Offen und geplant') && str_contains($html, 'Übung Hochwasser') && str_contains($html, 'Rechnung Landkreis') && str_contains($html, '>offen<'));
 $check('Nebenkosten-Hinweis', str_contains($html, 'Nebenkosten aus dem Verbrauch') && str_contains($html, 'hochgerechnet'));
 $html = render_partial('budget', ['jahr' => 2026, 'jahre' => [2026], 'budgets' => [], 'ohneTopf' => [], 'zuBestellen' => [], 'zurFreigabe' => [], 'zahlen' => ['geplant' => 0.0] + $z,
@@ -114,6 +114,6 @@ $html = render_partial('budget_year_edit', ['eintrag' => ['jahr' => 2027, 'betra
     'verbrauchHinweis' => verbrauch_kostenhinweis(2027, strtotime('2026-07-01'), $stats)]);
 $check('Jahresbudget mit Nebenkosten-Anhalt', str_contains($html, 'Nebenkosten aus dem Verbrauch 2026') && str_contains($html, 'hochgerechnet'));
 $html = render_partial('expense_edit', ['art' => 'einnahme', 'expense' => ['id' => null, 'art' => 'einnahme', 'jahr' => 2026, 'datum' => '2026-01-01', 'bezeichnung' => '', 'beschreibung' => '', 'kategorie_id' => null, 'fachgruppe_id' => null, 'budget_id' => null, 'wish_id' => null, 'event_id' => null, 'betrag_brutto' => '', 'betrag_netto' => '', 'lieferant' => '', 'beleg_nr' => '', 'referenz' => '', 'bezahlt_am' => null, 'notiz' => '', 'status' => 'offen'], 'errors' => [], 'budgets' => [], 'wishes' => [], 'events' => []]);
-$check('Formular: Stand als Auswahl, offen vorbelegt', str_contains($html, 'value="offen" checked') && str_contains($html, 'Rechnung gestellt'));
+$check('Formular: Weg der Einnahme, offen wird gestellt', str_contains($html, 'value="gestellt" checked') && str_contains($html, 'Weg der Einnahme'));
 
 echo "$ok bestanden, $fail fehlgeschlagen\n";

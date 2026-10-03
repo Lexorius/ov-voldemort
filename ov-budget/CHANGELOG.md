@@ -1,5 +1,21 @@
 # Änderungsverlauf
 
+## 2.0.13.0
+
+### Einnahmen planen
+
+- Einnahmen haben jetzt einen **Weg**: erwartet → abgerechnet (Einsatzabrechnung
+  eingereicht) → gestellt (Rechnung oder Gebührenbescheid der Regionalstelle)
+  → zugesagt (Mittel versprochen) → eingegangen / zugewiesen. Je Stufe mit
+  Datum, Betrag und beim Bescheid der Nummer; jedes Datum hebt den Stand.
+- **Stand der Einnahmen** oben in der Einnahmenliste: je Stufe Anzahl und
+  Summe, was der OV haben sollte, und wie viel die Bescheide hinter den
+  Abrechnungen zurückbleiben. Jede Zeile zeigt ihren Weg.
+- Eingegangen und zugesagt zählen als Einnahme des Jahres, abgerechnet und
+  gestellt als Forderungen; die Budgetübersicht nennt beides. CSV mit allen
+  Stufen, MQTT mit zugesagten Einnahmen.
+- Bisher „offene" Einnahmen gelten als gestellt.
+
 ## 2.0.12.0
 
 ### Warnen statt nachschauen

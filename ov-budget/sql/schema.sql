@@ -344,7 +344,16 @@ CREATE TABLE IF NOT EXISTS expenses (
   referenz      VARCHAR(100)  NOT NULL DEFAULT '',
   bezahlt_am    DATE          NULL,
   -- bezahlt und offen zaehlen als Ist, geplant nur in der Planung
-  status        ENUM('bezahlt','offen','geplant') NOT NULL DEFAULT 'bezahlt',
+  -- Einnahmen gehen den Weg geplant -> abgerechnet -> gestellt -> zugesagt -> bezahlt
+  status        ENUM('bezahlt','offen','geplant','abgerechnet','gestellt','zugesagt') NOT NULL DEFAULT 'bezahlt',
+  -- Stufen einer Einnahme: Einsatzabrechnung, Rechnung/Gebuehrenbescheid der Regionalstelle, Zusage
+  abgerechnet_am     DATE          NULL,
+  abgerechnet_betrag DECIMAL(12,2) NULL,
+  gestellt_am        DATE          NULL,
+  gestellt_betrag    DECIMAL(12,2) NULL,
+  gestellt_nr        VARCHAR(100)  NOT NULL DEFAULT '',
+  zugesagt_am        DATE          NULL,
+  zugesagt_betrag    DECIMAL(12,2) NULL,
   notiz         TEXT          NULL,
   created_by    INT UNSIGNED  NULL,
   updated_by    INT UNSIGNED  NULL,

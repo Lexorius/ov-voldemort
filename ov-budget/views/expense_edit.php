@@ -35,9 +35,9 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
       </div>
       <div class="field">
         <label for="betrag">Betrag *</label>
-        <input type="text" inputmode="decimal" id="betrag" name="betrag" required placeholder="0,00"
+        <input type="text" inputmode="decimal" id="betrag" name="betrag"<?= $istEinnahme ? '' : ' required' ?> placeholder="0,00"
                value="<?= e(num_input($betragWert)) ?>">
-        <small>Der Betrag, der tatsächlich <?= $istEinnahme ? 'eingegangen ist' : 'bezahlt wurde' ?>.</small>
+        <small><?= $istEinnahme ? 'Der Betrag, mit dem gerechnet wird – leer: der Betrag der letzten Stufe unten.' : 'Der Betrag, der tatsächlich bezahlt wurde.' ?></small>
       </div>
     </div>
 
@@ -106,7 +106,7 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
                placeholder="<?= $istEinnahme ? 'z.B. Landkreis, Feuerwehr, Firma' : '' ?>">
       </div>
       <div class="field">
-        <label for="beleg_nr"><?= $istEinnahme ? 'Rechnungsnummer' : 'Belegnummer' ?></label>
+        <label for="beleg_nr"><?= $istEinnahme ? 'Aktenzeichen / Vorgangsnummer' : 'Belegnummer' ?></label>
         <input type="text" id="beleg_nr" name="beleg_nr" value="<?= e((string)($expense['beleg_nr'] ?? '')) ?>">
       </div>
       <div class="field">
@@ -114,23 +114,62 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
         <input type="text" id="referenz" name="referenz" value="<?= e((string)($expense['referenz'] ?? '')) ?>"
                placeholder="<?= $istEinnahme ? 'z.B. Einsatz 2026-014' : '' ?>">
       </div>
+      <?php if (!$istEinnahme): ?>
       <div class="field">
-        <label for="bezahlt_am"><?= $istEinnahme ? 'Eingegangen am' : 'Bezahlt am' ?></label>
+        <label for="bezahlt_am">Bezahlt am</label>
         <input type="date" id="bezahlt_am" name="bezahlt_am" value="<?= e((string)($expense['bezahlt_am'] ?? '')) ?>">
       </div>
+      <?php endif; ?>
     </div>
+    <?php if ($istEinnahme): ?>
+      <?php $stand = buchung_status((string)($expense['status'] ?? 'bezahlt')); if (!array_key_exists($stand, EINNAHME_STUFEN)) { $stand = $stand === 'offen' ? 'gestellt' : 'bezahlt'; } ?>
+      <h3 class="mt">Weg der Einnahme</h3>
+      <p class="small muted">Der OV rechnet ab, die Regionalstelle stellt Rechnung oder Gebührenbescheid, sagt Mittel zu
+        und weist sie zu. Trage ein, was schon passiert ist – jedes Datum hebt den Stand auf seine Stufe. Weichen die
+        Beträge ab, siehst du in der Liste, was unterwegs verloren ging.</p>
+      <div class="tablewrap">
+        <table class="data">
+          <thead><tr><th>Stufe</th><th>Datum</th><th>Betrag</th><th>Nummer</th></tr></thead>
+          <tbody>
+          <?php foreach (EINNAHME_STUFEN_FELDER as $key => $f): ?>
+            <tr>
+              <td><strong><?= e($f['label']) ?></strong></td>
+              <td><input type="date" name="<?= e($f['datum']) ?>" value="<?= e((string)($expense[$f['datum']] ?? '')) ?>"></td>
+              <td><?php if (!empty($f['betrag'])): ?>
+                <input type="text" inputmode="decimal" name="<?= e($f['betrag']) ?>" placeholder="0,00" style="max-width:9rem"
+                       value="<?= e(($expense[$f['betrag']] ?? null) === null || $expense[$f['betrag']] === '' ? '' : num_input($expense[$f['betrag']])) ?>">
+                <?php else: ?><span class="small muted">Betrag oben</span><?php endif; ?></td>
+              <td><?php if (!empty($f['nr'])): ?>
+                <input type="text" name="<?= e($f['nr']) ?>" maxlength="100" placeholder="Rechnungs-/Bescheidnummer" value="<?= e((string)($expense[$f['nr']] ?? '')) ?>">
+                <?php endif; ?></td>
+            </tr>
+          <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <div class="field mt">
+        <label>Stand</label>
+        <div>
+          <?php foreach (EINNAHME_STUFEN as $key => $label): ?>
+            <label class="wahl"><input type="radio" name="status" value="<?= e($key) ?>"<?= $stand === $key ? ' checked' : '' ?>> <?= e($label) ?></label>
+          <?php endforeach; ?>
+        </div>
+        <small>Eingegangen und zugesagt zählen als Einnahme des Jahres – mit Zusagen darf der OV planen. Abgerechnet und
+          gestellt sind Forderungen, erwartet ist Planung. Ein Datum unten kann den Stand nur anheben.</small>
+      </div>
+    <?php else: ?>
     <div class="field">
       <label>Stand</label>
       <?php $stand = buchung_status((string)($expense['status'] ?? 'bezahlt')); ?>
       <div>
         <?php foreach (BUCHUNG_STATUS as $key => $label): ?>
-          <label class="wahl"><input type="radio" name="status" value="<?= e($key) ?>"<?= $stand === $key ? ' checked' : '' ?>>
-            <?= e($istEinnahme && $key === 'offen' ? 'Rechnung gestellt – Geld noch nicht eingegangen' : ($istEinnahme && $key === 'geplant' ? 'erwartet – noch keine Rechnung gestellt' : $label)) ?></label>
+          <label class="wahl"><input type="radio" name="status" value="<?= e($key) ?>"<?= $stand === $key ? ' checked' : '' ?>> <?= e($label) ?></label>
         <?php endforeach; ?>
       </div>
       <small>Bezahlt und offen zählen in den Ist-Zahlen des Jahres, geplant nur in der Planung. Ein
-        <?= $istEinnahme ? 'Eingangsdatum' : 'Zahlungsdatum' ?> setzt den Stand auf bezahlt.</small>
+        Zahlungsdatum setzt den Stand auf bezahlt.</small>
     </div>
+    <?php endif; ?>
     <div class="field">
       <label for="notiz">Notiz</label>
       <textarea id="notiz" name="notiz"><?= e((string)($expense['notiz'] ?? '')) ?></textarea>
