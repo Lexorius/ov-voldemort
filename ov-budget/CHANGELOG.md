@@ -1,5 +1,11 @@
 # Änderungsverlauf
 
+## 2.1.1.1
+
+- **Einnahmen landeten nach dem Speichern bei den Ausgaben** – auch bei
+  „Eintragen und nächste". Die Art stand nur im Formular, nicht in der
+  Adresse; jetzt gilt beim Speichern die Art aus dem Formular.
+
 ## 2.1.1.0
 
 ### Bestellungen mit mehreren Wünschen, Buchungen mit mehreren Bezügen

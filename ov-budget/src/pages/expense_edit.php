@@ -7,7 +7,8 @@ $id = get_int('id');
 $expense = $id ? expense_find($id) : null;
 
 // Beim Bearbeiten entscheidet der Datensatz, beim Anlegen die Adresszeile
-$art = buchungsart($expense['art'] ?? get_str('art', 'ausgabe'));
+// Beim Speichern steht die Art im Formular – sonst kämen Einnahmen nach dem Speichern bei den Ausgaben heraus
+$art = buchungsart($expense['art'] ?? ($_SERVER['REQUEST_METHOD'] === 'POST' ? post_str('art', get_str('art', 'ausgabe')) : get_str('art', 'ausgabe')));
 
 if ($id && !$expense) {
     http_response_code(404);

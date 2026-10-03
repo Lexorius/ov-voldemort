@@ -34,7 +34,7 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
   </div>
 <?php endif; ?>
 
-<form method="post" class="form" action="<?= e(url('expense_edit', $isNew ? [] : ['id' => $expense['id']])) ?>">
+<form method="post" class="form" action="<?= e(url('expense_edit', $isNew ? ['art' => $art] : ['id' => $expense['id']])) ?>">
   <?= csrf_field() ?>
   <input type="hidden" name="art" value="<?= e($art) ?>">
 
