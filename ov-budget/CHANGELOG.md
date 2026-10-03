@@ -1,5 +1,9 @@
 # Änderungsverlauf
 
+## 2.1.1.2
+
+- Prüfung ergänzt, die den Einnahmen-Fehler aus 2.1.1.1 künftig abfängt.
+
 ## 2.1.1.1
 
 - **Einnahmen landeten nach dem Speichern bei den Ausgaben** – auch bei

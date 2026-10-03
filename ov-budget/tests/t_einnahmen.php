@@ -143,4 +143,12 @@ $html = render_partial('expense_edit', ['art' => 'ausgabe', 'expense' => ['id' =
     'lieferant' => '', 'beleg_nr' => '', 'referenz' => '', 'notiz' => '', 'bezahlt_am' => null, 'status' => 'bezahlt'], 'errors' => [], 'budgets' => [], 'wishes' => [], 'events' => []]);
 $check('Ausgaben-Formular unverändert', !str_contains($html, 'Weg der Einnahme') && str_contains($html, 'name="status" value="offen"') && str_contains($html, 'name="bezahlt_am"'));
 
+/* ---------- Seite: Art beim Speichern aus dem Formular ---------- */
+$src = (string)file_get_contents($app . '/src/pages/expense_edit.php');
+$check('Seite nimmt die Art beim Speichern aus dem Formular', str_contains($src, "post_str('art', get_str('art', 'ausgabe'))"));
+$html = render_partial('expense_edit', ['art' => 'einnahme', 'expense' => ['id' => null, 'art' => 'einnahme', 'jahr' => 2026, 'datum' => '2026-03-12', 'bezeichnung' => '', 'beschreibung' => '',
+    'kategorie_id' => null, 'fachgruppe_id' => null, 'budget_id' => null, 'wish_id' => null, 'event_id' => null, 'betrag_brutto' => '', 'betrag_netto' => '',
+    'lieferant' => '', 'beleg_nr' => '', 'referenz' => '', 'notiz' => '', 'status' => 'bezahlt'], 'errors' => [], 'budgets' => [], 'wishes' => [], 'events' => []]);
+$check('Formular einer neuen Einnahme sendet an die Einnahmen-Adresse', str_contains($html, 'p=expense_edit&amp;art=einnahme') || str_contains($html, 'p=expense_edit&art=einnahme'));
+
 echo "$ok bestanden, $fail fehlgeschlagen\n";
