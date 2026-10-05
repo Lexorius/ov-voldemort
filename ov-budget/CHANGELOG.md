@@ -1,5 +1,9 @@
 # Änderungsverlauf
 
+## 2.1.5.1
+
+- Korrektur: Prozentanteile der Budgetübersicht als ganze Zahl (Prüfung schlug an).
+
 ## 2.1.5.0
 
 ### Budgetübersicht als Tagesordnungspunkt

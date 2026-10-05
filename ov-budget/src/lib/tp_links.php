@@ -166,7 +166,7 @@ function tp_anteile(array $liste, float $summe): array
     foreach ($liste as $k) {
         $betrag = (float)$k['betrag'];
         $out[] = ['label' => (string)($k['label'] ?? 'ohne Kategorie'), 'color' => (string)($k['color'] ?? ''), 'betrag' => $betrag,
-                  'anzahl' => (int)($k['anzahl'] ?? 0), 'anteil' => $summe > 0 ? round($betrag / $summe * 100) : 0];
+                  'anzahl' => (int)($k['anzahl'] ?? 0), 'anteil' => $summe > 0 ? (int)round($betrag / $summe * 100) : 0];
     }
     usort($out, static fn($a, $b) => $b['betrag'] <=> $a['betrag']);
     return $out;
