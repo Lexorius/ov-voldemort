@@ -316,7 +316,8 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 CREATE TABLE IF NOT EXISTS tp_links (
   id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
   tp_id         INT UNSIGNED NOT NULL,
-  typ           ENUM('termin','event','vehicle','radio') NOT NULL,
+  -- budget: ziel_id ist das Haushaltsjahr
+  typ           ENUM('termin','event','vehicle','radio','budget') NOT NULL,
   ziel_id       INT UNSIGNED NOT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_tp_link (tp_id, typ, ziel_id),

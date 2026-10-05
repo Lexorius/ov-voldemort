@@ -455,6 +455,12 @@ und ausblenden:
   geplante und gebuchte Kosten und die Verpflegungskalkulation (Personen,
   Mahlzeiten, Summe) – in der Tagesordnung, auf der Themenseite und im
   gedruckten Protokoll.
+* **Budgetübersicht als Tagesordnungspunkt:** „+ Budgetübersicht" in der
+  Tagesordnung (oder der Bezug „Budget" am Thema) zeigt Zuweisung,
+  eingegangene und zugesagte Einnahmen, gebuchte Ausgaben, freien Rest und
+  Stichtag – und die **Verwendung nach Zweck mit prozentualen Anteilen**,
+  getrennt für Ausgaben und Einnahmen, dazu die Töpfe mit Auslastung. Der
+  Stand wird beim Aufruf gerechnet; im Protokoll steht er als Text.
 * Die Startseite zeigt die nächsten Termine der kommenden 14 Tage.
 
 ## Verbrauch: Strom, Gas und Wasser

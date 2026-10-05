@@ -1,5 +1,18 @@
 # Änderungsverlauf
 
+## 2.1.5.0
+
+### Budgetübersicht als Tagesordnungspunkt
+
+- „+ Budgetübersicht" in der Tagesordnung einer geplanten Besprechung legt
+  den Punkt „Budget JJJJ: Stand und Verwendung" an; alternativ bekommt ein
+  Thema den Bezug „Budget" im Formular (laufendes und voriges Jahr).
+- Der Punkt zeigt Zuweisung, eingegangene und zugesagte Einnahmen, gebuchte
+  Ausgaben, freien Rest, Stichtag – und die **Verwendung nach Zweck mit
+  prozentualen Anteilen**, getrennt für Ausgaben und Einnahmen, dazu die
+  Töpfe mit Auslastung. Im gedruckten Protokoll als Text, auf Themenseite
+  und Tagesordnung mit Balken.
+
 ## 2.1.4.0
 
 ### Tagesordnungspunkte und Veranstaltungen

@@ -144,8 +144,11 @@ $ovName = (string)setting('ov_name', '');
     <?php if ($p['beschreibung']): ?>
       <div class="top__text"><?= e((string)$p['beschreibung']) ?></div>
     <?php endif; ?>
-    <?php $tpLinks ??= []; $tpEvents ??= []; if (!empty($tpLinks[(int)$p['id']])): ?>
+    <?php $tpLinks ??= []; $tpEvents ??= []; $tpBudgets ??= []; if (!empty($tpLinks[(int)$p['id']])): ?>
       <div class="top__text" style="color:#475569">Bezüge: <?= e(tp_links_text($tpLinks[(int)$p['id']])) ?></div>
+      <?php foreach ($tpLinks[(int)$p['id']] as $l): if ($l['typ'] === 'budget' && isset($tpBudgets[(int)$l['id']])): ?>
+        <div class="top__text" style="color:#475569;margin-left:1rem"><?= nl2br(e(implode("\n", tp_budget_kurzbericht_zeilen($tpBudgets[(int)$l['id']])))) ?></div>
+      <?php endif; endforeach; ?>
       <?php foreach ($tpLinks[(int)$p['id']] as $l): if ($l['typ'] === 'event' && isset($tpEvents[(int)$l['id']])): ?>
         <div class="top__text" style="color:#475569;margin-left:1rem"><?= nl2br(e(implode("\n", tp_event_kurzbericht_zeilen($tpEvents[(int)$l['id']])))) ?></div>
       <?php endif; endforeach; ?>

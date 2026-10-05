@@ -12,6 +12,7 @@ const TP_LINK_TYPEN = [
     'event'   => ['label' => 'Veranstaltung', 'mehrzahl' => 'Veranstaltungen'],
     'vehicle' => ['label' => 'Fahrzeug', 'mehrzahl' => 'Fahrzeuge'],
     'radio'   => ['label' => 'Funkgerät', 'mehrzahl' => 'Funkgeräte'],
+    'budget'  => ['label' => 'Budget', 'mehrzahl' => 'Budget'],
 ];
 
 function tp_link_typ(string $typ): ?string
@@ -38,7 +39,7 @@ function tp_links(int $tpId): array
 /** Verknüpfungen neu setzen. $post: ['termine' => ids, 'vehicles' => ids, 'radios' => ids] */
 function tp_links_speichern(int $tpId, array $post): void
 {
-    $felder = ['termin' => 'termine', 'event' => 'events', 'vehicle' => 'vehicles', 'radio' => 'radios'];
+    $felder = ['termin' => 'termine', 'event' => 'events', 'vehicle' => 'vehicles', 'radio' => 'radios', 'budget' => 'budgets'];
     db_exec('DELETE FROM tp_links WHERE tp_id = ?', [$tpId]);
     foreach ($felder as $typ => $feld) {
         foreach (tp_link_ids($post[$feld] ?? []) as $id) {
@@ -71,7 +72,7 @@ function tp_links_fuer(array $tpIds): array
          LEFT JOIN vehicles v ON v.id = l.ziel_id AND l.typ = 'vehicle'
          LEFT JOIN radios r ON r.id = l.ziel_id AND l.typ = 'radio'
          WHERE l.tp_id IN ($in)
-         ORDER BY FIELD(l.typ,'termin','event','vehicle','radio'), l.id",
+         ORDER BY FIELD(l.typ,'budget','termin','event','vehicle','radio'), l.id",
         $tpIds
     ) as $r) {
         $e = tp_link_anzeige($r);
@@ -92,6 +93,10 @@ function tp_link_anzeige(array $r): ?array
             'typ' => 'termin', 'id' => $id, 'label' => (string)$r['termin_titel'],
             'zusatz' => de_date(substr((string)$r['termin_beginn'], 0, 10)) . ((int)($r['termin_ganztag'] ?? 0) === 1 ? '' : ', ' . substr((string)$r['termin_beginn'], 11, 5) . ' Uhr'),
             'url' => url('kalender_edit', ['id' => $id]),
+        ],
+        'budget' => [
+            'typ' => 'budget', 'id' => $id, 'label' => 'Budget ' . $id, 'zusatz' => 'Stand und Verwendung',
+            'url' => url('budget', ['jahr' => $id]),
         ],
         'event' => ($r['event_titel'] ?? null) === null ? null : [
             'typ' => 'event', 'id' => $id, 'label' => (string)$r['event_titel'],
@@ -152,6 +157,106 @@ function tp_event_kurzbericht(int $eventId): ?array
         $out['verpflegung'] = $k;
     }
     return $out;
+}
+
+/** Prozentanteile je Zeile an der Summe. Reine Funktion. */
+function tp_anteile(array $liste, float $summe): array
+{
+    $out = [];
+    foreach ($liste as $k) {
+        $betrag = (float)$k['betrag'];
+        $out[] = ['label' => (string)($k['label'] ?? 'ohne Kategorie'), 'color' => (string)($k['color'] ?? ''), 'betrag' => $betrag,
+                  'anzahl' => (int)($k['anzahl'] ?? 0), 'anteil' => $summe > 0 ? round($betrag / $summe * 100) : 0];
+    }
+    usort($out, static fn($a, $b) => $b['betrag'] <=> $a['betrag']);
+    return $out;
+}
+
+/**
+ * Budgetübersicht als Tagesordnungspunkt: Zuweisung, Einnahmen, Ausgaben,
+ * frei – und die Verwendung nach Zweck mit Anteilen, für Ausgaben und
+ * Einnahmen, dazu die Töpfe.
+ */
+function tp_budget_kurzbericht(int $jahr): array
+{
+    $z = budget_jahr_zahlen($jahr);
+    $toepfe = [];
+    foreach (budget_pots($jahr) as $t) {
+        if ((int)$t['is_active'] !== 1) {
+            continue;
+        }
+        $soll = (float)$t['betrag_netto'];
+        $ist = (float)$t['ausgegeben'];
+        $toepfe[] = ['label' => (string)$t['name'], 'soll' => $soll, 'ist' => $ist, 'verplant' => (float)$t['verplant'],
+                     'anteil' => $soll > 0 ? (int)round($ist / $soll * 100) : 0];
+    }
+    return [
+        'jahr'       => $jahr,
+        'budget'     => (float)$z['budget'],
+        'einnahmen'  => (float)$z['einnahmen'],
+        'zugesagt'   => (float)($z['einnahmen_zugesagt'] ?? 0),
+        'forderungen' => (float)($z['einnahmen_forderungen'] ?? 0),
+        'verfuegbar' => (float)$z['verfuegbar'],
+        'ausgaben'   => (float)$z['ausgaben'],
+        'offen'      => (float)($z['ausgaben_offen'] ?? 0),
+        'geplant'    => (float)($z['geplant'] ?? 0),
+        'frei'       => (float)$z['frei'],
+        'quote'      => (float)$z['quote'],
+        'stichtag'   => $z['stichtag'] ?? null,
+        'ausgaben_zwecke'  => tp_anteile(expense_by_category($jahr), (float)$z['ausgaben']),
+        'einnahmen_zwecke' => tp_anteile(expense_by_category($jahr, 'einnahme'), (float)$z['einnahmen']),
+        'toepfe'     => $toepfe,
+    ];
+}
+
+/** Budgetübersichten in den Bezügen: [jahr => bericht] */
+function tp_budget_kurzberichte(array $tpLinks): array
+{
+    $out = [];
+    foreach ($tpLinks as $liste) {
+        foreach ($liste as $l) {
+            if ($l['typ'] === 'budget' && !isset($out[(int)$l['id']])) {
+                $out[(int)$l['id']] = tp_budget_kurzbericht((int)$l['id']);
+            }
+        }
+    }
+    return $out;
+}
+
+/** „Haus 45 % (1.800,00 €), Tanken 30 % (1.200,00 €)". Reine Funktion. */
+function tp_anteile_text(array $liste): string
+{
+    $teile = [];
+    foreach ($liste as $k) {
+        $teile[] = sprintf('%s %d %% (%s)', $k['label'], $k['anteil'], money($k['betrag']));
+    }
+    return $teile ? implode(', ', $teile) : 'nichts gebucht';
+}
+
+/** Die Budgetübersicht als Zeilen fürs Protokoll. Reine Funktion. */
+function tp_budget_kurzbericht_zeilen(array $b): array
+{
+    $z = [];
+    $z[] = sprintf('Budget %d: Zuweisung %s · eingegangen %s%s · verfügbar %s · gebucht %s (%d %%)%s · frei %s%s',
+        $b['jahr'], money($b['budget']), money($b['einnahmen']), $b['zugesagt'] > 0 ? ' (dazu ' . money($b['zugesagt']) . ' zugesagt)' : '',
+        money($b['verfuegbar']), money($b['ausgaben']), (int)round($b['quote']), $b['offen'] > 0 ? ', davon ' . money($b['offen']) . ' noch nicht bezahlt' : '',
+        money($b['frei']), $b['geplant'] > 0 ? ' (nach Planung ' . money($b['frei'] - $b['geplant']) . ')' : '');
+    $z[] = 'Ausgaben nach Zweck: ' . tp_anteile_text($b['ausgaben_zwecke']);
+    $z[] = 'Einnahmen nach Zweck: ' . tp_anteile_text($b['einnahmen_zwecke']);
+    if ($b['forderungen'] > 0) {
+        $z[] = 'Abgerechnet oder gestellt, noch nicht da: ' . money($b['forderungen']);
+    }
+    if ($b['toepfe']) {
+        $teile = [];
+        foreach ($b['toepfe'] as $t) {
+            $teile[] = sprintf('%s %s von %s (%d %%)', $t['label'], money($t['ist']), money($t['soll']), $t['anteil']);
+        }
+        $z[] = 'Töpfe: ' . implode(', ', $teile);
+    }
+    if (!empty($b['stichtag'])) {
+        $z[] = 'Stichtag für Ausgaben: ' . de_date((string)$b['stichtag']);
+    }
+    return $z;
 }
 
 /** Kurzberichte zu allen Veranstaltungen in den Bezügen: [event_id => bericht] */
@@ -228,9 +333,13 @@ function tp_links_auswahl(array $links, array $u): array
         . ($links['event'] ? ' OR e.id IN (' . implode(',', $links['event']) . ')' : '') . ' ORDER BY e.beginn',
         [$von . ' 00:00:00']
     ) : [];
+    $jahr = haushaltsjahr();
+    $budgets = can('view_expenses') ? array_values(array_unique(array_merge([$jahr, $jahr - 1], $links['budget'] ?? []))) : [];
+    rsort($budgets);
     return [
         'termine'  => array_values($termine),
         'events'   => $events,
+        'budgets'  => $budgets,
         'vehicles' => can('view_vehicles') ? db_all('SELECT id, bezeichnung, funkrufname FROM vehicles WHERE is_active = 1' . ($links['vehicle'] ? ' OR id IN (' . implode(',', $links['vehicle']) . ')' : '') . ' ORDER BY bezeichnung') : [],
         'radios'   => can('view_radios') ? db_all('SELECT id, bezeichnung, funkrufname FROM radios WHERE is_active = 1' . ($links['radio'] ? ' OR id IN (' . implode(',', $links['radio']) . ')' : '') . ' ORDER BY bezeichnung') : [],
     ];

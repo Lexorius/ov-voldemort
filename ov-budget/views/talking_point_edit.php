@@ -63,14 +63,24 @@ $zurueck = !empty($tp['meeting_id']) ? url('meeting', ['id' => $tp['meeting_id']
     </div>
   <?php endif; ?>
 
-  <?php $links ??= ['termin' => [], 'event' => [], 'vehicle' => [], 'radio' => []]; $links += ['event' => []];
-        $auswahl ??= ['termine' => [], 'events' => [], 'vehicles' => [], 'radios' => []]; $auswahl += ['events' => []]; ?>
+  <?php $links ??= []; $links += ['termin' => [], 'event' => [], 'vehicle' => [], 'radio' => [], 'budget' => []];
+        $auswahl ??= []; $auswahl += ['termine' => [], 'events' => [], 'vehicles' => [], 'radios' => [], 'budgets' => []]; ?>
   <fieldset>
     <legend>Bezüge</legend>
     <p class="small muted">Worüber gesprochen wird: Termine aus dem Kalender, Veranstaltungen, Fahrzeuge, Funkgeräte. Sie stehen am
       Punkt und im Protokoll – Veranstaltungen mit Budgettopf und Verpflegung – und umgekehrt in Fahrzeugakte, Gerät, Termin
       und Veranstaltung.</p>
     <input type="hidden" name="bezuege" value="1">
+    <?php if ($auswahl['budgets']): ?>
+      <div class="field">
+        <label>Budgetübersicht <span class="muted small">(Stand und Verwendung nach Zweck, mit Anteilen)</span></label>
+        <div class="chips">
+          <?php foreach ($auswahl['budgets'] as $j): ?>
+            <label class="chip" style="cursor:pointer"><input type="checkbox" name="budgets[]" value="<?= (int)$j ?>"<?= in_array((int)$j, $links['budget'], true) ? ' checked' : '' ?>> Budget <?= (int)$j ?></label>
+          <?php endforeach; ?>
+        </div>
+      </div>
+    <?php endif; ?>
     <div class="grid2">
       <div class="field">
         <label>Veranstaltungen <span class="muted small">(anstehende)</span></label>

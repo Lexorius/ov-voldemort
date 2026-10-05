@@ -57,11 +57,11 @@ if (!$tp) {
 }
 
 // Bezüge: gespeichert, aus dem Formular oder aus der Adresse (Fahrzeugakte, Gerät, Termin)
-$links = !empty($tp['id']) ? tp_links((int)$tp['id']) : ['termin' => [], 'event' => [], 'vehicle' => [], 'radio' => []];
+$links = !empty($tp['id']) ? tp_links((int)$tp['id']) : ['termin' => [], 'event' => [], 'vehicle' => [], 'radio' => [], 'budget' => []];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $links = ['termin' => tp_link_ids($_POST['termine'] ?? []), 'event' => tp_link_ids($_POST['events'] ?? []), 'vehicle' => tp_link_ids($_POST['vehicles'] ?? []), 'radio' => tp_link_ids($_POST['radios'] ?? [])];
+    $links = ['termin' => tp_link_ids($_POST['termine'] ?? []), 'event' => tp_link_ids($_POST['events'] ?? []), 'vehicle' => tp_link_ids($_POST['vehicles'] ?? []), 'radio' => tp_link_ids($_POST['radios'] ?? []), 'budget' => tp_link_ids($_POST['budgets'] ?? [])];
 } elseif (empty($tp['id'])) {
-    foreach (['termin' => 'termin_id', 'event' => 'event_id', 'vehicle' => 'vehicle_id', 'radio' => 'radio_id'] as $typ => $param) {
+    foreach (['termin' => 'termin_id', 'event' => 'event_id', 'vehicle' => 'vehicle_id', 'radio' => 'radio_id', 'budget' => 'budget_jahr'] as $typ => $param) {
         if (get_int($param)) {
             $links[$typ][] = (int)get_int($param);
         }

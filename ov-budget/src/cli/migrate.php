@@ -1468,6 +1468,12 @@ SQL);
         $pdo->exec("ALTER TABLE tp_links MODIFY typ ENUM('termin','event','vehicle','radio') NOT NULL");
     }
     $merken('048_tp_links_event');
+
+    /* ---------- 049: Budgetübersicht als Bezug (ziel_id = Haushaltsjahr) ---------- */
+    if (ovb_table_exists($pdo, 'tp_links')) {
+        $pdo->exec("ALTER TABLE tp_links MODIFY typ ENUM('termin','event','vehicle','radio','budget') NOT NULL");
+    }
+    $merken('049_tp_links_budget');
 }
 
 /**

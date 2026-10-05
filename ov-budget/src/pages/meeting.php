@@ -25,6 +25,7 @@ render('meeting', [
     'punkte'   => $punkte,
     'tpLinks'  => $tpLinks = tp_links_fuer(array_column($punkte, 'id')),
     'tpEvents' => tp_event_kurzberichte($tpLinks),
+    'tpBudgets' => tp_budget_kurzberichte($tpLinks),
     'zeiten'   => meeting_agenda_times($meeting['beginn'], $dauern, $vorgabe),
     'gesamt'   => meeting_total_minutes($dauern, $vorgabe),
     'speicher' => can('manage_meetings') && $meeting['status'] === 'geplant' ? tp_backlog() : [],

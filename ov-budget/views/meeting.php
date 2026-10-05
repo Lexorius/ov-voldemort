@@ -6,6 +6,7 @@
 $termine ??= [];
 $tpLinks ??= [];
 $tpEvents ??= [];
+$tpBudgets ??= [];
 $verwalten = can('manage_meetings');
 $aufgabenAnlegen = $verwalten && can('create_todo');
 $aufgaben ??= [];
@@ -92,9 +93,19 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
 <section class="card">
   <div class="card__head">
     <h2>Tagesordnung</h2>
-    <?php if ($geplant && can('create_talking_point')): ?>
-      <a class="btn btn--sm" href="<?= e(url('talking_point_edit', ['meeting_id' => $meeting['id']])) ?>">+ <?= e($label) ?></a>
-    <?php endif; ?>
+    <div class="btnrow">
+      <?php if ($geplant && $verwalten && can('view_expenses')): ?>
+        <form method="post" action="<?= e(url('meeting_action')) ?>" class="inline-form">
+          <?= csrf_field() ?>
+          <input type="hidden" name="action" value="budget_top">
+          <input type="hidden" name="meeting_id" value="<?= (int)$meeting['id'] ?>">
+          <button class="btn btn--sec btn--sm" type="submit" title="Stand und Verwendung des Budgets als Punkt aufnehmen">+ Budgetübersicht</button>
+        </form>
+      <?php endif; ?>
+      <?php if ($geplant && can('create_talking_point')): ?>
+        <a class="btn btn--sm" href="<?= e(url('talking_point_edit', ['meeting_id' => $meeting['id']])) ?>">+ <?= e($label) ?></a>
+      <?php endif; ?>
+    </div>
   </div>
 
   <?php if (!$punkte): ?>
@@ -127,7 +138,7 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
                         ? (int)$p['anmerkungen'] . ' Anmerkung(en)'
                         : (tp_discussion_open($p) ? 'Anmerkung schreiben' : '') ?></a>
               </div>
-              <?= render_partial('partials/tp_links', ['liste' => $tpLinks[(int)$p['id']] ?? [], 'events' => $tpEvents]) ?>
+              <?= render_partial('partials/tp_links', ['liste' => $tpLinks[(int)$p['id']] ?? [], 'events' => $tpEvents, 'budgets' => $tpBudgets]) ?>
             </div>
             <?php if ($verwalten && $geplant): ?>
               <div class="btnrow" style="flex-wrap:nowrap">

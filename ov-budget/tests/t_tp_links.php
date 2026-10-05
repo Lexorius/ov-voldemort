@@ -5,11 +5,11 @@ declare(strict_types=1);
  * „besprochen in", Auswahl im Formular, Ansichten.
  */
 session_start();
-$GLOBALS['settings'] = ['waehrung' => 'EUR', 'kalender_besprechung_wochen' => '6'];
+$GLOBALS['settings'] = ['waehrung' => 'EUR', 'kalender_besprechung_wochen' => '6', 'haushaltsjahr' => '2026'];
 $GLOBALS['inserts'] = [];
 $GLOBALS['execs'] = [];
 $GLOBALS['tabellen'] = [];
-$GLOBALS['rechte'] = ['view_vehicles' => true, 'view_radios' => true, 'view_meetings' => true, 'manage_meetings' => true, 'view_events' => true];
+$GLOBALS['rechte'] = ['view_vehicles' => true, 'view_radios' => true, 'view_meetings' => true, 'manage_meetings' => true, 'view_events' => true, 'view_expenses' => true];
 function db_all(string $sql, array $p = []): array {
     if (str_contains($sql, 'FROM settings')) {
         $r = [];
@@ -31,6 +31,12 @@ function current_user(): ?array { return ['id' => 1, 'role' => 'leitung', 'funct
 function tp_select(): string { return 'SELECT tp.* FROM talking_points tp LEFT JOIN meetings m ON m.id = tp.meeting_id'; }
 function kalender_termine(string $von, string $bis, array $u): array { return $GLOBALS['termine'] ?? []; }
 function event_find(?int $id): ?array { return $GLOBALS['events'][$id] ?? null; }
+function budget_jahr_zahlen(int $jahr): array { return ['budget' => 10000.0, 'einnahmen' => 2500.0, 'einnahmen_zugesagt' => 500.0, 'einnahmen_forderungen' => 800.0, 'verfuegbar' => 12500.0,
+    'ausgaben' => 4000.0, 'ausgaben_offen' => 300.0, 'geplant' => 700.0, 'frei' => 8500.0, 'quote' => 32.0, 'stichtag' => '2026-11-30']; }
+function expense_by_category(int $jahr, string $art = 'ausgabe'): array { return $art === 'ausgabe'
+    ? [['id' => 1, 'label' => 'Haus', 'color' => '#111', 'anzahl' => 3, 'betrag' => 1800], ['id' => 2, 'label' => 'Tanken', 'color' => '#222', 'anzahl' => 5, 'betrag' => 2200]]
+    : [['id' => 3, 'label' => 'Einsatzkostenerstattung', 'color' => '#333', 'anzahl' => 1, 'betrag' => 2000], ['id' => null, 'label' => null, 'color' => null, 'anzahl' => 1, 'betrag' => 500]]; }
+function budget_pots(int $jahr): array { return [['name' => 'Jugendarbeit', 'betrag_netto' => 2000, 'ausgegeben' => 1200, 'verplant' => 100, 'is_active' => 1], ['name' => 'Alt', 'betrag_netto' => 10, 'ausgegeben' => 0, 'verplant' => 0, 'is_active' => 0]]; }
 function event_kosten(int $id): array { return ['ausgaben' => 400.0, 'einnahmen' => 0.0, 'buchungen' => 1]; }
 function event_guests(int $id, string $status = ''): array { return []; }
 function event_stats(array $g): array { return ['personen' => 0]; }
@@ -54,7 +60,7 @@ $check('alte Bezüge gelöscht, neue eingetragen', count(array_filter($GLOBALS['
     && count($GLOBALS['inserts']) === 4 && $GLOBALS['inserts'][0][1] === ['tp_id' => 7, 'typ' => 'termin', 'ziel_id' => 4]
     && $GLOBALS['inserts'][1][1] === ['tp_id' => 7, 'typ' => 'event', 'ziel_id' => 6] && $GLOBALS['inserts'][3][1] === ['tp_id' => 7, 'typ' => 'vehicle', 'ziel_id' => 9]);
 $GLOBALS['tabellen']['FROM tp_links WHERE tp_id'] = [['typ' => 'termin', 'ziel_id' => 4], ['typ' => 'vehicle', 'ziel_id' => 2]];
-$check('lesen', tp_links(7) === ['termin' => [4], 'event' => [], 'vehicle' => [2], 'radio' => []]);
+$check('lesen', tp_links(7) === ['termin' => [4], 'event' => [], 'vehicle' => [2], 'radio' => [], 'budget' => []]);
 
 /* ---------- Anzeige ---------- */
 $GLOBALS['tabellen']['FROM tp_links l'] = [
@@ -84,6 +90,23 @@ $GLOBALS['events'][7] = ['id' => 7, 'titel' => 'Dienstabend', 'beginn' => '2026-
 $z = tp_event_kurzbericht_zeilen(tp_event_kurzbericht(7));
 $check('Kurzbericht ohne Topf und Verpflegung', count($z) === 2 && $z[0] === 'Veranstaltung Dienstabend – 11.07.2026 bis 12.07.2026' && $z[1] === 'Budgettopf: keiner · geplant 0,00 € · gebucht 400,00 €');
 $check('Kurzberichte aus den Bezügen, gelöschte übersprungen', array_keys(tp_event_kurzberichte(['x' => [['typ' => 'event', 'id' => 6], ['typ' => 'event', 'id' => 99], ['typ' => 'vehicle', 'id' => 2]]])) === [6] && tp_event_kurzbericht(99) === null);
+
+/* ---------- Budgetübersicht ---------- */
+$check('Budget als Bezug', tp_link_anzeige(['typ' => 'budget', 'ziel_id' => 2026])['label'] === 'Budget 2026' && str_contains(tp_link_anzeige(['typ' => 'budget', 'ziel_id' => 2026])['url'], 'jahr=2026'));
+$b = tp_budget_kurzbericht(2026);
+$check('Anteile je Zweck, größte zuerst, ohne Kategorie benannt', $b['ausgaben_zwecke'][0]['label'] === 'Tanken' && $b['ausgaben_zwecke'][0]['anteil'] === 55 && $b['ausgaben_zwecke'][1]['anteil'] === 45
+    && $b['einnahmen_zwecke'][0]['anteil'] === 80 && $b['einnahmen_zwecke'][1]['label'] === 'ohne Kategorie' && $b['einnahmen_zwecke'][1]['anteil'] === 20);
+$check('Töpfe nur aktive, mit Auslastung', count($b['toepfe']) === 1 && $b['toepfe'][0]['anteil'] === 60);
+$z = tp_budget_kurzbericht_zeilen($b);
+$check('Zeilen fürs Protokoll', $z[0] === 'Budget 2026: Zuweisung 10.000,00 € · eingegangen 2.500,00 € (dazu 500,00 € zugesagt) · verfügbar 12.500,00 € · gebucht 4.000,00 € (32 %), davon 300,00 € noch nicht bezahlt · frei 8.500,00 € (nach Planung 7.800,00 €)'
+    && $z[1] === 'Ausgaben nach Zweck: Tanken 55 % (2.200,00 €), Haus 45 % (1.800,00 €)' && $z[2] === 'Einnahmen nach Zweck: Einsatzkostenerstattung 80 % (2.000,00 €), ohne Kategorie 20 % (500,00 €)'
+    && $z[3] === 'Abgerechnet oder gestellt, noch nicht da: 800,00 €' && $z[4] === 'Töpfe: Jugendarbeit 1.200,00 € von 2.000,00 € (60 %)' && $z[5] === 'Stichtag für Ausgaben: 30.11.2026');
+$check('ohne Buchungen: nichts gebucht', tp_anteile_text([]) === 'nichts gebucht' && tp_anteile([], 0.0) === []);
+$check('Kurzberichte aus Bezügen', array_keys(tp_budget_kurzberichte(['a' => [['typ' => 'budget', 'id' => 2026], ['typ' => 'budget', 'id' => 2026], ['typ' => 'event', 'id' => 6]]])) === [2026]);
+$html = render_partial('partials/tp_links', ['liste' => [tp_link_anzeige(['typ' => 'budget', 'ziel_id' => 2026])], 'budgets' => [2026 => $b]]);
+$check('Budgetblock mit Balken und Anteilen', str_contains($html, 'Ausgaben nach Zweck') && str_contains($html, '55 %') && str_contains($html, 'Einsatzkostenerstattung') && str_contains($html, 'width:80%') && str_contains($html, 'Jugendarbeit'));
+$a = tp_links_auswahl(['termin' => [], 'event' => [], 'vehicle' => [], 'radio' => [], 'budget' => [2024]], current_user());
+$check('Budgetjahre zur Auswahl: laufendes, voriges, verknüpftes', $a['budgets'] === [2026, 2025, 2024]);
 
 $check('ganztägiger Termin ohne Uhrzeit', tp_link_anzeige(['typ' => 'termin', 'ziel_id' => 1, 'termin_titel' => 'Lehrgang', 'termin_beginn' => '2026-11-02 00:00:00', 'termin_ganztag' => 1])['zusatz'] === '02.11.2026');
 

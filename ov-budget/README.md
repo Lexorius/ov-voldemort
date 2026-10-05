@@ -120,6 +120,8 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - **Bezüge je Punkt** zu Terminen, Veranstaltungen (mit Budgettopf und
   Verpflegung im Protokoll), Fahrzeugen und Funkgeräten – umgekehrt in
   Fahrzeugakte, Gerät, Termin und Veranstaltung sichtbar
+- **Budgetübersicht als Tagesordnungspunkt**: Stand und Verwendung nach
+  Zweck mit Anteilen für Ausgaben und Einnahmen, auch im Protokoll
 - **Wiederkehrende Termine** („alle 2 Wochen montags", „jeden 2. Montag im Monat")
 - **Anwesenheit**: teilgenommen, entschuldigt, nicht erschienen
 - Tagesordnung und Protokoll zum Drucken

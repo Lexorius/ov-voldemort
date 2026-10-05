@@ -27,6 +27,26 @@ switch (post_str('action')) {
         flash('success', sprintf('%d Thema/Themen auf die Tagesordnung gesetzt.', $anzahl));
         break;
 
+    case 'budget_top':
+        // Stand und Verwendung des Budgets als eigener Punkt
+        if (!$meeting || $meeting['status'] !== 'geplant' || !can('view_expenses')) {
+            flash('error', 'Die Budgetübersicht lässt sich nur auf geplante Besprechungen setzen.');
+            break;
+        }
+        $jahr = haushaltsjahr();
+        $tpId = db_insert('talking_points', [
+            'meeting_id'      => $meetingId,
+            'titel'           => 'Budget ' . $jahr . ': Stand und Verwendung',
+            'beschreibung'    => 'Zuweisung, Einnahmen, Ausgaben und freier Rest; Verwendung nach Zweck mit Anteilen – Stand beim Aufruf.',
+            'status_id'       => list_default_id('tp_status'),
+            'sort_order'      => meeting_next_sort($meetingId),
+            'eingebracht_von' => (int)$user['id'],
+        ]);
+        db_insert('tp_links', ['tp_id' => $tpId, 'typ' => 'budget', 'ziel_id' => $jahr]);
+        audit('tp.budget', 'talking_point', $tpId, 'Budget ' . $jahr);
+        flash('success', 'Budgetübersicht ' . $jahr . ' steht auf der Tagesordnung.');
+        break;
+
     case 'termine':
         // Termine aus dem Kalender als Punkte auf die Tagesordnung
         if (!$meeting || $meeting['status'] !== 'geplant') {
