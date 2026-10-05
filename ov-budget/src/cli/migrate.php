@@ -1463,16 +1463,16 @@ SQL);
     }
     $merken('047_tp_links');
 
-    /* ---------- 048: Bezug zu Veranstaltungen ---------- */
+    /* ---------- 048/049: Bezug zu Veranstaltungen und Budget (ziel_id = Haushaltsjahr) ---------- */
+    // Beide Schritte setzen die Werteliste in einem Rutsch – robust gegen Zeilen mit unbekanntem Wert,
+    // an denen ein MODIFY im strengen Modus scheiterte (Neustart-Schleife in 2.1.4/2.1.5).
     if (ovb_table_exists($pdo, 'tp_links')) {
-        $pdo->exec("ALTER TABLE tp_links MODIFY typ ENUM('termin','event','vehicle','radio') NOT NULL");
+        $weg = ovb_enum_setzen($pdo, 'tp_links', 'typ', ['termin', 'event', 'vehicle', 'radio', 'budget']);
+        if ($weg > 0) {
+            $say(sprintf('tp_links: %d Bezug/Bezüge mit unbekanntem Typ entfernt.', $weg));
+        }
     }
     $merken('048_tp_links_event');
-
-    /* ---------- 049: Budgetübersicht als Bezug (ziel_id = Haushaltsjahr) ---------- */
-    if (ovb_table_exists($pdo, 'tp_links')) {
-        $pdo->exec("ALTER TABLE tp_links MODIFY typ ENUM('termin','event','vehicle','radio','budget') NOT NULL");
-    }
     $merken('049_tp_links_budget');
 }
 
@@ -1526,6 +1526,26 @@ function ovb_seed_settings(string $sql): array
         ];
     }
     return $out;
+}
+
+/**
+ * Eine ENUM-Spalte auf eine neue Werteliste setzen. Ein schlichtes MODIFY
+ * scheitert im strengen SQL-Modus an jeder Zeile, deren Wert nicht in der
+ * neuen Liste steht (Fehler 1265 „Data truncated"). Darum: Zeilen mit
+ * unbekanntem Wert entfernen, dann ohne strengen Modus ändern.
+ */
+function ovb_enum_setzen(PDO $pdo, string $table, string $column, array $werte, string $rest = 'NOT NULL'): int
+{
+    $liste = implode(',', array_map(static fn($w) => $pdo->quote($w), $werte));
+    $geloescht = $pdo->exec("DELETE FROM `$table` WHERE `$column` = '' OR `$column` NOT IN ($liste)");
+    $modus = (string)$pdo->query('SELECT @@SESSION.sql_mode')->fetchColumn();
+    $pdo->exec("SET SESSION sql_mode = ''");
+    try {
+        $pdo->exec("ALTER TABLE `$table` MODIFY `$column` ENUM($liste) $rest");
+    } finally {
+        $pdo->exec('SET SESSION sql_mode = ' . $pdo->quote($modus));
+    }
+    return (int)$geloescht;
 }
 
 function ovb_constraint_exists(PDO $pdo, string $table, string $name): bool

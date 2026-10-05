@@ -221,7 +221,23 @@ run_sql_file($pdo, APP_ROOT . '/sql/schema.sql');
  * an, ohne den das INSERT IGNORE in seed.sql wirkungslos waere.
  */
 require APP_ROOT . '/src/cli/migrate.php';
-ovb_migrate($pdo, 'say');
+try {
+    ovb_migrate($pdo, 'say');
+    $pdo->prepare("INSERT INTO settings (skey, svalue, sgroup, label) VALUES ('wanderung_fehler', '', '_intern', 'wanderung_fehler')
+                   ON DUPLICATE KEY UPDATE svalue = ''")->execute();
+} catch (Throwable $ex) {
+    // Die Anwendung startet trotzdem: Eine hängende Wanderung darf nicht den ganzen Ortsverband aussperren.
+    // Der Fehler steht im Protokoll und wird der Administration auf der Übersicht gezeigt.
+    $text = mb_substr($ex->getMessage(), 0, 500);
+    say('FEHLER in der Datenbank-Wanderung: ' . $text);
+    say('Die Anwendung startet trotzdem; bitte den Fehler melden. Der nächste Start versucht es erneut.');
+    try {
+        $pdo->prepare("INSERT INTO settings (skey, svalue, sgroup, label) VALUES ('wanderung_fehler', ?, '_intern', 'wanderung_fehler')
+                       ON DUPLICATE KEY UPDATE svalue = VALUES(svalue)")->execute([date('Y-m-d H:i') . ' – ' . $text]);
+    } catch (Throwable) {
+        // ohne settings-Tabelle bleibt nur das Protokoll
+    }
+}
 
 run_sql_file($pdo, APP_ROOT . '/sql/seed.sql');
 say($frischeInstallation ? 'Schema und Grunddaten eingespielt.' : 'Schema geprüft, Grunddaten vorhanden.');

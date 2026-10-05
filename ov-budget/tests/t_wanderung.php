@@ -21,6 +21,9 @@ foreach ($m[1] as $datei) {
     require_once $app . $datei;
 }
 $check('Rufnummern-Hilfe geladen', function_exists('phone_human'));
+$check('ENUM-Helfer vorhanden und für tp_links genutzt', str_contains($quelle, 'function ovb_enum_setzen') && str_contains($quelle, "ovb_enum_setzen(\$pdo, 'tp_links', 'typ'")
+    && !str_contains($quelle, "ALTER TABLE tp_links MODIFY typ"));
+$check('Start fängt Wanderungsfehler ab', str_contains((string)file_get_contents($app . '/src/cli/setup.php'), 'FEHLER in der Datenbank-Wanderung'));
 $check('Rufnummer ohne Einstellungen', function_exists('phone_human')
     && phone_human('0151 12345678', '+49') === '+49 151 12345678');
 

@@ -7,6 +7,12 @@ $quote = (float)$zahlen['quote'];
 $quoteCls = ($zahlen['verfuegbar'] > 0 && $zahlen['ausgaben'] > $zahlen['verfuegbar']) ? 'is-over'
     : ($quote >= $warnProzent ? 'is-warn' : '');
 ?>
+<?php if (can('admin') && ($wanderungFehler = state_get('wanderung_fehler', '')) !== ''): ?>
+  <div class="alert alert--error">
+    <strong>Die Datenbank-Wanderung beim letzten Start ist fehlgeschlagen.</strong> Die Anwendung läuft, aber neue Felder oder
+    Tabellen können fehlen. Bitte den Fehler melden: <span class="mono small"><?= e($wanderungFehler) ?></span>
+  </div>
+<?php endif; ?>
 <div class="pagehead">
   <div>
     <h1>Moin <?= e(explode(' ', trim((string)($user['display_name'] ?: $user['username'])))[0]) ?>!</h1>

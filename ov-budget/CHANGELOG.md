@@ -1,5 +1,19 @@
 # Änderungsverlauf
 
+## 2.1.5.3
+
+### Korrektur: Add-on startete nicht mehr
+
+- Die Wanderung für die Bezüge der Tagesordnungspunkte scheiterte an einer
+  Zeile mit unbekanntem Typ („Data truncated for column 'typ'") und riss den
+  Start in eine Neustart-Schleife. Die Werteliste wird jetzt robust gesetzt:
+  Zeilen mit unbekanntem Typ werden entfernt, die Änderung läuft ohne
+  strengen SQL-Modus.
+- **Ein Fehler in einer Wanderung stoppt die Anwendung nicht mehr.** Sie
+  startet trotzdem, der Fehler steht im Protokoll und wird der
+  Administration auf der Übersicht gezeigt; der nächste Start versucht es
+  erneut.
+
 ## 2.1.5.2
 
 - **Budgetübersicht verständlicher:** Der Tagesordnungspunkt spricht jetzt in
