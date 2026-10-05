@@ -22,4 +22,5 @@ render('radio', [
     'connector' => connector_find((int)($radio['qr_connector_id'] ?? 0)),
     'bestandConnectoren' => can('manage_radios') ? connector_liste('bestand') : [],
     'warn'   => setting_int('funk_pruefung_warnung_tage', 30),
+    'besprochen' => can('view_meetings') && function_exists('tps_fuer') ? tps_fuer('radio', (int)$radio['id']) : [],
 ]);

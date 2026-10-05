@@ -62,6 +62,7 @@ render('kalender_edit', [
     'title'   => $termin['id'] ? ($nurLesen ? 'Termin' : 'Termin bearbeiten') : 'Termin eintragen',
     'termin'  => $termin,
     'errors'  => $errors,
+    'besprochen' => !empty($termin['id']) && can('view_meetings') && function_exists('tps_fuer') ? tps_fuer('termin', (int)$termin['id']) : [],
     'nurLesen' => $nurLesen,
     'user'    => $user,
     'leitung' => in_array((string)$user['role'], ['admin', 'leitung'], true),

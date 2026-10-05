@@ -1,5 +1,20 @@
 # Änderungsverlauf
 
+## 2.1.3.0
+
+### Tagesordnungspunkte mit Bezügen
+
+- Jedes Thema kann auf **Termine**, **Fahrzeuge** und **Funkgeräte**
+  verweisen – mehrere je Art, im Abschnitt „Bezüge" des Formulars. Zur
+  Auswahl stehen die Termine der nächsten Wochen aus dem Kalender sowie
+  aktive Fahrzeuge und Geräte.
+- Die Bezüge stehen als Kennzeichen am Punkt in der Tagesordnung und auf
+  der Themenseite und als Zeile im gedruckten Protokoll.
+- Umgekehrt zeigen Fahrzeugakte, Funkgerät und Termin unter „In
+  Besprechungen", in welchen Punkten sie vorkamen – mit Datum, Status und
+  Ergebnis. Ein über „Termine mitnehmen" übernommener eigener Termin ist
+  automatisch verknüpft.
+
 ## 2.1.2.0
 
 ### Anfrage an die Regionalstelle

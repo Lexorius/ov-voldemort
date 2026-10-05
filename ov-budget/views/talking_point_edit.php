@@ -63,6 +63,52 @@ $zurueck = !empty($tp['meeting_id']) ? url('meeting', ['id' => $tp['meeting_id']
     </div>
   <?php endif; ?>
 
+  <?php $links ??= ['termin' => [], 'vehicle' => [], 'radio' => []]; $auswahl ??= ['termine' => [], 'vehicles' => [], 'radios' => []]; ?>
+  <fieldset>
+    <legend>Bezüge</legend>
+    <p class="small muted">Worüber gesprochen wird: Termine aus dem Kalender, Fahrzeuge, Funkgeräte. Sie stehen am Punkt und im
+      Protokoll – und umgekehrt in der Fahrzeugakte, am Gerät und am Termin.</p>
+    <input type="hidden" name="bezuege" value="1">
+    <div class="grid3">
+      <div class="field">
+        <label>Termine <span class="muted small">(nächste Wochen)</span></label>
+        <?php if (!$auswahl['termine']): ?><p class="small muted">Kein Termin im Kalender.</p>
+        <?php else: ?>
+        <div class="wahlliste">
+          <?php foreach ($auswahl['termine'] as $t): ?>
+            <label class="wahl"><input type="checkbox" name="termine[]" value="<?= (int)$t['id'] ?>"<?= in_array((int)$t['id'], $links['termin'], true) ? ' checked' : '' ?>>
+              <?= e((string)$t['titel']) ?> <span class="muted small">· <?= e(de_date(substr((string)$t['beginn'], 0, 10))) ?><?= (int)$t['ganztag'] === 1 ? '' : ', ' . e(substr((string)$t['beginn'], 11, 5)) ?></span></label>
+          <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+      </div>
+      <div class="field">
+        <label>Fahrzeuge</label>
+        <?php if (!$auswahl['vehicles']): ?><p class="small muted">–</p>
+        <?php else: ?>
+        <div class="wahlliste">
+          <?php foreach ($auswahl['vehicles'] as $v): ?>
+            <label class="wahl"><input type="checkbox" name="vehicles[]" value="<?= (int)$v['id'] ?>"<?= in_array((int)$v['id'], $links['vehicle'], true) ? ' checked' : '' ?>>
+              <?= e((string)$v['bezeichnung']) ?><?= $v['funkrufname'] ? ' <span class="muted small">' . e((string)$v['funkrufname']) . '</span>' : '' ?></label>
+          <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+      </div>
+      <div class="field">
+        <label>Funkgeräte</label>
+        <?php if (!$auswahl['radios']): ?><p class="small muted">–</p>
+        <?php else: ?>
+        <div class="wahlliste">
+          <?php foreach ($auswahl['radios'] as $r): ?>
+            <label class="wahl"><input type="checkbox" name="radios[]" value="<?= (int)$r['id'] ?>"<?= in_array((int)$r['id'], $links['radio'], true) ? ' checked' : '' ?>>
+              <?= e((string)$r['bezeichnung']) ?><?= $r['funkrufname'] ? ' <span class="muted small">' . e((string)$r['funkrufname']) . '</span>' : '' ?></label>
+          <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+      </div>
+    </div>
+  </fieldset>
+
   <?php if ($verwalten && !$isNew): ?>
     <fieldset>
       <legend>Ergebnis</legend>

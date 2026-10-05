@@ -144,6 +144,9 @@ $ovName = (string)setting('ov_name', '');
     <?php if ($p['beschreibung']): ?>
       <div class="top__text"><?= e((string)$p['beschreibung']) ?></div>
     <?php endif; ?>
+    <?php $tpLinks ??= []; if (!empty($tpLinks[(int)$p['id']])): ?>
+      <div class="top__text" style="color:#475569">Bezüge: <?= e(tp_links_text($tpLinks[(int)$p['id']])) ?></div>
+    <?php endif; ?>
 
     <?php if ($protokoll): ?>
       <?php if ($p['ergebnis'] || $p['status_label']): ?>

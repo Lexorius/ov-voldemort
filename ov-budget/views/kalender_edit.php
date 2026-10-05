@@ -124,6 +124,8 @@ $ganztag = (int)($termin['ganztag'] ?? 0) === 1;
   </fieldset>
 </form>
 
+<?php if (!$isNew && can('view_meetings')): ?><?= render_partial('partials/tp_besprochen', ['punkte' => $besprochen ?? []]) ?><?php endif; ?>
+
 <?php if (!$isNew && !$nurLesen): ?>
   <form method="post" class="card" action="<?= e(url('kalender_edit', ['id' => $termin['id']])) ?>">
     <?= csrf_field() ?>

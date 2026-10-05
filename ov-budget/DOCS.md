@@ -445,6 +445,12 @@ und ausblenden:
   Termine der nächsten Wochen (Einstellung, Vorgabe sechs). Ausgewählte
   kommen als Punkt „Termin: … (Datum)" auf die Tagesordnung – mit Quelle und
   Ort in der Beschreibung –, werden besprochen und stehen im Protokoll.
+* **Bezüge am Tagesordnungspunkt:** Jedes Thema kann auf **Termine**,
+  **Fahrzeuge** und **Funkgeräte** verweisen (Abschnitt „Bezüge" im
+  Formular, mehrere je Art). Sie erscheinen als Kennzeichen am Punkt, auf
+  der Themenseite und als Zeile im Protokoll; umgekehrt zeigen Fahrzeugakte,
+  Gerät und Termin unter „In Besprechungen", wo sie besprochen wurden – mit
+  Datum, Status und Ergebnis.
 * Die Startseite zeigt die nächsten Termine der kommenden 14 Tage.
 
 ## Verbrauch: Strom, Gas und Wasser

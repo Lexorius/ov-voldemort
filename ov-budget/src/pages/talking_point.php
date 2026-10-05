@@ -50,6 +50,7 @@ render('talking_point', [
     'title'      => $tp['titel'],
     'tp'         => $tp,
     'kommentare' => tp_comments((int)$tp['id']),
+    'links'      => tp_links_fuer([(int)$tp['id']])[(int)$tp['id']] ?? [],
     'offen'      => tp_discussion_open($tp),
     'user'       => $user,
 ]);

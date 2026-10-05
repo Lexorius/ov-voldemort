@@ -498,6 +498,9 @@ function kalender_in_besprechung(array $e, int $meetingId, array $user): int
         'eingebracht_von' => (int)$user['id'],
     ]);
     audit('tp.aus_kalender', 'talking_point', $id, $titel);
+    if ($e['quelle'] === 'termin' && (int)$e['id'] > 0) {
+        db_insert('tp_links', ['tp_id' => $id, 'typ' => 'termin', 'ziel_id' => (int)$e['id']]);
+    }
     return $id;
 }
 

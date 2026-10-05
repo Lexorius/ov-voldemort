@@ -518,6 +518,9 @@ function tp_save_from_post(?array $existing, array $user): array
         db_update('talking_points', $data, 'id = ?', [$existing['id']]);
         $id = (int)$existing['id'];
         audit('tp.bearbeitet', 'talking_point', $id, $data['titel']);
+        if (isset($_POST['bezuege']) && function_exists('tp_links_speichern')) {
+            tp_links_speichern($id, $_POST);
+        }
         return [$id, []];
     }
 
@@ -533,6 +536,9 @@ function tp_save_from_post(?array $existing, array $user): array
     ];
     $id = db_insert('talking_points', $data);
     audit('tp.angelegt', 'talking_point', $id, $data['titel']);
+    if (isset($_POST['bezuege']) && function_exists('tp_links_speichern')) {
+        tp_links_speichern($id, $_POST);
+    }
     return [$id, []];
 }
 

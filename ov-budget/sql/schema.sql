@@ -309,6 +309,22 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 -- Gesamtbudget je Haushaltsjahr
 -- ------------------------------------------------------------
 -- ------------------------------------------------------------
+-- Bezuege eines Tagesordnungspunkts: Termine, Fahrzeuge, Funkgeraete
+-- (die Fremdschluessel kommen in der Wanderung, weil die Zieltabellen
+-- weiter unten angelegt werden)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS tp_links (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  tp_id         INT UNSIGNED NOT NULL,
+  typ           ENUM('termin','vehicle','radio') NOT NULL,
+  ziel_id       INT UNSIGNED NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_tp_link (tp_id, typ, ziel_id),
+  KEY idx_tp_link_ziel (typ, ziel_id),
+  CONSTRAINT fk_tpl_tp FOREIGN KEY (tp_id) REFERENCES talking_points(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- Bestellungen: mehrere freigegebene Wuensche bei einem Lieferanten; dazu
 -- die Verknuepfung einer Buchung mit mehreren Wuenschen und Fahrzeugen
 -- ------------------------------------------------------------

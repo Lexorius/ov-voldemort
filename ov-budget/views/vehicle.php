@@ -550,6 +550,8 @@ $arten = [
 </section>
 <?php endif; ?>
 
+<?php if (can('view_meetings')): ?><?= render_partial('partials/tp_besprochen', ['punkte' => $besprochen ?? []]) ?><?php endif; ?>
+
 <section class="card" id="journal">
   <div class="card__head">
     <h2>Journal der Fahrzeugakte</h2>

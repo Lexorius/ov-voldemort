@@ -83,6 +83,8 @@ $pruefung = radio_pruefung($radio, $warn);
   <?php endif; ?>
 </section>
 
+<?php if (can('view_meetings')): ?><?= render_partial('partials/tp_besprochen', ['punkte' => $besprochen ?? []]) ?><?php endif; ?>
+
 <section class="card" id="karten">
   <div class="card__head">
     <h2>Karten im Gerät</h2>

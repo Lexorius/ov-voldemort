@@ -1447,6 +1447,21 @@ SQL);
         $pdo->exec('ALTER TABLE expenses ADD CONSTRAINT fk_exp_best FOREIGN KEY (bestellung_id) REFERENCES bestellungen(id) ON DELETE SET NULL');
     }
     $merken('046_bestellungen');
+
+    /* ---------- 047: Bezuege der Tagesordnungspunkte ---------- */
+    if (!ovb_table_exists($pdo, 'tp_links')) {
+        $pdo->exec("CREATE TABLE tp_links (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            tp_id INT UNSIGNED NOT NULL,
+            typ ENUM('termin','vehicle','radio') NOT NULL,
+            ziel_id INT UNSIGNED NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY uq_tp_link (tp_id, typ, ziel_id),
+            KEY idx_tp_link_ziel (typ, ziel_id),
+            CONSTRAINT fk_tpl_tp FOREIGN KEY (tp_id) REFERENCES talking_points(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    }
+    $merken('047_tp_links');
 }
 
 /**

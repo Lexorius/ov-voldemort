@@ -56,9 +56,23 @@ if (!$tp) {
     ];
 }
 
+// Bezüge: gespeichert, aus dem Formular oder aus der Adresse (Fahrzeugakte, Gerät, Termin)
+$links = !empty($tp['id']) ? tp_links((int)$tp['id']) : ['termin' => [], 'vehicle' => [], 'radio' => []];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $links = ['termin' => tp_link_ids($_POST['termine'] ?? []), 'vehicle' => tp_link_ids($_POST['vehicles'] ?? []), 'radio' => tp_link_ids($_POST['radios'] ?? [])];
+} elseif (empty($tp['id'])) {
+    foreach (['termin' => 'termin_id', 'vehicle' => 'vehicle_id', 'radio' => 'radio_id'] as $typ => $param) {
+        if (get_int($param)) {
+            $links[$typ][] = (int)get_int($param);
+        }
+    }
+}
+
 render('talking_point_edit', [
     'title'    => $tp['id'] ? 'Thema bearbeiten' : 'Thema einbringen',
     'tp'       => $tp,
     'errors'   => $errors,
     'geplant'  => meeting_query(['zeit' => 'kommend', 'nur_geplant' => 1]),
+    'links'    => $links,
+    'auswahl'  => tp_links_auswahl($links, $user),
 ]);

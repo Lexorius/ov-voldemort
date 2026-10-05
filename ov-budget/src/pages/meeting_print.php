@@ -27,6 +27,7 @@ $mitAnmerkungen = meeting_print_with_comments($art,
 echo render_partial('meeting_print', [
     'meeting' => $meeting,
     'punkte'  => $punkte,
+    'tpLinks' => tp_links_fuer(array_column($punkte, 'id')),
     'zeiten'  => meeting_agenda_times($meeting['beginn'], $dauern, $vorgabe),
     'gesamt'  => meeting_total_minutes($dauern, $vorgabe),
     'art'     => $art,
