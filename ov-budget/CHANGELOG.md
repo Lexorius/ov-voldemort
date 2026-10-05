@@ -1,5 +1,17 @@
 # Änderungsverlauf
 
+## 2.1.4.0
+
+### Tagesordnungspunkte und Veranstaltungen
+
+- Themen verweisen jetzt auch auf **Veranstaltungen** (Abschnitt „Bezüge",
+  zur Auswahl stehen die anstehenden). Die Veranstaltungsseite zeigt unter
+  „In Besprechungen", wo sie Thema war.
+- Eine verknüpfte Veranstaltung bringt ihren **Kurzbericht** mit: Wann und
+  wo, **Budgettopf**, geplante und gebuchte Kosten und die
+  **Verpflegungskalkulation** mit Personen, Mahlzeiten und Summe – in der
+  Tagesordnung, auf der Themenseite und im gedruckten Protokoll.
+
 ## 2.1.3.0
 
 ### Tagesordnungspunkte mit Bezügen

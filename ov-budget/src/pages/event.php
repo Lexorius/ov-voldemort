@@ -37,6 +37,7 @@ render('event', [
     'dateien'   => efile_list($id),
     'buchungen' => can('view_expenses') ? event_expenses($id) : [],
     'kosten'    => event_kosten($id),
+    'besprochen' => can('view_meetings') && function_exists('tps_fuer') ? tps_fuer('event', $id) : [],
     'verpflegung' => (int)($event['verpflegung'] ?? 0) === 1
         ? verpflegung_kalkulation($event, verpflegung_saetze((string)$event['beginn']), verpflegung_personen($event, event_stats($gaeste)))
         : null,

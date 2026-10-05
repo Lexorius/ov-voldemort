@@ -63,13 +63,27 @@ $zurueck = !empty($tp['meeting_id']) ? url('meeting', ['id' => $tp['meeting_id']
     </div>
   <?php endif; ?>
 
-  <?php $links ??= ['termin' => [], 'vehicle' => [], 'radio' => []]; $auswahl ??= ['termine' => [], 'vehicles' => [], 'radios' => []]; ?>
+  <?php $links ??= ['termin' => [], 'event' => [], 'vehicle' => [], 'radio' => []]; $links += ['event' => []];
+        $auswahl ??= ['termine' => [], 'events' => [], 'vehicles' => [], 'radios' => []]; $auswahl += ['events' => []]; ?>
   <fieldset>
     <legend>Bezüge</legend>
-    <p class="small muted">Worüber gesprochen wird: Termine aus dem Kalender, Fahrzeuge, Funkgeräte. Sie stehen am Punkt und im
-      Protokoll – und umgekehrt in der Fahrzeugakte, am Gerät und am Termin.</p>
+    <p class="small muted">Worüber gesprochen wird: Termine aus dem Kalender, Veranstaltungen, Fahrzeuge, Funkgeräte. Sie stehen am
+      Punkt und im Protokoll – Veranstaltungen mit Budgettopf und Verpflegung – und umgekehrt in Fahrzeugakte, Gerät, Termin
+      und Veranstaltung.</p>
     <input type="hidden" name="bezuege" value="1">
-    <div class="grid3">
+    <div class="grid2">
+      <div class="field">
+        <label>Veranstaltungen <span class="muted small">(anstehende)</span></label>
+        <?php if (!$auswahl['events']): ?><p class="small muted">Keine anstehende Veranstaltung.</p>
+        <?php else: ?>
+        <div class="wahlliste">
+          <?php foreach ($auswahl['events'] as $ev): ?>
+            <label class="wahl"><input type="checkbox" name="events[]" value="<?= (int)$ev['id'] ?>"<?= in_array((int)$ev['id'], $links['event'], true) ? ' checked' : '' ?>>
+              <?= e((string)$ev['titel']) ?> <span class="muted small">· <?= e(de_date(substr((string)$ev['beginn'], 0, 10))) ?></span></label>
+          <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+      </div>
       <div class="field">
         <label>Termine <span class="muted small">(nächste Wochen)</span></label>
         <?php if (!$auswahl['termine']): ?><p class="small muted">Kein Termin im Kalender.</p>

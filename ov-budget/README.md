@@ -117,8 +117,9 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - **Status-Rückmeldung an Divera**: Weitergeleitet → In Bearbeitung → Abgeschlossen
 - **Aufgaben aus der Besprechung**: je Punkt vorausgefüllt, mehrere Punkte auf
   einmal übernehmen oder frei anlegen; Übersicht in Besprechung und Protokoll
-- **Bezüge je Punkt** zu Terminen, Fahrzeugen und Funkgeräten, im Protokoll
-  und umgekehrt in Fahrzeugakte, Gerät und Termin sichtbar
+- **Bezüge je Punkt** zu Terminen, Veranstaltungen (mit Budgettopf und
+  Verpflegung im Protokoll), Fahrzeugen und Funkgeräten – umgekehrt in
+  Fahrzeugakte, Gerät, Termin und Veranstaltung sichtbar
 - **Wiederkehrende Termine** („alle 2 Wochen montags", „jeden 2. Montag im Monat")
 - **Anwesenheit**: teilgenommen, entschuldigt, nicht erschienen
 - Tagesordnung und Protokoll zum Drucken

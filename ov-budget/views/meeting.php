@@ -5,6 +5,7 @@
  *  @var array $aufgaben @var array $personen @var array $termine */
 $termine ??= [];
 $tpLinks ??= [];
+$tpEvents ??= [];
 $verwalten = can('manage_meetings');
 $aufgabenAnlegen = $verwalten && can('create_todo');
 $aufgaben ??= [];
@@ -126,7 +127,7 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
                         ? (int)$p['anmerkungen'] . ' Anmerkung(en)'
                         : (tp_discussion_open($p) ? 'Anmerkung schreiben' : '') ?></a>
               </div>
-              <?= render_partial('partials/tp_links', ['liste' => $tpLinks[(int)$p['id']] ?? []]) ?>
+              <?= render_partial('partials/tp_links', ['liste' => $tpLinks[(int)$p['id']] ?? [], 'events' => $tpEvents]) ?>
             </div>
             <?php if ($verwalten && $geplant): ?>
               <div class="btnrow" style="flex-wrap:nowrap">

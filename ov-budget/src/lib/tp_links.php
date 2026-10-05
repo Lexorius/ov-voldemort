@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 const TP_LINK_TYPEN = [
     'termin'  => ['label' => 'Termin', 'mehrzahl' => 'Termine'],
+    'event'   => ['label' => 'Veranstaltung', 'mehrzahl' => 'Veranstaltungen'],
     'vehicle' => ['label' => 'Fahrzeug', 'mehrzahl' => 'Fahrzeuge'],
     'radio'   => ['label' => 'Funkgerät', 'mehrzahl' => 'Funkgeräte'],
 ];
@@ -37,7 +38,7 @@ function tp_links(int $tpId): array
 /** Verknüpfungen neu setzen. $post: ['termine' => ids, 'vehicles' => ids, 'radios' => ids] */
 function tp_links_speichern(int $tpId, array $post): void
 {
-    $felder = ['termin' => 'termine', 'vehicle' => 'vehicles', 'radio' => 'radios'];
+    $felder = ['termin' => 'termine', 'event' => 'events', 'vehicle' => 'vehicles', 'radio' => 'radios'];
     db_exec('DELETE FROM tp_links WHERE tp_id = ?', [$tpId]);
     foreach ($felder as $typ => $feld) {
         foreach (tp_link_ids($post[$feld] ?? []) as $id) {
@@ -61,14 +62,16 @@ function tp_links_fuer(array $tpIds): array
     foreach (db_all(
         "SELECT l.tp_id, l.typ, l.ziel_id,
                 k.titel AS termin_titel, k.beginn AS termin_beginn, k.ganztag AS termin_ganztag,
+                ev.titel AS event_titel, ev.beginn AS event_beginn,
                 v.bezeichnung AS fahrzeug, v.funkrufname AS fahrzeug_ruf,
                 r.bezeichnung AS geraet, r.funkrufname AS geraet_ruf
          FROM tp_links l
          LEFT JOIN calendar_entries k ON k.id = l.ziel_id AND l.typ = 'termin'
+         LEFT JOIN events ev ON ev.id = l.ziel_id AND l.typ = 'event'
          LEFT JOIN vehicles v ON v.id = l.ziel_id AND l.typ = 'vehicle'
          LEFT JOIN radios r ON r.id = l.ziel_id AND l.typ = 'radio'
          WHERE l.tp_id IN ($in)
-         ORDER BY FIELD(l.typ,'termin','vehicle','radio'), l.id",
+         ORDER BY FIELD(l.typ,'termin','event','vehicle','radio'), l.id",
         $tpIds
     ) as $r) {
         $e = tp_link_anzeige($r);
@@ -90,6 +93,11 @@ function tp_link_anzeige(array $r): ?array
             'zusatz' => de_date(substr((string)$r['termin_beginn'], 0, 10)) . ((int)($r['termin_ganztag'] ?? 0) === 1 ? '' : ', ' . substr((string)$r['termin_beginn'], 11, 5) . ' Uhr'),
             'url' => url('kalender_edit', ['id' => $id]),
         ],
+        'event' => ($r['event_titel'] ?? null) === null ? null : [
+            'typ' => 'event', 'id' => $id, 'label' => (string)$r['event_titel'],
+            'zusatz' => de_date(substr((string)$r['event_beginn'], 0, 10)),
+            'url' => url('event', ['id' => $id]),
+        ],
         'vehicle' => $r['fahrzeug'] === null ? null : [
             'typ' => 'vehicle', 'id' => $id, 'label' => (string)$r['fahrzeug'], 'zusatz' => (string)($r['fahrzeug_ruf'] ?? ''),
             'url' => url('vehicle', ['id' => $id]),
@@ -110,6 +118,78 @@ function tp_links_text(array $liste): string
         $teile[] = TP_LINK_TYPEN[$l['typ']]['label'] . ' ' . $l['label'] . ($l['zusatz'] !== '' ? ' (' . $l['zusatz'] . ')' : '');
     }
     return implode(' · ', $teile);
+}
+
+/**
+ * Kurzbericht einer Veranstaltung für Tagesordnung und Protokoll: Wann, wo,
+ * Budgettopf, geplante und gebuchte Kosten, Verpflegungskalkulation.
+ */
+function tp_event_kurzbericht(int $eventId): ?array
+{
+    $e = event_find($eventId);
+    if (!$e) {
+        return null;
+    }
+    $kosten = event_kosten($eventId);
+    $out = [
+        'id'       => (int)$e['id'],
+        'titel'    => (string)$e['titel'],
+        'beginn'   => (string)$e['beginn'],
+        'ende'     => $e['ende'] ? (string)$e['ende'] : null,
+        'ort'      => (string)$e['ort'],
+        'typ'      => (string)($e['typ_label'] ?? ''),
+        'status'   => (string)$e['status'],
+        'budget'   => (string)($e['budget_name'] ?? ''),
+        'geplant'  => (float)$e['kosten_geplant'],
+        'gebucht'  => (float)$kosten['ausgaben'],
+        'personen' => null,
+        'verpflegung' => null,
+    ];
+    if ((int)($e['verpflegung'] ?? 0) === 1) {
+        $personen = verpflegung_personen($e, event_stats(event_guests($eventId)));
+        $k = verpflegung_kalkulation($e, verpflegung_saetze((string)$e['beginn']), $personen);
+        $out['personen'] = $personen;
+        $out['verpflegung'] = $k;
+    }
+    return $out;
+}
+
+/** Kurzberichte zu allen Veranstaltungen in den Bezügen: [event_id => bericht] */
+function tp_event_kurzberichte(array $tpLinks): array
+{
+    $out = [];
+    foreach ($tpLinks as $liste) {
+        foreach ($liste as $l) {
+            if ($l['typ'] === 'event' && !isset($out[(int)$l['id']])) {
+                $b = tp_event_kurzbericht((int)$l['id']);
+                if ($b !== null) {
+                    $out[(int)$l['id']] = $b;
+                }
+            }
+        }
+    }
+    return $out;
+}
+
+/** Der Kurzbericht als Zeilen fürs Protokoll. Reine Funktion. */
+function tp_event_kurzbericht_zeilen(array $b): array
+{
+    $z = [];
+    $wann = de_date(substr($b['beginn'], 0, 10)) . (substr($b['beginn'], 11, 5) !== '00:00' ? ', ' . substr($b['beginn'], 11, 5) . ' Uhr' : '')
+        . ($b['ende'] && substr($b['ende'], 0, 10) !== substr($b['beginn'], 0, 10) ? ' bis ' . de_date(substr($b['ende'], 0, 10)) : '');
+    $z[] = 'Veranstaltung ' . $b['titel'] . ($b['typ'] !== '' ? ' (' . $b['typ'] . ')' : '') . ' – ' . $wann . ($b['ort'] !== '' ? ', ' . $b['ort'] : '');
+    $z[] = 'Budgettopf: ' . ($b['budget'] !== '' ? $b['budget'] : 'keiner') . ' · geplant ' . money($b['geplant']) . ' · gebucht ' . money($b['gebucht']);
+    if ($b['verpflegung'] !== null) {
+        $teile = [];
+        foreach ($b['verpflegung']['zeilen'] as $zeile) {
+            if ($zeile['anzahl'] > 0) {
+                $teile[] = $zeile['anzahl'] . ' × ' . $zeile['label'] . ' à ' . money($zeile['satz']);
+            }
+        }
+        $z[] = 'Verpflegung: ' . (int)$b['personen'] . ' Personen' . ($teile ? ', ' . implode(', ', $teile) : '') . ' = ' . money($b['verpflegung']['gesamt'])
+            . ($b['verpflegung']['ohne_satz'] ? ' (Tagessatz fehlt)' : '');
+    }
+    return $z;
 }
 
 /** Tagesordnungspunkte, die auf ein Fahrzeug, Gerät oder einen Termin verweisen – jüngste zuerst */
@@ -143,8 +223,14 @@ function tp_links_auswahl(array $links, array $u): array
         }
     }
     uasort($termine, static fn($a, $b) => strcmp((string)$a['beginn'], (string)$b['beginn']));
+    $events = can('view_events') ? db_all(
+        "SELECT e.id, e.titel, e.beginn FROM events e WHERE (e.status IN ('geplant','laeuft') AND e.beginn >= ?)"
+        . ($links['event'] ? ' OR e.id IN (' . implode(',', $links['event']) . ')' : '') . ' ORDER BY e.beginn',
+        [$von . ' 00:00:00']
+    ) : [];
     return [
         'termine'  => array_values($termine),
+        'events'   => $events,
         'vehicles' => can('view_vehicles') ? db_all('SELECT id, bezeichnung, funkrufname FROM vehicles WHERE is_active = 1' . ($links['vehicle'] ? ' OR id IN (' . implode(',', $links['vehicle']) . ')' : '') . ' ORDER BY bezeichnung') : [],
         'radios'   => can('view_radios') ? db_all('SELECT id, bezeichnung, funkrufname FROM radios WHERE is_active = 1' . ($links['radio'] ? ' OR id IN (' . implode(',', $links['radio']) . ')' : '') . ' ORDER BY bezeichnung') : [],
     ];

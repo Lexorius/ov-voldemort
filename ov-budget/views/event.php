@@ -156,6 +156,8 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
 </div>
 <?php endif; ?>
 
+<?php if (can('view_meetings')): ?><?= render_partial('partials/tp_besprochen', ['punkte' => $besprochen ?? []]) ?><?php endif; ?>
+
 <?php if (!empty($verpflegung)): ?>
 <div class="card" id="verpflegung">
   <div class="card__head">

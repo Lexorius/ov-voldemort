@@ -1462,6 +1462,12 @@ SQL);
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
     $merken('047_tp_links');
+
+    /* ---------- 048: Bezug zu Veranstaltungen ---------- */
+    if (ovb_table_exists($pdo, 'tp_links')) {
+        $pdo->exec("ALTER TABLE tp_links MODIFY typ ENUM('termin','event','vehicle','radio') NOT NULL");
+    }
+    $merken('048_tp_links_event');
 }
 
 /**

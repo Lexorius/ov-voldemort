@@ -45,7 +45,7 @@ $zurueck = $tp['meeting_id']
   <?php if ($tp['beschreibung']): ?>
     <div class="comment__body mt"><?= nl2br(e((string)$tp['beschreibung'])) ?></div>
   <?php endif; ?>
-  <?= render_partial('partials/tp_links', ['liste' => $links ?? []]) ?>
+  <?= render_partial('partials/tp_links', ['liste' => $links ?? [], 'events' => $tpEvents ?? []]) ?>
   <?php if ($tp['ergebnis']): ?>
     <div class="mt"><div class="dl__label">Ergebnis</div>
       <div class="comment__body"><?= nl2br(e((string)$tp['ergebnis'])) ?></div></div>
