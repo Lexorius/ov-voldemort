@@ -15,7 +15,7 @@ if (!$liste) {
 $farben = ['termin' => '#0369a1', 'event' => '#c2410c', 'vehicle' => '#0f766e', 'radio' => '#7c3aed', 'budget' => '#15803d'];
 $anteilZeile = static function (array $liste, string $farbe): string {
     if (!$liste) {
-        return '<div class="muted">nichts gebucht</div>';
+        return '<div class="muted">bisher nichts</div>';
     }
     $html = '';
     foreach ($liste as $k) {
@@ -36,15 +36,17 @@ $anteilZeile = static function (array $liste, string $farbe): string {
 </div>
 <?php foreach ($liste as $l): if ($l['typ'] !== 'budget' || !isset($budgets[(int)$l['id']])) { continue; } $b = $budgets[(int)$l['id']]; ?>
   <div class="small" style="margin:.4rem 0 0 .5rem;padding-left:.6rem;border-left:2px solid #15803d">
-    <div><strong>Budget <?= (int)$b['jahr'] ?></strong> · Zuweisung <?= e(money($b['budget'])) ?> + eingegangen <?= e(money($b['einnahmen'])) ?><?= $b['zugesagt'] > 0 ? ' (dazu ' . e(money($b['zugesagt'])) . ' zugesagt)' : '' ?>
-      = verfügbar <?= e(money($b['verfuegbar'])) ?> · gebucht <?= e(money($b['ausgaben'])) ?> (<?= (int)round($b['quote']) ?> %)<?= $b['offen'] > 0 ? ', davon ' . e(money($b['offen'])) . ' noch nicht bezahlt' : '' ?>
-      · <strong>frei <?= e(money($b['frei'])) ?></strong><?= $b['geplant'] > 0 ? ' <span class="muted">(nach Planung ' . e(money($b['frei'] - $b['geplant'])) . ')</span>' : '' ?><?= !empty($b['stichtag']) ? ' · Stichtag ' . e(de_date((string)$b['stichtag'])) : '' ?></div>
+    <div><strong>Budget <?= (int)$b['jahr'] ?> – wo wir stehen.</strong> <?= e(tp_budget_satz_mittel($b)) ?></div>
+    <div style="margin-top:.15rem"><?= e(tp_budget_satz_ausgaben($b)) ?></div>
     <div class="grid2" style="margin-top:.3rem">
-      <div><div class="muted" style="margin-bottom:.1rem">Ausgaben nach Zweck</div><?= $anteilZeile($b['ausgaben_zwecke'], '#94a3b8') ?></div>
-      <div><div class="muted" style="margin-bottom:.1rem">Einnahmen nach Zweck</div><?= $anteilZeile($b['einnahmen_zwecke'], '#15803d') ?><?= $b['forderungen'] > 0 ? '<div class="muted">dazu ' . e(money($b['forderungen'])) . ' abgerechnet oder gestellt, noch nicht da</div>' : '' ?></div>
+      <div><div class="muted" style="margin-bottom:.1rem">Wofür das Geld ausgegeben wurde</div><?= $anteilZeile($b['ausgaben_zwecke'], '#94a3b8') ?></div>
+      <div><div class="muted" style="margin-bottom:.1rem">Woher die Einnahmen kamen</div><?= $anteilZeile($b['einnahmen_zwecke'], '#15803d') ?><?= $b['forderungen'] > 0 ? '<div class="muted">Noch ausstehend: ' . e(money($b['forderungen'])) . ' sind abgerechnet oder in Rechnung gestellt, aber noch nicht eingegangen.</div>' : '' ?></div>
     </div>
     <?php if ($b['toepfe']): ?>
-      <div class="muted" style="margin-top:.3rem">Töpfe: <?php $teile = []; foreach ($b['toepfe'] as $t) { $teile[] = e($t['label']) . ' ' . e(money($t['ist'], false)) . ' von ' . e(money($t['soll'], false)) . ' (' . (int)$t['anteil'] . ' %)'; } echo implode(' · ', $teile); ?></div>
+      <div class="muted" style="margin-top:.3rem">Vorab verteilte Budgettöpfe: <?php $teile = []; foreach ($b['toepfe'] as $t) { $teile[] = e($t['label']) . ' – ' . e(money($t['ist'], false)) . ' von ' . e(money($t['soll'], false)) . ' verbraucht (' . (int)$t['anteil'] . ' %)'; } echo implode(' · ', $teile); ?></div>
+    <?php endif; ?>
+    <?php if (!empty($b['stichtag'])): ?>
+      <div class="muted" style="margin-top:.15rem">Letzter Tag, an dem Geld aus diesem Budget ausgegeben werden darf: <?= e(de_date((string)$b['stichtag'])) ?>.</div>
     <?php endif; ?>
   </div>
 <?php endforeach; ?>

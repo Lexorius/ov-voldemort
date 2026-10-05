@@ -95,7 +95,7 @@ function tp_link_anzeige(array $r): ?array
             'url' => url('kalender_edit', ['id' => $id]),
         ],
         'budget' => [
-            'typ' => 'budget', 'id' => $id, 'label' => 'Budget ' . $id, 'zusatz' => 'Stand und Verwendung',
+            'typ' => 'budget', 'id' => $id, 'label' => 'Budget ' . $id, 'zusatz' => 'wo wir stehen',
             'url' => url('budget', ['jahr' => $id]),
         ],
         'event' => ($r['event_titel'] ?? null) === null ? null : [
@@ -165,7 +165,7 @@ function tp_anteile(array $liste, float $summe): array
     $out = [];
     foreach ($liste as $k) {
         $betrag = (float)$k['betrag'];
-        $out[] = ['label' => (string)($k['label'] ?? 'ohne Kategorie'), 'color' => (string)($k['color'] ?? ''), 'betrag' => $betrag,
+        $out[] = ['label' => (string)($k['label'] ?? 'ohne Zuordnung'), 'color' => (string)($k['color'] ?? ''), 'betrag' => $betrag,
                   'anzahl' => (int)($k['anzahl'] ?? 0), 'anteil' => $summe > 0 ? (int)round($betrag / $summe * 100) : 0];
     }
     usort($out, static fn($a, $b) => $b['betrag'] <=> $a['betrag']);
@@ -223,38 +223,61 @@ function tp_budget_kurzberichte(array $tpLinks): array
     return $out;
 }
 
-/** „Haus 45 % (1.800,00 €), Tanken 30 % (1.200,00 €)". Reine Funktion. */
+/** „Tanken 55 % (2.200,00 €), Haus 45 % (1.800,00 €)". Reine Funktion. */
 function tp_anteile_text(array $liste): string
 {
     $teile = [];
     foreach ($liste as $k) {
         $teile[] = sprintf('%s %d %% (%s)', $k['label'], $k['anteil'], money($k['betrag']));
     }
-    return $teile ? implode(', ', $teile) : 'nichts gebucht';
+    return $teile ? implode(', ', $teile) : 'bisher nichts';
 }
 
-/** Die Budgetübersicht als Zeilen fürs Protokoll. Reine Funktion. */
+/** Erster Satz der Übersicht: wie viel Geld da war. Reine Funktion. */
+function tp_budget_satz_mittel(array $b): string
+{
+    $s = sprintf('Zugewiesen wurden %s.', money($b['budget']));
+    if ($b['einnahmen'] > 0) {
+        $s .= sprintf(' Dazu kamen %s an eigenen Einnahmen', money($b['einnahmen']));
+        $s .= $b['zugesagt'] > 0 ? sprintf(' (weitere %s sind zugesagt, aber noch nicht da).', money($b['zugesagt'])) : '.';
+    } elseif ($b['zugesagt'] > 0) {
+        $s .= sprintf(' Eigene Einnahmen sind noch keine eingegangen, %s sind aber zugesagt.', money($b['zugesagt']));
+    }
+    return $s . sprintf(' Zusammen standen %s zur Verfügung.', money($b['verfuegbar']));
+}
+
+/** Zweiter Satz: was davon ausgegeben ist und was bleibt. Reine Funktion. */
+function tp_budget_satz_ausgaben(array $b): string
+{
+    $s = sprintf('Ausgegeben sind %s, das sind %d %% des Verfügbaren', money($b['ausgaben']), (int)round($b['quote']));
+    $s .= $b['offen'] > 0 ? sprintf(' – darin %s Rechnungen, die noch nicht bezahlt sind.', money($b['offen'])) : '.';
+    $s .= $b['frei'] >= 0
+        ? sprintf(' Übrig bleiben %s', money($b['frei']))
+        : sprintf(' Das Budget ist um %s überzogen', money(-$b['frei']));
+    $s .= $b['geplant'] > 0 ? sprintf(', nach Abzug der schon geplanten Ausgaben %s.', money($b['frei'] - $b['geplant'])) : '.';
+    return $s;
+}
+
+/** Die Budgetübersicht als Zeilen fürs Protokoll – so, dass es auch ohne Vorwissen verständlich ist. Reine Funktion. */
 function tp_budget_kurzbericht_zeilen(array $b): array
 {
     $z = [];
-    $z[] = sprintf('Budget %d: Zuweisung %s · eingegangen %s%s · verfügbar %s · gebucht %s (%d %%)%s · frei %s%s',
-        $b['jahr'], money($b['budget']), money($b['einnahmen']), $b['zugesagt'] > 0 ? ' (dazu ' . money($b['zugesagt']) . ' zugesagt)' : '',
-        money($b['verfuegbar']), money($b['ausgaben']), (int)round($b['quote']), $b['offen'] > 0 ? ', davon ' . money($b['offen']) . ' noch nicht bezahlt' : '',
-        money($b['frei']), $b['geplant'] > 0 ? ' (nach Planung ' . money($b['frei'] - $b['geplant']) . ')' : '');
-    $z[] = 'Ausgaben nach Zweck: ' . tp_anteile_text($b['ausgaben_zwecke']);
-    $z[] = 'Einnahmen nach Zweck: ' . tp_anteile_text($b['einnahmen_zwecke']);
+    $z[] = sprintf('Budget %d – wo wir stehen: ', $b['jahr']) . tp_budget_satz_mittel($b);
+    $z[] = tp_budget_satz_ausgaben($b);
+    $z[] = 'Wofür das Geld ausgegeben wurde: ' . tp_anteile_text($b['ausgaben_zwecke']) . '.';
+    $z[] = 'Woher die Einnahmen kamen: ' . tp_anteile_text($b['einnahmen_zwecke']) . '.';
     if ($b['forderungen'] > 0) {
-        $z[] = 'Abgerechnet oder gestellt, noch nicht da: ' . money($b['forderungen']);
+        $z[] = sprintf('Noch ausstehend: %s sind abgerechnet oder in Rechnung gestellt, aber noch nicht eingegangen.', money($b['forderungen']));
     }
     if ($b['toepfe']) {
         $teile = [];
         foreach ($b['toepfe'] as $t) {
-            $teile[] = sprintf('%s %s von %s (%d %%)', $t['label'], money($t['ist']), money($t['soll']), $t['anteil']);
+            $teile[] = sprintf('%s – %s von %s verbraucht (%d %%)', $t['label'], money($t['ist']), money($t['soll']), $t['anteil']);
         }
-        $z[] = 'Töpfe: ' . implode(', ', $teile);
+        $z[] = 'Vorab verteilte Budgettöpfe: ' . implode('; ', $teile) . '.';
     }
     if (!empty($b['stichtag'])) {
-        $z[] = 'Stichtag für Ausgaben: ' . de_date((string)$b['stichtag']);
+        $z[] = 'Letzter Tag, an dem Geld aus diesem Budget ausgegeben werden darf: ' . de_date((string)$b['stichtag']) . '.';
     }
     return $z;
 }

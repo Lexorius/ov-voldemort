@@ -95,16 +95,20 @@ $check('Kurzberichte aus den Bezügen, gelöschte übersprungen', array_keys(tp_
 $check('Budget als Bezug', tp_link_anzeige(['typ' => 'budget', 'ziel_id' => 2026])['label'] === 'Budget 2026' && str_contains(tp_link_anzeige(['typ' => 'budget', 'ziel_id' => 2026])['url'], 'jahr=2026'));
 $b = tp_budget_kurzbericht(2026);
 $check('Anteile je Zweck, größte zuerst, ohne Kategorie benannt', $b['ausgaben_zwecke'][0]['label'] === 'Tanken' && $b['ausgaben_zwecke'][0]['anteil'] === 55 && $b['ausgaben_zwecke'][1]['anteil'] === 45
-    && $b['einnahmen_zwecke'][0]['anteil'] === 80 && $b['einnahmen_zwecke'][1]['label'] === 'ohne Kategorie' && $b['einnahmen_zwecke'][1]['anteil'] === 20);
+    && $b['einnahmen_zwecke'][0]['anteil'] === 80 && $b['einnahmen_zwecke'][1]['label'] === 'ohne Zuordnung' && $b['einnahmen_zwecke'][1]['anteil'] === 20);
 $check('Töpfe nur aktive, mit Auslastung', count($b['toepfe']) === 1 && $b['toepfe'][0]['anteil'] === 60);
 $z = tp_budget_kurzbericht_zeilen($b);
-$check('Zeilen fürs Protokoll', $z[0] === 'Budget 2026: Zuweisung 10.000,00 € · eingegangen 2.500,00 € (dazu 500,00 € zugesagt) · verfügbar 12.500,00 € · gebucht 4.000,00 € (32 %), davon 300,00 € noch nicht bezahlt · frei 8.500,00 € (nach Planung 7.800,00 €)'
-    && $z[1] === 'Ausgaben nach Zweck: Tanken 55 % (2.200,00 €), Haus 45 % (1.800,00 €)' && $z[2] === 'Einnahmen nach Zweck: Einsatzkostenerstattung 80 % (2.000,00 €), ohne Kategorie 20 % (500,00 €)'
-    && $z[3] === 'Abgerechnet oder gestellt, noch nicht da: 800,00 €' && $z[4] === 'Töpfe: Jugendarbeit 1.200,00 € von 2.000,00 € (60 %)' && $z[5] === 'Stichtag für Ausgaben: 30.11.2026');
-$check('ohne Buchungen: nichts gebucht', tp_anteile_text([]) === 'nichts gebucht' && tp_anteile([], 0.0) === []);
+$check('Zeilen fürs Protokoll in ganzen Sätzen', $z[0] === 'Budget 2026 – wo wir stehen: Zugewiesen wurden 10.000,00 €. Dazu kamen 2.500,00 € an eigenen Einnahmen (weitere 500,00 € sind zugesagt, aber noch nicht da). Zusammen standen 12.500,00 € zur Verfügung.'
+    && $z[1] === 'Ausgegeben sind 4.000,00 €, das sind 32 % des Verfügbaren – darin 300,00 € Rechnungen, die noch nicht bezahlt sind. Übrig bleiben 8.500,00 €, nach Abzug der schon geplanten Ausgaben 7.800,00 €.'
+    && $z[2] === 'Wofür das Geld ausgegeben wurde: Tanken 55 % (2.200,00 €), Haus 45 % (1.800,00 €).' && $z[3] === 'Woher die Einnahmen kamen: Einsatzkostenerstattung 80 % (2.000,00 €), ohne Zuordnung 20 % (500,00 €).'
+    && $z[4] === 'Noch ausstehend: 800,00 € sind abgerechnet oder in Rechnung gestellt, aber noch nicht eingegangen.' && $z[5] === 'Vorab verteilte Budgettöpfe: Jugendarbeit – 1.200,00 € von 2.000,00 € verbraucht (60 %).'
+    && $z[6] === 'Letzter Tag, an dem Geld aus diesem Budget ausgegeben werden darf: 30.11.2026.');
+$check('Sätze ohne Einnahmen, überzogen', tp_budget_satz_mittel(['budget' => 100.0, 'einnahmen' => 0.0, 'zugesagt' => 0.0, 'verfuegbar' => 100.0]) === 'Zugewiesen wurden 100,00 €. Zusammen standen 100,00 € zur Verfügung.'
+    && tp_budget_satz_ausgaben(['ausgaben' => 120.0, 'quote' => 100.0, 'offen' => 0.0, 'frei' => -20.0, 'geplant' => 0.0]) === 'Ausgegeben sind 120,00 €, das sind 100 % des Verfügbaren. Das Budget ist um 20,00 € überzogen.');
+$check('ohne Buchungen: bisher nichts', tp_anteile_text([]) === 'bisher nichts' && tp_anteile([], 0.0) === []);
 $check('Kurzberichte aus Bezügen', array_keys(tp_budget_kurzberichte(['a' => [['typ' => 'budget', 'id' => 2026], ['typ' => 'budget', 'id' => 2026], ['typ' => 'event', 'id' => 6]]])) === [2026]);
 $html = render_partial('partials/tp_links', ['liste' => [tp_link_anzeige(['typ' => 'budget', 'ziel_id' => 2026])], 'budgets' => [2026 => $b]]);
-$check('Budgetblock mit Balken und Anteilen', str_contains($html, 'Ausgaben nach Zweck') && str_contains($html, '55 %') && str_contains($html, 'Einsatzkostenerstattung') && str_contains($html, 'width:80%') && str_contains($html, 'Jugendarbeit'));
+$check('Budgetblock mit Balken und Anteilen', str_contains($html, 'Wofür das Geld ausgegeben wurde') && str_contains($html, '55 %') && str_contains($html, 'Einsatzkostenerstattung') && str_contains($html, 'width:80%') && str_contains($html, 'Jugendarbeit') && str_contains($html, 'Zusammen standen 12.500,00 €'));
 $a = tp_links_auswahl(['termin' => [], 'event' => [], 'vehicle' => [], 'radio' => [], 'budget' => [2024]], current_user());
 $check('Budgetjahre zur Auswahl: laufendes, voriges, verknüpftes', $a['budgets'] === [2026, 2025, 2024]);
 

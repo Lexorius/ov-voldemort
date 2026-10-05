@@ -73,7 +73,7 @@ $zurueck = !empty($tp['meeting_id']) ? url('meeting', ['id' => $tp['meeting_id']
     <input type="hidden" name="bezuege" value="1">
     <?php if ($auswahl['budgets']): ?>
       <div class="field">
-        <label>Budgetübersicht <span class="muted small">(Stand und Verwendung nach Zweck, mit Anteilen)</span></label>
+        <label>Budgetübersicht <span class="muted small">(wie viel Geld da war, was ausgegeben wurde und wofür – mit Anteilen)</span></label>
         <div class="chips">
           <?php foreach ($auswahl['budgets'] as $j): ?>
             <label class="chip" style="cursor:pointer"><input type="checkbox" name="budgets[]" value="<?= (int)$j ?>"<?= in_array((int)$j, $links['budget'], true) ? ' checked' : '' ?>> Budget <?= (int)$j ?></label>

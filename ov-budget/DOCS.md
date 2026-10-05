@@ -456,11 +456,13 @@ und ausblenden:
   Mahlzeiten, Summe) – in der Tagesordnung, auf der Themenseite und im
   gedruckten Protokoll.
 * **Budgetübersicht als Tagesordnungspunkt:** „+ Budgetübersicht" in der
-  Tagesordnung (oder der Bezug „Budget" am Thema) zeigt Zuweisung,
-  eingegangene und zugesagte Einnahmen, gebuchte Ausgaben, freien Rest und
-  Stichtag – und die **Verwendung nach Zweck mit prozentualen Anteilen**,
-  getrennt für Ausgaben und Einnahmen, dazu die Töpfe mit Auslastung. Der
-  Stand wird beim Aufruf gerechnet; im Protokoll steht er als Text.
+  Tagesordnung (oder der Bezug „Budget" am Thema) erklärt in ganzen Sätzen,
+  wie viel Geld da war (Zuweisung, eingegangene und zugesagte Einnahmen),
+  wie viel ausgegeben ist und was übrig bleibt – dazu **wofür das Geld
+  ausgegeben wurde** und **woher die Einnahmen kamen**, je mit prozentualen
+  Anteilen, die vorab verteilten Töpfe und der letzte Tag für Ausgaben. So,
+  dass es auch Gäste ohne Vorwissen verstehen. Der Stand wird beim Aufruf
+  gerechnet; im Protokoll steht er als Text.
 * Die Startseite zeigt die nächsten Termine der kommenden 14 Tage.
 
 ## Verbrauch: Strom, Gas und Wasser

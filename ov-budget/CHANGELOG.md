@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 2.1.5.2
+
+- **Budgetübersicht verständlicher:** Der Tagesordnungspunkt spricht jetzt in
+  ganzen Sätzen – „Zugewiesen wurden …, dazu kamen … an eigenen Einnahmen,
+  zusammen standen … zur Verfügung. Ausgegeben sind …, übrig bleiben …" –
+  und überschreibt die Anteile mit „Wofür das Geld ausgegeben wurde" und
+  „Woher die Einnahmen kamen". Fachbegriffe wie Zuweisung, gebucht,
+  Forderungen und Stichtag sind erklärt oder ersetzt.
+
 ## 2.1.5.1
 
 - Korrektur: Prozentanteile der Budgetübersicht als ganze Zahl (Prüfung schlug an).

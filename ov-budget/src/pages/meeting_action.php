@@ -36,8 +36,8 @@ switch (post_str('action')) {
         $jahr = haushaltsjahr();
         $tpId = db_insert('talking_points', [
             'meeting_id'      => $meetingId,
-            'titel'           => 'Budget ' . $jahr . ': Stand und Verwendung',
-            'beschreibung'    => 'Zuweisung, Einnahmen, Ausgaben und freier Rest; Verwendung nach Zweck mit Anteilen – Stand beim Aufruf.',
+            'titel'           => 'Budget ' . $jahr . ': Wo stehen wir, wofür ging das Geld?',
+            'beschreibung'    => 'Übersicht für alle: wie viel Geld wir hatten, wie viel davon ausgegeben ist und wofür, woher Einnahmen kamen und was noch übrig ist. Die Zahlen werden beim Aufruf frisch gerechnet.',
             'status_id'       => list_default_id('tp_status'),
             'sort_order'      => meeting_next_sort($meetingId),
             'eingebracht_von' => (int)$user['id'],
