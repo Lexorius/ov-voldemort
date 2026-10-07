@@ -214,7 +214,8 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - Benutzer mit Rollen (Mitglied, Leitung, Administration) und Funktionen
 - **Stell- und Lagerplätze** als Baum: Gebäude, Hallen und Höfe mit
   Stockwerken, Räumen, Stellplätzen, Schränken und Regalen, Serien wie
-  „Raum 1–16" auf einmal – je Platz mit Bildern, GPS-Koordinaten und Karte
+  „Raum 1–16" auf einmal – je Platz mit Bildern, GPS-Koordinaten und Karte;
+  Fahrzeuge, Zähler, Funkgeräte und Funkgruppen werden Plätzen zugeordnet
 - **Zweiter Faktor** mit Authenticator-App und Backup-Codes, als Pflicht je
   Rolle einstellbar
 - Alle Auswahllisten, Texte und Regeln frei einstellbar; **Menüleiste in

@@ -14,7 +14,11 @@ if (!$radio) {
     return;
 }
 
+[$platzId, $platzUeberGruppe] = radio_platz($radio);
+
 render('radio', [
+    'stellplatzPfad'   => $platzId && function_exists('standort_pfad') ? standort_pfad($platzId, standort_all()) : '',
+    'platzUeberGruppe' => $platzUeberGruppe,
     'title'  => (string)$radio['bezeichnung'],
     'radio'  => $radio,
     'karten' => radio_cards((int)$radio['id']),

@@ -28,12 +28,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 if (!$gruppe) {
     $gruppe = [
-        'id' => null, 'name' => '', 'beschreibung' => '', 'lagerort' => '',
+        'id' => null, 'name' => '', 'beschreibung' => '', 'lagerort' => '', 'standort_id' => null,
         'ziel_typ' => 'ov', 'ziel_id' => null, 'is_active' => 1,
     ];
 }
 
 render('radio_group_edit', [
+    'standorte' => function_exists('standort_all') ? standort_all() : [],
     'title'       => $gruppe['id'] ? 'Gruppe bearbeiten' : 'Gruppe anlegen',
     'gruppe'      => $gruppe,
     'errors'      => $errors,

@@ -15,6 +15,7 @@ if (!$gruppe) {
 }
 
 render('radio_group', [
+    'stellplatzPfad' => !empty($gruppe['standort_id']) && function_exists('standort_pfad') ? standort_pfad((int)$gruppe['standort_id'], standort_all()) : '',
     'title'     => (string)$gruppe['name'],
     'gruppe'    => $gruppe,
     'geraete'   => radio_group_members((int)$gruppe['id']),

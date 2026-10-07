@@ -159,6 +159,32 @@ $ausser = $isNew ? [] : array_merge([(int)$s['id']], standort_nachkommen((int)$s
   </section>
   <?php endif; ?>
 
+  <?php $funk ??= []; $funkgruppen ??= []; if ($funk || $funkgruppen): ?>
+  <section class="card" id="funk">
+    <div class="card__head">
+      <h2>Funk an diesem Platz</h2>
+      <span class="muted small"><?= count($funkgruppen) + count($funk) ?></span>
+    </div>
+    <?php if ($funkgruppen): ?>
+      <h3>Gruppen</h3>
+      <div class="chips">
+        <?php foreach ($funkgruppen as $g): ?>
+          <a class="chip" href="<?= e(url('radio_group', ['id' => $g['id']])) ?>"><?= e((string)$g['name']) ?><?= (int)$g['is_active'] !== 1 ? ' <span class="badge badge--muted">stillgelegt</span>' : '' ?></a>
+        <?php endforeach; ?>
+      </div>
+      <p class="small muted">Geräte einer Gruppe ohne eigenen Platz gehören hierher.</p>
+    <?php endif; ?>
+    <?php if ($funk): ?>
+      <h3>Geräte</h3>
+      <div class="chips">
+        <?php foreach ($funk as $r): ?>
+          <a class="chip" href="<?= e(url('radio', ['id' => $r['id']])) ?>"><?= e((string)$r['bezeichnung']) ?><?= $r['funkrufname'] ? ' <span class="muted small">' . e((string)$r['funkrufname']) . '</span>' : '' ?><?= (int)$r['is_active'] !== 1 ? ' <span class="badge badge--muted">ausgemustert</span>' : '' ?></a>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+  </section>
+  <?php endif; ?>
+
   <section class="card" id="bilder">
     <div class="card__head">
       <h2>Bilder</h2>

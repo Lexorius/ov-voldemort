@@ -123,9 +123,20 @@ $zielId = (int)($radio['ziel_id'] ?? 0);
     <input type="hidden" name="ziel_id" value="<?= $zielId ?: '' ?>">
 
     <div class="field">
-      <label for="standort">Standort</label>
+      <label for="standort_id">Platz</label>
+      <?php $standorte ??= []; $aktive = array_values(array_filter($standorte, static fn($x) => (int)$x['is_active'] === 1 || (int)$x['id'] === (int)($radio['standort_id'] ?? 0))); ?>
+      <?php if ($aktive): ?>
+        <select id="standort_id" name="standort_id"><?= standort_optionen($aktive, (int)($radio['standort_id'] ?? 0), '– kein eigener Platz –') ?></select>
+        <small>Aus den Stell- und Lagerplätzen der Verwaltung – Raum, Schrank oder Regal. Ohne eigenen Platz gilt der Platz der Gruppe.</small>
+      <?php else: ?>
+        <select id="standort_id" name="standort_id" disabled><option>– noch keine Plätze angelegt –</option></select>
+        <small>Plätze legt die Leitung unter Verwaltung → Stell- und Lagerplätze an.</small>
+      <?php endif; ?>
+    </div>
+    <div class="field">
+      <label for="standort">Standort (frei)</label>
       <input type="text" id="standort" name="standort" maxlength="150"
-             value="<?= e((string)($radio['standort'] ?? '')) ?>" placeholder="z. B. Ladeschale Funkraum">
+             value="<?= e((string)($radio['standort'] ?? '')) ?>" placeholder="z. B. Ladeschale links">
     </div>
   </section>
 

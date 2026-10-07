@@ -15,6 +15,7 @@ foreach ($geraete as $g) {
     <h1><?= e((string)$gruppe['name']) ?></h1>
     <p><?= (int)$gruppe['geraete'] ?> Gerät(e)<?php if ((int)$gruppe['geraete'] > (int)($gruppe['meldbar'] ?? $gruppe['geraete'])): ?>,
         davon <?= (int)$gruppe['geraete'] - (int)$gruppe['meldbar'] ?> fest verbaut · <?= (int)$gruppe['meldbar'] ?> am Lagerort meldbar<?php endif; ?>
+      <?= !empty($stellplatzPfad) ? ' · ' . e($stellplatzPfad) : '' ?>
       <?= trim((string)$gruppe['lagerort']) !== '' ? ' · ' . e((string)$gruppe['lagerort']) : '' ?>
       · <?= e(sim_ziel_text($gruppe)) ?></p>
   </div>

@@ -35,12 +35,13 @@ if (!$radio) {
         // Aus der Fahrzeugakte heraus ist das Fahrzeug schon gesetzt
         'ziel_typ' => get_str('ziel_typ') !== '' ? radio_ziel_typ(get_str('ziel_typ')) : 'ov',
         'ziel_id' => get_int('ziel_id'),
-        'standort' => '', 'beschafft_am' => null, 'pruefung_bis' => null,
+        'standort' => '', 'standort_id' => null, 'beschafft_am' => null, 'pruefung_bis' => null,
         'notiz' => '', 'is_active' => 1,
     ];
 }
 
 render('radio_edit', [
+    'standorte' => function_exists('standort_all') ? standort_all() : [],
     'title'       => $radio['id'] ? 'Funkgerät bearbeiten' : 'Funkgerät anlegen',
     'radio'       => $radio,
     'errors'      => $errors,

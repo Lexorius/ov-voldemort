@@ -33,9 +33,20 @@ $zielId = (int)($gruppe['ziel_id'] ?? 0);
              value="<?= e((string)($gruppe['name'] ?? '')) ?>" placeholder="z. B. HRT-Koffer Zugtrupp">
     </div>
     <div class="field">
-      <label for="lagerort">Lagerort</label>
+      <label for="standort_id">Platz</label>
+      <?php $standorte ??= []; $aktive = array_values(array_filter($standorte, static fn($x) => (int)$x['is_active'] === 1 || (int)$x['id'] === (int)($gruppe['standort_id'] ?? 0))); ?>
+      <?php if ($aktive): ?>
+        <select id="standort_id" name="standort_id"><?= standort_optionen($aktive, (int)($gruppe['standort_id'] ?? 0), '– kein Platz –') ?></select>
+        <small>Aus den Stell- und Lagerplätzen der Verwaltung – etwa Funkraum › Regal 2. Geräte ohne eigenen Platz erben ihn.</small>
+      <?php else: ?>
+        <select id="standort_id" name="standort_id" disabled><option>– noch keine Plätze angelegt –</option></select>
+        <small>Plätze legt die Leitung unter Verwaltung → Stell- und Lagerplätze an.</small>
+      <?php endif; ?>
+    </div>
+    <div class="field">
+      <label for="lagerort">Lagerort (frei)</label>
       <input type="text" id="lagerort" name="lagerort" maxlength="150"
-             value="<?= e((string)($gruppe['lagerort'] ?? '')) ?>" placeholder="z. B. Funkraum, Regal 2">
+             value="<?= e((string)($gruppe['lagerort'] ?? '')) ?>" placeholder="z. B. oberstes Fach">
     </div>
     <div class="field">
       <label for="beschreibung">Beschreibung</label>

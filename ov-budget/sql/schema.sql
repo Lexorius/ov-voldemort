@@ -888,6 +888,8 @@ CREATE TABLE IF NOT EXISTS radio_groups (
   name            VARCHAR(150) NOT NULL,
   beschreibung    TEXT         NULL,
   lagerort        VARCHAR(150) NOT NULL DEFAULT '',
+  -- Platz aus den Stell- und Lagerplaetzen (Funkraum, Regal ...)
+  standort_id     INT UNSIGNED NULL,
   ziel_typ        ENUM('ov','fahrzeug','fachgruppe','person') NOT NULL DEFAULT 'ov',
   ziel_id         INT UNSIGNED NULL,
   -- QR-Code fuer die Bestandsmeldung am Lagerort
@@ -901,7 +903,8 @@ CREATE TABLE IF NOT EXISTS radio_groups (
   updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_gruppe_qr (qr_token),
-  CONSTRAINT fk_gruppe_con FOREIGN KEY (qr_connector_id) REFERENCES connectors(id) ON DELETE SET NULL
+  CONSTRAINT fk_gruppe_con FOREIGN KEY (qr_connector_id) REFERENCES connectors(id) ON DELETE SET NULL,
+  CONSTRAINT fk_gruppe_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
@@ -928,6 +931,8 @@ CREATE TABLE IF NOT EXISTS radios (
   ziel_typ       ENUM('ov','fahrzeug','fachgruppe','person') NOT NULL DEFAULT 'ov',
   ziel_id        INT UNSIGNED NULL,
   standort       VARCHAR(150) NOT NULL DEFAULT '',
+  -- Platz aus den Stell- und Lagerplaetzen; ohne eigenen gilt der der Gruppe
+  standort_id    INT UNSIGNED NULL,
   beschafft_am   DATE         NULL,
   pruefung_bis   DATE         NULL,
   notiz          TEXT         NULL,
@@ -942,6 +947,7 @@ CREATE TABLE IF NOT EXISTS radios (
   KEY idx_funk_ziel (ziel_typ, ziel_id),
   CONSTRAINT fk_funk_grp FOREIGN KEY (group_id)  REFERENCES radio_groups(id) ON DELETE SET NULL,
   CONSTRAINT fk_funk_con FOREIGN KEY (qr_connector_id) REFERENCES connectors(id) ON DELETE SET NULL,
+  CONSTRAINT fk_funk_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE SET NULL,
   CONSTRAINT fk_funk_typ FOREIGN KEY (typ_id)     REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_funk_sta FOREIGN KEY (status_id)  REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_funk_cb  FOREIGN KEY (created_by) REFERENCES users(id)      ON DELETE SET NULL,

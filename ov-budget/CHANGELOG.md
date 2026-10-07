@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 2.1.11.0
+
+- **Funkgeräte und Gruppen am Platz:** Funkgeräte-Gruppen und einzelne
+  Geräte lassen sich einem Stell- oder Lagerplatz zuordnen – etwa „Funkraum
+  › Regal 2". Ein Gerät ohne eigenen Platz gilt am Platz seiner Gruppe.
+  Geräte-, Gruppenseite und Liste zeigen den Pfad, die Platzseite in der
+  Verwaltung ihre Gruppen und Geräte. „Standort" und „Lagerort" bleiben als
+  freie Felder.
+
 ## 2.1.10.0
 
 - **Zähler mit zwei Plätzen:** „Zuständig für" ist der Bereich, den der

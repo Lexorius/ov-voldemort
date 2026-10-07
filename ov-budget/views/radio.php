@@ -39,6 +39,7 @@ $pruefung = radio_pruefung($radio, $warn);
         'Seriennummer'   => (string)$radio['seriennummer'],
         'Inventarnummer' => (string)$radio['inventarnummer'],
         'Funkrufname'    => (string)$radio['funkrufname'],
+        'Platz'          => ($stellplatzPfad ?? '') !== '' ? $stellplatzPfad . (!empty($platzUeberGruppe) ? ' (über die Gruppe)' : '') : '',
         'Standort'       => (string)$radio['standort'],
     ] as $label => $wert): ?>
       <?php if (trim($wert) !== ''): ?>

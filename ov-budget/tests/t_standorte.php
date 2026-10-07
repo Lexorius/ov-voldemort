@@ -188,4 +188,20 @@ $html = render_partial('admin/standort_edit', ['s' => $rows[2], 'parent' => $row
     'zaehler' => [], 'zustaendig' => standort_zustaendige_zaehler(3, $rows, [['id' => 10, 'name' => 'Hauszähler', 'art' => 'strom', 'rolle' => 'bezug', 'is_active' => 1, 'bereich_id' => 1]])]);
 $check('Platzseite zeigt geerbte Zuständigkeit', str_contains($html, 'Zuständig für diesen Platz') && str_contains($html, 'Hauszähler') && str_contains($html, 'über Haupthaus') && !str_contains($html, 'Hier eingebaut'));
 
+/* ---------- Funkgeräte und Gruppen am Platz ---------- */
+$fk = (string)file_get_contents($app . '/src/lib/radios.php');
+$check('Funkabfragen lesen den Platz mit', str_contains($fk, 'LEFT JOIN standorte sp ON sp.id = r.standort_id') && str_contains($fk, 'LEFT JOIN standorte sg ON sg.id = g.standort_id')
+    && str_contains($fk, 'LEFT JOIN standorte sp ON sp.id = g.standort_id') && substr_count($fk, "vehicle_stellplatz_pruefen(post_int('standort_id'))") === 2);
+if (!defined('SIM_ZIELE')) { define('SIM_ZIELE', ['ov' => 'Ortsverband', 'fahrzeug' => 'Fahrzeug', 'fachgruppe' => 'Fachgruppe', 'person' => 'Person']); }
+require $app . '/src/lib/radios.php';
+$check('Gerät erbt den Platz der Gruppe', radio_platz(['standort_id' => 3, 'gruppe_standort_id' => 1]) === [3, false]
+    && radio_platz(['standort_id' => null, 'gruppe_standort_id' => 1]) === [1, true] && radio_platz(['standort_id' => null]) === [null, false]);
+$html = render_partial('admin/standort_edit', ['s' => $rows[2], 'parent' => $rows[1], 'alle' => $rows, 'errors' => [], 'pfad' => 'Haupthaus › 1. Stock › Raum 12', 'kinder' => 0, 'bilder' => [], 'fahrzeuge' => [], 'zaehler' => [], 'zustaendig' => [],
+    'funkgruppen' => [['id' => 4, 'name' => 'HRT-Koffer Zugtrupp', 'is_active' => 1]],
+    'funk' => [['id' => 7, 'bezeichnung' => 'Feststation', 'funkrufname' => 'Heros HN 21/10', 'is_active' => 0]]]);
+$check('Platzseite zeigt Funk', str_contains($html, 'Funk an diesem Platz') && str_contains($html, 'HRT-Koffer Zugtrupp') && str_contains($html, 'p=radio_group')
+    && str_contains($html, 'Feststation') && str_contains($html, 'p=radio&') && str_contains($html, 'ausgemustert'));
+$mig = (string)file_get_contents($app . '/src/cli/migrate.php');
+$check('Wanderung 055 legt die Spalten an', str_contains($mig, "055_funk_standort") && str_contains($mig, 'fk_funk_standort') && str_contains($mig, 'fk_gruppe_standort'));
+
 echo "$ok bestanden, $fail fehlgeschlagen\n";

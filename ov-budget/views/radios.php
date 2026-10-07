@@ -61,7 +61,8 @@ $darf = can('manage_radios');
             <?php endif; ?>
             <div class="small muted"><?= e(sim_ziel_text($g)) ?></div>
           </td>
-          <td class="small"><?= e((string)$g['lagerort']) ?: '<span class="muted">–</span>' ?></td>
+          <?php $ort = implode(' · ', array_filter([(string)($g['stellplatz_name'] ?? ''), (string)$g['lagerort']])); ?>
+          <td class="small"><?= $ort !== '' ? e($ort) : '<span class="muted">–</span>' ?></td>
           <td class="small"><?= (int)$g['geraete'] ?><?= (int)$g['geraete'] > (int)($g['meldbar'] ?? $g['geraete'])
               ? ' <span class="muted">(' . (int)$g['meldbar'] . ' meldbar)</span>' : '' ?></td>
           <td class="small">
@@ -175,8 +176,9 @@ $darf = can('manage_radios');
               <?php else: ?>
                 <?= e(radio_ziel_text($r)) ?>
               <?php endif; ?>
-              <?php if (trim((string)$r['standort']) !== ''): ?>
-                <div class="muted"><?= e((string)$r['standort']) ?></div>
+              <?php $ort = implode(' · ', array_filter([(string)($r['stellplatz_name'] ?? ($r['gruppe_stellplatz_name'] ?? '')), (string)$r['standort']])); ?>
+              <?php if ($ort !== ''): ?>
+                <div class="muted"><?= e($ort) ?></div>
               <?php endif; ?>
             </td>
             <td class="small"><?= (int)$r['karten'] > 0

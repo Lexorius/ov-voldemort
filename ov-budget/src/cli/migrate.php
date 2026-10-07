@@ -1568,6 +1568,27 @@ SQL);
         }
     }
     $merken('054_zaehler_bereich');
+
+    /* ---------- 055: Funkgeraete und Gruppen am Platz ---------- */
+    if (ovb_table_exists($pdo, 'standorte')) {
+        if (ovb_table_exists($pdo, 'radio_groups')) {
+            if (!ovb_column_exists($pdo, 'radio_groups', 'standort_id')) {
+                $pdo->exec('ALTER TABLE radio_groups ADD COLUMN standort_id INT UNSIGNED NULL AFTER lagerort');
+            }
+            if (!ovb_constraint_exists($pdo, 'radio_groups', 'fk_gruppe_standort')) {
+                $pdo->exec('ALTER TABLE radio_groups ADD CONSTRAINT fk_gruppe_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE SET NULL');
+            }
+        }
+        if (ovb_table_exists($pdo, 'radios')) {
+            if (!ovb_column_exists($pdo, 'radios', 'standort_id')) {
+                $pdo->exec('ALTER TABLE radios ADD COLUMN standort_id INT UNSIGNED NULL AFTER standort');
+            }
+            if (!ovb_constraint_exists($pdo, 'radios', 'fk_funk_standort')) {
+                $pdo->exec('ALTER TABLE radios ADD CONSTRAINT fk_funk_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE SET NULL');
+            }
+        }
+    }
+    $merken('055_funk_standort');
 }
 
 /**

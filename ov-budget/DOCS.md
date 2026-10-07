@@ -1075,7 +1075,14 @@ achtet darauf, dass die Art zum übergeordneten Platz passt.
   Übersicht zeigen beides („für Haupthaus · in Hausanschlussraum"). Die
   Platzseite listet die Zähler, die für sie zuständig sind – auch geerbt
   über einen übergeordneten Platz, etwa der Hauszähler an jedem Stockwerk –
-  und die hier eingebauten. Geräte und Material folgen.
+  und die hier eingebauten.
+* **Funkgeräte und Gruppen:** Eine Gruppe (Koffer, Ladeschale, Satz)
+  bekommt ihren Platz – etwa „Funkraum › Regal 2" – und jedes Gerät kann
+  einen eigenen haben, etwa die Feststation im Zugtruppraum. Ein Gerät
+  ohne eigenen Platz gilt am Platz seiner Gruppe. Geräteseite, Gruppenseite
+  und Liste zeigen den Pfad, die Platzseite ihre Gruppen und Geräte. Die
+  freien Felder „Standort" und „Lagerort" bleiben für Hinweise wie
+  „oberstes Fach". Material folgt.
 
 ## Rollen
 

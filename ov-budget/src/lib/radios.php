@@ -42,9 +42,14 @@ function radio_select(): string
                    fg.label AS fachgruppe_label,
                    u.display_name AS person_label,
                    (SELECT COUNT(*) FROM sims s WHERE s.radio_id = r.id) AS karten,
-                   g.name AS gruppe_name, g.lagerort AS gruppe_lagerort
+                   g.name AS gruppe_name, g.lagerort AS gruppe_lagerort,
+                   g.standort_id AS gruppe_standort_id,
+                   sp.name AS stellplatz_name, sp.typ AS stellplatz_typ,
+                   sg.name AS gruppe_stellplatz_name
             FROM radios r
             LEFT JOIN radio_groups g ON g.id = r.group_id
+            LEFT JOIN standorte sp ON sp.id = r.standort_id
+            LEFT JOIN standorte sg ON sg.id = g.standort_id
             LEFT JOIN list_items t   ON t.id  = r.typ_id
             LEFT JOIN list_items st  ON st.id = r.status_id
             LEFT JOIN vehicles   v   ON v.id  = r.ziel_id AND r.ziel_typ = \'fahrzeug\'
@@ -185,11 +190,28 @@ function radio_group_select(): string
                    fg.label AS fachgruppe_label,
                    u.display_name AS person_label,
                    (SELECT COUNT(*) FROM radios r WHERE r.group_id = g.id AND r.is_active = 1) AS geraete,
-                   (SELECT COUNT(*) FROM radios r WHERE r.group_id = g.id AND r.is_active = 1 AND r.fest_verbaut = 0) AS meldbar
+                   (SELECT COUNT(*) FROM radios r WHERE r.group_id = g.id AND r.is_active = 1 AND r.fest_verbaut = 0) AS meldbar,
+                   sp.name AS stellplatz_name, sp.typ AS stellplatz_typ
             FROM radio_groups g
+            LEFT JOIN standorte sp ON sp.id = g.standort_id
             LEFT JOIN vehicles   v  ON v.id  = g.ziel_id AND g.ziel_typ = \'fahrzeug\'
             LEFT JOIN list_items fg ON fg.id = g.ziel_id AND g.ziel_typ = \'fachgruppe\'
             LEFT JOIN users      u  ON u.id  = g.ziel_id AND g.ziel_typ = \'person\'';
+}
+
+/**
+ * Der Platz eines Geräts: der eigene, sonst der seiner Gruppe.
+ * Gibt [id, ueberGruppe] zurück – [null, false], wenn keiner gesetzt ist.
+ */
+function radio_platz(array $r): array
+{
+    if (!empty($r['standort_id'])) {
+        return [(int)$r['standort_id'], false];
+    }
+    if (!empty($r['gruppe_standort_id'])) {
+        return [(int)$r['gruppe_standort_id'], true];
+    }
+    return [null, false];
 }
 
 function radio_group_find(?int $id): ?array
@@ -228,6 +250,7 @@ function radio_group_save_from_post(?array $gruppe, array $user): array
         'name'         => $name,
         'beschreibung' => post_str('beschreibung'),
         'lagerort'     => mb_substr(post_str('lagerort'), 0, 150),
+        'standort_id'  => function_exists('vehicle_stellplatz_pruefen') ? vehicle_stellplatz_pruefen(post_int('standort_id')) : null,
         'ziel_typ'     => $zielTyp,
         'ziel_id'      => $zielId,
         'is_active'    => post_bool('is_active'),
@@ -378,6 +401,7 @@ function radio_save_from_post(?array $radio, array $user): array
         'ziel_typ'       => $zielTyp,
         'ziel_id'        => $zielId,
         'standort'       => mb_substr(post_str('standort'), 0, 150),
+        'standort_id'    => function_exists('vehicle_stellplatz_pruefen') ? vehicle_stellplatz_pruefen(post_int('standort_id')) : null,
         'beschafft_am'   => post_date('beschafft_am'),
         'pruefung_bis'   => post_date('pruefung_bis'),
         'notiz'          => post_str('notiz'),
