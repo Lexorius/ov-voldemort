@@ -495,6 +495,14 @@ table.data td.num, table.data th.num { text-align: right; font-variant-numeric: 
 }
 .vote.is-on { background: var(--accent); border-color: var(--accent); color: #fff; }
 .inline-form { display: inline; }
+/* Stell- und Lagerplätze: Baum */
+.standort { border-left: 2px solid var(--border); padding-left: .5rem; margin-top: .2rem; }
+.standort--aus .standort__name { opacity: .55; }
+.standort__zeile { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; padding: .2rem 0; }
+.standort__icon { width: 1.6rem; text-align: center; }
+.standort__name { flex: 1 1 12rem; min-width: 0; }
+.standort__knoepfe { display: flex; gap: .25rem; }
+
 /* Kalender: Monatsraster */
 .kal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-top: .6rem; }
 .kal__kopf { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-mute); text-align: center; padding: .2rem 0; }

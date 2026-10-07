@@ -369,6 +369,30 @@ CREATE TABLE IF NOT EXISTS expense_links (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- Stell- und Lagerplaetze als Baum: Gebaeude/Halle/Hof oben, darunter
+-- Stockwerk, Raum, Stellplatz, Hofstellplatz, Schrank, Regal
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS standorte (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  parent_id     INT UNSIGNED  NULL,
+  typ           ENUM('gebaeude','halle','hof','stockwerk','raum','stellplatz','hofstellplatz','schrank','regal') NOT NULL DEFAULT 'raum',
+  name          VARCHAR(120)  NOT NULL,
+  kurz          VARCHAR(30)   NOT NULL DEFAULT '',
+  notiz         TEXT          NULL,
+  sort_order    INT           NOT NULL DEFAULT 0,
+  is_active     TINYINT(1)    NOT NULL DEFAULT 1,
+  created_by    INT UNSIGNED  NULL,
+  updated_by    INT UNSIGNED  NULL,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_standort_parent (parent_id, sort_order),
+  CONSTRAINT fk_standort_parent FOREIGN KEY (parent_id) REFERENCES standorte(id) ON DELETE SET NULL,
+  CONSTRAINT fk_standort_cb FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_standort_ub FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
 -- Kalender: eigene Termine (fuer OV, Fachgruppe, Funktion, Person) und der
 -- Zwischenspeicher der Kalender aus Home Assistant
 -- ------------------------------------------------------------

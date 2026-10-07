@@ -1474,6 +1474,30 @@ SQL);
     }
     $merken('048_tp_links_event');
     $merken('049_tp_links_budget');
+
+    /* ---------- 050: Stell- und Lagerplaetze ---------- */
+    if (!ovb_table_exists($pdo, 'standorte')) {
+        $pdo->exec("CREATE TABLE standorte (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            parent_id INT UNSIGNED NULL,
+            typ ENUM('gebaeude','halle','hof','stockwerk','raum','stellplatz','hofstellplatz','schrank','regal') NOT NULL DEFAULT 'raum',
+            name VARCHAR(120) NOT NULL,
+            kurz VARCHAR(30) NOT NULL DEFAULT '',
+            notiz TEXT NULL,
+            sort_order INT NOT NULL DEFAULT 0,
+            is_active TINYINT(1) NOT NULL DEFAULT 1,
+            created_by INT UNSIGNED NULL,
+            updated_by INT UNSIGNED NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY idx_standort_parent (parent_id, sort_order),
+            CONSTRAINT fk_standort_parent FOREIGN KEY (parent_id) REFERENCES standorte(id) ON DELETE SET NULL,
+            CONSTRAINT fk_standort_cb FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+            CONSTRAINT fk_standort_ub FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    }
+    $merken('050_standorte');
 }
 
 /**

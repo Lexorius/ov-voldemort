@@ -59,6 +59,8 @@
   <a href="<?= e(url('admin_connectors')) ?>"><div class="card"><h3>Connectoren</h3>
     <p>Briefkästen auf öffentlichen Webservern: Standort per QR-Code und Einladungen zu
        Veranstaltungen. Koppeln, anmelden, abholen.</p></div></a>
+  <a href="<?= e(url('admin_standorte')) ?>"><div class="card"><h3>Stell- und Lagerplätze</h3>
+    <p class="small muted">Gebäude, Hallen, Höfe – mit Stockwerken, Räumen, Stellplätzen, Schränken und Regalen.</p></div></a>
   <a href="<?= e(url('admin_kalender')) ?>"><div class="card"><h3>Kalender</h3>
     <p class="small muted">Feiertage je Bundesland, Kalender aus Home Assistant einbinden.</p></div></a>
   <a href="<?= e(url('admin_ha')) ?>"><div class="card"><h3>Home Assistant</h3>

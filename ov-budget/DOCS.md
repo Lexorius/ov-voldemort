@@ -1036,6 +1036,27 @@ allein reicht dann nicht mehr.
 * Das Geheimnis liegt in der Datenbank des Add-ons und wandert mit der
   Sicherung; Backup-Codes sind nur als Hash gespeichert.
 
+## Stell- und Lagerplätze
+
+Unter *Verwaltung → Stell- und Lagerplätze* beschreibt der Ortsverband, wo
+etwas steht oder liegt – als Baum. Ganz oben stehen **Gebäude**, **Hallen**
+und **Höfe**; darunter hängen **Stockwerke** und **Räume** (in Gebäuden),
+**Fahrzeugstellplätze** (in Hallen), **Stellplätze auf dem Hof**,
+**Schränke** (in Räumen) und **Regale** (in Schränken). Die Anwendung
+achtet darauf, dass die Art zum übergeordneten Platz passt.
+
+* **Serie anlegen:** Beim Anlegen „Wie viele auf einmal" und „Erste Nummer"
+  setzen – aus „Raum", 16, 1 werden „Raum 1" bis „Raum 16", ein
+  Kurzzeichen „R" wird zu R1 … R16. So ist ein Haus mit drei Stockwerken
+  und 16 Räumen je Stockwerk in vier Schritten erfasst.
+* **Pflege:** Plätze lassen sich innerhalb ihrer Ebene verschieben,
+  umhängen (nie unter einen eigenen Unterplatz), stilllegen (bleiben im
+  Baum, sind aber nicht mehr auswählbar) und löschen, sobald keine
+  Unterplätze mehr daran hängen. Leitung und Administration dürfen pflegen.
+* Der Baum ist die Grundlage für die Zuordnung von Fahkzeugen, Geräten und
+  Material zu einem Platz – ein Pfad wie „Haupthaus › 1. Stock › Raum 12"
+  steht dann überall gleich.
+
 ## Rollen
 
 | Rolle | Darf |

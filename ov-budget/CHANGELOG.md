@@ -1,5 +1,20 @@
 # Änderungsverlauf
 
+## 2.1.6.0
+
+### Stell- und Lagerplätze
+
+- Neu unter *Verwaltung → Stell- und Lagerplätze*: ein Baum aus Gebäuden,
+  Hallen und Höfen mit Stockwerken, Räumen, Fahrzeugstellplätzen,
+  Stellplätzen auf dem Hof, Schränken und Regalen. Die Art muss zum
+  übergeordneten Platz passen – ein Regal liegt im Schrank, ein
+  Fahrzeugstellplatz in der Halle.
+- **Serien:** „Raum", 16, ab 1 legt „Raum 1" bis „Raum 16" auf einmal an,
+  Kurzzeichen bekommen die Nummer angehängt.
+- Verschieben innerhalb der Ebene, umhängen, stilllegen, löschen ohne
+  Unterplätze. Pfad wie „Haupthaus › 1. Stock › Raum 12" als Grundlage für
+  spätere Zuordnungen von Fahrzeugen, Geräten und Material.
+
 ## 2.1.5.3
 
 ### Korrektur: Add-on startete nicht mehr

@@ -49,7 +49,7 @@ function nav_module(): array
                         'aktiv' => ['admin', 'admin_users', 'admin_user_edit', 'admin_lists', 'admin_list_edit',
                                     'admin_settings', 'admin_divera', 'admin_divera_form', 'admin_order_rights',
                                     'admin_stein', 'admin_divera_fahrzeuge', 'admin_connectors', 'admin_connector',
-                                    'admin_log', 'admin_backup', 'admin_ha', 'admin_nav', 'admin_kalender'],
+                                    'admin_log', 'admin_backup', 'admin_ha', 'admin_nav', 'admin_kalender', 'admin_standorte', 'admin_standort_edit'],
                         'darf' => can('admin')],
     ];
 }
