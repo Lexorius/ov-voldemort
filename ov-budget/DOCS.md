@@ -1062,9 +1062,12 @@ achtet darauf, dass die Art zum übergeordneten Platz passt.
   Baum als kleines Vorschaubild erscheint. Bilder werden verkleinert und
   verlieren den Aufnahmeort; sie liegen in der Dateiablage unter
   `standorte/` und wandern mit der Sicherung.
-* Der Baum ist die Grundlage für die Zuordnung von Fahrzeugen, Geräten und
-  Material zu einem Platz – ein Pfad wie „Haupthaus › 1. Stock › Raum 12"
-  steht dann überall gleich.
+* **Fahrzeuge:** In der Fahrzeugakte lässt sich unter „Stellplatz
+  (Standard)" einer der Plätze wählen – wo das Fahrzeug normalerweise steht.
+  Die Akte zeigt den Pfad („Halle 1 › Stellplatz 3"), die Fahrzeugliste den
+  Platznamen, und die Platzseite in der Verwaltung alle Fahrzeuge, die dort
+  stehen. Das freie Feld „Standort" bleibt für Vorübergehendes wie „in der
+  Werkstatt". Geräte und Material folgen.
 
 ## Rollen
 

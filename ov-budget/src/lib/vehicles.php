@@ -39,13 +39,14 @@ const FZ_JOURNAL_FELDER = [
 function vehicle_find(int $id): ?array
 {
     return db_row(
-        'SELECT v.*, t.label AS typ_label, t.color AS typ_color,
+        'SELECT v.*, t.label AS typ_label, t.color AS typ_color, sp.name AS stellplatz_name, sp.typ AS stellplatz_typ,
                 f.label AS fachgruppe_label,
                 s.label AS status_label, s.color AS status_color, s.slug AS status_slug
          FROM vehicles v
          LEFT JOIN list_items t ON t.id = v.typ_id
          LEFT JOIN list_items f ON f.id = v.fachgruppe_id
          LEFT JOIN list_items s ON s.id = v.status_id
+         LEFT JOIN standorte sp ON sp.id = v.standort_id
          WHERE v.id = ?',
         [$id]
     );
@@ -190,7 +191,7 @@ function vehicle_query(array $f = []): array
     $vorne = [$favUser];
 
     return db_all(
-        'SELECT v.*, t.label AS typ_label, t.color AS typ_color,
+        'SELECT v.*, t.label AS typ_label, t.color AS typ_color, sp.name AS stellplatz_name, sp.typ AS stellplatz_typ,
                 f.label AS fachgruppe_label,
                 s.label AS status_label, s.color AS status_color, s.slug AS status_slug,
                 (SELECT COUNT(*) FROM vehicle_favorites vf
@@ -204,7 +205,8 @@ function vehicle_query(array $f = []): array
          FROM vehicles v
          LEFT JOIN list_items t ON t.id = v.typ_id
          LEFT JOIN list_items f ON f.id = v.fachgruppe_id
-         LEFT JOIN list_items s ON s.id = v.status_id'
+         LEFT JOIN list_items s ON s.id = v.status_id
+         LEFT JOIN standorte sp ON sp.id = v.standort_id'
         . ($w ? ' WHERE ' . implode(' AND ', $w) : '')
         . ' ORDER BY ' . vehicle_sort_sql((string)($f['sort'] ?? 'standard')),
         array_merge($vorne, $p)
@@ -417,6 +419,16 @@ function journal_verify(int $vehicleId): array
  * ==================================================================== */
 
 /** Fahrzeug aus dem Formular speichern. Gibt [id, fehler[]] zurück. */
+/** Nur einen vorhandenen, aktiven Platz annehmen – sonst keinen */
+function vehicle_stellplatz_pruefen(?int $id): ?int
+{
+    if (!$id || !function_exists('standort_find')) {
+        return null;
+    }
+    $s = standort_find($id);
+    return $s && (int)$s['is_active'] === 1 ? (int)$s['id'] : null;
+}
+
 function vehicle_save_from_post(?array $existing, array $user): array
 {
     $errors = [];
@@ -447,6 +459,7 @@ function vehicle_save_from_post(?array $existing, array $user): array
         'sp_bis'            => post_date('sp_bis'),
         'uvv_bis'           => post_date('uvv_bis'),
         'standort'          => mb_substr(post_str('standort'), 0, 150),
+        'standort_id'       => vehicle_stellplatz_pruefen(post_int('standort_id')),
         'notiz'             => post_str('notiz'),
         'extra'             => extra_from_post(vehicle_extra_fields()),
         'is_active'         => post_bool('is_active'),

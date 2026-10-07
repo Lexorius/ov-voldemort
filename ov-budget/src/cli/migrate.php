@@ -1533,6 +1533,17 @@ SQL);
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
     $merken('051_standort_lage_bilder');
+
+    /* ---------- 052: Standard-Stellplatz je Fahrzeug ---------- */
+    if (ovb_table_exists($pdo, 'vehicles') && ovb_table_exists($pdo, 'standorte')) {
+        if (!ovb_column_exists($pdo, 'vehicles', 'standort_id')) {
+            $pdo->exec('ALTER TABLE vehicles ADD COLUMN standort_id INT UNSIGNED NULL AFTER standort');
+        }
+        if (!ovb_constraint_exists($pdo, 'vehicles', 'fk_fz_standort')) {
+            $pdo->exec('ALTER TABLE vehicles ADD CONSTRAINT fk_fz_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE SET NULL');
+        }
+    }
+    $merken('052_fahrzeug_stellplatz');
 }
 
 /**

@@ -169,7 +169,7 @@ $fristBadges = static function (array $liste): string {
           </a>
           <div class="kachel__text">
             <a class="item__title" href="<?= e(url('vehicle', ['id' => $v['id']])) ?>"><?= e($v['bezeichnung']) ?></a>
-            <div class="item__sub small"><?= e(implode(' · ', array_filter([$v['funkrufname'], $v['kennzeichen']]))) ?></div>
+            <div class="item__sub small"><?= e(implode(' · ', array_filter([$v['funkrufname'], $v['kennzeichen'], $v['stellplatz_name'] ?? '']))) ?></div>
             <div class="item__meta">
               <?= badge($v['status_label'] ? ['label' => $v['status_label'], 'color' => $v['status_color']] : null, 'ohne Status') ?>
               <?php if (($v['fms_status'] ?? null) !== null && $v['fms_status'] !== ''): ?>

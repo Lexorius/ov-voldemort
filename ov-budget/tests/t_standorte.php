@@ -163,4 +163,14 @@ $check('Baum mit Vorschaubild', str_contains($html, 'standort__thumb') && str_co
 $html = render_partial('admin/standort_edit', ['s' => $rows[0], 'parent' => null, 'alle' => $rows, 'errors' => [], 'pfad' => 'Haupthaus', 'kinder' => 1]);
 $check('Formular bearbeiten: keine Serie, Löschen gesperrt, sich selbst nicht als Eltern', !str_contains($html, 'name="anzahl"') && str_contains($html, 'Löschen</button>') && str_contains($html, ' disabled>Löschen') && !str_contains($html, '>Haupthaus (Gebäude)<'));
 
+/* ---------- Fahrzeuge: fester Stellplatz ---------- */
+$fz = (string)file_get_contents($app . '/src/lib/vehicles.php');
+$check('Fahrzeugabfragen lesen den Stellplatz mit', substr_count($fz, 'LEFT JOIN standorte sp ON sp.id = v.standort_id') >= 2 && str_contains($fz, "'standort_id'       => vehicle_stellplatz_pruefen(post_int('standort_id'))"));
+require $app . '/src/lib/vehicles.php';
+$GLOBALS['rows'] = $rows;
+$check('nur aktive Plätze werden Stellplatz', vehicle_stellplatz_pruefen(1) === 1 && vehicle_stellplatz_pruefen(5) === null && vehicle_stellplatz_pruefen(42) === null && vehicle_stellplatz_pruefen(null) === null);
+$html = render_partial('admin/standort_edit', ['s' => $rows[3], 'parent' => null, 'alle' => $rows, 'errors' => [], 'pfad' => 'Halle 1', 'kinder' => 1, 'bilder' => [],
+    'fahrzeuge' => [['id' => 2, 'bezeichnung' => 'GKW 1', 'funkrufname' => 'Heros HN 21/51', 'kennzeichen' => 'THW-1234', 'is_active' => 1]]]);
+$check('Platzseite zeigt Fahrzeuge', str_contains($html, 'Fahrzeuge mit diesem Stellplatz') && str_contains($html, 'GKW 1') && str_contains($html, 'p=vehicle'));
+
 echo "$ok bestanden, $fail fehlgeschlagen\n";

@@ -1086,6 +1086,8 @@ CREATE TABLE IF NOT EXISTS vehicles (
   sp_bis            DATE         NULL,
   uvv_bis           DATE         NULL,
   standort          VARCHAR(150) NOT NULL DEFAULT '',
+  -- fester Stellplatz aus den Stell- und Lagerplaetzen; der Fremdschluessel kommt in der Wanderung
+  standort_id       INT UNSIGNED NULL,
   notiz             TEXT         NULL,
   extra             TEXT         NULL,
   opta              VARCHAR(60)  NOT NULL DEFAULT '',

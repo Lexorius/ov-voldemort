@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 2.1.8.0
+
+### Fahrzeuge mit festem Stellplatz
+
+- In der Fahrzeugakte gibt es „Stellplatz (Standard)" – eine Auswahl aus den
+  Stell- und Lagerplätzen der Verwaltung. Die Akte zeigt den Pfad, die
+  Fahrzeugliste den Platznamen, die Platzseite alle Fahrzeuge dort.
+- Das freie Feld „Standort" bleibt für Vorübergehendes.
+
 ## 2.1.7.0
 
 ### Stell- und Lagerplätze: Bilder, Koordinaten, Karte

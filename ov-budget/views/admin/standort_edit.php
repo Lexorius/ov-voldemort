@@ -121,6 +121,21 @@ $ausser = $isNew ? [] : array_merge([(int)$s['id']], standort_nachkommen((int)$s
     <p class="small muted" id="position-hinweis">Übernimmt den Standort dieses Geräts – der Browser fragt dafür um Erlaubnis.</p>
   </section>
 
+  <?php $fahrzeuge ??= []; if ($fahrzeuge): ?>
+  <section class="card" id="fahrzeuge">
+    <div class="card__head">
+      <h2>Fahrzeuge mit diesem Stellplatz</h2>
+      <span class="muted small"><?= count($fahrzeuge) ?></span>
+    </div>
+    <div class="chips">
+      <?php foreach ($fahrzeuge as $v): ?>
+        <a class="chip" href="<?= e(url('vehicle', ['id' => $v['id']])) ?>"><?= e((string)$v['bezeichnung']) ?><?= $v['funkrufname'] ? ' <span class="muted small">' . e((string)$v['funkrufname']) . '</span>' : '' ?><?= (int)$v['is_active'] !== 1 ? ' <span class="badge badge--muted">ausgemustert</span>' : '' ?></a>
+      <?php endforeach; ?>
+    </div>
+    <p class="small muted">Gesetzt in der Fahrzeugakte unter „Stellplatz (Standard)".</p>
+  </section>
+  <?php endif; ?>
+
   <section class="card" id="bilder">
     <div class="card__head">
       <h2>Bilder</h2>
