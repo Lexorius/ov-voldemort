@@ -1498,6 +1498,41 @@ SQL);
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
     $merken('050_standorte');
+
+    /* ---------- 051: Lage und Bilder der Stell- und Lagerplaetze ---------- */
+    if (ovb_table_exists($pdo, 'standorte')) {
+        foreach ([
+            'geo_lat'         => 'DECIMAL(9,6) NULL AFTER notiz',
+            'geo_lng'         => 'DECIMAL(9,6) NULL AFTER geo_lat',
+            'geo_genauigkeit' => 'DECIMAL(8,1) NULL AFTER geo_lng',
+            'geo_quelle'      => "ENUM('geraet','mensch') NULL AFTER geo_genauigkeit",
+            'geo_at'          => 'DATETIME NULL AFTER geo_quelle',
+        ] as $spalte => $def) {
+            if (!ovb_column_exists($pdo, 'standorte', $spalte)) {
+                $pdo->exec("ALTER TABLE standorte ADD COLUMN $spalte $def");
+            }
+        }
+    }
+    if (!ovb_table_exists($pdo, 'standort_bilder')) {
+        $pdo->exec("CREATE TABLE standort_bilder (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            standort_id INT UNSIGNED NOT NULL,
+            titel VARCHAR(200) NOT NULL DEFAULT '',
+            orig_name VARCHAR(255) NOT NULL DEFAULT '',
+            stored_name VARCHAR(120) NOT NULL,
+            thumb_name VARCHAR(120) NULL,
+            mime VARCHAR(100) NOT NULL DEFAULT '',
+            size_bytes INT UNSIGNED NOT NULL DEFAULT 0,
+            is_cover TINYINT(1) NOT NULL DEFAULT 0,
+            uploaded_by INT UNSIGNED NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY idx_sb_standort (standort_id, is_cover),
+            CONSTRAINT fk_sb_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE CASCADE,
+            CONSTRAINT fk_sb_user FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    }
+    $merken('051_standort_lage_bilder');
 }
 
 /**

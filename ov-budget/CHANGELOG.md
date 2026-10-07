@@ -1,5 +1,17 @@
 # Änderungsverlauf
 
+## 2.1.7.0
+
+### Stell- und Lagerplätze: Bilder, Koordinaten, Karte
+
+- Jeder Platz kann **GPS-Koordinaten** tragen: von Hand als „Breite, Länge"
+  oder am Handy mit **„Jetzt Position setzen"** vom Gerät. Mit Position zeigt
+  die Platzseite eine **Karte** (OpenStreetMap) samt Kartenlink, im Baum
+  steht ein 📍.
+- **Bilder** je Platz hochladen, eines als Titelbild; der Baum zeigt es als
+  kleines Vorschaubild. Bilder werden verkleinert und verlieren den
+  Aufnahmeort.
+
 ## 2.1.6.0
 
 ### Stell- und Lagerplätze

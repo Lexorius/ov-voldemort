@@ -1053,7 +1053,16 @@ achtet darauf, dass die Art zum übergeordneten Platz passt.
   umhängen (nie unter einen eigenen Unterplatz), stilllegen (bleiben im
   Baum, sind aber nicht mehr auswählbar) und löschen, sobald keine
   Unterplätze mehr daran hängen. Leitung und Administration dürfen pflegen.
-* Der Baum ist die Grundlage für die Zuordnung von Fahkzeugen, Geräten und
+* **Lage und Bilder:** Jeder Platz kann **GPS-Koordinaten** tragen – von
+  Hand als „Breite, Länge" eingetragen oder am Handy vor Ort mit „Jetzt
+  Position setzen" vom Gerät übernommen (der Browser fragt um Erlaubnis).
+  Mit Position zeigt die Platzseite eine Karte von OpenStreetMap und einen
+  Kartenlink, im Baum steht ein 📍. Dazu lassen sich **Bilder** hochladen
+  (vom Regal, der Tür, dem Stellplatz), eines davon als Titelbild, das im
+  Baum als kleines Vorschaubild erscheint. Bilder werden verkleinert und
+  verlieren den Aufnahmeort; sie liegen in der Dateiablage unter
+  `standorte/` und wandern mit der Sicherung.
+* Der Baum ist die Grundlage für die Zuordnung von Fahrzeugen, Geräten und
   Material zu einem Platz – ein Pfad wie „Haupthaus › 1. Stock › Raum 12"
   steht dann überall gleich.
 

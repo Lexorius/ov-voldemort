@@ -39,4 +39,5 @@ render('admin/standorte', [
     'baum'     => standort_baum($alle),
     'alle'     => $alle,
     'zaehlung' => standort_zaehlung($alle),
+    'titelbilder' => standort_titelbilder(array_column($alle, 'id')),
 ]);

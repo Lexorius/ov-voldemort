@@ -502,6 +502,12 @@ table.data td.num, table.data th.num { text-align: right; font-variant-numeric: 
 .standort__icon { width: 1.6rem; text-align: center; }
 .standort__name { flex: 1 1 12rem; min-width: 0; }
 .standort__knoepfe { display: flex; gap: .25rem; }
+.standort__thumb { width: 1.6rem; height: 1.6rem; object-fit: cover; border-radius: 4px; display: block; }
+.galerie { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: .8rem; }
+.galerie__bild { margin: 0; }
+.galerie__bild img { display: block; width: 100%; height: 8rem; object-fit: cover; border-radius: var(--radius); border: 1px solid var(--border); }
+.galerie__bild--titel img { outline: 2px solid var(--accent); }
+.galerie__bild figcaption { font-size: .8rem; margin-top: .3rem; }
 
 /* Kalender: Monatsraster */
 .kal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-top: .6rem; }

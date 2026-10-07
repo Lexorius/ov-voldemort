@@ -1,6 +1,7 @@
 <?php
-/** @var array $baum @var array $alle @var array $zaehlung */
-$zeile = static function (array $s, array $geschwister) use (&$zeile): void {
+/** @var array $baum @var array $alle @var array $zaehlung @var array $titelbilder */
+$titelbilder ??= [];
+$zeile = static function (array $s, array $geschwister) use (&$zeile, $titelbilder): void {
     $typ = STANDORT_TYPEN[standort_typ((string)$s['typ'])];
     $ids = array_map('intval', array_column($geschwister, 'id'));
     $pos = array_search((int)$s['id'], $ids, true);
@@ -8,10 +9,16 @@ $zeile = static function (array $s, array $geschwister) use (&$zeile): void {
     ?>
     <div class="standort<?= (int)$s['is_active'] !== 1 ? ' standort--aus' : '' ?>" style="margin-left:<?= (int)$s['tiefe'] * 1.4 ?>rem">
       <div class="standort__zeile">
-        <span class="standort__icon" title="<?= e($typ['label']) ?>"><?= e($typ['icon']) ?></span>
+        <?php if (isset($titelbilder[(int)$s['id']])): ?>
+          <a class="standort__icon" href="<?= e(url('standort_bild', ['id' => $titelbilder[(int)$s['id']]['id']])) ?>" target="_blank" rel="noopener" title="<?= e($typ['label']) ?> – Bild öffnen">
+            <img src="<?= e(url('standort_bild', ['id' => $titelbilder[(int)$s['id']]['id'], 'vorschau' => 1])) ?>" alt="" loading="lazy" class="standort__thumb"></a>
+        <?php else: ?>
+          <span class="standort__icon" title="<?= e($typ['label']) ?>"><?= e($typ['icon']) ?></span>
+        <?php endif; ?>
         <span class="standort__name"><a href="<?= e(url('admin_standort_edit', ['id' => $s['id']])) ?>"><?= e((string)$s['name']) ?></a>
           <?php if ($s['kurz'] !== ''): ?><span class="mono muted small"><?= e((string)$s['kurz']) ?></span><?php endif; ?>
           <span class="muted small"><?= e($typ['label']) ?></span>
+          <?php if (($s['geo_lat'] ?? null) !== null): ?><a class="small" href="<?= e(dv_map_url((float)$s['geo_lat'], (float)$s['geo_lng'])) ?>" target="_blank" rel="noopener" title="auf der Karte">📍</a><?php endif; ?>
           <?php if ((int)$s['is_active'] !== 1): ?><span class="badge badge--muted">stillgelegt</span><?php endif; ?>
           <?php if ($s['kinder']): ?><span class="muted small">· <?= count($s['kinder']) ?> darunter</span><?php endif; ?></span>
         <span class="standort__knoepfe">

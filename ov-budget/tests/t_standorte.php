@@ -28,6 +28,9 @@ function db_update(string $t, array $d, string $w, array $p): int { $GLOBALS['up
 function can(string $was, mixed $ctx = null): bool { return true; }
 function current_user(): ?array { return ['id' => 1, 'role' => 'admin']; }
 $app = dirname(__DIR__);
+function dv_map_url(float $lat, float $lng): string { return 'https://osm/' . $lat . '/' . $lng; }
+function dv_map_embed_url(float $lat, float $lng, float $s = 0.008): string { return 'https://osm/embed'; }
+function upload_max_bytes(): int { return 8 * 1048576; }
 foreach (['util', 'settings', 'view', 'standorte'] as $lib) { require $app . '/src/lib/' . $lib . '.php'; }
 
 $ok = 0; $fail = 0;
@@ -106,6 +109,43 @@ $GLOBALS['kinder'] = 0;
 $GLOBALS['execs'] = [];
 $check('Löschen ohne Kinder', standort_delete($rows[2]) === null && str_contains($GLOBALS['execs'][0][0], 'DELETE FROM standorte'));
 
+/* ---------- Lage ---------- */
+$check('Koordinaten mit Punkt und Komma', standort_koordinaten_parsen('49.142345, 9.218765') === [49.142345, 9.218765] && standort_koordinaten_parsen('49,142345; 9,218765') === [49.142345, 9.218765]
+    && standort_koordinaten_parsen('49.1 9.2') === [49.1, 9.2]);
+$check('unbrauchbare Koordinaten', standort_koordinaten_parsen('') === null && standort_koordinaten_parsen('Heilbronn') === null && standort_koordinaten_parsen('95, 9') === null
+    && standort_koordinaten_parsen('0, 0') === null && standort_koordinaten_parsen('49.1') === null);
+$check('Koordinaten lesbar', standort_koordinaten_text(49.142345, 9.218765) === '49,14235 / 9,21877' && standort_koordinaten_text(null, null) === '');
+$GLOBALS['updates'] = [];
+$check('Position vom Gerät', standort_position_setzen($rows[0], 49.142345678, 9.2, 12.4, 'geraet', $u) === null && $GLOBALS['updates'][0][1]['geo_lat'] === 49.142346
+    && $GLOBALS['updates'][0][1]['geo_genauigkeit'] === 12.4 && $GLOBALS['updates'][0][1]['geo_quelle'] === 'geraet');
+$check('Position außerhalb abgelehnt', standort_position_setzen($rows[0], 95.0, 9.2, null, 'geraet', $u) !== null);
+$GLOBALS['updates'] = [];
+standort_position_setzen($rows[0], null, null, null, 'mensch', $u);
+$check('Position entfernt', $GLOBALS['updates'][0][1]['geo_lat'] === null && $GLOBALS['updates'][0][1]['geo_quelle'] === null);
+$GLOBALS['updates'] = [];
+$_POST = ['name' => 'Halle 1', 'typ' => 'halle', 'parent_id' => '', 'koordinaten' => '49.14, 9.22', 'is_active' => '1'];
+[$ids, $fehler] = standort_save_from_post($rows[3] + ['geo_lat' => null, 'geo_lng' => null], $u);
+$check('Koordinaten im Formular gespeichert', $fehler === [] && $GLOBALS['updates'][0][1]['geo_lat'] === 49.14 && $GLOBALS['updates'][0][1]['geo_quelle'] === 'mensch');
+$GLOBALS['updates'] = [];
+$_POST['koordinaten'] = '49.14, 9.22';
+[$ids, $fehler] = standort_save_from_post($rows[3] + ['geo_lat' => '49.140000', 'geo_lng' => '9.220000', 'geo_quelle' => 'geraet'], $u);
+$check('unveränderte Koordinaten lassen Quelle und Zeit in Ruhe', $fehler === [] && !array_key_exists('geo_lat', $GLOBALS['updates'][0][1]));
+$_POST['koordinaten'] = 'irgendwo';
+[$ids, $fehler] = standort_save_from_post($rows[3], $u);
+$check('unlesbare Koordinaten: Fehler', $ids === [] && str_contains($fehler[0], 'Koordinaten'));
+
+/* ---------- Bilder (ohne Dateien) ---------- */
+// Achtung: $GLOBALS['rows'] ist hier dieselbe Variable wie $rows – deshalb vorher sichern
+$standortZeilen = $rows;
+$GLOBALS['rows'] = [['id' => 7, 'standort_id' => 1, 'is_cover' => 0, 'titel' => 'Tür'], ['id' => 8, 'standort_id' => 1, 'is_cover' => 1, 'titel' => 'Regal'], ['id' => 9, 'standort_id' => 2, 'is_cover' => 0, 'titel' => 'Flur']];
+$tb = standort_titelbilder([1, 2, 3]);
+$check('Titelbild je Platz: markiertes zuerst, sonst das erste', $tb[1]['id'] === 8 && $tb[2]['id'] === 9 && !isset($tb[3]) && standort_titelbilder([]) === []);
+$GLOBALS['execs'] = [];
+standort_bild_cover_setzen(1, 7);
+$check('Titelbild setzen', str_contains($GLOBALS['execs'][0][0], 'is_cover = CASE') && $GLOBALS['execs'][0][1] === [7, 1]);
+$GLOBALS['rows'] = $standortZeilen;
+$rows = $standortZeilen;
+
 /* ---------- Ansichten ---------- */
 $html = render_partial('admin/standorte', ['baum' => $baum, 'alle' => $rows, 'zaehlung' => standort_zaehlung($rows)]);
 $check('Baum rendert mit Einrückung, Typen und Knöpfen', str_contains($html, 'Haupthaus') && str_contains($html, 'margin-left:2.8rem') && str_contains($html, '1 Gebäude') && str_contains($html, '2 Räume')
@@ -113,6 +153,13 @@ $check('Baum rendert mit Einrückung, Typen und Knöpfen', str_contains($html, '
 $check('leerer Baum', str_contains(render_partial('admin/standorte', ['baum' => [], 'alle' => [], 'zaehlung' => []]), 'Noch kein Platz'));
 $html = render_partial('admin/standort_edit', ['s' => ['id' => null, 'name' => '', 'typ' => 'raum', 'parent_id' => 2, 'kurz' => '', 'notiz' => '', 'is_active' => 1], 'parent' => $rows[1], 'alle' => $rows, 'errors' => [], 'pfad' => 'Haupthaus › 1. Stock', 'kinder' => 0]);
 $check('Formular neu: Serie, Eltern vorgewählt, Pfad', str_contains($html, 'name="anzahl"') && str_contains($html, 'value="2" selected') && str_contains($html, 'Haupthaus › 1. Stock') && str_contains($html, 'value="raum" selected'));
+$html = render_partial('admin/standort_edit', ['s' => $rows[0] + ['geo_lat' => '49.142345', 'geo_lng' => '9.218765', 'geo_quelle' => 'geraet', 'geo_at' => '2026-10-08 10:00:00', 'geo_genauigkeit' => '12.4'], 'parent' => null, 'alle' => $rows, 'errors' => [], 'pfad' => 'Haupthaus', 'kinder' => 1,
+    'bilder' => [['id' => 8, 'standort_id' => 1, 'is_cover' => 1, 'titel' => 'Regal'], ['id' => 7, 'standort_id' => 1, 'is_cover' => 0, 'titel' => 'Tür']]]);
+$check('Platzseite: Karte, Koordinaten, Position setzen, Galerie mit Titelbild', str_contains($html, 'class="karte"') && str_contains($html, '49,14235 / 9,21877') && str_contains($html, 'data-position')
+    && str_contains($html, 'value="49.142345, 9.218765"') && str_contains($html, 'Genauigkeit etwa 12 m') && substr_count($html, 'galerie__bild') >= 2 && str_contains($html, 'galerie__bild--titel')
+    && substr_count($html, 'value="bild_cover"') === 1 && str_contains($html, 'name="bilder[]"'));
+$html = render_partial('admin/standorte', ['baum' => $baum, 'alle' => $rows, 'zaehlung' => standort_zaehlung($rows), 'titelbilder' => [1 => ['id' => 8]]]);
+$check('Baum mit Vorschaubild', str_contains($html, 'standort__thumb') && str_contains($html, 'p=standort_bild'));
 $html = render_partial('admin/standort_edit', ['s' => $rows[0], 'parent' => null, 'alle' => $rows, 'errors' => [], 'pfad' => 'Haupthaus', 'kinder' => 1]);
 $check('Formular bearbeiten: keine Serie, Löschen gesperrt, sich selbst nicht als Eltern', !str_contains($html, 'name="anzahl"') && str_contains($html, 'Löschen</button>') && str_contains($html, ' disabled>Löschen') && !str_contains($html, '>Haupthaus (Gebäude)<'));
 

@@ -18,6 +18,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         flash($fehler ? 'error' : 'success', $fehler ?? sprintf('„%s" gelöscht.', (string)$s['name']));
         redirect_route($fehler ? 'admin_standort_edit' : 'admin_standorte', $fehler ? ['id' => $s['id']] : []);
     }
+    if (post_str('action') === 'position' && $s) {
+        $lat = post_str('lat');
+        $lng = post_str('lng');
+        $fehler = is_numeric($lat) && is_numeric($lng)
+            ? standort_position_setzen($s, (float)$lat, (float)$lng, is_numeric(post_str('genauigkeit')) ? (float)post_str('genauigkeit') : null, 'geraet', $user)
+            : 'Es kam keine Position an.';
+        flash($fehler ? 'error' : 'success', $fehler ?? 'Position vom Gerät übernommen.');
+        redirect(url('admin_standort_edit', ['id' => $s['id']]) . '#lage');
+    }
+    if (post_str('action') === 'position_weg' && $s) {
+        standort_position_setzen($s, null, null, null, 'mensch', $user);
+        flash('success', 'Position entfernt.');
+        redirect(url('admin_standort_edit', ['id' => $s['id']]) . '#lage');
+    }
+    if (post_str('action') === 'bild_upload' && $s) {
+        [$n, $fehler] = standort_bilder_speichern((int)$s['id'], 'bilder', post_str('titel'), $user);
+        foreach ($fehler as $f) {
+            flash('warn', e($f));
+        }
+        if ($n > 0) {
+            flash('success', sprintf('%d Bild(er) gespeichert.', $n));
+        }
+        redirect(url('admin_standort_edit', ['id' => $s['id']]) . '#bilder');
+    }
+    if (in_array(post_str('action'), ['bild_cover', 'bild_delete'], true) && $s) {
+        $bild = standort_bild_find((int)post_int('bild_id', 0));
+        if ($bild && (int)$bild['standort_id'] === (int)$s['id']) {
+            if (post_str('action') === 'bild_cover') {
+                standort_bild_cover_setzen((int)$s['id'], (int)$bild['id']);
+                flash('success', 'Titelbild gesetzt.');
+            } else {
+                standort_bild_delete($bild);
+                flash('success', 'Bild entfernt.');
+            }
+        }
+        redirect(url('admin_standort_edit', ['id' => $s['id']]) . '#bilder');
+    }
     if (post_str('action') === 'aktiv' && $s) {
         $neu = (int)$s['is_active'] === 1 ? 0 : 1;
         db_update('standorte', ['is_active' => $neu], 'id = ?', [(int)$s['id']]);
@@ -49,4 +86,5 @@ render('admin/standort_edit', [
     'errors'  => $errors,
     'pfad'    => $s['id'] ? standort_pfad((int)$s['id'], $alle) : ($parent ? standort_pfad((int)$parent['id'], $alle) : ''),
     'kinder'  => $s['id'] ? (int)db_val('SELECT COUNT(*) FROM standorte WHERE parent_id = ?', [(int)$s['id']], 0) : 0,
+    'bilder'  => $s['id'] ? standort_bilder((int)$s['id']) : [],
 ]);
