@@ -41,18 +41,7 @@ foreach ($fahrzeuge as $v) {
 }
 
 /** Fristen als Plaketten */
-$fristBadges = static function (array $liste): string {
-    $html = '';
-    foreach ($liste as $f) {
-        if ($f['status'] === 'ok') {
-            continue;
-        }
-        $farbe = $f['status'] === 'abgelaufen' ? '#b91c1c' : '#a16207';
-        $text = $f['label'] . ' ' . ($f['status'] === 'abgelaufen' ? 'abgelaufen' : 'bis ' . de_date($f['datum']));
-        $html .= '<span class="badge" style="background:' . $farbe . '">' . e($text) . '</span>';
-    }
-    return $html;
-};
+$fristBadges = static fn(array $liste): string => vehicle_frist_badges($liste);
 ?>
 <div class="pagehead">
   <div>
@@ -152,37 +141,7 @@ $fristBadges = static function (array $liste): string {
   <?php elseif ($ansicht === 'kacheln'): ?>
     <div class="kacheln">
       <?php foreach ($fahrzeuge as $v): ?>
-        <div class="kachel<?= (int)$v['is_active'] ? '' : ' kachel--aus' ?>"
-             style="border-top-color:<?= e($v['status_color'] ?: '#94a3b8') ?>">
-          <div class="kachel__stern"><?= $stern($v) ?></div>
-          <?php $stempel = vehicle_stamp($v); ?>
-          <a class="kachel__bild" href="<?= e(url('vehicle', ['id' => $v['id']])) ?>">
-            <?php if ($stempel !== null): ?>
-              <span class="stempel<?= (int)$v['is_active'] ? '' : ' stempel--grau' ?>"><?= e($stempel) ?></span>
-            <?php endif; ?>
-            <?php if (isset($titelbilder[(int)$v['id']])): ?>
-              <img alt="" loading="lazy"
-                   src="<?= e(url('vehicle_file', ['id' => $titelbilder[(int)$v['id']]['id'], 'vorschau' => 1])) ?>">
-            <?php else: ?>
-              <span class="kachel__leer" aria-hidden="true">⛟</span>
-            <?php endif; ?>
-          </a>
-          <div class="kachel__text">
-            <a class="item__title" href="<?= e(url('vehicle', ['id' => $v['id']])) ?>"><?= e($v['bezeichnung']) ?></a>
-            <div class="item__sub small"><?= e(implode(' · ', array_filter([$v['funkrufname'], $v['kennzeichen'], $v['stellplatz_name'] ?? '']))) ?></div>
-            <div class="item__meta">
-              <?= badge($v['status_label'] ? ['label' => $v['status_label'], 'color' => $v['status_color']] : null, 'ohne Status') ?>
-              <?php if (($v['fms_status'] ?? null) !== null && $v['fms_status'] !== ''): ?>
-                <span class="badge" style="background:<?= e(fms_color((int)$v['fms_status'])) ?>">S<?= (int)$v['fms_status'] ?></span>
-              <?php endif; ?>
-              <?= $fristBadges($fristen[(int)$v['id']] ?? []) ?>
-              <?php if ((int)$v['offene_auftraege'] > 0): ?>
-                <span class="badge badge--outline"><?= (int)$v['offene_auftraege'] ?> Auftrag/Aufträge</span>
-              <?php endif; ?>
-              <?php if (!(int)$v['is_active']): ?><span class="badge badge--muted">ausgemustert</span><?php endif; ?>
-            </div>
-          </div>
-        </div>
+        <?= render_partial('partials/fahrzeug_kachel', ['v' => $v, 'titelbilder' => $titelbilder, 'fristen' => $fristen[(int)$v['id']] ?? [], 'stern' => $stern($v)]) ?>
       <?php endforeach; ?>
     </div>
   <?php else: ?>

@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.13.0
+
+- **Fahrzeuge am Platz als Kachel:** In der Standortübersicht und auf der
+  Platzseite der Verwaltung erscheinen Fahrzeuge mit demselben Bild wie in
+  der Fahrzeugliste – Titelbild, Stempel („In Wartung", „Nicht
+  einsatzbereit", „Ausgemustert"), Status, FMS-Status, Fristen und offene
+  Aufträge. Die Kachel ist jetzt ein gemeinsames Teilstück.
+
 ## 2.1.12.0
 
 - **Standortübersicht:** Neuer Menüpunkt „Standorte" für alle. Gebäude,

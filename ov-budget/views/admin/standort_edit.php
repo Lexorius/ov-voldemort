@@ -127,9 +127,10 @@ $ausser = $isNew ? [] : array_merge([(int)$s['id']], standort_nachkommen((int)$s
       <h2>Fahrzeuge mit diesem Stellplatz</h2>
       <span class="muted small"><?= count($fahrzeuge) ?></span>
     </div>
-    <div class="chips">
+    <?php $fzTitelbilder ??= []; $fzFristen ??= []; ?>
+    <div class="kacheln">
       <?php foreach ($fahrzeuge as $v): ?>
-        <a class="chip" href="<?= e(url('vehicle', ['id' => $v['id']])) ?>"><?= e((string)$v['bezeichnung']) ?><?= $v['funkrufname'] ? ' <span class="muted small">' . e((string)$v['funkrufname']) . '</span>' : '' ?><?= (int)$v['is_active'] !== 1 ? ' <span class="badge badge--muted">ausgemustert</span>' : '' ?></a>
+        <?= render_partial('partials/fahrzeug_kachel', ['v' => $v, 'titelbilder' => $fzTitelbilder, 'fristen' => $fzFristen[(int)$v['id']] ?? [], 'mitPlatz' => false]) ?>
       <?php endforeach; ?>
     </div>
     <p class="small muted">Gesetzt in der Fahrzeugakte unter „Stellplatz (Standard)".</p>

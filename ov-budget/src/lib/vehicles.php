@@ -109,6 +109,21 @@ function vehicle_stamp(array $v): ?string
     };
 }
 
+/** Fristen (vehicle_deadlines) als Plaketten – nur die auffälligen. Reine Funktion. */
+function vehicle_frist_badges(array $liste): string
+{
+    $html = '';
+    foreach ($liste as $f) {
+        if (($f['status'] ?? 'ok') === 'ok') {
+            continue;
+        }
+        $farbe = $f['status'] === 'abgelaufen' ? '#b91c1c' : '#a16207';
+        $text = $f['label'] . ' ' . ($f['status'] === 'abgelaufen' ? 'abgelaufen' : 'bis ' . de_date($f['datum']));
+        $html .= '<span class="badge" style="background:' . $farbe . '">' . e($text) . '</span>';
+    }
+    return $html;
+}
+
 /**
  * Standort von Hand setzen (vom Handy). Rückgabe: Fehlermeldung oder null.
  * $genauigkeit in Metern, wie der Browser sie meldet.
@@ -179,6 +194,15 @@ function vehicle_query(array $f = []): array
     }
     if (!empty($f['nur_aktive'])) {
         $w[] = 'v.is_active = 1';
+    }
+    // Fahrzeuge an bestimmten Stell- und Lagerplätzen bzw. an irgendeinem
+    if (!empty($f['standort_ids'])) {
+        $ids = array_values(array_filter(array_map('intval', (array)$f['standort_ids'])));
+        $w[] = 'v.standort_id IN (' . implode(',', array_fill(0, max(1, count($ids)), '?')) . ')';
+        array_push($p, ...($ids ?: [0]));
+    }
+    if (!empty($f['mit_platz'])) {
+        $w[] = 'v.standort_id IS NOT NULL';
     }
     if (!empty($f['nur_favoriten'])) {
         $w[] = 'EXISTS (SELECT 1 FROM vehicle_favorites vf2

@@ -232,4 +232,22 @@ $check('Platz ohne Direktes verweist nach unten', str_contains($html, 'Direkt an
 $seite = (string)file_get_contents($app . '/src/pages/standorte.php');
 $check('Seite achtet auf die Rechte der Module', str_contains($seite, "can('view_vehicles')") && str_contains($seite, "can('view_verbrauch')") && str_contains($seite, "can('view_radios')") && str_contains($seite, 'COALESCE(r.standort_id, g.standort_id)'));
 
+/* ---------- Fahrzeuge am Platz als Kachel ---------- */
+$fzKachel = [['id' => 2, 'bezeichnung' => 'GKW 1', 'funkrufname' => 'Heros HN 21/51', 'kennzeichen' => 'THW-1234', 'standort_id' => 5, 'is_active' => 1,
+    'status_label' => 'In Wartung', 'status_color' => '#a16207', 'status_slug' => 'wartung', 'offene_auftraege' => 2]];
+$html = render_partial('standorte', ['s' => $rows[4], 'alle' => $rows, 'crumbs' => [$rows[3]], 'kinder' => [], 'summen' => [],
+    'hier' => ['fahrzeuge' => $fzKachel], 'darunter' => ['fahrzeuge' => 1], 'zustaendig' => [], 'titelbilder' => [], 'zaehlung' => [], 'kinderZahl' => [], 'darfPflegen' => false,
+    'fzTitelbilder' => [2 => ['id' => 9]], 'fzFristen' => [2 => [['label' => 'HU', 'status' => 'abgelaufen', 'datum' => '2026-01-01']]]]);
+$check('Übersicht: Fahrzeug als Kachel mit Bild, Stempel, Status und Frist', str_contains($html, 'class="kacheln"') && str_contains($html, 'class="kachel"')
+    && str_contains($html, 'vehicle_file') && str_contains($html, 'vorschau=1') && str_contains($html, 'class="stempel"') && str_contains($html, '>In Wartung<')
+    && str_contains($html, 'HU abgelaufen') && str_contains($html, '2 Auftrag/Aufträge') && !str_contains($html, 'kachel__stern') && !str_contains($html, 'class="chip" href="?p=vehicle'));
+$html = render_partial('admin/standort_edit', ['s' => $rows[4], 'parent' => $rows[3], 'alle' => $rows, 'errors' => [], 'pfad' => 'Halle 1 › Stellplatz 3', 'kinder' => 0, 'bilder' => [],
+    'fahrzeuge' => [['id' => 2, 'bezeichnung' => 'MTW', 'funkrufname' => '', 'kennzeichen' => '', 'is_active' => 0]], 'fzTitelbilder' => [], 'fzFristen' => []]);
+$check('Verwaltung: Kachel ohne Bild mit Platzhalter, ausgemustert grau gestempelt', str_contains($html, 'Fahrzeuge mit diesem Stellplatz') && str_contains($html, 'kachel__leer')
+    && str_contains($html, 'stempel--grau') && str_contains($html, '>Ausgemustert<') && str_contains($html, 'MTW'));
+$fz = (string)file_get_contents($app . '/src/lib/vehicles.php');
+$check('Fahrzeugabfrage filtert nach Platz', str_contains($fz, "'standort_ids'") && str_contains($fz, 'v.standort_id IN (') && str_contains($fz, "'mit_platz'") && str_contains($fz, 'v.standort_id IS NOT NULL'));
+$check('Fristplaketten nur für Auffälliges', vehicle_frist_badges([['label' => 'HU', 'status' => 'ok', 'datum' => '2027-01-01']]) === ''
+    && str_contains(vehicle_frist_badges([['label' => 'SP', 'status' => 'bald', 'datum' => '2026-11-01']]), 'SP bis 01.11.2026'));
+
 echo "$ok bestanden, $fail fehlgeschlagen\n";

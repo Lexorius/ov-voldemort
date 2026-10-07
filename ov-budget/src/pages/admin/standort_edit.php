@@ -78,6 +78,13 @@ if (!$s) {
 }
 $parent = standort_find((int)($s['parent_id'] ?? 0));
 
+// Fahrzeuge mit diesem Stellplatz als Kacheln: Zeilen wie in der Fahrzeugliste, mit Titelbild und Fristen
+$fahrzeuge = $s['id'] ? vehicle_query(['standort_ids' => [(int)$s['id']], 'user_id' => (int)$user['id']]) : [];
+$fzFristen = [];
+foreach ($fahrzeuge as $v) {
+    $fzFristen[(int)$v['id']] = vehicle_deadlines($v, setting_int('fahrzeug_frist_warnung_tage', 30));
+}
+
 render('admin/standort_edit', [
     'title'   => $s['id'] ? 'Platz bearbeiten' : 'Platz anlegen',
     's'       => $s,
@@ -87,7 +94,9 @@ render('admin/standort_edit', [
     'pfad'    => $s['id'] ? standort_pfad((int)$s['id'], $alle) : ($parent ? standort_pfad((int)$parent['id'], $alle) : ''),
     'kinder'  => $s['id'] ? (int)db_val('SELECT COUNT(*) FROM standorte WHERE parent_id = ?', [(int)$s['id']], 0) : 0,
     'bilder'  => $s['id'] ? standort_bilder((int)$s['id']) : [],
-    'fahrzeuge' => $s['id'] ? db_all('SELECT id, bezeichnung, funkrufname, kennzeichen, is_active FROM vehicles WHERE standort_id = ? ORDER BY bezeichnung', [(int)$s['id']]) : [],
+    'fahrzeuge' => $fahrzeuge,
+    'fzTitelbilder' => $fahrzeuge ? vfile_covers(array_column($fahrzeuge, 'id')) : [],
+    'fzFristen' => $fzFristen,
     'zaehler'   => $s['id'] ? db_all('SELECT id, name, art, rolle, is_active FROM meters WHERE standort_id = ? ORDER BY name', [(int)$s['id']]) : [],
     'funkgruppen' => $s['id'] ? db_all('SELECT id, name, is_active FROM radio_groups WHERE standort_id = ? ORDER BY name', [(int)$s['id']]) : [],
     'funk'      => $s['id'] ? db_all('SELECT id, bezeichnung, funkrufname, is_active FROM radios WHERE standort_id = ? ORDER BY bezeichnung', [(int)$s['id']]) : [],

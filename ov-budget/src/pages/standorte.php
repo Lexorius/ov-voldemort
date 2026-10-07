@@ -18,7 +18,7 @@ if ($id && !$s) {
 }
 
 $fahrzeuge = can('view_vehicles')
-    ? db_all('SELECT id, bezeichnung, funkrufname, kennzeichen, standort_id, is_active FROM vehicles WHERE standort_id IS NOT NULL ORDER BY bezeichnung')
+    ? vehicle_query(['mit_platz' => 1, 'user_id' => (int)(current_user()['id'] ?? 0)])
     : [];
 $zaehlerAlle = can('view_verbrauch')
     ? db_all('SELECT id, name, art, rolle, standort_id, bereich_id, is_active FROM meters WHERE standort_id IS NOT NULL OR bereich_id IS NOT NULL ORDER BY name')
@@ -60,6 +60,14 @@ if ($s) {
     }
 }
 
+// Für die Fahrzeugkacheln am Platz: Titelbilder und Fristen
+$hierFahrzeuge = $s ? ($inventar[(int)$s['id']]['fahrzeuge'] ?? []) : [];
+$warnTage = setting_int('fahrzeug_frist_warnung_tage', 30);
+$fzFristen = [];
+foreach ($hierFahrzeuge as $v) {
+    $fzFristen[(int)$v['id']] = vehicle_deadlines($v, $warnTage);
+}
+
 render('standorte', [
     'title'      => $s ? (string)$s['name'] : (string)setting('standort_modul_name', 'Standorte'),
     's'          => $s,
@@ -70,6 +78,8 @@ render('standorte', [
     'hier'       => $s ? ($inventar[(int)$s['id']] ?? []) : [],
     'darunter'   => $s ? standort_inventar_summe((int)$s['id'], $alle, $inventar) : [],
     'zustaendig' => $s && $zaehlerAlle ? standort_zustaendige_zaehler((int)$s['id'], $alle, $zaehlerAlle) : [],
+    'fzTitelbilder' => $hierFahrzeuge ? vfile_covers(array_column($hierFahrzeuge, 'id')) : [],
+    'fzFristen'  => $fzFristen,
     'titelbilder' => standort_titelbilder(array_merge($s ? [(int)$s['id']] : [], array_column($kinder, 'id'))),
     'zaehlung'   => standort_zaehlung($alle),
     'kinderZahl' => array_count_values(array_map(static fn($r) => (int)($r['parent_id'] ?? 0), $alle)),

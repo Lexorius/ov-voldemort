@@ -4,7 +4,7 @@
  * @var array $alle $crumbs $kinder $summen $hier $darunter $zustaendig $titelbilder $zaehlung $kinderZahl
  * @var bool $darfPflegen
  */
-$titelbilder ??= []; $hier ??= []; $darunter ??= []; $zustaendig ??= []; $kinderZahl ??= [];
+$titelbilder ??= []; $hier ??= []; $darunter ??= []; $zustaendig ??= []; $kinderZahl ??= []; $fzTitelbilder ??= []; $fzFristen ??= [];
 $typVon = static fn(array $p): array => STANDORT_TYPEN[standort_typ((string)$p['typ'])];
 $hierText = standort_inventar_text(['fahrzeuge' => count($hier['fahrzeuge'] ?? []), 'zaehler' => count($hier['zaehler'] ?? []) + count($zustaendig), 'funkgruppen' => count($hier['funkgruppen'] ?? []), 'funk' => count($hier['funk'] ?? [])]);
 $darunterText = $s ? standort_inventar_text($darunter) : '';
@@ -96,9 +96,9 @@ $darunterText = $s ? standort_inventar_text($darunter) : '';
   <?php if (!empty($hier['fahrzeuge'])): ?>
   <section class="card" id="fahrzeuge">
     <div class="card__head"><h2>Fahrzeuge</h2><span class="muted small"><?= count($hier['fahrzeuge']) ?></span></div>
-    <div class="chips">
+    <div class="kacheln">
       <?php foreach ($hier['fahrzeuge'] as $v): ?>
-        <a class="chip" href="<?= e(url('vehicle', ['id' => $v['id']])) ?>"><?= e((string)$v['bezeichnung']) ?><?= $v['funkrufname'] ? ' <span class="muted small">' . e((string)$v['funkrufname']) . '</span>' : '' ?><?= (int)$v['is_active'] !== 1 ? ' <span class="badge badge--muted">ausgemustert</span>' : '' ?></a>
+        <?= render_partial('partials/fahrzeug_kachel', ['v' => $v, 'titelbilder' => $fzTitelbilder, 'fristen' => $fzFristen[(int)$v['id']] ?? [], 'mitPlatz' => false]) ?>
       <?php endforeach; ?>
     </div>
   </section>
