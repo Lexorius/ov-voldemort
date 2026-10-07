@@ -425,6 +425,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('kalender_ha_intervall_minuten','60','Kalender aus Home Assistant holen alle … Minuten','Mindestens 5. Geholt werden 30 Tage zurück und ein Jahr voraus.','number','Kalender',60),
 ('kalender_besprechung_wochen','6','Besprechung: Termine der nächsten … Wochen anbieten','Was in der Besprechung mitgenommen werden kann','number','Kalender',70),
 ('verbrauch_modul_name','Verbrauch','Bezeichnung des Verbrauchsmoduls','','text','Verbrauch',10),
+('standort_modul_name','Standorte','Bezeichnung der Standortübersicht','Menüpunkt, unter dem alle durch Gebäude, Stockwerke und Räume klicken und sehen, was dort ist.','text','Allgemein',15),
 ('verbrauch_intro','Zählerstände für Strom, Gas und Wasser – aus Home Assistant, von Hand oder per QR-Code am Zähler.','Einleitungstext im Verbrauchsmodul','','textarea','Verbrauch',20),
 ('verbrauch_user_darf_sehen','0','Alle Mitglieder dürfen den Verbrauch sehen','Sonst nur Leitung und Administration','bool','Verbrauch',30),
 ('verbrauch_user_darf_ablesen','1','Wer sehen darf, darf auch Stände eintragen','Sonst nur die Leitung','bool','Verbrauch',40),

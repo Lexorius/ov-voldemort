@@ -153,6 +153,56 @@ function standort_nachkommen(int $id, array $rows): array
     return $out;
 }
 
+/**
+ * Was an welchem Platz ist – als Karte standort_id => ['fahrzeuge' => [...],
+ * 'zaehler' => [...], 'funkgruppen' => [...], 'funk' => [...]]. Die Zeilen
+ * brauchen nur 'standort_id'. Reine Funktion.
+ */
+function standort_inventar(array $fahrzeuge, array $zaehler, array $funkgruppen, array $funk): array
+{
+    $out = [];
+    foreach (['fahrzeuge' => $fahrzeuge, 'zaehler' => $zaehler, 'funkgruppen' => $funkgruppen, 'funk' => $funk] as $art => $zeilen) {
+        foreach ($zeilen as $z) {
+            $sid = (int)($z['standort_id'] ?? 0);
+            if ($sid > 0) {
+                $out[$sid][$art][] = $z;
+            }
+        }
+    }
+    return $out;
+}
+
+/** Anzahl je Art an einem Platz samt allem darunter. Reine Funktion. */
+function standort_inventar_summe(int $id, array $rows, array $inventar): array
+{
+    $summe = ['fahrzeuge' => 0, 'zaehler' => 0, 'funkgruppen' => 0, 'funk' => 0];
+    foreach (array_merge([$id], standort_nachkommen($id, $rows)) as $sid) {
+        foreach ($summe as $art => $n) {
+            $summe[$art] = $n + count($inventar[$sid][$art] ?? []);
+        }
+    }
+    return $summe;
+}
+
+/** „3 Fahrzeuge · 2 Zähler · 1 Funkgerät" aus einer Summe; leer, wenn nichts da ist. Reine Funktion. */
+function standort_inventar_text(array $summe): string
+{
+    $namen = [
+        'fahrzeuge'   => ['Fahrzeug', 'Fahrzeuge'],
+        'zaehler'     => ['Zähler', 'Zähler'],
+        'funkgruppen' => ['Funkgruppe', 'Funkgruppen'],
+        'funk'        => ['Funkgerät', 'Funkgeräte'],
+    ];
+    $teile = [];
+    foreach ($namen as $art => [$ein, $mehr]) {
+        $n = (int)($summe[$art] ?? 0);
+        if ($n > 0) {
+            $teile[] = $n . ' ' . ($n === 1 ? $ein : $mehr);
+        }
+    }
+    return implode(' · ', $teile);
+}
+
 /** Optionen für eine Auswahl, eingerückt nach Tiefe. */
 function standort_optionen(array $rows, ?int $selected, string $leer = '– keiner –', array $ausser = []): string
 {

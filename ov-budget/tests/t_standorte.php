@@ -204,4 +204,32 @@ $check('Platzseite zeigt Funk', str_contains($html, 'Funk an diesem Platz') && s
 $mig = (string)file_get_contents($app . '/src/cli/migrate.php');
 $check('Wanderung 055 legt die Spalten an', str_contains($mig, "055_funk_standort") && str_contains($mig, 'fk_funk_standort') && str_contains($mig, 'fk_gruppe_standort'));
 
+/* ---------- Standortübersicht ---------- */
+$inv = standort_inventar(
+    [['id' => 2, 'bezeichnung' => 'GKW 1', 'funkrufname' => '', 'kennzeichen' => '', 'standort_id' => 5, 'is_active' => 1]],
+    [['id' => 3, 'name' => 'Strom 1. OG', 'art' => 'strom', 'rolle' => 'unter', 'standort_id' => 3, 'bereich_id' => 2, 'is_active' => 1]],
+    [['id' => 4, 'name' => 'HRT-Koffer', 'standort_id' => 3, 'is_active' => 1]],
+    [['id' => 7, 'bezeichnung' => 'HRT 1', 'funkrufname' => '', 'is_active' => 1, 'standort_id' => 3, 'eigener_standort_id' => null, 'gruppe_name' => 'HRT-Koffer'],
+     ['id' => 8, 'bezeichnung' => 'Ohne Platz', 'funkrufname' => '', 'is_active' => 1, 'standort_id' => null]]
+);
+$check('Inventar je Platz', array_keys($inv) === [5, 3] && count($inv[3]['funk']) === 1 && !isset($inv[3]['fahrzeuge']));
+$check('Summe samt allem darunter', standort_inventar_summe(1, $rows, $inv) === ['fahrzeuge' => 0, 'zaehler' => 1, 'funkgruppen' => 1, 'funk' => 1]
+    && standort_inventar_summe(4, $rows, $inv)['fahrzeuge'] === 1 && standort_inventar_summe(6, $rows, $inv) === ['fahrzeuge' => 0, 'zaehler' => 0, 'funkgruppen' => 0, 'funk' => 0]);
+$check('Inventartext', standort_inventar_text(['fahrzeuge' => 1, 'zaehler' => 2, 'funk' => 1]) === '1 Fahrzeug · 2 Zähler · 1 Funkgerät' && standort_inventar_text([]) === '');
+$html = render_partial('standorte', ['s' => null, 'alle' => $rows, 'crumbs' => [], 'kinder' => [$rows[0], $rows[3]], 'summen' => [1 => standort_inventar_summe(1, $rows, $inv), 4 => standort_inventar_summe(4, $rows, $inv)],
+    'hier' => [], 'darunter' => [], 'zustaendig' => [], 'titelbilder' => [], 'zaehlung' => standort_zaehlung($rows), 'kinderZahl' => [1 => 1, 2 => 1, 4 => 1], 'darfPflegen' => true]);
+$check('Übersicht oben: Gebäude und Halle als Karten mit Summen', str_contains($html, 'Gebäude, Hallen und Höfe') && str_contains($html, 'Haupthaus') && str_contains($html, 'Halle 1')
+    && str_contains($html, '1 Zähler · 1 Funkgruppe · 1 Funkgerät') && str_contains($html, '1 Fahrzeug') && str_contains($html, 'p=standorte&amp;id=1') && str_contains($html, 'Plätze pflegen'));
+$html = render_partial('standorte', ['s' => $rows[2], 'alle' => $rows, 'crumbs' => [$rows[0], $rows[1]], 'kinder' => [], 'summen' => [],
+    'hier' => $inv[3], 'darunter' => standort_inventar_summe(3, $rows, $inv), 'zustaendig' => standort_zustaendige_zaehler(3, $rows, [['id' => 10, 'name' => 'Hauszähler', 'art' => 'strom', 'rolle' => 'bezug', 'is_active' => 1, 'bereich_id' => 1]]),
+    'titelbilder' => [], 'zaehlung' => [], 'kinderZahl' => [], 'darfPflegen' => false]);
+$check('Platzseite: Pfad, Zugeordnetes, geerbter Zähler, Gerät über Gruppe', str_contains($html, 'p=standorte&amp;id=2') && str_contains($html, 'Raum in Haupthaus › 1. Stock')
+    && str_contains($html, 'Hauszähler') && str_contains($html, 'über Haupthaus') && str_contains($html, 'Strom 1. OG') && str_contains($html, 'HRT-Koffer') && str_contains($html, 'über HRT-Koffer')
+    && str_contains($html, '↑ 1. Stock') && !str_contains($html, 'Platz bearbeiten') && !str_contains($html, 'Darunter</h2>'));
+$html = render_partial('standorte', ['s' => $rows[3], 'alle' => $rows, 'crumbs' => [], 'kinder' => [$rows[4]], 'summen' => [5 => standort_inventar_summe(5, $rows, $inv)],
+    'hier' => [], 'darunter' => standort_inventar_summe(4, $rows, $inv), 'zustaendig' => [], 'titelbilder' => [], 'zaehlung' => [], 'kinderZahl' => [], 'darfPflegen' => true]);
+$check('Platz ohne Direktes verweist nach unten', str_contains($html, 'Direkt an diesem Platz ist nichts zugeordnet') && str_contains($html, 'in den Plätzen darunter: 1 Fahrzeug') && str_contains($html, 'stillgelegt') && str_contains($html, 'Platz bearbeiten'));
+$seite = (string)file_get_contents($app . '/src/pages/standorte.php');
+$check('Seite achtet auf die Rechte der Module', str_contains($seite, "can('view_vehicles')") && str_contains($seite, "can('view_verbrauch')") && str_contains($seite, "can('view_radios')") && str_contains($seite, 'COALESCE(r.standort_id, g.standort_id)'));
+
 echo "$ok bestanden, $fail fehlgeschlagen\n";

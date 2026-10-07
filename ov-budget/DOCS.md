@@ -1076,6 +1076,13 @@ achtet darauf, dass die Art zum übergeordneten Platz passt.
   Platzseite listet die Zähler, die für sie zuständig sind – auch geerbt
   über einen übergeordneten Platz, etwa der Hauszähler an jedem Stockwerk –
   und die hier eingebauten.
+* **Standortübersicht:** Der Menüpunkt „Standorte" zeigt allen den Baum
+  zum Durchklicken – erst Gebäude, Hallen und Höfe, dann Stockwerke, Räume,
+  Stellplätze, Schränke, Regale. Jede Karte nennt, was darunter steckt
+  („3 Fahrzeuge · 2 Zähler"), die Seite eines Platzes seine Fahrzeuge,
+  Zähler, Funkgruppen und Funkgeräte mit Sprung in die jeweilige Akte.
+  Gezeigt wird nur, was die Person in den Modulen auch sehen darf. Der
+  Name des Menüpunkts ist in den Einstellungen änderbar.
 * **Funkgeräte und Gruppen:** Eine Gruppe (Koffer, Ladeschale, Satz)
   bekommt ihren Platz – etwa „Funkraum › Regal 2" – und jedes Gerät kann
   einen eigenen haben, etwa die Feststation im Zugtruppraum. Ein Gerät

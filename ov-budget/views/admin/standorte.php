@@ -46,6 +46,7 @@ $zeile = static function (array $s, array $geschwister) use (&$zeile, $titelbild
   </div>
   <div class="btnrow">
     <a class="btn" href="<?= e(url('admin_standort_edit')) ?>">+ Gebäude, Halle oder Hof</a>
+    <a class="btn btn--sec" href="<?= e(url('standorte')) ?>">Zur Standortübersicht</a>
     <a class="btn btn--sec" href="<?= e(url('admin')) ?>">Zur Verwaltung</a>
   </div>
 </div>

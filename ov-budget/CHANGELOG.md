@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 2.1.12.0
+
+- **Standortübersicht:** Neuer Menüpunkt „Standorte" für alle. Gebäude,
+  Hallen und Höfe anklicken, darunter Stockwerke, Räume, Stellplätze,
+  Schränke und Regale – jede Karte zeigt, was darunter steckt, die Seite
+  eines Platzes seine Fahrzeuge, Zähler, Funkgruppen und Funkgeräte mit
+  Sprung in die Akte. Sichtbar ist nur, was die Person auch sonst sehen
+  darf. Der Name des Menüpunkts ist einstellbar.
+
 ## 2.1.11.0
 
 - **Funkgeräte und Gruppen am Platz:** Funkgeräte-Gruppen und einzelne
