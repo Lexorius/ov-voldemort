@@ -88,4 +88,5 @@ render('admin/standort_edit', [
     'kinder'  => $s['id'] ? (int)db_val('SELECT COUNT(*) FROM standorte WHERE parent_id = ?', [(int)$s['id']], 0) : 0,
     'bilder'  => $s['id'] ? standort_bilder((int)$s['id']) : [],
     'fahrzeuge' => $s['id'] ? db_all('SELECT id, bezeichnung, funkrufname, kennzeichen, is_active FROM vehicles WHERE standort_id = ? ORDER BY bezeichnung', [(int)$s['id']]) : [],
+    'zaehler'   => $s['id'] ? db_all('SELECT id, name, art, rolle, is_active FROM meters WHERE standort_id = ? ORDER BY name', [(int)$s['id']]) : [],
 ]);

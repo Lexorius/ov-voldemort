@@ -1544,6 +1544,17 @@ SQL);
         }
     }
     $merken('052_fahrzeug_stellplatz');
+
+    /* ---------- 053: Zaehler am Platz ---------- */
+    if (ovb_table_exists($pdo, 'meters') && ovb_table_exists($pdo, 'standorte')) {
+        if (!ovb_column_exists($pdo, 'meters', 'standort_id')) {
+            $pdo->exec('ALTER TABLE meters ADD COLUMN standort_id INT UNSIGNED NULL AFTER standort');
+        }
+        if (!ovb_constraint_exists($pdo, 'meters', 'fk_meter_standort')) {
+            $pdo->exec('ALTER TABLE meters ADD CONSTRAINT fk_meter_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE SET NULL');
+        }
+    }
+    $merken('053_zaehler_standort');
 }
 
 /**

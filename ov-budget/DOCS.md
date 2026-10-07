@@ -1067,7 +1067,11 @@ achtet darauf, dass die Art zum übergeordneten Platz passt.
   Die Akte zeigt den Pfad („Halle 1 › Stellplatz 3"), die Fahrzeugliste den
   Platznamen, und die Platzseite in der Verwaltung alle Fahrzeuge, die dort
   stehen. Das freie Feld „Standort" bleibt für Vorübergehendes wie „in der
-  Werkstatt". Geräte und Material folgen.
+  Werkstatt".
+* **Zähler:** Jeder Zähler bekommt im Formular einen Platz – vom Gebäude
+  bis zum Raum: der Hauptzähler am Haus, Unterzähler am Stockwerk oder Raum.
+  Zählerseite und Übersicht zeigen ihn, die Platzseite ihre Zähler. Geräte
+  und Material folgen.
 
 ## Rollen
 

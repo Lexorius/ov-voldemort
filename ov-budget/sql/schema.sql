@@ -1008,6 +1008,8 @@ CREATE TABLE IF NOT EXISTS meters (
   name            VARCHAR(150)  NOT NULL,
   zaehlernummer   VARCHAR(80)   NOT NULL DEFAULT '',
   standort        VARCHAR(150)  NOT NULL DEFAULT '',
+  -- Platz aus den Stell- und Lagerplaetzen (Haus, Stockwerk, Raum ...)
+  standort_id     INT UNSIGNED  NULL,
   einheit         VARCHAR(10)   NOT NULL DEFAULT 'kWh',
   -- Umrechnung Zaehlereinheit -> Tarifeinheit (Gas: m3 -> kWh)
   umrechnung      DECIMAL(10,4) NOT NULL DEFAULT 1.0000,
@@ -1026,6 +1028,7 @@ CREATE TABLE IF NOT EXISTS meters (
   KEY idx_meter_qr (qr_token),
   CONSTRAINT fk_meter_con FOREIGN KEY (qr_connector_id) REFERENCES connectors(id) ON DELETE SET NULL,
   CONSTRAINT fk_meter_parent FOREIGN KEY (parent_id)   REFERENCES meters(id)     ON DELETE SET NULL,
+  CONSTRAINT fk_meter_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE SET NULL,
   CONSTRAINT fk_meter_cb  FOREIGN KEY (created_by)      REFERENCES users(id)      ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

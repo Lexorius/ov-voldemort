@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## 2.1.9.0
+
+- **Zähler am Platz:** Im Zählerformular lässt sich ein Stell- oder
+  Lagerplatz wählen – vom Gebäude bis zum Raum. Zählerseite und Übersicht
+  zeigen den Pfad bzw. Platznamen, die Platzseite in der Verwaltung ihre
+  Zähler. Das freie Feld „Standort" bleibt für Hinweise wie „hinter der Tür".
+
 ## 2.1.8.0
 
 ### Fahrzeuge mit festem Stellplatz

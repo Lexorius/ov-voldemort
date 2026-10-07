@@ -86,7 +86,7 @@ function menge(float|int|string|null $v, string $einheit = '', int $dezimal = 1)
 
 function meter_select(): string
 {
-    return 'SELECT m.*, c.name AS connector_name, p.name AS parent_name,
+    return 'SELECT m.*, c.name AS connector_name, p.name AS parent_name, sp.name AS stellplatz_name, sp.typ AS stellplatz_typ,
                    (SELECT COUNT(*) FROM meters u WHERE u.parent_id = m.id AND u.is_active = 1) AS unterzaehler,
                    (SELECT r.stand FROM meter_readings r WHERE r.meter_id = m.id
                      ORDER BY r.gelesen_am DESC, r.id DESC LIMIT 1) AS letzter_stand,
@@ -97,7 +97,8 @@ function meter_select(): string
                    (SELECT COUNT(*) FROM meter_readings r WHERE r.meter_id = m.id) AS ablesungen
             FROM meters m
             LEFT JOIN connectors c ON c.id = m.qr_connector_id
-            LEFT JOIN meters p ON p.id = m.parent_id';
+            LEFT JOIN meters p ON p.id = m.parent_id
+            LEFT JOIN standorte sp ON sp.id = m.standort_id';
 }
 
 /** $f: art, aktiv ('alle'), q */
@@ -183,6 +184,7 @@ function meter_save_from_post(?array $existing, array $user): array
         'name'          => mb_substr($name, 0, 150),
         'zaehlernummer' => mb_substr(post_str('zaehlernummer'), 0, 80),
         'standort'      => mb_substr(post_str('standort'), 0, 150),
+        'standort_id'   => function_exists('vehicle_stellplatz_pruefen') ? vehicle_stellplatz_pruefen(post_int('standort_id')) : null,
         'einheit'       => $einheit,
         'umrechnung'    => round($umrechnung, 4),
         'quelle'        => $quelle,

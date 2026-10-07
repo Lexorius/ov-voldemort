@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (!$meter) {
     $art = meter_art(get_str('art', 'strom'));
     $meter = [
-        'id' => null, 'art' => $art, 'name' => '', 'zaehlernummer' => '', 'standort' => '',
+        'id' => null, 'art' => $art, 'name' => '', 'zaehlernummer' => '', 'standort' => '', 'standort_id' => null,
         'einheit' => METER_ARTEN[$art]['einheit'], 'umrechnung' => 1, 'quelle' => 'manuell', 'rolle' => 'bezug', 'parent_id' => null,
         'ha_entity' => '', 'ha_faktor' => 1, 'notiz' => '', 'is_active' => 1,
     ];
@@ -49,6 +49,7 @@ try {
 }
 
 render('meter_edit', [
+    'standorte' => function_exists('standort_all') ? standort_all() : [],
     'title'      => $meter['id'] ? 'Zähler bearbeiten' : 'Zähler anlegen',
     'meter'      => $meter,
     'errors'     => $errors,

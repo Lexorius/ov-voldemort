@@ -172,5 +172,11 @@ $check('nur aktive Plätze werden Stellplatz', vehicle_stellplatz_pruefen(1) ===
 $html = render_partial('admin/standort_edit', ['s' => $rows[3], 'parent' => null, 'alle' => $rows, 'errors' => [], 'pfad' => 'Halle 1', 'kinder' => 1, 'bilder' => [],
     'fahrzeuge' => [['id' => 2, 'bezeichnung' => 'GKW 1', 'funkrufname' => 'Heros HN 21/51', 'kennzeichen' => 'THW-1234', 'is_active' => 1]]]);
 $check('Platzseite zeigt Fahrzeuge', str_contains($html, 'Fahrzeuge mit diesem Stellplatz') && str_contains($html, 'GKW 1') && str_contains($html, 'p=vehicle'));
+const METER_ARTEN = ['strom' => ['label' => 'Strom'], 'gas' => ['label' => 'Gas'], 'wasser' => ['label' => 'Wasser']];
+$html = render_partial('admin/standort_edit', ['s' => $rows[1], 'parent' => $rows[0], 'alle' => $rows, 'errors' => [], 'pfad' => 'Haupthaus › 1. Stock', 'kinder' => 1, 'bilder' => [], 'fahrzeuge' => [],
+    'zaehler' => [['id' => 3, 'name' => 'Strom 1. OG', 'art' => 'strom', 'rolle' => 'unter', 'is_active' => 1]]]);
+$check('Platzseite zeigt Zähler', str_contains($html, 'Zähler an diesem Platz') && str_contains($html, 'Strom 1. OG') && str_contains($html, 'Unterzähler') && str_contains($html, 'p=meter'));
+$vb = (string)file_get_contents($app . '/src/lib/verbrauch.php');
+$check('Zählerabfrage liest den Platz mit', str_contains($vb, 'LEFT JOIN standorte sp ON sp.id = m.standort_id') && str_contains($vb, "'standort_id'   => function_exists('vehicle_stellplatz_pruefen')"));
 
 echo "$ok bestanden, $fail fehlgeschlagen\n";

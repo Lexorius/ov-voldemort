@@ -63,9 +63,20 @@ $quelle = (string)($meter['quelle'] ?? 'manuell');
         <input type="text" id="zaehlernummer" name="zaehlernummer" maxlength="80" value="<?= e((string)$meter['zaehlernummer']) ?>">
       </div>
       <div class="field">
-        <label for="standort">Standort</label>
+        <label for="standort_id">Platz</label>
+        <?php $standorte ??= []; $aktive = array_values(array_filter($standorte, static fn($x) => (int)$x['is_active'] === 1 || (int)$x['id'] === (int)($meter['standort_id'] ?? 0))); ?>
+        <?php if ($aktive): ?>
+          <select id="standort_id" name="standort_id"><?= standort_optionen($aktive, (int)($meter['standort_id'] ?? 0), '– kein Platz –') ?></select>
+          <small>Vom Gebäude bis zum Raum – ein Hauptzähler hängt meist am Haus, ein Unterzähler am Stockwerk oder Raum.</small>
+        <?php else: ?>
+          <select id="standort_id" name="standort_id" disabled><option>– noch keine Plätze angelegt –</option></select>
+          <small>Plätze legt die Leitung unter Verwaltung → Stell- und Lagerplätze an.</small>
+        <?php endif; ?>
+      </div>
+      <div class="field">
+        <label for="standort">Standort (frei)</label>
         <input type="text" id="standort" name="standort" maxlength="150" value="<?= e((string)$meter['standort']) ?>"
-               placeholder="z. B. Hausanschlussraum">
+               placeholder="z. B. hinter der Tür links">
       </div>
       <div class="field">
         <label for="einheit">Einheit des Zählers</label>
