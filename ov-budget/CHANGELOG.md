@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 2.1.10.0
+
+- **Zähler mit zwei Plätzen:** „Zuständig für" ist der Bereich, den der
+  Zähler misst (Haus, Stockwerk, Raum – gilt auch für alles darunter),
+  „Zählerplatz (eingebaut in)" der Ort, an dem er hängt. Zählerseite und
+  Übersicht zeigen beides; die Platzseite nennt zuständige Zähler, auch
+  geerbt über übergeordnete Plätze, und die hier eingebauten.
+- Beim Update wird der bisherige Platz als zuständiger Bereich übernommen.
+
 ## 2.1.9.0
 
 - **Zähler am Platz:** Im Zählerformular lässt sich ein Stell- oder

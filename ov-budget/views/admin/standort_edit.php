@@ -136,17 +136,26 @@ $ausser = $isNew ? [] : array_merge([(int)$s['id']], standort_nachkommen((int)$s
   </section>
   <?php endif; ?>
 
-  <?php $zaehler ??= []; if ($zaehler): ?>
+  <?php $zaehler ??= []; $zustaendig ??= []; if ($zaehler || $zustaendig): ?>
   <section class="card" id="zaehler">
-    <div class="card__head">
-      <h2>Zähler an diesem Platz</h2>
-      <span class="muted small"><?= count($zaehler) ?></span>
-    </div>
-    <div class="chips">
-      <?php foreach ($zaehler as $z): ?>
-        <a class="chip" href="<?= e(url('meter', ['id' => $z['id']])) ?>"><?= e((string)$z['name']) ?> <span class="muted small"><?= e(METER_ARTEN[(string)$z['art']]['label'] ?? $z['art']) ?><?= (string)($z['rolle'] ?? 'bezug') === 'unter' ? ', Unterzähler' : '' ?></span><?= (int)$z['is_active'] !== 1 ? ' <span class="badge badge--muted">stillgelegt</span>' : '' ?></a>
-      <?php endforeach; ?>
-    </div>
+    <h2>Zähler</h2>
+    <?php if ($zustaendig): ?>
+      <h3>Zuständig für diesen Platz</h3>
+      <p class="small muted">Messen den Verbrauch hier – direkt oder über einen übergeordneten Platz.</p>
+      <div class="chips">
+        <?php foreach ($zustaendig as $z): ?>
+          <a class="chip" href="<?= e(url('meter', ['id' => $z['id']])) ?>"><?= e((string)$z['name']) ?> <span class="muted small"><?= e(METER_ARTEN[(string)$z['art']]['label'] ?? $z['art']) ?><?= (string)($z['rolle'] ?? 'bezug') === 'unter' ? ', Unterzähler' : '' ?><?= $z['geerbt_von'] !== null ? ' · über ' . e($z['geerbt_von']) : '' ?></span><?= (int)$z['is_active'] !== 1 ? ' <span class="badge badge--muted">stillgelegt</span>' : '' ?></a>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+    <?php if ($zaehler): ?>
+      <h3 class="mt">Hier eingebaut</h3>
+      <div class="chips">
+        <?php foreach ($zaehler as $z): ?>
+          <a class="chip" href="<?= e(url('meter', ['id' => $z['id']])) ?>"><?= e((string)$z['name']) ?> <span class="muted small"><?= e(METER_ARTEN[(string)$z['art']]['label'] ?? $z['art']) ?><?= (string)($z['rolle'] ?? 'bezug') === 'unter' ? ', Unterzähler' : '' ?></span><?= (int)$z['is_active'] !== 1 ? ' <span class="badge badge--muted">stillgelegt</span>' : '' ?></a>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
   </section>
   <?php endif; ?>
 

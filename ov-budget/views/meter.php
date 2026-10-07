@@ -18,7 +18,8 @@ $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Se
       <?= badge(['label' => $a['label'], 'color' => $a['color']]) ?>
       <?php if ((int)$meter['is_active'] !== 1): ?><span class="badge badge--muted">stillgelegt</span><?php endif; ?>
       <?= trim((string)$meter['zaehlernummer']) !== '' ? ' · Nr. ' . e((string)$meter['zaehlernummer']) : '' ?>
-      <?= !empty($stellplatzPfad) ? ' · ' . e($stellplatzPfad) : '' ?>
+      <?= !empty($bereichPfad) ? ' · für ' . e($bereichPfad) : '' ?>
+      <?= !empty($stellplatzPfad) ? ' · eingebaut in ' . e($stellplatzPfad) : '' ?>
       <?= trim((string)$meter['standort']) !== '' ? ' · ' . e((string)$meter['standort']) : '' ?>
       <?php $rolle = (string)($meter['rolle'] ?? 'bezug'); if ($rolle === 'unter'): ?>
         · Unterzähler von <?php if ($meter['parent_id']): ?><a href="<?= e(url('meter', ['id' => $meter['parent_id'], 'jahr' => $jahr])) ?>"><?= e((string)$meter['parent_name']) ?></a><?php else: ?>–<?php endif; ?>

@@ -1555,6 +1555,19 @@ SQL);
         }
     }
     $merken('053_zaehler_standort');
+
+    /* ---------- 054: Zaehler misst einen Bereich ---------- */
+    if (ovb_table_exists($pdo, 'meters') && ovb_table_exists($pdo, 'standorte')) {
+        if (!ovb_column_exists($pdo, 'meters', 'bereich_id')) {
+            $pdo->exec('ALTER TABLE meters ADD COLUMN bereich_id INT UNSIGNED NULL AFTER standort_id');
+            // Was bisher „Platz" war, war meist der versorgte Bereich – uebernehmen, der Zaehlerplatz wird neu gesetzt
+            $pdo->exec('UPDATE meters SET bereich_id = standort_id WHERE bereich_id IS NULL AND standort_id IS NOT NULL');
+        }
+        if (!ovb_constraint_exists($pdo, 'meters', 'fk_meter_bereich')) {
+            $pdo->exec('ALTER TABLE meters ADD CONSTRAINT fk_meter_bereich FOREIGN KEY (bereich_id) REFERENCES standorte(id) ON DELETE SET NULL');
+        }
+    }
+    $merken('054_zaehler_bereich');
 }
 
 /**

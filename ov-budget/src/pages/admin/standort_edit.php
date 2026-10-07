@@ -89,4 +89,5 @@ render('admin/standort_edit', [
     'bilder'  => $s['id'] ? standort_bilder((int)$s['id']) : [],
     'fahrzeuge' => $s['id'] ? db_all('SELECT id, bezeichnung, funkrufname, kennzeichen, is_active FROM vehicles WHERE standort_id = ? ORDER BY bezeichnung', [(int)$s['id']]) : [],
     'zaehler'   => $s['id'] ? db_all('SELECT id, name, art, rolle, is_active FROM meters WHERE standort_id = ? ORDER BY name', [(int)$s['id']]) : [],
+    'zustaendig' => $s['id'] ? standort_zustaendige_zaehler((int)$s['id'], $alle, db_all('SELECT id, name, art, rolle, is_active, bereich_id FROM meters WHERE bereich_id IS NOT NULL ORDER BY name')) : [],
 ]);

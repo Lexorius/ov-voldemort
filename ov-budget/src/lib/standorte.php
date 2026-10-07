@@ -102,6 +102,43 @@ function standort_pfad(int $id, array $rows, string $trenner = ' › '): string
 }
 
 /** Alle Nachkommen eines Knotens (ids), zum Verhindern von Schleifen. Reine Funktion. */
+/** Alle Vorfahren eines Knotens (ids, vom Elternteil aufwärts). Reine Funktion. */
+function standort_vorfahren(int $id, array $rows): array
+{
+    $nachId = isset($rows[$id]) && !isset($rows[0]) ? $rows : array_column($rows, null, 'id');
+    $out = [];
+    $schutz = 0;
+    $p = (int)($nachId[$id]['parent_id'] ?? 0);
+    while ($p > 0 && isset($nachId[$p]) && $schutz++ < 50) {
+        $out[] = $p;
+        $p = (int)($nachId[$p]['parent_id'] ?? 0);
+    }
+    return $out;
+}
+
+/**
+ * Zähler, die für einen Platz zuständig sind: direkt oder geerbt von einem
+ * übergeordneten Platz (der Hauszähler gilt für jedes Stockwerk). Jede Zeile
+ * bekommt 'geerbt_von' (Name des Platzes) oder null. Reine Funktion.
+ */
+function standort_zustaendige_zaehler(int $id, array $rows, array $zaehler): array
+{
+    $vorfahren = standort_vorfahren($id, $rows);
+    $nachId = array_column($rows, null, 'id');
+    $out = [];
+    foreach ($zaehler as $z) {
+        $b = (int)($z['bereich_id'] ?? 0);
+        if ($b === $id) {
+            $z['geerbt_von'] = null;
+            $out[] = $z;
+        } elseif (in_array($b, $vorfahren, true)) {
+            $z['geerbt_von'] = (string)($nachId[$b]['name'] ?? '');
+            $out[] = $z;
+        }
+    }
+    return $out;
+}
+
 function standort_nachkommen(int $id, array $rows): array
 {
     $out = [];

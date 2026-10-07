@@ -114,7 +114,8 @@ $darfAblesen = can('read_meter');
           <?php elseif ($rolle === 'erzeugung'): ?><span class="badge" style="background:#ca8a04">Erzeugung</span>
           <?php elseif ($rolle === 'einspeisung'): ?><span class="badge" style="background:#ca8a04">Einspeisung</span><?php endif; ?>
           <?php if ((int)$m['is_active'] !== 1): ?><span class="badge badge--muted">stillgelegt</span><?php endif; ?>
-          <?php if (!empty($m['stellplatz_name'])): ?><span class="muted small">· <?= e((string)$m['stellplatz_name']) ?></span><?php endif; ?>
+          <?php if (!empty($m['bereich_name'])): ?><span class="muted small">· für <?= e((string)$m['bereich_name']) ?></span><?php endif; ?>
+          <?php if (!empty($m['stellplatz_name'])): ?><span class="muted small">· in <?= e((string)$m['stellplatz_name']) ?></span><?php endif; ?>
           <?php if ((string)$m['quelle'] === 'ha'): ?><span class="badge badge--outline">Home Assistant</span><?php endif; ?>
           <?php if (trim((string)$m['qr_token']) !== ''): ?><span class="badge badge--outline">QR</span><?php endif; ?>
         </span>

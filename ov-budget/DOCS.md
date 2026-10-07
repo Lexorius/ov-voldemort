@@ -1068,10 +1068,14 @@ achtet darauf, dass die Art zum übergeordneten Platz passt.
   Platznamen, und die Platzseite in der Verwaltung alle Fahrzeuge, die dort
   stehen. Das freie Feld „Standort" bleibt für Vorübergehendes wie „in der
   Werkstatt".
-* **Zähler:** Jeder Zähler bekommt im Formular einen Platz – vom Gebäude
-  bis zum Raum: der Hauptzähler am Haus, Unterzähler am Stockwerk oder Raum.
-  Zählerseite und Übersicht zeigen ihn, die Platzseite ihre Zähler. Geräte
-  und Material folgen.
+* **Zähler** haben zwei Plätze: **„Zuständig für"** ist der Bereich, dessen
+  Verbrauch der Zähler misst – das ganze Haus, ein Stockwerk, ein Raum; er
+  gilt auch für alles darunter. **„Zählerplatz (eingebaut in)"** ist der Ort,
+  an dem der Zähler hängt, etwa der Hausanschlussraum. Zählerseite und
+  Übersicht zeigen beides („für Haupthaus · in Hausanschlussraum"). Die
+  Platzseite listet die Zähler, die für sie zuständig sind – auch geerbt
+  über einen übergeordneten Platz, etwa der Hauszähler an jedem Stockwerk –
+  und die hier eingebauten. Geräte und Material folgen.
 
 ## Rollen
 

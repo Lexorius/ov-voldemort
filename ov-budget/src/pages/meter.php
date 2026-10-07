@@ -27,6 +27,7 @@ if (!in_array($jahr, $jahre, true)) {
 
 render('meter', [
     'stellplatzPfad' => !empty($meter['standort_id']) && function_exists('standort_pfad') ? standort_pfad((int)$meter['standort_id'], standort_all()) : '',
+    'bereichPfad'    => !empty($meter['bereich_id']) && function_exists('standort_pfad') ? standort_pfad((int)$meter['bereich_id'], standort_all()) : '',
     'title'      => (string)$meter['name'],
     'meter'      => $meter,
     'jahr'       => $jahr,

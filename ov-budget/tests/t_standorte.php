@@ -59,6 +59,11 @@ $check('Baum: drei Wurzeln (Waise oben), Kinder mit Tiefe', count($baum) === 3 &
 $check('flache Lesereihenfolge', array_column(standort_flach($baum), 'name') === ['Haupthaus', '1. Stock', 'Raum 12', 'Halle 1', 'Stellplatz 3', 'Waise']);
 $check('Pfad', standort_pfad(3, $rows) === 'Haupthaus › 1. Stock › Raum 12' && standort_pfad(4, $rows) === 'Halle 1' && standort_pfad(42, $rows) === '');
 $check('Nachkommen', standort_nachkommen(1, $rows) === [2, 3] && standort_nachkommen(3, $rows) === []);
+$check('Vorfahren', standort_vorfahren(3, $rows) === [2, 1] && standort_vorfahren(1, $rows) === [] && standort_vorfahren(6, $rows) === []);
+$zl = [['id' => 10, 'name' => 'Hauszähler', 'bereich_id' => 1], ['id' => 11, 'name' => 'Zähler 1. OG', 'bereich_id' => 2], ['id' => 12, 'name' => 'Halle', 'bereich_id' => 4], ['id' => 13, 'name' => 'ohne', 'bereich_id' => null]];
+$zu = standort_zustaendige_zaehler(3, $rows, $zl);
+$check('zuständig für Raum 12: direkt keiner, geerbt vom Stock und vom Haus', array_column($zu, 'id') === [10, 11] && $zu[0]['geerbt_von'] === 'Haupthaus' && $zu[1]['geerbt_von'] === '1. Stock');
+$check('zuständig für das Haus: nur der Hauszähler, direkt', count(standort_zustaendige_zaehler(1, $rows, $zl)) === 1 && standort_zustaendige_zaehler(1, $rows, $zl)[0]['geerbt_von'] === null);
 $opt = standort_optionen($rows, 3, '– keiner –', [4]);
 $check('Optionen eingerückt, Ausgeschlossene fehlen', str_contains($opt, '>— — Raum 12 (Raum)<') && str_contains($opt, 'value="3" selected') && !str_contains($opt, 'Halle 1'));
 $check('Zählung je Typ', standort_zaehlung($rows) === ['gebaeude' => 1, 'stockwerk' => 1, 'raum' => 2, 'halle' => 1, 'stellplatz' => 1]);
@@ -175,8 +180,12 @@ $check('Platzseite zeigt Fahrzeuge', str_contains($html, 'Fahrzeuge mit diesem S
 const METER_ARTEN = ['strom' => ['label' => 'Strom'], 'gas' => ['label' => 'Gas'], 'wasser' => ['label' => 'Wasser']];
 $html = render_partial('admin/standort_edit', ['s' => $rows[1], 'parent' => $rows[0], 'alle' => $rows, 'errors' => [], 'pfad' => 'Haupthaus › 1. Stock', 'kinder' => 1, 'bilder' => [], 'fahrzeuge' => [],
     'zaehler' => [['id' => 3, 'name' => 'Strom 1. OG', 'art' => 'strom', 'rolle' => 'unter', 'is_active' => 1]]]);
-$check('Platzseite zeigt Zähler', str_contains($html, 'Zähler an diesem Platz') && str_contains($html, 'Strom 1. OG') && str_contains($html, 'Unterzähler') && str_contains($html, 'p=meter'));
+$check('Platzseite zeigt Zähler', str_contains($html, 'Hier eingebaut') && str_contains($html, 'Strom 1. OG') && str_contains($html, 'Unterzähler') && str_contains($html, 'p=meter'));
 $vb = (string)file_get_contents($app . '/src/lib/verbrauch.php');
-$check('Zählerabfrage liest den Platz mit', str_contains($vb, 'LEFT JOIN standorte sp ON sp.id = m.standort_id') && str_contains($vb, "'standort_id'   => function_exists('vehicle_stellplatz_pruefen')"));
+$check('Zählerabfrage liest den Platz mit', str_contains($vb, 'LEFT JOIN standorte sp ON sp.id = m.standort_id') && str_contains($vb, "'standort_id'   => function_exists('vehicle_stellplatz_pruefen')")
+    && str_contains($vb, 'LEFT JOIN standorte sb ON sb.id = m.bereich_id') && str_contains($vb, "'bereich_id'    => function_exists('vehicle_stellplatz_pruefen')"));
+$html = render_partial('admin/standort_edit', ['s' => $rows[2], 'parent' => $rows[1], 'alle' => $rows, 'errors' => [], 'pfad' => 'Haupthaus › 1. Stock › Raum 12', 'kinder' => 0, 'bilder' => [], 'fahrzeuge' => [],
+    'zaehler' => [], 'zustaendig' => standort_zustaendige_zaehler(3, $rows, [['id' => 10, 'name' => 'Hauszähler', 'art' => 'strom', 'rolle' => 'bezug', 'is_active' => 1, 'bereich_id' => 1]])]);
+$check('Platzseite zeigt geerbte Zuständigkeit', str_contains($html, 'Zuständig für diesen Platz') && str_contains($html, 'Hauszähler') && str_contains($html, 'über Haupthaus') && !str_contains($html, 'Hier eingebaut'));
 
 echo "$ok bestanden, $fail fehlgeschlagen\n";

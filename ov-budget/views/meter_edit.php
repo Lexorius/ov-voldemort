@@ -62,15 +62,24 @@ $quelle = (string)($meter['quelle'] ?? 'manuell');
         <label for="zaehlernummer">Zählernummer</label>
         <input type="text" id="zaehlernummer" name="zaehlernummer" maxlength="80" value="<?= e((string)$meter['zaehlernummer']) ?>">
       </div>
+      <?php $standorte ??= []; $aktive = array_values(array_filter($standorte, static fn($x) => (int)$x['is_active'] === 1 || in_array((int)$x['id'], [(int)($meter['standort_id'] ?? 0), (int)($meter['bereich_id'] ?? 0)], true))); ?>
       <div class="field">
-        <label for="standort_id">Platz</label>
-        <?php $standorte ??= []; $aktive = array_values(array_filter($standorte, static fn($x) => (int)$x['is_active'] === 1 || (int)$x['id'] === (int)($meter['standort_id'] ?? 0))); ?>
+        <label for="bereich_id">Zuständig für</label>
+        <?php if ($aktive): ?>
+          <select id="bereich_id" name="bereich_id"><?= standort_optionen($aktive, (int)($meter['bereich_id'] ?? 0), '– kein Bereich –') ?></select>
+          <small>Der Bereich, dessen Verbrauch der Zähler misst: das ganze Haus, ein Stockwerk, ein Raum. Gilt auch für alles darunter.</small>
+        <?php else: ?>
+          <select id="bereich_id" name="bereich_id" disabled><option>– noch keine Plätze angelegt –</option></select>
+          <small>Plätze legt die Leitung unter Verwaltung → Stell- und Lagerplätze an.</small>
+        <?php endif; ?>
+      </div>
+      <div class="field">
+        <label for="standort_id">Zählerplatz (eingebaut in)</label>
         <?php if ($aktive): ?>
           <select id="standort_id" name="standort_id"><?= standort_optionen($aktive, (int)($meter['standort_id'] ?? 0), '– kein Platz –') ?></select>
-          <small>Vom Gebäude bis zum Raum – ein Hauptzähler hängt meist am Haus, ein Unterzähler am Stockwerk oder Raum.</small>
+          <small>Wo der Zähler hängt, z. B. der Hausanschlussraum im Keller.</small>
         <?php else: ?>
           <select id="standort_id" name="standort_id" disabled><option>– noch keine Plätze angelegt –</option></select>
-          <small>Plätze legt die Leitung unter Verwaltung → Stell- und Lagerplätze an.</small>
         <?php endif; ?>
       </div>
       <div class="field">
