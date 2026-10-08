@@ -1079,7 +1079,9 @@ achtet darauf, dass die Art zum übergeordneten Platz passt.
 * **Standortübersicht:** Der Menüpunkt „Standorte" zeigt allen den Baum
   zum Durchklicken – erst Gebäude, Hallen und Höfe, dann Stockwerke, Räume,
   Stellplätze, Schränke, Regale. Jede Karte nennt, was darunter steckt
-  („3 Fahrzeuge · 2 Zähler"), die Seite eines Platzes seine Fahrzeuge
+  („3 Fahrzeuge · 2 Zähler"); auf der Seite einer Halle oder eines Hofs
+  zeigen die Kästen der Stellplätze ihre Fahrzeuge gleich mit – Bild,
+  Stempel, Name und Status. Die Seite eines Platzes zeigt seine Fahrzeuge
   als Kacheln wie in der Fahrzeugliste – mit Titelbild, Stempel („In
   Wartung", „Nicht einsatzbereit"), Status und Fristen –, dazu Zähler,
   Funkgruppen und Funkgeräte mit Sprung in die jeweilige Akte.

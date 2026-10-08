@@ -245,6 +245,17 @@ $html = render_partial('admin/standort_edit', ['s' => $rows[4], 'parent' => $row
     'fahrzeuge' => [['id' => 2, 'bezeichnung' => 'MTW', 'funkrufname' => '', 'kennzeichen' => '', 'is_active' => 0]], 'fzTitelbilder' => [], 'fzFristen' => []]);
 $check('Verwaltung: Kachel ohne Bild mit Platzhalter, ausgemustert grau gestempelt', str_contains($html, 'Fahrzeuge mit diesem Stellplatz') && str_contains($html, 'kachel__leer')
     && str_contains($html, 'stempel--grau') && str_contains($html, '>Ausgemustert<') && str_contains($html, 'MTW'));
+$html = render_partial('standorte', ['s' => $rows[3], 'alle' => $rows, 'crumbs' => [], 'kinder' => [$rows[4]], 'summen' => [5 => ['fahrzeuge' => 1]],
+    'hier' => [], 'darunter' => ['fahrzeuge' => 1], 'zustaendig' => [], 'titelbilder' => [], 'zaehlung' => [], 'kinderZahl' => [], 'darfPflegen' => false,
+    'kindFahrzeuge' => [5 => $fzKachel], 'fzTitelbilder' => [2 => ['id' => 9]]]);
+$check('Halle: Kasten des Stellplatzes zeigt das Fahrzeug mit Bild, Stempel und Status', str_contains($html, 'class="platz__fz"') && str_contains($html, 'p=standorte&amp;id=5')
+    && str_contains($html, 'p=vehicle&amp;id=2') && str_contains($html, 'vehicle_file') && str_contains($html, '>In Wartung<') && str_contains($html, 'class="stempel"')
+    && str_contains($html, 'Heros HN 21/51 · THW-1234') && substr_count($html, 'GKW 1') === 1 && !str_contains($html, 'class="kacheln"'));
+$html = render_partial('standorte', ['s' => $rows[3], 'alle' => $rows, 'crumbs' => [], 'kinder' => [$rows[4]], 'summen' => [], 'hier' => [], 'darunter' => [],
+    'zustaendig' => [], 'titelbilder' => [], 'zaehlung' => [], 'kinderZahl' => [], 'darfPflegen' => false]);
+$check('Kasten ohne Fahrzeuge bleibt schlicht', !str_contains($html, 'platz__fz') && str_contains($html, 'p=standorte&amp;id=5'));
+$seite = (string)file_get_contents($app . '/src/pages/standorte.php');
+$check('Seite sammelt die Fahrzeuge der Unterplätze', str_contains($seite, "'kindFahrzeuge' => \$kindFahrzeuge") && str_contains($seite, 'vfile_covers($bildIds)'));
 $fz = (string)file_get_contents($app . '/src/lib/vehicles.php');
 $check('Fahrzeugabfrage filtert nach Platz', str_contains($fz, "'standort_ids'") && str_contains($fz, 'v.standort_id IN (') && str_contains($fz, "'mit_platz'") && str_contains($fz, 'v.standort_id IS NOT NULL'));
 $check('Fristplaketten nur für Auffälliges', vehicle_frist_badges([['label' => 'HU', 'status' => 'ok', 'datum' => '2027-01-01']]) === ''

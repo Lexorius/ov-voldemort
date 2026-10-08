@@ -60,8 +60,19 @@ if ($s) {
     }
 }
 
-// Für die Fahrzeugkacheln am Platz: Titelbilder und Fristen
+// Für die Fahrzeugkacheln am Platz: Titelbilder und Fristen – und die
+// Fahrzeuge direkt an den Unterplätzen, damit die Kästen sie gleich zeigen
 $hierFahrzeuge = $s ? ($inventar[(int)$s['id']]['fahrzeuge'] ?? []) : [];
+$kindFahrzeuge = [];
+foreach ($kinder as $k) {
+    if (!empty($inventar[(int)$k['id']]['fahrzeuge'])) {
+        $kindFahrzeuge[(int)$k['id']] = $inventar[(int)$k['id']]['fahrzeuge'];
+    }
+}
+$bildIds = array_column($hierFahrzeuge, 'id');
+foreach ($kindFahrzeuge as $liste) {
+    $bildIds = array_merge($bildIds, array_column($liste, 'id'));
+}
 $warnTage = setting_int('fahrzeug_frist_warnung_tage', 30);
 $fzFristen = [];
 foreach ($hierFahrzeuge as $v) {
@@ -78,7 +89,8 @@ render('standorte', [
     'hier'       => $s ? ($inventar[(int)$s['id']] ?? []) : [],
     'darunter'   => $s ? standort_inventar_summe((int)$s['id'], $alle, $inventar) : [],
     'zustaendig' => $s && $zaehlerAlle ? standort_zustaendige_zaehler((int)$s['id'], $alle, $zaehlerAlle) : [],
-    'fzTitelbilder' => $hierFahrzeuge ? vfile_covers(array_column($hierFahrzeuge, 'id')) : [],
+    'fzTitelbilder' => $bildIds ? vfile_covers($bildIds) : [],
+    'kindFahrzeuge' => $kindFahrzeuge,
     'fzFristen'  => $fzFristen,
     'titelbilder' => standort_titelbilder(array_merge($s ? [(int)$s['id']] : [], array_column($kinder, 'id'))),
     'zaehlung'   => standort_zaehlung($alle),

@@ -4,7 +4,7 @@
  * @var array $alle $crumbs $kinder $summen $hier $darunter $zustaendig $titelbilder $zaehlung $kinderZahl
  * @var bool $darfPflegen
  */
-$titelbilder ??= []; $hier ??= []; $darunter ??= []; $zustaendig ??= []; $kinderZahl ??= []; $fzTitelbilder ??= []; $fzFristen ??= [];
+$titelbilder ??= []; $hier ??= []; $darunter ??= []; $zustaendig ??= []; $kinderZahl ??= []; $fzTitelbilder ??= []; $fzFristen ??= []; $kindFahrzeuge ??= [];
 $typVon = static fn(array $p): array => STANDORT_TYPEN[standort_typ((string)$p['typ'])];
 $hierText = standort_inventar_text(['fahrzeuge' => count($hier['fahrzeuge'] ?? []), 'zaehler' => count($hier['zaehler'] ?? []) + count($zustaendig), 'funkgruppen' => count($hier['funkgruppen'] ?? []), 'funk' => count($hier['funk'] ?? [])]);
 $darunterText = $s ? standort_inventar_text($darunter) : '';
@@ -69,7 +69,8 @@ $darunterText = $s ? standort_inventar_text($darunter) : '';
     </div>
     <div class="grid3">
       <?php foreach ($kinder as $k): $typ = $typVon($k); $text = standort_inventar_text($summen[(int)$k['id']] ?? []); $unter = (int)($kinderZahl[(int)$k['id']] ?? 0); ?>
-        <a class="item<?= (int)$k['is_active'] !== 1 ? ' item--done' : '' ?>" href="<?= e(url('standorte', ['id' => $k['id']])) ?>">
+        <div class="item<?= (int)$k['is_active'] !== 1 ? ' item--done' : '' ?>">
+          <a class="item__link" href="<?= e(url('standorte', ['id' => $k['id']])) ?>">
           <div class="item__top">
             <?php if (isset($titelbilder[(int)$k['id']])): ?>
               <img class="item__bild" alt="" loading="lazy" src="<?= e(url('standort_bild', ['id' => $titelbilder[(int)$k['id']]['id'], 'vorschau' => 1])) ?>">
@@ -82,7 +83,29 @@ $darunterText = $s ? standort_inventar_text($darunter) : '';
               <?php if ($text !== ''): ?><div class="item__sub"><?= e($text) ?></div><?php endif; ?>
             </div>
           </div>
-        </a>
+          </a>
+          <?php if (!empty($kindFahrzeuge[(int)$k['id']])): ?>
+            <div class="platz__fz">
+              <?php foreach ($kindFahrzeuge[(int)$k['id']] as $v): $stempel = vehicle_stamp($v); $vAktiv = (int)($v['is_active'] ?? 1) === 1; ?>
+                <a class="platz__fzeintrag<?= $vAktiv ? '' : ' platz__fzeintrag--aus' ?>" href="<?= e(url('vehicle', ['id' => $v['id']])) ?>">
+                  <span class="kachel__bild platz__fzbild">
+                    <?php if ($stempel !== null): ?><span class="stempel<?= $vAktiv ? '' : ' stempel--grau' ?>"><?= e($stempel) ?></span><?php endif; ?>
+                    <?php if (isset($fzTitelbilder[(int)$v['id']])): ?>
+                      <img alt="" loading="lazy" src="<?= e(url('vehicle_file', ['id' => $fzTitelbilder[(int)$v['id']]['id'], 'vorschau' => 1])) ?>">
+                    <?php else: ?>
+                      <span class="kachel__leer" aria-hidden="true">⛟</span>
+                    <?php endif; ?>
+                  </span>
+                  <span class="platz__fztext">
+                    <strong><?= e((string)$v['bezeichnung']) ?></strong>
+                    <?php $sub = implode(' · ', array_filter([(string)($v['funkrufname'] ?? ''), (string)($v['kennzeichen'] ?? '')])); if ($sub !== ''): ?><span class="small muted"><?= e($sub) ?></span><?php endif; ?>
+                    <?= badge(!empty($v['status_label']) ? ['label' => $v['status_label'], 'color' => $v['status_color'] ?? ''] : null, 'ohne Status') ?>
+                  </span>
+                </a>
+              <?php endforeach; ?>
+            </div>
+          <?php endif; ?>
+        </div>
       <?php endforeach; ?>
     </div>
   </section>

@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## 2.1.14.0
+
+- **Fahrzeuge gleich im Kasten des Stellplatzes:** Auf der Seite einer
+  Halle oder eines Hofs zeigen die Kästen der Stellplätze ihre Fahrzeuge
+  direkt – Bild mit Stempel, Name, Funkrufname, Kennzeichen und Status,
+  verlinkt zur Akte. Der Kasten selbst führt weiter zum Platz.
+
 ## 2.1.13.0
 
 - **Fahrzeuge am Platz als Kachel:** In der Standortübersicht und auf der
