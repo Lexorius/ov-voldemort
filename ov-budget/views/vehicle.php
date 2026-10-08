@@ -98,10 +98,12 @@ $arten = [
               ? (!empty($extra[$f['key']]) ? 'ja' : 'nein')
               : (string)($extra[$f['key']] ?? '');
       }
+      // Werte, die irgendwohin führen – der Stellplatz zur Standortseite
+      $verweise = ['Stellplatz' => !empty($vehicle['standort_id']) ? url('standorte', ['id' => (int)$vehicle['standort_id']]) : null];
       foreach ($zeilen as $label => $wert):
           if (trim((string)$wert) === '') { continue; } ?>
         <div class="dl__item"><div class="dl__label"><?= e((string)$label) ?></div>
-          <div class="dl__value"><?= e((string)$wert) ?></div></div>
+          <div class="dl__value"><?php if (!empty($verweise[$label])): ?><a href="<?= e($verweise[$label]) ?>"><?= e((string)$wert) ?></a><?php else: ?><?= e((string)$wert) ?><?php endif; ?></div></div>
       <?php endforeach; ?>
     </dl>
     <?php if ($vehicle['notiz']): ?>

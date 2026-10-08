@@ -7,7 +7,7 @@
  * @var array  $titelbilder vehicle_id => Titelbild (vfile_covers)
  * @var array  $fristen     Fristen dieses Fahrzeugs (vehicle_deadlines) – optional
  * @var string $stern       HTML des Anheft-Knopfs – optional, leer = keiner
- * @var bool   $mitPlatz    Platznamen in der Unterzeile zeigen (Vorgabe: ja)
+ * @var bool   $mitPlatz    Plakette mit dem Stellplatz zeigen, verlinkt zur Standortseite (Vorgabe: ja)
  */
 $titelbilder ??= [];
 $fristen ??= [];
@@ -31,7 +31,7 @@ $id = (int)$v['id'];
   </a>
   <div class="kachel__text">
     <a class="item__title" href="<?= e(url('vehicle', ['id' => $id])) ?>"><?= e((string)$v['bezeichnung']) ?></a>
-    <div class="item__sub small"><?= e(implode(' · ', array_filter([(string)($v['funkrufname'] ?? ''), (string)($v['kennzeichen'] ?? ''), $mitPlatz ? (string)($v['stellplatz_name'] ?? '') : '']))) ?></div>
+    <div class="item__sub small"><?= e(implode(' · ', array_filter([(string)($v['funkrufname'] ?? ''), (string)($v['kennzeichen'] ?? '')]))) ?></div>
     <div class="item__meta">
       <?= badge(!empty($v['status_label']) ? ['label' => $v['status_label'], 'color' => $v['status_color'] ?? ''] : null, 'ohne Status') ?>
       <?php if (($v['fms_status'] ?? null) !== null && $v['fms_status'] !== ''): ?>
@@ -40,6 +40,9 @@ $id = (int)$v['id'];
       <?= vehicle_frist_badges($fristen) ?>
       <?php if ((int)($v['offene_auftraege'] ?? 0) > 0): ?>
         <span class="badge badge--outline"><?= (int)$v['offene_auftraege'] ?> Auftrag/Aufträge</span>
+      <?php endif; ?>
+      <?php $platz = (string)($v['stellplatz_pfad'] ?? $v['stellplatz_name'] ?? ''); if ($mitPlatz && !empty($v['standort_id']) && $platz !== ''): ?>
+        <a class="badge badge--outline" href="<?= e(url('standorte', ['id' => (int)$v['standort_id']])) ?>" title="Stellplatz – zur Standortseite">📍 <?= e($platz) ?></a>
       <?php endif; ?>
       <?php if (!$aktiv): ?><span class="badge badge--muted">ausgemustert</span><?php endif; ?>
     </div>

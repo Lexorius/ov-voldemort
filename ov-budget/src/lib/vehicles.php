@@ -109,6 +109,23 @@ function vehicle_stamp(array $v): ?string
     };
 }
 
+/**
+ * Jedem Fahrzeug mit Stellplatz den Pfad nachtragen ('stellplatz_pfad',
+ * etwa „Halle 1 › Stellplatz 3"). $plaetze: alle Standorte. Reine Funktion.
+ */
+function vehicle_mit_stellplatz_pfad(array $fahrzeuge, array $plaetze): array
+{
+    foreach ($fahrzeuge as &$v) {
+        $sid = (int)($v['standort_id'] ?? 0);
+        $v['stellplatz_pfad'] = $sid > 0 && $plaetze ? standort_pfad($sid, $plaetze) : '';
+        if ($v['stellplatz_pfad'] === '') {
+            $v['stellplatz_pfad'] = (string)($v['stellplatz_name'] ?? '');
+        }
+    }
+    unset($v);
+    return $fahrzeuge;
+}
+
 /** Fristen (vehicle_deadlines) als Plaketten – nur die auffälligen. Reine Funktion. */
 function vehicle_frist_badges(array $liste): string
 {

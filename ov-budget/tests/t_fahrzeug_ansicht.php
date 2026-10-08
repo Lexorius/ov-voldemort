@@ -89,6 +89,15 @@ $check('Hinweis bei leerer Merkliste', str_contains($html, 'Noch kein Fahrzeug a
 $html = render_partial('vehicles', $leer + ['ansicht' => 'liste']);
 $check('sonst der übliche Hinweis', str_contains($html, 'Kein Fahrzeug gefunden'));
 
+/* ---------- Plakette mit Stellplatz ---------- */
+$amPlatz = ['fahrzeuge' => [$fahrzeug(['standort_id' => 5, 'stellplatz_name' => 'Stellplatz 3', 'stellplatz_pfad' => 'Halle 1 › Stellplatz 3'])]] + $daten;
+$html = render_partial('vehicles', $amPlatz + ['ansicht' => 'liste']);
+$check('Liste: Plakette mit dem Stellplatzpfad', str_contains($html, '📍 Halle 1 › Stellplatz 3') && str_contains($html, 'title="Stellplatz"'));
+$html = render_partial('vehicles', $amPlatz + ['ansicht' => 'kacheln']);
+$check('Kachel: Plakette verlinkt zur Standortseite', str_contains($html, '📍 Halle 1 › Stellplatz 3') && str_contains($html, 'p=standorte&amp;id=5'));
+$html = render_partial('vehicles', $daten + ['ansicht' => 'liste']);
+$check('ohne Stellplatz keine Plakette', !str_contains($html, '📍'));
+
 /* ---------- Stempel in der Kachel ---------- */
 $defekt = $daten;
 $defekt['fahrzeuge'] = [$fahrzeug(['status_slug' => 'nicht-einsatzbereit', 'status_label' => 'Nicht einsatzbereit',

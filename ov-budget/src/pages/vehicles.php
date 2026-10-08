@@ -34,7 +34,7 @@ $filter = [
     'user_id'       => (int)$user['id'],
     'sort'          => $sort,
 ];
-$fahrzeuge = vehicle_query($filter);
+$fahrzeuge = vehicle_mit_stellplatz_pfad(vehicle_query($filter), function_exists('standort_all') ? standort_all() : []);
 $warnTage = setting_int('fahrzeug_frist_warnung_tage', 30);
 
 $fristen = [];

@@ -256,6 +256,8 @@ $html = render_partial('standorte', ['s' => $rows[3], 'alle' => $rows, 'crumbs' 
 $check('Kasten ohne Fahrzeuge bleibt schlicht', !str_contains($html, 'platz__fz') && str_contains($html, 'p=standorte&amp;id=5'));
 $seite = (string)file_get_contents($app . '/src/pages/standorte.php');
 $check('Seite sammelt die Fahrzeuge der Unterplätze', str_contains($seite, "'kindFahrzeuge' => \$kindFahrzeuge") && str_contains($seite, 'vfile_covers($bildIds)'));
+$mitPfad = vehicle_mit_stellplatz_pfad([['id' => 1, 'standort_id' => 5, 'stellplatz_name' => 'Stellplatz 3'], ['id' => 2, 'standort_id' => null], ['id' => 3, 'standort_id' => 77, 'stellplatz_name' => 'Fremd']], $rows);
+$check('Pfad je Fahrzeug nachgetragen', $mitPfad[0]['stellplatz_pfad'] === 'Halle 1 › Stellplatz 3' && $mitPfad[1]['stellplatz_pfad'] === '' && $mitPfad[2]['stellplatz_pfad'] === 'Fremd');
 $fz = (string)file_get_contents($app . '/src/lib/vehicles.php');
 $check('Fahrzeugabfrage filtert nach Platz', str_contains($fz, "'standort_ids'") && str_contains($fz, 'v.standort_id IN (') && str_contains($fz, "'mit_platz'") && str_contains($fz, 'v.standort_id IS NOT NULL'));
 $check('Fristplaketten nur für Auffälliges', vehicle_frist_badges([['label' => 'HU', 'status' => 'ok', 'datum' => '2027-01-01']]) === ''

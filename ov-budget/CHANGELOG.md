@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## 2.1.15.0
+
+- **Stellplatz in der Fahrzeugliste:** Jedes Fahrzeug mit Stellplatz trägt
+  eine Plakette „📍 Halle 1 › Stellplatz 3" – in Liste und Kacheln, in der
+  Kachel verlinkt zur Standortseite.
+- **Fahrzeugakte:** Der Stellplatz ist eine Verknüpfung zur Standortseite.
+
 ## 2.1.14.0
 
 - **Fahrzeuge gleich im Kasten des Stellplatzes:** Auf der Seite einer

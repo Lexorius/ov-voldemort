@@ -182,6 +182,9 @@ $fristBadges = static fn(array $liste): string => vehicle_frist_badges($liste);
             <?php if ((int)$v['offene_auftraege'] > 0): ?>
               <span class="badge badge--outline"><?= (int)$v['offene_auftraege'] ?> offene(r) Auftrag/Aufträge</span>
             <?php endif; ?>
+            <?php if (!empty($v['standort_id']) && (string)($v['stellplatz_pfad'] ?? $v['stellplatz_name'] ?? '') !== ''): ?>
+              <span class="badge badge--outline" title="Stellplatz">📍 <?= e((string)($v['stellplatz_pfad'] ?? $v['stellplatz_name'])) ?></span>
+            <?php endif; ?>
             <?php if ($v['stein_asset_id']): ?>
               <span class="badge badge--outline" title="Mit der Stein.APP verbunden">Stein.APP</span>
             <?php endif; ?>

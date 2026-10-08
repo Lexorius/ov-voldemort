@@ -278,7 +278,8 @@ $html = render_partial('vehicle', [
         'status_color' => '#15803d', 'status_slug' => 'einsatzbereit', 'hersteller' => 'MAN', 'modell' => 'TGM',
         'baujahr' => 2015, 'erstzulassung' => '2015-04-01', 'fahrgestellnummer' => 'WMA123', 'km_stand' => 46500,
         'betriebsstunden' => null, 'standort' => 'Halle 1', 'notiz' => '', 'is_active' => 1,
-        'stein_asset_id' => 'a1', 'stein_sync_at' => '2026-09-17 10:00:00', 'extra' => null],
+        'stein_asset_id' => 'a1', 'stein_sync_at' => '2026-09-17 10:00:00', 'extra' => null, 'standort_id' => 5],
+    'stellplatzPfad' => 'Halle 1 › Stellplatz 3',
     'fristen' => vehicle_deadlines(['hu_bis' => '2026-09-20', 'uvv_bis' => '2026-08-01'], 30, $heute),
     'auftraege' => [['id' => 5, 'nummer' => '2026-0005', 'titel' => 'Bremse', 'art_label' => 'Instandsetzung',
         'prio_label' => 'Hoch', 'prio_color' => '#c2410c', 'status_label' => 'Gemeldet', 'status_color' => '#0284c7',
@@ -302,6 +303,7 @@ $check('Akte: Journal mit Wertwechsel', str_contains($html, 'Einsatzbereit') && 
 $check('Akte: Stein-Eintrag gekennzeichnet', str_contains($html, 'journal__row--stein'));
 $check('Akte: Prüf-Link', str_contains($html, 'pruefen=1'));
 $check('Akte: Eingabefeld für Journal', str_contains($html, 'name="text"'));
+$check('Akte: Stellplatz verlinkt zur Standortseite', str_contains($html, 'p=standorte&amp;id=5') && str_contains($html, '>Halle 1 › Stellplatz 3</a>'));
 
 $html = render_partial('vehicle', [
     'vehicle' => ['id' => 1, 'bezeichnung' => 'GKW 1', 'funkrufname' => '', 'kennzeichen' => '', 'kennung' => '',

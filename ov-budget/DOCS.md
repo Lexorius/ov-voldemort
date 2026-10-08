@@ -1064,9 +1064,10 @@ achtet darauf, dass die Art zum übergeordneten Platz passt.
   `standorte/` und wandern mit der Sicherung.
 * **Fahrzeuge:** In der Fahrzeugakte lässt sich unter „Stellplatz
   (Standard)" einer der Plätze wählen – wo das Fahrzeug normalerweise steht.
-  Die Akte zeigt den Pfad („Halle 1 › Stellplatz 3"), die Fahrzeugliste den
-  Platznamen, und die Platzseite in der Verwaltung alle Fahrzeuge, die dort
-  stehen. Das freie Feld „Standort" bleibt für Vorübergehendes wie „in der
+  Die Akte zeigt den Pfad („Halle 1 › Stellplatz 3") als Verknüpfung zur
+  Standortseite, die Fahrzeugliste eine Plakette „📍 Halle 1 › Stellplatz 3"
+  (in der Kachelansicht ebenfalls verlinkt), und die Platzseite in der
+  Verwaltung alle Fahrzeuge, die dort stehen. Das freie Feld „Standort" bleibt für Vorübergehendes wie „in der
   Werkstatt".
 * **Zähler** haben zwei Plätze: **„Zuständig für"** ist der Bereich, dessen
   Verbrauch der Zähler misst – das ganze Haus, ein Stockwerk, ein Raum; er
