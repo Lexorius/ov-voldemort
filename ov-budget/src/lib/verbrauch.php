@@ -1131,9 +1131,13 @@ function verbrauch_profil(array $staende, int $von, int $bis): array
     }
     if ($abschnitte === 0) {
         return ['abschnitte' => 0, 'tage' => 0.0, 'abstand_stunden' => 0.0, 'wochentage' => $wochentage, 'stunden' => $stunden,
+                'wochentage_tage' => array_fill(0, 7, 0.0), 'wochentage_fehlend' => range(0, 6),
                 'wochentage_aussagekraeftig' => false, 'stunden_aussagekraeftig' => false, 'spitze_tag' => 0, 'schwach_tag' => 0,
                 'spitzen_stunden' => [], 'spitzen_woche' => [], 'nacht_anteil' => 0];
     }
+    // Welche Wochentage überhaupt Daten haben – nach drei Tagen fehlen vier
+    $wtTage = array_map(static fn($s) => $s / 86400, $wtSekunden);
+    $fehlend = array_keys(array_filter($wtSekunden, static fn($s) => $s <= 0));
     // Durchschnitt: je Wochentag pro Tag, je Stunde pro Stunde
     foreach ($wochentage as $i => $v) {
         $wochentage[$i] = $wtSekunden[$i] > 0 ? $v / ($wtSekunden[$i] / 86400) : 0.0;
@@ -1161,7 +1165,8 @@ function verbrauch_profil(array $staende, int $von, int $bis): array
         $nacht += $stunden[$h];
     }
     $spitzeTag = (int)array_search(max($wochentage), $wochentage, true);
-    $schwachTag = (int)array_search(min($wochentage), $wochentage, true);
+    $belegt = array_filter($wochentage, static fn($v, $i) => $wtSekunden[$i] > 0, ARRAY_FILTER_USE_BOTH);
+    $schwachTag = $belegt ? (int)array_search(min($belegt), $wochentage, true) : 0;
 
     return [
         'abschnitte'      => $abschnitte,
@@ -1169,7 +1174,10 @@ function verbrauch_profil(array $staende, int $von, int $bis): array
         'abstand_stunden' => $median,
         'wochentage'      => $wochentage,
         'stunden'         => $stunden,
-        'wochentage_aussagekraeftig' => $median <= 26,
+        'wochentage_tage' => $wtTage,
+        'wochentage_fehlend' => $fehlend,
+        // Ein Wochenprofil braucht einen Stand je Tag und jeden Wochentag mindestens einmal
+        'wochentage_aussagekraeftig' => $median <= 26 && $fehlend === [],
         'stunden_aussagekraeftig'    => $median <= 2,
         'spitze_tag'      => $spitzeTag,
         'schwach_tag'     => $schwachTag,

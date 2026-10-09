@@ -20,11 +20,11 @@ $bericht = !empty($bericht);
     <div class="profil__block">
       <div class="profil__titel">Durchschnitt je Wochentag <span class="profil__einheit">· <?= e($einheit) ?> je Tag</span></div>
       <div class="profil__balken profil__balken--tage">
-        <?php foreach ($profil['wochentage'] as $i => $v): $h = $maxTag > 0 ? max(2, $v / $maxTag * 100) : 0; ?>
+        <?php foreach ($profil['wochentage'] as $i => $v): $leer = ($profil['wochentage_tage'][$i] ?? 1) <= 0; $h = $maxTag > 0 && !$leer ? max(2, $v / $maxTag * 100) : 0; ?>
           <div class="profil__spalte">
-            <div class="profil__wert"><?= e(menge($v, '', $v >= 100 ? 0 : 1)) ?></div>
+            <div class="profil__wert<?= $leer ? ' muted' : '' ?>"><?= $leer ? '–' : e(menge($v, '', $v >= 100 ? 0 : 1)) ?></div>
             <div class="profil__stab" style="height:<?= number_format($h, 1, '.', '') ?>%;background:<?= e($farbe) ?>"
-                 title="<?= e($tage[$i] . ': ' . menge($v, $einheit, 2)) ?>"></div>
+                 title="<?= e($leer ? $tage[$i] . ': noch kein Stand an diesem Wochentag' : $tage[$i] . ': ' . menge($v, $einheit, 2)) ?>"></div>
           </div>
         <?php endforeach; ?>
       </div>
@@ -33,7 +33,11 @@ $bericht = !empty($bericht);
           <div class="profil__name<?= $profil['spitze_tag'] === $i ? ' profil__name--spitze' : '' ?>"><?= e($t) ?></div>
         <?php endforeach; ?>
       </div>
-      <?php if (!$profil['wochentage_aussagekraeftig']): ?>
+      <?php if (!$profil['wochentage_aussagekraeftig'] && !empty($profil['wochentage_fehlend'])): ?>
+        <div class="<?= $bericht ? 'klein' : 'small muted' ?>">Erst nach einer vollen Woche entsteht ein Wochenprofil – bisher
+          <?= e(number_format($profil['tage'], 1, ',', '.')) ?> Tage, es <?= count($profil['wochentage_fehlend']) === 1 ? 'fehlt' : 'fehlen' ?> <?= e(implode(', ', array_map(static fn($i) => $tage[$i], $profil['wochentage_fehlend']))) ?>.
+          Ein Vergleich der Wochentage wäre jetzt noch irreführend.</div>
+      <?php elseif (!$profil['wochentage_aussagekraeftig']): ?>
         <div class="<?= $bericht ? 'klein' : 'small muted' ?>">Die Stände liegen im Schnitt <?= e(number_format($profil['abstand_stunden'] / 24, 1, ',', '.')) ?> Tage
           auseinander – zwischen den Wochentagen wird dann gleichmäßig verteilt. Für ein echtes Profil braucht es
           mindestens einen Stand je Tag.</div>
@@ -81,6 +85,7 @@ $bericht = !empty($bericht);
       <?php endif; ?>
     </dl>
   <?php endif; ?>
-  <p class="<?= $bericht ? 'klein' : 'small muted' ?>">Grundlage: <?= (int)$profil['abschnitte'] ?> Abschnitte zwischen Ablesungen,
-    <?= e(number_format($profil['tage'], 0, ',', '.')) ?> Tage. Jeder Abschnitt ist gleichmäßig auf seine Stunden verteilt.</p>
+  <p class="<?= $bericht ? 'klein' : 'small muted' ?>">Grundlage: <?= (int)$profil['abschnitte'] + 1 ?> Stände über <?= e(number_format($profil['tage'], $profil['tage'] < 10 ? 1 : 0, ',', '.')) ?> Tage.
+    Was zwischen zwei Ständen verbraucht wurde, wird gleichmäßig
+    auf die Stunden dazwischen verteilt.</p>
 <?php endif; ?>

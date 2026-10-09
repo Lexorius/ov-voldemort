@@ -1,5 +1,16 @@
 # Änderungsverlauf
 
+## 2.1.16.1
+
+- **Verbrauchsprofil bei jungen Zählern:** Nach drei Tagen stündlicher Stände
+  zeigte das Wochenprofil Montag bis Sonntag mit „0,0" für Tage ohne Daten
+  und kürte einen „stärksten" und „schwächsten" Wochentag. Jetzt stehen
+  Wochentage ohne Stand als „–", das Wochenprofil gilt erst, wenn jeder
+  Wochentag einmal vorkam, und die Seite nennt die fehlenden Tage.
+- Die Grundlage heißt nun „70 Stände über 2,9 Tage" statt „69 Abschnitte",
+  damit es nicht mit der Tabelle „Abschnitte" (von Ablesetag zu Ablesetag)
+  verwechselt wird.
+
 ## 2.1.16.0
 
 - **Unterzähler: Zeiträume sichtbar.** Die Aufteilung auf Unterzähler zeigt

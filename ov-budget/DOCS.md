@@ -524,7 +524,9 @@ Das Modul führt Zähler und ihre Stände und rechnet daraus Verbrauch und Koste
   die stärksten Stunden am Tag und die stärksten Zeiten in der Woche. Das
   Profil steht auch auf der Zählerseite. Eine Tageskurve entsteht erst mit
   stündlichen Ständen (Home Assistant), ein Wochenprofil ab einem Stand je
-  Tag; bei selteneren Ablesungen sagt die Seite das dazu. Im laufenden Jahr wird das Vorjahr
+  Tag und erst, wenn jeder Wochentag einmal vorkam – vorher stehen die
+  fehlenden Tage als „–" und die Seite sagt, welche noch fehlen; bei
+  selteneren Ablesungen sagt sie das ebenfalls dazu. Im laufenden Jahr wird das Vorjahr
   bis zum selben Tag verglichen. Beide Seiten drucken sich sauber auf A4 –
   „Drucken / PDF" nutzt den Browserdruck.
 * **Rechte:** Sehen nur Leitung und Administration, per Einstellung alle

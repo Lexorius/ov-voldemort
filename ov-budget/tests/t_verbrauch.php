@@ -230,6 +230,19 @@ $p = verbrauch_profil($woe, $start, $start + 56 * 86400);
 $check('wöchentlich: nur Mittelwert, alle Wochentage gleich', !$p['stunden_aussagekraeftig'] && !$p['wochentage_aussagekraeftig']
     && $nah($p['wochentage'][0], 10.0) && $nah($p['wochentage'][6], 10.0) && $p['abstand_stunden'] === 168.0);
 $check('ohne Stände leeres Profil', verbrauch_profil([], $start, $start + 86400)['abschnitte'] === 0);
+
+// Junger Unterzähler: drei Tage stündlich (Mi–Fr) – Tageskurve ja, Wochenprofil noch nicht
+$jung = [];
+$startMi = strtotime('2026-10-07 12:00:00');   // ein Mittwoch
+for ($h = 0; $h <= 69; $h++) { $jung[] = ['stand' => $h * 0.2, 'gelesen_am' => date('Y-m-d H:i:s', $startMi + $h * 3600), 'quelle' => 'ha']; }
+$pj = verbrauch_profil($jung, $startMi, $startMi + 70 * 3600);
+$check('drei Tage: Stunden aussagekräftig, Wochentage nicht; Mo, Di, So fehlen', $pj['stunden_aussagekraeftig'] && !$pj['wochentage_aussagekraeftig']
+    && $pj['wochentage_fehlend'] === [0, 1, 6] && $pj['wochentage_tage'][0] === 0.0 && $pj['wochentage_tage'][3] > 0.9 && $pj['abschnitte'] === 69);
+$check('schwächster Tag nur unter den belegten', in_array($pj['schwach_tag'], [2, 3, 4, 5], true));
+$html = render_partial('partials/verbrauch_profil', ['profil' => $pj, 'einheit' => 'kWh', 'farbe' => '#b45309', 'bericht' => false]);
+$check('Profil: fehlende Wochentage als –, Hinweis mit den fehlenden Tagen, kein stärkster Wochentag', str_contains($html, 'Erst nach einer vollen Woche')
+    && str_contains($html, 'es fehlen Mo, Di, So') && str_contains($html, 'noch kein Stand an diesem Wochentag') && !str_contains($html, 'Stärkster Wochentag')
+    && str_contains($html, 'Stärkste Stunden am Tag') && str_contains($html, 'Grundlage: 70 Stände über 2,9 Tage'));
 $html = render_partial('partials/verbrauch_profil', ['profil' => verbrauch_profil($prof, $start, $start + 28 * 86400), 'einheit' => 'kWh', 'farbe' => '#b45309', 'bericht' => false]);
 $check('Profil rendert mit Spitzen', str_contains($html, 'Dienstag') && str_contains($html, '18–19 Uhr') && str_contains($html, 'Di 18–19 Uhr'));
 $html = render_partial('partials/verbrauch_profil', ['profil' => $p, 'einheit' => 'kWh', 'farbe' => '#b45309', 'bericht' => true]);
