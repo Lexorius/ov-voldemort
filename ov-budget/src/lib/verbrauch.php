@@ -238,10 +238,28 @@ function meter_unterzaehler_mit_anteil(array $parent, int $jahr): array
     $anfang = mktime(0, 0, 0, 1, 1, $jahr);
     $ende = min($jetzt, mktime(0, 0, 0, 1, 1, $jahr + 1));
     [$von, $bis] = verbrauch_zeitraum($jahr, $jetzt);
-    $mengen = [(int)$parent['id'] => (float)(verbrauch_zwischen(readings_bereich((int)$parent['id'], $von, $bis), $anfang, $ende) ?? 0)];
-    foreach ($kinder as $k) {
-        $mengen[(int)$k['id']] = (float)(verbrauch_zwischen(readings_bereich((int)$k['id'], $von, $bis), $anfang, $ende) ?? 0);
+    $hauptStaende = readings_bereich((int)$parent['id'], $von, $bis);
+    $hauptZeitraum = verbrauch_abdeckung($hauptStaende, $anfang, $ende);
+    $mengen = [(int)$parent['id'] => (float)(verbrauch_zwischen($hauptStaende, $anfang, $ende) ?? 0)];
+    $abweichend = 0;
+    foreach ($kinder as &$k) {
+        $staende = readings_bereich((int)$k['id'], $von, $bis);
+        $mengen[(int)$k['id']] = (float)(verbrauch_zwischen($staende, $anfang, $ende) ?? 0);
+        // Deckt der Unterzähler denselben Zeitraum ab wie der Hauptzähler? Sonst
+        // taugt der Anteil am Jahr nichts – dann zählt der Anteil im eigenen Zeitraum.
+        $k['zeitraum'] = verbrauch_abdeckung($staende, $anfang, $ende);
+        $k['abweichend'] = verbrauch_zeitraum_abweichend($k['zeitraum'], $hauptZeitraum);
+        $k['haupt_gleich'] = null;
+        $k['anteil_eigen'] = null;
+        if ($k['abweichend']) {
+            $abweichend++;
+            if ($k['zeitraum'] !== null) {
+                $k['haupt_gleich'] = (float)(verbrauch_zwischen($hauptStaende, $k['zeitraum']['von'], $k['zeitraum']['bis']) ?? 0);
+                $k['anteil_eigen'] = $k['haupt_gleich'] > 0 ? round($mengen[(int)$k['id']] / $k['haupt_gleich'] * 100, 1) : null;
+            }
+        }
     }
+    unset($k);
     $anteile = verbrauch_anteile($kinder, $mengen);
     $rest = $mengen[(int)$parent['id']];
     foreach ($kinder as &$k) {
@@ -250,7 +268,8 @@ function meter_unterzaehler_mit_anteil(array $parent, int $jahr): array
         $rest -= $k['jahr'];
     }
     unset($k);
-    return ['liste' => $kinder, 'hauptzaehler' => $mengen[(int)$parent['id']], 'rest' => max(0.0, $rest)];
+    return ['liste' => $kinder, 'hauptzaehler' => $mengen[(int)$parent['id']], 'rest' => max(0.0, $rest),
+            'zeitraum' => $hauptZeitraum, 'abweichend' => $abweichend];
 }
 
 /* ==================================================================== */
@@ -967,6 +986,50 @@ function verbrauch_solar_bilanz(array $solar, float $bezug): array
     $solar['autarkie'] = $solar['gesamt'] > 0 ? (int)round($solar['eigenverbrauch'] / $solar['gesamt'] * 100) : 0;
     $solar['erloes'] = round((float)$solar['erloes'], 2);
     return $solar;
+}
+
+/**
+ * Welchen Teil eines Zeitraums die Stände wirklich abdecken: von der ersten
+ * bis zur letzten Ablesung, beschnitten auf [von, bis]. null = nichts
+ * Brauchbares (weniger als zwei Stände oder ganz außerhalb). Reine Funktion.
+ */
+function verbrauch_abdeckung(array $staende, int $von, int $bis): ?array
+{
+    if (count($staende) < 2) {
+        return null;
+    }
+    $a = max($von, (int)strtotime((string)$staende[0]['gelesen_am']));
+    $b = min($bis, (int)strtotime((string)$staende[count($staende) - 1]['gelesen_am']));
+    if ($b <= $a) {
+        return null;
+    }
+    return ['von' => $a, 'bis' => $b, 'tage' => ($b - $a) / 86400];
+}
+
+/**
+ * Passt der Zeitraum eines Unterzählers zu dem des Hauptzählers? Abweichend,
+ * wenn er mehr als $toleranzTage später beginnt oder früher endet – oder gar
+ * nichts abdeckt. Ohne Hauptzeitraum gibt es nichts zu vergleichen. Reine Funktion.
+ */
+function verbrauch_zeitraum_abweichend(?array $kind, ?array $haupt, int $toleranzTage = 7): bool
+{
+    if ($haupt === null) {
+        return false;
+    }
+    if ($kind === null) {
+        return true;
+    }
+    $t = $toleranzTage * 86400;
+    return $kind['von'] > $haupt['von'] + $t || $kind['bis'] < $haupt['bis'] - $t;
+}
+
+/** „12.09.–08.10.2026" für eine Abdeckung. Reine Funktion. */
+function verbrauch_zeitraum_text(?array $z): string
+{
+    if ($z === null) {
+        return 'keine Stände';
+    }
+    return date('d.m.', $z['von']) . '–' . date('d.m.Y', $z['bis']);
 }
 
 /**

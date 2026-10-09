@@ -138,7 +138,7 @@ $darfAblesen = can('read_meter');
             <?php endif; ?>
           </div></div>
         <div class="dl__item"><div class="dl__label">Letzte 30 Tage</div>
-          <div class="dl__value"><?= $k['tage30'] === null ? '<span class="muted">–</span>' : e(menge($k['tage30'], (string)$m['einheit'])) ?></div></div>
+          <div class="dl__value"><?= $k['tage30'] === null ? '<span class="muted">–</span>' : e(menge($k['tage30'], (string)$m['einheit'])) . ' <span class="muted small">· ' . e(menge($k['tage30'] / 30, (string)$m['einheit'], 2)) . ' je Tag</span>' ?></div></div>
         <div class="dl__item"><div class="dl__label"><?= (int)$jahr ?></div>
           <div class="dl__value"><?= $k['jahr'] === null ? '<span class="muted">–</span>' : e(menge($k['jahr'], (string)$m['einheit'])) ?>
             <?php if (isset($k['anteil']) && $k['anteil'] !== null): ?><span class="muted small">· <?= e(number_format($k['anteil'], 1, ',', '.')) ?> % des Hauptzählers</span><?php endif; ?>

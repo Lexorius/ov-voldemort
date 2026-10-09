@@ -1,5 +1,18 @@
 # Änderungsverlauf
 
+## 2.1.16.0
+
+- **Unterzähler: Zeiträume sichtbar.** Die Aufteilung auf Unterzähler zeigt
+  je Zeile den abgedeckten Zeitraum. Beginnt ein Unterzähler später oder
+  endet er früher als der Hauptzähler, warnt die Seite deutlich, markiert
+  die Zeilen mit ⚠ und zeigt den Anteil „im eigenen Zeitraum" – den Anteil
+  am Hauptzähler in genau diesen Tagen. „Nicht zugeordnet" trägt dann den
+  Hinweis „Zeiträume verschieden".
+- **„je Tag" auch bei Tagesabschnitten:** Bei täglichen Ablesungen (etwa aus
+  Home Assistant) blieb die Spalte leer; jetzt erscheint der Wert ab sechs
+  Stunden Abstand. Die Zählerkarten der Übersicht nennen zu den letzten
+  30 Tagen auch den Verbrauch je Tag.
+
 ## 2.1.15.0
 
 - **Stellplatz in der Fahrzeugliste:** Jedes Fahrzeug mit Stellplatz trägt

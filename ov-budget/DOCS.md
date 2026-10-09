@@ -476,7 +476,13 @@ Das Modul führt Zähler und ihre Stände und rechnet daraus Verbrauch und Koste
   Ein **Unterzähler** misst einen Teil davon (Stockwerk, Halle) – er hat
   keine eigenen Kosten und zählt nicht doppelt; die Zählerseite des
   Hauptzählers zeigt die Aufteilung mit Anteilen und dem nicht zugeordneten
-  Rest. Für eine **Solaranlage** gibt es die Rollen **Erzeugung** (was der
+  Rest. Jede Zeile nennt den **Zeitraum**, den der Unterzähler abdeckt.
+  Beginnt er später oder endet er früher als der Hauptzähler (mehr als
+  sieben Tage), warnt die Seite: Anteil am Jahr und „nicht zugeordnet"
+  sind dann nicht vergleichbar, weil der Rest Verbrauch aus Zeiten ohne
+  Unterzähler enthält. Stattdessen zeigt sie **„im eigenen Zeitraum"** –
+  den Anteil am Hauptzähler in genau den Tagen, die der Unterzähler
+  abdeckt. Für eine **Solaranlage** gibt es die Rollen **Erzeugung** (was der
   Wechselrichter liefert) und **Einspeisung** (was ins Netz zurückgeht,
   Zählwerk 2.8.0). Daraus rechnet die Übersicht: Eigenverbrauch = Erzeugung
   − Einspeisung, Gesamtverbrauch = Bezug + Eigenverbrauch, Autarkie =

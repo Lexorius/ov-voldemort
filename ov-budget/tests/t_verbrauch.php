@@ -251,6 +251,19 @@ $anteile = verbrauch_anteile([
 ], [1 => 1000.0, 2 => 250.0, 3 => 400.0, 4 => 10.0]);
 $check('Anteile am Hauptzähler', $anteile === [2 => 25.0, 3 => 40.0, 4 => null]);
 
+// Zeiträume: was die Stände wirklich abdecken, und ob Unterzähler zum Hauptzähler passen
+$j1 = strtotime('2026-01-01'); $j2 = strtotime('2027-01-01');
+$abd = verbrauch_abdeckung($st, $j1, $j2);
+$check('Abdeckung: erste bis letzte Ablesung', $abd['von'] === $j1 && $abd['bis'] === strtotime('2026-03-01') && $nah($abd['tage'], 59.0));
+$check('Abdeckung beschnitten auf den Zeitraum', verbrauch_abdeckung($st, strtotime('2026-02-15'), $j2)['von'] === strtotime('2026-02-15')
+    && verbrauch_abdeckung($st, strtotime('2026-04-01'), $j2) === null && verbrauch_abdeckung([$st[0]], $j1, $j2) === null);
+$haupt = ['von' => $j1, 'bis' => strtotime('2026-10-08'), 'tage' => 280.0];
+$check('Unterzähler ab September weicht ab', verbrauch_zeitraum_abweichend(['von' => strtotime('2026-09-12'), 'bis' => strtotime('2026-10-08'), 'tage' => 26.0], $haupt));
+$check('wenige Tage Versatz sind in Ordnung', !verbrauch_zeitraum_abweichend(['von' => strtotime('2026-01-05'), 'bis' => strtotime('2026-10-04'), 'tage' => 272.0], $haupt));
+$check('früheres Ende weicht ab, ohne Stände auch; ohne Hauptzeitraum nie', verbrauch_zeitraum_abweichend(['von' => $j1, 'bis' => strtotime('2026-06-01'), 'tage' => 151.0], $haupt)
+    && verbrauch_zeitraum_abweichend(null, $haupt) && !verbrauch_zeitraum_abweichend(null, null));
+$check('Zeitraumtext', verbrauch_zeitraum_text(['von' => strtotime('2026-09-12'), 'bis' => strtotime('2026-10-08'), 'tage' => 26.0]) === '12.09.–08.10.2026' && verbrauch_zeitraum_text(null) === 'keine Stände');
+
 // Kosten: Einspeisung mit Vergütung, Unterzähler ohne
 $tarifeSolar = array_merge($tarife, [['id' => 9, 'art' => 'einspeisung', 'name' => 'EEG', 'gueltig_von' => '2026-01-01', 'gueltig_bis' => null, 'arbeitspreis' => 0.08, 'grundpreis_monat' => 0, 'einheit' => 'kWh']]);
 $k = verbrauch_kosten_jahr($st, $tarifeSolar, ['art' => 'strom', 'rolle' => 'einspeisung', 'umrechnung' => 1], 2026);
@@ -301,11 +314,35 @@ $meterVoll = ['id' => 1, 'art' => 'strom', 'rolle' => 'bezug', 'parent_id' => nu
 $html = render_partial('verbrauch', ['meters' => [$meterVoll], 'karten' => [1 => ['tage30' => 12.0, 'jahr' => 590.0, 'kosten' => 250.0, 'ohne_tarif' => 0, 'alter' => ['stufe' => 'alt', 'tage' => 60], 'ha_fehler' => '', 'anteil' => null]],
     'stats' => verbrauch_stats([], $tarife, 2026), 'tarife' => $tarife, 'jahr' => 2026, 'jahre' => [2026], 'filter' => ['art' => '', 'aktiv' => '', 'q' => '']]);
 $check('Übersicht rendert', str_contains($html, 'Strom Unterkunft') && str_contains($html, 'Stand eintragen'));
+$check('Übersicht: je Tag zu den letzten 30 Tagen', str_contains($html, '0,40 kWh je Tag'));
 $html = render_partial('meter', ['meter' => $meterVoll, 'jahr' => 2026, 'jahre' => [2026], 'staende' => [], 'monate' => verbrauch_monate($st, 2026),
     'kosten' => verbrauch_kosten_jahr($st, $tarife, $meterVoll, 2026), 'abschnitte' => verbrauch_abschnitte($st), 'tarifHeute' => $tarife[1],
     'alter' => ['stufe' => 'frisch', 'tage' => 1], 'haFehler' => '', 'connector' => null, 'zaehlerConnectoren' => [],
     'profil' => verbrauch_profil($st, strtotime('2026-01-01'), strtotime('2026-12-31')), 'unterzaehler' => []]);
 $check('Zählerseite rendert', str_contains($html, 'Verbrauch je Monat') && str_contains($html, 'Ablesen per QR-Code'));
+$abH = render_partial('meter', ['meter' => $meterVoll, 'jahr' => 2026, 'jahre' => [2026], 'staende' => [], 'monate' => verbrauch_monate($st, 2026),
+    'kosten' => verbrauch_kosten_jahr($st, $tarife, $meterVoll, 2026), 'tarifHeute' => $tarife[1], 'alter' => ['stufe' => 'frisch', 'tage' => 1], 'haFehler' => '', 'connector' => null, 'zaehlerConnectoren' => [],
+    'profil' => verbrauch_profil($st, strtotime('2026-01-01'), strtotime('2026-12-31')), 'unterzaehler' => [],
+    'abschnitte' => [['von' => '2026-10-07 00:00:00', 'bis' => '2026-10-08 00:00:00', 'tage' => 1.0, 'menge' => 64.67, 'je_tag' => 64.67],
+                     ['von' => '2026-10-08 00:00:00', 'bis' => '2026-10-08 02:00:00', 'tage' => 0.08, 'menge' => 5.0, 'je_tag' => 60.0]]]);
+$check('Abschnitte: je Tag auch bei einem Tag Abstand, nicht bei zwei Stunden', substr_count($abH, '64,67 kWh') === 2 && !str_contains($abH, '60,00 kWh'));
+$unter = ['liste' => [
+    ['id' => 2, 'name' => 'Strom Halle 1', 'standort' => '', 'is_active' => 1, 'jahr' => 36.1, 'anteil' => 4.8, 'abweichend' => true,
+     'zeitraum' => ['von' => strtotime('2026-09-12'), 'bis' => strtotime('2026-10-08'), 'tage' => 26.0], 'haupt_gleich' => 120.0, 'anteil_eigen' => 30.1],
+    ['id' => 3, 'name' => 'Strom Keller', 'standort' => 'HAR', 'is_active' => 1, 'jahr' => 200.0, 'anteil' => 26.5, 'abweichend' => false,
+     'zeitraum' => ['von' => strtotime('2026-01-01'), 'bis' => strtotime('2026-10-08'), 'tage' => 280.0], 'haupt_gleich' => null, 'anteil_eigen' => null],
+], 'hauptzaehler' => 755.6, 'rest' => 519.5, 'zeitraum' => ['von' => strtotime('2026-01-01'), 'bis' => strtotime('2026-10-08'), 'tage' => 280.0], 'abweichend' => 1];
+$html = render_partial('meter', ['meter' => $meterVoll + ['unterzaehler' => 2], 'jahr' => 2026, 'jahre' => [2026], 'staende' => [], 'monate' => verbrauch_monate($st, 2026),
+    'kosten' => verbrauch_kosten_jahr($st, $tarife, $meterVoll, 2026), 'abschnitte' => [], 'tarifHeute' => $tarife[1], 'alter' => ['stufe' => 'frisch', 'tage' => 1], 'haFehler' => '',
+    'connector' => null, 'zaehlerConnectoren' => [], 'profil' => verbrauch_profil($st, strtotime('2026-01-01'), strtotime('2026-12-31')), 'unterzaehler' => $unter]);
+$check('Unterzähler: Warnung, Zeitraum, Anteil im eigenen Zeitraum', str_contains($html, 'Die Zeiträume passen nicht zusammen') && str_contains($html, 'ein Unterzähler deckt')
+    && str_contains($html, '12.09.–08.10.2026') && str_contains($html, '⚠ 26 Tage') && str_contains($html, '<strong>30,1 %</strong>') && str_contains($html, 'von 120,0 kWh')
+    && str_contains($html, 'Zeiträume verschieden') && str_contains($html, 'im eigenen Zeitraum') && str_contains($html, 'Hauptzähler abgelesen 01.01.–08.10.2026'));
+$unter['liste'][0]['abweichend'] = false; $unter['abweichend'] = 0;
+$html = render_partial('meter', ['meter' => $meterVoll + ['unterzaehler' => 2], 'jahr' => 2026, 'jahre' => [2026], 'staende' => [], 'monate' => verbrauch_monate($st, 2026),
+    'kosten' => verbrauch_kosten_jahr($st, $tarife, $meterVoll, 2026), 'abschnitte' => [], 'tarifHeute' => $tarife[1], 'alter' => ['stufe' => 'frisch', 'tage' => 1], 'haFehler' => '',
+    'connector' => null, 'zaehlerConnectoren' => [], 'profil' => verbrauch_profil($st, strtotime('2026-01-01'), strtotime('2026-12-31')), 'unterzaehler' => $unter]);
+$check('Unterzähler ohne Abweichung: keine Warnung, keine Zusatzspalte', !str_contains($html, 'passen nicht zusammen') && !str_contains($html, 'im eigenen Zeitraum') && !str_contains($html, 'Zeiträume verschieden') && str_contains($html, '01.01.–08.10.2026'));
 $html = render_partial('meter_edit', ['meter' => $meterVoll, 'errors' => [], 'entitaeten' => ['sensor.strom' => ['name' => 'Strom', 'einheit' => 'kWh', 'klasse' => 'energy', 'wert' => '1']], 'haHinweis' => '', 'hauptzaehler' => [['id' => 5, 'name' => 'Haupt', 'art' => 'strom']]]);
 $check('Zählerformular rendert mit Entitäten', str_contains($html, 'sensor.strom') && str_contains($html, 'data-quelle-block'));
 $html = render_partial('tarife', ['jeArt' => ['strom' => ['aktuell' => $tarife[1], 'liste' => [$tarife[0], $tarife[1]]], 'gas' => ['aktuell' => null, 'liste' => []], 'wasser' => ['aktuell' => null, 'liste' => []], 'einspeisung' => ['aktuell' => null, 'liste' => []]], 'heute' => '2026-09-25']);

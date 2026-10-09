@@ -6,7 +6,7 @@
 name: OV-Multitool
 # Der Slug bleibt: Home Assistant kennt das Add-on daran, mit ihm bleiben die Daten.
 slug: ov_budget
-version: "2.1.15.0"
+version: "2.1.16.0"
 description: >-
   Das Werkzeug für den THW-Ortsverband: Wünsche und Budget, Aufgaben, Kontakte,
   Besprechungen, Veranstaltungen, Fahrzeugakten, Funkgeräte, SIM-Karten und

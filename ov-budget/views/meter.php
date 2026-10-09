@@ -161,31 +161,48 @@ $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Se
   </section>
 </div>
 
-<?php if (!empty($unterzaehler['liste'])): ?>
+<?php if (!empty($unterzaehler['liste'])): $abweichend = (int)($unterzaehler['abweichend'] ?? 0); $hauptZeitraum = $unterzaehler['zeitraum'] ?? null; ?>
 <section class="card">
   <div class="card__head">
     <h2>Aufteilung auf Unterzähler</h2>
-    <span class="muted small"><?= (int)$jahr ?></span>
+    <span class="muted small"><?= (int)$jahr ?><?= $hauptZeitraum ? ' · Hauptzähler abgelesen ' . e(verbrauch_zeitraum_text($hauptZeitraum)) : '' ?></span>
   </div>
+  <?php if ($abweichend > 0): ?>
+    <div class="alert alert--warn">
+      <strong>Die Zeiträume passen nicht zusammen.</strong>
+      Der Hauptzähler ist <?= $hauptZeitraum ? 'von ' . e(date('d.m.Y', $hauptZeitraum['von'])) . ' bis ' . e(date('d.m.Y', $hauptZeitraum['bis'])) : 'über das Jahr' ?> abgelesen,
+      <?= $abweichend === 1 ? 'ein Unterzähler deckt' : $abweichend . ' Unterzähler decken' ?> nur einen Teil davon ab (⚠ in der Tabelle).
+      Der Anteil am Jahr und „nicht zugeordnet" sind deshalb nicht vergleichbar – der große Rest ist Verbrauch aus Zeiten, in denen
+      die Unterzähler noch nicht mitgezählt haben. Aussagekräftig ist <strong>„im eigenen Zeitraum"</strong>: der Anteil am
+      Hauptzähler in genau den Tagen, die der Unterzähler abdeckt.
+    </div>
+  <?php endif; ?>
   <div class="tablewrap">
     <table class="data">
-      <thead><tr><th>Unterzähler</th><th>Standort</th><th class="num">Verbrauch</th><th class="num">Anteil</th></tr></thead>
+      <thead><tr><th>Unterzähler</th><th>Standort</th><th>Zeitraum</th><th class="num">Verbrauch</th><th class="num">Anteil</th><?php if ($abweichend > 0): ?><th class="num">im eigenen Zeitraum</th><?php endif; ?></tr></thead>
       <tbody>
-      <?php foreach ($unterzaehler['liste'] as $u): ?>
+      <?php foreach ($unterzaehler['liste'] as $u): $ab = !empty($u['abweichend']); $z = $u['zeitraum'] ?? null; ?>
         <tr<?= (int)$u['is_active'] !== 1 ? ' class="is-muted"' : '' ?>>
           <td><a href="<?= e(url('meter', ['id' => $u['id'], 'jahr' => $jahr])) ?>"><?= e((string)$u['name']) ?></a></td>
           <td class="small"><?= e((string)$u['standort']) ?></td>
+          <td class="small nowrap"><?= e(verbrauch_zeitraum_text($z)) ?>
+            <?php if ($ab): ?><span class="badge" style="background:#a16207" title="Deckt nicht denselben Zeitraum ab wie der Hauptzähler">⚠<?= $z ? ' ' . (int)round($z['tage']) . ' Tage' : '' ?></span><?php endif; ?></td>
           <td class="num"><?= e(menge($u['jahr'], $einheit)) ?></td>
-          <td class="num"><?= $u['anteil'] === null ? '–' : e(number_format($u['anteil'], 1, ',', '.')) . ' %' ?></td>
+          <td class="num<?= $ab ? ' muted' : '' ?>"<?= $ab ? ' title="Anteil am ganzen Jahr – wegen des kürzeren Zeitraums nicht vergleichbar"' : '' ?>><?= $u['anteil'] === null ? '–' : e(number_format($u['anteil'], 1, ',', '.')) . ' %' ?></td>
+          <?php if ($abweichend > 0): ?>
+            <td class="num"><?php if ($ab && ($u['anteil_eigen'] ?? null) !== null): ?><strong><?= e(number_format($u['anteil_eigen'], 1, ',', '.')) ?> %</strong>
+              <span class="muted small">von <?= e(menge($u['haupt_gleich'], $einheit)) ?></span><?php elseif ($ab): ?><span class="muted">–</span><?php endif; ?></td>
+          <?php endif; ?>
         </tr>
       <?php endforeach; ?>
         <tr>
-          <td class="muted">nicht zugeordnet</td><td></td>
+          <td class="muted">nicht zugeordnet<?php if ($abweichend > 0): ?> <span class="badge" style="background:#a16207" title="Enthält Verbrauch aus Zeiten ohne Unterzähler">Zeiträume verschieden</span><?php endif; ?></td><td></td><td></td>
           <td class="num muted"><?= e(menge($unterzaehler['rest'], $einheit)) ?></td>
           <td class="num muted"><?= $unterzaehler['hauptzaehler'] > 0 ? e(number_format($unterzaehler['rest'] / $unterzaehler['hauptzaehler'] * 100, 1, ',', '.')) . ' %' : '–' ?></td>
+          <?php if ($abweichend > 0): ?><td></td><?php endif; ?>
         </tr>
       </tbody>
-      <tfoot><tr><th>Hauptzähler</th><th></th><th class="num"><?= e(menge($unterzaehler['hauptzaehler'], $einheit)) ?></th><th class="num">100 %</th></tr></tfoot>
+      <tfoot><tr><th>Hauptzähler</th><th></th><th class="small nowrap"><?= e(verbrauch_zeitraum_text($hauptZeitraum)) ?></th><th class="num"><?= e(menge($unterzaehler['hauptzaehler'], $einheit)) ?></th><th class="num">100 %</th><?php if ($abweichend > 0): ?><th></th><?php endif; ?></tr></tfoot>
     </table>
   </div>
 </section>
@@ -215,7 +232,7 @@ $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Se
           <td class="small nowrap"><?= e(de_date(substr($ab['bis'], 0, 10))) ?></td>
           <td class="num small"><?= e(number_format($ab['tage'], 1, ',', '.')) ?></td>
           <td class="num"><?= $ab['menge'] === null ? '<span class="muted">Zählerwechsel</span>' : e(menge($ab['menge'], $einheit, 2)) ?></td>
-          <td class="num small"><?= $ab['je_tag'] === null || $ab['tage'] < 1.5 ? '–' : e(menge($ab['je_tag'], $einheit, 2)) ?></td>
+          <td class="num small"><?= $ab['je_tag'] === null || $ab['tage'] < 0.25 ? '–' : e(menge($ab['je_tag'], $einheit, 2)) ?></td>
         </tr>
       <?php endforeach; ?>
       </tbody>
