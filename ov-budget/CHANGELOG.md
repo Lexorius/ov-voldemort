@@ -1,5 +1,15 @@
 # Änderungsverlauf
 
+## 2.1.20.0
+
+- **Objektkonten:** Neue Sicht im Budget. Ein Objektkonto (Nummer, Name,
+  Farbe) fasst mehrere Ausgaben- oder Einnahmekategorien zusammen – etwa
+  Getränke und Lebensmittel auf Verpflegung. Die Statistik nach Kategorien
+  bleibt, der neue Reiter „Objektkonten" wertet je Haushaltsjahr nach Konto
+  aus: Ausgaben, Einnahmen, Anteile, aufklappbar die Posten je Kategorie,
+  „Ohne Objektkonto" für den Rest. Pflegen unter Budget → Objektkonten →
+  „Objektkonten pflegen" (Leitung).
+
 ## 2.1.19.1
 
 - **Neuinstallation repariert:** Seit 2.1.3.0 ließ sich das Schema auf einer

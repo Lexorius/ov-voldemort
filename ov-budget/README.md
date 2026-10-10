@@ -26,6 +26,9 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - Jahresbudget, **Ausgaben** (Haus, Nebenkosten, Getränke, Tanken …) und
   **Einnahmen** (Einsätze, technische Hilfeleistung, Spenden …)
 - Übersicht nach Kategorie und Monat mit Grafik
+- **Objektkonten** als zweite Auswertung: mehrere Kategorien laufen auf ein
+  Konto (etwa Getränke und Lebensmittel auf Verpflegung), die Statistik nach
+  Kategorien bleibt daneben bestehen
 - **Budgettöpfe verwalten**: anlegen, ändern, stilllegen und zum Jahreswechsel
   aus dem Vorjahr übernehmen
 - **Stand je Ausgabe**: bezahlt, gebucht (Rechnung liegt vor) oder geplant;

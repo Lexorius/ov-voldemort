@@ -310,6 +310,24 @@ sie enthalten.
   Themenspeicher (Titel, Beschreibung, Fachgruppe, Priorität, Zeitbedarf,
   Einreicher). So lassen sich Themen direkt in Divera einreichen.
 
+## Objektkonten
+
+Eine zweite Sicht auf die Buchungen, neben der Statistik nach Kategorien.
+Ein Objektkonto – mit Kontonummer wie im Haushaltsplan, Name und Farbe –
+fasst mehrere Ausgaben- oder Einnahmekategorien zusammen: „Getränke" und
+„Lebensmittel" laufen in der Auswertung auf „Verpflegung", in der Statistik
+der Übersicht bleiben sie getrennt. Jede Kategorie gehört zu höchstens
+einem Konto; wer sie in einem anderen anhakt, nimmt sie dem bisherigen weg.
+
+* **Pflegen** (Leitung, Administration): Budget → Objektkonten → „Objektkonten
+  pflegen". Konto anlegen, Kategorien anhaken, stilllegen oder löschen –
+  die Kategorien bleiben in jedem Fall erhalten.
+* **Auswerten** (wer die Buchungen sehen darf): Budget → Reiter
+  „Objektkonten", je Haushaltsjahr. Je Konto Ausgaben und Einnahmen mit
+  Anteil am Jahr, aufklappbar die Posten je Kategorie. „Ohne Objektkonto"
+  sammelt Kategorien ohne Konto und Buchungen ohne Kategorie. Gezählt wird
+  wie in der Übersicht, was gebucht ist (bezahlt oder offen).
+
 ## Anmerkungen zu Talking Points
 
 Jeder Talking Point hat eine eigene Seite – erreichbar über seinen Titel im

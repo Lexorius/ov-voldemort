@@ -51,6 +51,9 @@ $routes = [
     'expense_edit'       => 'expense_edit',
     'expenses_export'    => 'expenses_export',
     'einnahmen_anfrage'  => 'einnahmen_anfrage',
+    'budget_objektkonten' => 'budget_objektkonten',
+    'objektkonten'       => 'objektkonten',
+    'objektkonto_edit'   => 'objektkonto_edit',
 
     'contacts'           => 'contacts',
     'contact_edit'       => 'contact_edit',

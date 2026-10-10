@@ -12,6 +12,22 @@ SET NAMES utf8mb4;
 -- Verweis auch auf eine Tabelle zeigen, die weiter unten erst angelegt wird.
 SET FOREIGN_KEY_CHECKS=0;
 
+-- Objektkonten: ein Konto fasst mehrere Kategorien fuer die zweite Auswertung
+-- zusammen (etwa Getraenke und Lebensmittel auf „Verpflegung")
+CREATE TABLE IF NOT EXISTS objektkonten (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nummer        VARCHAR(20)  NOT NULL DEFAULT '',
+  name          VARCHAR(150) NOT NULL,
+  beschreibung  VARCHAR(255) NOT NULL DEFAULT '',
+  color         VARCHAR(20)  NOT NULL DEFAULT '#64748b',
+  sort_order    INT          NOT NULL DEFAULT 0,
+  is_active     TINYINT(1)   NOT NULL DEFAULT 1,
+  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_objektkonto_sort (sort_order, nummer)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS list_items (
   id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
   list_key      VARCHAR(50)  NOT NULL,
@@ -24,10 +40,13 @@ CREATE TABLE IF NOT EXISTS list_items (
   is_active     TINYINT(1)   NOT NULL DEFAULT 1,
   is_default    TINYINT(1)   NOT NULL DEFAULT 0,
   is_final      TINYINT(1)   NOT NULL DEFAULT 0,
+  -- Ausgaben-/Einnahmekategorie: zu welchem Objektkonto sie gehoert
+  objektkonto_id INT UNSIGNED NULL,
   created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_list_slug (list_key, slug),
-  KEY idx_list (list_key, sort_order)
+  KEY idx_list (list_key, sort_order),
+  CONSTRAINT fk_list_objektkonto FOREIGN KEY (objektkonto_id) REFERENCES objektkonten(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

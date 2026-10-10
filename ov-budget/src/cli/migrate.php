@@ -1604,6 +1604,30 @@ SQL);
         }
     }
     $merken('056_hallenplan');
+
+    /* ---------- 057: Objektkonten ---------- */
+    if (!ovb_table_exists($pdo, 'objektkonten')) {
+        $pdo->exec("CREATE TABLE objektkonten (
+            id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            nummer        VARCHAR(20)  NOT NULL DEFAULT '',
+            name          VARCHAR(150) NOT NULL,
+            beschreibung  VARCHAR(255) NOT NULL DEFAULT '',
+            color         VARCHAR(20)  NOT NULL DEFAULT '#64748b',
+            sort_order    INT          NOT NULL DEFAULT 0,
+            is_active     TINYINT(1)   NOT NULL DEFAULT 1,
+            created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY idx_objektkonto_sort (sort_order, nummer)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    }
+    if (ovb_table_exists($pdo, 'list_items') && !ovb_column_exists($pdo, 'list_items', 'objektkonto_id')) {
+        $pdo->exec('ALTER TABLE list_items ADD COLUMN objektkonto_id INT UNSIGNED NULL AFTER is_final');
+    }
+    if (ovb_table_exists($pdo, 'list_items') && !ovb_constraint_exists($pdo, 'list_items', 'fk_list_objektkonto')) {
+        $pdo->exec('ALTER TABLE list_items ADD CONSTRAINT fk_list_objektkonto FOREIGN KEY (objektkonto_id) REFERENCES objektkonten(id) ON DELETE SET NULL');
+    }
+    $merken('057_objektkonten');
 }
 
 /**
