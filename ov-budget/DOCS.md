@@ -91,7 +91,12 @@ Plätze, Sicherungen) und nennt die größten Tabellen der Datenbank.
 ### Sicherung und Wiederherstellung
 
 Unter *Verwaltung → Sicherung* (nur Administration) entsteht auf Knopfdruck
-eine ZIP-Datei mit der ganzen Datenbank und der Dateiablage. Sie lässt sich
+eine ZIP-Datei mit der ganzen Datenbank und der Dateiablage. „Ganz" heißt:
+jede Tabelle, die es in der Datenbank gibt – auch Einstellungen, Protokoll,
+Zweiter Faktor und der Stand der Wanderungen –, mit Struktur, Inhalt und
+AUTO_INCREMENT; dazu jede Datei unter der Ablage (Angebote, Fahrzeuge,
+Veranstaltungen, Plätze, Stein.APP-Mitschnitte), nur der Ordner der
+Sicherungen selbst bleibt draußen. Sie lässt sich
 herunterladen, auf dem Server aufheben und jederzeit wiederherstellen.
 
 * **Inhalt:** `datenbank.sql` (alle Tabellen mit Struktur und Inhalt),
@@ -1150,6 +1155,14 @@ mit mbstring, openssl, zip und gd; auf Rechnern ohne mbstring hilft
 `OVB_PHP_ARGS="-d auto_prepend_file=tests/mb_shim.php"`. Bei jedem Push
 laufen die Prüfungen auf GitHub (Actions → Prüfungen), dazu ein
 Syntaxlauf über alle PHP-Dateien der Anwendung und des Connectors.
+
+Die Sicherung lässt sich zusätzlich gegen eine echte MariaDB durchspielen:
+`tests/rundlauf_sicherung.php` baut Schema, Wanderungen und Grunddaten in
+einer leeren Datenbank auf, trägt Daten mit fiesen Werten und Dateien ein,
+sichert, verändert alles, stellt wieder her und vergleicht Tabellen,
+Zeilen, Prüfsummen, AUTO_INCREMENT und Dateien. Der Kopf der Datei nennt
+den Docker-Aufruf; der Lauf leert die angegebene Datenbank und verlangt
+deshalb `OVB_RUNDLAUF=ja`.
 
 ## Wenn etwas klemmt
 

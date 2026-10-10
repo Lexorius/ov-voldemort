@@ -8,6 +8,10 @@ SET NAMES utf8mb4;
 -- Konfigurierbare Auswahllisten (Fachgruppen, Funktionen,
 -- Dringlichkeiten, Status, Kategorien ...) – alles im Admin pflegbar
 -- ------------------------------------------------------------
+-- Fremdschluessel-Pruefung waehrend des Einspielens aus: so darf ein
+-- Verweis auch auf eine Tabelle zeigen, die weiter unten erst angelegt wird.
+SET FOREIGN_KEY_CHECKS=0;
+
 CREATE TABLE IF NOT EXISTS list_items (
   id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
   list_key      VARCHAR(50)  NOT NULL,
@@ -305,25 +309,6 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
   CONSTRAINT fk_push_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ------------------------------------------------------------
--- Gesamtbudget je Haushaltsjahr
--- ------------------------------------------------------------
--- ------------------------------------------------------------
--- Bezuege eines Tagesordnungspunkts: Termine, Fahrzeuge, Funkgeraete
--- (die Fremdschluessel kommen in der Wanderung, weil die Zieltabellen
--- weiter unten angelegt werden)
--- ------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS tp_links (
-  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  tp_id         INT UNSIGNED NOT NULL,
-  -- budget: ziel_id ist das Haushaltsjahr
-  typ           ENUM('termin','event','vehicle','radio','budget') NOT NULL,
-  ziel_id       INT UNSIGNED NOT NULL,
-  PRIMARY KEY (id),
-  UNIQUE KEY uq_tp_link (tp_id, typ, ziel_id),
-  KEY idx_tp_link_ziel (typ, ziel_id),
-  CONSTRAINT fk_tpl_tp FOREIGN KEY (tp_id) REFERENCES talking_points(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
 -- Bestellungen: mehrere freigegebene Wuensche bei einem Lieferanten; dazu
@@ -357,16 +342,6 @@ CREATE TABLE IF NOT EXISTS bestellung_wuensche (
   CONSTRAINT fk_bw_wish FOREIGN KEY (wish_id)       REFERENCES wishes(id)       ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS expense_links (
-  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  expense_id    INT UNSIGNED NOT NULL,
-  typ           ENUM('wish','vehicle') NOT NULL,
-  ziel_id       INT UNSIGNED NOT NULL,
-  PRIMARY KEY (id),
-  UNIQUE KEY uq_link (expense_id, typ, ziel_id),
-  KEY idx_link_ziel (typ, ziel_id),
-  CONSTRAINT fk_link_exp FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
 -- Stell- und Lagerplaetze als Baum: Gebaeude/Halle/Hof oben, darunter
@@ -528,6 +503,17 @@ CREATE TABLE IF NOT EXISTS expenses (
   CONSTRAINT fk_exp_wish FOREIGN KEY (wish_id)       REFERENCES wishes(id)     ON DELETE SET NULL,
   CONSTRAINT fk_exp_cb   FOREIGN KEY (created_by)    REFERENCES users(id)      ON DELETE SET NULL,
   CONSTRAINT fk_exp_ub   FOREIGN KEY (updated_by)    REFERENCES users(id)      ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS expense_links (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  expense_id    INT UNSIGNED NOT NULL,
+  typ           ENUM('wish','vehicle') NOT NULL,
+  ziel_id       INT UNSIGNED NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_link (expense_id, typ, ziel_id),
+  KEY idx_link_ziel (typ, ziel_id),
+  CONSTRAINT fk_link_exp FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
@@ -705,6 +691,26 @@ CREATE TABLE IF NOT EXISTS talking_points (
   CONSTRAINT fk_tp_status  FOREIGN KEY (status_id)       REFERENCES list_items(id)     ON DELETE SET NULL,
   CONSTRAINT fk_tp_todo    FOREIGN KEY (todo_id)         REFERENCES todos(id)          ON DELETE SET NULL,
   CONSTRAINT fk_tp_user    FOREIGN KEY (eingebracht_von) REFERENCES users(id)          ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- Gesamtbudget je Haushaltsjahr
+-- ------------------------------------------------------------
+-- ------------------------------------------------------------
+-- Bezuege eines Tagesordnungspunkts: Termine, Fahrzeuge, Funkgeraete
+-- (die Fremdschluessel kommen in der Wanderung, weil die Zieltabellen
+-- weiter unten angelegt werden)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS tp_links (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  tp_id         INT UNSIGNED NOT NULL,
+  -- budget: ziel_id ist das Haushaltsjahr
+  typ           ENUM('termin','event','vehicle','radio','budget') NOT NULL,
+  ziel_id       INT UNSIGNED NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_tp_link (tp_id, typ, ziel_id),
+  KEY idx_tp_link_ziel (typ, ziel_id),
+  CONSTRAINT fk_tpl_tp FOREIGN KEY (tp_id) REFERENCES talking_points(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Anmerkungen und Diskussion zu einem Talking Point, solange er offen ist
@@ -1288,3 +1294,5 @@ CREATE TABLE IF NOT EXISTS login_attempts (
   PRIMARY KEY (id),
   KEY idx_user (username, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET FOREIGN_KEY_CHECKS=1;

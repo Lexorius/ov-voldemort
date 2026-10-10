@@ -71,4 +71,30 @@ foreach (array_unique($aufrufe) as $name) {
 $check('alle benutzten Funktionen sind erreichbar: ' . implode(', ', $fehlend), $fehlend === []);
 $check('Wanderungen gefunden', count($eigene) > 5 && in_array('ovb_migrate', $eigene, true));
 
+/* ---------- Schema: auf einer frischen Datenbank einspielbar ----------
+ * 2.1.3.0 bis 2.1.19.0 verwies tp_links auf talking_points, das erst weiter
+ * unten angelegt wurde – auf jeder frischen MariaDB brach setup.php mit
+ * „Foreign key constraint is incorrectly formed" ab. Bestehende Anlagen
+ * merkten nichts, weil die Tabelle dort aus der Wanderung kam. */
+$schema = (string)file_get_contents($app . '/sql/schema.sql');
+preg_match_all('/CREATE TABLE IF NOT EXISTS (\w+) \((.*?)\n\) ENGINE/s', $schema, $bl, PREG_SET_ORDER);
+$gesehen = [];
+$vorwaerts = [];
+foreach ($bl as $b) {
+    preg_match_all('/REFERENCES\s+(\w+)\s*\(/', $b[2], $refs);
+    foreach ($refs[1] as $ziel) {
+        if ($ziel !== $b[1] && !in_array($ziel, $gesehen, true)) {
+            $vorwaerts[] = $b[1] . ' -> ' . $ziel;
+        }
+    }
+    $gesehen[] = $b[1];
+}
+$check('Schema: ' . count($bl) . ' Tabellen, jeder Fremdschlüssel zeigt auf eine vorher angelegte Tabelle' . ($vorwaerts ? ' – ' . implode(', ', $vorwaerts) : ''), count($bl) > 50 && $vorwaerts === []);
+$check('Schema: Fremdschlüsselprüfung beim Einspielen aus und danach wieder an', str_contains($schema, 'SET FOREIGN_KEY_CHECKS=0;') && str_ends_with(trim($schema), 'SET FOREIGN_KEY_CHECKS=1;')
+    && strpos($schema, 'SET FOREIGN_KEY_CHECKS=0;') < strpos($schema, 'CREATE TABLE IF NOT EXISTS'));
+$alleZiele = [];
+foreach ($bl as $b) { preg_match_all('/REFERENCES\s+(\w+)\s*\(/', $b[2], $refs); foreach ($refs[1] as $z) { $alleZiele[$z] = true; } }
+$unbekannt = array_diff(array_keys($alleZiele), $gesehen);
+$check('Schema: jedes Fremdschlüsselziel gibt es' . ($unbekannt ? ' – ' . implode(', ', $unbekannt) : ''), $unbekannt === []);
+
 echo "$ok bestanden, $fail fehlgeschlagen\n";

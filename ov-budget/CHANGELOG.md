@@ -1,5 +1,20 @@
 # Änderungsverlauf
 
+## 2.1.19.1
+
+- **Neuinstallation repariert:** Seit 2.1.3.0 ließ sich das Schema auf einer
+  frischen Datenbank nicht einspielen („Foreign key constraint is
+  incorrectly formed"), weil `tp_links` und `expense_links` auf Tabellen
+  verwiesen, die erst weiter unten angelegt wurden. Bestehende Anlagen
+  waren nicht betroffen – dort kamen die Tabellen aus der Wanderung. Die
+  Blöcke stehen jetzt an der richtigen Stelle, das Schema schaltet die
+  Fremdschlüsselprüfung beim Einspielen aus, eine Prüfung wacht darüber.
+- **Sicherung geprüft:** Ein echter Rundlauf gegen MariaDB 11.4 (Sichern,
+  alles kaputt machen, Wiederherstellen, Prüfsummen vergleichen) bestätigt:
+  alle 55 Tabellen, alle Zeilen, alle Dateien und auch Sonderzeichen,
+  Nullbytes und AUTO_INCREMENT kommen identisch zurück. Das Skript liegt als
+  `tests/rundlauf_sicherung.php` bei.
+
 ## 2.1.19.0
 
 - **Speicherplatz in der Verwaltung:** Größe der Datenbank, der Dateiablage
