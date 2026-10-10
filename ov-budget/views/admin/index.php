@@ -1,4 +1,5 @@
-<?php /** @var array $zahlen @var array $zeit */ ?>
+<?php /** @var array $zahlen @var array $zeit @var array $ablage @var ?array $speicher */
+$speicher ??= null; ?>
 <div class="pagehead">
   <div>
     <h1>Verwaltung</h1>
@@ -55,6 +56,47 @@
         Diese Dateien sind beim Hochladen nicht angekommen oder später verloren gegangen.</p>
     <?php endif; ?>
   </div>
+
+  <?php if ($speicher): $db = $speicher['db']; $ab = $speicher['ablage']; $pl = $speicher['platte']; ?>
+  <div class="card" id="speicher">
+    <h3>Speicherplatz</h3>
+    <div class="speicher">
+      <div class="speicher__zeile"><span>Datenbank<?= $db['name'] !== '' ? ' <span class="mono muted small">' . e($db['name']) . '</span>' : '' ?></span>
+        <strong><?= e(bytes_human((int)$db['gesamt'])) ?></strong></div>
+      <div class="speicher__zeile"><span>Dateiablage <span class="muted small"><?= (int)$ab['dateien'] ?> Datei(en)</span></span>
+        <strong><?= $ab['vorhanden'] ? e(bytes_human((int)$ab['bytes'])) : '–' ?></strong></div>
+      <?php if ($pl): ?>
+        <div class="speicher__zeile"><span>Festplatte darunter</span>
+          <strong<?= $pl['knapp'] ? ' style="color:var(--bad)"' : '' ?>><?= e(bytes_human((int)$pl['frei'])) ?> frei</strong></div>
+        <div class="speicher__balken<?= $pl['knapp'] ? ' speicher__balken--voll' : ($pl['prozent'] >= 80 ? ' speicher__balken--warn' : '') ?>" title="<?= (int)$pl['prozent'] ?> % belegt">
+          <span style="width:<?= (int)$pl['prozent'] ?>%"></span></div>
+        <p class="small muted" style="margin:.25rem 0 0"><?= e(bytes_human((int)$pl['belegt'])) ?> von <?= e(bytes_human((int)$pl['gesamt'])) ?> belegt (<?= (int)$pl['prozent'] ?> %)<?= $pl['knapp'] ? ' – <strong style="color:var(--bad)">wird knapp</strong>: alte Sicherungen löschen oder Platz schaffen' : '' ?>.</p>
+      <?php else: ?>
+        <p class="small muted" style="margin:.25rem 0 0">Die Platte unter der Ablage lässt sich nicht abfragen.</p>
+      <?php endif; ?>
+    </div>
+    <details class="mt">
+      <summary class="small">Einzelheiten</summary>
+      <?php if ($ab['ordner']): ?>
+        <p class="small" style="margin:.4rem 0 .2rem"><strong>Dateiablage</strong> <span class="mono muted"><?= e($ab['pfad']) ?></span></p>
+        <table class="data"><tbody>
+          <?php foreach ($ab['ordner'] as $o): ?>
+            <tr><td class="small"><?= e($o['label']) ?></td><td class="num small"><?= $o['dateien'] > 0 ? (int)$o['dateien'] . ' Datei(en)' : '' ?></td><td class="num small"><?= e(bytes_human((int)$o['bytes'])) ?></td></tr>
+          <?php endforeach; ?>
+        </tbody></table>
+      <?php endif; ?>
+      <?php if ($db['tabellen']): ?>
+        <p class="small" style="margin:.6rem 0 .2rem"><strong>Datenbank</strong> <span class="muted"><?= (int)$db['anzahl'] ?> Tabellen, die größten:</span></p>
+        <table class="data"><tbody>
+          <?php foreach (array_slice($db['tabellen'], 0, 8) as $t): ?>
+            <tr><td class="small mono"><?= e($t['name']) ?></td><td class="num small"><?= number_format($t['zeilen'], 0, ',', '.') ?> Zeilen</td><td class="num small"><?= e(bytes_human((int)$t['bytes'])) ?></td></tr>
+          <?php endforeach; ?>
+        </tbody></table>
+        <p class="small muted" style="margin:.3rem 0 0">Zeilenzahlen sind Schätzungen der Datenbank.</p>
+      <?php endif; ?>
+    </details>
+  </div>
+  <?php endif; ?>
 
   <a href="<?= e(url('admin_connectors')) ?>"><div class="card"><h3>Connectoren</h3>
     <p>Briefkästen auf öffentlichen Webservern: Standort per QR-Code und Einladungen zu

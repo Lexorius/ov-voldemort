@@ -593,6 +593,11 @@ table.data details summary { cursor: pointer; color: var(--accent); }
 }
 .tab.is-active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 
+.speicher__zeile { display: flex; justify-content: space-between; gap: .6rem; align-items: baseline; padding: .15rem 0; font-size: .92rem; }
+.speicher__balken { height: .5rem; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; margin-top: .25rem; }
+.speicher__balken span { display: block; height: 100%; background: var(--accent); }
+.speicher__balken--warn span { background: #a16207; }
+.speicher__balken--voll span { background: var(--bad); }
 .adminmenu { display: grid; gap: .7rem; grid-template-columns: 1fr; }
 @media (min-width: 620px) { .adminmenu { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 980px) { .adminmenu { grid-template-columns: repeat(3, 1fr); } }

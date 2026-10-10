@@ -79,6 +79,15 @@ Das normale Home-Assistant-Backup erfasst diesen Ordner vollständig. Das Add-on
 ist als `backup: cold` eingetragen, wird also für die Dauer der Sicherung
 angehalten, damit die Datenbankdateien in sich stimmig sind.
 
+### Speicherplatz
+
+Die Verwaltungsseite zeigt unter „Speicherplatz", wie groß die Datenbank
+ist, was die Dateiablage belegt und wie viel auf der Platte darunter noch
+frei ist. Wird es knapp (unter 10 % oder unter 500 MB frei), steht das rot
+dabei – dann alte Sicherungen löschen oder Platz schaffen. „Einzelheiten"
+schlüsselt die Ablage nach Ordnern auf (Fahrzeuge, Veranstaltungen,
+Plätze, Sicherungen) und nennt die größten Tabellen der Datenbank.
+
 ### Sicherung und Wiederherstellung
 
 Unter *Verwaltung → Sicherung* (nur Administration) entsteht auf Knopfdruck

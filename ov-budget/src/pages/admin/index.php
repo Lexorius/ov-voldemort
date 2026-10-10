@@ -12,6 +12,7 @@ $ablage = vfile_storage_status();
 
 render('admin/index', [
     'ablage' => $ablage,
+    'speicher' => speicher_uebersicht(),
     'title' => 'Verwaltung',
     'zeit'  => [
         'zone'     => date_default_timezone_get(),

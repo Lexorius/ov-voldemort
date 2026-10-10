@@ -1,5 +1,11 @@
 # Änderungsverlauf
 
+## 2.1.19.0
+
+- **Speicherplatz in der Verwaltung:** Größe der Datenbank, der Dateiablage
+  und der Festplatte darunter mit Belegungsbalken; rot, wenn es knapp wird.
+  „Einzelheiten" zeigt die Ablage nach Ordnern und die größten Tabellen.
+
 ## 2.1.18.0
 
 - **Hallenplan:** Ein Bild der Halle, des Hofs oder des Stockwerks wird in
