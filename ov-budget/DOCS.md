@@ -310,6 +310,17 @@ sie enthalten.
   Themenspeicher (Titel, Beschreibung, Fachgruppe, Priorität, Zeitbedarf,
   Einreicher). So lassen sich Themen direkt in Divera einreichen.
 
+## Auslagen von Helfern
+
+Hat ein Helfer etwas vorgestreckt, steht das an der Ausgabe: im Formular
+unter „Auslage" der Helfer (aus den Zugängen oder als freier Name, etwa für
+jemanden ohne Zugang) und „Erstattet am", sobald der OV das Geld
+zurückgezahlt hat. Solange das Datum fehlt, gilt die Auslage als offen: Die
+Ausgabenliste zeigt oben, wer noch auf wie viel wartet, jede Buchung trägt
+die Plakette „ausgelegt von … – noch nicht erstattet", und der Filter
+„Auslagen" zeigt nur offene oder nur erstattete. Der CSV-Export führt beide
+Spalten mit.
+
 ## Objektkonten
 
 Eine zweite Sicht auf die Buchungen, neben der Statistik nach Kategorien.

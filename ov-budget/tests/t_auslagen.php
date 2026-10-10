@@ -1,0 +1,103 @@
+<?php
+declare(strict_types=1);
+/*
+ * Auslagen: wer hat vorgestreckt, wann erstattet – Speichern, Plakette,
+ * Filter, Formular, Liste mit Hinweis, Export.
+ */
+session_start();
+$GLOBALS['settings'] = ['waehrung' => 'EUR', 'budget_modul_name' => 'Budget', 'budget_rundung' => '0'];
+$GLOBALS['inserts'] = [];
+$GLOBALS['abfragen'] = [];
+function db_all(string $sql, array $p = []): array {
+    if (str_contains($sql, 'FROM settings')) {
+        $r = [];
+        foreach ($GLOBALS['settings'] as $k => $v) { $r[] = ['skey'=>$k,'svalue'=>$v,'sgroup'=>'x','stype'=>'text','label'=>'','hint'=>'','sort_order'=>0]; }
+        return $r;
+    }
+    $GLOBALS['abfragen'][] = [$sql, $p];
+    return [];
+}
+function db_row(string $sql, array $p = []): ?array { return null; }
+function db_val(string $sql, array $p = [], mixed $d = null) { return $d; }
+function db_exec(string $sql, array $p = []): int { return 1; }
+function db_insert(string $t, array $d): int { $GLOBALS['inserts'][] = [$t, $d]; return count($GLOBALS['inserts']); }
+function db_update(string $t, array $d, string $w, array $p): int { return 1; }
+function can(string $was, mixed $ctx = null): bool { return true; }
+function current_user(): ?array { return ['id' => 1]; }
+$app = dirname(__DIR__);
+foreach (['util', 'settings', 'lists', 'view', 'expenses'] as $lib) { require $app . '/src/lib/' . $lib . '.php'; }
+
+$ok = 0; $fail = 0;
+$check = function (string $n, bool $c) use (&$ok, &$fail) { if ($c) { $ok++; } else { $fail++; echo "FAIL: $n\n"; } };
+
+/* ---------- Speichern ---------- */
+$_POST = ['art' => 'ausgabe', 'bezeichnung' => 'Getränke Übung', 'datum' => '2026-10-03', 'jahr' => '2026', 'betrag' => '48,90', 'status' => 'bezahlt',
+    'ausgelegt_von' => '5', 'ausgelegt_name' => '  ', 'erstattet_am' => ''];
+[$id, $fehler] = expense_save_from_post(null, ['id' => 1]);
+$d = $GLOBALS['inserts'][0][1];
+$check('Ausgabe mit Auslage gespeichert', $fehler === [] && $d['ausgelegt_von'] === 5 && $d['ausgelegt_name'] === '' && $d['erstattet_am'] === null);
+$_POST = ['art' => 'ausgabe', 'bezeichnung' => 'Brötchen', 'datum' => '2026-10-04', 'jahr' => '2026', 'betrag' => '12', 'status' => 'bezahlt',
+    'ausgelegt_von' => '', 'ausgelegt_name' => 'Nachbar-OV Müller', 'erstattet_am' => '2026-10-08'];
+[$id, $fehler] = expense_save_from_post(null, ['id' => 1]);
+$d = $GLOBALS['inserts'][1][1];
+$check('freier Name und Erstattung', $d['ausgelegt_von'] === null && $d['ausgelegt_name'] === 'Nachbar-OV Müller' && $d['erstattet_am'] === '2026-10-08');
+$_POST = ['art' => 'einnahme', 'bezeichnung' => 'Einsatz', 'datum' => '2026-10-04', 'jahr' => '2026', 'betrag' => '500', 'status' => 'bezahlt', 'ausgelegt_von' => '5', 'ausgelegt_name' => 'x', 'erstattet_am' => '2026-10-08'];
+[$id, $fehler] = expense_save_from_post(null, ['id' => 1]);
+$d = $GLOBALS['inserts'][2][1];
+$check('Einnahmen kennen keine Auslage', $d['ausgelegt_von'] === null && $d['ausgelegt_name'] === '' && $d['erstattet_am'] === null);
+$_POST = [];
+
+/* ---------- Plakette und Helfer ---------- */
+$offen = ['ausgelegt_von' => 5, 'ausgelegt_display' => 'Max Muster', 'ausgelegt_name' => '', 'erstattet_am' => null, 'betrag_brutto' => 48.9];
+$erstattet = ['ausgelegt_von' => null, 'ausgelegt_display' => null, 'ausgelegt_name' => 'Nachbar-OV Müller', 'erstattet_am' => '2026-10-08', 'betrag_brutto' => 12.0];
+$keine = ['ausgelegt_von' => null, 'ausgelegt_display' => null, 'ausgelegt_name' => '', 'erstattet_am' => null, 'betrag_brutto' => 5.0];
+$check('wer ausgelegt hat', auslage_von($offen) === 'Max Muster' && auslage_von($erstattet) === 'Nachbar-OV Müller' && auslage_von($keine) === '' && auslage_von(['ausgelegt_von' => 9]) === 'Helfer #9');
+$check('offen oder erstattet', auslage_offen($offen) && !auslage_offen($erstattet) && !auslage_offen($keine));
+$check('Plakette', str_contains(auslage_badge($offen), 'noch nicht erstattet') && str_contains(auslage_badge($offen), 'Max Muster') && str_contains(auslage_badge($erstattet), 'erstattet 08.10.2026') && auslage_badge($keine) === '');
+$check('Summe je Helfer, größte zuerst', auslagen_je_helfer([$offen, $erstattet, $keine, $offen]) === ['Max Muster' => 97.8, 'Nachbar-OV Müller' => 12.0]);
+
+/* ---------- Abfrage ---------- */
+$GLOBALS['abfragen'] = [];
+expense_query(['jahr' => 2026, 'art' => 'ausgabe', 'auslage' => 'offen']);
+[$sql, $p] = $GLOBALS['abfragen'][0];
+$check('Abfrage: Helfer dabei, Filter offen', str_contains($sql, 'LEFT JOIN users      au ON au.id = e.ausgelegt_von') && str_contains($sql, 'au.display_name AS ausgelegt_display')
+    && str_contains($sql, "(e.ausgelegt_von IS NOT NULL OR e.ausgelegt_name <> '')") && str_contains($sql, 'e.erstattet_am IS NULL'));
+$GLOBALS['abfragen'] = [];
+expense_query(['auslage' => 'erstattet']);
+$check('Filter erstattet', str_contains($GLOBALS['abfragen'][0][0], 'e.erstattet_am IS NOT NULL'));
+$GLOBALS['abfragen'] = [];
+expense_query(['auslage' => 'ja']);
+$check('Filter nur Auslagen', str_contains($GLOBALS['abfragen'][0][0], "ausgelegt_name <> ''") && !str_contains($GLOBALS['abfragen'][0][0], 'erstattet_am IS'));
+$GLOBALS['abfragen'] = [];
+auslagen_offen(2026);
+$check('offene Auslagen: Ausgaben des Jahres, älteste zuerst', str_contains($GLOBALS['abfragen'][0][0], 'e.datum ASC') && $GLOBALS['abfragen'][0][1] === [2026, 'ausgabe']);
+
+/* ---------- Formular ---------- */
+$leer = ['id' => null, 'art' => 'ausgabe', 'jahr' => 2026, 'datum' => '2026-03-12', 'bezeichnung' => '', 'beschreibung' => '', 'kategorie_id' => null, 'fachgruppe_id' => null, 'budget_id' => null,
+    'wish_id' => null, 'event_id' => null, 'betrag_brutto' => '', 'betrag_netto' => '', 'lieferant' => '', 'beleg_nr' => '', 'referenz' => '', 'notiz' => '', 'bezahlt_am' => null, 'status' => 'bezahlt',
+    'ausgelegt_von' => 5, 'ausgelegt_name' => '', 'erstattet_am' => null];
+$html = render_partial('expense_edit', ['art' => 'ausgabe', 'expense' => $leer, 'errors' => [], 'budgets' => [], 'wishes' => [], 'events' => [],
+    'helfer' => [['id' => 4, 'display_name' => 'Anna'], ['id' => 5, 'display_name' => 'Max Muster']]]);
+$check('Formular: Auslage mit Helferwahl, Name, Erstattungsdatum', str_contains($html, '<h3 class="mt">Auslage</h3>') && str_contains($html, 'value="5" selected>Max Muster') && str_contains($html, 'name="ausgelegt_name"')
+    && str_contains($html, 'name="erstattet_am"') && str_contains($html, 'direkt vom OV bezahlt'));
+$html = render_partial('expense_edit', ['art' => 'einnahme', 'expense' => ['art' => 'einnahme'] + $leer, 'errors' => [], 'budgets' => [], 'wishes' => [], 'events' => []]);
+$check('Einnahmen-Formular ohne Auslage', !str_contains($html, 'name="ausgelegt_von"'));
+
+/* ---------- Liste ---------- */
+$row = ['id' => 1, 'art' => 'ausgabe', 'jahr' => 2026, 'datum' => '2026-10-03', 'bezeichnung' => 'Getränke Übung', 'betrag_brutto' => 48.9, 'status' => 'bezahlt', 'lieferant' => 'Getränke Huber',
+    'kategorie_label' => 'Verpflegung', 'kategorie_color' => '#b45309', 'fachgruppe_label' => '', 'budget_name' => '', 'wunsch_bezeichnung' => '', 'wuensche_namen' => '', 'fahrzeuge_namen' => '',
+    'bestellung_nummer' => '', 'veranstaltung_titel' => '', 'beleg_nr' => '', 'referenz' => '', 'erfasser' => 'Tester', 'bezahlt_am' => '2026-10-03'] + $offen;
+$filters = ['q' => '', 'kategorie_id' => 0, 'fachgruppe_id' => 0, 'budget_id' => 0, 'status' => '', 'von' => '', 'bis' => '', 'sort' => 'datum', 'auslage' => ''];
+$html = render_partial('expenses', ['art' => 'ausgabe', 'rows' => [$row], 'stats' => ['anzahl' => 1, 'summe' => 48.9], 'filters' => $filters, 'jahr' => 2026, 'jahre' => [2026],
+    'jahresbudget' => 10000.0, 'jahresSumme' => 48.9, 'gegenSumme' => 0.0, 'budgets' => [], 'einnahmenStand' => null, 'wartend' => null, 'auslagenOffen' => [$row]]);
+$check('Liste: Hinweis oben, Plakette an der Buchung, Filter Auslagen', str_contains($html, 'Eine Auslage ist noch nicht erstattet</strong>') && str_contains($html, 'Max Muster 48,90 €')
+    && str_contains($html, 'ausgelegt von Max Muster – noch nicht erstattet') && str_contains($html, 'name="auslage"') && str_contains($html, 'auslage=offen'));
+$html = render_partial('expenses', ['art' => 'ausgabe', 'rows' => [], 'stats' => ['anzahl' => 0, 'summe' => 0.0], 'filters' => $filters, 'jahr' => 2026, 'jahre' => [2026],
+    'jahresbudget' => 10000.0, 'jahresSumme' => 0.0, 'gegenSumme' => 0.0, 'budgets' => [], 'einnahmenStand' => null, 'wartend' => null]);
+$check('Liste ohne offene Auslagen: kein Hinweis', !str_contains($html, 'noch nicht erstattet'));
+$export = (string)file_get_contents($app . '/src/pages/expenses_export.php');
+$check('Export mit beiden Spalten', str_contains($export, "'Ausgelegt von', 'Erstattet am'") && str_contains($export, 'auslage_von($r)'));
+$mig = (string)file_get_contents($app . '/src/cli/migrate.php');
+$check('Wanderung 058', str_contains($mig, '058_auslagen') && str_contains($mig, 'fk_exp_auslage'));
+
+echo "$ok bestanden, $fail fehlgeschlagen\n";

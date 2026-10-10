@@ -22,6 +22,7 @@ $filters = [
     'von'           => get_str('von'),
     'bis'           => get_str('bis'),
     'sort'          => get_str('sort', 'datum'),
+    'auslage'       => $art === 'ausgabe' ? get_str('auslage') : '',
 ];
 
 $rows = expense_query($filters);
@@ -39,5 +40,6 @@ render('expenses', [
     'gegenSumme'   => expense_total($jahr, $art === 'einnahme' ? 'ausgabe' : 'einnahme'),
     'budgets'      => db_all('SELECT id, jahr, name FROM budgets WHERE jahr = ? ORDER BY name', [$jahr]),
     'einnahmenStand' => $art === 'einnahme' ? einnahmen_stand($jahr) : null,
+    'auslagenOffen'  => $art === 'ausgabe' ? auslagen_offen($jahr) : [],
     'wartend'        => $art === 'einnahme' ? einnahmen_wartend($jahr) : null,
 ]);

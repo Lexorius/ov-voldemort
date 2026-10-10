@@ -92,6 +92,15 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
 </section>
 <?php endif; ?>
 
+<?php $auslagenOffen ??= []; if ($auslagenOffen): $jeHelfer = auslagen_je_helfer($auslagenOffen); ?>
+  <div class="alert alert--warn">
+    <strong><?= count($auslagenOffen) === 1 ? 'Eine Auslage ist' : count($auslagenOffen) . ' Auslagen sind' ?> noch nicht erstattet</strong>
+    (<?= e(money(array_sum($jeHelfer))) ?>):
+    <?= e(implode(', ', array_map(static fn($n, $b) => $n . ' ' . money($b), array_keys($jeHelfer), $jeHelfer))) ?>.
+    <a href="<?= e(url('expenses', ['jahr' => $jahr, 'art' => 'ausgabe', 'auslage' => 'offen'])) ?>">Nur offene Auslagen zeigen</a>
+  </div>
+<?php endif; ?>
+
 <form class="card card--tight" method="get" data-autosubmit>
   <input type="hidden" name="p" value="expenses">
   <input type="hidden" name="jahr" value="<?= (int)$jahr ?>">
@@ -119,6 +128,16 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
         <?php endforeach; ?>
       </select>
     </div>
+    <?php if (!$istEinnahme): ?>
+    <div class="field">
+      <label for="auslage">Auslagen</label>
+      <select id="auslage" name="auslage">
+        <?php foreach (['' => 'alle Buchungen', 'ja' => 'nur Auslagen', 'offen' => 'offene Auslagen', 'erstattet' => 'erstattete Auslagen'] as $key => $label): ?>
+          <option value="<?= e($key) ?>"<?= (string)($filters['auslage'] ?? '') === $key ? ' selected' : '' ?>><?= e($label) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+    <?php endif; ?>
     <div class="field">
       <label for="von">Von</label>
       <input type="date" id="von" name="von" value="<?= e((string)$filters['von']) ?>">
@@ -165,6 +184,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
             <?= badge($r['kategorie_label'] ? ['label' => $r['kategorie_label'], 'color' => $r['kategorie_color']] : null, 'ohne Kategorie') ?>
             <?php if ($r['fachgruppe_label']): ?><span class="badge badge--outline"><?= e($r['fachgruppe_label']) ?></span><?php endif; ?>
             <?php if ($r['budget_name']): ?><span class="badge badge--outline"><?= e($r['budget_name']) ?></span><?php endif; ?>
+            <?= auslage_badge($r) ?>
           </div>
         </a>
       <?php endforeach; ?>
@@ -186,6 +206,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
             <td>
               <strong><?= e($r['bezeichnung']) ?></strong> <?= buchung_status_badge((string)($r['status'] ?? 'bezahlt')) ?><?= $istEinnahme ? ' ' . einnahme_alter_badge(einnahme_alter($r)) : '' ?>
               <?php if ($r['lieferant']): ?><div class="small muted"><?= e($r['lieferant']) ?></div><?php endif; ?>
+              <?php if (($ab = auslage_badge($r)) !== ''): ?><div class="small" style="margin-top:.2rem"><?= $ab ?></div><?php endif; ?>
               <?php if ($istEinnahme && ($weg = einnahme_weg($r)) !== ''): ?><div class="small muted"><?= e($weg) ?></div><?php endif; ?>
               <?php if (!empty($r['wuensche_namen'])): ?>
                 <div class="small muted">zu Wunsch: <?= e((string)$r['wuensche_namen']) ?></div>

@@ -368,6 +368,57 @@ function buchung_list_key(string $art): string
     return buchungsart($art) === 'einnahme' ? 'einnahme_kategorie' : 'ausgabe_kategorie';
 }
 
+/* ---------------- Auslagen ---------------- */
+
+/** Wer ausgelegt hat – Anzeigename des Zugangs oder freier Name; leer = niemand. Reine Funktion. */
+function auslage_von(array $e): string
+{
+    $name = trim((string)($e['ausgelegt_display'] ?? ''));
+    if ($name === '' && !empty($e['ausgelegt_von'])) {
+        $name = 'Helfer #' . (int)$e['ausgelegt_von'];
+    }
+    return $name !== '' ? $name : trim((string)($e['ausgelegt_name'] ?? ''));
+}
+
+/** Noch nicht erstattet? Reine Funktion. */
+function auslage_offen(array $e): bool
+{
+    return auslage_von($e) !== '' && empty($e['erstattet_am']);
+}
+
+/** Plakette für die Liste: leer ohne Auslage, orange solange offen, sonst still. Reine Funktion. */
+function auslage_badge(array $e): string
+{
+    $von = auslage_von($e);
+    if ($von === '') {
+        return '';
+    }
+    if (auslage_offen($e)) {
+        return '<span class="badge" style="background:#a16207" title="Der Helfer wartet noch auf sein Geld">ausgelegt von ' . e($von) . ' – noch nicht erstattet</span>';
+    }
+    return '<span class="badge badge--outline">ausgelegt von ' . e($von) . ' · erstattet ' . e(de_date((string)$e['erstattet_am'])) . '</span>';
+}
+
+/** Offene Auslagen eines Jahres, älteste zuerst */
+function auslagen_offen(int $jahr): array
+{
+    return expense_query(['jahr' => $jahr, 'art' => 'ausgabe', 'auslage' => 'offen', 'sort' => 'alt']);
+}
+
+/** Summe je Helfer: [name => Betrag], größte zuerst. Reine Funktion. */
+function auslagen_je_helfer(array $rows): array
+{
+    $out = [];
+    foreach ($rows as $r) {
+        $von = auslage_von($r);
+        if ($von !== '') {
+            $out[$von] = ($out[$von] ?? 0.0) + (float)$r['betrag_brutto'];
+        }
+    }
+    arsort($out);
+    return $out;
+}
+
 /* ---------------- Jahresbudget ---------------- */
 
 function budget_year(int $jahr): ?array
@@ -578,6 +629,15 @@ function expense_query(array $f = []): array
         $w[] = 'e.status = ?';
         $p[] = buchung_status((string)$f['status']);
     }
+    // Auslagen: ja = alle mit Auslage, offen = noch nicht erstattet, erstattet = schon erstattet
+    if (!empty($f['auslage'])) {
+        $w[] = "(e.ausgelegt_von IS NOT NULL OR e.ausgelegt_name <> '')";
+        if ($f['auslage'] === 'offen') {
+            $w[] = 'e.erstattet_am IS NULL';
+        } elseif ($f['auslage'] === 'erstattet') {
+            $w[] = 'e.erstattet_am IS NOT NULL';
+        }
+    }
     if (!empty($f['von'])) {
         $w[] = 'e.datum >= ?';
         $p[] = $f['von'];
@@ -601,6 +661,7 @@ function expense_query(array $f = []): array
                    w.bezeichnung AS wunsch_bezeichnung,
                    ev.titel AS veranstaltung_titel,
                    u.display_name AS erfasser,
+                   au.display_name AS ausgelegt_display,
                    bs.nummer AS bestellung_nummer,
                    (SELECT GROUP_CONCAT(lw.bezeichnung ORDER BY lw.bezeichnung SEPARATOR \' · \') FROM expense_links l JOIN wishes lw ON lw.id = l.ziel_id
                      WHERE l.expense_id = e.id AND l.typ = \'wish\') AS wuensche_namen,
@@ -613,7 +674,8 @@ function expense_query(array $f = []): array
             LEFT JOIN budgets    b  ON b.id  = e.budget_id
             LEFT JOIN wishes     w  ON w.id  = e.wish_id
             LEFT JOIN events     ev ON ev.id = e.event_id
-            LEFT JOIN users      u  ON u.id  = e.created_by'
+            LEFT JOIN users      u  ON u.id  = e.created_by
+            LEFT JOIN users      au ON au.id = e.ausgelegt_von'
         . ($w ? ' WHERE ' . implode(' AND ', $w) : '')
         . ' ORDER BY ' . $order;
 
@@ -883,6 +945,10 @@ function expense_save_from_post(?array $existing, array $user): array
         'beleg_nr'      => mb_substr(post_str('beleg_nr'), 0, 100),
         'referenz'      => mb_substr(post_str('referenz'), 0, 100),
         'bezahlt_am'    => post_date('bezahlt_am'),
+        // Auslage: nur bei Ausgaben – ein Helfer mit Zugang oder ein freier Name
+        'ausgelegt_von' => $art === 'ausgabe' ? post_int('ausgelegt_von') : null,
+        'ausgelegt_name' => $art === 'ausgabe' ? mb_substr(trim(post_str('ausgelegt_name')), 0, 100) : '',
+        'erstattet_am'  => $art === 'ausgabe' ? post_date('erstattet_am') : null,
         'notiz'         => post_str('notiz'),
         'updated_by'    => (int)$user['id'],
     ];

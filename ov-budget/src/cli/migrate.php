@@ -1628,6 +1628,19 @@ SQL);
         $pdo->exec('ALTER TABLE list_items ADD CONSTRAINT fk_list_objektkonto FOREIGN KEY (objektkonto_id) REFERENCES objektkonten(id) ON DELETE SET NULL');
     }
     $merken('057_objektkonten');
+
+    /* ---------- 058: Auslagen von Helfern ---------- */
+    if (ovb_table_exists($pdo, 'expenses')) {
+        if (!ovb_column_exists($pdo, 'expenses', 'ausgelegt_von')) {
+            $pdo->exec('ALTER TABLE expenses ADD COLUMN ausgelegt_von INT UNSIGNED NULL AFTER bezahlt_am');
+            $pdo->exec("ALTER TABLE expenses ADD COLUMN ausgelegt_name VARCHAR(100) NOT NULL DEFAULT '' AFTER ausgelegt_von");
+            $pdo->exec('ALTER TABLE expenses ADD COLUMN erstattet_am DATE NULL AFTER ausgelegt_name');
+        }
+        if (!ovb_constraint_exists($pdo, 'expenses', 'fk_exp_auslage')) {
+            $pdo->exec('ALTER TABLE expenses ADD CONSTRAINT fk_exp_auslage FOREIGN KEY (ausgelegt_von) REFERENCES users(id) ON DELETE SET NULL');
+        }
+    }
+    $merken('058_auslagen');
 }
 
 /**

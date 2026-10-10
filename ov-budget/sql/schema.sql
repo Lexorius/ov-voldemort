@@ -494,6 +494,10 @@ CREATE TABLE IF NOT EXISTS expenses (
   beleg_nr      VARCHAR(100)  NOT NULL DEFAULT '',
   referenz      VARCHAR(100)  NOT NULL DEFAULT '',
   bezahlt_am    DATE          NULL,
+  -- Auslage: welcher Helfer vorgestreckt hat (Zugang oder freier Name) und wann der OV erstattet hat
+  ausgelegt_von INT UNSIGNED  NULL,
+  ausgelegt_name VARCHAR(100) NOT NULL DEFAULT '',
+  erstattet_am  DATE          NULL,
   -- bezahlt und offen zaehlen als Ist, geplant nur in der Planung
   -- Rechnung zu einer Bestellung (mehrere Wuensche); der Fremdschluessel kommt in der Wanderung
   bestellung_id INT UNSIGNED  NULL,
@@ -521,7 +525,8 @@ CREATE TABLE IF NOT EXISTS expenses (
   CONSTRAINT fk_exp_bud  FOREIGN KEY (budget_id)     REFERENCES budgets(id)    ON DELETE SET NULL,
   CONSTRAINT fk_exp_wish FOREIGN KEY (wish_id)       REFERENCES wishes(id)     ON DELETE SET NULL,
   CONSTRAINT fk_exp_cb   FOREIGN KEY (created_by)    REFERENCES users(id)      ON DELETE SET NULL,
-  CONSTRAINT fk_exp_ub   FOREIGN KEY (updated_by)    REFERENCES users(id)      ON DELETE SET NULL
+  CONSTRAINT fk_exp_ub   FOREIGN KEY (updated_by)    REFERENCES users(id)      ON DELETE SET NULL,
+  CONSTRAINT fk_exp_auslage FOREIGN KEY (ausgelegt_von) REFERENCES users(id)   ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS expense_links (

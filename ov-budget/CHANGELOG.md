@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.21.0
+
+- **Auslagen von Helfern:** An jeder Ausgabe lässt sich eintragen, welcher
+  Helfer das Geld vorgestreckt hat (aus den Zugängen oder als freier Name)
+  und wann der OV erstattet hat. Offene Auslagen stehen oben in der
+  Ausgabenliste mit Summe je Helfer, jede Buchung trägt eine Plakette, der
+  Filter „Auslagen" zeigt offene oder erstattete. Auch im CSV-Export.
+
 ## 2.1.20.0
 
 - **Objektkonten:** Neue Sicht im Budget. Ein Objektkonto (Nummer, Name,

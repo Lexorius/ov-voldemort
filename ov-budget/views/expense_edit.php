@@ -165,6 +165,30 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
       </div>
       <?php endif; ?>
     </div>
+    <?php if (!$istEinnahme): $helfer ??= []; $ausgelegtVon = (int)($expense['ausgelegt_von'] ?? 0); ?>
+    <h3 class="mt">Auslage</h3>
+    <p class="small muted">Hat ein Helfer das Geld vorgestreckt? Dann hier eintragen – die Ausgabenliste zeigt, wer noch auf sein Geld wartet.</p>
+    <div class="grid3">
+      <div class="field">
+        <label for="ausgelegt_von">Ausgelegt von</label>
+        <select id="ausgelegt_von" name="ausgelegt_von">
+          <option value="">– niemand, direkt vom OV bezahlt –</option>
+          <?php foreach ($helfer as $h): ?>
+            <option value="<?= (int)$h['id'] ?>"<?= (int)$h['id'] === $ausgelegtVon ? ' selected' : '' ?>><?= e((string)$h['display_name']) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div class="field">
+        <label for="ausgelegt_name">… oder Name ohne Zugang</label>
+        <input type="text" id="ausgelegt_name" name="ausgelegt_name" maxlength="100" value="<?= e((string)($expense['ausgelegt_name'] ?? '')) ?>" placeholder="z. B. Helfer der Nachbar-OV">
+      </div>
+      <div class="field">
+        <label for="erstattet_am">Erstattet am</label>
+        <input type="date" id="erstattet_am" name="erstattet_am" value="<?= e((string)($expense['erstattet_am'] ?? '')) ?>">
+        <small>Leer = die Auslage ist noch offen.</small>
+      </div>
+    </div>
+    <?php endif; ?>
     <?php if ($istEinnahme): ?>
       <?php $stand = buchung_status((string)($expense['status'] ?? 'bezahlt')); if (!array_key_exists($stand, EINNAHME_STUFEN)) { $stand = $stand === 'offen' ? 'gestellt' : 'bezahlt'; } ?>
       <h3 class="mt">Weg der Einnahme</h3>

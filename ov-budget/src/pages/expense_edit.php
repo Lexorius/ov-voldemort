@@ -54,7 +54,7 @@ if (!$expense) {
         'event_id' => get_int('event_id'), 'bestellung_id' => get_int('bestellung_id'),
         'betrag_brutto' => '', 'betrag_netto' => '',
         'lieferant' => '', 'beleg_nr' => '', 'referenz' => '',
-        'bezahlt_am' => null, 'notiz' => '',
+        'bezahlt_am' => null, 'ausgelegt_von' => get_int('ausgelegt_von'), 'ausgelegt_name' => '', 'erstattet_am' => null, 'notiz' => '',
         'status' => buchung_status(get_str('status', 'bezahlt')),
         'abgerechnet_am' => null, 'abgerechnet_betrag' => null, 'gestellt_am' => null, 'gestellt_betrag' => null,
         'gestellt_nr' => '', 'zugesagt_am' => null, 'zugesagt_betrag' => null,
@@ -125,4 +125,6 @@ render('expense_edit', [
     'bestellungen' => db_all(bestellung_select() . " WHERE b.status IN ('bestellt','geliefert')" . (!empty($expense['bestellung_id']) ? ' OR b.id = ' . (int)$expense['bestellung_id'] : '') . ' ORDER BY b.bestellt_am DESC'),
     'links'   => $links,
     'events'  => db_all('SELECT id, titel, beginn FROM events ORDER BY beginn DESC LIMIT 200'),
+    // Helfer zur Auswahl – ein schon eingetragener bleibt wählbar, auch wenn sein Zugang ruht
+    'helfer'  => $art === 'ausgabe' ? db_all('SELECT id, display_name FROM users WHERE is_active = 1 OR id = ? ORDER BY display_name', [(int)($expense['ausgelegt_von'] ?? 0)]) : [],
 ]);
