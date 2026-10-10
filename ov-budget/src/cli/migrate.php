@@ -1641,6 +1641,12 @@ SQL);
         }
     }
     $merken('058_auslagen');
+
+    /* ---------- 059: Auslage in Stufen (an die Regionalstelle weitergegeben) ---------- */
+    if (ovb_table_exists($pdo, 'expenses') && !ovb_column_exists($pdo, 'expenses', 'weitergegeben_am')) {
+        $pdo->exec('ALTER TABLE expenses ADD COLUMN weitergegeben_am DATE NULL AFTER ausgelegt_name');
+    }
+    $merken('059_auslage_stufen');
 }
 
 /**

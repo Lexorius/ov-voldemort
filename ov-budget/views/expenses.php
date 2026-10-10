@@ -92,12 +92,17 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
 </section>
 <?php endif; ?>
 
-<?php $auslagenOffen ??= []; if ($auslagenOffen): $jeHelfer = auslagen_je_helfer($auslagenOffen); ?>
+<?php $auslagenOffen ??= []; if ($auslagenOffen): $jeHelfer = auslagen_je_helfer($auslagenOffen); $stufen = auslagen_nach_stufe($auslagenOffen); ?>
   <div class="alert alert--warn">
-    <strong><?= count($auslagenOffen) === 1 ? 'Eine Auslage ist' : count($auslagenOffen) . ' Auslagen sind' ?> noch nicht erstattet</strong>
+    <strong><?= count($auslagenOffen) === 1 ? 'Ein Helfer wartet' : count($auslagenOffen) . ' Auslagen warten' ?> noch auf Erstattung</strong>
     (<?= e(money(array_sum($jeHelfer))) ?>):
     <?= e(implode(', ', array_map(static fn($n, $b) => $n . ' ' . money($b), array_keys($jeHelfer), $jeHelfer))) ?>.
-    <a href="<?= e(url('expenses', ['jahr' => $jahr, 'art' => 'ausgabe', 'auslage' => 'offen'])) ?>">Nur offene Auslagen zeigen</a>
+    <?php if ($stufen['ausgelegt']['anzahl'] > 0): ?>
+      <a href="<?= e(url('expenses', ['jahr' => $jahr, 'art' => 'ausgabe', 'auslage' => 'ausgelegt'])) ?>"><?= (int)$stufen['ausgelegt']['anzahl'] ?> noch nicht an die Regionalstelle weitergegeben (<?= e(money($stufen['ausgelegt']['summe'])) ?>)</a><?= $stufen['weitergegeben']['anzahl'] > 0 ? ',' : '.' ?>
+    <?php endif; ?>
+    <?php if ($stufen['weitergegeben']['anzahl'] > 0): ?>
+      <a href="<?= e(url('expenses', ['jahr' => $jahr, 'art' => 'ausgabe', 'auslage' => 'weitergegeben'])) ?>"><?= (int)$stufen['weitergegeben']['anzahl'] ?> bei der Regionalstelle (<?= e(money($stufen['weitergegeben']['summe'])) ?>)</a>.
+    <?php endif; ?>
   </div>
 <?php endif; ?>
 
@@ -132,7 +137,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
     <div class="field">
       <label for="auslage">Auslagen</label>
       <select id="auslage" name="auslage">
-        <?php foreach (['' => 'alle Buchungen', 'ja' => 'nur Auslagen', 'offen' => 'offene Auslagen', 'erstattet' => 'erstattete Auslagen'] as $key => $label): ?>
+        <?php foreach (['' => 'alle Buchungen', 'ja' => 'nur Auslagen', 'offen' => 'Helfer wartet noch', 'ausgelegt' => 'noch nicht weitergegeben', 'weitergegeben' => 'bei der Regionalstelle', 'erstattet' => 'Helfer hat sein Geld'] as $key => $label): ?>
           <option value="<?= e($key) ?>"<?= (string)($filters['auslage'] ?? '') === $key ? ' selected' : '' ?>><?= e($label) ?></option>
         <?php endforeach; ?>
       </select>

@@ -167,7 +167,8 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
     </div>
     <?php if (!$istEinnahme): $helfer ??= []; $ausgelegtVon = (int)($expense['ausgelegt_von'] ?? 0); ?>
     <h3 class="mt">Auslage</h3>
-    <p class="small muted">Hat ein Helfer das Geld vorgestreckt? Dann hier eintragen – die Ausgabenliste zeigt, wer noch auf sein Geld wartet.</p>
+    <p class="small muted">Hat ein Helfer das Geld vorgestreckt? Dann hier eintragen. Der Weg: der Helfer hat bezahlt → die Helferauszahlung
+      geht an die Regionalstelle → der Helfer hat sein Geld bekommen. Jedes Datum hebt die Auslage auf seine Stufe; die Ausgabenliste zeigt, wer noch wartet.</p>
     <div class="grid3">
       <div class="field">
         <label for="ausgelegt_von">Ausgelegt von</label>
@@ -183,11 +184,19 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
         <input type="text" id="ausgelegt_name" name="ausgelegt_name" maxlength="100" value="<?= e((string)($expense['ausgelegt_name'] ?? '')) ?>" placeholder="z. B. Helfer der Nachbar-OV">
       </div>
       <div class="field">
-        <label for="erstattet_am">Erstattet am</label>
+        <label for="weitergegeben_am">An die Regionalstelle weitergegeben am</label>
+        <input type="date" id="weitergegeben_am" name="weitergegeben_am" value="<?= e((string)($expense['weitergegeben_am'] ?? '')) ?>">
+        <small>Wann die Helferauszahlung beantragt wurde.</small>
+      </div>
+      <div class="field">
+        <label for="erstattet_am">Helfer hat sein Geld bekommen am</label>
         <input type="date" id="erstattet_am" name="erstattet_am" value="<?= e((string)($expense['erstattet_am'] ?? '')) ?>">
-        <small>Leer = die Auslage ist noch offen.</small>
+        <small>Leer = der Helfer wartet noch.</small>
       </div>
     </div>
+    <?php $stufeJetzt = auslage_stufe(['ausgelegt_von' => $ausgelegtVon, 'ausgelegt_name' => (string)($expense['ausgelegt_name'] ?? ''), 'weitergegeben_am' => $expense['weitergegeben_am'] ?? null, 'erstattet_am' => $expense['erstattet_am'] ?? null]); if ($stufeJetzt !== ''): ?>
+      <p class="small">Stand: <strong><?= e(AUSLAGE_STUFEN[$stufeJetzt]['label']) ?></strong></p>
+    <?php endif; ?>
     <?php endif; ?>
     <?php if ($istEinnahme): ?>
       <?php $stand = buchung_status((string)($expense['status'] ?? 'bezahlt')); if (!array_key_exists($stand, EINNAHME_STUFEN)) { $stand = $stand === 'offen' ? 'gestellt' : 'bezahlt'; } ?>

@@ -380,23 +380,62 @@ function auslage_von(array $e): string
     return $name !== '' ? $name : trim((string)($e['ausgelegt_name'] ?? ''));
 }
 
-/** Noch nicht erstattet? Reine Funktion. */
-function auslage_offen(array $e): bool
+/** Die Stufen einer Auslage, in Reihenfolge */
+const AUSLAGE_STUFEN = [
+    'ausgelegt'     => ['label' => 'von Helfer ausgelegt',               'kurz' => 'noch nicht weitergegeben', 'farbe' => '#a16207'],
+    'weitergegeben' => ['label' => 'an die Regionalstelle weitergegeben', 'kurz' => 'bei der Regionalstelle',   'farbe' => '#0369a1'],
+    'erstattet'     => ['label' => 'Helfer hat sein Geld bekommen',       'kurz' => 'erstattet',                 'farbe' => ''],
+];
+
+/** Stufe aus den Daten: leer ohne Auslage, sonst ausgelegt / weitergegeben / erstattet. Reine Funktion. */
+function auslage_stufe(array $e): string
 {
-    return auslage_von($e) !== '' && empty($e['erstattet_am']);
+    if (auslage_von($e) === '') {
+        return '';
+    }
+    if (!empty($e['erstattet_am'])) {
+        return 'erstattet';
+    }
+    return !empty($e['weitergegeben_am']) ? 'weitergegeben' : 'ausgelegt';
 }
 
-/** Plakette für die Liste: leer ohne Auslage, orange solange offen, sonst still. Reine Funktion. */
+/** Wartet der Helfer noch auf sein Geld? Reine Funktion. */
+function auslage_offen(array $e): bool
+{
+    $s = auslage_stufe($e);
+    return $s === 'ausgelegt' || $s === 'weitergegeben';
+}
+
+/** Plakette für die Liste: leer ohne Auslage, orange solange nur ausgelegt, blau bei der Regionalstelle, still wenn erstattet. Reine Funktion. */
 function auslage_badge(array $e): string
 {
     $von = auslage_von($e);
-    if ($von === '') {
+    $stufe = auslage_stufe($e);
+    if ($stufe === '') {
         return '';
     }
-    if (auslage_offen($e)) {
-        return '<span class="badge" style="background:#a16207" title="Der Helfer wartet noch auf sein Geld">ausgelegt von ' . e($von) . ' – noch nicht erstattet</span>';
+    if ($stufe === 'erstattet') {
+        return '<span class="badge badge--outline">ausgelegt von ' . e($von) . ' · Geld erhalten ' . e(de_date((string)$e['erstattet_am'])) . '</span>';
     }
-    return '<span class="badge badge--outline">ausgelegt von ' . e($von) . ' · erstattet ' . e(de_date((string)$e['erstattet_am'])) . '</span>';
+    if ($stufe === 'weitergegeben') {
+        return '<span class="badge" style="background:#0369a1" title="Helferauszahlung an die Regionalstelle weitergegeben, der Helfer wartet noch">ausgelegt von ' . e($von)
+            . ' – bei der Regionalstelle seit ' . e(de_date((string)$e['weitergegeben_am'])) . '</span>';
+    }
+    return '<span class="badge" style="background:#a16207" title="Der Helfer hat bezahlt, die Auszahlung ist noch nicht beantragt">ausgelegt von ' . e($von) . ' – noch nicht weitergegeben</span>';
+}
+
+/** Offene Auslagen nach Stufe: ['ausgelegt' => [anzahl, summe], 'weitergegeben' => …]. Reine Funktion. */
+function auslagen_nach_stufe(array $rows): array
+{
+    $out = ['ausgelegt' => ['anzahl' => 0, 'summe' => 0.0], 'weitergegeben' => ['anzahl' => 0, 'summe' => 0.0]];
+    foreach ($rows as $r) {
+        $s = auslage_stufe($r);
+        if (isset($out[$s])) {
+            $out[$s]['anzahl']++;
+            $out[$s]['summe'] += (float)$r['betrag_brutto'];
+        }
+    }
+    return $out;
 }
 
 /** Offene Auslagen eines Jahres, älteste zuerst */
@@ -629,13 +668,23 @@ function expense_query(array $f = []): array
         $w[] = 'e.status = ?';
         $p[] = buchung_status((string)$f['status']);
     }
-    // Auslagen: ja = alle mit Auslage, offen = noch nicht erstattet, erstattet = schon erstattet
+    // Auslagen: ja = alle mit Auslage, offen = Helfer wartet noch (auch wenn schon weitergegeben),
+    // ausgelegt = noch nicht weitergegeben, weitergegeben = bei der Regionalstelle, erstattet = Helfer hat sein Geld
     if (!empty($f['auslage'])) {
         $w[] = "(e.ausgelegt_von IS NOT NULL OR e.ausgelegt_name <> '')";
-        if ($f['auslage'] === 'offen') {
-            $w[] = 'e.erstattet_am IS NULL';
-        } elseif ($f['auslage'] === 'erstattet') {
-            $w[] = 'e.erstattet_am IS NOT NULL';
+        switch ($f['auslage']) {
+            case 'offen':
+                $w[] = 'e.erstattet_am IS NULL';
+                break;
+            case 'ausgelegt':
+                $w[] = 'e.erstattet_am IS NULL AND e.weitergegeben_am IS NULL';
+                break;
+            case 'weitergegeben':
+                $w[] = 'e.erstattet_am IS NULL AND e.weitergegeben_am IS NOT NULL';
+                break;
+            case 'erstattet':
+                $w[] = 'e.erstattet_am IS NOT NULL';
+                break;
         }
     }
     if (!empty($f['von'])) {
@@ -948,6 +997,7 @@ function expense_save_from_post(?array $existing, array $user): array
         // Auslage: nur bei Ausgaben – ein Helfer mit Zugang oder ein freier Name
         'ausgelegt_von' => $art === 'ausgabe' ? post_int('ausgelegt_von') : null,
         'ausgelegt_name' => $art === 'ausgabe' ? mb_substr(trim(post_str('ausgelegt_name')), 0, 100) : '',
+        'weitergegeben_am' => $art === 'ausgabe' ? post_date('weitergegeben_am') : null,
         'erstattet_am'  => $art === 'ausgabe' ? post_date('erstattet_am') : null,
         'notiz'         => post_str('notiz'),
         'updated_by'    => (int)$user['id'],

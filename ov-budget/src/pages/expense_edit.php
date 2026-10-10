@@ -54,7 +54,7 @@ if (!$expense) {
         'event_id' => get_int('event_id'), 'bestellung_id' => get_int('bestellung_id'),
         'betrag_brutto' => '', 'betrag_netto' => '',
         'lieferant' => '', 'beleg_nr' => '', 'referenz' => '',
-        'bezahlt_am' => null, 'ausgelegt_von' => get_int('ausgelegt_von'), 'ausgelegt_name' => '', 'erstattet_am' => null, 'notiz' => '',
+        'bezahlt_am' => null, 'ausgelegt_von' => get_int('ausgelegt_von'), 'ausgelegt_name' => '', 'weitergegeben_am' => null, 'erstattet_am' => null, 'notiz' => '',
         'status' => buchung_status(get_str('status', 'bezahlt')),
         'abgerechnet_am' => null, 'abgerechnet_betrag' => null, 'gestellt_am' => null, 'gestellt_betrag' => null,
         'gestellt_nr' => '', 'zugesagt_am' => null, 'zugesagt_betrag' => null,

@@ -497,6 +497,8 @@ CREATE TABLE IF NOT EXISTS expenses (
   -- Auslage: welcher Helfer vorgestreckt hat (Zugang oder freier Name) und wann der OV erstattet hat
   ausgelegt_von INT UNSIGNED  NULL,
   ausgelegt_name VARCHAR(100) NOT NULL DEFAULT '',
+  -- Weg der Auslage: Helferauszahlung an die Regionalstelle weitergegeben, Helfer hat sein Geld
+  weitergegeben_am DATE       NULL,
   erstattet_am  DATE          NULL,
   -- bezahlt und offen zaehlen als Ist, geplant nur in der Planung
   -- Rechnung zu einer Bestellung (mehrere Wuensche); der Fremdschluessel kommt in der Wanderung

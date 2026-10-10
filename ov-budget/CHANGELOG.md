@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.21.1
+
+- **Auslagen in Stufen:** von Helfer ausgelegt → an die Regionalstelle
+  weitergegeben (Datum der Helferauszahlung) → Helfer hat sein Geld
+  bekommen. Plaketten in orange und blau, Filter je Stufe, der Hinweis in
+  der Ausgabenliste nennt, was noch nicht weitergegeben ist und was bei der
+  Regionalstelle liegt. CSV mit Spalte „Weitergegeben am".
+
 ## 2.1.21.0
 
 - **Auslagen von Helfern:** An jeder Ausgabe lässt sich eintragen, welcher
