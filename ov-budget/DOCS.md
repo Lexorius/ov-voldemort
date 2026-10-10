@@ -489,6 +489,16 @@ Das Modul führt Zähler und ihre Stände und rechnet daraus Verbrauch und Koste
   Eigenverbrauch / Gesamtverbrauch. Mit einem Tarif der Art
   **Einspeisevergütung** wird der Erlös ausgewiesen und von den Kosten
   abgezogen.
+* **Kosten je Bereich** (Knopf auf der Verbrauchsseite): Verbrauch und
+  Kosten entlang der Stell- und Lagerplätze. Jeder Zähler ist für einen
+  Bereich zuständig – der Hauptzähler für das Gebäude, Unterzähler für
+  Stockwerke oder Hallen. Die Tabelle zeigt je Bereich Strom, Gas und
+  Wasser mit Kosten, darunter „davon in Teilbereichen gemessen" und „nicht
+  weiter aufgeteilt", dazu den Anteil am Hauptzähler. Unterzähler kosten
+  den Arbeitspreis ihres Hauptzählers, der Grundpreis bleibt beim
+  Hauptzähler. Zähler ohne Bereich stehen gesondert, damit man sie zuordnen
+  kann. Die Standortübersicht zeigt je Platz dieselben Zahlen, bei Plätzen
+  ohne eigenen Zähler die des Gebäudes.
 * **Auffälligkeiten:** Die Übersicht warnt, wenn ein Zähler in den letzten
   sieben Tagen je Tag mehr als das Eineinhalbfache (einstellbar) der bis zu
   acht Wochen davor verbraucht hat – das geht schon mit 14 Tagen Vergleich,

@@ -70,6 +70,8 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
   (Abfrage im einstellbaren Takt), von Hand oder **per QR-Code am Zähler**
 - **Tarife** mit Zeitraum, Verbrauch und Kosten je Monat und Jahr; Warnung,
   wenn ein Zähler lange keinen Stand hat oder ein Monat ohne Tarif ist
+- **Kosten je Bereich**: Verbrauch und Kosten je Gebäude, Halle, Stockwerk
+  entlang der Stell- und Lagerplätze, mit Anteil am Hauptzähler
 - **Unterzähler** für Stockwerke oder Hallen mit Anteil am Hauptzähler,
   ohne doppelte Kosten
 - **Solaranlage**: Erzeugung und Einspeisung als eigene Zähler, daraus

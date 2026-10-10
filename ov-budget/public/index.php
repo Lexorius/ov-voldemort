@@ -109,6 +109,7 @@ $routes = [
     'verbrauch_action'   => 'verbrauch_action',
     'verbrauch_export'   => 'verbrauch_export',
     'verbrauch_bericht'  => 'verbrauch_bericht',
+    'verbrauch_bereiche' => 'verbrauch_bereiche',
     'meter_bericht'      => 'meter_bericht',
     'tarife'             => 'tarife',
     'tarif_edit'         => 'tarif_edit',

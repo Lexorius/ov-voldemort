@@ -79,7 +79,37 @@ foreach ($hierFahrzeuge as $v) {
     $fzFristen[(int)$v['id']] = vehicle_deadlines($v, $warnTage);
 }
 
+// Energie und Kosten dieses Bereichs – aus den zuständigen Zählern, auch geerbt vom Gebäude
+$energie = null;
+if ($s && can('view_verbrauch') && function_exists('verbrauch_bereiche_jahr') && $zaehlerAlle) {
+    $jahr = (int)date('Y');
+    $b = verbrauch_bereiche_jahr($jahr);
+    $treffer = $b['nach_id'][(int)$s['id']] ?? null;
+    $geerbtVon = null;
+    if ($treffer === null || !$treffer['eigen']) {
+        foreach (standort_vorfahren((int)$s['id'], $alle) as $vid) {
+            if (!empty($b['nach_id'][$vid]['eigen'])) {
+                $treffer = $b['nach_id'][$vid];
+                $geerbtVon = (string)$treffer['name'];
+                break;
+            }
+        }
+    }
+    if ($treffer !== null && $treffer['eigen']) {
+        $teile = [];
+        foreach (METER_ARTEN as $key => $a) {
+            $w = $treffer['je_art'][$key];
+            if ($w['menge'] > 0 || $w['kosten'] > 0) {
+                $teile[] = ['label' => $a['label'], 'text' => menge($w['menge'], $w['einheit'], 0) . ($w['kosten'] > 0 ? ' · ' . money($w['kosten']) : '')];
+            }
+        }
+        $energie = ['jahr' => $jahr, 'teile' => $teile, 'kosten' => $treffer['kosten'] > 0 ? money($treffer['kosten']) : '',
+                    'geerbt_von' => $geerbtVon, 'anteil' => $treffer['anteil'] !== null ? number_format($treffer['anteil'], 1, ',', '.') . ' % von ' . $treffer['anteil_von'] : ''];
+    }
+}
+
 render('standorte', [
+    'energie'    => $energie,
     'title'      => $s ? (string)$s['name'] : (string)setting('standort_modul_name', 'Standorte'),
     's'          => $s,
     'alle'       => $alle,

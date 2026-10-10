@@ -127,6 +127,27 @@ $darunterText = $s ? standort_inventar_text($darunter) : '';
   </section>
   <?php endif; ?>
 
+  <?php $energie ??= null; if ($energie && $energie['teile']): ?>
+  <section class="card" id="energie">
+    <div class="card__head"><h2>Energie und Kosten <?= (int)$energie['jahr'] ?></h2>
+      <a class="small" href="<?= e(url('verbrauch_bereiche', ['jahr' => $energie['jahr']])) ?>">Alle Bereiche</a></div>
+    <?php if ($energie['geerbt_von']): ?>
+      <p class="small muted">Kein eigener Zähler – die Zahlen gelten für <?= e($energie['geerbt_von']) ?>, zu dem dieser Platz gehört.</p>
+    <?php endif; ?>
+    <dl class="dl">
+      <?php foreach ($energie['teile'] as $t): ?>
+        <div class="dl__item"><div class="dl__label"><?= e($t['label']) ?></div><div class="dl__value"><?= e($t['text']) ?></div></div>
+      <?php endforeach; ?>
+      <?php if ($energie['kosten'] !== '' && count($energie['teile']) > 1): ?>
+        <div class="dl__item"><div class="dl__label">Kosten gesamt</div><div class="dl__value"><strong><?= e($energie['kosten']) ?></strong></div></div>
+      <?php endif; ?>
+      <?php if ($energie['anteil'] !== ''): ?>
+        <div class="dl__item"><div class="dl__label">Anteil</div><div class="dl__value"><?= e($energie['anteil']) ?></div></div>
+      <?php endif; ?>
+    </dl>
+  </section>
+  <?php endif; ?>
+
   <?php if ($zustaendig || !empty($hier['zaehler'])): ?>
   <section class="card" id="zaehler">
     <h2>Zähler</h2>

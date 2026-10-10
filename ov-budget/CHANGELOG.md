@@ -1,5 +1,16 @@
 # Änderungsverlauf
 
+## 2.1.17.0
+
+- **Kosten je Bereich:** Neue Seite im Verbrauchsmodul. Verbrauch und
+  Kosten für Strom, Gas und Wasser entlang der Stell- und Lagerplätze –
+  Gebäude, Hallen, Stockwerke, Räume – aus den Zählern, die dafür zuständig
+  sind. Je Bereich „davon in Teilbereichen gemessen" und „nicht weiter
+  aufgeteilt", dazu der Anteil am Bereich des Hauptzählers. Zähler ohne
+  Bereich werden gesondert aufgeführt.
+- Die Standortübersicht zeigt je Platz Energie und Kosten des laufenden
+  Jahres, bei Plätzen ohne eigenen Zähler die des Gebäudes.
+
 ## 2.1.16.1
 
 - **Verbrauchsprofil bei jungen Zählern:** Nach drei Tagen stündlicher Stände

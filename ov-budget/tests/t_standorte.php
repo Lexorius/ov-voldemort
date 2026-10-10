@@ -254,6 +254,11 @@ $check('Halle: Kasten des Stellplatzes zeigt das Fahrzeug mit Bild, Stempel und 
 $html = render_partial('standorte', ['s' => $rows[3], 'alle' => $rows, 'crumbs' => [], 'kinder' => [$rows[4]], 'summen' => [], 'hier' => [], 'darunter' => [],
     'zustaendig' => [], 'titelbilder' => [], 'zaehlung' => [], 'kinderZahl' => [], 'darfPflegen' => false]);
 $check('Kasten ohne Fahrzeuge bleibt schlicht', !str_contains($html, 'platz__fz') && str_contains($html, 'p=standorte&amp;id=5'));
+$html = render_partial('standorte', ['s' => $rows[2], 'alle' => $rows, 'crumbs' => [$rows[0], $rows[1]], 'kinder' => [], 'summen' => [], 'hier' => [], 'darunter' => [],
+    'zustaendig' => [], 'titelbilder' => [], 'zaehlung' => [], 'kinderZahl' => [], 'darfPflegen' => false,
+    'energie' => ['jahr' => 2026, 'teile' => [['label' => 'Strom', 'text' => '1.000 kWh · 300,00 €'], ['label' => 'Gas', 'text' => '800 m³ · 80,00 €']], 'kosten' => '380,00 €', 'geerbt_von' => 'Haupthaus', 'anteil' => '']]);
+$check('Platzseite: Energie und Kosten, geerbt vom Gebäude', str_contains($html, 'Energie und Kosten 2026') && str_contains($html, '1.000 kWh · 300,00 €') && str_contains($html, 'Kosten gesamt')
+    && str_contains($html, 'gelten für Haupthaus') && str_contains($html, 'p=verbrauch_bereiche'));
 $seite = (string)file_get_contents($app . '/src/pages/standorte.php');
 $check('Seite sammelt die Fahrzeuge der Unterplätze', str_contains($seite, "'kindFahrzeuge' => \$kindFahrzeuge") && str_contains($seite, 'vfile_covers($bildIds)'));
 $mitPfad = vehicle_mit_stellplatz_pfad([['id' => 1, 'standort_id' => 5, 'stellplatz_name' => 'Stellplatz 3'], ['id' => 2, 'standort_id' => null], ['id' => 3, 'standort_id' => 77, 'stellplatz_name' => 'Fremd']], $rows);

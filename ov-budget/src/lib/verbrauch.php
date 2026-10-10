@@ -671,6 +671,184 @@ function verbrauch_kosten_jahr(array $staende, array $tarife, array $meter, int 
     return $out;
 }
 
+/**
+ * Was der Verbrauch eines Unterzählers kostet: er hat keinen eigenen Tarif,
+ * aber sein Verbrauch läuft über den Hauptzähler – also Arbeitspreis × Menge,
+ * ohne Grundpreis (den trägt der Hauptzähler einmal). Reine Funktion.
+ */
+function verbrauch_kosten_jahr_unter(array $staende, array $tarife, array $meter, int $jahr): float
+{
+    $ohneGrund = array_map(static fn(array $t) => ['grundpreis_monat' => 0] + $t, $tarife);
+    return (float)verbrauch_kosten_jahr($staende, $ohneGrund, ['rolle' => 'bezug'] + $meter, $jahr)['gesamt'];
+}
+
+/**
+ * Verbrauch und Kosten je Bereich (Stell- und Lagerplatz) aus den Zählern,
+ * die dafür zuständig sind. $plaetze: alle Standorte; $meters: Zähler mit
+ * id, name, art, rolle, parent_id, bereich_id; $zahlen: [id => ['menge', 'kosten']].
+ * Zeilen in Baumreihenfolge, nur Plätze, die selbst oder darunter Zähler
+ * haben. Je Zeile: eigen (Zähler), je_art, kosten, unter (was davon
+ * Unterzähler anderswo messen), rest (nicht weiter aufgeteilt), anteil am
+ * Bereich des Hauptzählers (anteil_von). Reine Funktion.
+ */
+function verbrauch_bereiche(array $plaetze, array $meters, array $zahlen): array
+{
+    $leer = static fn(): array => array_map(static fn($a) => ['menge' => 0.0, 'kosten' => 0.0, 'einheit' => $a['einheit']], METER_ARTEN);
+    $nachId = [];
+    $nachBereich = [];
+    foreach ($meters as $m) {
+        $rolle = (string)($m['rolle'] ?? 'bezug');
+        if ($rolle !== 'bezug' && $rolle !== 'unter') {
+            continue;   // Solar misst keinen Bereich
+        }
+        $m['menge'] = (float)($zahlen[(int)$m['id']]['menge'] ?? 0);
+        $m['kosten'] = (float)($zahlen[(int)$m['id']]['kosten'] ?? 0);
+        $nachId[(int)$m['id']] = $m;
+        if ((int)($m['bereich_id'] ?? 0) > 0) {
+            $nachBereich[(int)$m['bereich_id']][] = $m;
+        }
+    }
+    // Zu welchem Hauptzähler-Strang ein Zähler gehört: alle Vorfahren in der Zählerkette
+    $vorfahren = static function (int $id) use ($nachId): array {
+        $out = [];
+        $schutz = 0;
+        $p = (int)($nachId[$id]['parent_id'] ?? 0);
+        while ($p > 0 && isset($nachId[$p]) && $schutz++ < 20) {
+            $out[] = $p;
+            $p = (int)($nachId[$p]['parent_id'] ?? 0);
+        }
+        return $out;
+    };
+    $bereichVon = [];
+    foreach ($nachBereich as $bid => $liste) {
+        foreach ($liste as $m) {
+            $bereichVon[(int)$m['id']] = $bid;
+        }
+    }
+    $nachPlatz = array_column($plaetze, null, 'id');
+    $mitZaehlerUnten = [];
+    foreach ($nachBereich as $bid => $liste) {
+        foreach (standort_vorfahren((int)$bid, $plaetze) as $v) {
+            $mitZaehlerUnten[$v] = true;
+        }
+    }
+
+    $zeilen = [];
+    foreach (standort_flach(standort_baum($plaetze)) as $p) {
+        $id = (int)$p['id'];
+        $eigen = $nachBereich[$id] ?? [];
+        if (!$eigen && empty($mitZaehlerUnten[$id])) {
+            continue;
+        }
+        $jeArt = $leer();
+        $unter = $leer();
+        $kosten = 0.0;
+        $eigenIds = array_map(static fn($m) => (int)$m['id'], $eigen);
+        foreach ($eigen as $m) {
+            $art = (string)$m['art'];
+            $jeArt[$art]['menge'] += $m['menge'];
+            $jeArt[$art]['kosten'] += $m['kosten'];
+            $jeArt[$art]['einheit'] = (string)($m['einheit'] ?? $jeArt[$art]['einheit']);
+            $kosten += $m['kosten'];
+        }
+        // Unterzähler meiner Zähler, die einen anderen Bereich messen
+        $hatUnter = false;
+        foreach ($nachId as $uid => $u) {
+            if ((int)($u['bereich_id'] ?? 0) !== $id && (int)($u['bereich_id'] ?? 0) > 0 && array_intersect($vorfahren($uid), $eigenIds)) {
+                // nur die oberste Ebene zählen, sonst doppelt
+                $direkt = (int)$u['parent_id'];
+                if (in_array($direkt, $eigenIds, true)) {
+                    $unter[(string)$u['art']]['menge'] += $u['menge'];
+                    $unter[(string)$u['art']]['kosten'] += $u['kosten'];
+                    $hatUnter = true;
+                }
+            }
+        }
+        $rest = $leer();
+        foreach ($jeArt as $art => $w) {
+            $rest[$art]['menge'] = max(0.0, $w['menge'] - $unter[$art]['menge']);
+            $rest[$art]['kosten'] = max(0.0, $w['kosten'] - $unter[$art]['kosten']);
+        }
+        // Anteil am Hauptzähler, zu dem meine Unterzähler gehören – über den
+        // Zählerstrang, nicht über den Platzbaum (die Halle kann am Hauszähler hängen)
+        $anteil = null;
+        $anteilVon = null;
+        foreach ($eigen as $m) {
+            $parent = (int)($m['parent_id'] ?? 0);
+            if ($parent === 0 || !isset($nachId[$parent]) || ($bereichVon[$parent] ?? $id) === $id) {
+                continue;
+            }
+            $oben = $nachId[$parent];
+            $meine = array_filter($eigen, static fn($x) => (int)($x['parent_id'] ?? 0) === $parent);
+            $kostenHier = array_sum(array_column($meine, 'kosten'));
+            $mengeHier = array_sum(array_column($meine, 'menge'));
+            $anteilVon = (string)($nachPlatz[$bereichVon[$parent]]['name'] ?? '');
+            if ($oben['kosten'] > 0) {
+                $anteil = round($kostenHier / $oben['kosten'] * 100, 1);
+            } elseif ($oben['menge'] > 0) {
+                $anteil = round($mengeHier / $oben['menge'] * 100, 1);
+            }
+            break;
+        }
+        $zeilen[] = [
+            'id'        => $id,
+            'name'      => (string)$p['name'],
+            'typ'       => (string)$p['typ'],
+            'tiefe'     => (int)($p['tiefe'] ?? 0),
+            'is_active' => (int)($p['is_active'] ?? 1),
+            'eigen'     => $eigen,
+            'je_art'    => $jeArt,
+            'kosten'    => round($kosten, 2),
+            'unter'     => $hatUnter ? $unter : null,
+            'rest'      => $hatUnter ? $rest : null,
+            'anteil'    => $anteil,
+            'anteil_von' => $anteilVon,
+        ];
+    }
+    return $zeilen;
+}
+
+/**
+ * Verbrauch und Kosten je Bereich für ein Jahr – rechnet die Zahlen aller
+ * Zähler und gibt ['zeilen', 'nach_id', 'ohne_bereich', 'gesamt'] zurück.
+ */
+function verbrauch_bereiche_jahr(int $jahr, ?int $jetzt = null): array
+{
+    $jetzt ??= time();
+    $meters = meter_query();
+    $tarife = tarif_query();
+    $plaetze = function_exists('standort_all') ? standort_all() : [];
+    $anfang = mktime(0, 0, 0, 1, 1, $jahr);
+    $ende = min($jetzt, mktime(0, 0, 0, 1, 1, $jahr + 1));
+    [$von, $bis] = verbrauch_zeitraum($jahr, $jetzt);
+    $zahlen = [];
+    $gesamt = array_map(static fn($a) => ['menge' => 0.0, 'kosten' => 0.0, 'einheit' => $a['einheit']], METER_ARTEN);
+    $ohne = [];
+    foreach ($meters as $m) {
+        $rolle = (string)($m['rolle'] ?? 'bezug');
+        if ($rolle !== 'bezug' && $rolle !== 'unter') {
+            continue;
+        }
+        $staende = readings_bereich((int)$m['id'], $von, $bis);
+        $menge = (float)(verbrauch_zwischen($staende, $anfang, $ende) ?? 0);
+        $kosten = $rolle === 'unter'
+            ? verbrauch_kosten_jahr_unter($staende, $tarife, $m, $jahr)
+            : (float)verbrauch_kosten_jahr($staende, $tarife, $m, $jahr)['gesamt'];
+        $zahlen[(int)$m['id']] = ['menge' => $menge, 'kosten' => $kosten];
+        if ($rolle === 'bezug') {
+            $gesamt[(string)$m['art']]['menge'] += $menge;
+            $gesamt[(string)$m['art']]['kosten'] += $kosten;
+            $gesamt[(string)$m['art']]['einheit'] = (string)$m['einheit'];
+        }
+        if ((int)($m['bereich_id'] ?? 0) === 0) {
+            $ohne[] = $m + ['menge' => $menge, 'kosten' => $kosten];
+        }
+    }
+    $zeilen = verbrauch_bereiche($plaetze, $meters, $zahlen);
+    return ['zeilen' => $zeilen, 'nach_id' => array_column($zeilen, null, 'id'), 'ohne_bereich' => $ohne, 'gesamt' => $gesamt,
+            'bis_heute' => $ende < mktime(0, 0, 0, 1, 1, $jahr + 1)];
+}
+
 /* ==================================================================== */
 /* Kennzahlen                                                            */
 /* ==================================================================== */

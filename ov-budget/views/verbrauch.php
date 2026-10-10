@@ -15,6 +15,7 @@ $darfAblesen = can('read_meter');
     <?php endif; ?>
     <a class="btn btn--sec" href="<?= e(url('tarife')) ?>">Tarife</a>
     <a class="btn btn--sec" href="<?= e(url('verbrauch_bericht', ['jahr' => $jahr])) ?>">Jahresbericht</a>
+    <a class="btn btn--sec" href="<?= e(url('verbrauch_bereiche', ['jahr' => $jahr])) ?>">Kosten je Bereich</a>
     <a class="btn btn--sec" href="<?= e(url('verbrauch_export')) ?>">CSV</a>
   </div>
 </div>

@@ -277,6 +277,42 @@ $check('früheres Ende weicht ab, ohne Stände auch; ohne Hauptzeitraum nie', ve
     && verbrauch_zeitraum_abweichend(null, $haupt) && !verbrauch_zeitraum_abweichend(null, null));
 $check('Zeitraumtext', verbrauch_zeitraum_text(['von' => strtotime('2026-09-12'), 'bis' => strtotime('2026-10-08'), 'tage' => 26.0]) === '12.09.–08.10.2026' && verbrauch_zeitraum_text(null) === 'keine Stände');
 
+// Kosten je Bereich
+$ohneGrund = array_map(static fn($t) => ['grundpreis_monat' => 0] + $t, $tarife);
+$check('Unterzähler kostet den Arbeitspreis ohne Grundpreis', $nah(verbrauch_kosten_jahr_unter($st, $tarife, ['art' => 'strom', 'rolle' => 'unter', 'umrechnung' => 1], 2026),
+    verbrauch_kosten_jahr($st, $ohneGrund, ['art' => 'strom', 'rolle' => 'bezug', 'umrechnung' => 1], 2026)['gesamt']) && verbrauch_kosten_jahr_unter($st, $tarife, ['art' => 'strom', 'rolle' => 'unter', 'umrechnung' => 1], 2026) > 0);
+require_once $app . '/src/lib/standorte.php';
+$plaetze = [
+    ['id' => 1, 'parent_id' => null, 'typ' => 'gebaeude', 'name' => 'Haupthaus', 'sort_order' => 10, 'is_active' => 1, 'kurz' => ''],
+    ['id' => 2, 'parent_id' => 1, 'typ' => 'stockwerk', 'name' => '1. Stock', 'sort_order' => 10, 'is_active' => 1, 'kurz' => ''],
+    ['id' => 3, 'parent_id' => 2, 'typ' => 'raum', 'name' => 'Raum 12', 'sort_order' => 10, 'is_active' => 1, 'kurz' => ''],
+    ['id' => 4, 'parent_id' => null, 'typ' => 'halle', 'name' => 'Halle 1', 'sort_order' => 20, 'is_active' => 1, 'kurz' => ''],
+    ['id' => 5, 'parent_id' => null, 'typ' => 'hof', 'name' => 'Hof', 'sort_order' => 30, 'is_active' => 1, 'kurz' => ''],
+];
+$bm = [
+    ['id' => 10, 'name' => 'Hauszähler', 'art' => 'strom', 'rolle' => 'bezug', 'parent_id' => null, 'bereich_id' => 1, 'einheit' => 'kWh'],
+    ['id' => 11, 'name' => 'Strom 1. OG', 'art' => 'strom', 'rolle' => 'unter', 'parent_id' => 10, 'bereich_id' => 2, 'einheit' => 'kWh'],
+    ['id' => 12, 'name' => 'Strom Halle', 'art' => 'strom', 'rolle' => 'unter', 'parent_id' => 10, 'bereich_id' => 4, 'einheit' => 'kWh'],
+    ['id' => 13, 'name' => 'Gas Haus', 'art' => 'gas', 'rolle' => 'bezug', 'parent_id' => null, 'bereich_id' => 1, 'einheit' => 'm³'],
+    ['id' => 14, 'name' => 'Solar', 'art' => 'strom', 'rolle' => 'erzeugung', 'parent_id' => null, 'bereich_id' => 1, 'einheit' => 'kWh'],
+    ['id' => 15, 'name' => 'Wasser ohne', 'art' => 'wasser', 'rolle' => 'bezug', 'parent_id' => null, 'bereich_id' => null, 'einheit' => 'm³'],
+];
+$bz = [10 => ['menge' => 1000.0, 'kosten' => 300.0], 11 => ['menge' => 400.0, 'kosten' => 120.0], 12 => ['menge' => 100.0, 'kosten' => 30.0],
+       13 => ['menge' => 800.0, 'kosten' => 80.0], 14 => ['menge' => 5000.0, 'kosten' => 0.0], 15 => ['menge' => 50.0, 'kosten' => 100.0]];
+$bereiche = verbrauch_bereiche($plaetze, $bm, $bz);
+$check('Bereiche: nur Plätze mit Zählern, in Baumreihenfolge', array_column($bereiche, 'name') === ['Haupthaus', '1. Stock', 'Halle 1']);
+$hh = $bereiche[0];
+$check('Haupthaus: Strom und Gas, Solar bleibt außen vor', $nah($hh['je_art']['strom']['menge'], 1000.0) && $nah($hh['je_art']['gas']['kosten'], 80.0) && $nah($hh['kosten'], 380.0) && count($hh['eigen']) === 2);
+$check('Haupthaus: davon in Teilbereichen 500 kWh, nicht aufgeteilt 500 kWh', $nah($hh['unter']['strom']['menge'], 500.0) && $nah($hh['unter']['strom']['kosten'], 150.0)
+    && $nah($hh['rest']['strom']['menge'], 500.0) && $nah($hh['rest']['gas']['menge'], 800.0) && $hh['anteil'] === null);
+$check('1. Stock: 40 % vom Haupthaus, Halle 10 % – auch außerhalb des Platzbaums', $bereiche[1]['anteil'] === 40.0 && $bereiche[1]['anteil_von'] === 'Haupthaus'
+    && $bereiche[1]['tiefe'] === 1 && $bereiche[1]['unter'] === null && $bereiche[2]['anteil'] === 10.0 && $bereiche[2]['tiefe'] === 0);
+$html = render_partial('verbrauch_bereiche', ['jahr' => 2026, 'jahre' => [2026], 'zeilen' => $bereiche, 'ohneBereich' => [$bm[5] + $bz[15]], 'gesamt' => ['strom' => ['menge' => 1000.0, 'kosten' => 300.0, 'einheit' => 'kWh'], 'gas' => ['menge' => 800.0, 'kosten' => 80.0, 'einheit' => 'm³'], 'wasser' => ['menge' => 50.0, 'kosten' => 100.0, 'einheit' => 'm³']], 'bisHeute' => true, 'plaetzeDa' => true]);
+$check('Kosten je Bereich rendert', str_contains($html, 'Kosten je Bereich 2026') && str_contains($html, 'Haupthaus') && str_contains($html, '380,00') && str_contains($html, '40,0 %') && str_contains($html, 'von Haupthaus')
+    && str_contains($html, 'davon in Teilbereichen gemessen') && str_contains($html, 'Zähler ohne Bereich') && str_contains($html, 'Wasser ohne') && str_contains($html, 'p=standorte&amp;id=2') && str_contains($html, '480,00'));
+$html = render_partial('verbrauch_bereiche', ['jahr' => 2026, 'jahre' => [2026], 'zeilen' => [], 'ohneBereich' => [], 'gesamt' => [], 'bisHeute' => false, 'plaetzeDa' => false]);
+$check('ohne Plätze ein Hinweis', str_contains($html, 'Noch keine Stell- und Lagerplätze'));
+
 // Kosten: Einspeisung mit Vergütung, Unterzähler ohne
 $tarifeSolar = array_merge($tarife, [['id' => 9, 'art' => 'einspeisung', 'name' => 'EEG', 'gueltig_von' => '2026-01-01', 'gueltig_bis' => null, 'arbeitspreis' => 0.08, 'grundpreis_monat' => 0, 'einheit' => 'kWh']]);
 $k = verbrauch_kosten_jahr($st, $tarifeSolar, ['art' => 'strom', 'rolle' => 'einspeisung', 'umrechnung' => 1], 2026);
