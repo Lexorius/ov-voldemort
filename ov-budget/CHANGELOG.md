@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.18.0
+
+- **Hallenplan:** Ein Bild der Halle, des Hofs oder des Stockwerks wird in
+  der Verwaltung „Als Plan" gewählt; per Klick im Plan werden die
+  Unterplätze darauf verortet. Die Standortübersicht zeigt den Plan mit
+  jedem Fahrzeug an seinem Stellplatz – Bild, Name, Statusfarbe, Stempel –
+  und leeren Plätzen als Markierung. Klick führt zur Akte bzw. zum Platz.
+
 ## 2.1.17.0
 
 - **Kosten je Bereich:** Neue Seite im Verbrauchsmodul. Verbrauch und

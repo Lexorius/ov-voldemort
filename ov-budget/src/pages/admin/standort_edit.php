@@ -55,6 +55,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         redirect(url('admin_standort_edit', ['id' => $s['id']]) . '#bilder');
     }
+    if (in_array(post_str('action'), ['plan_setzen', 'plan_weg'], true) && $s) {
+        $bild = post_str('action') === 'plan_setzen' ? standort_bild_find((int)post_int('bild_id', 0)) : null;
+        if (post_str('action') === 'plan_setzen' && (!$bild || (int)$bild['standort_id'] !== (int)$s['id'])) {
+            flash('error', 'Dieses Bild gehört nicht zu diesem Platz.');
+        } else {
+            standort_plan_setzen($s, $bild);
+            flash('success', $bild ? 'Das Bild ist jetzt der Plan – unten die Unterplätze darauf verorten.' : 'Plan entfernt.');
+        }
+        redirect(url('admin_standort_edit', ['id' => $s['id']]) . '#plan');
+    }
+    if (in_array(post_str('action'), ['plan_position', 'plan_position_weg'], true) && $s) {
+        $kind = standort_find((int)post_int('kind_id', 0));
+        if (!$kind || (int)($kind['parent_id'] ?? 0) !== (int)$s['id']) {
+            flash('error', 'Bitte einen Platz wählen, der direkt unter diesem liegt.');
+        } elseif (post_str('action') === 'plan_position_weg') {
+            standort_plan_position_setzen($kind, null, null);
+            flash('success', sprintf('„%s" aus dem Plan genommen.', (string)$kind['name']));
+        } else {
+            $xy = standort_plan_koordinaten(post_str('x'), post_str('y'));
+            if ($xy === null) {
+                flash('error', 'Erst im Plan an die Stelle klicken, wo der Platz liegt.');
+            } else {
+                standort_plan_position_setzen($kind, $xy[0], $xy[1]);
+                flash('success', sprintf('„%s" im Plan verortet.', (string)$kind['name']));
+            }
+        }
+        redirect(url('admin_standort_edit', ['id' => $s['id']]) . '#plan');
+    }
     if (post_str('action') === 'aktiv' && $s) {
         $neu = (int)$s['is_active'] === 1 ? 0 : 1;
         db_update('standorte', ['is_active' => $neu], 'id = ?', [(int)$s['id']]);
@@ -94,6 +122,7 @@ render('admin/standort_edit', [
     'pfad'    => $s['id'] ? standort_pfad((int)$s['id'], $alle) : ($parent ? standort_pfad((int)$parent['id'], $alle) : ''),
     'kinder'  => $s['id'] ? (int)db_val('SELECT COUNT(*) FROM standorte WHERE parent_id = ?', [(int)$s['id']], 0) : 0,
     'bilder'  => $s['id'] ? standort_bilder((int)$s['id']) : [],
+    'planKinder' => $s['id'] ? array_values(array_filter($alle, static fn($x) => (int)($x['parent_id'] ?? 0) === (int)$s['id'])) : [],
     'fahrzeuge' => $fahrzeuge,
     'fzTitelbilder' => $fahrzeuge ? vfile_covers(array_column($fahrzeuge, 'id')) : [],
     'fzFristen' => $fzFristen,

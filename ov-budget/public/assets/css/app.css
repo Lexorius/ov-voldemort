@@ -505,6 +505,23 @@ table.data td.num, table.data th.num { text-align: right; font-variant-numeric: 
 .standort__thumb { width: 1.6rem; height: 1.6rem; object-fit: cover; border-radius: 4px; display: block; }
 .standort-icon { display: flex; align-items: center; justify-content: center; font-size: 1.6rem; background: var(--bg); border: 1px solid var(--border); }
 .standort-titel { display: block; margin-bottom: 1rem; }
+/* Hallenplan: Bild mit Markierungen in Prozent */
+.plan { position: relative; display: block; max-width: 100%; }
+.plan img { display: block; width: 100%; height: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+.plan--edit { cursor: crosshair; }
+.plan__marker { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; color: inherit; text-decoration: none; z-index: 1; }
+.plan__marker--aus { opacity: .6; }
+.plan__marker--neu .plan__pin { background: var(--accent); }
+.plan__pin { width: .9rem; height: .9rem; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #b91c1c; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.4); order: 2; margin-top: .15rem; }
+.plan__label { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: .1rem .4rem; font-size: .75rem; white-space: nowrap; box-shadow: var(--shadow); }
+.plan__marker--fz { transform: translate(-50%, -50%); background: var(--surface); border: 2px solid var(--border); border-radius: 8px; padding: .25rem; width: 6.5rem; box-shadow: var(--shadow); }
+.plan__marker--fz img, .plan__fzleer { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 4px; }
+.plan__fzleer { display: flex; align-items: center; justify-content: center; background: var(--surface-2); font-size: 1.6rem; color: var(--muted); }
+.plan__fzname { font-size: .75rem; font-weight: 700; margin-top: .2rem; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+.plan__platz { font-size: .65rem; color: var(--ink-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; text-align: center; }
+.plan__stempel { font-size: .65rem; color: #b91c1c; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; text-align: center; }
+.plan__marker--fz:hover, .plan__marker:hover .plan__label { outline: 2px solid var(--accent); }
+@media (max-width: 600px) { .plan__marker--fz { width: 4.6rem; padding: .15rem; } .plan__fzname { font-size: .65rem; } }
 /* Fahrzeuge gleich im Kasten eines Stellplatzes */
 .platz__fz { display: grid; gap: .5rem; margin-top: .6rem; padding-top: .6rem; border-top: 1px solid var(--border); }
 .platz__fzeintrag { display: block; color: inherit; text-decoration: none; }

@@ -268,4 +268,34 @@ $check('Fahrzeugabfrage filtert nach Platz', str_contains($fz, "'standort_ids'")
 $check('Fristplaketten nur für Auffälliges', vehicle_frist_badges([['label' => 'HU', 'status' => 'ok', 'datum' => '2027-01-01']]) === ''
     && str_contains(vehicle_frist_badges([['label' => 'SP', 'status' => 'bald', 'datum' => '2026-11-01']]), 'SP bis 01.11.2026'));
 
+/* ---------- Hallenplan ---------- */
+$halle = $rows[3] + ['plan_bild_id' => 8];
+$kinderHalle = [$rows[4] + ['plan_x' => 30.5, 'plan_y' => 60.0], ['id' => 9, 'parent_id' => 4, 'typ' => 'stellplatz', 'name' => 'Stellplatz 4', 'sort_order' => 20, 'is_active' => 1, 'kurz' => '', 'plan_x' => null, 'plan_y' => null]];
+$bilderHalle = [['id' => 8, 'standort_id' => 4, 'is_cover' => 1, 'titel' => 'Halle von vorn'], ['id' => 7, 'standort_id' => 4, 'is_cover' => 0, 'titel' => 'Skizze']];
+$check('Planbild aus der Galerie', standort_plan_bild($halle, $bilderHalle)['titel'] === 'Halle von vorn' && standort_plan_bild($rows[3], $bilderHalle) === null && standort_plan_bild($halle, []) === null);
+$mk = standort_plan_marker($kinderHalle);
+$check('Marker nur für verortete Unterplätze', count($mk) === 1 && $mk[0]['id'] === 5 && $mk[0]['x'] === 30.5 && $mk[0]['y'] === 60.0 && $mk[0]['is_active'] === 0);
+$check('Lage im Plan: Prozent 0–100, Komma erlaubt', standort_plan_koordinaten('12,5', '99') === [12.5, 99.0] && standort_plan_koordinaten('101', '5') === null && standort_plan_koordinaten('', '5') === null && standort_plan_koordinaten('0', '0') === [0.0, 0.0]);
+$GLOBALS['updates'] = [];
+standort_plan_setzen($halle, $bilderHalle[1]);
+standort_plan_position_setzen($kinderHalle[1], 40.0, 55.5);
+standort_plan_position_setzen($kinderHalle[0], null, null);
+$check('Plan und Lage speichern', $GLOBALS['updates'][0][1] === ['plan_bild_id' => 7] && $GLOBALS['updates'][1][1] === ['plan_x' => 40.0, 'plan_y' => 55.5] && $GLOBALS['updates'][1][2] === [9]
+    && $GLOBALS['updates'][2][1] === ['plan_x' => null, 'plan_y' => null]);
+$html = render_partial('admin/standort_edit', ['s' => $halle, 'parent' => null, 'alle' => $rows, 'errors' => [], 'pfad' => 'Halle 1', 'kinder' => 2, 'bilder' => $bilderHalle, 'planKinder' => $kinderHalle, 'fahrzeuge' => []]);
+$check('Verwaltung: Plan mit Marker, Formular zum Verorten, „Als Plan" nur für andere Bilder', str_contains($html, 'data-plan-editor') && str_contains($html, 'left:30.50%;top:60.00%') && str_contains($html, 'value="plan_position"')
+    && str_contains($html, 'Stellplatz 3 (im Plan)') && str_contains($html, 'Noch nicht im Plan: Stellplatz 4') && substr_count($html, 'value="plan_setzen"') === 1 && str_contains($html, 'value="plan_weg"') && str_contains($html, '>Plan</span>'));
+$html = render_partial('admin/standort_edit', ['s' => $rows[3], 'parent' => null, 'alle' => $rows, 'errors' => [], 'pfad' => 'Halle 1', 'kinder' => 2, 'bilder' => $bilderHalle, 'planKinder' => $kinderHalle, 'fahrzeuge' => []]);
+$check('Verwaltung ohne Plan: Hinweis und „Als Plan" an jedem Bild', str_contains($html, '„Als Plan" wählen') && substr_count($html, 'value="plan_setzen"') === 2 && !str_contains($html, 'data-plan-editor'));
+$html = render_partial('standorte', ['s' => $halle, 'alle' => $rows, 'crumbs' => [], 'kinder' => $kinderHalle, 'summen' => [], 'hier' => [], 'darunter' => [], 'zustaendig' => [], 'titelbilder' => [], 'zaehlung' => [], 'kinderZahl' => [], 'darfPflegen' => false,
+    'plan' => $bilderHalle[0], 'planMarker' => standort_plan_marker($kinderHalle), 'kindFahrzeuge' => [5 => $fzKachel], 'fzTitelbilder' => [2 => ['id' => 9]]]);
+$check('Übersicht: Plan mit Fahrzeugkarte am Stellplatz', str_contains($html, 'class="plan"') && str_contains($html, 'plan__marker--fz') && str_contains($html, 'left:30.50%;top:60.00%') && str_contains($html, 'GKW 1')
+    && str_contains($html, 'plan__stempel">In Wartung') && str_contains($html, 'vehicle_file') && str_contains($html, '1 von 2 Plätzen verortet') && str_contains($html, 'p=vehicle&amp;id=2'));
+$html = render_partial('standorte', ['s' => $halle, 'alle' => $rows, 'crumbs' => [], 'kinder' => $kinderHalle, 'summen' => [], 'hier' => [], 'darunter' => [], 'zustaendig' => [], 'titelbilder' => [], 'zaehlung' => [], 'kinderZahl' => [], 'darfPflegen' => false,
+    'plan' => $bilderHalle[0], 'planMarker' => standort_plan_marker($kinderHalle), 'kindFahrzeuge' => []]);
+$check('Übersicht: leerer Platz als Markierung mit Link zum Platz', str_contains($html, 'plan__pin') && str_contains($html, 'plan__label">Stellplatz 3') && !str_contains($html, 'plan__marker--fz'));
+$mig = (string)file_get_contents($app . '/src/cli/migrate.php');
+$check('Wanderung 056 legt Plan-Spalten an', str_contains($mig, '056_hallenplan') && str_contains($mig, 'plan_bild_id') && str_contains($mig, 'fk_standort_plan'));
+$check('Bild löschen räumt den Plan', str_contains((string)file_get_contents($app . '/src/lib/standorte.php'), 'UPDATE standorte SET plan_bild_id = NULL WHERE plan_bild_id = ?'));
+
 echo "$ok bestanden, $fail fehlgeschlagen\n";

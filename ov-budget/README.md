@@ -218,7 +218,8 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
   Stockwerken, Räumen, Stellplätzen, Schränken und Regalen, Serien wie
   „Raum 1–16" auf einmal – je Platz mit Bildern, GPS-Koordinaten und Karte;
   Fahrzeuge, Zähler, Funkgeräte und Funkgruppen werden Plätzen zugeordnet;
-  **Standortübersicht** für alle zum Durchklicken, was wo ist
+  **Standortübersicht** für alle zum Durchklicken, was wo ist, mit
+  **Hallenplan**: Foto oder Skizze, auf der jedes Fahrzeug an seinem Platz steht
 - **Zweiter Faktor** mit Authenticator-App und Backup-Codes, als Pflicht je
   Rolle einstellbar
 - Alle Auswahllisten, Texte und Regeln frei einstellbar; **Menüleiste in

@@ -203,6 +203,32 @@
     }
   });
 
+  /* Hallenplan bearbeiten: ein Klick ins Bild füllt die Prozentwerte und zeigt die Markierung */
+  document.querySelectorAll('[data-plan-editor]').forEach(function (plan) {
+    var form = document.querySelector('form[data-plan-form]');
+    var bild = plan.querySelector('img');
+    var neu = plan.querySelector('.plan__marker--neu');
+    if (!form || !bild) { return; }
+    plan.addEventListener('click', function (ev) {
+      var r = bild.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) { return; }
+      var x = Math.min(100, Math.max(0, (ev.clientX - r.left) / r.width * 100));
+      var y = Math.min(100, Math.max(0, (ev.clientY - r.top) / r.height * 100));
+      form.x.value = x.toFixed(1);
+      form.y.value = y.toFixed(1);
+      if (neu) {
+        neu.style.left = x + '%';
+        neu.style.top = y + '%';
+        neu.hidden = false;
+        var wahl = form.kind_id;
+        var label = neu.querySelector('.plan__label');
+        if (label && wahl && wahl.options[wahl.selectedIndex]) {
+          label.textContent = wahl.options[wahl.selectedIndex].textContent.replace(' (im Plan)', '');
+        }
+      }
+    });
+  });
+
   /* "Jetzt Position setzen": erst den Standort holen, dann absenden */
   document.querySelectorAll('form[data-position]').forEach(function (form) {
     var hinweis = document.getElementById('position-hinweis');

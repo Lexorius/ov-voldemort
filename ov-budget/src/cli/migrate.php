@@ -1589,6 +1589,21 @@ SQL);
         }
     }
     $merken('055_funk_standort');
+
+    /* ---------- 056: Hallenplan ---------- */
+    if (ovb_table_exists($pdo, 'standorte')) {
+        if (!ovb_column_exists($pdo, 'standorte', 'plan_bild_id')) {
+            $pdo->exec('ALTER TABLE standorte ADD COLUMN plan_bild_id INT UNSIGNED NULL AFTER sort_order');
+        }
+        if (!ovb_column_exists($pdo, 'standorte', 'plan_x')) {
+            $pdo->exec('ALTER TABLE standorte ADD COLUMN plan_x DECIMAL(5,2) NULL AFTER plan_bild_id');
+            $pdo->exec('ALTER TABLE standorte ADD COLUMN plan_y DECIMAL(5,2) NULL AFTER plan_x');
+        }
+        if (ovb_table_exists($pdo, 'standort_bilder') && !ovb_constraint_exists($pdo, 'standorte', 'fk_standort_plan')) {
+            $pdo->exec('ALTER TABLE standorte ADD CONSTRAINT fk_standort_plan FOREIGN KEY (plan_bild_id) REFERENCES standort_bilder(id) ON DELETE SET NULL');
+        }
+    }
+    $merken('056_hallenplan');
 }
 
 /**

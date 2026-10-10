@@ -121,6 +121,69 @@ $ausser = $isNew ? [] : array_merge([(int)$s['id']], standort_nachkommen((int)$s
     <p class="small muted" id="position-hinweis">Übernimmt den Standort dieses Geräts – der Browser fragt dafür um Erlaubnis.</p>
   </section>
 
+  <?php $planKinder ??= []; $plan = standort_plan_bild($s, $bilder); $marker = standort_plan_marker($planKinder); ?>
+  <?php if ($planKinder || $plan): ?>
+  <section class="card" id="plan">
+    <div class="card__head">
+      <h2>Plan</h2>
+      <?php if ($plan): ?>
+        <form method="post" class="inline-form" action="<?= e(url('admin_standort_edit', ['id' => $s['id']])) ?>"><?= csrf_field() ?>
+          <input type="hidden" name="action" value="plan_weg">
+          <button class="btn btn--sec btn--sm" type="submit" data-confirm="Den Plan entfernen? Die Lage der Unterplätze bleibt gespeichert.">Plan entfernen</button></form>
+      <?php endif; ?>
+    </div>
+    <?php if (!$plan): ?>
+      <p class="muted">Ein Foto oder eine Skizze der Halle, des Hofs oder des Stockwerks als Plan: Bild unten hochladen und in der Galerie
+        „Als Plan" wählen. Danach lassen sich die Unterplätze darauf verorten – die Standortübersicht zeigt dann jedes Fahrzeug an seinem Platz.</p>
+    <?php else: ?>
+      <div class="plan plan--edit" data-plan-editor>
+        <img src="<?= e(url('standort_bild', ['id' => $plan['id']])) ?>" alt="<?= e((string)$plan['titel']) ?>">
+        <?php foreach ($marker as $m): ?>
+          <span class="plan__marker" style="left:<?= number_format($m['x'], 2, '.', '') ?>%;top:<?= number_format($m['y'], 2, '.', '') ?>%" title="<?= e($m['name']) ?>">
+            <span class="plan__pin"></span><span class="plan__label"><?= e($m['name']) ?></span></span>
+        <?php endforeach; ?>
+        <span class="plan__marker plan__marker--neu" hidden><span class="plan__pin"></span><span class="plan__label">hier</span></span>
+      </div>
+      <form method="post" class="form mt" action="<?= e(url('admin_standort_edit', ['id' => $s['id']])) ?>" data-plan-form>
+        <?= csrf_field() ?>
+        <input type="hidden" name="action" value="plan_position">
+        <div class="grid3">
+          <div class="field">
+            <label for="plan-kind">Unterplatz</label>
+            <select id="plan-kind" name="kind_id">
+              <?php foreach ($planKinder as $k): ?>
+                <option value="<?= (int)$k['id'] ?>"><?= e((string)$k['name']) ?><?= ($k['plan_x'] ?? null) !== null ? ' (im Plan)' : '' ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="field">
+            <label for="plan-x">Lage im Plan (% von links / von oben)</label>
+            <div style="display:flex;gap:.4rem"><input type="number" id="plan-x" name="x" min="0" max="100" step="0.1" placeholder="links" style="width:6rem">
+              <input type="number" id="plan-y" name="y" min="0" max="100" step="0.1" placeholder="oben" style="width:6rem"></div>
+            <small>Einfach im Plan an die Stelle klicken – die Werte füllen sich von selbst.</small>
+          </div>
+          <div class="field" style="align-self:end">
+            <button class="btn" type="submit">Im Plan verorten</button>
+          </div>
+        </div>
+      </form>
+      <?php if ($marker): ?>
+        <div class="chips mt">
+          <?php foreach ($marker as $m): ?>
+            <form method="post" class="inline-form" action="<?= e(url('admin_standort_edit', ['id' => $s['id']])) ?>"><?= csrf_field() ?>
+              <input type="hidden" name="action" value="plan_position_weg"><input type="hidden" name="kind_id" value="<?= (int)$m['id'] ?>">
+              <span class="chip"><?= e($m['name']) ?> <span class="muted small"><?= (int)round($m['x']) ?> / <?= (int)round($m['y']) ?></span>
+                <button class="btn btn--sec btn--sm" type="submit" title="aus dem Plan nehmen">×</button></span></form>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+      <?php $ohne = array_filter($planKinder, static fn($k) => ($k['plan_x'] ?? null) === null); if ($ohne): ?>
+        <p class="small muted mt">Noch nicht im Plan: <?= e(implode(', ', array_map(static fn($k) => (string)$k['name'], $ohne))) ?></p>
+      <?php endif; ?>
+    <?php endif; ?>
+  </section>
+  <?php endif; ?>
+
   <?php $fahrzeuge ??= []; if ($fahrzeuge): ?>
   <section class="card" id="fahrzeuge">
     <div class="card__head">
@@ -197,8 +260,13 @@ $ausser = $isNew ? [] : array_merge([(int)$s['id']], standort_nachkommen((int)$s
           <figure class="galerie__bild<?= (int)$b['is_cover'] === 1 ? ' galerie__bild--titel' : '' ?>">
             <a href="<?= e(url('standort_bild', ['id' => $b['id']])) ?>" target="_blank" rel="noopener">
               <img src="<?= e(url('standort_bild', ['id' => $b['id'], 'vorschau' => 1])) ?>" alt="<?= e((string)$b['titel']) ?>" loading="lazy"></a>
-            <figcaption><?= e((string)$b['titel']) ?><?= (int)$b['is_cover'] === 1 ? ' <span class="badge badge--outline">Titelbild</span>' : '' ?>
+            <figcaption><?= e((string)$b['titel']) ?><?= (int)$b['is_cover'] === 1 ? ' <span class="badge badge--outline">Titelbild</span>' : '' ?><?= (int)($s['plan_bild_id'] ?? 0) === (int)$b['id'] ? ' <span class="badge badge--outline">Plan</span>' : '' ?>
               <span class="btnrow" style="margin-top:.3rem">
+                <?php if (($planKinder ?? []) && (int)($s['plan_bild_id'] ?? 0) !== (int)$b['id']): ?>
+                  <form method="post" class="inline-form" action="<?= e(url('admin_standort_edit', ['id' => $s['id']])) ?>"><?= csrf_field() ?>
+                    <input type="hidden" name="action" value="plan_setzen"><input type="hidden" name="bild_id" value="<?= (int)$b['id'] ?>">
+                    <button class="btn btn--sec btn--sm" type="submit">Als Plan</button></form>
+                <?php endif; ?>
                 <?php if ((int)$b['is_cover'] !== 1): ?>
                   <form method="post" class="inline-form" action="<?= e(url('admin_standort_edit', ['id' => $s['id']])) ?>"><?= csrf_field() ?>
                     <input type="hidden" name="action" value="bild_cover"><input type="hidden" name="bild_id" value="<?= (int)$b['id'] ?>">

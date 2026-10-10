@@ -386,6 +386,11 @@ CREATE TABLE IF NOT EXISTS standorte (
   geo_quelle      ENUM('geraet','mensch') NULL,
   geo_at          DATETIME      NULL,
   sort_order    INT           NOT NULL DEFAULT 0,
+  -- Hallenplan: ein Bild des Platzes (standort_bilder) als Plan, Fremdschluessel kommt in der Wanderung
+  plan_bild_id  INT UNSIGNED  NULL,
+  -- Lage dieses Platzes im Plan des Elternplatzes, in Prozent von links / von oben
+  plan_x        DECIMAL(5,2)  NULL,
+  plan_y        DECIMAL(5,2)  NULL,
   is_active     TINYINT(1)    NOT NULL DEFAULT 1,
   created_by    INT UNSIGNED  NULL,
   updated_by    INT UNSIGNED  NULL,

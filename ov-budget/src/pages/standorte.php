@@ -123,6 +123,8 @@ render('standorte', [
     'kindFahrzeuge' => $kindFahrzeuge,
     'fzFristen'  => $fzFristen,
     'titelbilder' => standort_titelbilder(array_merge($s ? [(int)$s['id']] : [], array_column($kinder, 'id'))),
+    'plan'       => $s && !empty($s['plan_bild_id']) ? standort_plan_bild($s, standort_bilder((int)$s['id'])) : null,
+    'planMarker' => $s ? standort_plan_marker($kinder) : [],
     'zaehlung'   => standort_zaehlung($alle),
     'kinderZahl' => array_count_values(array_map(static fn($r) => (int)($r['parent_id'] ?? 0), $alle)),
     'darfPflegen' => in_array((string)(current_user()['role'] ?? ''), ['admin', 'leitung'], true),

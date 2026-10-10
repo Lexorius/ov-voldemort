@@ -203,6 +203,62 @@ function standort_inventar_text(array $summe): string
     return implode(' · ', $teile);
 }
 
+/* ---------- Hallenplan: ein Bild des Platzes, auf dem die Unterplätze liegen ---------- */
+
+/** Das Bild, das als Plan dient – aus der Bilderliste des Platzes. Reine Funktion. */
+function standort_plan_bild(array $s, array $bilder): ?array
+{
+    $id = (int)($s['plan_bild_id'] ?? 0);
+    if ($id === 0) {
+        return null;
+    }
+    foreach ($bilder as $b) {
+        if ((int)$b['id'] === $id) {
+            return $b;
+        }
+    }
+    return null;
+}
+
+/** Die Unterplätze, die im Plan verortet sind: id, name, typ, x, y (Prozent). Reine Funktion. */
+function standort_plan_marker(array $kinder): array
+{
+    $out = [];
+    foreach ($kinder as $k) {
+        if (($k['plan_x'] ?? null) === null || ($k['plan_y'] ?? null) === null) {
+            continue;
+        }
+        $out[] = ['id' => (int)$k['id'], 'name' => (string)$k['name'], 'typ' => (string)$k['typ'],
+                  'x' => (float)$k['plan_x'], 'y' => (float)$k['plan_y'], 'is_active' => (int)($k['is_active'] ?? 1)];
+    }
+    return $out;
+}
+
+/** Prozentwerte für die Lage im Plan prüfen: beide 0–100, sonst null. Reine Funktion. */
+function standort_plan_koordinaten(string $x, string $y): ?array
+{
+    $x = str_replace(',', '.', trim($x));
+    $y = str_replace(',', '.', trim($y));
+    if (!is_numeric($x) || !is_numeric($y) || (float)$x < 0 || (float)$x > 100 || (float)$y < 0 || (float)$y > 100) {
+        return null;
+    }
+    return [round((float)$x, 2), round((float)$y, 2)];
+}
+
+/** Ein Bild des Platzes als Plan verwenden (null = keinen Plan). */
+function standort_plan_setzen(array $s, ?array $bild): void
+{
+    db_update('standorte', ['plan_bild_id' => $bild ? (int)$bild['id'] : null], 'id = ?', [(int)$s['id']]);
+    audit('standort.bearbeitet', 'standort', (int)$s['id'], $bild ? 'Plan: ' . (string)$bild['titel'] : 'Plan entfernt');
+}
+
+/** Einen Unterplatz im Plan des Elternplatzes verorten (null = aus dem Plan nehmen). */
+function standort_plan_position_setzen(array $kind, ?float $x, ?float $y): void
+{
+    db_update('standorte', ['plan_x' => $x, 'plan_y' => $y], 'id = ?', [(int)$kind['id']]);
+    audit('standort.bearbeitet', 'standort', (int)$kind['id'], $x === null ? 'aus dem Plan genommen' : sprintf('im Plan bei %.0f/%.0f', $x, $y));
+}
+
 /** Optionen für eine Auswahl, eingerückt nach Tiefe. */
 function standort_optionen(array $rows, ?int $selected, string $leer = '– keiner –', array $ausser = []): string
 {
@@ -536,6 +592,7 @@ function standort_bild_delete(array $bild): void
             @unlink(standort_bild_dir() . DIRECTORY_SEPARATOR . basename((string)$name));
         }
     }
+    db_exec('UPDATE standorte SET plan_bild_id = NULL WHERE plan_bild_id = ?', [(int)$bild['id']]);
     db_exec('DELETE FROM standort_bilder WHERE id = ?', [(int)$bild['id']]);
     audit('standort.bild_geloescht', 'standort', (int)$bild['standort_id'], (string)$bild['titel']);
     // bleibt ein Bild übrig, wird das erste Titelbild

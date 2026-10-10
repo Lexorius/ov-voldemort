@@ -1095,6 +1095,15 @@ achtet darauf, dass die Art zum übergeordneten Platz passt.
   Platzseite listet die Zähler, die für sie zuständig sind – auch geerbt
   über einen übergeordneten Platz, etwa der Hauszähler an jedem Stockwerk –
   und die hier eingebauten.
+* **Hallenplan:** Auf der Platzseite in der Verwaltung lässt sich ein
+  hochgeladenes Bild – Foto oder Skizze der Halle, des Hofs, des
+  Stockwerks – „Als Plan" wählen. Danach klickt man im Plan an die Stelle,
+  wo ein Unterplatz liegt, wählt ihn aus und speichert; die Lage wird in
+  Prozent gemerkt und passt sich jeder Bildschirmgröße an. Die
+  Standortübersicht zeigt den Plan mit allen verorteten Plätzen: ein
+  Stellplatz mit Fahrzeug erscheint als kleine Fahrzeugkarte mit Bild,
+  Name, Statusfarbe und Stempel („In Wartung"), ein leerer Platz als
+  Markierung. Klick führt zur Akte bzw. zum Platz.
 * **Standortübersicht:** Der Menüpunkt „Standorte" zeigt allen den Baum
   zum Durchklicken – erst Gebäude, Hallen und Höfe, dann Stockwerke, Räume,
   Stellplätze, Schränke, Regale. Jede Karte nennt, was darunter steckt

@@ -61,6 +61,35 @@ $darunterText = $s ? standort_inventar_text($darunter) : '';
     <?= !empty($darfPflegen) ? 'Unter Verwaltung → Stell- und Lagerplätze beginnt es mit einem Gebäude, einer Halle oder einem Hof.' : 'Die Leitung legt sie unter Verwaltung → Stell- und Lagerplätze an.' ?></div></section>
 <?php endif; ?>
 
+<?php $plan ??= null; $planMarker ??= []; if ($s && $plan): ?>
+  <section class="card" id="plan">
+    <div class="card__head">
+      <h2>Plan</h2>
+      <span class="muted small"><?= count($planMarker) ?> von <?= count($kinder) ?> Plätzen verortet</span>
+    </div>
+    <div class="plan">
+      <img src="<?= e(url('standort_bild', ['id' => $plan['id']])) ?>" alt="<?= e((string)$plan['titel']) ?>">
+      <?php foreach ($planMarker as $m): $fz = $kindFahrzeuge[$m['id']] ?? []; ?>
+        <?php if ($fz): $v = $fz[0]; $stempel = vehicle_stamp($v); $vAktiv = (int)($v['is_active'] ?? 1) === 1; ?>
+          <a class="plan__marker plan__marker--fz<?= !$vAktiv ? ' plan__marker--aus' : '' ?>" style="left:<?= number_format($m['x'], 2, '.', '') ?>%;top:<?= number_format($m['y'], 2, '.', '') ?>%;border-color:<?= e((string)($v['status_color'] ?? '') ?: '#94a3b8') ?>"
+             href="<?= e(url('vehicle', ['id' => $v['id']])) ?>" title="<?= e($m['name'] . ': ' . (string)$v['bezeichnung'] . ($stempel ? ' – ' . $stempel : '')) ?>">
+            <?php if (isset($fzTitelbilder[(int)$v['id']])): ?>
+              <img alt="" loading="lazy" src="<?= e(url('vehicle_file', ['id' => $fzTitelbilder[(int)$v['id']]['id'], 'vorschau' => 1])) ?>">
+            <?php else: ?><span class="plan__fzleer">⛟</span><?php endif; ?>
+            <span class="plan__fzname"><?= e((string)$v['bezeichnung']) ?><?= count($fz) > 1 ? ' +' . (count($fz) - 1) : '' ?></span>
+            <?php if ($stempel !== null): ?><span class="plan__stempel"><?= e($stempel) ?></span><?php endif; ?>
+            <span class="plan__platz"><?= e($m['name']) ?></span>
+          </a>
+        <?php else: ?>
+          <a class="plan__marker<?= $m['is_active'] !== 1 ? ' plan__marker--aus' : '' ?>" style="left:<?= number_format($m['x'], 2, '.', '') ?>%;top:<?= number_format($m['y'], 2, '.', '') ?>%" href="<?= e(url('standorte', ['id' => $m['id']])) ?>" title="<?= e($m['name']) ?>">
+            <span class="plan__pin"></span><span class="plan__label"><?= e($m['name']) ?></span></a>
+        <?php endif; ?>
+      <?php endforeach; ?>
+    </div>
+    <p class="small muted" style="margin:.5rem 0 0">Farbige Kante: Status des Fahrzeugs. Leere Markierung: Platz ohne Fahrzeug. Klick führt zur Akte bzw. zum Platz.</p>
+  </section>
+<?php endif; ?>
+
 <?php if ($kinder): ?>
   <section class="card" id="darunter">
     <div class="card__head">
