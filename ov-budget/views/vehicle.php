@@ -361,7 +361,7 @@ $arten = [
   <?php else: ?>
     <div class="itemlist">
       <?php foreach ($termine as $t): $tag = substr((string)$t['beginn'], 0, 10); $zeit = kalender_zeit(['ganztag' => (int)$t['ganztag'] === 1, 'beginn' => (string)$t['beginn'], 'ende' => $t['ende']]); $ort = kalender_ort_text($t); ?>
-        <a class="item" href="<?= e(url('kalender_edit', ['id' => $t['id']])) ?>" style="border-left-color:<?= e((string)($t['farbe'] ?: '#0369a1')) ?>">
+        <a class="item" href="<?= e(url('kalender_termin', ['id' => $t['id']])) ?>" style="border-left-color:<?= e((string)($t['farbe'] ?: '#0369a1')) ?>">
           <div class="item__top"><div style="min-width:0">
             <div class="item__title"><?= e((string)$t['titel']) ?></div>
             <div class="item__sub"><?= e(de_date($tag) . ($zeit !== '' ? ', ' . $zeit . ' Uhr' : ', ganztägig') . ($t['ende'] && substr((string)$t['ende'], 0, 10) !== $tag ? ' bis ' . de_date(substr((string)$t['ende'], 0, 10)) : '') . ($ort !== '' ? ' · ' . $ort : '') . ' · ' . kalender_untertitel($t)) ?></div>

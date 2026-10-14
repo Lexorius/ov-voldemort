@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 2.1.34.0
+
+- **Terminseite:** Ein Klick auf einen Termin im Kalender, auf der
+  Startseite, in der Fahrzeugakte oder am Auftrag öffnet zuerst eine
+  Zusammenfassung – Wann, Wo, Für wen, Beschreibung und nur die
+  Abschnitte, an denen etwas hängt. „Drucken / PDF" liefert eine
+  Druckfassung des einzelnen Termins, „Bearbeiten" führt zum vollständigen
+  Formular, das nach dem Speichern zur Terminseite zurückkehrt.
+
 ## 2.1.33.0
 
 - **Kontakte an THW-Dienststellen:** Ansprechpartner aus dem Kontaktmodul

@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
                 flash('warn', e(kalender_konflikt_text($konflikte, db_all('SELECT id, bezeichnung FROM vehicles WHERE is_active = 1'))));
             }
         }
-        redirect_route('kalender', ['monat' => substr((string)post_date('datum'), 0, 7)]);
+        redirect_route('kalender_termin', ['id' => $neu]);
     }
     $termin = array_merge($termin ?? [], $_POST, ['id' => $termin['id'] ?? null]);
 }

@@ -493,6 +493,13 @@ Leitung und Administration.
 
 ## Kalender
 
+Ein Klick auf einen Termin öffnet zuerst die **Terminseite**: eine ruhige
+Zusammenfassung mit Wann, Wo, Für wen und nur den Abschnitten, an denen
+wirklich etwas hängt – Fahrzeuge, Aufträge, THW-Dienststellen, Kontakte,
+Dateien, Besprechungen. „Drucken / PDF" öffnet eine Druckfassung auf A4,
+„Bearbeiten" führt zum vollständigen Formular. Nach dem Speichern landet
+man wieder auf der Terminseite.
+
 Ein Termin gilt für ein Ziel (Ortsverband, Fachgruppe, Funktion, Person)
 und kann unter „Weitere Fachgruppen" für **mehrere Fachgruppen** zugleich
 gelten – sie alle sehen ihn in ihrem Kalender, der Eintrag nennt sie

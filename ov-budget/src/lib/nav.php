@@ -44,7 +44,7 @@ function nav_module(): array
         'thw'       => ['label' => (string)setting('thw_modul_name', 'THW-Kontakte'), 'icon' => '⛑',
                         'route' => 'thw', 'aktiv' => ['thw', 'thw_dienststelle_edit', 'thw_postfach_edit'], 'darf' => true],
         'kalender'  => ['label' => (string)setting('kalender_modul_name', 'Kalender'), 'icon' => '▤',
-                        'route' => 'kalender', 'aktiv' => ['kalender', 'kalender_edit'], 'darf' => true],
+                        'route' => 'kalender', 'aktiv' => ['kalender', 'kalender_termin', 'kalender_edit'], 'darf' => true],
         'meetings'  => ['label' => (string)setting('besprechung_modul_name', 'Besprechungen'), 'icon' => '☰',
                         'route' => 'meetings',
                         'aktiv' => ['meetings', 'meeting', 'meeting_edit', 'meeting_series_edit', 'talking_points', 'talking_point_edit'],

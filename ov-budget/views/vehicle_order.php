@@ -99,7 +99,7 @@ $fertig = (int)$order['status_final'] === 1;
     <div class="itemlist">
       <?php foreach ($termine as $t): $tag = substr((string)$t['beginn'], 0, 10); $zeit = kalender_zeit(['ganztag' => (int)$t['ganztag'] === 1, 'beginn' => (string)$t['beginn'], 'ende' => $t['ende']]);
         $vorbei = (string)($t['ende'] ?: $t['beginn']) < $jetzt; $ort = function_exists('kalender_ort_text') ? kalender_ort_text($t) : (string)$t['ort']; ?>
-        <a class="item<?= $vorbei ? ' item--done' : '' ?>" href="<?= e(url('kalender_edit', ['id' => $t['id']])) ?>" style="border-left-color:<?= e((string)($t['farbe'] ?: '#0369a1')) ?>">
+        <a class="item<?= $vorbei ? ' item--done' : '' ?>" href="<?= e(url('kalender_termin', ['id' => $t['id']])) ?>" style="border-left-color:<?= e((string)($t['farbe'] ?: '#0369a1')) ?>">
           <div class="item__top"><div style="min-width:0">
             <div class="item__title"><?= e((string)$t['titel']) ?></div>
             <div class="item__sub"><?= e(de_date($tag) . ($zeit !== '' ? ', ' . $zeit . ' Uhr' : ', ganztägig') . ($t['ende'] && substr((string)$t['ende'], 0, 10) !== $tag ? ' bis ' . de_date(substr((string)$t['ende'], 0, 10)) : '') . ($ort !== '' ? ' · ' . $ort : '')) ?></div>

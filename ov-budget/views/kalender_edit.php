@@ -3,7 +3,7 @@
 $isNew = empty($termin['id']);
 $ziel = kalender_ziel((string)($termin['ziel'] ?? 'user'));
 $zielId = (int)($termin['ziel_id'] ?? 0);
-$zurueck = url('kalender', ['monat' => substr((string)($termin['datum'] ?? date('Y-m-d')), 0, 7)]);
+$zurueck = $isNew ? url('kalender', ['monat' => substr((string)($termin['datum'] ?? date('Y-m-d')), 0, 7)]) : url('kalender_termin', ['id' => $termin['id']]);
 $ganztag = (int)($termin['ganztag'] ?? 0) === 1;
 ?>
 <div class="pagehead">

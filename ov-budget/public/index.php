@@ -63,6 +63,7 @@ $routes = [
     'contacts_import'    => 'contacts_import',
 
     'kalender'           => 'kalender',
+    'kalender_termin'    => 'kalender_termin',
     'kalender_edit'      => 'kalender_edit',
     'kalender_file'      => 'kalender_file',
     'admin_kalender'     => 'admin/kalender',

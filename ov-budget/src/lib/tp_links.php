@@ -92,7 +92,7 @@ function tp_link_anzeige(array $r): ?array
         'termin' => $r['termin_titel'] === null ? null : [
             'typ' => 'termin', 'id' => $id, 'label' => (string)$r['termin_titel'],
             'zusatz' => de_date(substr((string)$r['termin_beginn'], 0, 10)) . ((int)($r['termin_ganztag'] ?? 0) === 1 ? '' : ', ' . substr((string)$r['termin_beginn'], 11, 5) . ' Uhr'),
-            'url' => url('kalender_edit', ['id' => $id]),
+            'url' => url('kalender_termin', ['id' => $id]),
         ],
         'budget' => [
             'typ' => 'budget', 'id' => $id, 'label' => 'Budget ' . $id, 'zusatz' => 'wo wir stehen',

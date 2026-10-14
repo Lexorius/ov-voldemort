@@ -72,7 +72,7 @@ $GLOBALS['tabellen']['FROM tp_links l'] = [
 ];
 $l = tp_links_fuer([7, 8]);
 $check('je Punkt mit Beschriftung und Adresse, gelöschte Ziele fehlen', count($l[7]) === 2 && count($l[8]) === 1 && $l[7][0]['label'] === 'Übung' && $l[7][0]['zusatz'] === '17.10.2026, 08:00 Uhr'
-    && str_contains($l[7][0]['url'], 'p=kalender_edit') && $l[7][1]['zusatz'] === 'Heros HN 21/51' && str_contains($l[7][1]['url'], 'p=vehicle') && $l[8][0]['typ'] === 'radio');
+    && str_contains($l[7][0]['url'], 'p=kalender_termin') && $l[7][1]['zusatz'] === 'Heros HN 21/51' && str_contains($l[7][1]['url'], 'p=vehicle') && $l[8][0]['typ'] === 'radio');
 $check('ohne ids nichts', tp_links_fuer([]) === []);
 $check('Protokolltext', tp_links_text($l[7]) === 'Termin Übung (17.10.2026, 08:00 Uhr) · Fahrzeug GKW 1 (Heros HN 21/51)' && tp_links_text($l[8]) === 'Funkgerät HRT 12');
 $l9 = tp_links_fuer([9]);

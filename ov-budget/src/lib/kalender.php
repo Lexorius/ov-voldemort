@@ -660,7 +660,7 @@ function standort_belegung(int $standortId, string $von, string $bis, array $u):
         }
         $out[] = kalender_eintrag('termin', (string)$t['titel'], (string)$t['beginn'], $t['ende'], [
             'ganztag' => (int)$t['ganztag'] === 1, 'ort' => kalender_ort_text($t), 'id' => $t['id'], 'fahrzeuge' => (string)($t['fahrzeuge_namen'] ?? ''),
-            'url' => url('kalender_edit', ['id' => $t['id']]), 'farbe' => $t['farbe'] ?: KALENDER_QUELLEN['termin']['color'], 'untertitel' => kalender_untertitel($t),
+            'url' => url('kalender_termin', ['id' => $t['id']]), 'farbe' => $t['farbe'] ?: KALENDER_QUELLEN['termin']['color'], 'untertitel' => kalender_untertitel($t),
         ]);
     }
     if (can('view_events')) {
@@ -756,7 +756,7 @@ function kalender_quelle(string $quelle, string $von, string $bis, array $u): ar
         foreach (kalender_termine($von, $bis, $u) as $t) {
             $out[] = kalender_eintrag('termin', (string)$t['titel'], (string)$t['beginn'], $t['ende'], [
                 'ganztag' => (int)$t['ganztag'] === 1, 'ort' => kalender_ort_text($t), 'id' => $t['id'], 'fahrzeuge' => (string)($t['fahrzeuge_namen'] ?? ''),
-                'url' => url('kalender_edit', ['id' => $t['id']]), 'farbe' => $t['farbe'] ?: KALENDER_QUELLEN['termin']['color'],
+                'url' => url('kalender_termin', ['id' => $t['id']]), 'farbe' => $t['farbe'] ?: KALENDER_QUELLEN['termin']['color'],
                 'untertitel' => kalender_untertitel($t),
             ]);
         }
@@ -1052,6 +1052,51 @@ function kfile_path(array $datei, bool $vorschau = false): ?string
     $name = $vorschau && ($datei['thumb_name'] ?? null) ? $datei['thumb_name'] : $datei['stored_name'];
     $pfad = kfile_dir() . DIRECTORY_SEPARATOR . basename((string)$name);
     return is_file($pfad) ? $pfad : null;
+}
+
+/** „Mi 14.10.2026, 19:00–21:00 Uhr" bzw. „Sa 17.10.2026 bis So 18.10.2026, ganztägig". Reine Funktion. */
+function kalender_wann_lang(array $t): string
+{
+    $tage = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+    $tag = substr((string)$t['beginn'], 0, 10);
+    $ganztag = (int)($t['ganztag'] ?? 0) === 1;
+    $text = $tage[(int)date('N', strtotime($tag)) - 1] . ', ' . de_date($tag);
+    $endeTag = !empty($t['ende']) ? substr((string)$t['ende'], 0, 10) : $tag;
+    if ($endeTag !== $tag) {
+        $text .= ' bis ' . $tage[(int)date('N', strtotime($endeTag)) - 1] . ', ' . de_date($endeTag);
+    }
+    $zeit = kalender_zeit(['ganztag' => $ganztag, 'beginn' => (string)$t['beginn'], 'ende' => $t['ende'] ?? null]);
+    if ($ganztag) {
+        return $text . ', ganztägig';
+    }
+    if ($endeTag !== $tag && !empty($t['ende'])) {
+        return $text . ', ' . substr((string)$t['beginn'], 11, 5) . ' bis ' . substr((string)$t['ende'], 11, 5) . ' Uhr';
+    }
+    return $text . ($zeit !== '' ? ', ' . $zeit . ' Uhr' : '');
+}
+
+/**
+ * Alles, was an einem Termin hängt – nur das, was die Person sehen darf.
+ * Rückgabe: ['standorte', 'fahrzeuge', 'auftraege', 'dienststellen', 'kontakte', 'fachgruppen', 'dateien']
+ */
+function kalender_termin_anhang(array $t, array $u): array
+{
+    $id = (int)$t['id'];
+    $alleStandorte = function_exists('standort_all') ? standort_all() : [];
+    $standorte = function_exists('standort_links') ? standort_links('calendar_standorte', 'entry_id', $id) : [];
+    foreach ($standorte as &$s) {
+        $s['pfad'] = $alleStandorte ? standort_pfad((int)$s['id'], $alleStandorte) : (string)$s['name'];
+    }
+    unset($s);
+    return [
+        'standorte'     => $standorte,
+        'fahrzeuge'     => can('view_vehicles') ? kalender_fahrzeuge($id) : [],
+        'auftraege'     => can('view_vehicles') ? kalender_auftraege($id) : [],
+        'dienststellen' => function_exists('kalender_dienststellen') ? kalender_dienststellen($id) : [],
+        'kontakte'      => can('view_contacts') ? kalender_kontakte($id) : [],
+        'fachgruppen'   => db_all('SELECT li.id, li.label, li.color FROM calendar_fachgruppen cf JOIN list_items li ON li.id = cf.fachgruppe_id WHERE cf.entry_id = ? ORDER BY li.sort_order, li.label', [$id]),
+        'dateien'       => kfile_list($id),
+    ];
 }
 
 /** Schlüssel, mit dem ein Eintrag im Formular wiedergefunden wird. Reine Funktion. */

@@ -273,6 +273,33 @@ $res = (static function () {
 $check('Abruf: ein Kalender geholt, der andere als Fehler, Zwischenspeicher gefüllt', $res['kalender'] === 1 && $res['eintraege'] === 2 && isset($res['fehler']['calendar.ferien'])
     && count($GLOBALS['inserts']) === 2 && $GLOBALS['inserts'][0][0] === 'calendar_ha' && $GLOBALS['state']['kalender_ha_letzter_abruf'] === '1700000000');
 
+/* ---------- Terminseite ---------- */
+$check('Wann in Worten', kalender_wann_lang(['beginn' => '2026-10-14 19:00:00', 'ende' => '2026-10-14 21:00:00', 'ganztag' => 0]) === 'Mittwoch, 14.10.2026, 19:00–21:00 Uhr'
+    && kalender_wann_lang(['beginn' => '2026-10-17 00:00:00', 'ende' => '2026-10-18 23:59:59', 'ganztag' => 1]) === 'Samstag, 17.10.2026 bis Sonntag, 18.10.2026, ganztägig'
+    && kalender_wann_lang(['beginn' => '2026-10-17 08:00:00', 'ende' => '2026-10-18 16:00:00', 'ganztag' => 0]) === 'Samstag, 17.10.2026 bis Sonntag, 18.10.2026, 08:00 bis 16:00 Uhr'
+    && kalender_wann_lang(['beginn' => '2026-10-14 19:00:00', 'ende' => null, 'ganztag' => 0]) === 'Mittwoch, 14.10.2026, 19:00 Uhr');
+require_once $app . '/src/lib/thw.php';
+if (!function_exists('contact_name')) { function contact_name(array $c): string { return trim(($c['vorname'] ?? '') . ' ' . ($c['nachname'] ?? '')) ?: (string)($c['organisation'] ?? ''); } }
+$terminVoll = ['id' => 5, 'titel' => 'Übung Hochwasser', 'beschreibung' => "Treffen an der Halle\nVerpflegung dabei", 'ort' => 'Neckarwiese', 'beginn' => '2026-10-17 08:00:00', 'ende' => '2026-10-17 16:00:00', 'ganztag' => 0,
+    'ziel' => 'fachgruppe', 'ziel_id' => 5, 'farbe' => '#0369a1', 'erfasser' => 'Leitung', 'created_by' => 1];
+$anhang = ['standorte' => [['id' => 4, 'name' => 'Halle 1', 'typ' => 'halle', 'pfad' => 'Haupthaus › Halle 1']], 'fahrzeuge' => [['id' => 2, 'bezeichnung' => 'GKW 1', 'funkrufname' => 'Heros 24/51', 'kennzeichen' => 'THW-1', 'is_active' => 1]],
+    'auftraege' => [['id' => 12, 'nummer' => '2026-0005', 'titel' => 'Bremse', 'fahrzeug' => 'GKW 1']], 'dienststellen' => [['id' => 4, 'name' => 'OV Neckarsulm', 'kurz' => 'NSU', 'typ' => 'ortsverband', 'telefon' => '', 'email' => '']],
+    'kontakte' => [['id' => 30, 'vorname' => 'Max', 'nachname' => 'Muster', 'organisation' => 'Stadt', 'position' => '', 'email' => 'max@example.org', 'telefon' => '', 'mobil' => '0171 1']],
+    'fachgruppen' => [['id' => 6, 'label' => 'Logistik', 'color' => '#111']], 'dateien' => [['id' => 9, 'art' => 'dokument', 'titel' => 'Einladung', 'orig_name' => 'Einladung.pdf', 'thumb_name' => null, 'size_bytes' => 1000]]];
+$htmlT = render_partial('kalender_termin', ['termin' => $terminVoll, 'wann' => kalender_wann_lang($terminVoll), 'fuerWen' => 'Fachgruppe Bergung', 'darfBearbeiten' => true, 'besprochen' => []] + $anhang);
+$check('Terminseite: Kopf, Wann, Wo, Für wen, Beschreibung, Knöpfe', str_contains($htmlT, '<h1>Übung Hochwasser</h1>') && str_contains($htmlT, 'Samstag, 17.10.2026, 08:00–16:00 Uhr') && str_contains($htmlT, 'Haupthaus › Halle 1') && str_contains($htmlT, 'Neckarwiese')
+    && str_contains($htmlT, 'auch für Logistik') && str_contains($htmlT, 'Treffen an der Halle<br') && str_contains($htmlT, 'p=kalender_edit&amp;id=5') && str_contains($htmlT, 'druck=1') && str_contains($htmlT, 'p=kalender&amp;monat=2026-10'));
+$check('Terminseite: nur belegte Abschnitte', str_contains($htmlT, '⛟ GKW 1') && str_contains($htmlT, '🔧 2026-0005 Bremse') && str_contains($htmlT, 'OV Neckarsulm') && str_contains($htmlT, '👤 Max Muster') && str_contains($htmlT, 'tel:01711')
+    && str_contains($htmlT, '📎 Einladung') && str_contains($htmlT, 'p=kalender_file&amp;id=9'));
+$leerAnhang = array_map(static fn($x) => [], $anhang);
+$htmlT = render_partial('kalender_termin', ['termin' => ['ort' => '', 'beschreibung' => ''] + $terminVoll, 'wann' => 'x', 'fuerWen' => 'Ortsverband', 'darfBearbeiten' => false, 'besprochen' => []] + $leerAnhang);
+$check('Terminseite ohne Anhänge: keine leeren Abschnitte, kein Bearbeiten', !str_contains($htmlT, 'id="fahrzeuge"') && !str_contains($htmlT, 'id="kontakte"') && !str_contains($htmlT, 'id="dateien"') && !str_contains($htmlT, '>Bearbeiten<') && !str_contains($htmlT, '>Wo<'));
+$htmlP = render_partial('kalender_termin_druck', ['termin' => $terminVoll, 'wann' => kalender_wann_lang($terminVoll), 'fuerWen' => 'Fachgruppe Bergung', 'darfBearbeiten' => true, 'besprochen' => []] + $anhang);
+$check('Druckfassung: eigenständige Seite mit allen Angaben', str_starts_with(trim($htmlP), '<!doctype html>') && str_contains($htmlP, '<h1>Übung Hochwasser</h1>') && str_contains($htmlP, 'window.print()') && str_contains($htmlP, '2026-0005 Bremse')
+    && str_contains($htmlP, 'Max Muster') && str_contains($htmlP, 'Einladung.pdf') && str_contains($htmlP, 'OV Neckarsulm') && str_contains($htmlP, '</html>'));
+$check('Einträge führen zur Terminseite', str_contains(array_values(array_filter($alle, static fn($e) => $e['titel'] === 'Eigener'))[0]['url'], 'p=kalender_termin') && str_contains((string)file_get_contents($app . '/views/dashboard.php'), "url('kalender_termin'")
+    && str_contains((string)file_get_contents($app . '/views/vehicle.php'), "url('kalender_termin'") && str_contains((string)file_get_contents($app . '/public/index.php'), "'kalender_termin'"));
+
 /* ---------- Ansichten ---------- */
 $GLOBALS['rechte']['create_kalender'] = true;
 $raster = kalender_monatsraster(2026, 10);
@@ -354,13 +381,13 @@ $GLOBALS['tabellen'] = [
     'FROM event_standorte es' => [['id' => 4, 'titel' => 'Sommerfest', 'beginn' => '2026-10-12 16:00:00', 'ende' => null, 'ort' => 'Festzelt', 'typ_color' => '#db2777', 'typ_label' => 'Feier']],
 ];
 $bel = standort_belegung(4, '2026-10-10', '2026-12-10', $u);
-$check('Belegung eines Platzes: Termin und Veranstaltung, nach Beginn', count($bel) === 2 && $bel[0]['titel'] === 'Sommerfest' && $bel[0]['quelle'] === 'veranstaltung' && $bel[1]['ort'] === 'Gute Stube · Küche' && str_contains($bel[1]['url'], 'p=kalender_edit'));
+$check('Belegung eines Platzes: Termin und Veranstaltung, nach Beginn', count($bel) === 2 && $bel[0]['titel'] === 'Sommerfest' && $bel[0]['quelle'] === 'veranstaltung' && $bel[1]['ort'] === 'Gute Stube · Küche' && str_contains($bel[1]['url'], 'p=kalender_termin'));
 $GLOBALS['tabellen'] = [];
 $html = render_partial('dashboard', ['termine' => [], 'termineGesamt' => 0, 'user' => $u, 'jahr' => 2026, 'wuensche' => [], 'statsW' => ['anzahl' => 0, 'summe' => 0.0], 'budgets' => [],
     'zahlen' => ['budget' => 0.0, 'einnahmen' => 0.0, 'ausgaben' => 0.0, 'verfuegbar' => 0.0, 'frei' => 0.0, 'quote' => 0.0], 'budgetVerplant' => 0.0, 'todos' => [], 'todosGesamt' => 0, 'ueberfaellig' => 0, 'zuBestellen' => [], 'fahrzeuge' => [],
     'fahrzeugeWoche' => $gr, 'woche' => ['2026-10-12', '2026-10-18']]);
 $check('Startseite: Fahrzeuge diese Woche als Karten', str_contains($html, 'Fahrzeuge diese Woche verplant') && str_contains($html, '12.10.2026 – 18.10.2026') && str_contains($html, 'fzwoche__karte') && str_contains($html, 'GKW 1')
-    && str_contains($html, 'Mi 14.10.') && str_contains($html, '19:00 · Dienstabend') && str_contains($html, 'Übungsgelände') && str_contains($html, 'p=vehicle&amp;id=2') && str_contains($html, 'p=kalender_edit&amp;id=3')
+    && str_contains($html, 'Mi 14.10.') && str_contains($html, '19:00 · Dienstabend') && str_contains($html, 'Übungsgelände') && str_contains($html, 'p=vehicle&amp;id=2') && str_contains($html, 'p=kalender_termin&amp;id=3')
     && !str_contains($html, 'Doppelbuchung') && str_contains($html, 'fzwoche__leer'));
 $html = render_partial('dashboard', ['termine' => [], 'termineGesamt' => 0, 'user' => $u, 'jahr' => 2026, 'wuensche' => [], 'statsW' => ['anzahl' => 0, 'summe' => 0.0], 'budgets' => [],
     'zahlen' => ['budget' => 0.0, 'einnahmen' => 0.0, 'ausgaben' => 0.0, 'verfuegbar' => 0.0, 'frei' => 0.0, 'quote' => 0.0], 'budgetVerplant' => 0.0, 'todos' => [], 'todosGesamt' => 0, 'ueberfaellig' => 0, 'zuBestellen' => [], 'fahrzeuge' => [],
