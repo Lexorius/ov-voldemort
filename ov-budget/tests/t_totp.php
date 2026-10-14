@@ -109,9 +109,12 @@ $check('Einschalten speichert Geheimnis und Hashes', totp_aktiv($GLOBALS['user']
 $check('mit zweitem Faktor: Passwort ok, Sitzung noch nicht', $ok1 && $zf === true && !isset($_SESSION['uid']) && auth_zweiter_faktor_offen());
 [$ok2, $msg] = auth_zweiter_faktor('000000');
 $check('falscher Code abgewiesen und gezählt', !$ok2 && $msg !== '' && $GLOBALS['attempts'] === 1 && !isset($_SESSION['uid']));
-[$ok2, $msg] = auth_zweiter_faktor(totp_code($rfc, time()));
+// Zeitfest: vom gespeicherten Einrichtungsschritt ausgehen, nicht von time() –
+// sonst kippt die Prüfung, wenn das 30-Sekunden-Fenster zwischen Einrichten und Prüfen wechselt
+$basis = (int)$GLOBALS['user']['totp_letzter'] * TOTP_SCHRITT;
+[$ok2, $msg] = auth_zweiter_faktor(totp_code($rfc, $basis));
 $check('Code der Einrichtung gilt nicht noch einmal', !$ok2 && $GLOBALS['attempts'] === 2);
-[$ok2, , $art] = auth_zweiter_faktor(totp_code($rfc, time() + 30));
+[$ok2, , $art] = auth_zweiter_faktor(totp_code($rfc, $basis + TOTP_SCHRITT));
 $check('richtiger Code: angemeldet', $ok2 && $art === 'app' && ($_SESSION['uid'] ?? 0) === 7 && !isset($_SESSION['totp_pending']) && $GLOBALS['attempts'] === 0);
 
 $_SESSION = [];

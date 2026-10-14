@@ -1,5 +1,11 @@
 # Änderungsverlauf
 
+## 2.1.30.1
+
+- Prüfung des zweiten Faktors zeitfest gemacht: Sie kippte, wenn das
+  30-Sekunden-Fenster während des Laufs wechselte. Keine Änderung an der
+  Anwendung.
+
 ## 2.1.30.0
 
 - **Transportkapazität:** Fahrzeuge haben Sitzplätze (Personen samt Fahrer)
