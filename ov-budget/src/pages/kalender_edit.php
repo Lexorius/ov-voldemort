@@ -43,9 +43,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
         }
         redirect(url('kalender_edit', ['id' => $termin['id']]) . '#dateien');
     }
+    // Wer das Boot einplant, plant den Anhänger mit – vor dem Speichern ergänzen
+    $traegerErgaenzt = [];
+    if (can('view_vehicles') && post_str('fahrzeuge_feld') === '1' && function_exists('vehicle_mit_traegern')) {
+        [$alleFahrzeuge, $traegerErgaenzt] = vehicle_mit_traegern(wahl_ids('vehicles'));
+        $_POST['vehicles'] = array_map('strval', $alleFahrzeuge);
+        unset($_POST['vehicles_neu']);
+    }
     [$neu, $errors] = kalender_save_from_post($termin, $user);
     if ($neu) {
         flash('success', $termin ? 'Termin gespeichert.' : 'Termin eingetragen.');
+        foreach ($traegerErgaenzt as $te) {
+            flash('info', e(sprintf('%s mit eingeplant – trägt %s.', $te['bezeichnung'], $te['wegen'])));
+        }
         // Mitgeschickte Dateien gleich anhängen – auch beim Anlegen
         if (kalender_dateien_mitgeschickt('dateien')) {
             [$anzahl, $dateiFehler] = kfile_store_uploads($neu, 'dateien', post_str('datei_titel'), $user);

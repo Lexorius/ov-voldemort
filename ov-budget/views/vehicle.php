@@ -90,6 +90,8 @@ $arten = [
           'Fahrgestellnummer' => $vehicle['fahrgestellnummer'],
           'Kilometerstand'    => $vehicle['km_stand'] !== null ? number_format((float)$vehicle['km_stand'], 0, ',', '.') . ' km' : '',
           'Betriebsstunden'   => $vehicle['betriebsstunden'] !== null ? (int)$vehicle['betriebsstunden'] . ' h' : '',
+          'Steht auf / gezogen von' => !empty($vehicle['traeger_bezeichnung']) ? $vehicle['traeger_bezeichnung'] . (!empty($vehicle['traeger_kennzeichen']) ? ' (' . $vehicle['traeger_kennzeichen'] . ')' : '') : '',
+          'Ladung'            => implode(' · ', array_map(static fn($l) => (string)$l['bezeichnung'], $ladung ?? [])),
           'Sitzplätze'        => ($vehicle['sitzplaetze'] ?? null) !== null ? (int)$vehicle['sitzplaetze'] . ' Personen' : '',
           'Zuladung'          => ($vehicle['zuladung_kg'] ?? null) !== null ? number_format((int)$vehicle['zuladung_kg'], 0, ',', '.') . ' kg' : '',
           'Stellplatz'        => $stellplatzPfad ?? ($vehicle['stellplatz_name'] ?? ''),
@@ -101,7 +103,9 @@ $arten = [
               : (string)($extra[$f['key']] ?? '');
       }
       // Werte, die irgendwohin führen – der Stellplatz zur Standortseite
-      $verweise = ['Stellplatz' => !empty($vehicle['standort_id']) ? url('standorte', ['id' => (int)$vehicle['standort_id']]) : null];
+      $verweise = ['Stellplatz' => !empty($vehicle['standort_id']) ? url('standorte', ['id' => (int)$vehicle['standort_id']]) : null,
+                   'Steht auf / gezogen von' => !empty($vehicle['traeger_id']) ? url('vehicle', ['id' => (int)$vehicle['traeger_id']]) : null,
+                   'Ladung' => count($ladung ?? []) === 1 ? url('vehicle', ['id' => (int)$ladung[0]['id']]) : null];
       foreach ($zeilen as $label => $wert):
           if (trim((string)$wert) === '') { continue; } ?>
         <div class="dl__item"><div class="dl__label"><?= e((string)$label) ?></div>

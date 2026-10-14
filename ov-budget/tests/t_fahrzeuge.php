@@ -278,7 +278,8 @@ $html = render_partial('vehicle', [
         'status_color' => '#15803d', 'status_slug' => 'einsatzbereit', 'hersteller' => 'MAN', 'modell' => 'TGM',
         'baujahr' => 2015, 'erstzulassung' => '2015-04-01', 'fahrgestellnummer' => 'WMA123', 'km_stand' => 46500,
         'betriebsstunden' => null, 'standort' => 'Halle 1', 'notiz' => '', 'is_active' => 1,
-        'stein_asset_id' => 'a1', 'stein_sync_at' => '2026-09-17 10:00:00', 'extra' => null, 'standort_id' => 5, 'sitzplaetze' => 9, 'zuladung_kg' => 1200],
+        'stein_asset_id' => 'a1', 'stein_sync_at' => '2026-09-17 10:00:00', 'extra' => null, 'standort_id' => 5, 'sitzplaetze' => 9, 'zuladung_kg' => 1200, 'traeger_id' => 2, 'traeger_bezeichnung' => 'FwA Boot', 'traeger_kennzeichen' => 'HN-TH 123'],
+    'ladung' => [['id' => 9, 'bezeichnung' => 'Pumpe', 'funkrufname' => '', 'kennzeichen' => '', 'is_active' => 1]],
     'stellplatzPfad' => 'Halle 1 › Stellplatz 3',
     'fristen' => vehicle_deadlines(['hu_bis' => '2026-09-20', 'uvv_bis' => '2026-08-01'], 30, $heute),
     'auftraege' => [['id' => 5, 'nummer' => '2026-0005', 'titel' => 'Bremse', 'art_label' => 'Instandsetzung',
@@ -306,6 +307,7 @@ $check('Akte: Eingabefeld für Journal', str_contains($html, 'name="text"'));
 $check('Akte: Stellplatz verlinkt zur Standortseite', str_contains($html, 'p=standorte&amp;id=5') && str_contains($html, '>Halle 1 › Stellplatz 3</a>'));
 $check('Akte: Termine-Abschnitt ohne Termine', str_contains($html, 'Termine mit diesem Fahrzeug') && str_contains($html, 'in keinem Termin eingeplant'));
 $check('Akte: Sitzplätze und Zuladung', str_contains($html, '9 Personen') && str_contains($html, '1.200 kg'));
+$check('Akte: Träger verlinkt, Ladung genannt', str_contains($html, 'FwA Boot (HN-TH 123)</a>') && str_contains($html, 'p=vehicle&amp;id=2') && str_contains($html, '>Pumpe</a>'));
 
 $html = render_partial('vehicle', [
     'vehicle' => ['id' => 1, 'bezeichnung' => 'GKW 1', 'funkrufname' => '', 'kennzeichen' => '', 'kennung' => '',

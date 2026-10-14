@@ -162,6 +162,7 @@ INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_defa
 ('fahrzeug_typ','Gerätekraftwagen (GKW)',        'gkw','#b45309',20,0,0),
 ('fahrzeug_typ','Lastkraftwagen',                'lkw','#7c3aed',30,0,0),
 ('fahrzeug_typ','Anhänger',                      'anhaenger','#0d9488',40,0,0),
+('fahrzeug_typ','Boot',                          'boot','#0e7490',45,0,0),
 ('fahrzeug_typ','Gerät / Aggregat',              'geraet','#64748b',50,0,0),
 ('fahrzeug_typ','Sonstiges Fahrzeug',            'sonstiges','#94a3b8',60,0,0);
 

@@ -17,7 +17,7 @@ function db_all(string $sql, array $p = []): array {
     $GLOBALS['abfragen'][] = [$sql, $p];
     return [];
 }
-function db_row(string $sql, array $p = []): ?array { return null; }
+function db_row(string $sql, array $p = []): ?array { return $GLOBALS['fahrzeuge'][(int)($p[0] ?? 0)] ?? null; }
 function db_val(string $sql, array $p = [], mixed $d = null) { return $d; }
 function db_exec(string $sql, array $p = []): int { return 1; }
 function db_insert(string $t, array $d): int { $GLOBALS['inserts'][] = [$t, $d]; return count($GLOBALS['inserts']); }
@@ -80,5 +80,34 @@ $html = render_partial('vehicle_edit', ['vehicle' => ['id' => null, 'bezeichnung
 $check('Formular: Felder für Sitzplätze und Zuladung', str_contains($html, 'name="sitzplaetze"') && str_contains($html, 'value="9"') && str_contains($html, 'name="zuladung_kg"'));
 $check('Route und Knopf', str_contains((string)file_get_contents($app . '/public/index.php'), "'vehicle_kapazitaet'") && str_contains((string)file_get_contents($app . '/views/vehicles.php'), "url('vehicle_kapazitaet')")
     && str_contains((string)file_get_contents($app . '/src/cli/migrate.php'), '066_kapazitaet'));
+
+/* ---------- Trägerfahrzeug ---------- */
+$GLOBALS['fahrzeuge'] = [2 => ['id' => 2, 'traeger_id' => null, 'bezeichnung' => 'FwA Boot'], 3 => ['id' => 3, 'traeger_id' => 2, 'bezeichnung' => 'MzB 1'], 4 => ['id' => 4, 'traeger_id' => 3, 'bezeichnung' => 'Kreis'], 5 => ['id' => 5, 'traeger_id' => 4, 'bezeichnung' => 'Kreis 2']];
+$check('Träger prüfen: anderes vorhandenes Fahrzeug', vehicle_traeger_pruefen(2, 3) === 2 && vehicle_traeger_pruefen(null, 3) === null && vehicle_traeger_pruefen(3, 3) === null && vehicle_traeger_pruefen(99, 3) === null);
+$check('Träger prüfen: kein Kreis', vehicle_traeger_pruefen(5, 2) === null && vehicle_traeger_pruefen(2, 0) === 2);
+$zeilen = [3 => ['bezeichnung' => 'MzB 1', 'traeger_id' => 2, 'traeger_bezeichnung' => 'FwA Boot'], 2 => ['bezeichnung' => 'FwA Boot', 'traeger_id' => 7, 'traeger_bezeichnung' => 'GKW 1'], 7 => ['bezeichnung' => 'GKW 1', 'traeger_id' => null]];
+[$alle, $erg] = vehicle_traeger_ergaenzen([3, 3, 'x'], $zeilen);
+$check('Boot zieht Anhänger und Zugfahrzeug nach', $alle === [3, 2, 7] && count($erg) === 2 && $erg[0] === ['id' => 2, 'bezeichnung' => 'FwA Boot', 'wegen' => 'MzB 1'] && $erg[1]['id'] === 7);
+[$alle, $erg] = vehicle_traeger_ergaenzen([3, 2], $zeilen);
+$check('schon gewählter Träger wird nicht doppelt ergänzt', $alle === [3, 2, 7] && count($erg) === 1 && $erg[0]['id'] === 7);
+$check('Trägertext', vehicle_traeger_text(['traeger_bezeichnung' => 'FwA Boot', 'traeger_kennzeichen' => 'HN-TH 123']) === 'auf FwA Boot · HN-TH 123' && vehicle_traeger_text(['traeger_bezeichnung' => 'GKW 1', 'traeger_kennzeichen' => '']) === 'auf GKW 1' && vehicle_traeger_text([]) === '');
+$mit = vehicle_mit_stellplatz_pfad([['id' => 3, 'standort_id' => null, 'stellplatz_name' => null, 'traeger_standort_id' => 5, 'traeger_stellplatz_name' => 'Stellplatz 3', 'traeger_bezeichnung' => 'FwA Boot'], ['id' => 2, 'standort_id' => 5, 'stellplatz_name' => 'Stellplatz 3']], []);
+$check('Boot erbt den Stellplatz des Anhängers', $mit[0]['stellplatz_pfad'] === 'Stellplatz 3 (über FwA Boot)' && $mit[0]['standort_id'] === 5 && $mit[1]['stellplatz_pfad'] === 'Stellplatz 3');
+$_POST = ['bezeichnung' => 'MzB 1', 'is_active' => '1', 'traeger_id' => '2'];
+$GLOBALS['inserts'] = [];
+vehicle_save_from_post(null, ['id' => 1, 'display_name' => 'Tester']);
+$check('Träger gespeichert', $GLOBALS['inserts'][0][1]['traeger_id'] === 2);
+$_POST = [];
+$GLOBALS['abfragen'] = [];
+vehicle_query(['q' => 'HN-TH']);
+$check('Suche findet das Kennzeichen des Trägers', str_contains($GLOBALS['abfragen'][0][0], 'tr.kennzeichen LIKE ?') && str_contains($GLOBALS['abfragen'][0][0], 'LEFT JOIN vehicles tr ON tr.id = v.traeger_id') && str_contains($GLOBALS['abfragen'][0][0], 'AS ladung_namen'));
+$html = render_partial('partials/fahrzeug_kachel', ['v' => ['id' => 3, 'bezeichnung' => 'MzB 1', 'funkrufname' => '', 'kennzeichen' => '', 'is_active' => 1, 'traeger_bezeichnung' => 'FwA Boot', 'traeger_kennzeichen' => 'HN-TH 123', 'status_label' => '', 'status_color' => '', 'offene_auftraege' => 0], 'titelbilder' => [], 'fristen' => [], 'mitPlatz' => false]);
+$check('Kachel: Kennzeichen des Anhängers beim Boot', str_contains($html, 'auf FwA Boot · HN-TH 123'));
+$html = render_partial('vehicle_edit', ['vehicle' => ['id' => 3, 'bezeichnung' => 'MzB 1', 'funkrufname' => '', 'issi' => '', 'opta' => '', 'ric' => '', 'kennzeichen' => '', 'kennung' => '', 'typ_id' => null, 'fachgruppe_id' => null,
+    'status_id' => null, 'hersteller' => '', 'modell' => '', 'baujahr' => '', 'fahrgestellnummer' => '', 'erstzulassung' => null, 'km_stand' => null, 'betriebsstunden' => null, 'sitzplaetze' => null, 'zuladung_kg' => null, 'traeger_id' => 2,
+    'hu_bis' => null, 'sp_bis' => null, 'uvv_bis' => null, 'standort' => '', 'standort_id' => null, 'notiz' => '', 'is_active' => 1, 'ausgemustert_am' => null, 'extra' => null], 'errors' => [], 'felder' => [], 'extra' => [], 'standorte' => [],
+    'traeger' => [['id' => 2, 'bezeichnung' => 'FwA Boot', 'kennzeichen' => 'HN-TH 123', 'typ_label' => 'Anhänger'], ['id' => 7, 'bezeichnung' => 'GKW 1', 'kennzeichen' => 'THW-1', 'typ_label' => 'GKW']]]);
+$check('Formular: Träger wählbar, Anhänger vorgewählt', str_contains($html, 'name="traeger_id"') && str_contains($html, 'value="2" selected>FwA Boot · HN-TH 123 (Anhänger)') && str_contains($html, 'fährt selbst'));
+$check('Seed kennt die Art Boot, Wanderung 070', str_contains((string)file_get_contents($app . '/sql/seed.sql'), "('fahrzeug_typ','Boot'") && str_contains((string)file_get_contents($app . '/src/cli/migrate.php'), '070_traeger'));
 
 echo "$ok bestanden, $fail fehlgeschlagen\n";

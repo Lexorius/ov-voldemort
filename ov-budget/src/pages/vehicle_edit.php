@@ -27,6 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 render('vehicle_edit', [
+    'traeger' => vehicle_traeger_auswahl((int)($vehicle['id'] ?? 0)),
     'standorte' => function_exists('standort_all') ? standort_all() : [],
     'title'   => $vehicle && !empty($vehicle['id']) ? 'Fahrzeug bearbeiten' : 'Fahrzeug anlegen',
     'vehicle' => $vehicle ?? [
@@ -34,7 +35,7 @@ render('vehicle_edit', [
         'kennzeichen' => '', 'kennung' => '',
         'typ_id' => null, 'fachgruppe_id' => null, 'status_id' => list_default_id('fahrzeug_status'),
         'hersteller' => '', 'modell' => '', 'baujahr' => null, 'fahrgestellnummer' => '',
-        'erstzulassung' => null, 'km_stand' => null, 'betriebsstunden' => null, 'sitzplaetze' => null, 'zuladung_kg' => null,
+        'erstzulassung' => null, 'km_stand' => null, 'betriebsstunden' => null, 'sitzplaetze' => null, 'zuladung_kg' => null, 'traeger_id' => null,
         'hu_bis' => null, 'sp_bis' => null, 'uvv_bis' => null, 'standort' => '', 'standort_id' => null, 'notiz' => '',
         'extra' => null, 'is_active' => 1, 'ausgemustert_am' => null, 'stein_asset_id' => null,
     ],

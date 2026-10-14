@@ -1027,6 +1027,20 @@ den Vorgang, sofern die Adresse der Anwendung hinterlegt ist. Läuft ein Abo ab
 (Browser neu aufgesetzt, App gelöscht), wird es beim nächsten Versand
 automatisch entfernt.
 
+## Boote auf Anhängern, Anhänger am Zugfahrzeug
+
+Boot und Anhänger bleiben zwei Fahrzeuge – das Kennzeichen gehört zum
+Anhänger, HU und SP ebenso, das Boot hat seine eigenen Prüfungen. Im
+Fahrzeugformular steht unter „Steht auf / wird gezogen von" der Träger;
+die Fahrzeugart „Boot" ist in der Auswahlliste vorhanden. Danach zeigt
+das Boot in Listen und Kacheln „auf FwA Boot · HN-TH 123", die Suche nach
+dem Kennzeichen findet beides, die Akte des Anhängers nennt seine Ladung.
+Ohne eigenen Stellplatz steht das Boot dort, wo sein Anhänger steht. Wer
+das Boot in einen Termin einplant, bekommt den Anhänger automatisch mit
+eingeplant (Hinweis beim Speichern) – so greift die Warnung vor
+Doppelbuchungen auch für den Anhänger. Dasselbe gilt für einen Anhänger
+mit festem Zugfahrzeug.
+
 ## Kapazitäten der Fahrzeuge
 
 In der Fahrzeugakte stehen unter „Bearbeiten" die **Sitzplätze** (Personen

@@ -31,7 +31,7 @@ $id = (int)$v['id'];
   </a>
   <div class="kachel__text">
     <a class="item__title" href="<?= e(url('vehicle', ['id' => $id])) ?>"><?= e((string)$v['bezeichnung']) ?></a>
-    <div class="item__sub small"><?= e(implode(' · ', array_filter([(string)($v['funkrufname'] ?? ''), (string)($v['kennzeichen'] ?? '')]))) ?></div>
+    <div class="item__sub small"><?= e(implode(' · ', array_filter([(string)($v['funkrufname'] ?? ''), (string)($v['kennzeichen'] ?? ''), function_exists('vehicle_traeger_text') ? vehicle_traeger_text($v) : ''], 'strlen'))) ?></div>
     <div class="item__meta">
       <?= badge(!empty($v['status_label']) ? ['label' => $v['status_label'], 'color' => $v['status_color'] ?? ''] : null, 'ohne Status') ?>
       <?php if (($v['fms_status'] ?? null) !== null && $v['fms_status'] !== ''): ?>

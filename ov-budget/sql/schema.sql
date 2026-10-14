@@ -1254,6 +1254,8 @@ CREATE TABLE IF NOT EXISTS vehicles (
   -- Transportkapazitaet: Sitzplaetze samt Fahrer, maximale Zuladung in kg
   sitzplaetze       SMALLINT UNSIGNED NULL,
   zuladung_kg       INT UNSIGNED NULL,
+  -- Traegerfahrzeug: ein Boot steht auf einem Anhaenger, ein Anhaenger wird von einem Zugfahrzeug gezogen
+  traeger_id        INT UNSIGNED NULL,
   hu_bis            DATE         NULL,
   sp_bis            DATE         NULL,
   uvv_bis           DATE         NULL,
@@ -1301,7 +1303,8 @@ CREATE TABLE IF NOT EXISTS vehicles (
   CONSTRAINT fk_fz_fg  FOREIGN KEY (fachgruppe_id)  REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_fz_sta FOREIGN KEY (status_id)      REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_fz_cb  FOREIGN KEY (created_by)     REFERENCES users(id)      ON DELETE SET NULL,
-  CONSTRAINT fk_fz_con FOREIGN KEY (qr_connector_id) REFERENCES connectors(id) ON DELETE SET NULL
+  CONSTRAINT fk_fz_con FOREIGN KEY (qr_connector_id) REFERENCES connectors(id) ON DELETE SET NULL,
+  CONSTRAINT fk_fz_traeger FOREIGN KEY (traeger_id) REFERENCES vehicles(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Journal der Fahrzeugakte: wird nur angehaengt, nie geaendert oder geloescht.

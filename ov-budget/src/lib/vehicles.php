@@ -31,6 +31,7 @@ const FZ_JOURNAL_FELDER = [
     'betriebsstunden'   => 'Betriebsstunden',
     'sitzplaetze'       => 'Sitzplätze',
     'zuladung_kg'       => 'Zuladung (kg)',
+    'traeger_id'        => 'Steht auf / gezogen von',
     'hu_bis'            => 'HU gültig bis',
     'sp_bis'            => 'SP gültig bis',
     'uvv_bis'           => 'UVV gültig bis',
@@ -42,6 +43,8 @@ function vehicle_find(int $id): ?array
 {
     return db_row(
         'SELECT v.*, t.label AS typ_label, t.color AS typ_color, sp.name AS stellplatz_name, sp.typ AS stellplatz_typ,
+                tr.bezeichnung AS traeger_bezeichnung, tr.kennzeichen AS traeger_kennzeichen, tr.standort_id AS traeger_standort_id, trsp.name AS traeger_stellplatz_name,
+                (SELECT GROUP_CONCAT(l.bezeichnung ORDER BY l.bezeichnung SEPARATOR \' · \') FROM vehicles l WHERE l.traeger_id = v.id AND l.is_active = 1) AS ladung_namen,
                 f.label AS fachgruppe_label,
                 s.label AS status_label, s.color AS status_color, s.slug AS status_slug
          FROM vehicles v
@@ -49,6 +52,8 @@ function vehicle_find(int $id): ?array
          LEFT JOIN list_items f ON f.id = v.fachgruppe_id
          LEFT JOIN list_items s ON s.id = v.status_id
          LEFT JOIN standorte sp ON sp.id = v.standort_id
+         LEFT JOIN vehicles tr ON tr.id = v.traeger_id
+         LEFT JOIN standorte trsp ON trsp.id = tr.standort_id
          WHERE v.id = ?',
         [$id]
     );
@@ -123,9 +128,107 @@ function vehicle_mit_stellplatz_pfad(array $fahrzeuge, array $plaetze): array
         if ($v['stellplatz_pfad'] === '') {
             $v['stellplatz_pfad'] = (string)($v['stellplatz_name'] ?? '');
         }
+        // Ohne eigenen Platz gilt der des Trägers – das Boot steht, wo sein Anhänger steht
+        if ($v['stellplatz_pfad'] === '' && (int)($v['traeger_standort_id'] ?? 0) > 0) {
+            $v['standort_id'] = (int)$v['traeger_standort_id'];
+            $v['stellplatz_pfad'] = ($plaetze ? standort_pfad((int)$v['traeger_standort_id'], $plaetze) : (string)($v['traeger_stellplatz_name'] ?? '')) . ' (über ' . (string)($v['traeger_bezeichnung'] ?? 'Träger') . ')';
+        }
     }
     unset($v);
     return $fahrzeuge;
+}
+
+/* ---------- Trägerfahrzeug: Boot auf Anhänger, Anhänger am Zugfahrzeug ---------- */
+
+/** Nur ein anderes, vorhandenes Fahrzeug darf Träger sein – und keine Kette im Kreis (A auf B auf A). */
+function vehicle_traeger_pruefen(?int $traegerId, int $eigeneId): ?int
+{
+    if (!$traegerId || $traegerId === $eigeneId) {
+        return null;
+    }
+    $gesehen = [];
+    $id = $traegerId;
+    for ($i = 0; $i < 10 && $id > 0; $i++) {
+        if ($id === $eigeneId || isset($gesehen[$id])) {
+            return null;   // Kreis
+        }
+        $gesehen[$id] = true;
+        $t = db_row('SELECT id, traeger_id FROM vehicles WHERE id = ?', [$id]);
+        if (!$t) {
+            return $i === 0 ? null : $traegerId;
+        }
+        $id = (int)($t['traeger_id'] ?? 0);
+    }
+    return $traegerId;
+}
+
+/** Fahrzeuge, die als Träger in Frage kommen: alle aktiven außer dem eigenen */
+function vehicle_traeger_auswahl(int $eigeneId): array
+{
+    return array_values(array_filter(
+        db_all('SELECT v.id, v.bezeichnung, v.kennzeichen, t.label AS typ_label FROM vehicles v LEFT JOIN list_items t ON t.id = v.typ_id WHERE v.is_active = 1 ORDER BY v.bezeichnung'),
+        static fn($v) => (int)$v['id'] !== $eigeneId
+    ));
+}
+
+/** Die Ladung eines Trägers: Boote, Geräte, Anhänger, die auf ihm stehen */
+function vehicle_ladung(int $id): array
+{
+    return db_all('SELECT id, bezeichnung, funkrufname, kennzeichen, is_active FROM vehicles WHERE traeger_id = ? ORDER BY bezeichnung', [$id]);
+}
+
+/**
+ * Zu einer Fahrzeugauswahl die Träger ergänzen: wer das Boot einplant, plant
+ * den Anhänger mit. $zeilen: [id => ['bezeichnung', 'traeger_id', 'traeger_bezeichnung']].
+ * Rückgabe: [alle ids, ergänzte Zeilen ['id', 'bezeichnung', 'wegen']]. Reine Funktion.
+ */
+function vehicle_traeger_ergaenzen(array $ids, array $zeilen): array
+{
+    $alle = array_values(array_unique(array_filter(array_map('intval', $ids), static fn($i) => $i > 0)));
+    $ergaenzt = [];
+    $schutz = 0;
+    for ($i = 0; $i < count($alle) && $schutz++ < 200; $i++) {
+        $z = $zeilen[$alle[$i]] ?? null;
+        $tr = (int)($z['traeger_id'] ?? 0);
+        if ($tr > 0 && !in_array($tr, $alle, true)) {
+            $alle[] = $tr;
+            $ergaenzt[] = ['id' => $tr, 'bezeichnung' => (string)($z['traeger_bezeichnung'] ?? ('#' . $tr)), 'wegen' => (string)($z['bezeichnung'] ?? '')];
+        }
+    }
+    return [$alle, $ergaenzt];
+}
+
+/** Dasselbe mit Blick in die Datenbank */
+function vehicle_mit_traegern(array $ids): array
+{
+    $ids = array_values(array_filter(array_map('intval', $ids), static fn($i) => $i > 0));
+    if (!$ids) {
+        return [[], []];
+    }
+    $zeilen = [];
+    // Zwei Runden reichen für Boot → Anhänger → Zugfahrzeug
+    $suchen = $ids;
+    for ($r = 0; $r < 3 && $suchen; $r++) {
+        $platz = implode(',', array_fill(0, count($suchen), '?'));
+        $neu = [];
+        foreach (db_all("SELECT v.id, v.bezeichnung, v.traeger_id, tr.bezeichnung AS traeger_bezeichnung FROM vehicles v LEFT JOIN vehicles tr ON tr.id = v.traeger_id WHERE v.id IN ($platz)", $suchen) as $z) {
+            $zeilen[(int)$z['id']] = $z;
+            if ((int)($z['traeger_id'] ?? 0) > 0 && !isset($zeilen[(int)$z['traeger_id']])) {
+                $neu[] = (int)$z['traeger_id'];
+            }
+        }
+        $suchen = array_values(array_unique($neu));
+    }
+    return vehicle_traeger_ergaenzen($ids, $zeilen);
+}
+
+/** „auf FwA Boot · HN-TH 123" für ein Fahrzeug mit Träger – leer ohne. Reine Funktion. */
+function vehicle_traeger_text(array $v): string
+{
+    if (empty($v['traeger_bezeichnung'])) {
+        return '';
+    }
+    return 'auf ' . $v['traeger_bezeichnung'] . (!empty($v['traeger_kennzeichen']) ? ' · ' . $v['traeger_kennzeichen'] : '');
 }
 
 /** Kapazitäten einer Fahrzeugliste zusammenzählen. Reine Funktion. */
@@ -246,9 +349,9 @@ function vehicle_query(array $f = []): array
     $p = [];
     if (!empty($f['q'])) {
         $w[] = '(v.bezeichnung LIKE ? OR v.funkrufname LIKE ? OR v.kennzeichen LIKE ?'
-            . ' OR v.kennung LIKE ? OR v.issi LIKE ? OR v.opta LIKE ?)';
+            . ' OR v.kennung LIKE ? OR v.issi LIKE ? OR v.opta LIKE ? OR tr.kennzeichen LIKE ?)';
         $like = '%' . $f['q'] . '%';
-        array_push($p, $like, $like, $like, $like, $like, $like);
+        array_push($p, $like, $like, $like, $like, $like, $like, $like);
     }
     foreach (['status_id', 'typ_id', 'fachgruppe_id'] as $col) {
         if (!empty($f[$col])) {
@@ -289,6 +392,8 @@ function vehicle_query(array $f = []): array
 
     return db_all(
         'SELECT v.*, t.label AS typ_label, t.color AS typ_color, sp.name AS stellplatz_name, sp.typ AS stellplatz_typ,
+                tr.bezeichnung AS traeger_bezeichnung, tr.kennzeichen AS traeger_kennzeichen, tr.standort_id AS traeger_standort_id, trsp.name AS traeger_stellplatz_name,
+                (SELECT GROUP_CONCAT(l.bezeichnung ORDER BY l.bezeichnung SEPARATOR \' · \') FROM vehicles l WHERE l.traeger_id = v.id AND l.is_active = 1) AS ladung_namen,
                 f.label AS fachgruppe_label,
                 s.label AS status_label, s.color AS status_color, s.slug AS status_slug,
                 (SELECT COUNT(*) FROM vehicle_favorites vf
@@ -303,7 +408,9 @@ function vehicle_query(array $f = []): array
          LEFT JOIN list_items t ON t.id = v.typ_id
          LEFT JOIN list_items f ON f.id = v.fachgruppe_id
          LEFT JOIN list_items s ON s.id = v.status_id
-         LEFT JOIN standorte sp ON sp.id = v.standort_id'
+         LEFT JOIN standorte sp ON sp.id = v.standort_id
+         LEFT JOIN vehicles tr ON tr.id = v.traeger_id
+         LEFT JOIN standorte trsp ON trsp.id = tr.standort_id'
         . ($w ? ' WHERE ' . implode(' AND ', $w) : '')
         . ' ORDER BY ' . vehicle_sort_sql((string)($f['sort'] ?? 'standard')),
         array_merge($vorne, $p)
@@ -448,6 +555,10 @@ function vehicle_field_text(string $feld, mixed $wert): string
     if ($wert === null || $wert === '') {
         return '';
     }
+    if ($feld === 'traeger_id') {
+        $t = db_row('SELECT bezeichnung FROM vehicles WHERE id = ?', [(int)$wert]);
+        return $t ? (string)$t['bezeichnung'] : '#' . (int)$wert;
+    }
     if (str_ends_with($feld, '_id')) {
         return list_label((int)$wert, '');
     }
@@ -554,6 +665,7 @@ function vehicle_save_from_post(?array $existing, array $user): array
         'betriebsstunden'   => post_int('betriebsstunden'),
         'sitzplaetze'       => post_int('sitzplaetze'),
         'zuladung_kg'       => post_int('zuladung_kg'),
+        'traeger_id'        => vehicle_traeger_pruefen(post_int('traeger_id'), $existing ? (int)$existing['id'] : 0),
         'hu_bis'            => post_date('hu_bis'),
         'sp_bis'            => post_date('sp_bis'),
         'uvv_bis'           => post_date('uvv_bis'),

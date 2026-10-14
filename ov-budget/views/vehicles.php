@@ -161,8 +161,8 @@ $fristBadges = static fn(array $liste): string => vehicle_frist_badges($liste);
               <div class="item__title"><?= e($v['bezeichnung']) ?></div>
               <div class="item__sub">
                 <?= e(implode(' · ', array_filter([
-                    $v['funkrufname'], $v['kennzeichen'], $v['typ_label'], $v['fachgruppe_label'],
-                ]))) ?>
+                    $v['funkrufname'], $v['kennzeichen'], vehicle_traeger_text($v), $v['typ_label'], $v['fachgruppe_label'],
+                ], 'strlen'))) ?>
               </div>
               <?php if (trim((string)$v['issi']) !== ''): ?>
                 <div class="item__sub small">ISSI <?= e((string)$v['issi']) ?></div>

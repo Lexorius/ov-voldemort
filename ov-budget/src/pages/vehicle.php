@@ -18,6 +18,7 @@ $id = (int)$vehicle['id'];
 $art = get_str('art');
 
 render('vehicle', [
+    'ladung'   => vehicle_ladung($id),
     'termine'  => function_exists('kalender_termine_fahrzeug') ? kalender_termine_fahrzeug($id, date('Y-m-d'), date('Y-m-d', time() + 365 * 86400), current_user()) : [],
     'stellplatzPfad' => !empty($vehicle['standort_id']) && function_exists('standort_pfad') ? standort_pfad((int)$vehicle['standort_id'], standort_all()) : '',
     'wuensche'   => wish_query(['vehicle_id' => $id, 'sort' => 'prio']),

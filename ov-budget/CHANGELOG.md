@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 2.1.36.0
+
+- **Boote auf Anhängern:** Fahrzeuge haben ein Trägerfahrzeug („Steht auf
+  / wird gezogen von") und es gibt die Fahrzeugart „Boot". Das Boot zeigt
+  Kennzeichen und Stellplatz seines Anhängers mit, der Anhänger seine
+  Ladung; die Suche nach dem Kennzeichen findet beides. Wer das Boot in
+  einen Termin einplant, bekommt den Anhänger automatisch mit eingeplant,
+  damit die Doppelbuchungswarnung auch für ihn gilt.
+
 ## 2.1.35.0
 
 - **Navigation vom Termin aus:** Die Terminseite hat den Knopf „Navigation

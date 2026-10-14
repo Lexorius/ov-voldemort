@@ -1843,6 +1843,17 @@ SQL);
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
     }
     $merken('069_thw_kontakte_link');
+
+    /* ---------- 070: Traegerfahrzeug (Boot auf Anhaenger) ---------- */
+    if (ovb_table_exists($pdo, 'vehicles')) {
+        if (!ovb_column_exists($pdo, 'vehicles', 'traeger_id')) {
+            $pdo->exec('ALTER TABLE vehicles ADD COLUMN traeger_id INT UNSIGNED NULL AFTER zuladung_kg');
+        }
+        if (!ovb_constraint_exists($pdo, 'vehicles', 'fk_fz_traeger')) {
+            $pdo->exec('ALTER TABLE vehicles ADD CONSTRAINT fk_fz_traeger FOREIGN KEY (traeger_id) REFERENCES vehicles(id) ON DELETE SET NULL');
+        }
+    }
+    $merken('070_traeger');
 }
 
 /**

@@ -134,6 +134,18 @@ $isNew = empty($vehicle['id']);
         <label for="zuladung_kg">Maximale Zuladung (kg)</label>
         <input type="number" id="zuladung_kg" name="zuladung_kg" min="0" max="99999" value="<?= e((string)($vehicle['zuladung_kg'] ?? '')) ?>" placeholder="z. B. 1200">
       </div>
+      <?php $traeger ??= []; if ($traeger): ?>
+      <div class="field">
+        <label for="traeger_id">Steht auf / wird gezogen von</label>
+        <select id="traeger_id" name="traeger_id">
+          <option value="">– fährt selbst –</option>
+          <?php foreach ($traeger as $t): ?>
+            <option value="<?= (int)$t['id'] ?>"<?= (int)$t['id'] === (int)($vehicle['traeger_id'] ?? 0) ? ' selected' : '' ?>><?= e((string)$t['bezeichnung']) ?><?= $t['kennzeichen'] ? ' · ' . e((string)$t['kennzeichen']) : '' ?><?= $t['typ_label'] ? ' (' . e((string)$t['typ_label']) . ')' : '' ?></option>
+          <?php endforeach; ?>
+        </select>
+        <small>Ein Boot steht auf seinem Anhänger, ein Anhänger hängt am Zugfahrzeug. Das Kennzeichen bleibt beim Träger, die Liste zeigt es hier mit; wer das Boot einplant, plant den Träger automatisch mit.</small>
+      </div>
+      <?php endif; ?>
     </div>
   </section>
 
