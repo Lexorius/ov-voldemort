@@ -963,6 +963,21 @@ function kfile_store_uploads(int $entryId, string $feld, string $titel, array $u
     return [$anzahl, $fehler];
 }
 
+/** Wurde im Formular mindestens eine Datei ausgewählt? Reine Funktion über $_FILES. */
+function kalender_dateien_mitgeschickt(string $feld): bool
+{
+    $namen = $_FILES[$feld]['name'] ?? null;
+    if (!is_array($namen)) {
+        return false;
+    }
+    foreach ($namen as $n) {
+        if ((string)$n !== '') {
+            return true;
+        }
+    }
+    return false;
+}
+
 function kfile_delete(array $datei): void
 {
     foreach ([$datei['stored_name'] ?? '', $datei['thumb_name'] ?? ''] as $name) {

@@ -18,7 +18,7 @@ $ganztag = (int)($termin['ganztag'] ?? 0) === 1;
   <div class="alert alert--error"><ul><?php foreach ($errors as $er): ?><li><?= e($er) ?></li><?php endforeach; ?></ul></div>
 <?php endif; ?>
 
-<form method="post" class="form" action="<?= e(url('kalender_edit', $isNew ? [] : ['id' => $termin['id']])) ?>">
+<form method="post" enctype="multipart/form-data" class="form" action="<?= e(url('kalender_edit', $isNew ? [] : ['id' => $termin['id']])) ?>">
   <?= csrf_field() ?>
   <fieldset<?= $nurLesen ? ' disabled' : '' ?> style="border:0;padding:0;margin:0;min-width:0">
   <section class="card">
@@ -138,6 +138,46 @@ $ganztag = (int)($termin['ganztag'] ?? 0) === 1;
   </section>
   <?php endif; ?>
 
+  <?php $dateien ??= []; ?>
+  <section class="card" id="dateien">
+    <div class="card__head">
+      <h2>Dateien</h2>
+      <span class="muted small"><?= count($dateien) ?></span>
+    </div>
+    <?php if ($dateien): ?>
+      <ul class="wahl__liste">
+        <?php foreach ($dateien as $f): ?>
+          <li class="wahl__eintrag">
+            <?php if (($f['art'] ?? '') === 'bild' && !empty($f['thumb_name'])): ?>
+              <a href="<?= e(url('kalender_file', ['id' => $f['id']])) ?>" target="_blank" rel="noopener"><img src="<?= e(url('kalender_file', ['id' => $f['id'], 'vorschau' => 1])) ?>" alt="" loading="lazy" style="width:2.6rem;height:2.6rem;object-fit:cover;border-radius:6px"></a>
+            <?php endif; ?>
+            <span class="wahl__text"><a href="<?= e(url('kalender_file', ['id' => $f['id']])) ?>"><?= e((string)($f['titel'] ?: $f['orig_name'])) ?></a>
+              <span class="muted small"><?= e((string)$f['orig_name']) ?> · <?= e(bytes_human((int)$f['size_bytes'])) ?> · <?= e(de_datetime((string)$f['created_at'])) ?><?= !empty($f['hochgeladen_von']) ? ' · ' . e((string)$f['hochgeladen_von']) : '' ?></span></span>
+            <?php if (!$nurLesen): ?>
+              <button type="submit" class="wahl__weg" name="datei_weg" value="<?= (int)$f['id'] ?>" title="Datei entfernen" formnovalidate data-confirm="Diese Datei entfernen?">🗑</button>
+            <?php endif; ?>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    <?php elseif ($nurLesen): ?>
+      <p class="muted">Keine Dateien an diesem Termin.</p>
+    <?php endif; ?>
+    <?php if (!$nurLesen): ?>
+      <div class="grid2">
+        <div class="field">
+          <label for="dateien-upload">Dateien anhängen</label>
+          <input type="file" id="dateien-upload" name="dateien[]" multiple>
+          <small>Einladung, Programm, Anfahrtsskizze – PDF, Bilder und die erlaubten Dokumenttypen, bis <?= function_exists('upload_max_bytes') ? (int)round(upload_max_bytes() / 1048576) : 8 ?> MB je Datei.
+            Sie werden beim <?= $isNew ? 'Eintragen' : 'Speichern' ?> mit abgelegt.</small>
+        </div>
+        <div class="field">
+          <label for="datei-titel">Bezeichnung der neuen Dateien <span class="muted">(freiwillig)</span></label>
+          <input type="text" id="datei-titel" name="datei_titel" maxlength="200" placeholder="z. B. Einladung">
+        </div>
+      </div>
+    <?php endif; ?>
+  </section>
+
   <?php if (!$nurLesen): ?>
   <div class="btnrow">
     <button class="btn" type="submit"><?= $isNew ? 'Eintragen' : 'Speichern' ?></button>
@@ -146,63 +186,6 @@ $ganztag = (int)($termin['ganztag'] ?? 0) === 1;
   <?php endif; ?>
   </fieldset>
 </form>
-
-<?php $dateien ??= []; if (!$isNew): ?>
-<section class="card" id="dateien">
-  <div class="card__head">
-    <h2>Dateien</h2>
-    <span class="muted small"><?= count($dateien) ?></span>
-  </div>
-  <?php if (!$dateien): ?>
-    <p class="muted">Noch nichts angehängt – hier gehören Einladung, Programm oder Anfahrtsskizze hin.</p>
-  <?php else: ?>
-    <div class="tablewrap">
-      <table class="data">
-        <thead><tr><th>Datei</th><th>Größe</th><?php if (!$nurLesen): ?><th></th><?php endif; ?></tr></thead>
-        <tbody>
-        <?php foreach ($dateien as $f): ?>
-          <tr>
-            <td>
-              <?php if (($f['art'] ?? '') === 'bild' && !empty($f['thumb_name'])): ?>
-                <a href="<?= e(url('kalender_file', ['id' => $f['id']])) ?>" target="_blank" rel="noopener"><img src="<?= e(url('kalender_file', ['id' => $f['id'], 'vorschau' => 1])) ?>" alt="" loading="lazy" style="width:3rem;height:3rem;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:.4rem"></a>
-              <?php endif; ?>
-              <a href="<?= e(url('kalender_file', ['id' => $f['id']])) ?>"><?= e((string)($f['titel'] ?: $f['orig_name'])) ?></a>
-              <div class="small muted"><?= e((string)$f['orig_name']) ?> · <?= e(de_datetime((string)$f['created_at'])) ?><?= !empty($f['hochgeladen_von']) ? ' · ' . e((string)$f['hochgeladen_von']) : '' ?></div>
-            </td>
-            <td class="small"><?= e(bytes_human((int)$f['size_bytes'])) ?></td>
-            <?php if (!$nurLesen): ?>
-              <td style="text-align:right">
-                <form method="post" class="inline-form" action="<?= e(url('kalender_edit', ['id' => $termin['id']])) ?>"><?= csrf_field() ?>
-                  <input type="hidden" name="action" value="datei_weg"><input type="hidden" name="file_id" value="<?= (int)$f['id'] ?>">
-                  <button class="btn btn--sec btn--sm" type="submit" data-confirm="Diese Datei entfernen?">🗑</button></form>
-              </td>
-            <?php endif; ?>
-          </tr>
-        <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
-  <?php endif; ?>
-  <?php if (!$nurLesen): ?>
-    <form method="post" enctype="multipart/form-data" class="form mt" action="<?= e(url('kalender_edit', ['id' => $termin['id']])) ?>">
-      <?= csrf_field() ?>
-      <input type="hidden" name="action" value="datei">
-      <div class="grid2">
-        <div class="field">
-          <label for="dateien-upload">Dateien anhängen</label>
-          <input type="file" id="dateien-upload" name="dateien[]" multiple required>
-          <small>PDF, Bilder und die erlaubten Dokumenttypen, bis <?= function_exists('upload_max_bytes') ? (int)round(upload_max_bytes() / 1048576) : 8 ?> MB je Datei.</small>
-        </div>
-        <div class="field">
-          <label for="datei-titel">Bezeichnung <span class="muted">(freiwillig)</span></label>
-          <input type="text" id="datei-titel" name="titel" maxlength="200" placeholder="z. B. Einladung">
-        </div>
-      </div>
-      <div class="btnrow"><button class="btn btn--sec" type="submit">Hochladen</button></div>
-    </form>
-  <?php endif; ?>
-</section>
-<?php endif; ?>
 
 <?php if (!$isNew && can('view_meetings')): ?><?= render_partial('partials/tp_besprochen', ['punkte' => $besprochen ?? []]) ?><?php endif; ?>
 

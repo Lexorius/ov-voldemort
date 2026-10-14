@@ -33,19 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
         flash('success', 'Termin gelöscht.');
         redirect_route('kalender', ['monat' => substr((string)$termin['beginn'], 0, 7)]);
     }
-    if (post_str('action') === 'datei' && $termin) {
-        [$anzahl, $fehler] = kfile_store_uploads((int)$termin['id'], 'dateien', post_str('titel'), $user);
-        if ($anzahl > 0) {
-            flash('success', sprintf('%d Datei(en) angehängt.', $anzahl));
-            audit('termin.datei', 'calendar', (int)$termin['id'], sprintf('%d Datei(en)', $anzahl));
-        }
-        foreach ($fehler as $f) {
-            flash('error', e($f));
-        }
-        redirect(url('kalender_edit', ['id' => $termin['id']]) . '#dateien');
-    }
-    if (post_str('action') === 'datei_weg' && $termin) {
-        $datei = kfile_find((int)post_int('file_id', 0));
+    // Mülleimer an einer Datei: nur die Datei weg, die übrigen Eingaben bleiben unangetastet
+    if (post_int('datei_weg') && $termin) {
+        $datei = kfile_find((int)post_int('datei_weg', 0));
         if ($datei && (int)$datei['entry_id'] === (int)$termin['id']) {
             kfile_delete($datei);
             audit('termin.datei_weg', 'calendar', (int)$termin['id'], (string)$datei['orig_name']);
@@ -56,6 +46,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
     [$neu, $errors] = kalender_save_from_post($termin, $user);
     if ($neu) {
         flash('success', $termin ? 'Termin gespeichert.' : 'Termin eingetragen.');
+        // Mitgeschickte Dateien gleich anhängen – auch beim Anlegen
+        if (kalender_dateien_mitgeschickt('dateien')) {
+            [$anzahl, $dateiFehler] = kfile_store_uploads($neu, 'dateien', post_str('datei_titel'), $user);
+            if ($anzahl > 0) {
+                flash('success', sprintf('%d Datei(en) angehängt.', $anzahl));
+                audit('termin.datei', 'calendar', $neu, sprintf('%d Datei(en)', $anzahl));
+            }
+            foreach ($dateiFehler as $f) {
+                flash('error', e($f));
+            }
+        }
         // Doppelbuchung? Dann warnen, aber speichern
         $gespeichert = kalender_find($neu);
         $gewaehlteFahrzeuge = can('view_vehicles') ? wahl_ids('vehicles') : [];

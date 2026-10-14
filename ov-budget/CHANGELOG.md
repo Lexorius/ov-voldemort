@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## 2.1.28.1
+
+- **Dateien direkt im Terminformular:** Der Abschnitt „Dateien" steckt jetzt
+  im Formular selbst, auch beim Anlegen eines neuen Termins. Ausgewählte
+  Dateien werden beim Eintragen bzw. Speichern mit abgelegt; vorhandene
+  stehen als Liste mit Mülleimer darüber.
+
 ## 2.1.28.0
 
 - **Werkstatttermine:** Termine und Instandsetzungsaufträge sind

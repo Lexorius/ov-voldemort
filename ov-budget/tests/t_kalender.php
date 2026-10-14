@@ -279,11 +279,20 @@ $html = render_partial('kalender_edit', ['termin' => ['id' => 5, 'titel' => 'x',
 $htmlN = render_partial('kalender_edit', ['termin' => ['id' => 5, 'titel' => 'x', 'beschreibung' => '', 'ort' => '', 'datum' => '2026-10-15', 'zeit' => '19:00', 'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'ov', 'ziel_id' => null, 'farbe' => '', 'erfasser' => 'Leitung'],
     'errors' => [], 'nurLesen' => false, 'user' => $leitung, 'leitung' => true, 'users' => [], 'fahrzeuge' => [], 'standorte' => [],
     'dateien' => [['id' => 9, 'entry_id' => 5, 'art' => 'dokument', 'titel' => 'Einladung', 'orig_name' => 'Einladung.pdf', 'thumb_name' => null, 'size_bytes' => 120000, 'created_at' => '2026-10-10 12:00:00', 'hochgeladen_von' => 'Leitung']]]);
-$check('Termin: Dateien mit Link, Mülleimer und Upload', str_contains($htmlN, 'id="dateien"') && str_contains($htmlN, 'p=kalender_file&amp;id=9') && str_contains($htmlN, 'Einladung.pdf') && str_contains($htmlN, '117.2 KB')
-    && str_contains($htmlN, 'value="datei_weg"') && str_contains($htmlN, 'name="dateien[]"') && str_contains($htmlN, 'enctype="multipart/form-data"'));
+$check('Termin: Dateien mit Link, Mülleimer und Upload im Formular', str_contains($htmlN, 'id="dateien"') && str_contains($htmlN, 'p=kalender_file&amp;id=9') && str_contains($htmlN, 'Einladung.pdf') && str_contains($htmlN, '117.2 KB')
+    && str_contains($htmlN, 'name="datei_weg" value="9"') && str_contains($htmlN, 'name="dateien[]"') && str_contains($htmlN, 'name="datei_titel"') && str_contains($htmlN, 'enctype="multipart/form-data"')
+    && strpos($htmlN, 'name="dateien[]"') < strpos($htmlN, '</form>'));
+$htmlNeu = render_partial('kalender_edit', ['termin' => ['id' => null, 'titel' => '', 'beschreibung' => '', 'ort' => '', 'datum' => '2026-10-15', 'zeit' => '', 'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'user', 'ziel_id' => 3, 'farbe' => ''],
+    'errors' => [], 'nurLesen' => false, 'user' => $u, 'leitung' => false, 'users' => [], 'fahrzeuge' => [], 'standorte' => []]);
+$check('neuer Termin: Dateien gleich mitgeben', str_contains($htmlNeu, 'id="dateien"') && str_contains($htmlNeu, 'name="dateien[]"') && str_contains($htmlNeu, 'beim Eintragen') && !str_contains($htmlNeu, 'name="datei_weg"'));
+$_FILES = ['dateien' => ['name' => ['']]];
+$check('mitgeschickt? leer erkannt', !kalender_dateien_mitgeschickt('dateien') && !kalender_dateien_mitgeschickt('x'));
+$_FILES = ['dateien' => ['name' => ['', 'Einladung.pdf']]];
+$check('mitgeschickt? Datei erkannt', kalender_dateien_mitgeschickt('dateien'));
+$_FILES = [];
 $htmlN = render_partial('kalender_edit', ['termin' => ['id' => 5, 'titel' => 'x', 'beschreibung' => '', 'ort' => '', 'datum' => '2026-10-15', 'zeit' => '19:00', 'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'ov', 'ziel_id' => null, 'farbe' => ''],
     'errors' => [], 'nurLesen' => true, 'user' => $u, 'leitung' => false, 'users' => [], 'fahrzeuge' => [], 'standorte' => [], 'dateien' => []]);
-$check('Termin nur lesen: Dateien sichtbar, kein Upload', str_contains($htmlN, 'Noch nichts angehängt') && !str_contains($htmlN, 'name="dateien[]"') && !str_contains($htmlN, 'value="datei_weg"'));
+$check('Termin nur lesen: Dateien sichtbar, kein Upload', str_contains($htmlN, 'Keine Dateien an diesem Termin') && !str_contains($htmlN, 'name="dateien[]"') && !str_contains($htmlN, 'name="datei_weg"'));
 $check('Route und Wanderung für Termindateien', str_contains((string)file_get_contents($app . '/public/index.php'), "'kalender_file'") && str_contains((string)file_get_contents($app . '/src/cli/migrate.php'), '063_termin_dateien'));
 $htmlN = render_partial('kalender_edit', ['termin' => ['id' => 5, 'titel' => 'x', 'beschreibung' => '', 'ort' => '', 'datum' => '2026-10-15', 'zeit' => '19:00', 'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'ov', 'ziel_id' => null, 'farbe' => ''],
     'errors' => [], 'nurLesen' => false, 'user' => $leitung, 'leitung' => true, 'users' => [], 'standorte' => [], 'dateien' => [],

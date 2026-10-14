@@ -473,11 +473,12 @@ Stube, Küche und Schulungsraum zugleich) und einen **freien Ort**
 („Übungsgelände Neckarwiese"); alles steht zusammen am Eintrag. Dasselbe
 gilt für Veranstaltungen. Die Seite eines Platzes in der Standortübersicht
 zeigt unter „Belegung", welche Termine und Veranstaltungen dort in den
-nächsten 60 Tagen stattfinden. An jeden gespeicherten Termin lassen sich
-unter „Dateien" **Anhänge** hängen – Einladung, Programm, Anfahrtsskizze
-als PDF, Bild oder erlaubter Dokumenttyp; Bilder werden verkleinert und
-verlieren den Aufnahmeort. Öffnen darf sie, wer den Termin sieht; anhängen
-und entfernen, wer ihn bearbeiten darf. **Werkstatttermine:** Ein Termin
+nächsten 60 Tagen stattfinden. Im Terminformular – auch beim Anlegen – lassen sich
+unter „Dateien" **Anhänge** mitgeben – Einladung, Programm, Anfahrtsskizze
+als PDF, Bild oder erlaubter Dokumenttyp; sie werden beim Eintragen bzw.
+Speichern abgelegt, Bilder verkleinert und ohne Aufnahmeort. Vorhandene
+Dateien stehen als Liste mit Mülleimer darüber. Öffnen darf sie, wer den
+Termin sieht; anhängen und entfernen, wer ihn bearbeiten darf. **Werkstatttermine:** Ein Termin
 kann Instandsetzungsaufträge betreffen (Auswahl im Abschnitt Fahrzeuge,
 offene Aufträge je Fahrzeug); die Auftragsseite zeigt unter
 „Werkstatttermine" alle verknüpften Termine – vorbei oder geplant – und
