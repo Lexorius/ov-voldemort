@@ -660,6 +660,16 @@ CREATE TABLE IF NOT EXISTS calendar_kontakte (
   CONSTRAINT fk_ck_contact FOREIGN KEY (contact_id) REFERENCES contacts(id)         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Kontakte aus dem Kontaktmodul, die zu einer THW-Dienststelle gehoeren (Ortsbeauftragte, Sachbearbeiter ...)
+CREATE TABLE IF NOT EXISTS thw_dienststelle_kontakte (
+  dienststelle_id  INT UNSIGNED NOT NULL,
+  contact_id       INT UNSIGNED NOT NULL,
+  PRIMARY KEY (dienststelle_id, contact_id),
+  KEY idx_tdk_contact (contact_id),
+  CONSTRAINT fk_tdk_dst     FOREIGN KEY (dienststelle_id) REFERENCES thw_dienststellen(id) ON DELETE CASCADE,
+  CONSTRAINT fk_tdk_contact FOREIGN KEY (contact_id)      REFERENCES contacts(id)          ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS contact_groups (
   id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
   name          VARCHAR(150) NOT NULL,

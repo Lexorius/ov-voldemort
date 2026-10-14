@@ -132,6 +132,9 @@ foreach ($rows as $r) {
             <?php if ((int)$c['verteiler'] > 0): ?>
               <span class="badge badge--outline"><?= (int)$c['verteiler'] ?>× Verteiler</span>
             <?php endif; ?>
+            <?php if (!empty($c['dienststellen_namen'])): ?>
+              <span class="badge badge--outline" title="THW-Dienststellen">⛑ <?= e((string)$c['dienststellen_namen']) ?></span>
+            <?php endif; ?>
           </div>
         </div>
       <?php endforeach; ?>

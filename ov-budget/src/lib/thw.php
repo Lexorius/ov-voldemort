@@ -115,6 +115,10 @@ function thw_save_from_post(?array $existing, array $user): array
         $id = db_insert('thw_dienststellen', $daten);
         audit('thw.angelegt', 'thw_dienststelle', $id, $name);
     }
+    // Kontakte aus dem Kontaktmodul: nur, wer sie sehen darf und wenn das Feld im Formular war
+    if (can('view_contacts') && post_str('kontakte_feld') === '1') {
+        thw_kontakte_setzen($id, wahl_ids('kontakte'));
+    }
     return [$id, []];
 }
 
@@ -127,6 +131,66 @@ function thw_delete(array $d): ?string
     db_exec('DELETE FROM thw_dienststellen WHERE id = ?', [(int)$d['id']]);
     audit('thw.geloescht', 'thw_dienststelle', (int)$d['id'], (string)$d['name']);
     return null;
+}
+
+/* ---------- Kontakte an Dienststellen (beide Richtungen) ---------- */
+
+/** Die Kontakte einer Dienststelle */
+function thw_kontakte(int $dienststelleId): array
+{
+    return db_all('SELECT c.id, c.titel, c.vorname, c.nachname, c.organisation, c.position, c.email, c.telefon, c.mobil, c.is_active
+                   FROM thw_dienststelle_kontakte l JOIN contacts c ON c.id = l.contact_id WHERE l.dienststelle_id = ? ORDER BY c.nachname, c.vorname', [$dienststelleId]);
+}
+
+/** Genau diese Kontakte gehören zur Dienststelle */
+function thw_kontakte_setzen(int $dienststelleId, array $ids): void
+{
+    db_exec('DELETE FROM thw_dienststelle_kontakte WHERE dienststelle_id = ?', [$dienststelleId]);
+    foreach (array_values(array_unique(array_filter(array_map('intval', $ids), static fn($i) => $i > 0))) as $cid) {
+        db_insert('thw_dienststelle_kontakte', ['dienststelle_id' => $dienststelleId, 'contact_id' => $cid]);
+    }
+}
+
+/** Alle Zuordnungen samt Kontakt, für die Übersicht: [dienststelle_id => [Kontakte]] */
+function thw_kontakte_je_dienststelle(?array $rows = null): array
+{
+    $rows ??= db_all('SELECT l.dienststelle_id, c.id, c.titel, c.vorname, c.nachname, c.organisation, c.position, c.email, c.telefon, c.mobil, c.is_active
+                      FROM thw_dienststelle_kontakte l JOIN contacts c ON c.id = l.contact_id ORDER BY c.nachname, c.vorname');
+    $out = [];
+    foreach ($rows as $r) {
+        $out[(int)$r['dienststelle_id']][] = $r;
+    }
+    return $out;
+}
+
+/** Die Dienststellen eines Kontakts */
+function kontakt_dienststellen(int $contactId): array
+{
+    return db_all('SELECT d.* FROM thw_dienststelle_kontakte l JOIN thw_dienststellen d ON d.id = l.dienststelle_id WHERE l.contact_id = ? ORDER BY d.sort_order, d.name', [$contactId]);
+}
+
+/** Genau diese Dienststellen gehören zum Kontakt */
+function kontakt_dienststellen_setzen(int $contactId, array $ids): void
+{
+    db_exec('DELETE FROM thw_dienststelle_kontakte WHERE contact_id = ?', [$contactId]);
+    foreach (array_values(array_unique(array_filter(array_map('intval', $ids), static fn($i) => $i > 0))) as $did) {
+        db_insert('thw_dienststelle_kontakte', ['dienststelle_id' => $did, 'contact_id' => $contactId]);
+    }
+}
+
+/** Optionen für die Dienststellen-Auswahl (Name mit Kürzel, Pfad, nach Art gruppiert). Reine Funktion. */
+function thw_optionen(array $alle, array $gewaehlt = []): array
+{
+    $out = [];
+    foreach ($alle as $d) {
+        if ((int)$d['is_active'] !== 1 && !in_array((int)$d['id'], $gewaehlt, true)) {
+            continue;
+        }
+        $typ = THW_TYPEN[thw_typ((string)$d['typ'])];
+        $out[] = ['id' => (int)$d['id'], 'text' => (string)$d['name'] . (($d['kurz'] ?? '') !== '' ? ' (' . $d['kurz'] . ')' : ''),
+                  'sub' => standort_pfad((int)($d['parent_id'] ?? 0), $alle), 'gruppe' => $typ['mehrzahl']];
+    }
+    return $out;
 }
 
 /* ---------- Funktionspostfächer ---------- */

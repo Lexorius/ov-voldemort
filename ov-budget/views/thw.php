@@ -12,9 +12,11 @@ $netzBadges = static function (array $p): string {
     }
     return $html !== '' ? $html : '<span class="badge badge--muted">Erreichbarkeit offen</span>';
 };
-$zeile = static function (array $d, int $tiefe) use (&$zeile, $jeDienststelle, $darfPflegen, $netzBadges): void {
+$kontakteJe ??= [];
+$zeile = static function (array $d, int $tiefe) use (&$zeile, $jeDienststelle, $kontakteJe, $darfPflegen, $netzBadges): void {
     $typ = THW_TYPEN[thw_typ((string)$d['typ'])];
     $pf = $jeDienststelle[(int)$d['id']] ?? [];
+    $leute = $kontakteJe[(int)$d['id']] ?? [];
     ?>
     <div class="standort<?= (int)$d['is_active'] !== 1 ? ' standort--aus' : '' ?>" style="margin-left:<?= $tiefe * 1.4 ?>rem">
       <div class="standort__zeile">
@@ -37,6 +39,13 @@ $zeile = static function (array $d, int $tiefe) use (&$zeile, $jeDienststelle, $
             <div class="chips" style="margin-top:.25rem">
               <?php foreach ($pf as $p): ?>
                 <a class="chip<?= (int)$p['is_active'] !== 1 ? ' is-muted' : '' ?>" href="mailto:<?= e((string)$p['email']) ?>" title="<?= e((string)$p['beschreibung'] . ' – ' . postfach_netz_text($p)) ?>">✉ <?= e((string)$p['name']) ?> <span class="muted small"><?= e((string)$p['email']) ?></span></a>
+              <?php endforeach; ?>
+            </div>
+          <?php endif; ?>
+          <?php if ($leute): ?>
+            <div class="chips" style="margin-top:.25rem">
+              <?php foreach ($leute as $c): ?>
+                <a class="chip<?= (int)$c['is_active'] !== 1 ? ' is-muted' : '' ?>" href="<?= e(url('contact_edit', ['id' => $c['id']])) ?>" title="<?= e(implode(' · ', array_filter([(string)($c['position'] ?? ''), (string)($c['mobil'] ?: $c['telefon'] ?: ''), (string)($c['email'] ?? '')]))) ?>">👤 <?= e(contact_name($c)) ?><?= ($c['position'] ?? '') !== '' ? ' <span class="muted small">' . e((string)$c['position']) . '</span>' : '' ?></a>
               <?php endforeach; ?>
             </div>
           <?php endif; ?>

@@ -26,7 +26,7 @@ function db_update(string $t, array $d, string $w, array $p): int { $GLOBALS['up
 function can(string $was, mixed $ctx = null): bool { return true; }
 function current_user(): ?array { return ['id' => 1, 'role' => 'leitung']; }
 $app = dirname(__DIR__);
-foreach (['util', 'settings', 'view', 'standorte', 'thw'] as $lib) { require $app . '/src/lib/' . $lib . '.php'; }
+foreach (['util', 'settings', 'lists', 'view', 'standorte', 'thw', 'contacts'] as $lib) { require $app . '/src/lib/' . $lib . '.php'; }
 
 $ok = 0; $fail = 0;
 $check = function (string $n, bool $c) use (&$ok, &$fail) { if ($c) { $ok++; } else { $fail++; echo "FAIL: $n\n"; } };
@@ -65,6 +65,30 @@ $GLOBALS['kinder'] = 0;
 $GLOBALS['execs'] = [];
 $check('Löschen ohne Unterstellen', thw_delete($rows[3]) === null && str_contains($GLOBALS['execs'][0][0], 'DELETE FROM thw_dienststellen'));
 
+/* ---------- Kontakte an Dienststellen, beide Richtungen ---------- */
+$GLOBALS['inserts'] = [];
+$_POST = ['name' => 'OV Neckarsulm', 'typ' => 'ortsverband', 'parent_id' => '2', 'is_active' => '1', 'kontakte_feld' => '1', 'kontakte' => ['30', '30'], 'kontakte_neu' => '31'];
+[$id, $fehler] = thw_save_from_post($rows[3], $u);
+$tk = array_values(array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'thw_dienststelle_kontakte'));
+$check('Dienststelle: Kontakte gesetzt, ohne Doppelte', $fehler === [] && count($tk) === 2 && $tk[0][1] === ['dienststelle_id' => 4, 'contact_id' => 30] && $tk[1][1]['contact_id'] === 31);
+$GLOBALS['inserts'] = [];
+$_POST = ['vorname' => 'Max', 'nachname' => 'Muster', 'organisation' => '', 'email' => '', 'is_active' => '1', 'dienststellen_feld' => '1', 'dienststellen' => ['2'], 'dienststellen_neu' => '4'];
+[$cid, $fehler] = contact_save_from_post(null, $u);
+$kd = array_values(array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'thw_dienststelle_kontakte'));
+$check('Kontakt: Dienststellen gesetzt', $fehler === [] && count($kd) === 2 && $kd[0][1] === ['dienststelle_id' => 2, 'contact_id' => $cid] && $kd[1][1]['dienststelle_id'] === 4);
+$GLOBALS['inserts'] = [];
+$_POST = ['vorname' => 'Ohne', 'nachname' => 'Feld', 'organisation' => '', 'email' => '', 'is_active' => '1'];
+contact_save_from_post(null, $u);
+$check('Kontakt ohne das Feld lässt die Zuordnung in Ruhe', !array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'thw_dienststelle_kontakte'));
+$_POST = [];
+$leuteJe = thw_kontakte_je_dienststelle([['dienststelle_id' => 2, 'id' => 30, 'vorname' => 'Max', 'nachname' => 'Muster', 'position' => 'Sachbearbeiter', 'organisation' => '', 'email' => '', 'telefon' => '', 'mobil' => '', 'is_active' => 1],
+    ['dienststelle_id' => 4, 'id' => 31, 'vorname' => 'Erika', 'nachname' => 'Beispiel', 'position' => 'Ortsbeauftragte', 'organisation' => '', 'email' => 'e@example.org', 'telefon' => '', 'mobil' => '', 'is_active' => 1]]);
+$check('Kontakte je Dienststelle', count($leuteJe[2]) === 1 && $leuteJe[4][0]['nachname'] === 'Beispiel');
+$opt = thw_optionen($rows, [4]);
+$check('Optionen: Name mit Kürzel, Pfad, Gruppe nach Art, stillgelegte nur wenn gewählt', $opt[1]['text'] === 'Regionalstelle Heilbronn (RSt HN)' && $opt[1]['sub'] === 'LV Baden-Württemberg' && $opt[1]['gruppe'] === 'Regionalstellen'
+    && in_array(4, array_column($opt, 'id'), true) && !in_array(4, array_column(thw_optionen($rows), 'id'), true) && $opt[2]['sub'] === 'LV Baden-Württemberg › Regionalstelle Heilbronn');
+$check('Kontaktliste liest die Dienststellen mit', str_contains((string)file_get_contents($app . '/src/lib/contacts.php'), 'AS dienststellen_namen'));
+
 /* ---------- Postfächer ---------- */
 $pf = [
     ['id' => 10, 'dienststelle_id' => 2, 'name' => 'Einsatz', 'email' => 'einsatz.rst@example.org', 'beschreibung' => 'Einsatzabrechnungen', 'offiziell' => 1, 'behoerdennetz' => 1, 'notiz' => '', 'sort_order' => 10, 'is_active' => 1, 'dienststelle_name' => 'Regionalstelle Heilbronn'],
@@ -91,6 +115,16 @@ $html = render_partial('thw', ['q' => '', 'alle' => $rows, 'baum' => standort_ba
 $check('Übersicht: Baum mit Pfad, Anschrift, Links, Postfach-Chips, Knöpfe', str_contains($html, 'LV Baden-Württemberg') && str_contains($html, 'margin-left:2.8rem') && str_contains($html, 'Musterstraße 1, 74072 Heilbronn')
     && str_contains($html, 'tel:071311234') && str_contains($html, 'mailto:rst@example.org') && str_contains($html, 'https://thw.de') && str_contains($html, '✉ Einsatz') && str_contains($html, 'stillgelegt')
     && str_contains($html, 'p=thw_dienststelle_edit&amp;parent_id=2') && str_contains($html, 'p=thw_postfach_edit&amp;dienststelle_id=2') && str_contains($html, '2 Ortsverbände') && str_contains($html, '1 Landesverband'));
+$htmlL = render_partial('thw', ['q' => '', 'alle' => $rows, 'baum' => standort_baum($rows), 'zaehlung' => standort_zaehlung($rows), 'postfaecher' => $pf, 'jeDienststelle' => $je2 = postfach_je_dienststelle($pf), 'darfPflegen' => true, 'kontakteJe' => $leuteJe]);
+$check('Übersicht: Ansprechpartner als Chips an der Dienststelle', str_contains($htmlL, '👤 Erika Beispiel') && str_contains($htmlL, 'Ortsbeauftragte') && str_contains($htmlL, 'p=contact_edit&amp;id=31'));
+$htmlF = render_partial('thw_dienststelle_edit', ['d' => $rows[3], 'errors' => [], 'alle' => $rows, 'ausser' => [4], 'kontaktOptionen' => [['id' => 30, 'text' => 'Max Muster', 'sub' => 'Sachbearbeiter', 'gruppe' => ''], ['id' => 31, 'text' => 'Erika Beispiel', 'sub' => '', 'gruppe' => '']], 'kontakteGewaehlt' => [31]]);
+$check('Dienststellenformular: Kontakte wählbar', str_contains($htmlF, 'Ansprechpartner aus dem Kontaktmodul') && str_contains($htmlF, 'data-wahl="kontakte"') && str_contains($htmlF, 'name="kontakte[]" value="31"') && str_contains($htmlF, 'data-text="Max Muster"'));
+$dstZeilen = $rows; $opt4 = thw_optionen($rows, [4]);
+$GLOBALS['rows'] = [];
+$htmlC = render_partial('contact_edit', ['contact' => ['id' => 30, 'anrede' => '', 'titel' => '', 'vorname' => 'Max', 'nachname' => 'Muster', 'organisation' => '', 'position' => '', 'kategorie_id' => null, 'email' => '', 'telefon' => '', 'mobil' => '',
+    'strasse' => '', 'plz' => '', 'ort' => '', 'land' => '', 'anschreiben' => '', 'notiz' => '', 'is_active' => 1, 'extra' => null], 'errors' => [], 'verteiler' => [], 'mitglied' => [], 'dienststellenOptionen' => $opt4, 'dienststellenGewaehlt' => [4]]);
+$rows = $dstZeilen; $GLOBALS['rows'] = $rows;
+$check('Kontaktformular: Dienststellen wählbar', str_contains($htmlC, '>THW-Dienststellen</h3>') && str_contains($htmlC, 'data-wahl="dienststellen"') && str_contains($htmlC, 'name="dienststellen[]" value="4"') && str_contains($htmlC, '<optgroup label="Ortsverbände">'));
 $check('Übersicht: Postfachtabelle mit Erreichbarkeit', str_contains($html, '>Behördennetz</span>') && str_contains($html, '>offizielles Netz</span>') && str_contains($html, 'Personal und Haushalt') && str_contains($html, 'value="postfach_aktiv"'));
 $html = render_partial('thw', ['q' => '', 'alle' => $rows, 'baum' => standort_baum($rows), 'zaehlung' => standort_zaehlung($rows), 'postfaecher' => $pf, 'jeDienststelle' => $je, 'darfPflegen' => false]);
 $check('ohne Pflegerecht keine Knöpfe', !str_contains($html, '+ Dienststelle') && !str_contains($html, 'value="postfach_aktiv"') && str_contains($html, 'mailto:einsatz.rst@example.org'));

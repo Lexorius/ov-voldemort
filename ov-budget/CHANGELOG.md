@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.33.0
+
+- **Kontakte an THW-Dienststellen:** Ansprechpartner aus dem Kontaktmodul
+  lassen sich einer Dienststelle zuordnen – im Formular der Dienststelle
+  oder im Kontakt selbst, beide Richtungen pflegen dieselbe Zuordnung. Die
+  THW-Kontakte zeigen die Personen als Chips an der Dienststelle, die
+  Kontaktliste die Dienststellen am Kontakt (nur mit Kontaktrecht).
+
 ## 2.1.32.0
 
 - **Termine mit THW-Dienststellen:** Unter „THW-Dienststellen" lassen sich

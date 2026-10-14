@@ -31,7 +31,30 @@ if (!$d) {
 }
 $ausser = !empty($d['id']) ? array_merge([(int)$d['id']], standort_nachkommen((int)$d['id'], $alle)) : [];
 
+// Kontakte aus dem Kontaktmodul – nur, wer sie sehen darf
+$kontakteGewaehlt = [];
+$kontaktOptionen = [];
+if (can('view_contacts') && function_exists('contact_query')) {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $kontakteGewaehlt = wahl_ids('kontakte');
+    } elseif (!empty($d['id'])) {
+        $kontakteGewaehlt = array_map('intval', array_column(thw_kontakte((int)$d['id']), 'id'));
+    }
+    $liste = contact_query(['limit' => 1000]);
+    $da = array_map('intval', array_column($liste, 'id'));
+    foreach ($kontakteGewaehlt as $cid) {
+        if (!in_array($cid, $da, true) && ($c = contact_find($cid))) {
+            $liste[] = $c;
+        }
+    }
+    foreach ($liste as $c) {
+        $kontaktOptionen[] = ['id' => (int)$c['id'], 'text' => contact_name($c), 'sub' => implode(' · ', array_filter([trim(($c['vorname'] ?? '') . ($c['nachname'] ?? '')) !== '' ? (string)($c['organisation'] ?? '') : '', (string)($c['position'] ?? '')])), 'gruppe' => ''];
+    }
+}
+
 render('thw_dienststelle_edit', [
+    'kontakteGewaehlt' => $kontakteGewaehlt,
+    'kontaktOptionen'  => $kontaktOptionen,
     'title'  => $d['id'] ? 'Dienststelle bearbeiten' : 'Dienststelle anlegen',
     'd'      => $d,
     'errors' => $errors,

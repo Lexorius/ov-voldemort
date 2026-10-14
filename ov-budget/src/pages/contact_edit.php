@@ -48,7 +48,17 @@ if (!$contact) {
     ];
 }
 
+// THW-Dienststellen, zu denen der Kontakt gehört
+$dienststellenGewaehlt = [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $dienststellenGewaehlt = wahl_ids('dienststellen');
+} elseif (!empty($contact['id']) && function_exists('kontakt_dienststellen')) {
+    $dienststellenGewaehlt = array_map('intval', array_column(kontakt_dienststellen((int)$contact['id']), 'id'));
+}
+
 render('contact_edit', [
+    'dienststellenGewaehlt' => $dienststellenGewaehlt,
+    'dienststellenOptionen' => function_exists('thw_optionen') ? thw_optionen(thw_all(), $dienststellenGewaehlt) : [],
     'title'     => $contact['id'] ? 'Kontakt bearbeiten' : 'Kontakt anlegen',
     'contact'   => $contact,
     'errors'    => $errors,

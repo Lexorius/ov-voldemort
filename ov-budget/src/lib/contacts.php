@@ -122,7 +122,9 @@ function contact_query(array $f = []): array
     };
 
     $sql = 'SELECT c.*, ka.label AS kategorie_label, ka.color AS kategorie_color,
-                   (SELECT COUNT(*) FROM contact_group_members m WHERE m.contact_id = c.id) AS verteiler
+                   (SELECT COUNT(*) FROM contact_group_members m WHERE m.contact_id = c.id) AS verteiler,
+                   (SELECT GROUP_CONCAT(COALESCE(NULLIF(d.kurz, \'\'), d.name) ORDER BY d.sort_order, d.name SEPARATOR \', \')
+                      FROM thw_dienststelle_kontakte l JOIN thw_dienststellen d ON d.id = l.dienststelle_id WHERE l.contact_id = c.id) AS dienststellen_namen
             FROM contacts c
             LEFT JOIN list_items ka ON ka.id = c.kategorie_id'
         . ($w ? ' WHERE ' . implode(' AND ', $w) : '')
@@ -183,6 +185,10 @@ function contact_save_from_post(?array $existing, array $user): array
         $data['created_by'] = (int)$user['id'];
         $id = db_insert('contacts', $data);
         audit('kontakt.angelegt', 'contact', $id, contact_name($data));
+    }
+    // THW-Dienststellen, zu denen der Kontakt gehört: nur, wenn das Feld im Formular war
+    if (post_str('dienststellen_feld') === '1' && function_exists('kontakt_dienststellen_setzen')) {
+        kontakt_dienststellen_setzen($id, wahl_ids('dienststellen'));
     }
 
     return [$id, []];

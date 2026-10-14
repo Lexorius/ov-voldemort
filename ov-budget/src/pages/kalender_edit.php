@@ -190,18 +190,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
 } elseif (!empty($termin['id'])) {
     $dienststellenGewaehlt = array_map('intval', array_column(kalender_dienststellen((int)$termin['id']), 'id'));
 }
-$dienststellenOptionen = [];
-if (function_exists('thw_all')) {
-    $dstAlle = thw_all();
-    foreach ($dstAlle as $d) {
-        if ((int)$d['is_active'] !== 1 && !in_array((int)$d['id'], $dienststellenGewaehlt, true)) {
-            continue;
-        }
-        $typ = THW_TYPEN[thw_typ((string)$d['typ'])];
-        $dienststellenOptionen[] = ['id' => (int)$d['id'], 'text' => (string)$d['name'] . ($d['kurz'] !== '' ? ' (' . $d['kurz'] . ')' : ''),
-                                    'sub' => standort_pfad((int)($d['parent_id'] ?? 0), $dstAlle), 'gruppe' => $typ['mehrzahl']];
-    }
-}
+$dienststellenOptionen = function_exists('thw_optionen') ? thw_optionen(thw_all(), $dienststellenGewaehlt) : [];
 
 render('kalender_edit', [
     'dienststellenGewaehlt' => $dienststellenGewaehlt,

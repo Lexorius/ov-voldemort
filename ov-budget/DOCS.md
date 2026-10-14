@@ -476,6 +476,13 @@ Leitung und Administration.
   Adresse, wofür das Postfach da ist, Dienststelle und die Erreichbarkeit
   als zwei Haken – **offizielles Netz** (Internet) und **Behördennetz**.
   Die Postfächer stehen in der Tabelle und als Chips an ihrer Dienststelle.
+* **Ansprechpartner:** Kontakte aus dem Kontaktmodul – etwa der
+  Ortsbeauftragte von OV Neckarsulm – lassen sich einer Dienststelle
+  zuordnen, in beide Richtungen: im Formular der Dienststelle unter
+  „Ansprechpartner aus dem Kontaktmodul" oder im Kontakt unter
+  „THW-Dienststellen". Die Übersicht zeigt sie als Chips an der
+  Dienststelle, die Kontaktliste die Dienststellen am Kontakt. Das sehen
+  nur Personen, die Kontakte sehen dürfen.
 * **Termine:** Im Terminformular lassen sich unter „THW-Dienststellen"
   beteiligte Dienststellen anhängen – in oder mit welchem Ortsverband, mit
   welcher Regionalstelle der Termin stattfindet, auch mehrere. Kalender und

@@ -31,5 +31,6 @@ render('thw', [
     'zaehlung'    => standort_zaehlung($alle),
     'postfaecher' => postfach_suchen($postfaecher, $q),
     'jeDienststelle' => postfach_je_dienststelle($postfaecher),
+    'kontakteJe'  => can('view_contacts') ? thw_kontakte_je_dienststelle() : [],
     'darfPflegen' => in_array((string)($user['role'] ?? ''), ['admin', 'leitung'], true),
 ]);

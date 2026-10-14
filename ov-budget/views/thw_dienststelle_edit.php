@@ -66,6 +66,11 @@ $isNew = empty($d['id']);
     <label for="notiz">Notiz</label>
     <textarea id="notiz" name="notiz" rows="2"><?= e((string)($d['notiz'] ?? '')) ?></textarea>
   </div>
+  <?php $kontaktOptionen ??= []; $kontakteGewaehlt ??= []; if ($kontaktOptionen && can('view_contacts')): ?>
+    <h2 class="mt">Ansprechpartner aus dem Kontaktmodul</h2>
+    <?= render_partial('partials/wahl_liste', ['name' => 'kontakte', 'feld' => 'kontakte_feld', 'label' => 'Kontakte dieser Dienststelle', 'optionen' => $kontaktOptionen, 'gewaehlt' => $kontakteGewaehlt, 'leer' => '– Kontakt wählen –',
+        'hinweis' => 'Etwa Ortsbeauftragte oder Sachbearbeiter – dieselbe Zuordnung lässt sich auch im Kontakt selbst setzen.']) ?>
+  <?php endif; ?>
   <div class="btnrow">
     <button class="btn" type="submit">Speichern</button>
     <a class="btn btn--sec" href="<?= e(url('thw')) ?>">Abbrechen</a>

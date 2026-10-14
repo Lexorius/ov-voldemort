@@ -176,6 +176,11 @@ $extraFelder = contact_extra_fields();
         <?php endforeach; ?>
       </div>
     <?php endif; ?>
+    <?php $dienststellenOptionen ??= []; $dienststellenGewaehlt ??= []; if ($dienststellenOptionen): ?>
+      <h3 class="mt">THW-Dienststellen</h3>
+      <?= render_partial('partials/wahl_liste', ['name' => 'dienststellen', 'feld' => 'dienststellen_feld', 'label' => 'Gehört zu', 'optionen' => $dienststellenOptionen, 'gewaehlt' => $dienststellenGewaehlt, 'leer' => '– Dienststelle wählen –',
+          'hinweis' => 'Etwa der Ortsbeauftragte von OV Neckarsulm oder eine Sachbearbeiterin der Regionalstelle. Die Dienststelle zeigt den Kontakt dann in den THW-Kontakten.']) ?>
+    <?php endif; ?>
   </section>
 
   <div class="btnrow">
