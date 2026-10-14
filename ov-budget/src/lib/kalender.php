@@ -1099,6 +1099,45 @@ function kalender_termin_anhang(array $t, array $u): array
     ];
 }
 
+/**
+ * Wohin das Navi soll: Koordinaten des ersten Platzes mit Lage, sonst der
+ * freie Ort als Adresse, sonst die Anschrift der ersten THW-Dienststelle.
+ * Rückgabe: ['text' => Beschriftung, 'ziel' => „49.1,9.2" oder Adresse, 'koordinaten' => bool] oder null. Reine Funktion.
+ */
+function kalender_navi_ziel(array $termin, array $standorte, array $dienststellen = []): ?array
+{
+    foreach ($standorte as $s) {
+        if (($s['geo_lat'] ?? null) !== null && ($s['geo_lng'] ?? null) !== null) {
+            return ['text' => (string)($s['pfad'] ?? $s['name']), 'ziel' => sprintf('%.6f,%.6f', (float)$s['geo_lat'], (float)$s['geo_lng']), 'koordinaten' => true];
+        }
+    }
+    $ort = trim((string)($termin['ort'] ?? ''));
+    if ($ort !== '') {
+        return ['text' => $ort, 'ziel' => $ort, 'koordinaten' => false];
+    }
+    foreach ($dienststellen as $d) {
+        $adresse = implode(', ', array_filter([trim((string)($d['strasse'] ?? '')), trim(trim((string)($d['plz'] ?? '')) . ' ' . trim((string)($d['ort'] ?? '')))], 'strlen'));
+        if ($adresse !== '') {
+            return ['text' => (string)$d['name'] . ' – ' . $adresse, 'ziel' => $adresse, 'koordinaten' => false];
+        }
+    }
+    return null;
+}
+
+/** Adressen für die Karten-Apps: Google Maps (überall), Apple Karten, geo: (Android). Reine Funktion. */
+function kalender_navi_links(array $ziel): array
+{
+    $z = rawurlencode($ziel['ziel']);
+    $out = [
+        'google' => 'https://www.google.com/maps/dir/?api=1&destination=' . $z,
+        'apple'  => 'https://maps.apple.com/?daddr=' . $z,
+    ];
+    if (!empty($ziel['koordinaten'])) {
+        $out['geo'] = 'geo:' . $ziel['ziel'] . '?q=' . $z;
+    }
+    return $out;
+}
+
 /** Schlüssel, mit dem ein Eintrag im Formular wiedergefunden wird. Reine Funktion. */
 function kalender_schluessel(array $e): string
 {

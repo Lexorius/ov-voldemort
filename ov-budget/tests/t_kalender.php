@@ -300,6 +300,22 @@ $check('Druckfassung: eigenständige Seite mit allen Angaben', str_starts_with(t
 $check('Einträge führen zur Terminseite', str_contains(array_values(array_filter($alle, static fn($e) => $e['titel'] === 'Eigener'))[0]['url'], 'p=kalender_termin') && str_contains((string)file_get_contents($app . '/views/dashboard.php'), "url('kalender_termin'")
     && str_contains((string)file_get_contents($app . '/views/vehicle.php'), "url('kalender_termin'") && str_contains((string)file_get_contents($app . '/public/index.php'), "'kalender_termin'"));
 
+/* ---------- Navigation ---------- */
+$z = kalender_navi_ziel(['ort' => 'Neckarwiese'], [['id' => 4, 'name' => 'Halle 1', 'pfad' => 'Haupthaus › Halle 1', 'geo_lat' => '49.142345', 'geo_lng' => '9.218765']], []);
+$check('Navi: Koordinaten des Platzes zuerst', $z['koordinaten'] && $z['ziel'] === '49.142345,9.218765' && $z['text'] === 'Haupthaus › Halle 1');
+$z = kalender_navi_ziel(['ort' => 'Neckarwiese, Heilbronn'], [['id' => 4, 'name' => 'Halle 1', 'geo_lat' => null, 'geo_lng' => null]], [['name' => 'RSt', 'strasse' => 'Musterstraße 1', 'plz' => '74072', 'ort' => 'Heilbronn']]);
+$check('Navi: sonst der freie Ort', !$z['koordinaten'] && $z['ziel'] === 'Neckarwiese, Heilbronn');
+$z = kalender_navi_ziel(['ort' => ''], [], [['name' => 'RSt Heilbronn', 'strasse' => 'Musterstraße 1', 'plz' => '74072', 'ort' => 'Heilbronn']]);
+$check('Navi: sonst die Anschrift der Dienststelle', $z['ziel'] === 'Musterstraße 1, 74072 Heilbronn' && str_starts_with($z['text'], 'RSt Heilbronn – '));
+$check('Navi: ohne alles nichts', kalender_navi_ziel(['ort' => ''], [], [['name' => 'x', 'strasse' => '', 'plz' => '', 'ort' => '']]) === null);
+$l = kalender_navi_links(['ziel' => '49.142345,9.218765', 'koordinaten' => true]);
+$check('Navi-Links', $l['google'] === 'https://www.google.com/maps/dir/?api=1&destination=49.142345%2C9.218765' && str_starts_with($l['apple'], 'https://maps.apple.com/?daddr=') && $l['geo'] === 'geo:49.142345,9.218765?q=49.142345%2C9.218765'
+    && !isset(kalender_navi_links(['ziel' => 'Neckarwiese', 'koordinaten' => false])['geo']));
+$htmlN = render_partial('kalender_termin', ['termin' => ['id' => 5, 'titel' => 'x', 'beschreibung' => '', 'ort' => 'Neckarwiese', 'beginn' => '2026-10-17 08:00:00', 'ende' => null, 'ganztag' => 0, 'ziel' => 'ov', 'ziel_id' => null, 'farbe' => ''],
+    'wann' => 'x', 'fuerWen' => 'Ortsverband', 'darfBearbeiten' => false, 'besprochen' => [], 'standorte' => [], 'fahrzeuge' => [], 'auftraege' => [], 'dienststellen' => [], 'kontakte' => [], 'fachgruppen' => [], 'dateien' => [],
+    'navi' => $z = kalender_navi_ziel(['ort' => 'Neckarwiese'], [], []), 'naviLinks' => kalender_navi_links($z)]);
+$check('Terminseite: Navigationsknopf und Links', str_contains($htmlN, '🧭 Navigation starten') && str_contains($htmlN, 'destination=Neckarwiese') && str_contains($htmlN, 'maps.apple.com') && str_contains($htmlN, '(als Adresse)') && !str_contains($htmlN, 'geo:'));
+
 /* ---------- Ansichten ---------- */
 $GLOBALS['rechte']['create_kalender'] = true;
 $raster = kalender_monatsraster(2026, 10);

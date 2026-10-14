@@ -498,7 +498,11 @@ Zusammenfassung mit Wann, Wo, Für wen und nur den Abschnitten, an denen
 wirklich etwas hängt – Fahrzeuge, Aufträge, THW-Dienststellen, Kontakte,
 Dateien, Besprechungen. „Drucken / PDF" öffnet eine Druckfassung auf A4,
 „Bearbeiten" führt zum vollständigen Formular. Nach dem Speichern landet
-man wieder auf der Terminseite.
+man wieder auf der Terminseite. **Navigation starten** schickt das Ziel
+ans Navi des Handys: die GPS-Koordinaten des ersten Platzes mit Lage,
+sonst den freien Ort als Adresse, sonst die Anschrift der ersten
+THW-Dienststelle – über Google Maps, Apple Karten oder die Karten-App
+unter Android.
 
 Ein Termin gilt für ein Ziel (Ortsverband, Fachgruppe, Funktion, Person)
 und kann unter „Weitere Fachgruppen" für **mehrere Fachgruppen** zugleich

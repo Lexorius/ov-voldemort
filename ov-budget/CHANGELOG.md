@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## 2.1.35.0
+
+- **Navigation vom Termin aus:** Die Terminseite hat den Knopf „Navigation
+  starten", der das Ziel ans Navi des Handys gibt – GPS-Koordinaten des
+  Platzes, sonst der freie Ort, sonst die Anschrift der THW-Dienststelle.
+  Links für Google Maps, Apple Karten und die Karten-App unter Android.
+
 ## 2.1.34.0
 
 - **Terminseite:** Ein Klick auf einen Termin im Kalender, auf der

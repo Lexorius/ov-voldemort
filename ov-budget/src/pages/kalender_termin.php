@@ -24,6 +24,9 @@ $daten = [
     'besprochen' => can('view_meetings') && function_exists('tps_fuer') ? tps_fuer('termin', (int)$termin['id']) : [],
 ] + kalender_termin_anhang($termin, $user);
 
+$daten['navi'] = kalender_navi_ziel($termin, $daten['standorte'], $daten['dienststellen']);
+$daten['naviLinks'] = $daten['navi'] ? kalender_navi_links($daten['navi']) : [];
+
 if (get_str('druck') === '1') {
     echo render_partial('kalender_termin_druck', $daten);
     return;

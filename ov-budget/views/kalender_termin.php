@@ -11,6 +11,9 @@ $weitere = implode(', ', array_map(static fn($f) => (string)$f['label'], $fachgr
   </div>
   <div class="btnrow">
     <?php if ($darfBearbeiten): ?><a class="btn" href="<?= e(url('kalender_edit', ['id' => $termin['id']])) ?>">Bearbeiten</a><?php endif; ?>
+    <?php $navi ??= null; $naviLinks ??= []; if ($navi): ?>
+      <a class="btn btn--sec" href="<?= e($naviLinks['google']) ?>" target="_blank" rel="noopener" title="<?= e('Ziel: ' . $navi['text']) ?>">🧭 Navigation starten</a>
+    <?php endif; ?>
     <a class="btn btn--sec" href="<?= e(url('kalender_termin', ['id' => $termin['id'], 'druck' => 1])) ?>" target="_blank" rel="noopener">Drucken / PDF</a>
     <a class="btn btn--sec" href="<?= e(url('kalender', ['monat' => substr((string)$termin['beginn'], 0, 7)])) ?>">Zum Kalender</a>
   </div>
@@ -22,6 +25,10 @@ $weitere = implode(', ', array_map(static fn($f) => (string)$f['label'], $fachgr
     <?php if ($ort !== ''): ?><div class="dl__item"><div class="dl__label">Wo</div><div class="dl__value">
       <?php foreach ($standorte as $s): ?><a href="<?= e(url('standorte', ['id' => $s['id']])) ?>"><?= e((string)$s['pfad']) ?></a><br><?php endforeach; ?>
       <?= trim((string)($termin['ort'] ?? '')) !== '' ? e((string)$termin['ort']) : '' ?></div></div><?php endif; ?>
+    <?php if ($navi): ?>
+      <div class="dl__item"><div class="dl__label">Navigation</div><div class="dl__value">Ziel: <?= e($navi['text']) ?><?= $navi['koordinaten'] ? ' <span class="muted small">(GPS-Koordinaten des Platzes)' : ' <span class="muted small">(als Adresse)' ?></span><br>
+        <span class="small"><a href="<?= e($naviLinks['google']) ?>" target="_blank" rel="noopener">Google Maps</a> · <a href="<?= e($naviLinks['apple']) ?>" target="_blank" rel="noopener">Apple Karten</a><?= isset($naviLinks['geo']) ? ' · <a href="' . e($naviLinks['geo']) . '">Karten-App (Android)</a>' : '' ?></span></div></div>
+    <?php endif; ?>
     <div class="dl__item"><div class="dl__label">Für wen</div><div class="dl__value"><?= e($fuerWen) ?><?= $weitere !== '' ? '<br><span class="muted small">auch für ' . e($weitere) . '</span>' : '' ?></div></div>
     <?php if (!empty($termin['erfasser'])): ?><div class="dl__item"><div class="dl__label">Eingetragen von</div><div class="dl__value"><?= e((string)$termin['erfasser']) ?></div></div><?php endif; ?>
   </dl>
