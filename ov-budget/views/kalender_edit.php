@@ -138,6 +138,28 @@ $ganztag = (int)($termin['ganztag'] ?? 0) === 1;
   </section>
   <?php endif; ?>
 
+  <?php $kontaktOptionen ??= []; $kontakte ??= []; $kontakteGewaehlt ??= []; if ($kontaktOptionen && can('view_contacts')): ?>
+  <section class="card" id="kontakte">
+    <h2>Kontakte</h2>
+    <p class="small muted">Ansprechpartner, Referenten oder Gäste aus dem Kontaktmodul – zum schnellen Anrufen oder Anschreiben vom Termin aus.</p>
+    <?php if ($kontakte): ?>
+      <ul class="wahl__liste" style="margin-bottom:.6rem">
+        <?php foreach ($kontakte as $c): ?>
+          <li class="wahl__eintrag" style="background:transparent">
+            <span class="wahl__text"><a href="<?= e(url('contact_edit', ['id' => $c['id']])) ?>"><?= e(contact_name($c)) ?></a>
+              <span class="muted small"><?= e(implode(' · ', array_filter([(string)($c['organisation'] ?? ''), (string)($c['position'] ?? '')]))) ?></span>
+              <?php if (!empty($c['telefon']) || !empty($c['mobil']) || !empty($c['email'])): ?>
+                <span class="small"><?php foreach (array_filter([$c['mobil'] ?? '', $c['telefon'] ?? '']) as $nr): ?> · <a href="tel:<?= e(preg_replace('/[^0-9+]/', '', (string)$nr)) ?>"><?= e((string)$nr) ?></a><?php endforeach; ?><?= !empty($c['email']) ? ' · <a href="mailto:' . e((string)$c['email']) . '">' . e((string)$c['email']) . '</a>' : '' ?></span>
+              <?php endif; ?></span>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    <?php endif; ?>
+    <?= render_partial('partials/wahl_liste', ['name' => 'kontakte', 'feld' => 'kontakte_feld', 'label' => 'Kontakte am Termin', 'optionen' => $kontaktOptionen, 'gewaehlt' => $kontakteGewaehlt, 'leer' => '– Kontakt wählen –',
+        'hinweis' => 'Tippen zum Suchen, dann „+ Hinzufügen". Die Kontakte sehen nur Personen, die das Kontaktmodul sehen dürfen.']) ?>
+  </section>
+  <?php endif; ?>
+
   <?php $dateien ??= []; ?>
   <section class="card" id="dateien">
     <div class="card__head">

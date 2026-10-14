@@ -1752,6 +1752,19 @@ SQL);
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
     }
     $merken('064_werkstatttermine');
+
+    /* ---------- 065: Kontakte am Termin ---------- */
+    if (ovb_table_exists($pdo, 'calendar_entries') && ovb_table_exists($pdo, 'contacts') && !ovb_table_exists($pdo, 'calendar_kontakte')) {
+        $pdo->exec('CREATE TABLE calendar_kontakte (
+            entry_id    INT UNSIGNED NOT NULL,
+            contact_id  INT UNSIGNED NOT NULL,
+            PRIMARY KEY (entry_id, contact_id),
+            KEY idx_ck_contact (contact_id),
+            CONSTRAINT fk_ck_entry   FOREIGN KEY (entry_id)   REFERENCES calendar_entries(id) ON DELETE CASCADE,
+            CONSTRAINT fk_ck_contact FOREIGN KEY (contact_id) REFERENCES contacts(id)         ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+    }
+    $merken('065_termin_kontakte');
 }
 
 /**

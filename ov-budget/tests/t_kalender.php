@@ -69,6 +69,9 @@ $check('weitere Fachgruppe am Termin macht ihn sichtbar', kalender_sichtbar(['zi
     && !kalender_sichtbar(['ziel' => 'fachgruppe', 'ziel_id' => 6, 'created_by' => 1, 'fachgruppen_ids' => '9'], $u) && kalender_sichtbar(['ziel' => 'user', 'ziel_id' => 4, 'created_by' => 1, 'fachgruppen_ids' => [5]], $u)
     && kalender_fachgruppen_ids(['fachgruppen_ids' => '5,x,0,7']) === [5, 7] && kalender_fachgruppen_ids([]) === []);
 $check('Fachgruppen dazunehmen: Mitglied nur die eigene, Leitung alle', kalender_fachgruppen_erlaubt([5, 6, 5, 0], $u) === [5] && kalender_fachgruppen_erlaubt([5, 6], $leitung) === [5, 6]);
+$GLOBALS['rechte']['view_contacts'] = true;
+$check('Untertitel mit Kontakten nur mit Recht', str_contains(kalender_untertitel(['ziel' => 'ov', 'ziel_id' => null, 'kontakte_namen' => 'Max Muster']), '👤 Max Muster')
+    && (static function () { $GLOBALS['rechte']['view_contacts'] = false; $t = kalender_untertitel(['ziel' => 'ov', 'ziel_id' => null, 'kontakte_namen' => 'Max Muster']); $GLOBALS['rechte']['view_contacts'] = true; return !str_contains($t, 'Max'); })());
 $check('Untertitel mit Auftrag', kalender_untertitel(['ziel' => 'ov', 'ziel_id' => null, 'auftraege_namen' => '2026-0005 Bremse']) === 'Ortsverband · 🔧 2026-0005 Bremse' && kalender_untertitel(['ziel' => 'ov', 'ziel_id' => null]) === 'Ortsverband');
 $check('Zielname mit weiteren Fachgruppen', kalender_ziel_name(['ziel' => 'fachgruppe', 'ziel_id' => 5, 'fachgruppen_namen' => 'Logistik, Jugend']) === 'Fachgruppe Bergung + Logistik, Jugend'
     && kalender_ziel_name(['ziel' => 'ov', 'ziel_id' => null, 'fachgruppen_namen' => '']) === 'Ortsverband');
@@ -105,8 +108,17 @@ $GLOBALS['inserts'] = []; $GLOBALS['execs'] = [];
 $GLOBALS['tabellen'] = ['FROM standorte' => [['id' => 4, 'parent_id' => null, 'typ' => 'raum', 'name' => 'Gute Stube', 'sort_order' => 10, 'is_active' => 1, 'kurz' => ''], ['id' => 6, 'parent_id' => null, 'typ' => 'raum', 'name' => 'Küche', 'sort_order' => 20, 'is_active' => 1, 'kurz' => ''],
     ['id' => 8, 'parent_id' => null, 'typ' => 'raum', 'name' => 'Alt', 'sort_order' => 30, 'is_active' => 0, 'kurz' => '']]];
 $_POST = ['titel' => 'Fahrzeugpflege', 'datum' => '2026-11-02', 'ganztag' => '1', 'ziel' => 'user', 'ort' => 'Waschplatz', 'standorte_feld' => '1', 'standorte' => ['4', '6', '6', '8', '99', 'x'], 'fahrzeuge_feld' => '1', 'vehicles' => ['2', '2', 'x', '5'],
-    'fachgruppen_feld' => '1', 'fachgruppen' => ['6'], 'fachgruppen_neu' => '5', 'auftraege_feld' => '1', 'auftraege' => ['12'], 'auftraege_neu' => '12'];
+    'fachgruppen_feld' => '1', 'fachgruppen' => ['6'], 'fachgruppen_neu' => '5', 'auftraege_feld' => '1', 'auftraege' => ['12'], 'auftraege_neu' => '12',
+    'kontakte_feld' => '1', 'kontakte' => ['30'], 'kontakte_neu' => '31'];
+$GLOBALS['rechte']['view_contacts'] = true;
 [$id, $fehler] = kalender_save_from_post(null, $u);
+$ck = array_values(array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'calendar_kontakte'));
+$check('Kontakte am Termin', count($ck) === 2 && $ck[0][1] === ['entry_id' => $id, 'contact_id' => 30] && $ck[1][1]['contact_id'] === 31);
+$GLOBALS['rechte']['view_contacts'] = false;
+$GLOBALS['inserts'] = [];
+kalender_save_from_post(null, $u);
+$check('ohne Kontaktrecht keine Kontakte', !array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'calendar_kontakte'));
+$GLOBALS['rechte']['view_contacts'] = true;
 $ca = array_values(array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'calendar_auftraege'));
 $check('Auftrag am Termin, ohne Doppelte', count($ca) === 1 && $ca[0][1] === ['entry_id' => $id, 'order_id' => 12]);
 $cf = array_values(array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'calendar_fachgruppen'));
@@ -298,6 +310,13 @@ $htmlN = render_partial('kalender_edit', ['termin' => ['id' => 5, 'titel' => 'x'
     'errors' => [], 'nurLesen' => false, 'user' => $leitung, 'leitung' => true, 'users' => [], 'standorte' => [], 'dateien' => [],
     'fahrzeuge' => [['id' => 2, 'bezeichnung' => 'GKW 1', 'funkrufname' => '', 'kennzeichen' => '', 'typ_slug' => 'gkw', 'typ_label' => 'GKW']], 'gewaehlt' => [2],
     'auftragOptionen' => [['id' => 12, 'text' => '2026-0005 Bremse', 'sub' => 'Gemeldet', 'gruppe' => 'GKW 1'], ['id' => 13, 'text' => '2026-0006 Licht', 'sub' => 'Gemeldet', 'gruppe' => 'MTW']], 'auftraegeGewaehlt' => [12]]);
+function contact_name(array $c): string { return trim(($c['vorname'] ?? '') . ' ' . ($c['nachname'] ?? '')) ?: (string)($c['organisation'] ?? ''); }
+$htmlK = render_partial('kalender_edit', ['termin' => ['id' => 5, 'titel' => 'x', 'beschreibung' => '', 'ort' => '', 'datum' => '2026-10-15', 'zeit' => '19:00', 'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'ov', 'ziel_id' => null, 'farbe' => ''],
+    'errors' => [], 'nurLesen' => false, 'user' => $leitung, 'leitung' => true, 'users' => [], 'standorte' => [], 'dateien' => [], 'fahrzeuge' => [],
+    'kontakte' => [['id' => 30, 'vorname' => 'Max', 'nachname' => 'Muster', 'organisation' => 'Stadt Heilbronn', 'position' => 'Amtsleiter', 'email' => 'max@example.org', 'telefon' => '07131 1234', 'mobil' => '', 'is_active' => 1]],
+    'kontakteGewaehlt' => [30], 'kontaktOptionen' => [['id' => 30, 'text' => 'Max Muster', 'sub' => 'Stadt Heilbronn · Amtsleiter', 'gruppe' => ''], ['id' => 31, 'text' => 'Erika Beispiel', 'sub' => '', 'gruppe' => '']]]);
+$check('Formular: Kontakte mit Telefon und E-Mail, Auswahl mit Suchfeld', str_contains($htmlK, 'id="kontakte"') && str_contains($htmlK, 'p=contact_edit&amp;id=30') && str_contains($htmlK, 'tel:071311234') && str_contains($htmlK, 'mailto:max@example.org')
+    && str_contains($htmlK, 'data-wahl="kontakte"') && str_contains($htmlK, 'name="kontakte[]" value="30"') && str_contains($htmlK, 'data-text="Erika Beispiel"') && str_contains($htmlK, 'data-wahl-suche') && str_contains($htmlK, 'name="kontakte_feld"'));
 $check('Formular: Aufträge je Fahrzeug im Dropdown, gewählter in der Liste', str_contains($htmlN, 'data-wahl="auftraege"') && str_contains($htmlN, '<optgroup label="GKW 1">') && str_contains($htmlN, '<optgroup label="MTW">')
     && str_contains($htmlN, 'name="auftraege[]" value="12"') && str_contains($htmlN, 'data-text="2026-0006 Licht"') && str_contains($htmlN, 'name="auftraege_feld"') && str_contains($htmlN, 'Werkstatttermin'));
 $check('Termine eines Auftrags: Abfrage über die Verknüpfung', str_contains((string)file_get_contents($app . '/src/lib/kalender.php'), 'FROM calendar_auftraege ca') && str_contains((string)file_get_contents($app . '/src/cli/migrate.php'), '064_werkstatttermine'));

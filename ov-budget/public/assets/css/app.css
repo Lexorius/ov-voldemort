@@ -563,8 +563,9 @@ table.data td.num, table.data th.num { text-align: right; font-variant-numeric: 
 .wahl__text { flex: 1 1 auto; min-width: 0; }
 .wahl__weg { margin-left: auto; background: none; border: 0; cursor: pointer; font-size: 1.05rem; line-height: 1; padding: .1rem .3rem; border-radius: 6px; }
 .wahl__weg:hover, .wahl__weg:focus-visible { background: var(--border); }
-.wahl__zeile { display: flex; gap: .4rem; align-items: center; }
-.wahl__zeile select { flex: 1 1 auto; min-width: 0; }
+.wahl__zeile { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+.wahl__zeile select { flex: 1 1 12rem; min-width: 0; }
+.wahl__suche { flex: 0 1 11rem; min-width: 7rem; }
 /* Fahrzeuge, die schon in einem anderen Termin stecken; rot, wenn es sich überschneidet */
 .chip--belegt { border-color: #a16207; background: #fffbeb; color: #92400e; }
 .chip--konflikt { border-color: #b91c1c; background: #fef2f2; color: #991b1b; font-weight: 600; }

@@ -159,7 +159,34 @@ foreach (list_items('fachgruppe') as $fg) {
     }
 }
 
+// Kontakte: nur, wer sie sehen darf – zur Wahl alle aktiven, dazu die schon verknüpften
+$kontakte = [];
+$kontakteGewaehlt = [];
+$kontaktOptionen = [];
+if (can('view_contacts') && function_exists('contact_query')) {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
+        $kontakteGewaehlt = wahl_ids('kontakte');
+    } elseif (!empty($termin['id'])) {
+        $kontakte = kalender_kontakte((int)$termin['id']);
+        $kontakteGewaehlt = array_map('intval', array_column($kontakte, 'id'));
+    }
+    $liste = contact_query(['limit' => 1000]);
+    $da = array_map('intval', array_column($liste, 'id'));
+    foreach ($kontakteGewaehlt as $cid) {
+        if (!in_array($cid, $da, true) && ($c = contact_find($cid))) {
+            $liste[] = $c;
+        }
+    }
+    foreach ($liste as $c) {
+        $sub = implode(' · ', array_filter([trim((string)($c['organisation'] ?? '')) !== '' && trim(($c['vorname'] ?? '') . ($c['nachname'] ?? '')) !== '' ? (string)$c['organisation'] : '', (string)($c['position'] ?? '')]));
+        $kontaktOptionen[] = ['id' => (int)$c['id'], 'text' => contact_name($c), 'sub' => $sub, 'gruppe' => ''];
+    }
+}
+
 render('kalender_edit', [
+    'kontakte'         => $kontakte,
+    'kontakteGewaehlt' => $kontakteGewaehlt,
+    'kontaktOptionen'  => $kontaktOptionen,
     'auftraegeGewaehlt' => $auftraegeGewaehlt,
     'auftragOptionen'   => $auftragOptionen,
     'dateien' => !empty($termin['id']) ? kfile_list((int)$termin['id']) : [],

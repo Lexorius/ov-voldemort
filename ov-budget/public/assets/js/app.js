@@ -531,6 +531,32 @@
     select.addEventListener('keydown', function (ev) {
       if (ev.key === 'Enter') { ev.preventDefault(); hinzufuegen(); }
     });
+
+    /* Suchfeld: blendet alles aus, was nicht passt; bei genau einem Treffer ist er schon gewählt */
+    var suche = wahl.querySelector('[data-wahl-suche]');
+    if (suche) {
+      function filtern() {
+        var q = suche.value.trim().toLowerCase();
+        var treffer = [];
+        Array.prototype.forEach.call(select.options, function (opt) {
+          if (opt.value === '') { return; }
+          var gruppe = opt.parentElement && opt.parentElement.tagName === 'OPTGROUP' ? opt.parentElement.label : '';
+          var text = ((opt.dataset.text || opt.textContent) + ' ' + (opt.dataset.sub || '') + ' ' + gruppe).toLowerCase();
+          var passt = q === '' || text.indexOf(q) !== -1;
+          opt.hidden = !passt;
+          if (passt && !opt.disabled) { treffer.push(opt); }
+        });
+        Array.prototype.forEach.call(select.querySelectorAll('optgroup'), function (g) {
+          g.hidden = Array.prototype.every.call(g.querySelectorAll('option'), function (o) { return o.hidden; });
+        });
+        if (q !== '' && treffer.length === 1) { select.value = treffer[0].value; }
+        else if (q !== '' && (select.selectedIndex < 0 || select.options[select.selectedIndex].hidden)) { select.value = ''; }
+      }
+      suche.addEventListener('input', filtern);
+      suche.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') { ev.preventDefault(); hinzufuegen(); suche.value = ''; filtern(); }
+      });
+    }
     liste.addEventListener('click', function (ev) {
       var weg = ev.target.closest('.wahl__weg');
       if (!weg) { return; }

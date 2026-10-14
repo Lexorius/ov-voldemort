@@ -238,11 +238,35 @@ function kalender_termine_auftrag(int $orderId, array $u): array
     return array_values(array_filter($rows, static fn($t) => kalender_sichtbar($t, $u)));
 }
 
-/** Untertitel eines Termins: für wen – und welche Aufträge (🔧). Reine Funktion. */
+/** Untertitel eines Termins: für wen – dazu Aufträge (🔧) und Kontakte (👤, nur wer Kontakte sehen darf). */
 function kalender_untertitel(array $t): string
 {
     $a = trim((string)($t['auftraege_namen'] ?? ''));
-    return kalender_ziel_name($t) . ($a !== '' ? ' · 🔧 ' . $a : '');
+    $k = can('view_contacts') ? trim((string)($t['kontakte_namen'] ?? '')) : '';
+    return kalender_ziel_name($t) . ($a !== '' ? ' · 🔧 ' . $a : '') . ($k !== '' ? ' · 👤 ' . $k : '');
+}
+
+/** Unterabfrage: die Kontakte eines Termins als „Max Muster, Stadt Heilbronn" */
+function kalender_kontakte_sub(): string
+{
+    return "(SELECT GROUP_CONCAT(COALESCE(NULLIF(TRIM(CONCAT_WS(' ', c.vorname, c.nachname)), ''), c.organisation) ORDER BY c.nachname, c.vorname SEPARATOR ', ')
+              FROM calendar_kontakte ck JOIN contacts c ON c.id = ck.contact_id WHERE ck.entry_id = k.id) AS kontakte_namen";
+}
+
+/** Die Kontakte eines Termins */
+function kalender_kontakte(int $entryId): array
+{
+    return db_all('SELECT c.id, c.titel, c.vorname, c.nachname, c.organisation, c.position, c.email, c.telefon, c.mobil, c.is_active
+                   FROM calendar_kontakte ck JOIN contacts c ON c.id = ck.contact_id WHERE ck.entry_id = ? ORDER BY c.nachname, c.vorname, c.organisation', [$entryId]);
+}
+
+/** Genau diese Kontakte gehören zum Termin */
+function kalender_kontakte_setzen(int $entryId, array $ids): void
+{
+    db_exec('DELETE FROM calendar_kontakte WHERE entry_id = ?', [$entryId]);
+    foreach (array_values(array_unique(array_filter(array_map('intval', $ids), static fn($i) => $i > 0))) as $cid) {
+        db_insert('calendar_kontakte', ['entry_id' => $entryId, 'contact_id' => $cid]);
+    }
 }
 
 /** Unterabfragen für die weiteren Fachgruppen eines Termins: ids und Namen */
@@ -264,7 +288,7 @@ function kalender_select_zusatz(): string
 {
     return kalender_standorte_sub('calendar_standorte', 'entry_id', 'k') . " AS standort_name,
             (SELECT GROUP_CONCAT(v.bezeichnung ORDER BY v.bezeichnung SEPARATOR ' · ') FROM calendar_vehicles cv JOIN vehicles v ON v.id = cv.vehicle_id
-              WHERE cv.entry_id = k.id) AS fahrzeuge_namen, " . kalender_fachgruppen_sub() . ", " . kalender_auftraege_sub();
+              WHERE cv.entry_id = k.id) AS fahrzeuge_namen, " . kalender_fachgruppen_sub() . ", " . kalender_auftraege_sub() . ", " . kalender_kontakte_sub();
 }
 
 function kalender_find(int $id): ?array
@@ -582,6 +606,10 @@ function kalender_save_from_post(?array $existing, array $user): array
     // Instandsetzungsaufträge (Werkstatttermin): nur, wenn das Feld im Formular war
     if (can('view_vehicles') && post_str('auftraege_feld') === '1') {
         kalender_auftraege_setzen($id, wahl_ids('auftraege'));
+    }
+    // Kontakte: nur, wer sie sehen darf und wenn das Feld im Formular war
+    if (can('view_contacts') && post_str('kontakte_feld') === '1') {
+        kalender_kontakte_setzen($id, wahl_ids('kontakte'));
     }
     return [$id, []];
 }

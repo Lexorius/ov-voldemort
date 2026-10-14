@@ -1,5 +1,15 @@
 # Änderungsverlauf
 
+## 2.1.29.0
+
+- **Suchfeld in den Auswahllisten:** Plätze, Fahrzeuge, Aufträge,
+  Fachgruppen und Kontakte lassen sich durch Tippen filtern; bei genau
+  einem Treffer ist er schon gewählt, Eingabetaste fügt ihn hinzu.
+- **Kontakte am Termin:** Ansprechpartner, Referenten oder Gäste aus dem
+  Kontaktmodul hängen am Termin, mit Telefon und E-Mail zum direkten
+  Anrufen. Kalender und Startseite nennen sie mit 👤 – nur für Personen,
+  die Kontakte sehen dürfen.
+
 ## 2.1.28.1
 
 - **Dateien direkt im Terminformular:** Der Abschnitt „Dateien" steckt jetzt

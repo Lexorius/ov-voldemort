@@ -478,7 +478,13 @@ unter „Dateien" **Anhänge** mitgeben – Einladung, Programm, Anfahrtsskizze
 als PDF, Bild oder erlaubter Dokumenttyp; sie werden beim Eintragen bzw.
 Speichern abgelegt, Bilder verkleinert und ohne Aufnahmeort. Vorhandene
 Dateien stehen als Liste mit Mülleimer darüber. Öffnen darf sie, wer den
-Termin sieht; anhängen und entfernen, wer ihn bearbeiten darf. **Werkstatttermine:** Ein Termin
+Termin sieht; anhängen und entfernen, wer ihn bearbeiten darf. Unter
+„Kontakte" hängen Ansprechpartner, Referenten oder Gäste aus dem
+Kontaktmodul am Termin – mit Telefon und E-Mail zum direkten Anrufen; das
+sehen nur Personen, die Kontakte sehen dürfen. Alle Auswahllisten
+(Plätze, Fahrzeuge, Aufträge, Fachgruppen, Kontakte) haben ein Suchfeld:
+Tippen blendet aus, was nicht passt, bei genau einem Treffer ist er schon
+gewählt, Eingabetaste fügt ihn hinzu. **Werkstatttermine:** Ein Termin
 kann Instandsetzungsaufträge betreffen (Auswahl im Abschnitt Fahrzeuge,
 offene Aufträge je Fahrzeug); die Auftragsseite zeigt unter
 „Werkstatttermine" alle verknüpften Termine – vorbei oder geplant – und

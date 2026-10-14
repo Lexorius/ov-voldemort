@@ -40,6 +40,7 @@ $zeile = static function (array $o) use ($name): string {
     <?php foreach ($gewaehlt as $gid): if (isset($nachId[(int)$gid])): ?><?= $zeile($nachId[(int)$gid]) ?><?php endif; endforeach; ?>
   </ul>
   <div class="wahl__zeile">
+    <input type="search" class="wahl__suche" data-wahl-suche placeholder="Suchen …" aria-label="In der Auswahl suchen" autocomplete="off">
     <select id="<?= e($name) ?>_neu" name="<?= e($name) ?>_neu" data-wahl-select>
       <option value=""><?= e($leer) ?></option>
       <?php foreach ($gruppen as $gruppe => $liste): ?>

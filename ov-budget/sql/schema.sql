@@ -598,6 +598,16 @@ CREATE TABLE IF NOT EXISTS contacts (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Verteiler, etwa "Einladung Jubilaeum 2027"
+-- Kontakte, die zu einem Termin gehoeren (Ansprechpartner, Referent, Gaeste)
+CREATE TABLE IF NOT EXISTS calendar_kontakte (
+  entry_id    INT UNSIGNED NOT NULL,
+  contact_id  INT UNSIGNED NOT NULL,
+  PRIMARY KEY (entry_id, contact_id),
+  KEY idx_ck_contact (contact_id),
+  CONSTRAINT fk_ck_entry   FOREIGN KEY (entry_id)   REFERENCES calendar_entries(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ck_contact FOREIGN KEY (contact_id) REFERENCES contacts(id)         ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS contact_groups (
   id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
   name          VARCHAR(150) NOT NULL,
