@@ -264,9 +264,10 @@ $html = render_partial('kalender_edit', ['termin' => ['id' => 5, 'titel' => 'x',
     'gewaehlt' => [7], 'standorte' => [['id' => 1, 'parent_id' => null, 'typ' => 'gebaeude', 'name' => 'Haupthaus', 'sort_order' => 10, 'is_active' => 1, 'kurz' => ''], ['id' => 4, 'parent_id' => 1, 'typ' => 'raum', 'name' => 'Gute Stube', 'sort_order' => 10, 'is_active' => 1, 'kurz' => ''],
         ['id' => 6, 'parent_id' => 1, 'typ' => 'raum', 'name' => 'Küche', 'sort_order' => 20, 'is_active' => 1, 'kurz' => ''], ['id' => 8, 'parent_id' => 1, 'typ' => 'raum', 'name' => 'Alt', 'sort_order' => 30, 'is_active' => 0, 'kurz' => '']],
     'standorteGewaehlt' => [4, 6]]);
-$check('Formular: mehrere Plätze als Haken mit Pfad, stillgelegte weg, freier Ort, Fahrzeuge', substr_count($html, 'name="standorte[]"') === 3 && str_contains($html, 'name="standorte[]" value="4" checked') && str_contains($html, 'name="standorte[]" value="6" checked')
-    && !str_contains($html, 'name="standorte[]" value="1" checked') && !str_contains($html, '>Alt<') && str_contains($html, 'Gute Stube') && str_contains($html, 'name="standorte_feld"') && !str_contains($html, 'name="standort_id"')
-    && str_contains($html, 'Ort (frei)') && str_contains($html, 'value="Tor 3"') && substr_count($html, 'name="vehicles[]"') === 2 && str_contains($html, 'value="7" checked') && str_contains($html, 'name="fahrzeuge_feld"'));
+$check('Formular: Plätze als Liste mit Mülleimer und Dropdown, stillgelegte weg, freier Ort, Fahrzeuge', substr_count($html, 'name="standorte[]"') === 2 && str_contains($html, 'name="standorte[]" value="4"') && str_contains($html, 'name="standorte[]" value="6"')
+    && str_contains($html, 'data-wahl="standorte"') && substr_count($html, 'wahl__weg') >= 3 && str_contains($html, 'option value="1" data-text="Haupthaus"') && str_contains($html, 'option value="4" data-text="Gute Stube" data-sub="Haupthaus" data-warn="" disabled')
+    && !str_contains($html, 'data-text="Alt"') && str_contains($html, 'name="standorte_feld"') && str_contains($html, 'name="standorte_neu"') && !str_contains($html, 'name="standort_id"')
+    && str_contains($html, 'Ort (frei)') && str_contains($html, 'value="Tor 3"') && substr_count($html, 'name="vehicles[]"') === 1 && str_contains($html, 'name="vehicles[]" value="7"') && str_contains($html, 'name="fahrzeuge_feld"') && str_contains($html, 'data-wahl="vehicles"'));
 $html = render_partial('kalender_edit', ['termin' => ['id' => null, 'titel' => '', 'beschreibung' => '', 'ort' => '', 'datum' => '2026-10-15', 'zeit' => '', 'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'user', 'ziel_id' => 3, 'farbe' => ''],
     'errors' => [], 'nurLesen' => false, 'user' => $u, 'leitung' => false, 'users' => [], 'fahrzeuge' => [], 'standorte' => []]);
 $check('ohne Fahrzeuge und Plätze keine Abschnitte', !str_contains($html, 'name="vehicles[]"') && !str_contains($html, 'name="standorte[]"') && str_contains($html, 'name="ort"'));
@@ -275,9 +276,13 @@ $fzListe = [['id' => 2, 'bezeichnung' => 'GKW 1', 'funkrufname' => '', 'kennzeic
 $html = render_partial('kalender_edit', ['termin' => ['id' => 5, 'titel' => 'x', 'beschreibung' => '', 'ort' => '', 'datum' => '2026-10-17', 'zeit' => '10:00', 'ende_datum' => '', 'ende_zeit' => '12:00', 'ganztag' => 0, 'ziel' => 'ov', 'ziel_id' => null, 'farbe' => '', 'erfasser' => 'Leitung'],
     'errors' => [], 'nurLesen' => false, 'user' => $leitung, 'leitung' => true, 'users' => [], 'fahrzeuge' => $fzListe, 'fahrzeugBloecke' => kalender_fahrzeuge_bloecke($fzListe), 'gewaehlt' => [9], 'standorte' => [],
     'belegt' => [2 => [['id' => 9, 'titel' => 'Übung', 'beginn' => '2026-10-17 08:00:00', 'ende' => '2026-10-17 16:00:00', 'ganztag' => false]]]]);
-$check('Formular: drei Blöcke, belegtes Fahrzeug orange mit dem anderen Termin', str_contains($html, '>Autos und LKW</h3>') && str_contains($html, '>Anhänger</h3>') && str_contains($html, '>Geräte</h3>')
-    && strpos($html, 'GKW 1') < strpos($html, 'FwA Licht') && strpos($html, 'FwA Licht') < strpos($html, 'Notstrom 50') && substr_count($html, 'chip--belegt') === 2
-    && str_contains($html, '⚠ Übung') && str_contains($html, 'Sa 17.10., 08:00–16:00 Uhr') && str_contains($html, 'value="9" checked'));
+$check('Formular: drei Gruppen im Dropdown, belegtes Fahrzeug mit ⚠, gewähltes in der Liste', str_contains($html, '<optgroup label="Autos und LKW">') && str_contains($html, '<optgroup label="Anhänger">') && str_contains($html, '<optgroup label="Geräte">')
+    && strpos($html, 'data-text="GKW 1"') < strpos($html, 'data-text="FwA Licht"') && strpos($html, 'data-text="FwA Licht"') < strpos($html, 'data-text="Notstrom 50"')
+    && str_contains($html, 'data-warn="schon im Termin „Übung&quot; (Sa 17.10., 08:00–16:00 Uhr)"') && str_contains($html, '⚠ schon im Termin „Übung&quot;') && str_contains($html, 'name="vehicles[]" value="9"')
+    && str_contains($html, 'option value="9" data-text="Notstrom 50" data-sub="" data-warn="" disabled') && str_contains($html, 'wahl__weg'));
+$_POST = ['vehicles' => ['2', '2'], 'vehicles_neu' => '9', 'standorte_neu' => '4'];
+$check('Ids aus Liste und Dropdown, ohne Doppelte', wahl_ids('vehicles') === [2, 9] && wahl_ids('standorte') === [4] && wahl_ids('x') === []);
+$_POST = [];
 $GLOBALS['tabellen'] = [
     'FROM calendar_standorte cs' => [['id' => 1, 'titel' => 'Dienstabend', 'beginn' => '2026-10-14 19:00:00', 'ende' => null, 'ganztag' => 0, 'ziel' => 'ov', 'ziel_id' => null, 'created_by' => 3, 'ort' => '', 'farbe' => '', 'standort_name' => 'Gute Stube · Küche', 'fahrzeuge_namen' => '']],
     'FROM event_standorte es' => [['id' => 4, 'titel' => 'Sommerfest', 'beginn' => '2026-10-12 16:00:00', 'ende' => null, 'ort' => 'Festzelt', 'typ_color' => '#db2777', 'typ_label' => 'Feier']],

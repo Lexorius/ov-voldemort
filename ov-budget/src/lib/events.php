@@ -244,7 +244,7 @@ function event_save_from_post(?array $e, array $user): array
         audit('veranstaltung.angelegt', 'event', $id, $titel);
     }
     if (post_str('standorte_feld') === '1' && function_exists('standort_links_setzen')) {
-        standort_links_setzen('event_standorte', 'event_id', $id, (array)($_POST['standorte'] ?? []));
+        standort_links_setzen('event_standorte', 'event_id', $id, wahl_ids('standorte'));
     }
     return [$id, []];
 }

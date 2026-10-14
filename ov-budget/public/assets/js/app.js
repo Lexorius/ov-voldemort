@@ -495,6 +495,52 @@
     wahl.addEventListener('change', function () { if (wahl.value) { ziel.value = wahl.value; } });
   });
 
+  /* Auswahlliste: Dropdown + „Hinzufügen" füllt die Liste, der Mülleimer nimmt wieder heraus */
+  document.querySelectorAll('[data-wahl]').forEach(function (wahl) {
+    var name = wahl.getAttribute('data-wahl');
+    var liste = wahl.querySelector('[data-wahl-liste]');
+    var select = wahl.querySelector('[data-wahl-select]');
+    var knopf = wahl.querySelector('[data-wahl-add]');
+    if (!liste || !select || !knopf) { return; }
+
+    function text(s) { return document.createTextNode(s); }
+
+    function hinzufuegen() {
+      var opt = select.options[select.selectedIndex];
+      if (!opt || opt.value === '' || opt.disabled) { return; }
+      if (liste.querySelector('li[data-id="' + opt.value + '"]')) { select.value = ''; return; }
+      var li = document.createElement('li');
+      li.className = 'wahl__eintrag' + (opt.dataset.warn ? ' wahl__eintrag--warn' : '');
+      li.setAttribute('data-id', opt.value);
+      var hidden = document.createElement('input');
+      hidden.type = 'hidden'; hidden.name = name + '[]'; hidden.value = opt.value;
+      var span = document.createElement('span');
+      span.className = 'wahl__text';
+      span.appendChild(text(opt.dataset.text || opt.textContent));
+      if (opt.dataset.sub) { var sub = document.createElement('span'); sub.className = 'muted small'; sub.textContent = ' ' + opt.dataset.sub; span.appendChild(sub); }
+      if (opt.dataset.warn) { var warn = document.createElement('span'); warn.className = 'small wahl__warn'; warn.textContent = ' ⚠ ' + opt.dataset.warn; span.appendChild(warn); }
+      var weg = document.createElement('button');
+      weg.type = 'button'; weg.className = 'wahl__weg'; weg.title = 'Eintrag entfernen'; weg.textContent = '🗑';
+      li.appendChild(hidden); li.appendChild(span); li.appendChild(weg);
+      liste.appendChild(li);
+      opt.disabled = true;
+      select.value = '';
+    }
+
+    knopf.addEventListener('click', hinzufuegen);
+    select.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') { ev.preventDefault(); hinzufuegen(); }
+    });
+    liste.addEventListener('click', function (ev) {
+      var weg = ev.target.closest('.wahl__weg');
+      if (!weg) { return; }
+      var li = weg.closest('li');
+      var opt = select.querySelector('option[value="' + li.getAttribute('data-id') + '"]');
+      if (opt) { opt.disabled = false; }
+      li.remove();
+    });
+  });
+
   // Statusauswahl der Anwesenheit sofort sichtbar machen
   document.querySelectorAll('.chips').forEach(function (gruppe) {
     gruppe.addEventListener('change', function (ev) {

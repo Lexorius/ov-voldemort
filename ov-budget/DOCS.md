@@ -476,10 +476,14 @@ darunter „Fahrzeuge diese Woche verplant" als Karten mit Bild: je Fahrzeug
 seine Termine von Montag bis Sonntag, mit Sprung in Akte und Termin.
 Steckt ein Fahrzeug zur selben Zeit in zwei Terminen, ist das eine
 **Doppelbuchung**: die Karte und die betroffenen Termine sind rot, oben
-steht eine Warnung. Im Terminformular stehen die Fahrzeuge in drei Blöcken
-(Autos und LKW, Anhänger, Geräte – nach der Fahrzeugart); wer zur
-gewählten Zeit schon in einem anderen Termin steckt, ist orange mit dem
-Namen des Termins. Anhaken geht trotzdem, beim Speichern warnt die Seite.
+steht eine Warnung. Im Terminformular werden Plätze und Fahrzeuge über ein
+Dropdown mit „+ Hinzufügen" gewählt; die gewählten stehen als Liste mit
+Mülleimer darüber. Die Fahrzeuge sind im Dropdown in drei Gruppen (Autos
+und LKW, Anhänger, Geräte – nach der Fahrzeugart); wer zur gewählten Zeit
+schon in einem anderen Termin steckt, trägt ein ⚠ mit dem Namen des
+Termins und steht orange in der Liste. Hinzufügen geht trotzdem, beim
+Speichern warnt die Seite. Ohne JavaScript genügt es, im Dropdown zu
+wählen und zu speichern.
 
 Ein Monat auf einen Blick oder die nächsten 60 Tage als Liste – mit allem,
 was im Ortsverband ein Datum hat. Die Quellen lassen sich oben einzeln ein-

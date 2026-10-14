@@ -554,6 +554,17 @@ table.data td.num, table.data th.num { text-align: right; font-variant-numeric: 
 .kal__datum { font-size: .8rem; font-weight: 700; color: var(--ink-soft); margin: .8rem 0 .3rem; }
 .kal--kompakt .kal__tag { min-height: 4rem; }
 @media (max-width: 640px) { .kal--kompakt { grid-template-columns: repeat(7, minmax(0, 1fr)); } .kal--kompakt .kal__tag { min-height: 3rem; padding: .15rem .2rem; } .kal--kompakt .kal__e { font-size: .62rem; } }
+/* Auswahlliste: gewählte Einträge mit Mülleimer, darunter Dropdown und + */
+.wahl__liste { list-style: none; margin: 0 0 .4rem; padding: 0; display: grid; gap: .3rem; }
+.wahl__eintrag { display: flex; align-items: center; gap: .5rem; padding: .35rem .6rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); }
+.wahl__eintrag--warn { border-color: #a16207; background: #fffbeb; }
+.wahl__warn { color: #92400e; }
+@media (prefers-color-scheme: dark) { .wahl__eintrag--warn { background: rgba(161, 98, 7, .25); } .wahl__warn { color: #fcd34d; } }
+.wahl__text { flex: 1 1 auto; min-width: 0; }
+.wahl__weg { margin-left: auto; background: none; border: 0; cursor: pointer; font-size: 1.05rem; line-height: 1; padding: .1rem .3rem; border-radius: 6px; }
+.wahl__weg:hover, .wahl__weg:focus-visible { background: var(--border); }
+.wahl__zeile { display: flex; gap: .4rem; align-items: center; }
+.wahl__zeile select { flex: 1 1 auto; min-width: 0; }
 /* Fahrzeuge, die schon in einem anderen Termin stecken; rot, wenn es sich überschneidet */
 .chip--belegt { border-color: #a16207; background: #fffbeb; color: #92400e; }
 .chip--konflikt { border-color: #b91c1c; background: #fef2f2; color: #991b1b; font-weight: 600; }

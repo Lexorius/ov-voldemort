@@ -108,7 +108,8 @@ $html2 = render_partial('event_edit', [
     'standorte' => [['id' => 1, 'parent_id' => null, 'typ' => 'gebaeude', 'name' => 'Haupthaus', 'sort_order' => 10, 'is_active' => 1, 'kurz' => ''], ['id' => 4, 'parent_id' => 1, 'typ' => 'raum', 'name' => 'Gute Stube', 'sort_order' => 10, 'is_active' => 1, 'kurz' => ''],
         ['id' => 6, 'parent_id' => 1, 'typ' => 'raum', 'name' => 'Küche', 'sort_order' => 20, 'is_active' => 1, 'kurz' => '']], 'standorteGewaehlt' => [4, 6],
 ]);
-$check('Formular: mehrere Plätze anhakbar', substr_count($html2, 'name="standorte[]"') === 3 && str_contains($html2, 'value="4" checked') && str_contains($html2, 'value="6" checked') && str_contains($html2, 'Ort (frei)'));
+$check('Formular: mehrere Plätze über Liste und Dropdown', substr_count($html2, 'name="standorte[]"') === 2 && str_contains($html2, 'name="standorte[]" value="4"') && str_contains($html2, 'name="standorte[]" value="6"')
+    && str_contains($html2, 'data-wahl="standorte"') && str_contains($html2, 'option value="1" data-text="Haupthaus"') && str_contains($html2, 'Ort (frei)'));
 $html2 = render_partial('event', $daten(['event' => $event + ['standorte_namen' => 'Gute Stube · Küche']]));
 $check('Seite nennt die Plätze mit dem freien Ort', str_contains($html2, 'Gute Stube · Küche · Unterkunft') && str_contains($html2, '>Standorte</div>'));
 $check('sagt, was verschwindet', str_contains($html, 'Gästeliste, Rückmeldungen und Dateien'));

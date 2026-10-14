@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
         flash('success', $termin ? 'Termin gespeichert.' : 'Termin eingetragen.');
         // Doppelbuchung? Dann warnen, aber speichern
         $gespeichert = kalender_find($neu);
-        $gewaehlteFahrzeuge = can('view_vehicles') ? array_map('intval', (array)($_POST['vehicles'] ?? [])) : [];
+        $gewaehlteFahrzeuge = can('view_vehicles') ? wahl_ids('vehicles') : [];
         if ($gespeichert && $gewaehlteFahrzeuge) {
             $konflikte = kalender_fahrzeug_konflikte($gewaehlteFahrzeuge, (string)$gespeichert['beginn'], (string)($gespeichert['ende'] ?: $gespeichert['beginn']), $neu);
             if ($konflikte) {
@@ -69,7 +69,7 @@ if (!$termin) {
 
 $gewaehlt = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
-    $gewaehlt = array_map('intval', (array)($_POST['vehicles'] ?? []));
+    $gewaehlt = wahl_ids('vehicles');
 } elseif (!empty($termin['id'])) {
     $gewaehlt = array_map('intval', array_column(kalender_fahrzeuge((int)$termin['id']), 'id'));
 } elseif (get_int('vehicle_id')) {
@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
 
 $standorteGewaehlt = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
-    $standorteGewaehlt = array_map('intval', (array)($_POST['standorte'] ?? []));
+    $standorteGewaehlt = wahl_ids('standorte');
 } elseif (!empty($termin['id'])) {
     $standorteGewaehlt = array_map('intval', array_column(standort_links('calendar_standorte', 'entry_id', (int)$termin['id']), 'id'));
 } elseif (get_int('standort_id')) {

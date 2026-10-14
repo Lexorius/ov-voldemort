@@ -175,6 +175,20 @@ function env_config(): array
 
 /* ---------------- Flash-Nachrichten ---------------- */
 
+/**
+ * Ids aus einer Auswahlliste (partials/wahl_liste): die gewählten name[] plus
+ * das Dropdown name_neu – so zählt die Wahl auch ohne JavaScript. Reine Funktion über $_POST.
+ */
+function wahl_ids(string $name): array
+{
+    $ids = array_map('intval', (array)($_POST[$name] ?? []));
+    $neu = (int)($_POST[$name . '_neu'] ?? 0);
+    if ($neu > 0) {
+        $ids[] = $neu;
+    }
+    return array_values(array_unique(array_filter($ids, static fn($i) => $i > 0)));
+}
+
 function flash(string $type, string $message): void
 {
     $_SESSION['_flash'][] = ['type' => $type, 'msg' => $message];

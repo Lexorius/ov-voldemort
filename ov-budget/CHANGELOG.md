@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.25.0
+
+- **Termin- und Veranstaltungsformular aufgeräumt:** Plätze und Fahrzeuge
+  werden über ein Dropdown mit „+ Hinzufügen" gewählt, die gewählten stehen
+  als Liste mit Mülleimer zum Entfernen. Fahrzeuge im Dropdown nach
+  Gruppen (Autos und LKW, Anhänger, Geräte), schon belegte mit ⚠ und
+  orange in der Liste. Ohne JavaScript: wählen und speichern fügt hinzu.
+
 ## 2.1.24.0
 
 - **Startseite:** oben ein Raster „Nächste zwei Wochen" mit allen

@@ -30,7 +30,7 @@ $jahr = (int)($event['jahr'] ?? haushaltsjahr());
 
 $standorteGewaehlt = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $standorteGewaehlt = array_map('intval', (array)($_POST['standorte'] ?? []));
+    $standorteGewaehlt = wahl_ids('standorte');
 } elseif (!empty($event['id'])) {
     $standorteGewaehlt = array_map('intval', array_column(standort_links('event_standorte', 'event_id', (int)$event['id']), 'id'));
 }

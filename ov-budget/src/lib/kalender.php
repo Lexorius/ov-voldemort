@@ -482,15 +482,13 @@ function kalender_save_from_post(?array $existing, array $user): array
         $id = db_insert('calendar_entries', $data);
         audit('termin.angelegt', 'calendar', $id, $data['titel']);
     }
-    // Fahrzeuge nur anfassen, wenn die Person sie überhaupt wählen konnte
-    if (can('view_vehicles') && isset($_POST['vehicles'])) {
-        kalender_fahrzeuge_setzen($id, (array)$_POST['vehicles']);
-    } elseif (can('view_vehicles') && post_str('fahrzeuge_feld') === '1') {
-        kalender_fahrzeuge_setzen($id, []);
+    // Fahrzeuge nur anfassen, wenn das Feld im Formular war (die Person sie also wählen konnte)
+    if (can('view_vehicles') && (post_str('fahrzeuge_feld') === '1' || isset($_POST['vehicles']))) {
+        kalender_fahrzeuge_setzen($id, wahl_ids('vehicles'));
     }
     // Plätze: nur, wenn das Feld im Formular war
     if (post_str('standorte_feld') === '1' && function_exists('standort_links_setzen')) {
-        standort_links_setzen('calendar_standorte', 'entry_id', $id, (array)($_POST['standorte'] ?? []));
+        standort_links_setzen('calendar_standorte', 'entry_id', $id, wahl_ids('standorte'));
     }
     return [$id, []];
 }

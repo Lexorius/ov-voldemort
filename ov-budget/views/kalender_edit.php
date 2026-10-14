@@ -121,18 +121,16 @@ $ganztag = (int)($termin['ganztag'] ?? 0) === 1;
   <section class="card" id="fahrzeuge">
     <h2>Fahrzeuge</h2>
     <p class="small muted">Welche Fahrzeuge dieser Termin braucht – die Fahrzeugakte und die Startseite zeigen sie dann als verplant.
-      <?php if ($belegt): ?><span class="chip chip--belegt" style="cursor:default">orange</span> = zur gewählten Zeit schon in einem anderen Termin; anhaken geht trotzdem, dann warnt die Seite vor der Doppelbuchung.<?php endif; ?></p>
-    <input type="hidden" name="fahrzeuge_feld" value="1">
-    <?php foreach (['fahrzeuge' => 'Autos und LKW', 'anhaenger' => 'Anhänger', 'geraete' => 'Geräte'] as $key => $titel): if (empty($bloecke[$key])) { continue; } ?>
-      <h3 class="mt"><?= e($titel) ?></h3>
-      <div class="chips">
-        <?php foreach ($bloecke[$key] as $v): $an = in_array((int)$v['id'], $gewaehlt, true); $andere = $belegt[(int)$v['id']] ?? []; ?>
-          <label class="chip<?= $an ? ' is-on' : '' ?><?= $andere ? ' chip--belegt' : '' ?>"<?= $andere ? ' title="' . e('Schon im Termin ' . implode(' und ', array_map(static fn($t) => '„' . $t['titel'] . '" (' . kalender_wann($t) . ')', $andere))) . '"' : '' ?>>
-            <input type="checkbox" name="vehicles[]" value="<?= (int)$v['id'] ?>"<?= $an ? ' checked' : '' ?>>
-            <?= e((string)$v['bezeichnung']) ?><?= $v['funkrufname'] ? ' <span class="muted small">' . e((string)$v['funkrufname']) . '</span>' : '' ?><?= $andere ? ' <span class="small">⚠ ' . e((string)$andere[0]['titel']) . '</span>' : '' ?></label>
-        <?php endforeach; ?>
-      </div>
-    <?php endforeach; ?>
+      Ein ⚠ heißt: zur gewählten Zeit schon in einem anderen Termin. Hinzufügen geht trotzdem, dann warnt die Seite vor der Doppelbuchung.</p>
+    <?php $optionen = [];
+    foreach (['fahrzeuge' => 'Autos und LKW', 'anhaenger' => 'Anhänger', 'geraete' => 'Geräte'] as $key => $titel) {
+        foreach ($bloecke[$key] ?? [] as $v) {
+            $andere = $belegt[(int)$v['id']] ?? [];
+            $optionen[] = ['id' => (int)$v['id'], 'text' => (string)$v['bezeichnung'], 'sub' => (string)($v['funkrufname'] ?? ''), 'gruppe' => $titel,
+                           'warn' => $andere ? 'schon im Termin ' . implode(' und ', array_map(static fn($t) => '„' . $t['titel'] . '" (' . kalender_wann($t) . ')', $andere)) : ''];
+        }
+    } ?>
+    <?= render_partial('partials/wahl_liste', ['name' => 'vehicles', 'feld' => 'fahrzeuge_feld', 'label' => 'Fahrzeuge', 'optionen' => $optionen, 'gewaehlt' => $gewaehlt, 'leer' => '– Fahrzeug wählen –']) ?>
   </section>
   <?php endif; ?>
 
