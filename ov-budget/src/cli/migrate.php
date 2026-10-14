@@ -1668,6 +1668,42 @@ SQL);
         }
     }
     $merken('060_termin_fahrzeuge');
+
+    /* ---------- 061: mehrere Standorte je Termin und Veranstaltung ---------- */
+    if (ovb_table_exists($pdo, 'standorte')) {
+        if (ovb_table_exists($pdo, 'calendar_entries') && !ovb_table_exists($pdo, 'calendar_standorte')) {
+            $pdo->exec("CREATE TABLE calendar_standorte (
+                entry_id    INT UNSIGNED NOT NULL,
+                standort_id INT UNSIGNED NOT NULL,
+                PRIMARY KEY (entry_id, standort_id),
+                KEY idx_cs_standort (standort_id),
+                CONSTRAINT fk_cs_ziel     FOREIGN KEY (entry_id)    REFERENCES calendar_entries(id) ON DELETE CASCADE,
+                CONSTRAINT fk_cs_standort FOREIGN KEY (standort_id) REFERENCES standorte(id)        ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            // Den bisherigen einzelnen Platz (2.1.22.0) mitnehmen
+            if (ovb_column_exists($pdo, 'calendar_entries', 'standort_id')) {
+                $pdo->exec('INSERT IGNORE INTO calendar_standorte (entry_id, standort_id)
+                            SELECT id, standort_id FROM calendar_entries WHERE standort_id IS NOT NULL');
+            }
+        }
+        if (ovb_constraint_exists($pdo, 'calendar_entries', 'fk_cal_standort')) {
+            $pdo->exec('ALTER TABLE calendar_entries DROP FOREIGN KEY fk_cal_standort');
+        }
+        if (ovb_column_exists($pdo, 'calendar_entries', 'standort_id')) {
+            $pdo->exec('ALTER TABLE calendar_entries DROP COLUMN standort_id');
+        }
+        if (ovb_table_exists($pdo, 'events') && !ovb_table_exists($pdo, 'event_standorte')) {
+            $pdo->exec("CREATE TABLE event_standorte (
+                event_id    INT UNSIGNED NOT NULL,
+                standort_id INT UNSIGNED NOT NULL,
+                PRIMARY KEY (event_id, standort_id),
+                KEY idx_es_standort (standort_id),
+                CONSTRAINT fk_es_ziel     FOREIGN KEY (event_id)    REFERENCES events(id)    ON DELETE CASCADE,
+                CONSTRAINT fk_es_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        }
+    }
+    $merken('061_mehrere_standorte');
 }
 
 /**

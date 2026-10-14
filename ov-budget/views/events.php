@@ -17,7 +17,7 @@ $karte = static function (array $e): string {
         . '<div class="item__title">' . e((string)$e['titel']) . '</div>'
         . '<div class="item__sub">' . e(de_date(substr((string)$e['beginn'], 0, 10)))
         . ($zeit !== '00:00' ? ', ' . e($zeit) . ' Uhr' : '')
-        . ($e['ort'] ? ' · ' . e((string)$e['ort']) : '') . '</div>'
+        . (event_ort_text($e) !== '' ? ' · ' . e(event_ort_text($e)) : '') . '</div>'
         . '</div><div class="item__amount">'
         . ((int)($e['gaesteliste'] ?? 1) === 1
             ? (int)$e['zusagen'] . '/' . (int)$e['gaeste']

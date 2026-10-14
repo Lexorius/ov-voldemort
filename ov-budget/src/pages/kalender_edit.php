@@ -47,7 +47,7 @@ if (!$termin) {
         $datum = date('Y-m-d');
     }
     $termin = [
-        'id' => null, 'titel' => '', 'beschreibung' => '', 'ort' => '', 'standort_id' => null, 'datum' => $datum, 'zeit' => '',
+        'id' => null, 'titel' => '', 'beschreibung' => '', 'ort' => '', 'datum' => $datum, 'zeit' => '',
         'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'user', 'ziel_id' => (int)$user['id'], 'farbe' => '',
     ];
 } elseif (!isset($termin['datum'])) {
@@ -67,7 +67,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
     $gewaehlt = [(int)get_int('vehicle_id')];
 }
 
+$standorteGewaehlt = [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
+    $standorteGewaehlt = array_map('intval', (array)($_POST['standorte'] ?? []));
+} elseif (!empty($termin['id'])) {
+    $standorteGewaehlt = array_map('intval', array_column(standort_links('calendar_standorte', 'entry_id', (int)$termin['id']), 'id'));
+} elseif (get_int('standort_id')) {
+    $standorteGewaehlt = [(int)get_int('standort_id')];
+}
+
 render('kalender_edit', [
+    'standorteGewaehlt' => $standorteGewaehlt,
     'fahrzeuge' => can('view_vehicles') ? db_all('SELECT id, bezeichnung, funkrufname, kennzeichen FROM vehicles WHERE is_active = 1 ORDER BY bezeichnung') : [],
     'gewaehlt'  => $gewaehlt,
     'standorte' => function_exists('standort_all') ? standort_all() : [],

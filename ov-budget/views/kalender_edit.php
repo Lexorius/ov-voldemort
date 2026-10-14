@@ -48,19 +48,13 @@ $ganztag = (int)($termin['ganztag'] ?? 0) === 1;
         <label for="ende_zeit">Ende (Uhrzeit)</label>
         <input type="time" id="ende_zeit" name="ende_zeit" value="<?= e((string)($termin['ende_zeit'] ?? '')) ?>"<?= $ganztag ? ' disabled' : '' ?> data-zeitfeld>
       </div>
-      <?php $standorte ??= []; $aktive = array_values(array_filter($standorte, static fn($x) => (int)$x['is_active'] === 1 || (int)$x['id'] === (int)($termin['standort_id'] ?? 0))); ?>
-      <?php if ($aktive && function_exists('standort_optionen')): ?>
-      <div class="field">
-        <label for="standort_id">Standort</label>
-        <select id="standort_id" name="standort_id"><?= standort_optionen($aktive, (int)($termin['standort_id'] ?? 0), '– kein Platz –') ?></select>
-        <small>Aus den Stell- und Lagerplätzen – Halle, Raum, Hof.</small>
-      </div>
-      <?php endif; ?>
       <div class="field">
         <label for="ort">Ort (frei)</label>
         <input type="text" id="ort" name="ort" maxlength="150" value="<?= e((string)($termin['ort'] ?? '')) ?>" placeholder="z. B. Übungsgelände Neckarwiese">
       </div>
     </div>
+    <?= render_partial('partials/standorte_wahl', ['standorte' => $standorte ?? [], 'gewaehlt' => $standorteGewaehlt ?? [],
+        'hinweis' => 'Aus den Stell- und Lagerplätzen – ein Termin kann an mehreren Plätzen stattfinden, etwa Gute Stube, Küche und Schulungsraum.']) ?>
     <div class="field">
       <label for="beschreibung">Beschreibung</label>
       <textarea id="beschreibung" name="beschreibung"><?= e((string)($termin['beschreibung'] ?? '')) ?></textarea>

@@ -259,6 +259,56 @@ function standort_plan_position_setzen(array $kind, ?float $x, ?float $y): void
     audit('standort.bearbeitet', 'standort', (int)$kind['id'], $x === null ? 'aus dem Plan genommen' : sprintf('im Plan bei %.0f/%.0f', $x, $y));
 }
 
+/* ---------- Mehrere Plätze an einem Vorgang (Termin, Veranstaltung) ---------- */
+
+/** Nur Plätze, die es gibt und die aktiv sind (oder schon dran hängen). Reine Funktion. */
+function standort_ids_pruefen(array $ids, array $alle, array $bisher = []): array
+{
+    $erlaubt = [];
+    foreach ($alle as $s) {
+        if ((int)$s['is_active'] === 1 || in_array((int)$s['id'], $bisher, true)) {
+            $erlaubt[(int)$s['id']] = true;
+        }
+    }
+    $out = [];
+    foreach ($ids as $id) {
+        $id = (int)$id;
+        if ($id > 0 && isset($erlaubt[$id]) && !in_array($id, $out, true)) {
+            $out[] = $id;
+        }
+    }
+    return $out;
+}
+
+/** Die Plätze eines Vorgangs, in Baumreihenfolge. $tabelle/$spalte sind feste Namen aus dem Code. */
+function standort_links(string $tabelle, string $spalte, int $zielId): array
+{
+    return db_all("SELECT s.* FROM $tabelle l JOIN standorte s ON s.id = l.standort_id WHERE l.$spalte = ? ORDER BY s.parent_id, s.sort_order, s.name, s.id", [$zielId]);
+}
+
+/** Genau diese Plätze gehören zum Vorgang */
+function standort_links_setzen(string $tabelle, string $spalte, int $zielId, array $ids): void
+{
+    $bisher = array_map('intval', array_column(standort_links($tabelle, $spalte, $zielId), 'id'));
+    $neu = standort_ids_pruefen($ids, standort_all(), $bisher);
+    db_exec("DELETE FROM $tabelle WHERE $spalte = ?", [$zielId]);
+    foreach ($neu as $sid) {
+        db_insert($tabelle, [$spalte => $zielId, 'standort_id' => $sid]);
+    }
+}
+
+/** Unterabfrage für Listen: die Namen der Plätze eines Vorgangs als „Gute Stube · Küche". Reine Funktion. */
+function standort_namen_subquery(string $tabelle, string $spalte, string $alias): string
+{
+    return "(SELECT GROUP_CONCAT(s.name ORDER BY s.parent_id, s.sort_order, s.name SEPARATOR ' · ') FROM $tabelle l JOIN standorte s ON s.id = l.standort_id WHERE l.$spalte = $alias.id)";
+}
+
+/** Namen aus Standortzeilen. Reine Funktion. */
+function standort_namen_text(array $rows): string
+{
+    return implode(' · ', array_map(static fn($s) => (string)$s['name'], $rows));
+}
+
 /** Optionen für eine Auswahl, eingerückt nach Tiefe. */
 function standort_optionen(array $rows, ?int $selected, string $leer = '– keiner –', array $ausser = []): string
 {

@@ -156,6 +156,23 @@ $darunterText = $s ? standort_inventar_text($darunter) : '';
   </section>
   <?php endif; ?>
 
+  <?php $belegung ??= []; if ($belegung): ?>
+  <section class="card" id="belegung">
+    <div class="card__head"><h2>Belegung</h2><span class="muted small">nächste 60 Tage · <?= count($belegung) ?></span></div>
+    <div class="itemlist">
+      <?php foreach ($belegung as $e): $tag = substr($e['beginn'], 0, 10); $zeit = kalender_zeit($e); ?>
+        <a class="item" href="<?= e($e['url']) ?>" style="border-left-color:<?= e($e['farbe']) ?>">
+          <div class="item__top"><div style="min-width:0">
+            <div class="item__title"><?= e($e['titel']) ?></div>
+            <div class="item__sub"><?= e(de_date($tag) . ($zeit !== '' ? ', ' . $zeit . ' Uhr' : ', ganztägig') . (!empty($e['ende']) && substr($e['ende'], 0, 10) !== $tag ? ' bis ' . de_date(substr($e['ende'], 0, 10)) : '')
+                . ($e['ort'] !== '' ? ' · ' . $e['ort'] : '') . ($e['untertitel'] !== '' ? ' · ' . $e['untertitel'] : '') . (($e['fahrzeuge'] ?? '') !== '' ? ' · ⛟ ' . $e['fahrzeuge'] : '')) ?></div>
+          </div><span class="badge" style="background:<?= e($e['farbe']) ?>"><?= e(KALENDER_QUELLEN[$e['quelle']]['label'] ?? $e['quelle']) ?></span></div>
+        </a>
+      <?php endforeach; ?>
+    </div>
+  </section>
+  <?php endif; ?>
+
   <?php $energie ??= null; if ($energie && $energie['teile']): ?>
   <section class="card" id="energie">
     <div class="card__head"><h2>Energie und Kosten <?= (int)$energie['jahr'] ?></h2>

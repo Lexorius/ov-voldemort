@@ -58,7 +58,8 @@ function event_find(?int $id): ?array
     return db_row(
         'SELECT e.*, b.name AS budget_name, b.betrag_netto AS budget_betrag,
                 fg.label AS fachgruppe_label, t.label AS typ_label, t.color AS typ_color, t.slug AS typ_slug,
-                c.name AS connector_name, u.display_name AS ersteller
+                c.name AS connector_name, u.display_name AS ersteller,
+                ' . (function_exists('standort_namen_subquery') ? standort_namen_subquery('event_standorte', 'event_id', 'e') : "''") . ' AS standorte_namen
          FROM events e
          LEFT JOIN budgets    b  ON b.id  = e.budget_id
          LEFT JOIN list_items fg ON fg.id = e.fachgruppe_id
@@ -110,6 +111,7 @@ function event_query(array $f = []): array
 
     $sql = 'SELECT e.*, b.name AS budget_name, fg.label AS fachgruppe_label,
                    t.label AS typ_label, t.color AS typ_color,
+                   ' . (function_exists('standort_namen_subquery') ? standort_namen_subquery('event_standorte', 'event_id', 'e') : "''") . ' AS standorte_namen,
                    (SELECT COUNT(*) FROM event_guests g WHERE g.event_id = e.id) AS gaeste,
                    (SELECT COUNT(*) FROM event_guests g WHERE g.event_id = e.id
                      AND g.status IN (\'zusage\',\'vertretung\')) AS zusagen,
@@ -241,7 +243,16 @@ function event_save_from_post(?array $e, array $user): array
         $id = db_insert('events', $daten);
         audit('veranstaltung.angelegt', 'event', $id, $titel);
     }
+    if (post_str('standorte_feld') === '1' && function_exists('standort_links_setzen')) {
+        standort_links_setzen('event_standorte', 'event_id', $id, (array)($_POST['standorte'] ?? []));
+    }
     return [$id, []];
+}
+
+/** Plätze und freier Ort als ein Text: „Gute Stube · Küche · Festzelt hinter dem Haus". Reine Funktion. */
+function event_ort_text(array $e): string
+{
+    return implode(' · ', array_filter([trim((string)($e['standorte_namen'] ?? '')), trim((string)($e['ort'] ?? ''))], 'strlen'));
 }
 
 function event_delete(array $e): void

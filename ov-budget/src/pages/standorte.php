@@ -109,6 +109,7 @@ if ($s && can('view_verbrauch') && function_exists('verbrauch_bereiche_jahr') &&
 }
 
 render('standorte', [
+    'belegung'   => $s && function_exists('standort_belegung') ? standort_belegung((int)$s['id'], date('Y-m-d'), date('Y-m-d', time() + 60 * 86400), current_user() ?? []) : [],
     'energie'    => $energie,
     'title'      => $s ? (string)$s['name'] : (string)setting('standort_modul_name', 'Standorte'),
     's'          => $s,

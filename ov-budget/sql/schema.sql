@@ -424,8 +424,6 @@ CREATE TABLE IF NOT EXISTS calendar_entries (
   titel         VARCHAR(200)  NOT NULL,
   beschreibung  TEXT          NULL,
   ort           VARCHAR(150)  NOT NULL DEFAULT '',
-  -- Platz aus den Stell- und Lagerplaetzen; der freie Ort bleibt daneben
-  standort_id   INT UNSIGNED  NULL,
   beginn        DATETIME      NOT NULL,
   ende          DATETIME      NULL,
   ganztag       TINYINT(1)    NOT NULL DEFAULT 0,
@@ -440,8 +438,17 @@ CREATE TABLE IF NOT EXISTS calendar_entries (
   KEY idx_cal_beginn (beginn),
   KEY idx_cal_ziel (ziel, ziel_id),
   CONSTRAINT fk_cal_cb FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
-  CONSTRAINT fk_cal_ub FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL,
-  CONSTRAINT fk_cal_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE SET NULL
+  CONSTRAINT fk_cal_ub FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Ein Termin kann an mehreren Plaetzen stattfinden (Gute Stube, Kueche, Schulungsraum)
+CREATE TABLE IF NOT EXISTS calendar_standorte (
+  entry_id INT UNSIGNED NOT NULL,
+  standort_id INT UNSIGNED NOT NULL,
+  PRIMARY KEY (entry_id, standort_id),
+  KEY idx_cs_standort (standort_id),
+  CONSTRAINT fk_cs_ziel     FOREIGN KEY (entry_id) REFERENCES calendar_entries(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cs_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS calendar_ha (
@@ -858,6 +865,16 @@ CREATE TABLE IF NOT EXISTS events (
   CONSTRAINT fk_ev_con    FOREIGN KEY (connector_id)  REFERENCES connectors(id) ON DELETE SET NULL,
   CONSTRAINT fk_ev_cb     FOREIGN KEY (created_by)    REFERENCES users(id)      ON DELETE SET NULL,
   CONSTRAINT fk_ev_ub     FOREIGN KEY (updated_by)    REFERENCES users(id)      ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Plaetze einer Veranstaltung
+CREATE TABLE IF NOT EXISTS event_standorte (
+  event_id INT UNSIGNED NOT NULL,
+  standort_id INT UNSIGNED NOT NULL,
+  PRIMARY KEY (event_id, standort_id),
+  KEY idx_es_standort (standort_id),
+  CONSTRAINT fk_es_ziel     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+  CONSTRAINT fk_es_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Eingeladene und ihre Rueckmeldung. Der Code steht in der Einladung;

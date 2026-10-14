@@ -50,10 +50,12 @@ $endeZeit = substr((string)($event['ende'] ?? ''), 11, 5);
       </div>
     </div>
     <div class="field">
-      <label for="ort">Ort</label>
+      <label for="ort">Ort (frei)</label>
       <input type="text" id="ort" name="ort" maxlength="200" value="<?= e((string)($event['ort'] ?? '')) ?>"
-             placeholder="z. B. Unterkunft, Fahrzeughalle">
+             placeholder="z. B. Festzelt hinter dem Haus">
     </div>
+    <?= render_partial('partials/standorte_wahl', ['standorte' => $standorte ?? [], 'gewaehlt' => $standorteGewaehlt ?? [],
+        'hinweis' => 'Aus den Stell- und Lagerplätzen – eine Veranstaltung kann mehrere Plätze belegen, etwa Gute Stube, Küche und Schulungsraum.']) ?>
     <div class="grid2">
       <div class="field">
         <label for="status">Status</label>

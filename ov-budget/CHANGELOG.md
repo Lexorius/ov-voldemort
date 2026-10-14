@@ -1,5 +1,15 @@
 # Änderungsverlauf
 
+## 2.1.23.0
+
+- **Mehrere Standorte je Termin und Veranstaltung:** Statt eines einzelnen
+  Platzes lassen sich mehrere anhaken – Gute Stube, Küche und
+  Schulungsraum zugleich. Termin- und Veranstaltungsformular zeigen die
+  Plätze als Haken mit ihrem Pfad, Kalender, Listen und Seiten nennen sie
+  zusammen mit dem freien Ort. Die Platzseite in der Standortübersicht
+  zeigt unter „Belegung" die Termine und Veranstaltungen der nächsten 60
+  Tage. Der einzelne Platz aus 2.1.22.0 wird beim Update übernommen.
+
 ## 2.1.22.0
 
 - **Termine mit Fahrzeugen und Standort:** Jeder Termin kann Fahrzeuge

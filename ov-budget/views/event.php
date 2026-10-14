@@ -19,7 +19,7 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
             ? e(substr($ende, 11, 5)) . ' Uhr'
             : e(de_datetime($ende)) ?>
       <?php endif; ?>
-      <?= $event['ort'] ? ' · ' . e((string)$event['ort']) : '' ?>
+      <?= event_ort_text($event) !== '' ? ' · ' . e(event_ort_text($event)) : '' ?>
       · <?= e(event_status_label((string)$event['status'])) ?></p>
     <?php if (!empty($event['typ_label'])): ?>
       <p><?= badge(['label' => $event['typ_label'], 'color' => $event['typ_color']]) ?></p>
@@ -84,6 +84,10 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
     <?php if ($ende !== ''): ?>
       <div class="dl__item"><div class="dl__label">Ende</div>
         <div class="dl__value"><?= e(de_datetime($ende)) ?></div></div>
+    <?php endif; ?>
+    <?php if (!empty($event['standorte_namen'])): ?>
+      <div class="dl__item"><div class="dl__label">Standorte</div>
+        <div class="dl__value"><?= e((string)$event['standorte_namen']) ?></div></div>
     <?php endif; ?>
     <?php if ($event['ort']): ?>
       <div class="dl__item"><div class="dl__label">Ort</div>

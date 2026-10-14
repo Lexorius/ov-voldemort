@@ -28,7 +28,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $jahr = (int)($event['jahr'] ?? haushaltsjahr());
 
+$standorteGewaehlt = [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $standorteGewaehlt = array_map('intval', (array)($_POST['standorte'] ?? []));
+} elseif (!empty($event['id'])) {
+    $standorteGewaehlt = array_map('intval', array_column(standort_links('event_standorte', 'event_id', (int)$event['id']), 'id'));
+}
+
 render('event_edit', [
+    'standorte' => function_exists('standort_all') ? standort_all() : [],
+    'standorteGewaehlt' => $standorteGewaehlt,
     'title'  => $event && !empty($event['id']) ? 'Veranstaltung bearbeiten' : 'Veranstaltung anlegen',
     'event'  => $event ?? [
         'id' => null, 'titel' => '', 'beschreibung' => '', 'ort' => '',

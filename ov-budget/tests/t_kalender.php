@@ -93,12 +93,22 @@ $check('ohne Uhrzeit und ohne ganztägig: Fehler', $id === null && str_contains(
 $_POST = ['titel' => 'Rückwärts', 'datum' => '2026-11-02', 'ganztag' => '1', 'ende_datum' => '2026-11-01', 'ziel' => 'user'];
 [$id, $fehler] = kalender_save_from_post(null, $u);
 $check('Ende vor Beginn: Fehler', $id === null && str_contains($fehler[0], 'Ende'));
+require_once $app . '/src/lib/standorte.php';
 $GLOBALS['inserts'] = []; $GLOBALS['execs'] = [];
-$_POST = ['titel' => 'Fahrzeugpflege', 'datum' => '2026-11-02', 'ganztag' => '1', 'ziel' => 'user', 'ort' => 'Waschplatz', 'standort_id' => '4', 'fahrzeuge_feld' => '1', 'vehicles' => ['2', '2', 'x', '5']];
+$GLOBALS['tabellen'] = ['FROM standorte' => [['id' => 4, 'parent_id' => null, 'typ' => 'raum', 'name' => 'Gute Stube', 'sort_order' => 10, 'is_active' => 1, 'kurz' => ''], ['id' => 6, 'parent_id' => null, 'typ' => 'raum', 'name' => 'Küche', 'sort_order' => 20, 'is_active' => 1, 'kurz' => ''],
+    ['id' => 8, 'parent_id' => null, 'typ' => 'raum', 'name' => 'Alt', 'sort_order' => 30, 'is_active' => 0, 'kurz' => '']]];
+$_POST = ['titel' => 'Fahrzeugpflege', 'datum' => '2026-11-02', 'ganztag' => '1', 'ziel' => 'user', 'ort' => 'Waschplatz', 'standorte_feld' => '1', 'standorte' => ['4', '6', '6', '8', '99', 'x'], 'fahrzeuge_feld' => '1', 'vehicles' => ['2', '2', 'x', '5']];
 [$id, $fehler] = kalender_save_from_post(null, $u);
 $cv = array_values(array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'calendar_vehicles'));
-$check('Termin mit Ort und Fahrzeugen: Fahrzeuge gesetzt, Platz nur geprüft', $fehler === [] && $GLOBALS['inserts'][0][1]['ort'] === 'Waschplatz' && array_key_exists('standort_id', $GLOBALS['inserts'][0][1])
-    && count($cv) === 2 && $cv[0][1] === ['entry_id' => $id, 'vehicle_id' => 2] && $cv[1][1]['vehicle_id'] === 5);
+$cs = array_values(array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'calendar_standorte'));
+$check('Termin mit Ort, Fahrzeugen und mehreren Plätzen', $fehler === [] && $GLOBALS['inserts'][0][1]['ort'] === 'Waschplatz' && !array_key_exists('standort_id', $GLOBALS['inserts'][0][1])
+    && count($cv) === 2 && $cv[0][1] === ['entry_id' => $id, 'vehicle_id' => 2] && $cv[1][1]['vehicle_id'] === 5
+    && count($cs) === 2 && $cs[0][1] === ['entry_id' => $id, 'standort_id' => 4] && $cs[1][1]['standort_id'] === 6);
+$check('Plätze prüfen: nur vorhandene und aktive, Doppelte raus, bisherige stillgelegte bleiben', standort_ids_pruefen([4, 6, 6, 8, 99], $GLOBALS['tabellen']['FROM standorte']) === [4, 6]
+    && standort_ids_pruefen([8, 4], $GLOBALS['tabellen']['FROM standorte'], [8]) === [8, 4]);
+$check('Namen und Unterabfrage', standort_namen_text([['name' => 'Gute Stube'], ['name' => 'Küche']]) === 'Gute Stube · Küche'
+    && str_contains(standort_namen_subquery('calendar_standorte', 'entry_id', 'k'), "FROM calendar_standorte l JOIN standorte s ON s.id = l.standort_id WHERE l.entry_id = k.id"));
+$GLOBALS['tabellen'] = [];
 $GLOBALS['inserts'] = [];
 $_POST = ['titel' => 'Ohne Fahrzeug', 'datum' => '2026-11-02', 'ganztag' => '1', 'ziel' => 'user', 'fahrzeuge_feld' => '1'];
 [$id, $fehler] = kalender_save_from_post(null, $u);
@@ -227,14 +237,24 @@ $html = render_partial('kalender', ['ansicht' => 'liste', 'monat' => '2026-10', 
 $check('Liste rendert mit Tagesüberschriften und HA-Hinweis', str_contains($html, 'Nächste 60 Tage') && str_contains($html, 'kal__datum') && str_contains($html, 'calendar.x: weg') && !str_contains($html, '+ Termin')
     && str_contains($html, '⛟ GKW 1 · MTW') && str_contains($html, 'Halle 1 · Tor 3'));
 require_once $app . '/src/lib/standorte.php';
-$html = render_partial('kalender_edit', ['termin' => ['id' => 5, 'titel' => 'x', 'beschreibung' => '', 'ort' => 'Tor 3', 'standort_id' => 4, 'datum' => '2026-10-15', 'zeit' => '19:00', 'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'ov', 'ziel_id' => null, 'farbe' => '', 'erfasser' => 'Leitung'],
+$html = render_partial('kalender_edit', ['termin' => ['id' => 5, 'titel' => 'x', 'beschreibung' => '', 'ort' => 'Tor 3', 'datum' => '2026-10-15', 'zeit' => '19:00', 'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'ov', 'ziel_id' => null, 'farbe' => '', 'erfasser' => 'Leitung'],
     'errors' => [], 'nurLesen' => false, 'user' => $leitung, 'leitung' => true, 'users' => [], 'fahrzeuge' => [['id' => 2, 'bezeichnung' => 'GKW 1', 'funkrufname' => 'Heros 24/51', 'kennzeichen' => ''], ['id' => 7, 'bezeichnung' => 'MTW', 'funkrufname' => '', 'kennzeichen' => '']],
-    'gewaehlt' => [7], 'standorte' => [['id' => 4, 'parent_id' => null, 'typ' => 'halle', 'name' => 'Halle 1', 'sort_order' => 10, 'is_active' => 1, 'kurz' => '']]]);
-$check('Formular: Standort-Auswahl, freier Ort, Fahrzeuge mit Haken', str_contains($html, 'name="standort_id"') && str_contains($html, 'value="4" selected') && str_contains($html, 'Ort (frei)') && str_contains($html, 'value="Tor 3"')
-    && substr_count($html, 'name="vehicles[]"') === 2 && str_contains($html, 'value="7" checked') && !str_contains($html, 'value="2" checked') && str_contains($html, 'name="fahrzeuge_feld"'));
+    'gewaehlt' => [7], 'standorte' => [['id' => 1, 'parent_id' => null, 'typ' => 'gebaeude', 'name' => 'Haupthaus', 'sort_order' => 10, 'is_active' => 1, 'kurz' => ''], ['id' => 4, 'parent_id' => 1, 'typ' => 'raum', 'name' => 'Gute Stube', 'sort_order' => 10, 'is_active' => 1, 'kurz' => ''],
+        ['id' => 6, 'parent_id' => 1, 'typ' => 'raum', 'name' => 'Küche', 'sort_order' => 20, 'is_active' => 1, 'kurz' => ''], ['id' => 8, 'parent_id' => 1, 'typ' => 'raum', 'name' => 'Alt', 'sort_order' => 30, 'is_active' => 0, 'kurz' => '']],
+    'standorteGewaehlt' => [4, 6]]);
+$check('Formular: mehrere Plätze als Haken mit Pfad, stillgelegte weg, freier Ort, Fahrzeuge', substr_count($html, 'name="standorte[]"') === 3 && str_contains($html, 'name="standorte[]" value="4" checked') && str_contains($html, 'name="standorte[]" value="6" checked')
+    && !str_contains($html, 'name="standorte[]" value="1" checked') && !str_contains($html, '>Alt<') && str_contains($html, 'Gute Stube') && str_contains($html, 'name="standorte_feld"') && !str_contains($html, 'name="standort_id"')
+    && str_contains($html, 'Ort (frei)') && str_contains($html, 'value="Tor 3"') && substr_count($html, 'name="vehicles[]"') === 2 && str_contains($html, 'value="7" checked') && str_contains($html, 'name="fahrzeuge_feld"'));
 $html = render_partial('kalender_edit', ['termin' => ['id' => null, 'titel' => '', 'beschreibung' => '', 'ort' => '', 'datum' => '2026-10-15', 'zeit' => '', 'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'user', 'ziel_id' => 3, 'farbe' => ''],
     'errors' => [], 'nurLesen' => false, 'user' => $u, 'leitung' => false, 'users' => [], 'fahrzeuge' => [], 'standorte' => []]);
-$check('ohne Fahrzeuge und Plätze keine Abschnitte', !str_contains($html, 'name="vehicles[]"') && !str_contains($html, 'name="standort_id"') && str_contains($html, 'name="ort"'));
+$check('ohne Fahrzeuge und Plätze keine Abschnitte', !str_contains($html, 'name="vehicles[]"') && !str_contains($html, 'name="standorte[]"') && str_contains($html, 'name="ort"'));
+$GLOBALS['tabellen'] = [
+    'FROM calendar_standorte cs' => [['id' => 1, 'titel' => 'Dienstabend', 'beginn' => '2026-10-14 19:00:00', 'ende' => null, 'ganztag' => 0, 'ziel' => 'ov', 'ziel_id' => null, 'created_by' => 3, 'ort' => '', 'farbe' => '', 'standort_name' => 'Gute Stube · Küche', 'fahrzeuge_namen' => '']],
+    'FROM event_standorte es' => [['id' => 4, 'titel' => 'Sommerfest', 'beginn' => '2026-10-12 16:00:00', 'ende' => null, 'ort' => 'Festzelt', 'typ_color' => '#db2777', 'typ_label' => 'Feier']],
+];
+$bel = standort_belegung(4, '2026-10-10', '2026-12-10', $u);
+$check('Belegung eines Platzes: Termin und Veranstaltung, nach Beginn', count($bel) === 2 && $bel[0]['titel'] === 'Sommerfest' && $bel[0]['quelle'] === 'veranstaltung' && $bel[1]['ort'] === 'Gute Stube · Küche' && str_contains($bel[1]['url'], 'p=kalender_edit'));
+$GLOBALS['tabellen'] = [];
 $html = render_partial('dashboard', ['termine' => [], 'termineGesamt' => 0, 'user' => $u, 'jahr' => 2026, 'wuensche' => [], 'statsW' => ['anzahl' => 0, 'summe' => 0.0], 'budgets' => [],
     'zahlen' => ['budget' => 0.0, 'einnahmen' => 0.0, 'ausgaben' => 0.0, 'verfuegbar' => 0.0, 'frei' => 0.0, 'quote' => 0.0], 'budgetVerplant' => 0.0, 'todos' => [], 'todosGesamt' => 0, 'ueberfaellig' => 0, 'zuBestellen' => [], 'fahrzeuge' => [],
     'fahrzeugeWoche' => $gr, 'woche' => ['2026-10-12', '2026-10-18']]);
