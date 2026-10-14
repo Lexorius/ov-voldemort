@@ -1817,6 +1817,19 @@ SQL);
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
     $merken('067_thw_kontakte');
+
+    /* ---------- 068: Termine mit THW-Dienststellen ---------- */
+    if (ovb_table_exists($pdo, 'calendar_entries') && ovb_table_exists($pdo, 'thw_dienststellen') && !ovb_table_exists($pdo, 'calendar_dienststellen')) {
+        $pdo->exec('CREATE TABLE calendar_dienststellen (
+            entry_id         INT UNSIGNED NOT NULL,
+            dienststelle_id  INT UNSIGNED NOT NULL,
+            PRIMARY KEY (entry_id, dienststelle_id),
+            KEY idx_cd_dst (dienststelle_id),
+            CONSTRAINT fk_cd_entry FOREIGN KEY (entry_id)        REFERENCES calendar_entries(id)  ON DELETE CASCADE,
+            CONSTRAINT fk_cd_dst   FOREIGN KEY (dienststelle_id) REFERENCES thw_dienststellen(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+    }
+    $merken('068_termin_dienststellen');
 }
 
 /**

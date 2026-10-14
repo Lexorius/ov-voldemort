@@ -138,6 +138,15 @@ $ganztag = (int)($termin['ganztag'] ?? 0) === 1;
   </section>
   <?php endif; ?>
 
+  <?php $dienststellenOptionen ??= []; $dienststellenGewaehlt ??= []; if ($dienststellenOptionen): ?>
+  <section class="card" id="dienststellen">
+    <h2>THW-Dienststellen</h2>
+    <p class="small muted">In oder mit welchem Ortsverband, welcher Regionalstelle der Termin stattfindet – etwa eine gemeinsame Übung mit dem Nachbar-OV. Mehrere möglich.</p>
+    <?= render_partial('partials/wahl_liste', ['name' => 'dienststellen', 'feld' => 'dienststellen_feld', 'label' => 'Beteiligte Dienststellen', 'optionen' => $dienststellenOptionen, 'gewaehlt' => $dienststellenGewaehlt,
+        'leer' => '– Dienststelle wählen –', 'hinweis' => 'Aus den THW-Kontakten. Der Termin zeigt sie im Kalender mit ⛑.']) ?>
+  </section>
+  <?php endif; ?>
+
   <?php $kontaktOptionen ??= []; $kontakte ??= []; $kontakteGewaehlt ??= []; if ($kontaktOptionen && can('view_contacts')): ?>
   <section class="card" id="kontakte">
     <h2>Kontakte</h2>

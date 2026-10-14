@@ -476,6 +476,10 @@ Leitung und Administration.
   Adresse, wofür das Postfach da ist, Dienststelle und die Erreichbarkeit
   als zwei Haken – **offizielles Netz** (Internet) und **Behördennetz**.
   Die Postfächer stehen in der Tabelle und als Chips an ihrer Dienststelle.
+* **Termine:** Im Terminformular lassen sich unter „THW-Dienststellen"
+  beteiligte Dienststellen anhängen – in oder mit welchem Ortsverband, mit
+  welcher Regionalstelle der Termin stattfindet, auch mehrere. Kalender und
+  Startseite zeigen sie mit ⛑ am Eintrag.
 * **Suche** über Dienststellen (Name, Kürzel, Ort, PLZ, E-Mail) und
   Postfächer (Name, Adresse, Zweck, Dienststelle); im Baum bleiben die
   Vorfahren eines Treffers stehen, damit der Pfad erkennbar ist.

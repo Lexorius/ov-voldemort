@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.32.0
+
+- **Termine mit THW-Dienststellen:** Unter „THW-Dienststellen" lassen sich
+  beteiligte Dienststellen an einen Termin hängen – in oder mit welchem
+  Ortsverband, welcher Regionalstelle er stattfindet, auch mehrere. Die
+  Auswahl kennt Gruppen nach Art und das Suchfeld; Kalender und Startseite
+  zeigen die Dienststellen mit ⛑ am Eintrag.
+
 ## 2.1.31.0
 
 - **THW-Kontakte:** Neuer Menüpunkt. Dienststellen als Baum – THW-Leitung,

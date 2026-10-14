@@ -72,6 +72,7 @@ $check('Fachgruppen dazunehmen: Mitglied nur die eigene, Leitung alle', kalender
 $GLOBALS['rechte']['view_contacts'] = true;
 $check('Untertitel mit Kontakten nur mit Recht', str_contains(kalender_untertitel(['ziel' => 'ov', 'ziel_id' => null, 'kontakte_namen' => 'Max Muster']), '👤 Max Muster')
     && (static function () { $GLOBALS['rechte']['view_contacts'] = false; $t = kalender_untertitel(['ziel' => 'ov', 'ziel_id' => null, 'kontakte_namen' => 'Max Muster']); $GLOBALS['rechte']['view_contacts'] = true; return !str_contains($t, 'Max'); })());
+$check('Untertitel mit Dienststellen', kalender_untertitel(['ziel' => 'ov', 'ziel_id' => null, 'dienststellen_namen' => 'NSU, RSt HN']) === 'Ortsverband · ⛑ NSU, RSt HN');
 $check('Untertitel mit Auftrag', kalender_untertitel(['ziel' => 'ov', 'ziel_id' => null, 'auftraege_namen' => '2026-0005 Bremse']) === 'Ortsverband · 🔧 2026-0005 Bremse' && kalender_untertitel(['ziel' => 'ov', 'ziel_id' => null]) === 'Ortsverband');
 $check('Zielname mit weiteren Fachgruppen', kalender_ziel_name(['ziel' => 'fachgruppe', 'ziel_id' => 5, 'fachgruppen_namen' => 'Logistik, Jugend']) === 'Fachgruppe Bergung + Logistik, Jugend'
     && kalender_ziel_name(['ziel' => 'ov', 'ziel_id' => null, 'fachgruppen_namen' => '']) === 'Ortsverband');
@@ -109,11 +110,13 @@ $GLOBALS['tabellen'] = ['FROM standorte' => [['id' => 4, 'parent_id' => null, 't
     ['id' => 8, 'parent_id' => null, 'typ' => 'raum', 'name' => 'Alt', 'sort_order' => 30, 'is_active' => 0, 'kurz' => '']]];
 $_POST = ['titel' => 'Fahrzeugpflege', 'datum' => '2026-11-02', 'ganztag' => '1', 'ziel' => 'user', 'ort' => 'Waschplatz', 'standorte_feld' => '1', 'standorte' => ['4', '6', '6', '8', '99', 'x'], 'fahrzeuge_feld' => '1', 'vehicles' => ['2', '2', 'x', '5'],
     'fachgruppen_feld' => '1', 'fachgruppen' => ['6'], 'fachgruppen_neu' => '5', 'auftraege_feld' => '1', 'auftraege' => ['12'], 'auftraege_neu' => '12',
-    'kontakte_feld' => '1', 'kontakte' => ['30'], 'kontakte_neu' => '31'];
+    'kontakte_feld' => '1', 'kontakte' => ['30'], 'kontakte_neu' => '31', 'dienststellen_feld' => '1', 'dienststellen' => ['3', '3'], 'dienststellen_neu' => '4'];
 $GLOBALS['rechte']['view_contacts'] = true;
 [$id, $fehler] = kalender_save_from_post(null, $u);
 $ck = array_values(array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'calendar_kontakte'));
 $check('Kontakte am Termin', count($ck) === 2 && $ck[0][1] === ['entry_id' => $id, 'contact_id' => 30] && $ck[1][1]['contact_id'] === 31);
+$cd = array_values(array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'calendar_dienststellen'));
+$check('THW-Dienststellen am Termin, ohne Doppelte', count($cd) === 2 && $cd[0][1] === ['entry_id' => $id, 'dienststelle_id' => 3] && $cd[1][1]['dienststelle_id'] === 4);
 $GLOBALS['rechte']['view_contacts'] = false;
 $GLOBALS['inserts'] = [];
 kalender_save_from_post(null, $u);
@@ -315,6 +318,11 @@ $htmlK = render_partial('kalender_edit', ['termin' => ['id' => 5, 'titel' => 'x'
     'errors' => [], 'nurLesen' => false, 'user' => $leitung, 'leitung' => true, 'users' => [], 'standorte' => [], 'dateien' => [], 'fahrzeuge' => [],
     'kontakte' => [['id' => 30, 'vorname' => 'Max', 'nachname' => 'Muster', 'organisation' => 'Stadt Heilbronn', 'position' => 'Amtsleiter', 'email' => 'max@example.org', 'telefon' => '07131 1234', 'mobil' => '', 'is_active' => 1]],
     'kontakteGewaehlt' => [30], 'kontaktOptionen' => [['id' => 30, 'text' => 'Max Muster', 'sub' => 'Stadt Heilbronn · Amtsleiter', 'gruppe' => ''], ['id' => 31, 'text' => 'Erika Beispiel', 'sub' => '', 'gruppe' => '']]]);
+$htmlD = render_partial('kalender_edit', ['termin' => ['id' => 5, 'titel' => 'x', 'beschreibung' => '', 'ort' => '', 'datum' => '2026-10-15', 'zeit' => '19:00', 'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'ov', 'ziel_id' => null, 'farbe' => ''],
+    'errors' => [], 'nurLesen' => false, 'user' => $leitung, 'leitung' => true, 'users' => [], 'standorte' => [], 'dateien' => [], 'fahrzeuge' => [],
+    'dienststellenGewaehlt' => [4], 'dienststellenOptionen' => [['id' => 2, 'text' => 'Regionalstelle Heilbronn (RSt HN)', 'sub' => 'LV BW', 'gruppe' => 'Regionalstellen'], ['id' => 4, 'text' => 'OV Neckarsulm (NSU)', 'sub' => 'LV BW › Regionalstelle Heilbronn', 'gruppe' => 'Ortsverbände']]]);
+$check('Formular: THW-Dienststellen als Liste nach Art gruppiert', str_contains($htmlD, 'id="dienststellen"') && str_contains($htmlD, 'data-wahl="dienststellen"') && str_contains($htmlD, 'name="dienststellen[]" value="4"')
+    && str_contains($htmlD, '<optgroup label="Ortsverbände">') && str_contains($htmlD, '<optgroup label="Regionalstellen">') && str_contains($htmlD, 'data-text="Regionalstelle Heilbronn (RSt HN)"') && str_contains($htmlD, 'name="dienststellen_feld"'));
 $check('Formular: Kontakte mit Telefon und E-Mail, Auswahl mit Suchfeld', str_contains($htmlK, 'id="kontakte"') && str_contains($htmlK, 'p=contact_edit&amp;id=30') && str_contains($htmlK, 'tel:071311234') && str_contains($htmlK, 'mailto:max@example.org')
     && str_contains($htmlK, 'data-wahl="kontakte"') && str_contains($htmlK, 'name="kontakte[]" value="30"') && str_contains($htmlK, 'data-text="Erika Beispiel"') && str_contains($htmlK, 'data-wahl-suche') && str_contains($htmlK, 'name="kontakte_feld"'));
 $check('Formular: Aufträge je Fahrzeug im Dropdown, gewählter in der Liste', str_contains($htmlN, 'data-wahl="auftraege"') && str_contains($htmlN, '<optgroup label="GKW 1">') && str_contains($htmlN, '<optgroup label="MTW">')

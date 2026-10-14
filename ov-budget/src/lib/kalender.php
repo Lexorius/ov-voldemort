@@ -238,12 +238,35 @@ function kalender_termine_auftrag(int $orderId, array $u): array
     return array_values(array_filter($rows, static fn($t) => kalender_sichtbar($t, $u)));
 }
 
-/** Untertitel eines Termins: für wen – dazu Aufträge (🔧) und Kontakte (👤, nur wer Kontakte sehen darf). */
+/** Untertitel eines Termins: für wen – dazu Dienststellen (⛑), Aufträge (🔧) und Kontakte (👤, nur wer Kontakte sehen darf). */
 function kalender_untertitel(array $t): string
 {
+    $d = trim((string)($t['dienststellen_namen'] ?? ''));
     $a = trim((string)($t['auftraege_namen'] ?? ''));
     $k = can('view_contacts') ? trim((string)($t['kontakte_namen'] ?? '')) : '';
-    return kalender_ziel_name($t) . ($a !== '' ? ' · 🔧 ' . $a : '') . ($k !== '' ? ' · 👤 ' . $k : '');
+    return kalender_ziel_name($t) . ($d !== '' ? ' · ⛑ ' . $d : '') . ($a !== '' ? ' · 🔧 ' . $a : '') . ($k !== '' ? ' · 👤 ' . $k : '');
+}
+
+/** Unterabfrage: die beteiligten THW-Dienststellen eines Termins als „OV Neckarsulm, RSt Heilbronn" */
+function kalender_dienststellen_sub(): string
+{
+    return "(SELECT GROUP_CONCAT(COALESCE(NULLIF(d.kurz, ''), d.name) ORDER BY d.sort_order, d.name SEPARATOR ', ')
+              FROM calendar_dienststellen cd JOIN thw_dienststellen d ON d.id = cd.dienststelle_id WHERE cd.entry_id = k.id) AS dienststellen_namen";
+}
+
+/** Die beteiligten Dienststellen eines Termins */
+function kalender_dienststellen(int $entryId): array
+{
+    return db_all('SELECT d.* FROM calendar_dienststellen cd JOIN thw_dienststellen d ON d.id = cd.dienststelle_id WHERE cd.entry_id = ? ORDER BY d.sort_order, d.name', [$entryId]);
+}
+
+/** Genau diese Dienststellen gehören zum Termin */
+function kalender_dienststellen_setzen(int $entryId, array $ids): void
+{
+    db_exec('DELETE FROM calendar_dienststellen WHERE entry_id = ?', [$entryId]);
+    foreach (array_values(array_unique(array_filter(array_map('intval', $ids), static fn($i) => $i > 0))) as $did) {
+        db_insert('calendar_dienststellen', ['entry_id' => $entryId, 'dienststelle_id' => $did]);
+    }
 }
 
 /** Unterabfrage: die Kontakte eines Termins als „Max Muster, Stadt Heilbronn" */
@@ -288,7 +311,7 @@ function kalender_select_zusatz(): string
 {
     return kalender_standorte_sub('calendar_standorte', 'entry_id', 'k') . " AS standort_name,
             (SELECT GROUP_CONCAT(v.bezeichnung ORDER BY v.bezeichnung SEPARATOR ' · ') FROM calendar_vehicles cv JOIN vehicles v ON v.id = cv.vehicle_id
-              WHERE cv.entry_id = k.id) AS fahrzeuge_namen, " . kalender_fachgruppen_sub() . ", " . kalender_auftraege_sub() . ", " . kalender_kontakte_sub();
+              WHERE cv.entry_id = k.id) AS fahrzeuge_namen, " . kalender_fachgruppen_sub() . ", " . kalender_auftraege_sub() . ", " . kalender_kontakte_sub() . ", " . kalender_dienststellen_sub();
 }
 
 function kalender_find(int $id): ?array
@@ -610,6 +633,10 @@ function kalender_save_from_post(?array $existing, array $user): array
     // Kontakte: nur, wer sie sehen darf und wenn das Feld im Formular war
     if (can('view_contacts') && post_str('kontakte_feld') === '1') {
         kalender_kontakte_setzen($id, wahl_ids('kontakte'));
+    }
+    // Beteiligte THW-Dienststellen (in oder mit OV y): nur, wenn das Feld im Formular war
+    if (post_str('dienststellen_feld') === '1') {
+        kalender_dienststellen_setzen($id, wahl_ids('dienststellen'));
     }
     return [$id, []];
 }

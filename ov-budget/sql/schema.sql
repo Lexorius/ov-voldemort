@@ -607,6 +607,16 @@ CREATE TABLE IF NOT EXISTS thw_postfaecher (
   CONSTRAINT fk_thw_pf_dst FOREIGN KEY (dienststelle_id) REFERENCES thw_dienststellen(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Beteiligte THW-Dienststellen eines Termins: in oder mit OV y
+CREATE TABLE IF NOT EXISTS calendar_dienststellen (
+  entry_id         INT UNSIGNED NOT NULL,
+  dienststelle_id  INT UNSIGNED NOT NULL,
+  PRIMARY KEY (entry_id, dienststelle_id),
+  KEY idx_cd_dst (dienststelle_id),
+  CONSTRAINT fk_cd_entry FOREIGN KEY (entry_id)        REFERENCES calendar_entries(id)  ON DELETE CASCADE,
+  CONSTRAINT fk_cd_dst   FOREIGN KEY (dienststelle_id) REFERENCES thw_dienststellen(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS contacts (
   id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
   anrede        VARCHAR(30)  NOT NULL DEFAULT '',
