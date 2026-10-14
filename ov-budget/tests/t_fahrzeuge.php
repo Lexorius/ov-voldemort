@@ -304,6 +304,7 @@ $check('Akte: Stein-Eintrag gekennzeichnet', str_contains($html, 'journal__row--
 $check('Akte: Prüf-Link', str_contains($html, 'pruefen=1'));
 $check('Akte: Eingabefeld für Journal', str_contains($html, 'name="text"'));
 $check('Akte: Stellplatz verlinkt zur Standortseite', str_contains($html, 'p=standorte&amp;id=5') && str_contains($html, '>Halle 1 › Stellplatz 3</a>'));
+$check('Akte: Termine-Abschnitt ohne Termine', str_contains($html, 'Termine mit diesem Fahrzeug') && str_contains($html, 'in keinem Termin eingeplant'));
 
 $html = render_partial('vehicle', [
     'vehicle' => ['id' => 1, 'bezeichnung' => 'GKW 1', 'funkrufname' => '', 'kennzeichen' => '', 'kennung' => '',

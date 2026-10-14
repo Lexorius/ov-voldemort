@@ -1,5 +1,15 @@
 # Änderungsverlauf
 
+## 2.1.22.0
+
+- **Termine mit Fahrzeugen und Standort:** Jeder Termin kann Fahrzeuge
+  haben, einen Standort aus den Stell- und Lagerplätzen und einen freien
+  Ort. Kalender und Startseite zeigen die Fahrzeuge am Eintrag, die
+  Fahrzeugakte ihre Termine der nächsten zwölf Monate („+ Termin" hakt das
+  Fahrzeug gleich an), und die Startseite listet, welche Fahrzeuge diese
+  Woche in Terminen verplant sind – je Fahrzeug mit Tag, Uhrzeit, Titel
+  und Ort.
+
 ## 2.1.21.1
 
 - **Auslagen in Stufen:** von Helfer ausgelegt → an die Regionalstelle

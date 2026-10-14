@@ -48,9 +48,17 @@ $ganztag = (int)($termin['ganztag'] ?? 0) === 1;
         <label for="ende_zeit">Ende (Uhrzeit)</label>
         <input type="time" id="ende_zeit" name="ende_zeit" value="<?= e((string)($termin['ende_zeit'] ?? '')) ?>"<?= $ganztag ? ' disabled' : '' ?> data-zeitfeld>
       </div>
+      <?php $standorte ??= []; $aktive = array_values(array_filter($standorte, static fn($x) => (int)$x['is_active'] === 1 || (int)$x['id'] === (int)($termin['standort_id'] ?? 0))); ?>
+      <?php if ($aktive && function_exists('standort_optionen')): ?>
       <div class="field">
-        <label for="ort">Ort</label>
-        <input type="text" id="ort" name="ort" maxlength="150" value="<?= e((string)($termin['ort'] ?? '')) ?>">
+        <label for="standort_id">Standort</label>
+        <select id="standort_id" name="standort_id"><?= standort_optionen($aktive, (int)($termin['standort_id'] ?? 0), '– kein Platz –') ?></select>
+        <small>Aus den Stell- und Lagerplätzen – Halle, Raum, Hof.</small>
+      </div>
+      <?php endif; ?>
+      <div class="field">
+        <label for="ort">Ort (frei)</label>
+        <input type="text" id="ort" name="ort" maxlength="150" value="<?= e((string)($termin['ort'] ?? '')) ?>" placeholder="z. B. Übungsgelände Neckarwiese">
       </div>
     </div>
     <div class="field">
@@ -114,6 +122,20 @@ $ganztag = (int)($termin['ganztag'] ?? 0) === 1;
       </div>
     </div>
   </section>
+
+  <?php $fahrzeuge ??= []; $gewaehlt ??= []; if ($fahrzeuge): ?>
+  <section class="card" id="fahrzeuge">
+    <h2>Fahrzeuge</h2>
+    <p class="small muted">Welche Fahrzeuge dieser Termin braucht – die Fahrzeugakte und die Startseite zeigen sie dann als verplant.</p>
+    <input type="hidden" name="fahrzeuge_feld" value="1">
+    <div class="chips">
+      <?php foreach ($fahrzeuge as $v): $an = in_array((int)$v['id'], $gewaehlt, true); ?>
+        <label class="chip<?= $an ? ' is-on' : '' ?>"><input type="checkbox" name="vehicles[]" value="<?= (int)$v['id'] ?>"<?= $an ? ' checked' : '' ?>>
+          <?= e((string)$v['bezeichnung']) ?><?= $v['funkrufname'] ? ' <span class="muted small">' . e((string)$v['funkrufname']) . '</span>' : '' ?></label>
+      <?php endforeach; ?>
+    </div>
+  </section>
+  <?php endif; ?>
 
   <?php if (!$nurLesen): ?>
   <div class="btnrow">

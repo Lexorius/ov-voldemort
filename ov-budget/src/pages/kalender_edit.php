@@ -47,7 +47,7 @@ if (!$termin) {
         $datum = date('Y-m-d');
     }
     $termin = [
-        'id' => null, 'titel' => '', 'beschreibung' => '', 'ort' => '', 'datum' => $datum, 'zeit' => '',
+        'id' => null, 'titel' => '', 'beschreibung' => '', 'ort' => '', 'standort_id' => null, 'datum' => $datum, 'zeit' => '',
         'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'user', 'ziel_id' => (int)$user['id'], 'farbe' => '',
     ];
 } elseif (!isset($termin['datum'])) {
@@ -58,7 +58,19 @@ if (!$termin) {
     $termin['ende_zeit'] = $termin['ende'] && (int)$termin['ganztag'] !== 1 ? substr((string)$termin['ende'], 11, 5) : '';
 }
 
+$gewaehlt = [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
+    $gewaehlt = array_map('intval', (array)($_POST['vehicles'] ?? []));
+} elseif (!empty($termin['id'])) {
+    $gewaehlt = array_map('intval', array_column(kalender_fahrzeuge((int)$termin['id']), 'id'));
+} elseif (get_int('vehicle_id')) {
+    $gewaehlt = [(int)get_int('vehicle_id')];
+}
+
 render('kalender_edit', [
+    'fahrzeuge' => can('view_vehicles') ? db_all('SELECT id, bezeichnung, funkrufname, kennzeichen FROM vehicles WHERE is_active = 1 ORDER BY bezeichnung') : [],
+    'gewaehlt'  => $gewaehlt,
+    'standorte' => function_exists('standort_all') ? standort_all() : [],
     'title'   => $termin['id'] ? ($nurLesen ? 'Termin' : 'Termin bearbeiten') : 'Termin eintragen',
     'termin'  => $termin,
     'errors'  => $errors,

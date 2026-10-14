@@ -424,6 +424,8 @@ CREATE TABLE IF NOT EXISTS calendar_entries (
   titel         VARCHAR(200)  NOT NULL,
   beschreibung  TEXT          NULL,
   ort           VARCHAR(150)  NOT NULL DEFAULT '',
+  -- Platz aus den Stell- und Lagerplaetzen; der freie Ort bleibt daneben
+  standort_id   INT UNSIGNED  NULL,
   beginn        DATETIME      NOT NULL,
   ende          DATETIME      NULL,
   ganztag       TINYINT(1)    NOT NULL DEFAULT 0,
@@ -438,7 +440,8 @@ CREATE TABLE IF NOT EXISTS calendar_entries (
   KEY idx_cal_beginn (beginn),
   KEY idx_cal_ziel (ziel, ziel_id),
   CONSTRAINT fk_cal_cb FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
-  CONSTRAINT fk_cal_ub FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+  CONSTRAINT fk_cal_ub FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_cal_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS calendar_ha (
@@ -1280,6 +1283,16 @@ CREATE TABLE IF NOT EXISTS vehicle_favorites (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Protokoll der Stein.app-Abrufe (das Rate Limit macht Nachvollziehbarkeit wichtig)
+-- Fahrzeuge, die ein Termin braucht (nach vehicles, weil der Fremdschluessel dorthin zeigt)
+CREATE TABLE IF NOT EXISTS calendar_vehicles (
+  entry_id    INT UNSIGNED NOT NULL,
+  vehicle_id  INT UNSIGNED NOT NULL,
+  PRIMARY KEY (entry_id, vehicle_id),
+  KEY idx_cv_vehicle (vehicle_id),
+  CONSTRAINT fk_cv_entry   FOREIGN KEY (entry_id)   REFERENCES calendar_entries(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cv_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)         ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS stein_log (
   id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
   status      VARCHAR(20)  NOT NULL DEFAULT 'ok',

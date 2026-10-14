@@ -57,7 +57,13 @@ $termine = array_values(array_filter(
     static fn($e) => $e['quelle'] !== 'feiertag'
 ));
 
+// Fahrzeuge, die diese Woche in Terminen stecken
+$woche = kalender_woche(date('Y-m-d'));
+$fahrzeugeWoche = can('view_vehicles') ? kalender_fahrzeuge_zeitraum($woche[0], $woche[1], $user) : [];
+
 render('dashboard', [
+    'fahrzeugeWoche' => $fahrzeugeWoche,
+    'woche'          => $woche,
     'title'          => 'Übersicht',
     'termine'        => array_slice($termine, 0, 6),
     'termineGesamt'  => count($termine),

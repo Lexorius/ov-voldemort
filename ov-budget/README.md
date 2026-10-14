@@ -28,6 +28,9 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - Übersicht nach Kategorie und Monat mit Grafik
 - **Auslagen**: an jeder Ausgabe, welcher Helfer vorgestreckt hat und wann
   erstattet wurde; die Liste zeigt, wer noch auf sein Geld wartet
+- **Termine mit Fahrzeugen und Standort**: Fahrzeuge je Termin, Platz aus
+  den Stell- und Lagerplätzen plus freier Ort; die Fahrzeugakte zeigt ihre
+  Termine, die Startseite, welche Fahrzeuge diese Woche verplant sind
 - **Objektkonten** als zweite Auswertung: mehrere Kategorien laufen auf ein
   Konto (etwa Getränke und Lebensmittel auf Verpflegung), die Statistik nach
   Kategorien bleibt daneben bestehen

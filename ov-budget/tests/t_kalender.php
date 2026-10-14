@@ -93,6 +93,26 @@ $check('ohne Uhrzeit und ohne ganztägig: Fehler', $id === null && str_contains(
 $_POST = ['titel' => 'Rückwärts', 'datum' => '2026-11-02', 'ganztag' => '1', 'ende_datum' => '2026-11-01', 'ziel' => 'user'];
 [$id, $fehler] = kalender_save_from_post(null, $u);
 $check('Ende vor Beginn: Fehler', $id === null && str_contains($fehler[0], 'Ende'));
+$GLOBALS['inserts'] = []; $GLOBALS['execs'] = [];
+$_POST = ['titel' => 'Fahrzeugpflege', 'datum' => '2026-11-02', 'ganztag' => '1', 'ziel' => 'user', 'ort' => 'Waschplatz', 'standort_id' => '4', 'fahrzeuge_feld' => '1', 'vehicles' => ['2', '2', 'x', '5']];
+[$id, $fehler] = kalender_save_from_post(null, $u);
+$cv = array_values(array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'calendar_vehicles'));
+$check('Termin mit Ort und Fahrzeugen: Fahrzeuge gesetzt, Platz nur geprüft', $fehler === [] && $GLOBALS['inserts'][0][1]['ort'] === 'Waschplatz' && array_key_exists('standort_id', $GLOBALS['inserts'][0][1])
+    && count($cv) === 2 && $cv[0][1] === ['entry_id' => $id, 'vehicle_id' => 2] && $cv[1][1]['vehicle_id'] === 5);
+$GLOBALS['inserts'] = [];
+$_POST = ['titel' => 'Ohne Fahrzeug', 'datum' => '2026-11-02', 'ganztag' => '1', 'ziel' => 'user', 'fahrzeuge_feld' => '1'];
+[$id, $fehler] = kalender_save_from_post(null, $u);
+$check('Feld da, nichts gewählt: Fahrzeuge geleert, keine neuen', $fehler === [] && !array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'calendar_vehicles'));
+$check('Ort aus Platz und freiem Ort', kalender_ort_text(['standort_name' => 'Halle 1', 'ort' => 'Tor 3']) === 'Halle 1 · Tor 3' && kalender_ort_text(['standort_name' => null, 'ort' => '']) === '' && kalender_ort_text(['ort' => 'nur frei']) === 'nur frei');
+$check('Woche Montag bis Sonntag', kalender_woche('2026-10-14') === ['2026-10-12', '2026-10-18'] && kalender_woche('2026-10-12') === ['2026-10-12', '2026-10-18'] && kalender_woche('2026-10-18') === ['2026-10-12', '2026-10-18']);
+$gr = kalender_fahrzeuge_gruppieren([
+    ['id' => 1, 'titel' => 'Übung', 'beginn' => '2026-10-17 08:00:00', 'ende' => '2026-10-17 16:00:00', 'ganztag' => 0, 'ort' => '', 'standort_name' => 'Übungsgelände', 'vehicle_id' => 2, 'vehicle_bezeichnung' => 'GKW 1', 'vehicle_funkrufname' => 'Heros 24/51', 'vehicle_kennzeichen' => 'THW-1'],
+    ['id' => 3, 'titel' => 'Dienstabend', 'beginn' => '2026-10-14 19:00:00', 'ende' => null, 'ganztag' => 0, 'ort' => 'Halle', 'standort_name' => null, 'vehicle_id' => 2, 'vehicle_bezeichnung' => 'GKW 1', 'vehicle_funkrufname' => 'Heros 24/51', 'vehicle_kennzeichen' => 'THW-1'],
+    ['id' => 3, 'titel' => 'Dienstabend', 'beginn' => '2026-10-14 19:00:00', 'ende' => null, 'ganztag' => 0, 'ort' => 'Halle', 'standort_name' => null, 'vehicle_id' => 7, 'vehicle_bezeichnung' => 'MTW', 'vehicle_funkrufname' => '', 'vehicle_kennzeichen' => ''],
+    ['id' => 4, 'titel' => 'Lehrgang', 'beginn' => '2026-10-13 00:00:00', 'ende' => '2026-10-13 23:59:59', 'ganztag' => 1, 'ort' => '', 'standort_name' => null, 'vehicle_id' => 9, 'vehicle_bezeichnung' => 'MLW', 'vehicle_funkrufname' => '', 'vehicle_kennzeichen' => ''],
+]);
+$check('je Fahrzeug gebündelt, Termine sortiert, Fahrzeuge nach erstem Termin', count($gr) === 3 && $gr[0]['fahrzeug']['bezeichnung'] === 'MLW' && $gr[1]['fahrzeug']['bezeichnung'] === 'GKW 1'
+    && count($gr[1]['termine']) === 2 && $gr[1]['termine'][0]['titel'] === 'Dienstabend' && $gr[1]['termine'][1]['ort'] === 'Übungsgelände' && $gr[2]['fahrzeug']['bezeichnung'] === 'MTW' && $gr[0]['termine'][0]['ganztag'] === true);
 
 /* ---------- Monatsraster und Verteilung ---------- */
 $r = kalender_monatsraster(2026, 10);
@@ -108,7 +128,7 @@ $check('Zeit lesbar', kalender_zeit($e2) === '19:00–21:00' && kalender_zeit($e
 /* ---------- Sammeln aus den Modulen ---------- */
 $GLOBALS['tabellen'] = [
     'FROM calendar_entries' => [
-        ['id' => 1, 'titel' => 'Eigener', 'beginn' => '2026-10-10 10:00:00', 'ende' => null, 'ganztag' => 0, 'ziel' => 'user', 'ziel_id' => 3, 'created_by' => 3, 'ort' => '', 'farbe' => '', 'ziel_name' => 'Anna'],
+        ['id' => 1, 'titel' => 'Eigener', 'beginn' => '2026-10-10 10:00:00', 'ende' => null, 'ganztag' => 0, 'ziel' => 'user', 'ziel_id' => 3, 'created_by' => 3, 'ort' => 'Tor 3', 'farbe' => '', 'ziel_name' => 'Anna', 'standort_name' => 'Halle 1', 'fahrzeuge_namen' => 'GKW 1 · MTW'],
         ['id' => 2, 'titel' => 'Fremder', 'beginn' => '2026-10-11 10:00:00', 'ende' => null, 'ganztag' => 0, 'ziel' => 'user', 'ziel_id' => 4, 'created_by' => 4, 'ort' => '', 'farbe' => '', 'ziel_name' => 'Bob'],
     ],
     'FROM meetings' => [['id' => 9, 'titel' => 'OV-Runde', 'datum' => '2026-10-12', 'beginn' => '19:00:00', 'ende' => '21:00:00', 'ort' => 'Unterkunft', 'status' => 'geplant']],
@@ -124,6 +144,8 @@ $alle = kalender_sammeln('2026-10-01', '2026-10-31', $u);
 $titel = array_column($alle, 'titel');
 $check('alle Quellen, nach Beginn sortiert', $titel[0] === 'Feiertag' || true);
 $check('eigener Termin ja, fremder nicht', in_array('Eigener', $titel, true) && !in_array('Fremder', $titel, true));
+$eigener = array_values(array_filter($alle, static fn($e) => $e['titel'] === 'Eigener'))[0];
+$check('Termin trägt Platz, Ort und Fahrzeuge', $eigener['ort'] === 'Halle 1 · Tor 3' && $eigener['fahrzeuge'] === 'GKW 1 · MTW' && kalender_eintrag('ha', 'x', '2026-10-10')['fahrzeuge'] === '');
 $check('Besprechung, Veranstaltung, eigene Aufgabe, Fristen, Stichtag, HA, Feiertag', in_array('OV-Runde', $titel, true) && in_array('Übung', $titel, true)
     && in_array('Fällig: Bericht', $titel, true) && !in_array('Fällig: Fremd', $titel, true) && in_array('HU fällig: GKW 1', $titel, true)
     && in_array('Prüfung fällig: HRT 12', $titel, true) && in_array('Vertrag endet: 0171 1234567', $titel, true) && in_array('Stichtag Jahresbudget 2026', $titel, true)
@@ -202,7 +224,22 @@ $check('Monat rendert mit Feiertag, Terminen und Links', str_contains($html, 'Ok
     && str_contains($html, 'kal__tag--heute') && str_contains($html, 'p=kalender_edit') && str_contains($html, 'p=meeting') && substr_count($html, 'class="kal__kopf"') === 7);
 $html = render_partial('kalender', ['ansicht' => 'liste', 'monat' => '2026-10', 'jahr' => 2026, 'mon' => 10, 'heute' => '2026-10-03', 'raster' => null,
     'eintraege' => $alle, 'jeTag' => [], 'quellen' => ['termin'], 'erlaubt' => kalender_quellen_fuer($u), 'darfAnlegen' => false, 'haFehler' => ['calendar.x' => 'weg']]);
-$check('Liste rendert mit Tagesüberschriften und HA-Hinweis', str_contains($html, 'Nächste 60 Tage') && str_contains($html, 'kal__datum') && str_contains($html, 'calendar.x: weg') && !str_contains($html, '+ Termin'));
+$check('Liste rendert mit Tagesüberschriften und HA-Hinweis', str_contains($html, 'Nächste 60 Tage') && str_contains($html, 'kal__datum') && str_contains($html, 'calendar.x: weg') && !str_contains($html, '+ Termin')
+    && str_contains($html, '⛟ GKW 1 · MTW') && str_contains($html, 'Halle 1 · Tor 3'));
+require_once $app . '/src/lib/standorte.php';
+$html = render_partial('kalender_edit', ['termin' => ['id' => 5, 'titel' => 'x', 'beschreibung' => '', 'ort' => 'Tor 3', 'standort_id' => 4, 'datum' => '2026-10-15', 'zeit' => '19:00', 'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'ov', 'ziel_id' => null, 'farbe' => '', 'erfasser' => 'Leitung'],
+    'errors' => [], 'nurLesen' => false, 'user' => $leitung, 'leitung' => true, 'users' => [], 'fahrzeuge' => [['id' => 2, 'bezeichnung' => 'GKW 1', 'funkrufname' => 'Heros 24/51', 'kennzeichen' => ''], ['id' => 7, 'bezeichnung' => 'MTW', 'funkrufname' => '', 'kennzeichen' => '']],
+    'gewaehlt' => [7], 'standorte' => [['id' => 4, 'parent_id' => null, 'typ' => 'halle', 'name' => 'Halle 1', 'sort_order' => 10, 'is_active' => 1, 'kurz' => '']]]);
+$check('Formular: Standort-Auswahl, freier Ort, Fahrzeuge mit Haken', str_contains($html, 'name="standort_id"') && str_contains($html, 'value="4" selected') && str_contains($html, 'Ort (frei)') && str_contains($html, 'value="Tor 3"')
+    && substr_count($html, 'name="vehicles[]"') === 2 && str_contains($html, 'value="7" checked') && !str_contains($html, 'value="2" checked') && str_contains($html, 'name="fahrzeuge_feld"'));
+$html = render_partial('kalender_edit', ['termin' => ['id' => null, 'titel' => '', 'beschreibung' => '', 'ort' => '', 'datum' => '2026-10-15', 'zeit' => '', 'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'user', 'ziel_id' => 3, 'farbe' => ''],
+    'errors' => [], 'nurLesen' => false, 'user' => $u, 'leitung' => false, 'users' => [], 'fahrzeuge' => [], 'standorte' => []]);
+$check('ohne Fahrzeuge und Plätze keine Abschnitte', !str_contains($html, 'name="vehicles[]"') && !str_contains($html, 'name="standort_id"') && str_contains($html, 'name="ort"'));
+$html = render_partial('dashboard', ['termine' => [], 'termineGesamt' => 0, 'user' => $u, 'jahr' => 2026, 'wuensche' => [], 'statsW' => ['anzahl' => 0, 'summe' => 0.0], 'budgets' => [],
+    'zahlen' => ['budget' => 0.0, 'einnahmen' => 0.0, 'ausgaben' => 0.0, 'verfuegbar' => 0.0, 'frei' => 0.0, 'quote' => 0.0], 'budgetVerplant' => 0.0, 'todos' => [], 'todosGesamt' => 0, 'ueberfaellig' => 0, 'zuBestellen' => [], 'fahrzeuge' => [],
+    'fahrzeugeWoche' => $gr, 'woche' => ['2026-10-12', '2026-10-18']]);
+$check('Startseite: Fahrzeuge diese Woche mit Terminen', str_contains($html, 'Fahrzeuge diese Woche verplant') && str_contains($html, '12.10.2026 – 18.10.2026') && str_contains($html, 'GKW 1') && str_contains($html, '2 Termin(e)')
+    && str_contains($html, 'Mi 14.10.') && str_contains($html, '19:00 · Dienstabend') && str_contains($html, 'Übungsgelände') && str_contains($html, 'p=vehicle&amp;id=2') && str_contains($html, 'p=kalender_edit&amp;id=3'));
 $html = render_partial('kalender_edit', ['termin' => ['id' => null, 'titel' => '', 'beschreibung' => '', 'ort' => '', 'datum' => '2026-10-15', 'zeit' => '', 'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'user', 'ziel_id' => 3, 'farbe' => ''],
     'errors' => [], 'nurLesen' => false, 'user' => $u, 'leitung' => false, 'users' => []]);
 $check('Formular für Mitglieder ohne OV-Ziel, mit eigener Fachgruppe und Funktion', !str_contains($html, 'value="ov"') && str_contains($html, '>Bergung<') && str_contains($html, '>Zugführer<') && str_contains($html, 'data-ganztag'));

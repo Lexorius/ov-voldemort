@@ -94,7 +94,8 @@ $quoteCls = ($zahlen['verfuegbar'] > 0 && $zahlen['ausgaben'] > $zahlen['verfueg
       <div class="itemlist">
         <?php foreach ($termine as $e): $tag = substr($e['beginn'], 0, 10); $zeit = kalender_zeit($e);
           $inner = '<div class="item__top"><div style="min-width:0"><div class="item__title">' . e($e['titel']) . '</div><div class="item__sub">'
-              . e(de_date($tag) . ($zeit !== '' ? ', ' . $zeit . ' Uhr' : '') . ($e['ort'] !== '' ? ' · ' . $e['ort'] : '') . ($e['untertitel'] !== '' ? ' · ' . $e['untertitel'] : ''))
+              . e(de_date($tag) . ($zeit !== '' ? ', ' . $zeit . ' Uhr' : '') . ($e['ort'] !== '' ? ' · ' . $e['ort'] : '') . ($e['untertitel'] !== '' ? ' · ' . $e['untertitel'] : '')
+                  . (($e['fahrzeuge'] ?? '') !== '' ? ' · ⛟ ' . $e['fahrzeuge'] : ''))
               . '</div></div><span class="badge" style="background:' . e($e['farbe']) . '">' . e(KALENDER_QUELLEN[$e['quelle']]['label'] ?? $e['quelle']) . '</span></div>'; ?>
           <?php if ($e['url'] !== ''): ?><a class="item" href="<?= e($e['url']) ?>" style="border-left-color:<?= e($e['farbe']) ?>"><?= $inner ?></a>
           <?php else: ?><div class="item" style="border-left-color:<?= e($e['farbe']) ?>"><?= $inner ?></div><?php endif; ?>
@@ -120,6 +121,31 @@ $quoteCls = ($zahlen['verfuegbar'] > 0 && $zahlen['ausgaben'] > $zahlen['verfueg
     <?php endif; ?>
   </section>
 </div>
+
+<?php $fahrzeugeWoche ??= []; $woche ??= ['', '']; if ($fahrzeugeWoche): $tage = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']; ?>
+  <section class="card" id="fahrzeuge-woche">
+    <div class="card__head">
+      <h2>Fahrzeuge diese Woche verplant</h2>
+      <span class="muted small"><?= e(de_date($woche[0])) ?> – <?= e(de_date($woche[1])) ?></span>
+    </div>
+    <div class="itemlist">
+      <?php foreach ($fahrzeugeWoche as $g): $v = $g['fahrzeug']; ?>
+        <div class="item" style="border-left-color:#0369a1">
+          <div class="item__top"><div style="min-width:0">
+            <a class="item__title item__link" href="<?= e(url('vehicle', ['id' => $v['id']])) ?>"><?= e((string)$v['bezeichnung']) ?></a>
+            <div class="item__sub"><?= e(implode(' · ', array_filter([$v['funkrufname'], $v['kennzeichen']]))) ?></div>
+          </div><span class="badge badge--outline"><?= count($g['termine']) ?> Termin(e)</span></div>
+          <div class="item__meta">
+            <?php foreach ($g['termine'] as $t): $tag = substr($t['beginn'], 0, 10); $zeit = kalender_zeit($t); ?>
+              <a class="chip" href="<?= e(url('kalender_edit', ['id' => $t['id']])) ?>"><strong><?= e($tage[(int)date('N', strtotime($tag)) - 1] . ' ' . date('d.m.', strtotime($tag))) ?></strong>
+                <?= $zeit !== '' ? e($zeit) : 'ganztägig' ?> · <?= e($t['titel']) ?><?= $t['ort'] !== '' ? ' <span class="muted small">' . e($t['ort']) . '</span>' : '' ?></a>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  </section>
+<?php endif; ?>
 
 <?php if ($fahrzeuge): ?>
   <section class="card">

@@ -463,6 +463,14 @@ Connectoren*). Abgeholt wird im Takt des Standort-Intervalls und auf Knopfdruck.
 
 ## Kalender
 
+Jeder Termin kann **Fahrzeuge** haben (Haken im Formular, wer die Fahrzeuge
+sehen darf), einen **Standort** aus den Stell- und Lagerplätzen und einen
+**freien Ort** („Übungsgelände Neckarwiese"); beides steht zusammen am
+Eintrag. Die Fahrzeugakte zeigt unter „Termine mit diesem Fahrzeug" die
+nächsten zwölf Monate mit Knopf „+ Termin", der das Fahrzeug gleich
+anhakt. Die Startseite listet „Fahrzeuge diese Woche verplant": je Fahrzeug
+seine Termine von Montag bis Sonntag, mit Sprung in Akte und Termin.
+
 Ein Monat auf einen Blick oder die nächsten 60 Tage als Liste – mit allem,
 was im Ortsverband ein Datum hat. Die Quellen lassen sich oben einzeln ein-
 und ausblenden:

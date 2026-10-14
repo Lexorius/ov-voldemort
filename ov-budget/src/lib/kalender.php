@@ -168,13 +168,22 @@ function kalender_ziel_name(array $t): string
     };
 }
 
+/** Spalten, die jeder Termin mitbringt: Platzname und die Namen seiner Fahrzeuge */
+function kalender_select_zusatz(): string
+{
+    return "sp.name AS standort_name,
+            (SELECT GROUP_CONCAT(v.bezeichnung ORDER BY v.bezeichnung SEPARATOR ' · ') FROM calendar_vehicles cv JOIN vehicles v ON v.id = cv.vehicle_id
+              WHERE cv.entry_id = k.id) AS fahrzeuge_namen";
+}
+
 function kalender_find(int $id): ?array
 {
     return $id > 0 ? db_row(
-        'SELECT k.*, u.display_name AS ziel_name, e.display_name AS erfasser
+        'SELECT k.*, u.display_name AS ziel_name, e.display_name AS erfasser, ' . kalender_select_zusatz() . '
          FROM calendar_entries k
          LEFT JOIN users u ON u.id = k.ziel_id AND k.ziel = \'user\'
          LEFT JOIN users e ON e.id = k.created_by
+         LEFT JOIN standorte sp ON sp.id = k.standort_id
          WHERE k.id = ?',
         [$id]
     ) : null;
@@ -184,14 +193,102 @@ function kalender_find(int $id): ?array
 function kalender_termine(string $von, string $bis, array $u): array
 {
     $rows = db_all(
-        'SELECT k.*, u.display_name AS ziel_name
+        'SELECT k.*, u.display_name AS ziel_name, ' . kalender_select_zusatz() . '
          FROM calendar_entries k
          LEFT JOIN users u ON u.id = k.ziel_id AND k.ziel = \'user\'
+         LEFT JOIN standorte sp ON sp.id = k.standort_id
          WHERE k.beginn < ? AND COALESCE(k.ende, k.beginn) >= ?
          ORDER BY k.beginn, k.id',
         [$bis . ' 23:59:59', $von . ' 00:00:00']
     );
     return array_values(array_filter($rows, static fn($t) => kalender_sichtbar($t, $u)));
+}
+
+/** Platz und freier Ort als ein Text: „Halle 1 · Tor 3". Reine Funktion. */
+function kalender_ort_text(array $t): string
+{
+    return implode(' · ', array_filter([trim((string)($t['standort_name'] ?? '')), trim((string)($t['ort'] ?? ''))], 'strlen'));
+}
+
+/* ---------- Fahrzeuge am Termin ---------- */
+
+/** Die Fahrzeuge eines Termins */
+function kalender_fahrzeuge(int $entryId): array
+{
+    return db_all('SELECT v.id, v.bezeichnung, v.funkrufname, v.kennzeichen, v.is_active FROM calendar_vehicles cv
+                   JOIN vehicles v ON v.id = cv.vehicle_id WHERE cv.entry_id = ? ORDER BY v.bezeichnung', [$entryId]);
+}
+
+/** Genau diese Fahrzeuge gehören zum Termin */
+function kalender_fahrzeuge_setzen(int $entryId, array $ids): void
+{
+    db_exec('DELETE FROM calendar_vehicles WHERE entry_id = ?', [$entryId]);
+    foreach (array_values(array_unique(array_filter(array_map('intval', $ids), static fn($i) => $i > 0))) as $vid) {
+        db_insert('calendar_vehicles', ['entry_id' => $entryId, 'vehicle_id' => $vid]);
+    }
+}
+
+/** Termine mit einem Fahrzeug im Zeitraum, die diese Person sehen darf */
+function kalender_termine_fahrzeug(int $vehicleId, string $von, string $bis, array $u): array
+{
+    $rows = db_all(
+        'SELECT k.*, u.display_name AS ziel_name, ' . kalender_select_zusatz() . '
+         FROM calendar_vehicles cv
+         JOIN calendar_entries k ON k.id = cv.entry_id
+         LEFT JOIN users u ON u.id = k.ziel_id AND k.ziel = \'user\'
+         LEFT JOIN standorte sp ON sp.id = k.standort_id
+         WHERE cv.vehicle_id = ? AND k.beginn < ? AND COALESCE(k.ende, k.beginn) >= ?
+         ORDER BY k.beginn, k.id',
+        [$vehicleId, $bis . ' 23:59:59', $von . ' 00:00:00']
+    );
+    return array_values(array_filter($rows, static fn($t) => kalender_sichtbar($t, $u)));
+}
+
+/** Alle Fahrzeuge, die im Zeitraum in Terminen verplant sind – je Fahrzeug seine Termine */
+function kalender_fahrzeuge_zeitraum(string $von, string $bis, array $u): array
+{
+    $rows = db_all(
+        'SELECT k.*, u.display_name AS ziel_name, sp.name AS standort_name,
+                v.id AS vehicle_id, v.bezeichnung AS vehicle_bezeichnung, v.funkrufname AS vehicle_funkrufname, v.kennzeichen AS vehicle_kennzeichen
+         FROM calendar_vehicles cv
+         JOIN calendar_entries k ON k.id = cv.entry_id
+         JOIN vehicles v ON v.id = cv.vehicle_id
+         LEFT JOIN users u ON u.id = k.ziel_id AND k.ziel = \'user\'
+         LEFT JOIN standorte sp ON sp.id = k.standort_id
+         WHERE k.beginn < ? AND COALESCE(k.ende, k.beginn) >= ?
+         ORDER BY v.bezeichnung, k.beginn, k.id',
+        [$bis . ' 23:59:59', $von . ' 00:00:00']
+    );
+    return kalender_fahrzeuge_gruppieren(array_values(array_filter($rows, static fn($t) => kalender_sichtbar($t, $u))));
+}
+
+/** Zeilen (Termin + Fahrzeugspalten) je Fahrzeug bündeln, Fahrzeuge nach dem frühesten Termin. Reine Funktion. */
+function kalender_fahrzeuge_gruppieren(array $rows): array
+{
+    $out = [];
+    foreach ($rows as $r) {
+        $vid = (int)$r['vehicle_id'];
+        if (!isset($out[$vid])) {
+            $out[$vid] = ['fahrzeug' => ['id' => $vid, 'bezeichnung' => (string)$r['vehicle_bezeichnung'], 'funkrufname' => (string)($r['vehicle_funkrufname'] ?? ''),
+                                         'kennzeichen' => (string)($r['vehicle_kennzeichen'] ?? '')], 'termine' => []];
+        }
+        $out[$vid]['termine'][] = ['id' => (int)$r['id'], 'titel' => (string)$r['titel'], 'beginn' => (string)$r['beginn'], 'ende' => $r['ende'] ?? null,
+                                   'ganztag' => (int)($r['ganztag'] ?? 0) === 1, 'ort' => kalender_ort_text($r)];
+    }
+    foreach ($out as &$g) {
+        usort($g['termine'], static fn($a, $b) => $a['beginn'] <=> $b['beginn']);
+    }
+    unset($g);
+    uasort($out, static fn($a, $b) => [$a['termine'][0]['beginn'], $a['fahrzeug']['bezeichnung']] <=> [$b['termine'][0]['beginn'], $b['fahrzeug']['bezeichnung']]);
+    return array_values($out);
+}
+
+/** Montag und Sonntag der Woche, in der ein Tag liegt. Reine Funktion. */
+function kalender_woche(string $tag): array
+{
+    $ts = strtotime($tag);
+    $montag = $ts - (((int)date('N', $ts)) - 1) * 86400;
+    return [date('Y-m-d', $montag), date('Y-m-d', $montag + 6 * 86400)];
 }
 
 /** Termin aus dem Formular speichern. Gibt [id, fehler[]] zurück. */
@@ -240,6 +337,7 @@ function kalender_save_from_post(?array $existing, array $user): array
         'titel'        => mb_substr($titel, 0, 200),
         'beschreibung' => post_str('beschreibung'),
         'ort'          => mb_substr(post_str('ort'), 0, 150),
+        'standort_id'  => function_exists('vehicle_stellplatz_pruefen') ? vehicle_stellplatz_pruefen(post_int('standort_id')) : null,
         'beginn'       => $beginn,
         'ende'         => $ende,
         'ganztag'      => $ganztag ? 1 : 0,
@@ -256,6 +354,12 @@ function kalender_save_from_post(?array $existing, array $user): array
         $data['created_by'] = (int)$user['id'];
         $id = db_insert('calendar_entries', $data);
         audit('termin.angelegt', 'calendar', $id, $data['titel']);
+    }
+    // Fahrzeuge nur anfassen, wenn die Person sie überhaupt wählen konnte
+    if (can('view_vehicles') && isset($_POST['vehicles'])) {
+        kalender_fahrzeuge_setzen($id, (array)$_POST['vehicles']);
+    } elseif (can('view_vehicles') && post_str('fahrzeuge_feld') === '1') {
+        kalender_fahrzeuge_setzen($id, []);
     }
     return [$id, []];
 }
@@ -284,6 +388,7 @@ function kalender_eintrag(string $quelle, string $titel, string $beginn, ?string
         'url'      => (string)($mehr['url'] ?? ''),
         'farbe'    => (string)($mehr['farbe'] ?? KALENDER_QUELLEN[$quelle]['color']),
         'untertitel' => (string)($mehr['untertitel'] ?? ''),
+        'fahrzeuge' => (string)($mehr['fahrzeuge'] ?? ''),
         'id'       => (int)($mehr['id'] ?? 0),
         'tag'      => substr($beginn, 0, 10),
     ];
@@ -337,7 +442,7 @@ function kalender_quelle(string $quelle, string $von, string $bis, array $u): ar
     if (in_array('termin', $quellen, true)) {
         foreach (kalender_termine($von, $bis, $u) as $t) {
             $out[] = kalender_eintrag('termin', (string)$t['titel'], (string)$t['beginn'], $t['ende'], [
-                'ganztag' => (int)$t['ganztag'] === 1, 'ort' => $t['ort'], 'id' => $t['id'],
+                'ganztag' => (int)$t['ganztag'] === 1, 'ort' => kalender_ort_text($t), 'id' => $t['id'], 'fahrzeuge' => (string)($t['fahrzeuge_namen'] ?? ''),
                 'url' => url('kalender_edit', ['id' => $t['id']]), 'farbe' => $t['farbe'] ?: KALENDER_QUELLEN['termin']['color'],
                 'untertitel' => kalender_ziel_name($t),
             ]);

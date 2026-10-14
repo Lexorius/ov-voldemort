@@ -1647,6 +1647,27 @@ SQL);
         $pdo->exec('ALTER TABLE expenses ADD COLUMN weitergegeben_am DATE NULL AFTER ausgelegt_name');
     }
     $merken('059_auslage_stufen');
+
+    /* ---------- 060: Termine mit Fahrzeugen und Platz ---------- */
+    if (ovb_table_exists($pdo, 'calendar_entries')) {
+        if (!ovb_column_exists($pdo, 'calendar_entries', 'standort_id')) {
+            $pdo->exec('ALTER TABLE calendar_entries ADD COLUMN standort_id INT UNSIGNED NULL AFTER ort');
+        }
+        if (ovb_table_exists($pdo, 'standorte') && !ovb_constraint_exists($pdo, 'calendar_entries', 'fk_cal_standort')) {
+            $pdo->exec('ALTER TABLE calendar_entries ADD CONSTRAINT fk_cal_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE SET NULL');
+        }
+        if (ovb_table_exists($pdo, 'vehicles') && !ovb_table_exists($pdo, 'calendar_vehicles')) {
+            $pdo->exec('CREATE TABLE calendar_vehicles (
+                entry_id    INT UNSIGNED NOT NULL,
+                vehicle_id  INT UNSIGNED NOT NULL,
+                PRIMARY KEY (entry_id, vehicle_id),
+                KEY idx_cv_vehicle (vehicle_id),
+                CONSTRAINT fk_cv_entry   FOREIGN KEY (entry_id)   REFERENCES calendar_entries(id) ON DELETE CASCADE,
+                CONSTRAINT fk_cv_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)         ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+        }
+    }
+    $merken('060_termin_fahrzeuge');
 }
 
 /**

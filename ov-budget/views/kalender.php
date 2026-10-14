@@ -87,7 +87,8 @@ $tage = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
         <?php endif; ?>
         <?php $inner = '<div class="item__top"><div style="min-width:0"><div class="item__title">' . e($e['titel']) . '</div><div class="item__sub">'
             . e(trim(($zeit !== '' ? $zeit . ' Uhr' : 'ganztägig') . ($e['ende'] && substr($e['ende'], 0, 10) !== $tag ? ' bis ' . de_date(substr($e['ende'], 0, 10)) : '')
-                . ($e['ort'] !== '' ? ' · ' . $e['ort'] : '') . ($e['untertitel'] !== '' ? ' · ' . $e['untertitel'] : '')))
+                . ($e['ort'] !== '' ? ' · ' . $e['ort'] : '') . ($e['untertitel'] !== '' ? ' · ' . $e['untertitel'] : '')
+                . (($e['fahrzeuge'] ?? '') !== '' ? ' · ⛟ ' . $e['fahrzeuge'] : '')))
             . '</div></div><span class="badge" style="background:' . e($e['farbe']) . '">' . e(KALENDER_QUELLEN[$e['quelle']]['label'] ?? $e['quelle']) . '</span></div>'; ?>
         <?php if ($e['url'] !== ''): ?><a class="item" href="<?= e($e['url']) ?>" style="border-left-color:<?= e($e['farbe']) ?>"><?= $inner ?></a>
         <?php else: ?><div class="item" style="border-left-color:<?= e($e['farbe']) ?>"><?= $inner ?></div><?php endif; ?>

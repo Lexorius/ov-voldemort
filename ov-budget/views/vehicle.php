@@ -348,6 +348,28 @@ $arten = [
   ]) ?>
 </div>
 
+<?php $termine ??= []; ?>
+<section class="card" id="termine">
+  <div class="card__head">
+    <h2>Termine mit diesem Fahrzeug</h2>
+    <?php if (can('create_kalender')): ?><a class="btn btn--sec btn--sm" href="<?= e(url('kalender_edit', ['vehicle_id' => $vehicle['id']])) ?>">+ Termin</a><?php endif; ?>
+  </div>
+  <?php if (!$termine): ?>
+    <div class="empty">In den nächsten zwölf Monaten ist dieses Fahrzeug in keinem Termin eingeplant.</div>
+  <?php else: ?>
+    <div class="itemlist">
+      <?php foreach ($termine as $t): $tag = substr((string)$t['beginn'], 0, 10); $zeit = kalender_zeit(['ganztag' => (int)$t['ganztag'] === 1, 'beginn' => (string)$t['beginn'], 'ende' => $t['ende']]); $ort = kalender_ort_text($t); ?>
+        <a class="item" href="<?= e(url('kalender_edit', ['id' => $t['id']])) ?>" style="border-left-color:<?= e((string)($t['farbe'] ?: '#0369a1')) ?>">
+          <div class="item__top"><div style="min-width:0">
+            <div class="item__title"><?= e((string)$t['titel']) ?></div>
+            <div class="item__sub"><?= e(de_date($tag) . ($zeit !== '' ? ', ' . $zeit . ' Uhr' : ', ganztägig') . ($t['ende'] && substr((string)$t['ende'], 0, 10) !== $tag ? ' bis ' . de_date(substr((string)$t['ende'], 0, 10)) : '') . ($ort !== '' ? ' · ' . $ort : '') . ' · ' . kalender_ziel_name($t)) ?></div>
+          </div></div>
+        </a>
+      <?php endforeach; ?>
+    </div>
+  <?php endif; ?>
+</section>
+
 <section class="card" id="auftraege">
   <div class="card__head">
     <h2>Instandsetzungsaufträge</h2>
