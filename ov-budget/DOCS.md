@@ -471,8 +471,15 @@ gilt für Veranstaltungen. Die Seite eines Platzes in der Standortübersicht
 zeigt unter „Belegung", welche Termine und Veranstaltungen dort in den
 nächsten 60 Tagen stattfinden. Die Fahrzeugakte zeigt unter „Termine mit diesem Fahrzeug" die
 nächsten zwölf Monate mit Knopf „+ Termin", der das Fahrzeug gleich
-anhakt. Die Startseite listet „Fahrzeuge diese Woche verplant": je Fahrzeug
+anhakt. Die Startseite zeigt oben „Nächste zwei Wochen" als Kalenderraster und
+darunter „Fahrzeuge diese Woche verplant" als Karten mit Bild: je Fahrzeug
 seine Termine von Montag bis Sonntag, mit Sprung in Akte und Termin.
+Steckt ein Fahrzeug zur selben Zeit in zwei Terminen, ist das eine
+**Doppelbuchung**: die Karte und die betroffenen Termine sind rot, oben
+steht eine Warnung. Im Terminformular stehen die Fahrzeuge in drei Blöcken
+(Autos und LKW, Anhänger, Geräte – nach der Fahrzeugart); wer zur
+gewählten Zeit schon in einem anderen Termin steckt, ist orange mit dem
+Namen des Termins. Anhaken geht trotzdem, beim Speichern warnt die Seite.
 
 Ein Monat auf einen Blick oder die nächsten 60 Tage als Liste – mit allem,
 was im Ortsverband ein Datum hat. Die Quellen lassen sich oben einzeln ein-

@@ -1,5 +1,19 @@
 # Änderungsverlauf
 
+## 2.1.24.0
+
+- **Startseite:** oben ein Raster „Nächste zwei Wochen" mit allen
+  Einträgen je Tag (Feiertage, Termine, Besprechungen, Veranstaltungen,
+  Fristen), darunter „Fahrzeuge diese Woche verplant" als Karten mit
+  Bild, deutlich sichtbarer als bisher.
+- **Doppelbuchungen:** Steckt ein Fahrzeug zur selben Zeit in zwei
+  Terminen, sind Karte und Termine rot und eine Warnung steht darüber. Im
+  Terminformular sind Fahrzeuge, die zur gewählten Zeit schon verplant
+  sind, orange mit dem Namen des anderen Termins; beim Speichern warnt
+  die Seite, speichert aber.
+- **Terminformular:** Fahrzeuge in drei Blöcken – Autos und LKW, Anhänger,
+  Geräte – nach der Fahrzeugart.
+
 ## 2.1.23.0
 
 - **Mehrere Standorte je Termin und Veranstaltung:** Statt eines einzelnen

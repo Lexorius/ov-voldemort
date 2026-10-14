@@ -285,6 +285,132 @@ function kalender_fahrzeuge_gruppieren(array $rows): array
     return array_values($out);
 }
 
+/** Überschneiden sich zwei Zeiträume? Gleicher Beginn zählt mit. Reine Funktion. */
+function kalender_ueberschneidung(string $b1, ?string $e1, string $b2, ?string $e2): bool
+{
+    $e1 = $e1 ?: $b1;
+    $e2 = $e2 ?: $b2;
+    return $b1 === $b2 || ($b1 < $e2 && $b2 < $e1);
+}
+
+/** Beginn und Ende aus den Formularfeldern (datum, zeit, ganztag, ende_datum, ende_zeit) – null, wenn unvollständig. Reine Funktion. */
+function kalender_zeitraum_aus_feldern(array $t): ?array
+{
+    $datum = (string)($t['datum'] ?? '');
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $datum)) {
+        return null;
+    }
+    $ganztag = (int)($t['ganztag'] ?? 0) === 1;
+    $zeit = preg_match('/^\d{2}:\d{2}$/', (string)($t['zeit'] ?? '')) ? (string)$t['zeit'] : '';
+    if (!$ganztag && $zeit === '') {
+        return null;
+    }
+    $endeDatum = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($t['ende_datum'] ?? '')) ? (string)$t['ende_datum'] : $datum;
+    $endeZeit = preg_match('/^\d{2}:\d{2}$/', (string)($t['ende_zeit'] ?? '')) ? (string)$t['ende_zeit'] : '';
+    $beginn = $datum . ' ' . ($ganztag ? '00:00:00' : $zeit . ':00');
+    $ende = $ganztag ? $endeDatum . ' 23:59:59' : $endeDatum . ' ' . ($endeZeit !== '' ? $endeZeit . ':00' : $zeit . ':00');
+    return $ende < $beginn ? null : [$beginn, $ende];
+}
+
+/**
+ * Welche dieser Fahrzeuge stecken im Zeitraum schon in einem anderen Termin?
+ * Rückgabe: [vehicle_id => [[id, titel, beginn, ende, ganztag]]]. $ausser: der eigene Termin.
+ */
+function kalender_fahrzeug_konflikte(array $vehicleIds, string $beginn, string $ende, int $ausser = 0): array
+{
+    $ids = array_values(array_filter(array_map('intval', $vehicleIds), static fn($i) => $i > 0));
+    if (!$ids) {
+        return [];
+    }
+    $platz = implode(',', array_fill(0, count($ids), '?'));
+    $rows = db_all(
+        "SELECT cv.vehicle_id, k.id, k.titel, k.beginn, k.ende, k.ganztag
+         FROM calendar_vehicles cv JOIN calendar_entries k ON k.id = cv.entry_id
+         WHERE cv.vehicle_id IN ($platz) AND k.id <> ? AND k.beginn <= ? AND COALESCE(k.ende, k.beginn) >= ?
+         ORDER BY k.beginn, k.id",
+        array_merge($ids, [$ausser, $ende, $beginn])
+    );
+    return kalender_konflikte_gruppieren($rows, $beginn, $ende);
+}
+
+/** Zeilen (vehicle_id + Termin) zu [vehicle_id => Termine], nur echte Überschneidungen. Reine Funktion. */
+function kalender_konflikte_gruppieren(array $rows, string $beginn, string $ende): array
+{
+    $out = [];
+    foreach ($rows as $r) {
+        if (kalender_ueberschneidung($beginn, $ende, (string)$r['beginn'], $r['ende'] ?? null)) {
+            $out[(int)$r['vehicle_id']][] = ['id' => (int)$r['id'], 'titel' => (string)$r['titel'], 'beginn' => (string)$r['beginn'],
+                                             'ende' => $r['ende'] ?? null, 'ganztag' => (int)($r['ganztag'] ?? 0) === 1];
+        }
+    }
+    return $out;
+}
+
+/** „Sa 17.10., 08:00 Uhr" für einen Termin. Reine Funktion. */
+function kalender_wann(array $t): string
+{
+    $tag = substr((string)$t['beginn'], 0, 10);
+    $zeit = kalender_zeit(['ganztag' => !empty($t['ganztag']), 'beginn' => (string)$t['beginn'], 'ende' => $t['ende'] ?? null]);
+    return ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'][(int)date('N', strtotime($tag)) - 1] . ' ' . date('d.m.', strtotime($tag)) . ($zeit !== '' ? ', ' . $zeit . ' Uhr' : '');
+}
+
+/** Warnung für die Leitung: welche Fahrzeuge doppelt gebucht sind. Reine Funktion. */
+function kalender_konflikt_text(array $konflikte, array $fahrzeuge): string
+{
+    $namen = [];
+    foreach ($fahrzeuge as $v) {
+        $namen[(int)$v['id']] = (string)$v['bezeichnung'];
+    }
+    $teile = [];
+    foreach ($konflikte as $vid => $termine) {
+        $teile[] = ($namen[(int)$vid] ?? ('Fahrzeug #' . $vid)) . ' ist auch im Termin ' . implode(' und ', array_map(static fn($t) => '„' . $t['titel'] . '" (' . kalender_wann($t) . ')', $termine));
+    }
+    return $teile ? 'Doppelbuchung: ' . implode('; ', $teile) . '.' : '';
+}
+
+/** Fahrzeuge in drei Blöcke: Autos und LKW, Anhänger, Geräte – nach Art (slug/label). Reine Funktion. */
+function kalender_fahrzeuge_bloecke(array $fahrzeuge): array
+{
+    $out = ['fahrzeuge' => [], 'anhaenger' => [], 'geraete' => []];
+    foreach ($fahrzeuge as $v) {
+        $slug = strtolower((string)($v['typ_slug'] ?? ''));
+        $label = strtolower((string)($v['typ_label'] ?? ''));
+        if (str_contains($slug, 'anh') || str_contains($label, 'anhänger') || str_contains($label, 'anhaenger') || str_contains($label, 'fwa')) {
+            $out['anhaenger'][] = $v;
+        } elseif (str_starts_with($slug, 'geraet') || preg_match('/aggregat|pumpe|boot|notstrom|material/u', $label)
+            || (preg_match('/gerät|geraet/u', $label) && !preg_match('/wagen|fahrzeug|lkw|kraft/u', $label))) {
+            // „Gerätekraftwagen" bleibt ein Fahrzeug, „Gerät / Aggregat" ein Gerät
+            $out['geraete'][] = $v;
+        } else {
+            $out['fahrzeuge'][] = $v;
+        }
+    }
+    return $out;
+}
+
+/** In den Wochengruppen die Termine markieren, die sich je Fahrzeug überschneiden ('konflikt'). Reine Funktion. */
+function kalender_konflikte_markieren(array $gruppen): array
+{
+    foreach ($gruppen as &$g) {
+        $g['konflikte'] = 0;
+        $n = count($g['termine']);
+        for ($i = 0; $i < $n; $i++) {
+            $g['termine'][$i]['konflikt'] = false;
+            for ($k = 0; $k < $n; $k++) {
+                if ($k !== $i && kalender_ueberschneidung((string)$g['termine'][$i]['beginn'], $g['termine'][$i]['ende'] ?? null, (string)$g['termine'][$k]['beginn'], $g['termine'][$k]['ende'] ?? null)) {
+                    $g['termine'][$i]['konflikt'] = true;
+                    break;
+                }
+            }
+            if ($g['termine'][$i]['konflikt']) {
+                $g['konflikte']++;
+            }
+        }
+    }
+    unset($g);
+    return $gruppen;
+}
+
 /** Montag und Sonntag der Woche, in der ein Tag liegt. Reine Funktion. */
 function kalender_woche(string $tag): array
 {

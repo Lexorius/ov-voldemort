@@ -36,6 +36,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
     [$neu, $errors] = kalender_save_from_post($termin, $user);
     if ($neu) {
         flash('success', $termin ? 'Termin gespeichert.' : 'Termin eingetragen.');
+        // Doppelbuchung? Dann warnen, aber speichern
+        $gespeichert = kalender_find($neu);
+        $gewaehlteFahrzeuge = can('view_vehicles') ? array_map('intval', (array)($_POST['vehicles'] ?? [])) : [];
+        if ($gespeichert && $gewaehlteFahrzeuge) {
+            $konflikte = kalender_fahrzeug_konflikte($gewaehlteFahrzeuge, (string)$gespeichert['beginn'], (string)($gespeichert['ende'] ?: $gespeichert['beginn']), $neu);
+            if ($konflikte) {
+                flash('warn', e(kalender_konflikt_text($konflikte, db_all('SELECT id, bezeichnung FROM vehicles WHERE is_active = 1'))));
+            }
+        }
         redirect_route('kalender', ['monat' => substr((string)post_date('datum'), 0, 7)]);
     }
     $termin = array_merge($termin ?? [], $_POST, ['id' => $termin['id'] ?? null]);
@@ -76,9 +85,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
     $standorteGewaehlt = [(int)get_int('standort_id')];
 }
 
+$fahrzeuge = can('view_vehicles')
+    ? db_all('SELECT v.id, v.bezeichnung, v.funkrufname, v.kennzeichen, t.slug AS typ_slug, t.label AS typ_label
+              FROM vehicles v LEFT JOIN list_items t ON t.id = v.typ_id WHERE v.is_active = 1 ORDER BY v.bezeichnung')
+    : [];
+// Welche Fahrzeuge zur gewählten Zeit schon in einem anderen Termin stecken
+$zeitraum = kalender_zeitraum_aus_feldern($termin);
+$belegt = $fahrzeuge && $zeitraum ? kalender_fahrzeug_konflikte(array_column($fahrzeuge, 'id'), $zeitraum[0], $zeitraum[1], (int)($termin['id'] ?? 0)) : [];
+
 render('kalender_edit', [
     'standorteGewaehlt' => $standorteGewaehlt,
-    'fahrzeuge' => can('view_vehicles') ? db_all('SELECT id, bezeichnung, funkrufname, kennzeichen FROM vehicles WHERE is_active = 1 ORDER BY bezeichnung') : [],
+    'fahrzeuge' => $fahrzeuge,
+    'fahrzeugBloecke' => kalender_fahrzeuge_bloecke($fahrzeuge),
+    'belegt'    => $belegt,
     'gewaehlt'  => $gewaehlt,
     'standorte' => function_exists('standort_all') ? standort_all() : [],
     'title'   => $termin['id'] ? ($nurLesen ? 'Termin' : 'Termin bearbeiten') : 'Termin eintragen',

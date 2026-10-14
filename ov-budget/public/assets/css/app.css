@@ -552,6 +552,20 @@ table.data td.num, table.data th.num { text-align: right; font-variant-numeric: 
 .kal__e:hover { background: var(--border); }
 .kal__zeit { color: var(--ink-mute); margin-right: .2rem; font-variant-numeric: tabular-nums; }
 .kal__datum { font-size: .8rem; font-weight: 700; color: var(--ink-soft); margin: .8rem 0 .3rem; }
+.kal--kompakt .kal__tag { min-height: 4rem; }
+@media (max-width: 640px) { .kal--kompakt { grid-template-columns: repeat(7, minmax(0, 1fr)); } .kal--kompakt .kal__tag { min-height: 3rem; padding: .15rem .2rem; } .kal--kompakt .kal__e { font-size: .62rem; } }
+/* Fahrzeuge, die schon in einem anderen Termin stecken; rot, wenn es sich überschneidet */
+.chip--belegt { border-color: #a16207; background: #fffbeb; color: #92400e; }
+.chip--konflikt { border-color: #b91c1c; background: #fef2f2; color: #991b1b; font-weight: 600; }
+@media (prefers-color-scheme: dark) { .chip--belegt { background: rgba(161, 98, 7, .25); color: #fcd34d; } .chip--konflikt { background: rgba(185, 28, 28, .3); color: #fca5a5; } }
+/* Fahrzeuge der Woche auf der Startseite */
+.fzwoche { display: grid; gap: .7rem; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+.fzwoche__karte { border: 1px solid var(--border); border-top: 4px solid #0369a1; border-radius: var(--radius); background: var(--surface); padding: .6rem; box-shadow: var(--shadow); }
+.fzwoche__karte--konflikt { border-top-color: #b91c1c; }
+.fzwoche__kopf { display: block; color: inherit; text-decoration: none; }
+.fzwoche__kopf strong { display: block; font-size: 1rem; }
+.fzwoche__bild { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 6px; margin-bottom: .4rem; background: var(--surface-2); }
+.fzwoche__leer { display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--muted); }
 .kal__datum--heute { color: var(--accent); }
 @media (max-width: 719px) {
   .kal { gap: 1px; }

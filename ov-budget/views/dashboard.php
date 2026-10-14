@@ -64,6 +64,67 @@ $quoteCls = ($zahlen['verfuegbar'] > 0 && $zahlen['ausgaben'] > $zahlen['verfueg
   </div>
 </div>
 
+<?php $zweiWochen ??= null; $darfTermin ??= false; $heute = date('Y-m-d'); $tageKurz = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']; if ($zweiWochen): ?>
+  <section class="card" id="zwei-wochen">
+    <div class="card__head">
+      <h2>Nächste zwei Wochen</h2>
+      <a class="btn btn--sec btn--sm" href="<?= e(url('kalender')) ?>">Kalender</a>
+    </div>
+    <div class="kal kal--kompakt">
+      <?php for ($i = 0; $i < 14; $i++): $tag = date('Y-m-d', strtotime($zweiWochen['von']) + $i * 86400); $liste = $zweiWochen['jeTag'][$tag] ?? [];
+        $feiertag = null; foreach ($liste as $e) { if ($e['quelle'] === 'feiertag') { $feiertag = $e; break; } }
+        $wochenende = (int)date('N', strtotime($tag)) >= 6; ?>
+        <div class="kal__tag<?= $tag === $heute ? ' kal__tag--heute' : '' ?><?= $wochenende || $feiertag ? ' kal__tag--frei' : '' ?>">
+          <div class="kal__nr">
+            <?php if ($darfTermin): ?><a href="<?= e(url('kalender_edit', ['datum' => $tag])) ?>" title="Termin an diesem Tag anlegen"><?= e($tageKurz[(int)date('N', strtotime($tag)) - 1]) ?> <?= (int)substr($tag, 8, 2) ?>.<?= (int)substr($tag, 5, 2) ?>.</a>
+            <?php else: ?><?= e($tageKurz[(int)date('N', strtotime($tag)) - 1]) ?> <?= (int)substr($tag, 8, 2) ?>.<?= (int)substr($tag, 5, 2) ?>.<?php endif; ?>
+            <?php if ($feiertag): ?><span class="kal__feiertag" title="<?= e($feiertag['titel']) ?>"><?= e($feiertag['titel']) ?></span><?php endif; ?>
+          </div>
+          <?php foreach ($liste as $e): if ($e['quelle'] === 'feiertag') { continue; } $zeit = kalender_zeit($e);
+            $tip = ($zeit !== '' ? $zeit . ' Uhr · ' : '') . $e['titel'] . ($e['untertitel'] !== '' ? ' · ' . $e['untertitel'] : '') . ($e['ort'] !== '' ? ' · ' . $e['ort'] : '') . (($e['fahrzeuge'] ?? '') !== '' ? ' · ⛟ ' . $e['fahrzeuge'] : ''); ?>
+            <?php if ($e['url'] !== ''): ?><a class="kal__e" href="<?= e($e['url']) ?>" style="border-left-color:<?= e($e['farbe']) ?>" title="<?= e($tip) ?>"><?php else: ?><span class="kal__e" style="border-left-color:<?= e($e['farbe']) ?>" title="<?= e($tip) ?>"><?php endif; ?>
+              <?php if ($zeit !== ''): ?><span class="kal__zeit"><?= e(substr($zeit, 0, 5)) ?></span><?php endif; ?><?= e($e['titel']) ?><?= ($e['fahrzeuge'] ?? '') !== '' ? ' <span class="muted">⛟</span>' : '' ?>
+            <?= $e['url'] !== '' ? '</a>' : '</span>' ?>
+          <?php endforeach; ?>
+        </div>
+      <?php endfor; ?>
+    </div>
+  </section>
+<?php endif; ?>
+
+<?php $fahrzeugeWoche ??= []; $woche ??= ['', '']; $fzBilder ??= []; if ($fahrzeugeWoche): $konflikte = array_sum(array_map(static fn($g) => (int)($g['konflikte'] ?? 0), $fahrzeugeWoche)); ?>
+  <section class="card" id="fahrzeuge-woche">
+    <div class="card__head">
+      <h2>⛟ Fahrzeuge diese Woche verplant</h2>
+      <span class="muted small"><?= e(de_date($woche[0])) ?> – <?= e(de_date($woche[1])) ?> · <?= count($fahrzeugeWoche) ?> Fahrzeug(e)</span>
+    </div>
+    <?php if ($konflikte > 0): ?>
+      <div class="alert alert--warn"><strong>Doppelbuchung:</strong> <?= count(array_filter($fahrzeugeWoche, static fn($g) => (int)($g['konflikte'] ?? 0) > 0)) === 1 ? 'Ein Fahrzeug ist' : 'Mehrere Fahrzeuge sind' ?>
+        zur selben Zeit in zwei Terminen eingeplant – rot markiert. Bitte einen der Termine ändern.</div>
+    <?php endif; ?>
+    <div class="fzwoche">
+      <?php foreach ($fahrzeugeWoche as $g): $v = $g['fahrzeug']; $hatKonflikt = (int)($g['konflikte'] ?? 0) > 0; ?>
+        <div class="fzwoche__karte<?= $hatKonflikt ? ' fzwoche__karte--konflikt' : '' ?>">
+          <a href="<?= e(url('vehicle', ['id' => $v['id']])) ?>" class="fzwoche__kopf">
+            <?php if (isset($fzBilder[(int)$v['id']])): ?>
+              <img class="fzwoche__bild" alt="" loading="lazy" src="<?= e(url('vehicle_file', ['id' => $fzBilder[(int)$v['id']]['id'], 'vorschau' => 1])) ?>">
+            <?php else: ?><span class="fzwoche__bild fzwoche__leer">⛟</span><?php endif; ?>
+            <strong><?= e((string)$v['bezeichnung']) ?></strong>
+            <span class="muted small"><?= e(implode(' · ', array_filter([$v['funkrufname'], $v['kennzeichen']]))) ?></span>
+            <?php if ($hatKonflikt): ?><span class="badge" style="background:#b91c1c">Doppelbuchung</span><?php endif; ?>
+          </a>
+          <div class="chips" style="margin-top:.4rem">
+            <?php foreach ($g['termine'] as $t): $tag = substr($t['beginn'], 0, 10); $zeit = kalender_zeit($t); ?>
+              <a class="chip<?= !empty($t['konflikt']) ? ' chip--konflikt' : '' ?>" href="<?= e(url('kalender_edit', ['id' => $t['id']])) ?>"<?= !empty($t['konflikt']) ? ' title="Überschneidet sich mit einem anderen Termin dieses Fahrzeugs"' : '' ?>><strong><?= e($tageKurz[(int)date('N', strtotime($tag)) - 1] . ' ' . date('d.m.', strtotime($tag))) ?></strong>
+                <?= $zeit !== '' ? e($zeit) : 'ganztägig' ?> · <?= e($t['titel']) ?><?= $t['ort'] !== '' ? ' <span class="muted small">' . e($t['ort']) . '</span>' : '' ?></a>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  </section>
+<?php endif; ?>
+
 <div class="grid2">
   <section class="card">
     <div class="card__head">
@@ -121,31 +182,6 @@ $quoteCls = ($zahlen['verfuegbar'] > 0 && $zahlen['ausgaben'] > $zahlen['verfueg
     <?php endif; ?>
   </section>
 </div>
-
-<?php $fahrzeugeWoche ??= []; $woche ??= ['', '']; if ($fahrzeugeWoche): $tage = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']; ?>
-  <section class="card" id="fahrzeuge-woche">
-    <div class="card__head">
-      <h2>Fahrzeuge diese Woche verplant</h2>
-      <span class="muted small"><?= e(de_date($woche[0])) ?> – <?= e(de_date($woche[1])) ?></span>
-    </div>
-    <div class="itemlist">
-      <?php foreach ($fahrzeugeWoche as $g): $v = $g['fahrzeug']; ?>
-        <div class="item" style="border-left-color:#0369a1">
-          <div class="item__top"><div style="min-width:0">
-            <a class="item__title item__link" href="<?= e(url('vehicle', ['id' => $v['id']])) ?>"><?= e((string)$v['bezeichnung']) ?></a>
-            <div class="item__sub"><?= e(implode(' · ', array_filter([$v['funkrufname'], $v['kennzeichen']]))) ?></div>
-          </div><span class="badge badge--outline"><?= count($g['termine']) ?> Termin(e)</span></div>
-          <div class="item__meta">
-            <?php foreach ($g['termine'] as $t): $tag = substr($t['beginn'], 0, 10); $zeit = kalender_zeit($t); ?>
-              <a class="chip" href="<?= e(url('kalender_edit', ['id' => $t['id']])) ?>"><strong><?= e($tage[(int)date('N', strtotime($tag)) - 1] . ' ' . date('d.m.', strtotime($tag))) ?></strong>
-                <?= $zeit !== '' ? e($zeit) : 'ganztägig' ?> · <?= e($t['titel']) ?><?= $t['ort'] !== '' ? ' <span class="muted small">' . e($t['ort']) . '</span>' : '' ?></a>
-            <?php endforeach; ?>
-          </div>
-        </div>
-      <?php endforeach; ?>
-    </div>
-  </section>
-<?php endif; ?>
 
 <?php if ($fahrzeuge): ?>
   <section class="card">

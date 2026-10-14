@@ -117,17 +117,22 @@ $ganztag = (int)($termin['ganztag'] ?? 0) === 1;
     </div>
   </section>
 
-  <?php $fahrzeuge ??= []; $gewaehlt ??= []; if ($fahrzeuge): ?>
+  <?php $fahrzeuge ??= []; $gewaehlt ??= []; $belegt ??= []; $bloecke = $fahrzeugBloecke ?? kalender_fahrzeuge_bloecke($fahrzeuge); if ($fahrzeuge): ?>
   <section class="card" id="fahrzeuge">
     <h2>Fahrzeuge</h2>
-    <p class="small muted">Welche Fahrzeuge dieser Termin braucht – die Fahrzeugakte und die Startseite zeigen sie dann als verplant.</p>
+    <p class="small muted">Welche Fahrzeuge dieser Termin braucht – die Fahrzeugakte und die Startseite zeigen sie dann als verplant.
+      <?php if ($belegt): ?><span class="chip chip--belegt" style="cursor:default">orange</span> = zur gewählten Zeit schon in einem anderen Termin; anhaken geht trotzdem, dann warnt die Seite vor der Doppelbuchung.<?php endif; ?></p>
     <input type="hidden" name="fahrzeuge_feld" value="1">
-    <div class="chips">
-      <?php foreach ($fahrzeuge as $v): $an = in_array((int)$v['id'], $gewaehlt, true); ?>
-        <label class="chip<?= $an ? ' is-on' : '' ?>"><input type="checkbox" name="vehicles[]" value="<?= (int)$v['id'] ?>"<?= $an ? ' checked' : '' ?>>
-          <?= e((string)$v['bezeichnung']) ?><?= $v['funkrufname'] ? ' <span class="muted small">' . e((string)$v['funkrufname']) . '</span>' : '' ?></label>
-      <?php endforeach; ?>
-    </div>
+    <?php foreach (['fahrzeuge' => 'Autos und LKW', 'anhaenger' => 'Anhänger', 'geraete' => 'Geräte'] as $key => $titel): if (empty($bloecke[$key])) { continue; } ?>
+      <h3 class="mt"><?= e($titel) ?></h3>
+      <div class="chips">
+        <?php foreach ($bloecke[$key] as $v): $an = in_array((int)$v['id'], $gewaehlt, true); $andere = $belegt[(int)$v['id']] ?? []; ?>
+          <label class="chip<?= $an ? ' is-on' : '' ?><?= $andere ? ' chip--belegt' : '' ?>"<?= $andere ? ' title="' . e('Schon im Termin ' . implode(' und ', array_map(static fn($t) => '„' . $t['titel'] . '" (' . kalender_wann($t) . ')', $andere))) . '"' : '' ?>>
+            <input type="checkbox" name="vehicles[]" value="<?= (int)$v['id'] ?>"<?= $an ? ' checked' : '' ?>>
+            <?= e((string)$v['bezeichnung']) ?><?= $v['funkrufname'] ? ' <span class="muted small">' . e((string)$v['funkrufname']) . '</span>' : '' ?><?= $andere ? ' <span class="small">⚠ ' . e((string)$andere[0]['titel']) . '</span>' : '' ?></label>
+        <?php endforeach; ?>
+      </div>
+    <?php endforeach; ?>
   </section>
   <?php endif; ?>
 
