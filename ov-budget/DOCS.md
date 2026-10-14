@@ -463,8 +463,12 @@ Connectoren*). Abgeholt wird im Takt des Standort-Intervalls und auf Knopfdruck.
 
 ## Kalender
 
-Jeder Termin kann **Fahrzeuge** haben (Haken im Formular, wer die Fahrzeuge
-sehen darf), **mehrere Standorte** aus den Stell- und Lagerplätzen (Gute
+Ein Termin gilt für ein Ziel (Ortsverband, Fachgruppe, Funktion, Person)
+und kann unter „Weitere Fachgruppen" für **mehrere Fachgruppen** zugleich
+gelten – sie alle sehen ihn in ihrem Kalender, der Eintrag nennt sie
+(„Fachgruppe Bergung + Logistik, Jugend"). Die Leitung darf jede
+Fachgruppe dazunehmen, Mitglieder ihre eigene. Jeder Termin kann
+**Fahrzeuge** haben (Haken im Formular, wer die Fahrzeuge sehen darf), **mehrere Standorte** aus den Stell- und Lagerplätzen (Gute
 Stube, Küche und Schulungsraum zugleich) und einen **freien Ort**
 („Übungsgelände Neckarwiese"); alles steht zusammen am Eintrag. Dasselbe
 gilt für Veranstaltungen. Die Seite eines Platzes in der Standortübersicht

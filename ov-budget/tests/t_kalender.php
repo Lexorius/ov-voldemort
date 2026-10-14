@@ -65,6 +65,12 @@ $check('Funktion nur die eigene', kalender_sichtbar(['ziel' => 'funktion', 'ziel
 $check('persönlich nur ich oder der Ersteller', kalender_sichtbar(['ziel' => 'user', 'ziel_id' => 3, 'created_by' => 1], $u) && !kalender_sichtbar(['ziel' => 'user', 'ziel_id' => 4, 'created_by' => 1], $u)
     && kalender_sichtbar(['ziel' => 'user', 'ziel_id' => 4, 'created_by' => 3], $u));
 $check('Leitung sieht alles', kalender_sichtbar(['ziel' => 'user', 'ziel_id' => 4, 'created_by' => 2], $leitung) && kalender_sichtbar(['ziel' => 'fachgruppe', 'ziel_id' => 9, 'created_by' => 2], $leitung));
+$check('weitere Fachgruppe am Termin macht ihn sichtbar', kalender_sichtbar(['ziel' => 'fachgruppe', 'ziel_id' => 6, 'created_by' => 1, 'fachgruppen_ids' => '9,5'], $u)
+    && !kalender_sichtbar(['ziel' => 'fachgruppe', 'ziel_id' => 6, 'created_by' => 1, 'fachgruppen_ids' => '9'], $u) && kalender_sichtbar(['ziel' => 'user', 'ziel_id' => 4, 'created_by' => 1, 'fachgruppen_ids' => [5]], $u)
+    && kalender_fachgruppen_ids(['fachgruppen_ids' => '5,x,0,7']) === [5, 7] && kalender_fachgruppen_ids([]) === []);
+$check('Fachgruppen dazunehmen: Mitglied nur die eigene, Leitung alle', kalender_fachgruppen_erlaubt([5, 6, 5, 0], $u) === [5] && kalender_fachgruppen_erlaubt([5, 6], $leitung) === [5, 6]);
+$check('Zielname mit weiteren Fachgruppen', kalender_ziel_name(['ziel' => 'fachgruppe', 'ziel_id' => 5, 'fachgruppen_namen' => 'Logistik, Jugend']) === 'Fachgruppe Bergung + Logistik, Jugend'
+    && kalender_ziel_name(['ziel' => 'ov', 'ziel_id' => null, 'fachgruppen_namen' => '']) === 'Ortsverband');
 $check('Mitglied darf für sich, Fachgruppe, Funktion', kalender_darf_ziel('user', 3, $u) && kalender_darf_ziel('fachgruppe', 5, $u) && kalender_darf_ziel('funktion', 7, $u)
     && !kalender_darf_ziel('user', 4, $u) && !kalender_darf_ziel('fachgruppe', 6, $u) && !kalender_darf_ziel('ov', 0, $u));
 $check('Leitung darf alles', kalender_darf_ziel('ov', 0, $leitung) && kalender_darf_ziel('user', 4, $leitung));
@@ -97,8 +103,11 @@ require_once $app . '/src/lib/standorte.php';
 $GLOBALS['inserts'] = []; $GLOBALS['execs'] = [];
 $GLOBALS['tabellen'] = ['FROM standorte' => [['id' => 4, 'parent_id' => null, 'typ' => 'raum', 'name' => 'Gute Stube', 'sort_order' => 10, 'is_active' => 1, 'kurz' => ''], ['id' => 6, 'parent_id' => null, 'typ' => 'raum', 'name' => 'Küche', 'sort_order' => 20, 'is_active' => 1, 'kurz' => ''],
     ['id' => 8, 'parent_id' => null, 'typ' => 'raum', 'name' => 'Alt', 'sort_order' => 30, 'is_active' => 0, 'kurz' => '']]];
-$_POST = ['titel' => 'Fahrzeugpflege', 'datum' => '2026-11-02', 'ganztag' => '1', 'ziel' => 'user', 'ort' => 'Waschplatz', 'standorte_feld' => '1', 'standorte' => ['4', '6', '6', '8', '99', 'x'], 'fahrzeuge_feld' => '1', 'vehicles' => ['2', '2', 'x', '5']];
+$_POST = ['titel' => 'Fahrzeugpflege', 'datum' => '2026-11-02', 'ganztag' => '1', 'ziel' => 'user', 'ort' => 'Waschplatz', 'standorte_feld' => '1', 'standorte' => ['4', '6', '6', '8', '99', 'x'], 'fahrzeuge_feld' => '1', 'vehicles' => ['2', '2', 'x', '5'],
+    'fachgruppen_feld' => '1', 'fachgruppen' => ['6'], 'fachgruppen_neu' => '5'];
 [$id, $fehler] = kalender_save_from_post(null, $u);
+$cf = array_values(array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'calendar_fachgruppen'));
+$check('Mitglied: nur die eigene Fachgruppe wird dazugenommen', count($cf) === 1 && $cf[0][1] === ['entry_id' => $id, 'fachgruppe_id' => 5]);
 $cv = array_values(array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'calendar_vehicles'));
 $cs = array_values(array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'calendar_standorte'));
 $check('Termin mit Ort, Fahrzeugen und mehreren Plätzen', $fehler === [] && $GLOBALS['inserts'][0][1]['ort'] === 'Waschplatz' && !array_key_exists('standort_id', $GLOBALS['inserts'][0][1])
@@ -263,7 +272,9 @@ $html = render_partial('kalender_edit', ['termin' => ['id' => 5, 'titel' => 'x',
     'errors' => [], 'nurLesen' => false, 'user' => $leitung, 'leitung' => true, 'users' => [], 'fahrzeuge' => [['id' => 2, 'bezeichnung' => 'GKW 1', 'funkrufname' => 'Heros 24/51', 'kennzeichen' => ''], ['id' => 7, 'bezeichnung' => 'MTW', 'funkrufname' => '', 'kennzeichen' => '']],
     'gewaehlt' => [7], 'standorte' => [['id' => 1, 'parent_id' => null, 'typ' => 'gebaeude', 'name' => 'Haupthaus', 'sort_order' => 10, 'is_active' => 1, 'kurz' => ''], ['id' => 4, 'parent_id' => 1, 'typ' => 'raum', 'name' => 'Gute Stube', 'sort_order' => 10, 'is_active' => 1, 'kurz' => ''],
         ['id' => 6, 'parent_id' => 1, 'typ' => 'raum', 'name' => 'Küche', 'sort_order' => 20, 'is_active' => 1, 'kurz' => ''], ['id' => 8, 'parent_id' => 1, 'typ' => 'raum', 'name' => 'Alt', 'sort_order' => 30, 'is_active' => 0, 'kurz' => '']],
-    'standorteGewaehlt' => [4, 6]]);
+    'standorteGewaehlt' => [4, 6], 'fachgruppenOptionen' => [['id' => 5, 'text' => 'Bergung', 'sub' => '', 'gruppe' => ''], ['id' => 6, 'text' => 'Logistik', 'sub' => '', 'gruppe' => '']], 'fachgruppenGewaehlt' => [6]]);
+$check('Formular: weitere Fachgruppen als Liste', str_contains($html, 'data-wahl="fachgruppen"') && str_contains($html, 'name="fachgruppen[]" value="6"') && substr_count($html, 'name="fachgruppen[]"') === 1
+    && str_contains($html, 'option value="5" data-text="Bergung"') && str_contains($html, 'name="fachgruppen_feld"') && str_contains($html, 'Weitere Fachgruppen'));
 $check('Formular: Plätze als Liste mit Mülleimer und Dropdown, stillgelegte weg, freier Ort, Fahrzeuge', substr_count($html, 'name="standorte[]"') === 2 && str_contains($html, 'name="standorte[]" value="4"') && str_contains($html, 'name="standorte[]" value="6"')
     && str_contains($html, 'data-wahl="standorte"') && substr_count($html, 'wahl__weg') >= 3 && str_contains($html, 'option value="1" data-text="Haupthaus"') && str_contains($html, 'option value="4" data-text="Gute Stube" data-sub="Haupthaus" data-warn="" disabled')
     && !str_contains($html, 'data-text="Alt"') && str_contains($html, 'name="standorte_feld"') && str_contains($html, 'name="standorte_neu"') && !str_contains($html, 'name="standort_id"')

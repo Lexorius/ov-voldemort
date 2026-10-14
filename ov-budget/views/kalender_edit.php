@@ -115,6 +115,8 @@ $ganztag = (int)($termin['ganztag'] ?? 0) === 1;
         <small>Zum Wiedererkennen im Monat.</small>
       </div>
     </div>
+    <?= render_partial('partials/wahl_liste', ['name' => 'fachgruppen', 'feld' => 'fachgruppen_feld', 'label' => 'Weitere Fachgruppen', 'optionen' => $fachgruppenOptionen ?? [], 'gewaehlt' => $fachgruppenGewaehlt ?? [],
+        'leer' => '– Fachgruppe wählen –', 'hinweis' => 'Der Termin gilt dann auch für diese Fachgruppen – sie sehen ihn in ihrem Kalender. ' . (!empty($leitung) ? 'Die Leitung darf jede Fachgruppe dazunehmen.' : 'Du kannst deine eigene Fachgruppe dazunehmen.')]) ?>
   </section>
 
   <?php $fahrzeuge ??= []; $gewaehlt ??= []; $belegt ??= []; $bloecke = $fahrzeugBloecke ?? kalender_fahrzeuge_bloecke($fahrzeuge); if ($fahrzeuge): ?>

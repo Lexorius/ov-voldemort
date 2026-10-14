@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.26.0
+
+- **Mehrere Fachgruppen je Termin:** Unter „Weitere Fachgruppen" lassen
+  sich über Dropdown und Liste beliebig viele Fachgruppen an einen Termin
+  hängen. Er gilt dann für alle: Sie sehen ihn im Kalender, Einträge nennen
+  sie mit. Die Leitung darf jede Fachgruppe dazunehmen, Mitglieder ihre
+  eigene.
+
 ## 2.1.25.0
 
 - **Termin- und Veranstaltungsformular aufgeräumt:** Plätze und Fahrzeuge

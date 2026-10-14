@@ -93,7 +93,23 @@ $fahrzeuge = can('view_vehicles')
 $zeitraum = kalender_zeitraum_aus_feldern($termin);
 $belegt = $fahrzeuge && $zeitraum ? kalender_fahrzeug_konflikte(array_column($fahrzeuge, 'id'), $zeitraum[0], $zeitraum[1], (int)($termin['id'] ?? 0)) : [];
 
+$fachgruppenGewaehlt = [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
+    $fachgruppenGewaehlt = wahl_ids('fachgruppen');
+} elseif (!empty($termin['id'])) {
+    $fachgruppenGewaehlt = array_map('intval', array_column(db_all('SELECT fachgruppe_id FROM calendar_fachgruppen WHERE entry_id = ? ORDER BY fachgruppe_id', [(int)$termin['id']]), 'fachgruppe_id'));
+}
+// Zur Wahl: Leitung alle Fachgruppen, Mitglieder nur die eigene
+$fachgruppenOptionen = [];
+foreach (list_items('fachgruppe') as $fg) {
+    if (kalender_darf_ziel('fachgruppe', (int)$fg['id'], $user) || in_array((int)$fg['id'], $fachgruppenGewaehlt, true)) {
+        $fachgruppenOptionen[] = ['id' => (int)$fg['id'], 'text' => (string)$fg['label'], 'sub' => '', 'gruppe' => ''];
+    }
+}
+
 render('kalender_edit', [
+    'fachgruppenGewaehlt' => $fachgruppenGewaehlt,
+    'fachgruppenOptionen' => $fachgruppenOptionen,
     'standorteGewaehlt' => $standorteGewaehlt,
     'fahrzeuge' => $fahrzeuge,
     'fahrzeugBloecke' => kalender_fahrzeuge_bloecke($fahrzeuge),

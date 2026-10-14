@@ -128,6 +128,10 @@ function kalender_sichtbar(array $t, array $u): bool
     if (in_array((string)($u['role'] ?? ''), ['admin', 'leitung'], true) || (int)($t['created_by'] ?? 0) === (int)$u['id']) {
         return true;
     }
+    // Weitere Fachgruppen am Termin: wer in einer davon ist, sieht ihn
+    if ((int)($u['fachgruppe_id'] ?? 0) > 0 && in_array((int)$u['fachgruppe_id'], kalender_fachgruppen_ids($t), true)) {
+        return true;
+    }
     return match ((string)$t['ziel']) {
         'ov'         => true,
         'fachgruppe' => (int)$t['ziel_id'] === (int)($u['fachgruppe_id'] ?? 0),
@@ -135,6 +139,32 @@ function kalender_sichtbar(array $t, array $u): bool
         'user'       => (int)$t['ziel_id'] === (int)$u['id'],
         default      => false,
     };
+}
+
+/** Die weiteren Fachgruppen eines Termins als ids – aus „5,7" (Abfrage) oder einer Liste. Reine Funktion. */
+function kalender_fachgruppen_ids(array $t): array
+{
+    $roh = $t['fachgruppen_ids'] ?? [];
+    if (is_string($roh)) {
+        $roh = $roh === '' ? [] : explode(',', $roh);
+    }
+    return array_values(array_filter(array_map('intval', (array)$roh), static fn($i) => $i > 0));
+}
+
+/** Welche Fachgruppen diese Person an einen Termin hängen darf: Leitung alle, sonst nur die eigene. Reine Funktion. */
+function kalender_fachgruppen_erlaubt(array $ids, array $u): array
+{
+    $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static fn($i) => $i > 0)));
+    return array_values(array_filter($ids, static fn($id) => kalender_darf_ziel('fachgruppe', $id, $u)));
+}
+
+/** Genau diese weiteren Fachgruppen gehören zum Termin */
+function kalender_fachgruppen_setzen(int $entryId, array $ids, array $u): void
+{
+    db_exec('DELETE FROM calendar_fachgruppen WHERE entry_id = ?', [$entryId]);
+    foreach (kalender_fachgruppen_erlaubt($ids, $u) as $fid) {
+        db_insert('calendar_fachgruppen', ['entry_id' => $entryId, 'fachgruppe_id' => $fid]);
+    }
 }
 
 /** Darf diese Person einen Termin mit diesem Ziel anlegen? Reine Funktion. */
@@ -156,16 +186,26 @@ function kalender_darf_bearbeiten(array $t, array $u): bool
     return in_array((string)($u['role'] ?? ''), ['admin', 'leitung'], true) || (int)($t['created_by'] ?? 0) === (int)$u['id'];
 }
 
-/** Was ein Termin „für" wen ist – zum Anzeigen. */
+/** Was ein Termin „für" wen ist – zum Anzeigen, samt weiterer Fachgruppen. */
 function kalender_ziel_name(array $t): string
 {
-    return match ((string)$t['ziel']) {
+    $name = match ((string)$t['ziel']) {
         'ov'         => 'Ortsverband',
         'fachgruppe' => 'Fachgruppe ' . list_label((int)$t['ziel_id'], '?'),
         'funktion'   => list_label((int)$t['ziel_id'], '?'),
         'user'       => (string)($t['ziel_name'] ?? 'persönlich'),
         default      => '',
     };
+    $weitere = trim((string)($t['fachgruppen_namen'] ?? ''));
+    return $weitere !== '' ? ($name !== '' ? $name . ' + ' : '') . $weitere : $name;
+}
+
+/** Unterabfragen für die weiteren Fachgruppen eines Termins: ids und Namen */
+function kalender_fachgruppen_sub(): string
+{
+    return "(SELECT GROUP_CONCAT(cf.fachgruppe_id) FROM calendar_fachgruppen cf WHERE cf.entry_id = k.id) AS fachgruppen_ids,
+            (SELECT GROUP_CONCAT(li.label ORDER BY li.sort_order, li.label SEPARATOR ', ') FROM calendar_fachgruppen cf JOIN list_items li ON li.id = cf.fachgruppe_id
+              WHERE cf.entry_id = k.id) AS fachgruppen_namen";
 }
 
 /** Unterabfrage für die Platznamen – leer, wenn die Plätze (noch) nicht geladen sind */
@@ -179,7 +219,7 @@ function kalender_select_zusatz(): string
 {
     return kalender_standorte_sub('calendar_standorte', 'entry_id', 'k') . " AS standort_name,
             (SELECT GROUP_CONCAT(v.bezeichnung ORDER BY v.bezeichnung SEPARATOR ' · ') FROM calendar_vehicles cv JOIN vehicles v ON v.id = cv.vehicle_id
-              WHERE cv.entry_id = k.id) AS fahrzeuge_namen";
+              WHERE cv.entry_id = k.id) AS fahrzeuge_namen, " . kalender_fachgruppen_sub();
 }
 
 function kalender_find(int $id): ?array
@@ -251,7 +291,7 @@ function kalender_termine_fahrzeug(int $vehicleId, string $von, string $bis, arr
 function kalender_fahrzeuge_zeitraum(string $von, string $bis, array $u): array
 {
     $rows = db_all(
-        'SELECT k.*, u.display_name AS ziel_name, ' . kalender_standorte_sub('calendar_standorte', 'entry_id', 'k') . ' AS standort_name,
+        'SELECT k.*, u.display_name AS ziel_name, ' . kalender_standorte_sub('calendar_standorte', 'entry_id', 'k') . ' AS standort_name, ' . kalender_fachgruppen_sub() . ',
                 v.id AS vehicle_id, v.bezeichnung AS vehicle_bezeichnung, v.funkrufname AS vehicle_funkrufname, v.kennzeichen AS vehicle_kennzeichen
          FROM calendar_vehicles cv
          JOIN calendar_entries k ON k.id = cv.entry_id
@@ -489,6 +529,10 @@ function kalender_save_from_post(?array $existing, array $user): array
     // Plätze: nur, wenn das Feld im Formular war
     if (post_str('standorte_feld') === '1' && function_exists('standort_links_setzen')) {
         standort_links_setzen('calendar_standorte', 'entry_id', $id, wahl_ids('standorte'));
+    }
+    // Weitere Fachgruppen: nur, wenn das Feld im Formular war; Mitglieder nur die eigene
+    if (post_str('fachgruppen_feld') === '1') {
+        kalender_fachgruppen_setzen($id, wahl_ids('fachgruppen'), $user);
     }
     return [$id, []];
 }

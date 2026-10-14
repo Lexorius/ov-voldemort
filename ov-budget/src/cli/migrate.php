@@ -1704,6 +1704,19 @@ SQL);
         }
     }
     $merken('061_mehrere_standorte');
+
+    /* ---------- 062: mehrere Fachgruppen je Termin ---------- */
+    if (ovb_table_exists($pdo, 'calendar_entries') && !ovb_table_exists($pdo, 'calendar_fachgruppen')) {
+        $pdo->exec("CREATE TABLE calendar_fachgruppen (
+            entry_id      INT UNSIGNED NOT NULL,
+            fachgruppe_id INT UNSIGNED NOT NULL,
+            PRIMARY KEY (entry_id, fachgruppe_id),
+            KEY idx_cf_fachgruppe (fachgruppe_id),
+            CONSTRAINT fk_cf_ziel       FOREIGN KEY (entry_id)      REFERENCES calendar_entries(id) ON DELETE CASCADE,
+            CONSTRAINT fk_cf_fachgruppe FOREIGN KEY (fachgruppe_id) REFERENCES list_items(id)       ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    }
+    $merken('062_termin_fachgruppen');
 }
 
 /**
