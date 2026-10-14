@@ -125,6 +125,15 @@ $isNew = empty($vehicle['id']);
         <input type="number" id="betriebsstunden" name="betriebsstunden" min="0"
                value="<?= e((string)($vehicle['betriebsstunden'] ?? '')) ?>">
       </div>
+      <div class="field">
+        <label for="sitzplaetze">Sitzplätze (Transportkapazität)</label>
+        <input type="number" id="sitzplaetze" name="sitzplaetze" min="0" max="999" value="<?= e((string)($vehicle['sitzplaetze'] ?? '')) ?>" placeholder="z. B. 9">
+        <small>Personen samt Fahrer.</small>
+      </div>
+      <div class="field">
+        <label for="zuladung_kg">Maximale Zuladung (kg)</label>
+        <input type="number" id="zuladung_kg" name="zuladung_kg" min="0" max="99999" value="<?= e((string)($vehicle['zuladung_kg'] ?? '')) ?>" placeholder="z. B. 1200">
+      </div>
     </div>
   </section>
 

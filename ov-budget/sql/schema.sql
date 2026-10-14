@@ -1189,6 +1189,9 @@ CREATE TABLE IF NOT EXISTS vehicles (
   erstzulassung     DATE         NULL,
   km_stand          INT UNSIGNED NULL,
   betriebsstunden   INT UNSIGNED NULL,
+  -- Transportkapazitaet: Sitzplaetze samt Fahrer, maximale Zuladung in kg
+  sitzplaetze       SMALLINT UNSIGNED NULL,
+  zuladung_kg       INT UNSIGNED NULL,
   hu_bis            DATE         NULL,
   sp_bis            DATE         NULL,
   uvv_bis           DATE         NULL,

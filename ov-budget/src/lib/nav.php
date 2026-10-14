@@ -22,7 +22,7 @@ function nav_module(): array
                         'darf' => true],
         'vehicles'  => ['label' => (string)setting('fahrzeug_modul_name', 'Fahrzeuge'), 'icon' => '⛟',
                         'route' => 'vehicles',
-                        'aktiv' => ['vehicles', 'vehicle', 'vehicle_edit', 'vehicle_order', 'vehicle_order_edit'],
+                        'aktiv' => ['vehicles', 'vehicle', 'vehicle_edit', 'vehicle_order', 'vehicle_order_edit', 'vehicle_kapazitaet'],
                         'darf' => can('view_vehicles')],
         'radios'    => ['label' => (string)setting('funk_modul_name', 'Funkgeräte'), 'icon' => '((•))',
                         'route' => 'radios',

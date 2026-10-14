@@ -90,6 +90,8 @@ $arten = [
           'Fahrgestellnummer' => $vehicle['fahrgestellnummer'],
           'Kilometerstand'    => $vehicle['km_stand'] !== null ? number_format((float)$vehicle['km_stand'], 0, ',', '.') . ' km' : '',
           'Betriebsstunden'   => $vehicle['betriebsstunden'] !== null ? (int)$vehicle['betriebsstunden'] . ' h' : '',
+          'Sitzplätze'        => ($vehicle['sitzplaetze'] ?? null) !== null ? (int)$vehicle['sitzplaetze'] . ' Personen' : '',
+          'Zuladung'          => ($vehicle['zuladung_kg'] ?? null) !== null ? number_format((int)$vehicle['zuladung_kg'], 0, ',', '.') . ' kg' : '',
           'Stellplatz'        => $stellplatzPfad ?? ($vehicle['stellplatz_name'] ?? ''),
           'Standort'          => $vehicle['standort'],
       ];

@@ -52,6 +52,7 @@ $fristBadges = static fn(array $liste): string => vehicle_frist_badges($liste);
     <?php if (can('manage_vehicles')): ?>
       <a class="btn" href="<?= e(url('vehicle_edit')) ?>">+ Fahrzeug</a>
     <?php endif; ?>
+    <a class="btn btn--sec" href="<?= e(url('vehicle_kapazitaet')) ?>">Kapazitäten</a>
   </div>
 </div>
 

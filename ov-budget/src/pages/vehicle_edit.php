@@ -34,7 +34,7 @@ render('vehicle_edit', [
         'kennzeichen' => '', 'kennung' => '',
         'typ_id' => null, 'fachgruppe_id' => null, 'status_id' => list_default_id('fahrzeug_status'),
         'hersteller' => '', 'modell' => '', 'baujahr' => null, 'fahrgestellnummer' => '',
-        'erstzulassung' => null, 'km_stand' => null, 'betriebsstunden' => null,
+        'erstzulassung' => null, 'km_stand' => null, 'betriebsstunden' => null, 'sitzplaetze' => null, 'zuladung_kg' => null,
         'hu_bis' => null, 'sp_bis' => null, 'uvv_bis' => null, 'standort' => '', 'standort_id' => null, 'notiz' => '',
         'extra' => null, 'is_active' => 1, 'ausgemustert_am' => null, 'stein_asset_id' => null,
     ],

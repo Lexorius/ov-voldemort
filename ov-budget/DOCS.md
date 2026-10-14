@@ -986,6 +986,18 @@ den Vorgang, sofern die Adresse der Anwendung hinterlegt ist. Läuft ein Abo ab
 (Browser neu aufgesetzt, App gelöscht), wird es beim nächsten Versand
 automatisch entfernt.
 
+## Kapazitäten der Fahrzeuge
+
+In der Fahrzeugakte stehen unter „Bearbeiten" die **Sitzplätze** (Personen
+samt Fahrer) und die **maximale Zuladung** in kg. Die Fahrzeugliste hat den
+Knopf „Kapazitäten": eine Tabelle aller Fahrzeuge mit beiden Werten,
+filterbar nach Art, Fachgruppe, Status, Suchbegriff und Mindestwerten
+(„mindestens 9 Sitzplätze"), sortierbar nach Sitzplätzen, Zuladung oder
+Name. Oben und in der Fußzeile steht die Summe der gefilterten Fahrzeuge –
+so sieht man schnell, ob zwei MTW für 16 Personen reichen. Fahrzeuge ohne
+Angabe zählen nicht mit und werden benannt. Im Terminformular nennt das
+Fahrzeug-Dropdown die Werte gleich mit.
+
 ## Fahrzeugdaten aus Divera
 
 Unter *Einstellungen → Divera 24/7* lässt sich *Fahrzeugdaten aus Divera

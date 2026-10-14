@@ -138,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
 }
 
 $fahrzeuge = can('view_vehicles')
-    ? db_all('SELECT v.id, v.bezeichnung, v.funkrufname, v.kennzeichen, t.slug AS typ_slug, t.label AS typ_label
+    ? db_all('SELECT v.id, v.bezeichnung, v.funkrufname, v.kennzeichen, v.sitzplaetze, v.zuladung_kg, t.slug AS typ_slug, t.label AS typ_label
               FROM vehicles v LEFT JOIN list_items t ON t.id = v.typ_id WHERE v.is_active = 1 ORDER BY v.bezeichnung')
     : [];
 // Welche Fahrzeuge zur gewählten Zeit schon in einem anderen Termin stecken

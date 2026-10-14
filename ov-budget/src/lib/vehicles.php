@@ -29,6 +29,8 @@ const FZ_JOURNAL_FELDER = [
     'erstzulassung'     => 'Erstzulassung',
     'km_stand'          => 'Kilometerstand',
     'betriebsstunden'   => 'Betriebsstunden',
+    'sitzplaetze'       => 'Sitzplätze',
+    'zuladung_kg'       => 'Zuladung (kg)',
     'hu_bis'            => 'HU gültig bis',
     'sp_bis'            => 'SP gültig bis',
     'uvv_bis'           => 'UVV gültig bis',
@@ -126,6 +128,51 @@ function vehicle_mit_stellplatz_pfad(array $fahrzeuge, array $plaetze): array
     return $fahrzeuge;
 }
 
+/** Kapazitäten einer Fahrzeugliste zusammenzählen. Reine Funktion. */
+function vehicle_kapazitaet_summe(array $rows): array
+{
+    $out = ['fahrzeuge' => count($rows), 'personen' => 0, 'zuladung' => 0, 'ohne_personen' => 0, 'ohne_zuladung' => 0];
+    foreach ($rows as $v) {
+        if (($v['sitzplaetze'] ?? null) === null || $v['sitzplaetze'] === '') {
+            $out['ohne_personen']++;
+        } else {
+            $out['personen'] += (int)$v['sitzplaetze'];
+        }
+        if (($v['zuladung_kg'] ?? null) === null || $v['zuladung_kg'] === '') {
+            $out['ohne_zuladung']++;
+        } else {
+            $out['zuladung'] += (int)$v['zuladung_kg'];
+        }
+    }
+    return $out;
+}
+
+/** Kapazitätsliste sortieren: personen, zuladung oder name. Reine Funktion. */
+function vehicle_kapazitaet_sortieren(array $rows, string $sort): array
+{
+    usort($rows, static function ($a, $b) use ($sort) {
+        return match ($sort) {
+            'zuladung' => [(int)($b['zuladung_kg'] ?? -1), (string)$a['bezeichnung']] <=> [(int)($a['zuladung_kg'] ?? -1), (string)$b['bezeichnung']],
+            'name'     => strcasecmp((string)$a['bezeichnung'], (string)$b['bezeichnung']),
+            default    => [(int)($b['sitzplaetze'] ?? -1), (string)$a['bezeichnung']] <=> [(int)($a['sitzplaetze'] ?? -1), (string)$b['bezeichnung']],
+        };
+    });
+    return $rows;
+}
+
+/** „9 Personen · 1.200 kg" für eine Zeile – leer ohne Angaben. Reine Funktion. */
+function vehicle_kapazitaet_text(array $v): string
+{
+    $teile = [];
+    if (($v['sitzplaetze'] ?? null) !== null && $v['sitzplaetze'] !== '') {
+        $teile[] = (int)$v['sitzplaetze'] . ' Pers.';
+    }
+    if (($v['zuladung_kg'] ?? null) !== null && $v['zuladung_kg'] !== '') {
+        $teile[] = number_format((int)$v['zuladung_kg'], 0, ',', '.') . ' kg';
+    }
+    return implode(' · ', $teile);
+}
+
 /** Fristen (vehicle_deadlines) als Plaketten – nur die auffälligen. Reine Funktion. */
 function vehicle_frist_badges(array $liste): string
 {
@@ -211,6 +258,15 @@ function vehicle_query(array $f = []): array
     }
     if (!empty($f['nur_aktive'])) {
         $w[] = 'v.is_active = 1';
+    }
+    // Kapazität: mindestens so viele Sitzplätze bzw. so viel Zuladung
+    if (!empty($f['min_sitzplaetze'])) {
+        $w[] = 'v.sitzplaetze >= ?';
+        $p[] = (int)$f['min_sitzplaetze'];
+    }
+    if (!empty($f['min_zuladung'])) {
+        $w[] = 'v.zuladung_kg >= ?';
+        $p[] = (int)$f['min_zuladung'];
     }
     // Fahrzeuge an bestimmten Stell- und Lagerplätzen bzw. an irgendeinem
     if (!empty($f['standort_ids'])) {
@@ -496,6 +552,8 @@ function vehicle_save_from_post(?array $existing, array $user): array
         'erstzulassung'     => post_date('erstzulassung'),
         'km_stand'          => post_int('km_stand'),
         'betriebsstunden'   => post_int('betriebsstunden'),
+        'sitzplaetze'       => post_int('sitzplaetze'),
+        'zuladung_kg'       => post_int('zuladung_kg'),
         'hu_bis'            => post_date('hu_bis'),
         'sp_bis'            => post_date('sp_bis'),
         'uvv_bis'           => post_date('uvv_bis'),

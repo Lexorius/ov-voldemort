@@ -1765,6 +1765,13 @@ SQL);
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
     }
     $merken('065_termin_kontakte');
+
+    /* ---------- 066: Transportkapazitaet der Fahrzeuge ---------- */
+    if (ovb_table_exists($pdo, 'vehicles') && !ovb_column_exists($pdo, 'vehicles', 'sitzplaetze')) {
+        $pdo->exec('ALTER TABLE vehicles ADD COLUMN sitzplaetze SMALLINT UNSIGNED NULL AFTER betriebsstunden');
+        $pdo->exec('ALTER TABLE vehicles ADD COLUMN zuladung_kg INT UNSIGNED NULL AFTER sitzplaetze');
+    }
+    $merken('066_kapazitaet');
 }
 
 /**

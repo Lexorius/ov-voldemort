@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 2.1.30.0
+
+- **Transportkapazität:** Fahrzeuge haben Sitzplätze (Personen samt Fahrer)
+  und maximale Zuladung in kg – in Formular, Akte und im Fahrzeug-Dropdown
+  des Terminformulars.
+- **Kapazitätsliste** (Knopf in der Fahrzeugliste): alle Fahrzeuge mit
+  beiden Werten, filterbar nach Art, Fachgruppe, Status, Suche und
+  Mindestwerten, sortierbar; Summe der Auswahl oben und unten.
+
 ## 2.1.29.0
 
 - **Suchfeld in den Auswahllisten:** Plätze, Fahrzeuge, Aufträge,

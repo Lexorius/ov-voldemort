@@ -165,7 +165,10 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 
 ### Fahrzeuge
 - **Fahrzeugakte** mit Funkrufname, Kennzeichen, ISSI, OPTA, RIC und den
-  Fristen HU, SP und UVV
+  Fristen HU, SP und UVV; Sitzplätze und maximale Zuladung
+- **Kapazitätsliste** zum Planen von Fahrten: Personen und Zuladung je
+  Fahrzeug, filterbar nach Art, Fachgruppe, Status und Mindestwerten, mit
+  Summe der Auswahl
 - **Journal, das sich nicht nachträglich ändern lässt** – jede Änderung, jeder
   Auftragsschritt, jede Meldung; eine Prüfsummen-Kette zeigt Manipulationen an
 - **Instandsetzungsaufträge** mit eigener Nummer, der Nummer der

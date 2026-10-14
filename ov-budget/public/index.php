@@ -123,6 +123,7 @@ $routes = [
     'vehicle'            => 'vehicle',
     'vehicle_edit'       => 'vehicle_edit',
     'vehicle_action'     => 'vehicle_action',
+    'vehicle_kapazitaet' => 'vehicle_kapazitaet',
     'vehicle_order'      => 'vehicle_order',
     'vehicle_order_edit' => 'vehicle_order_edit',
     'vehicle_file'       => 'vehicle_file',

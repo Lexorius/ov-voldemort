@@ -128,7 +128,7 @@ $ganztag = (int)($termin['ganztag'] ?? 0) === 1;
     foreach (['fahrzeuge' => 'Autos und LKW', 'anhaenger' => 'Anhänger', 'geraete' => 'Geräte'] as $key => $titel) {
         foreach ($bloecke[$key] ?? [] as $v) {
             $andere = $belegt[(int)$v['id']] ?? [];
-            $optionen[] = ['id' => (int)$v['id'], 'text' => (string)$v['bezeichnung'], 'sub' => (string)($v['funkrufname'] ?? ''), 'gruppe' => $titel,
+            $optionen[] = ['id' => (int)$v['id'], 'text' => (string)$v['bezeichnung'], 'sub' => implode(' · ', array_filter([(string)($v['funkrufname'] ?? ''), function_exists('vehicle_kapazitaet_text') ? vehicle_kapazitaet_text($v) : ''])), 'gruppe' => $titel,
                            'warn' => $andere ? 'schon im Termin ' . implode(' und ', array_map(static fn($t) => '„' . $t['titel'] . '" (' . kalender_wann($t) . ')', $andere)) : ''];
         }
     } ?>
