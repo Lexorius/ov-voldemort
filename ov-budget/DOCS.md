@@ -95,7 +95,7 @@ eine ZIP-Datei mit der ganzen Datenbank und der Dateiablage. „Ganz" heißt:
 jede Tabelle, die es in der Datenbank gibt – auch Einstellungen, Protokoll,
 Zweiter Faktor und der Stand der Wanderungen –, mit Struktur, Inhalt und
 AUTO_INCREMENT; dazu jede Datei unter der Ablage (Angebote, Fahrzeuge,
-Veranstaltungen, Plätze, Stein.APP-Mitschnitte), nur der Ordner der
+Veranstaltungen, Termine, Plätze, Stein.APP-Mitschnitte), nur der Ordner der
 Sicherungen selbst bleibt draußen. Sie lässt sich
 herunterladen, auf dem Server aufheben und jederzeit wiederherstellen.
 
@@ -473,7 +473,17 @@ Stube, Küche und Schulungsraum zugleich) und einen **freien Ort**
 („Übungsgelände Neckarwiese"); alles steht zusammen am Eintrag. Dasselbe
 gilt für Veranstaltungen. Die Seite eines Platzes in der Standortübersicht
 zeigt unter „Belegung", welche Termine und Veranstaltungen dort in den
-nächsten 60 Tagen stattfinden. Die Fahrzeugakte zeigt unter „Termine mit diesem Fahrzeug" die
+nächsten 60 Tagen stattfinden. An jeden gespeicherten Termin lassen sich
+unter „Dateien" **Anhänge** hängen – Einladung, Programm, Anfahrtsskizze
+als PDF, Bild oder erlaubter Dokumenttyp; Bilder werden verkleinert und
+verlieren den Aufnahmeort. Öffnen darf sie, wer den Termin sieht; anhängen
+und entfernen, wer ihn bearbeiten darf. **Werkstatttermine:** Ein Termin
+kann Instandsetzungsaufträge betreffen (Auswahl im Abschnitt Fahrzeuge,
+offene Aufträge je Fahrzeug); die Auftragsseite zeigt unter
+„Werkstatttermine" alle verknüpften Termine – vorbei oder geplant – und
+„+ Termin" legt einen neuen mit Fahrzeug, Auftrag und Werkstatt als Ort
+vorbelegt an. Kalender, Startseite und Fahrzeugakte nennen den Auftrag
+am Termin (🔧). Die Fahrzeugakte zeigt unter „Termine mit diesem Fahrzeug" die
 nächsten zwölf Monate mit Knopf „+ Termin", der das Fahrzeug gleich
 anhakt. Die Startseite zeigt oben „Nächste zwei Wochen" als Kalenderraster und
 darunter „Fahrzeuge diese Woche verplant" als Karten mit Bild: je Fahrzeug

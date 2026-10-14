@@ -33,6 +33,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
         flash('success', 'Termin gelöscht.');
         redirect_route('kalender', ['monat' => substr((string)$termin['beginn'], 0, 7)]);
     }
+    if (post_str('action') === 'datei' && $termin) {
+        [$anzahl, $fehler] = kfile_store_uploads((int)$termin['id'], 'dateien', post_str('titel'), $user);
+        if ($anzahl > 0) {
+            flash('success', sprintf('%d Datei(en) angehängt.', $anzahl));
+            audit('termin.datei', 'calendar', (int)$termin['id'], sprintf('%d Datei(en)', $anzahl));
+        }
+        foreach ($fehler as $f) {
+            flash('error', e($f));
+        }
+        redirect(url('kalender_edit', ['id' => $termin['id']]) . '#dateien');
+    }
+    if (post_str('action') === 'datei_weg' && $termin) {
+        $datei = kfile_find((int)post_int('file_id', 0));
+        if ($datei && (int)$datei['entry_id'] === (int)$termin['id']) {
+            kfile_delete($datei);
+            audit('termin.datei_weg', 'calendar', (int)$termin['id'], (string)$datei['orig_name']);
+            flash('success', 'Datei entfernt.');
+        }
+        redirect(url('kalender_edit', ['id' => $termin['id']]) . '#dateien');
+    }
     [$neu, $errors] = kalender_save_from_post($termin, $user);
     if ($neu) {
         flash('success', $termin ? 'Termin gespeichert.' : 'Termin eingetragen.');
@@ -50,6 +70,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
     $termin = array_merge($termin ?? [], $_POST, ['id' => $termin['id'] ?? null]);
 }
 
+// Aus einem Auftrag heraus: Werkstatttermin mit Fahrzeug und Auftrag vorbelegen
+$auftragVorlage = !$termin && get_int('auftrag_id') && can('view_vehicles') && function_exists('order_find') ? order_find((int)get_int('auftrag_id')) : null;
+
 if (!$termin) {
     $datum = get_str('datum');
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $datum)) {
@@ -59,6 +82,10 @@ if (!$termin) {
         'id' => null, 'titel' => '', 'beschreibung' => '', 'ort' => '', 'datum' => $datum, 'zeit' => '',
         'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'user', 'ziel_id' => (int)$user['id'], 'farbe' => '',
     ];
+    if ($auftragVorlage) {
+        $termin['titel'] = mb_substr('Werkstatt: ' . $auftragVorlage['titel'] . ' (' . $auftragVorlage['fahrzeug'] . ')', 0, 200);
+        $termin['ort'] = (string)($auftragVorlage['werkstatt'] ?? '');
+    }
 } elseif (!isset($termin['datum'])) {
     // aus der Datenbank: Beginn und Ende in Formularfelder zerlegen
     $termin['datum'] = substr((string)$termin['beginn'], 0, 10);
@@ -74,6 +101,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
     $gewaehlt = array_map('intval', array_column(kalender_fahrzeuge((int)$termin['id']), 'id'));
 } elseif (get_int('vehicle_id')) {
     $gewaehlt = [(int)get_int('vehicle_id')];
+} elseif ($auftragVorlage) {
+    $gewaehlt = [(int)$auftragVorlage['vehicle_id']];
+}
+$auftraegeGewaehlt = [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
+    $auftraegeGewaehlt = wahl_ids('auftraege');
+} elseif (!empty($termin['id']) && can('view_vehicles')) {
+    $auftraegeGewaehlt = array_map('intval', array_column(kalender_auftraege((int)$termin['id']), 'id'));
+} elseif ($auftragVorlage) {
+    $auftraegeGewaehlt = [(int)$auftragVorlage['id']];
+}
+// Zur Wahl: offene Aufträge aller Fahrzeuge, dazu die schon verknüpften (auch wenn erledigt)
+$auftragOptionen = [];
+if (can('view_vehicles') && function_exists('order_query')) {
+    $liste = order_query(['offen' => 1]);
+    $da = array_map('intval', array_column($liste, 'id'));
+    foreach ($auftraegeGewaehlt as $oid) {
+        if (!in_array($oid, $da, true) && ($o = order_find($oid))) {
+            $liste[] = $o;
+        }
+    }
+    foreach ($liste as $o) {
+        $auftragOptionen[] = ['id' => (int)$o['id'], 'text' => $o['nummer'] . ' ' . $o['titel'], 'sub' => (string)($o['status_label'] ?? ''), 'gruppe' => (string)$o['fahrzeug']];
+    }
 }
 
 $standorteGewaehlt = [];
@@ -108,6 +159,9 @@ foreach (list_items('fachgruppe') as $fg) {
 }
 
 render('kalender_edit', [
+    'auftraegeGewaehlt' => $auftraegeGewaehlt,
+    'auftragOptionen'   => $auftragOptionen,
+    'dateien' => !empty($termin['id']) ? kfile_list((int)$termin['id']) : [],
     'fachgruppenGewaehlt' => $fachgruppenGewaehlt,
     'fachgruppenOptionen' => $fachgruppenOptionen,
     'standorteGewaehlt' => $standorteGewaehlt,

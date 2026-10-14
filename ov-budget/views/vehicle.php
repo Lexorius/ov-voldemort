@@ -362,7 +362,7 @@ $arten = [
         <a class="item" href="<?= e(url('kalender_edit', ['id' => $t['id']])) ?>" style="border-left-color:<?= e((string)($t['farbe'] ?: '#0369a1')) ?>">
           <div class="item__top"><div style="min-width:0">
             <div class="item__title"><?= e((string)$t['titel']) ?></div>
-            <div class="item__sub"><?= e(de_date($tag) . ($zeit !== '' ? ', ' . $zeit . ' Uhr' : ', ganztägig') . ($t['ende'] && substr((string)$t['ende'], 0, 10) !== $tag ? ' bis ' . de_date(substr((string)$t['ende'], 0, 10)) : '') . ($ort !== '' ? ' · ' . $ort : '') . ' · ' . kalender_ziel_name($t)) ?></div>
+            <div class="item__sub"><?= e(de_date($tag) . ($zeit !== '' ? ', ' . $zeit . ' Uhr' : ', ganztägig') . ($t['ende'] && substr((string)$t['ende'], 0, 10) !== $tag ? ' bis ' . de_date(substr((string)$t['ende'], 0, 10)) : '') . ($ort !== '' ? ' · ' . $ort : '') . ' · ' . kalender_untertitel($t)) ?></div>
           </div></div>
         </a>
       <?php endforeach; ?>

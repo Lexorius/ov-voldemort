@@ -10,6 +10,7 @@ declare(strict_types=1);
 const SPEICHER_ORDNER = [
     'fahrzeuge'      => 'Fahrzeuge (Bilder, Dokumente)',
     'veranstaltungen' => 'Veranstaltungen',
+    'termine'        => 'Termine (Einladungen, Anhänge)',
     'standorte'      => 'Stell- und Lagerplätze (Bilder, Pläne)',
     'sicherungen'    => 'Sicherungen',
     'stein-debug'    => 'Stein.APP-Mitschnitte',

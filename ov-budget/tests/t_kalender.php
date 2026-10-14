@@ -69,6 +69,7 @@ $check('weitere Fachgruppe am Termin macht ihn sichtbar', kalender_sichtbar(['zi
     && !kalender_sichtbar(['ziel' => 'fachgruppe', 'ziel_id' => 6, 'created_by' => 1, 'fachgruppen_ids' => '9'], $u) && kalender_sichtbar(['ziel' => 'user', 'ziel_id' => 4, 'created_by' => 1, 'fachgruppen_ids' => [5]], $u)
     && kalender_fachgruppen_ids(['fachgruppen_ids' => '5,x,0,7']) === [5, 7] && kalender_fachgruppen_ids([]) === []);
 $check('Fachgruppen dazunehmen: Mitglied nur die eigene, Leitung alle', kalender_fachgruppen_erlaubt([5, 6, 5, 0], $u) === [5] && kalender_fachgruppen_erlaubt([5, 6], $leitung) === [5, 6]);
+$check('Untertitel mit Auftrag', kalender_untertitel(['ziel' => 'ov', 'ziel_id' => null, 'auftraege_namen' => '2026-0005 Bremse']) === 'Ortsverband · 🔧 2026-0005 Bremse' && kalender_untertitel(['ziel' => 'ov', 'ziel_id' => null]) === 'Ortsverband');
 $check('Zielname mit weiteren Fachgruppen', kalender_ziel_name(['ziel' => 'fachgruppe', 'ziel_id' => 5, 'fachgruppen_namen' => 'Logistik, Jugend']) === 'Fachgruppe Bergung + Logistik, Jugend'
     && kalender_ziel_name(['ziel' => 'ov', 'ziel_id' => null, 'fachgruppen_namen' => '']) === 'Ortsverband');
 $check('Mitglied darf für sich, Fachgruppe, Funktion', kalender_darf_ziel('user', 3, $u) && kalender_darf_ziel('fachgruppe', 5, $u) && kalender_darf_ziel('funktion', 7, $u)
@@ -104,8 +105,10 @@ $GLOBALS['inserts'] = []; $GLOBALS['execs'] = [];
 $GLOBALS['tabellen'] = ['FROM standorte' => [['id' => 4, 'parent_id' => null, 'typ' => 'raum', 'name' => 'Gute Stube', 'sort_order' => 10, 'is_active' => 1, 'kurz' => ''], ['id' => 6, 'parent_id' => null, 'typ' => 'raum', 'name' => 'Küche', 'sort_order' => 20, 'is_active' => 1, 'kurz' => ''],
     ['id' => 8, 'parent_id' => null, 'typ' => 'raum', 'name' => 'Alt', 'sort_order' => 30, 'is_active' => 0, 'kurz' => '']]];
 $_POST = ['titel' => 'Fahrzeugpflege', 'datum' => '2026-11-02', 'ganztag' => '1', 'ziel' => 'user', 'ort' => 'Waschplatz', 'standorte_feld' => '1', 'standorte' => ['4', '6', '6', '8', '99', 'x'], 'fahrzeuge_feld' => '1', 'vehicles' => ['2', '2', 'x', '5'],
-    'fachgruppen_feld' => '1', 'fachgruppen' => ['6'], 'fachgruppen_neu' => '5'];
+    'fachgruppen_feld' => '1', 'fachgruppen' => ['6'], 'fachgruppen_neu' => '5', 'auftraege_feld' => '1', 'auftraege' => ['12'], 'auftraege_neu' => '12'];
 [$id, $fehler] = kalender_save_from_post(null, $u);
+$ca = array_values(array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'calendar_auftraege'));
+$check('Auftrag am Termin, ohne Doppelte', count($ca) === 1 && $ca[0][1] === ['entry_id' => $id, 'order_id' => 12]);
 $cf = array_values(array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'calendar_fachgruppen'));
 $check('Mitglied: nur die eigene Fachgruppe wird dazugenommen', count($cf) === 1 && $cf[0][1] === ['entry_id' => $id, 'fachgruppe_id' => 5]);
 $cv = array_values(array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'calendar_vehicles'));
@@ -188,7 +191,7 @@ $check('eigener Termin ja, fremder nicht', in_array('Eigener', $titel, true) && 
 $eigener = array_values(array_filter($alle, static fn($e) => $e['titel'] === 'Eigener'))[0];
 $check('Termin trägt Platz, Ort und Fahrzeuge', $eigener['ort'] === 'Halle 1 · Tor 3' && $eigener['fahrzeuge'] === 'GKW 1 · MTW' && kalender_eintrag('ha', 'x', '2026-10-10')['fahrzeuge'] === '');
 $check('Besprechung, Veranstaltung, eigene Aufgabe, Fristen, Stichtag, HA, Feiertag', in_array('OV-Runde', $titel, true) && in_array('Übung', $titel, true)
-    && in_array('Fällig: Bericht', $titel, true) && !in_array('Fällig: Fremd', $titel, true) && in_array('HU fällig: GKW 1', $titel, true)
+    && in_array('☑ Fällig: Bericht', $titel, true) && !in_array('☑ Fällig: Fremd', $titel, true) && in_array('HU fällig: GKW 1', $titel, true)
     && in_array('Prüfung fällig: HRT 12', $titel, true) && in_array('Vertrag endet: 0171 1234567', $titel, true) && in_array('Stichtag Jahresbudget 2026', $titel, true)
     && in_array('Ferien', $titel, true) && in_array('Tag der Deutschen Einheit', $titel, true));
 $check('nur zwei Fristen im Fenster (SP 2027 nicht)', count(array_filter($alle, static fn($e) => $e['quelle'] === 'frist')) === 3 && !in_array('SP fällig: GKW 1', $titel, true));
@@ -273,6 +276,22 @@ $html = render_partial('kalender_edit', ['termin' => ['id' => 5, 'titel' => 'x',
     'gewaehlt' => [7], 'standorte' => [['id' => 1, 'parent_id' => null, 'typ' => 'gebaeude', 'name' => 'Haupthaus', 'sort_order' => 10, 'is_active' => 1, 'kurz' => ''], ['id' => 4, 'parent_id' => 1, 'typ' => 'raum', 'name' => 'Gute Stube', 'sort_order' => 10, 'is_active' => 1, 'kurz' => ''],
         ['id' => 6, 'parent_id' => 1, 'typ' => 'raum', 'name' => 'Küche', 'sort_order' => 20, 'is_active' => 1, 'kurz' => ''], ['id' => 8, 'parent_id' => 1, 'typ' => 'raum', 'name' => 'Alt', 'sort_order' => 30, 'is_active' => 0, 'kurz' => '']],
     'standorteGewaehlt' => [4, 6], 'fachgruppenOptionen' => [['id' => 5, 'text' => 'Bergung', 'sub' => '', 'gruppe' => ''], ['id' => 6, 'text' => 'Logistik', 'sub' => '', 'gruppe' => '']], 'fachgruppenGewaehlt' => [6]]);
+$htmlN = render_partial('kalender_edit', ['termin' => ['id' => 5, 'titel' => 'x', 'beschreibung' => '', 'ort' => '', 'datum' => '2026-10-15', 'zeit' => '19:00', 'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'ov', 'ziel_id' => null, 'farbe' => '', 'erfasser' => 'Leitung'],
+    'errors' => [], 'nurLesen' => false, 'user' => $leitung, 'leitung' => true, 'users' => [], 'fahrzeuge' => [], 'standorte' => [],
+    'dateien' => [['id' => 9, 'entry_id' => 5, 'art' => 'dokument', 'titel' => 'Einladung', 'orig_name' => 'Einladung.pdf', 'thumb_name' => null, 'size_bytes' => 120000, 'created_at' => '2026-10-10 12:00:00', 'hochgeladen_von' => 'Leitung']]]);
+$check('Termin: Dateien mit Link, Mülleimer und Upload', str_contains($htmlN, 'id="dateien"') && str_contains($htmlN, 'p=kalender_file&amp;id=9') && str_contains($htmlN, 'Einladung.pdf') && str_contains($htmlN, '117.2 KB')
+    && str_contains($htmlN, 'value="datei_weg"') && str_contains($htmlN, 'name="dateien[]"') && str_contains($htmlN, 'enctype="multipart/form-data"'));
+$htmlN = render_partial('kalender_edit', ['termin' => ['id' => 5, 'titel' => 'x', 'beschreibung' => '', 'ort' => '', 'datum' => '2026-10-15', 'zeit' => '19:00', 'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'ov', 'ziel_id' => null, 'farbe' => ''],
+    'errors' => [], 'nurLesen' => true, 'user' => $u, 'leitung' => false, 'users' => [], 'fahrzeuge' => [], 'standorte' => [], 'dateien' => []]);
+$check('Termin nur lesen: Dateien sichtbar, kein Upload', str_contains($htmlN, 'Noch nichts angehängt') && !str_contains($htmlN, 'name="dateien[]"') && !str_contains($htmlN, 'value="datei_weg"'));
+$check('Route und Wanderung für Termindateien', str_contains((string)file_get_contents($app . '/public/index.php'), "'kalender_file'") && str_contains((string)file_get_contents($app . '/src/cli/migrate.php'), '063_termin_dateien'));
+$htmlN = render_partial('kalender_edit', ['termin' => ['id' => 5, 'titel' => 'x', 'beschreibung' => '', 'ort' => '', 'datum' => '2026-10-15', 'zeit' => '19:00', 'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'ov', 'ziel_id' => null, 'farbe' => ''],
+    'errors' => [], 'nurLesen' => false, 'user' => $leitung, 'leitung' => true, 'users' => [], 'standorte' => [], 'dateien' => [],
+    'fahrzeuge' => [['id' => 2, 'bezeichnung' => 'GKW 1', 'funkrufname' => '', 'kennzeichen' => '', 'typ_slug' => 'gkw', 'typ_label' => 'GKW']], 'gewaehlt' => [2],
+    'auftragOptionen' => [['id' => 12, 'text' => '2026-0005 Bremse', 'sub' => 'Gemeldet', 'gruppe' => 'GKW 1'], ['id' => 13, 'text' => '2026-0006 Licht', 'sub' => 'Gemeldet', 'gruppe' => 'MTW']], 'auftraegeGewaehlt' => [12]]);
+$check('Formular: Aufträge je Fahrzeug im Dropdown, gewählter in der Liste', str_contains($htmlN, 'data-wahl="auftraege"') && str_contains($htmlN, '<optgroup label="GKW 1">') && str_contains($htmlN, '<optgroup label="MTW">')
+    && str_contains($htmlN, 'name="auftraege[]" value="12"') && str_contains($htmlN, 'data-text="2026-0006 Licht"') && str_contains($htmlN, 'name="auftraege_feld"') && str_contains($htmlN, 'Werkstatttermin'));
+$check('Termine eines Auftrags: Abfrage über die Verknüpfung', str_contains((string)file_get_contents($app . '/src/lib/kalender.php'), 'FROM calendar_auftraege ca') && str_contains((string)file_get_contents($app . '/src/cli/migrate.php'), '064_werkstatttermine'));
 $check('Formular: weitere Fachgruppen als Liste', str_contains($html, 'data-wahl="fachgruppen"') && str_contains($html, 'name="fachgruppen[]" value="6"') && substr_count($html, 'name="fachgruppen[]"') === 1
     && str_contains($html, 'option value="5" data-text="Bergung"') && str_contains($html, 'name="fachgruppen_feld"') && str_contains($html, 'Weitere Fachgruppen'));
 $check('Formular: Plätze als Liste mit Mülleimer und Dropdown, stillgelegte weg, freier Ort, Fahrzeuge', substr_count($html, 'name="standorte[]"') === 2 && str_contains($html, 'name="standorte[]" value="4"') && str_contains($html, 'name="standorte[]" value="6"')

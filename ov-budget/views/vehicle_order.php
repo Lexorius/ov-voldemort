@@ -87,6 +87,29 @@ $fertig = (int)$order['status_final'] === 1;
   </section>
 </div>
 
+<?php $termine ??= []; $jetzt = date('Y-m-d H:i:s'); ?>
+<section class="card" id="termine">
+  <div class="card__head">
+    <h2>Werkstatttermine</h2>
+    <?php if (can('create_kalender')): ?><a class="btn btn--sec btn--sm" href="<?= e(url('kalender_edit', ['auftrag_id' => $order['id']])) ?>">+ Termin</a><?php endif; ?>
+  </div>
+  <?php if (!$termine): ?>
+    <div class="empty">Noch kein Termin zu diesem Auftrag – etwa Abgabe in der Werkstatt, Abholung oder Nachbesserung.</div>
+  <?php else: ?>
+    <div class="itemlist">
+      <?php foreach ($termine as $t): $tag = substr((string)$t['beginn'], 0, 10); $zeit = kalender_zeit(['ganztag' => (int)$t['ganztag'] === 1, 'beginn' => (string)$t['beginn'], 'ende' => $t['ende']]);
+        $vorbei = (string)($t['ende'] ?: $t['beginn']) < $jetzt; $ort = function_exists('kalender_ort_text') ? kalender_ort_text($t) : (string)$t['ort']; ?>
+        <a class="item<?= $vorbei ? ' item--done' : '' ?>" href="<?= e(url('kalender_edit', ['id' => $t['id']])) ?>" style="border-left-color:<?= e((string)($t['farbe'] ?: '#0369a1')) ?>">
+          <div class="item__top"><div style="min-width:0">
+            <div class="item__title"><?= e((string)$t['titel']) ?></div>
+            <div class="item__sub"><?= e(de_date($tag) . ($zeit !== '' ? ', ' . $zeit . ' Uhr' : ', ganztägig') . ($t['ende'] && substr((string)$t['ende'], 0, 10) !== $tag ? ' bis ' . de_date(substr((string)$t['ende'], 0, 10)) : '') . ($ort !== '' ? ' · ' . $ort : '')) ?></div>
+          </div><?php if ($vorbei): ?><span class="badge badge--muted">vorbei</span><?php else: ?><span class="badge" style="background:#0369a1">geplant</span><?php endif; ?></div>
+        </a>
+      <?php endforeach; ?>
+    </div>
+  <?php endif; ?>
+</section>
+
 <?php if ($vehicle): ?>
   <?= render_partial('partials/vehicle_files', [
       'vehicle' => $vehicle, 'order' => $order, 'bilder' => $bilder, 'dokumente' => $dokumente, 'modus' => 'auftrag',

@@ -1,5 +1,22 @@
 # Änderungsverlauf
 
+## 2.1.28.0
+
+- **Werkstatttermine:** Termine und Instandsetzungsaufträge sind
+  verknüpfbar – im Terminformular über die Auswahl „Instandsetzungsaufträge",
+  vom Auftrag aus über „+ Termin" (Fahrzeug, Auftrag und Werkstatt
+  vorbelegt). Die Auftragsseite listet alle Werkstatttermine (vorbei oder
+  geplant), Kalender, Startseite und Fahrzeugakte nennen den Auftrag am
+  Termin mit 🔧.
+- **Aufgaben im Kalender:** Fällige Aufgaben tragen das Symbol ☑ und den
+  Zusatz „Aufgabe", damit sie sich von Terminen unterscheiden.
+
+- **Dateien an Terminen:** Jeder gespeicherte Termin hat einen Abschnitt
+  „Dateien" für Einladung, Programm oder Anfahrtsskizze (PDF, Bilder,
+  erlaubte Dokumenttypen). Öffnen darf sie, wer den Termin sieht; anhängen
+  und entfernen, wer ihn bearbeiten darf. Die Dateien liegen in der Ablage
+  unter „termine" und wandern mit in die Sicherung.
+
 ## 2.1.26.0
 
 - **Mehrere Fachgruppen je Termin:** Unter „Weitere Fachgruppen" lassen

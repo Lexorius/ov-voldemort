@@ -877,6 +877,25 @@ CREATE TABLE IF NOT EXISTS events (
   CONSTRAINT fk_ev_ub     FOREIGN KEY (updated_by)    REFERENCES users(id)      ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Dateien an einem Termin (Einladung, Programm, Anfahrt)
+CREATE TABLE IF NOT EXISTS calendar_files (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  entry_id     INT UNSIGNED NOT NULL,
+  art          VARCHAR(20)  NOT NULL DEFAULT 'dokument',
+  titel        VARCHAR(200) NOT NULL DEFAULT '',
+  orig_name    VARCHAR(255) NOT NULL DEFAULT '',
+  stored_name  VARCHAR(255) NOT NULL,
+  thumb_name   VARCHAR(255) NULL,
+  mime         VARCHAR(120) NOT NULL DEFAULT '',
+  size_bytes   INT UNSIGNED NOT NULL DEFAULT 0,
+  uploaded_by  INT UNSIGNED NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_cfile_entry (entry_id),
+  CONSTRAINT fk_cfile_entry FOREIGN KEY (entry_id)    REFERENCES calendar_entries(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cfile_ub    FOREIGN KEY (uploaded_by) REFERENCES users(id)            ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Plaetze einer Veranstaltung
 CREATE TABLE IF NOT EXISTS event_standorte (
   event_id INT UNSIGNED NOT NULL,
@@ -1276,6 +1295,16 @@ CREATE TABLE IF NOT EXISTS vehicle_orders (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Bilder und Dokumente zu Fahrzeugen und Aufträgen
+-- Werkstatttermine: welche Instandsetzungsauftraege ein Termin betrifft
+CREATE TABLE IF NOT EXISTS calendar_auftraege (
+  entry_id  INT UNSIGNED NOT NULL,
+  order_id  INT UNSIGNED NOT NULL,
+  PRIMARY KEY (entry_id, order_id),
+  KEY idx_ca_order (order_id),
+  CONSTRAINT fk_ca_entry FOREIGN KEY (entry_id) REFERENCES calendar_entries(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ca_order FOREIGN KEY (order_id) REFERENCES vehicle_orders(id)   ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS vehicle_files (
   id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
   vehicle_id   INT UNSIGNED NOT NULL,

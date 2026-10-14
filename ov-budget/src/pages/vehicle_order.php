@@ -15,6 +15,7 @@ if (!$order) {
 }
 
 render('vehicle_order', [
+    'termine' => function_exists('kalender_termine_auftrag') ? kalender_termine_auftrag((int)$order['id'], current_user() ?? []) : [],
     'title'   => $order['nummer'] . ' · ' . $order['titel'],
     'order'   => $order,
     'vehicle' => vehicle_find((int)$order['vehicle_id']),

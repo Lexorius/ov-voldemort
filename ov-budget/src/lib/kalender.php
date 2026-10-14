@@ -200,6 +200,51 @@ function kalender_ziel_name(array $t): string
     return $weitere !== '' ? ($name !== '' ? $name . ' + ' : '') . $weitere : $name;
 }
 
+/** Unterabfrage: die Instandsetzungsaufträge eines Termins als „2026-0005 Bremse · …" */
+function kalender_auftraege_sub(): string
+{
+    return "(SELECT GROUP_CONCAT(CONCAT(o.nummer, ' ', o.titel) ORDER BY o.nummer SEPARATOR ' · ') FROM calendar_auftraege ca JOIN vehicle_orders o ON o.id = ca.order_id
+              WHERE ca.entry_id = k.id) AS auftraege_namen";
+}
+
+/** Die Aufträge eines Termins */
+function kalender_auftraege(int $entryId): array
+{
+    return db_all('SELECT o.id, o.nummer, o.titel, o.vehicle_id, v.bezeichnung AS fahrzeug FROM calendar_auftraege ca
+                   JOIN vehicle_orders o ON o.id = ca.order_id JOIN vehicles v ON v.id = o.vehicle_id WHERE ca.entry_id = ? ORDER BY o.nummer', [$entryId]);
+}
+
+/** Genau diese Aufträge gehören zum Termin */
+function kalender_auftraege_setzen(int $entryId, array $ids): void
+{
+    db_exec('DELETE FROM calendar_auftraege WHERE entry_id = ?', [$entryId]);
+    foreach (array_values(array_unique(array_filter(array_map('intval', $ids), static fn($i) => $i > 0))) as $oid) {
+        db_insert('calendar_auftraege', ['entry_id' => $entryId, 'order_id' => $oid]);
+    }
+}
+
+/** Alle Termine eines Auftrags (Abgabe, Abholung, Nachbesserung), die diese Person sehen darf – älteste zuerst */
+function kalender_termine_auftrag(int $orderId, array $u): array
+{
+    $rows = db_all(
+        'SELECT k.*, u.display_name AS ziel_name, ' . kalender_select_zusatz() . '
+         FROM calendar_auftraege ca
+         JOIN calendar_entries k ON k.id = ca.entry_id
+         LEFT JOIN users u ON u.id = k.ziel_id AND k.ziel = \'user\'
+         WHERE ca.order_id = ?
+         ORDER BY k.beginn, k.id',
+        [$orderId]
+    );
+    return array_values(array_filter($rows, static fn($t) => kalender_sichtbar($t, $u)));
+}
+
+/** Untertitel eines Termins: für wen – und welche Aufträge (🔧). Reine Funktion. */
+function kalender_untertitel(array $t): string
+{
+    $a = trim((string)($t['auftraege_namen'] ?? ''));
+    return kalender_ziel_name($t) . ($a !== '' ? ' · 🔧 ' . $a : '');
+}
+
 /** Unterabfragen für die weiteren Fachgruppen eines Termins: ids und Namen */
 function kalender_fachgruppen_sub(): string
 {
@@ -219,7 +264,7 @@ function kalender_select_zusatz(): string
 {
     return kalender_standorte_sub('calendar_standorte', 'entry_id', 'k') . " AS standort_name,
             (SELECT GROUP_CONCAT(v.bezeichnung ORDER BY v.bezeichnung SEPARATOR ' · ') FROM calendar_vehicles cv JOIN vehicles v ON v.id = cv.vehicle_id
-              WHERE cv.entry_id = k.id) AS fahrzeuge_namen, " . kalender_fachgruppen_sub();
+              WHERE cv.entry_id = k.id) AS fahrzeuge_namen, " . kalender_fachgruppen_sub() . ", " . kalender_auftraege_sub();
 }
 
 function kalender_find(int $id): ?array
@@ -534,6 +579,10 @@ function kalender_save_from_post(?array $existing, array $user): array
     if (post_str('fachgruppen_feld') === '1') {
         kalender_fachgruppen_setzen($id, wahl_ids('fachgruppen'), $user);
     }
+    // Instandsetzungsaufträge (Werkstatttermin): nur, wenn das Feld im Formular war
+    if (can('view_vehicles') && post_str('auftraege_feld') === '1') {
+        kalender_auftraege_setzen($id, wahl_ids('auftraege'));
+    }
     return [$id, []];
 }
 
@@ -556,7 +605,7 @@ function standort_belegung(int $standortId, string $von, string $bis, array $u):
         }
         $out[] = kalender_eintrag('termin', (string)$t['titel'], (string)$t['beginn'], $t['ende'], [
             'ganztag' => (int)$t['ganztag'] === 1, 'ort' => kalender_ort_text($t), 'id' => $t['id'], 'fahrzeuge' => (string)($t['fahrzeuge_namen'] ?? ''),
-            'url' => url('kalender_edit', ['id' => $t['id']]), 'farbe' => $t['farbe'] ?: KALENDER_QUELLEN['termin']['color'], 'untertitel' => kalender_ziel_name($t),
+            'url' => url('kalender_edit', ['id' => $t['id']]), 'farbe' => $t['farbe'] ?: KALENDER_QUELLEN['termin']['color'], 'untertitel' => kalender_untertitel($t),
         ]);
     }
     if (can('view_events')) {
@@ -653,7 +702,7 @@ function kalender_quelle(string $quelle, string $von, string $bis, array $u): ar
             $out[] = kalender_eintrag('termin', (string)$t['titel'], (string)$t['beginn'], $t['ende'], [
                 'ganztag' => (int)$t['ganztag'] === 1, 'ort' => kalender_ort_text($t), 'id' => $t['id'], 'fahrzeuge' => (string)($t['fahrzeuge_namen'] ?? ''),
                 'url' => url('kalender_edit', ['id' => $t['id']]), 'farbe' => $t['farbe'] ?: KALENDER_QUELLEN['termin']['color'],
-                'untertitel' => kalender_ziel_name($t),
+                'untertitel' => kalender_untertitel($t),
             ]);
         }
     }
@@ -681,8 +730,9 @@ function kalender_quelle(string $quelle, string $von, string $bis, array $u): ar
             if (!todo_is_mine($t, $u) && !can('manage_todos')) {
                 continue;
             }
-            $out[] = kalender_eintrag('aufgabe', 'Fällig: ' . $t['titel'], (string)$t['faellig_am'], null, ['id' => $t['id'],
-                'url' => url('todo', ['id' => $t['id']]), 'untertitel' => function_exists('todo_target_name') ? todo_target_name($t) : '']);
+            // Mit Haken-Symbol, damit die Aufgabe im Kalender sofort als Aufgabe erkennbar ist
+            $out[] = kalender_eintrag('aufgabe', '☑ Fällig: ' . $t['titel'], (string)$t['faellig_am'], null, ['id' => $t['id'],
+                'url' => url('todo', ['id' => $t['id']]), 'untertitel' => 'Aufgabe' . (function_exists('todo_target_name') ? ' · ' . todo_target_name($t) : '')]);
         }
     }
     if (in_array('frist', $quellen, true)) {
@@ -817,6 +867,121 @@ function kalender_in_besprechung(array $e, int $meetingId, array $user): int
         db_insert('tp_links', ['tp_id' => $id, 'typ' => 'termin', 'ziel_id' => (int)$e['id']]);
     }
     return $id;
+}
+
+/* ==================================================================== */
+/* Dateien am Termin: Einladung, Programm, Anfahrt                       */
+/* ==================================================================== */
+
+function kfile_dir(): string
+{
+    $dir = upload_dir() . DIRECTORY_SEPARATOR . 'termine';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0770, true);
+    }
+    return $dir;
+}
+
+function kfile_list(int $entryId): array
+{
+    return db_all('SELECT f.*, u.display_name AS hochgeladen_von FROM calendar_files f LEFT JOIN users u ON u.id = f.uploaded_by
+                   WHERE f.entry_id = ? ORDER BY f.created_at DESC, f.id DESC', [$entryId]);
+}
+
+function kfile_find(?int $id): ?array
+{
+    return $id ? db_row('SELECT * FROM calendar_files WHERE id = ?', [$id]) : null;
+}
+
+/** Hochgeladene Dateien an einen Termin hängen – Bilder verkleinert und ohne Aufnahmeort. Gibt [anzahl, fehler[]] zurück. */
+function kfile_store_uploads(int $entryId, string $feld, string $titel, array $user): array
+{
+    $fehler = [];
+    $anzahl = 0;
+    if (empty($_FILES[$feld]) || !is_array($_FILES[$feld]['name'])) {
+        return [0, ['Es kam keine Datei an. Bei sehr großen Dateien bricht der Browser den Upload ab, bevor die Anwendung ihn sieht.']];
+    }
+    $erlaubt = array_values(array_unique(array_merge(vfile_document_types(), VFILE_BILD_TYPEN)));
+    $max = upload_max_bytes();
+    $dir = kfile_dir();
+    if (!is_dir($dir) || !is_writable($dir)) {
+        return [0, [sprintf('Der Ordner %s ist nicht beschreibbar.', $dir)]];
+    }
+    foreach ($_FILES[$feld]['name'] as $i => $name) {
+        $name = (string)$name;
+        $err = (int)$_FILES[$feld]['error'][$i];
+        if ($err === UPLOAD_ERR_NO_FILE || $name === '') {
+            continue;
+        }
+        if ($err !== UPLOAD_ERR_OK) {
+            $fehler[] = sprintf('„%s" konnte nicht hochgeladen werden (Fehlercode %d).', $name, $err);
+            continue;
+        }
+        $tmp = (string)$_FILES[$feld]['tmp_name'][$i];
+        $groesse = (int)$_FILES[$feld]['size'][$i];
+        if (!is_uploaded_file($tmp) && !defined('OVB_TEST_UPLOADS')) {
+            $fehler[] = sprintf('„%s" wurde nicht über das Formular hochgeladen.', $name);
+            continue;
+        }
+        $mime = class_exists('finfo') ? (string)(new finfo(FILEINFO_MIME_TYPE))->file($tmp) : '';
+        $grund = vfile_check($name, $groesse, $mime, 'dokument', $erlaubt, $max);
+        if ($grund !== null) {
+            $fehler[] = $grund;
+            continue;
+        }
+        $endung = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        $basis = date('Ymd_His') . '_' . bin2hex(random_bytes(8));
+        $gespeichert = $basis . '.' . $endung;
+        $ziel = $dir . DIRECTORY_SEPARATOR . $gespeichert;
+        $vorschau = null;
+        $istBild = in_array($endung, VFILE_BILD_TYPEN, true) && str_starts_with($mime, 'image/');
+        $verarbeitet = $istBild && vfile_process_image($tmp, $ziel, $mime, VFILE_BILD_MAX) !== null;
+        if ($verarbeitet) {
+            @unlink($tmp);
+            $groesse = (int)filesize($ziel);
+            $vorschau = $basis . '_vorschau.' . $endung;
+            if (vfile_process_image($ziel, $dir . DIRECTORY_SEPARATOR . $vorschau, $mime, VFILE_VORSCHAU_MAX) === null) {
+                $vorschau = null;
+            }
+        } elseif (!(defined('OVB_TEST_UPLOADS') ? rename($tmp, $ziel) : move_uploaded_file($tmp, $ziel))) {
+            $fehler[] = sprintf('„%s" konnte nicht gespeichert werden.', $name);
+            continue;
+        }
+        db_insert('calendar_files', [
+            'entry_id'    => $entryId,
+            'art'         => $istBild ? 'bild' : 'dokument',
+            'titel'       => mb_substr(trim($titel) !== '' ? trim($titel) : pathinfo($name, PATHINFO_FILENAME), 0, 200),
+            'orig_name'   => mb_substr($name, 0, 255),
+            'stored_name' => $gespeichert,
+            'thumb_name'  => $vorschau,
+            'mime'        => $mime,
+            'size_bytes'  => $groesse,
+            'uploaded_by' => (int)$user['id'],
+        ]);
+        $anzahl++;
+    }
+    return [$anzahl, $fehler];
+}
+
+function kfile_delete(array $datei): void
+{
+    foreach ([$datei['stored_name'] ?? '', $datei['thumb_name'] ?? ''] as $name) {
+        if ($name) {
+            $pfad = kfile_dir() . DIRECTORY_SEPARATOR . basename((string)$name);
+            if (is_file($pfad)) {
+                @unlink($pfad);
+            }
+        }
+    }
+    db_exec('DELETE FROM calendar_files WHERE id = ?', [(int)$datei['id']]);
+}
+
+/** Pfad zur Datei oder zur Vorschau – oder null */
+function kfile_path(array $datei, bool $vorschau = false): ?string
+{
+    $name = $vorschau && ($datei['thumb_name'] ?? null) ? $datei['thumb_name'] : $datei['stored_name'];
+    $pfad = kfile_dir() . DIRECTORY_SEPARATOR . basename((string)$name);
+    return is_file($pfad) ? $pfad : null;
 }
 
 /** Schlüssel, mit dem ein Eintrag im Formular wiedergefunden wird. Reine Funktion. */

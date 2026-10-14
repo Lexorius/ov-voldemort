@@ -64,6 +64,7 @@ $routes = [
 
     'kalender'           => 'kalender',
     'kalender_edit'      => 'kalender_edit',
+    'kalender_file'      => 'kalender_file',
     'admin_kalender'     => 'admin/kalender',
     'admin_standorte'    => 'admin/standorte',
     'admin_standort_edit' => 'admin/standort_edit',

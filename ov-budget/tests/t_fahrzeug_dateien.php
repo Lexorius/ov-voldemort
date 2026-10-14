@@ -153,6 +153,22 @@ $check('Scan behält die volle Auflösung', $b === 3000);
 $check('auch am Dokument ist der Ort weg', !str_contains(
     (string)file_get_contents(vfile_dir() . '/' . $doc['stored_name']), 'GPS-GEHEIM'));
 
+// Dieselbe Ablage für Termine: ein Dokument am Termin
+require_once $app . '/src/lib/kalender.php';
+$einladung = $tmp . '/upload_einladung';
+file_put_contents($einladung, "%PDF-1.4\n%%EOF\n");
+$_FILES['dateien'] = ['name' => ['Einladung.pdf'], 'type' => ['application/pdf'], 'tmp_name' => [$einladung], 'error' => [UPLOAD_ERR_OK], 'size' => [filesize($einladung)]];
+$GLOBALS['inserts'] = [];
+[$n, $fehler] = kfile_store_uploads(5, 'dateien', '', ['id' => 1]);
+$kd = $GLOBALS['inserts'][0][1] ?? [];
+$check('Termindatei gespeichert', $n === 1 && $fehler === [] && $GLOBALS['inserts'][0][0] === 'calendar_files' && $kd['entry_id'] === 5 && $kd['art'] === 'dokument' && $kd['titel'] === 'Einladung'
+    && is_file(kfile_dir() . '/' . $kd['stored_name']) && str_ends_with(kfile_dir(), 'termine'));
+$check('Termindatei: Pfad und Löschen', kfile_path($kd + ['id' => 1]) !== null && (kfile_delete($kd + ['id' => 1]) ?? true) && kfile_path($kd + ['id' => 1]) === null);
+$_FILES['dateien'] = ['name' => ['boese.php'], 'type' => ['text/plain'], 'tmp_name' => [$tmp . '/nix'], 'error' => [UPLOAD_ERR_OK], 'size' => [10]];
+file_put_contents($tmp . '/nix', '<?php echo 1;');
+[$n, $fehler] = kfile_store_uploads(5, 'dateien', '', ['id' => 1]);
+$check('Termindatei: gefährliche Endung abgewiesen', $n === 0 && $fehler !== []);
+
 // Ein PDF bleibt Byte für Byte unverändert
 $pdfDatei = $tmp . '/upload_pdf';
 $pdfInhalt = "%PDF-1.4
