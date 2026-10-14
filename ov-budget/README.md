@@ -226,6 +226,10 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 
 ### Verwaltung
 - Benutzer mit Rollen (Mitglied, Leitung, Administration) und Funktionen
+- **THW-Kontakte** als eigener Menüpunkt: Dienststellen als Baum
+  (Landesverband › Regionalstelle › Ortsverbände) mit Anschrift und
+  Erreichbarkeit, dazu Funktionspostfächer mit Zweck und den Haken
+  „offizielles Netz" / „Behördennetz"
 - **Stell- und Lagerplätze** als Baum: Gebäude, Hallen und Höfe mit
   Stockwerken, Räumen, Stellplätzen, Schränken und Regalen, Serien wie
   „Raum 1–16" auf einmal – je Platz mit Bildern, GPS-Koordinaten und Karte;

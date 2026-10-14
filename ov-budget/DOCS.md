@@ -461,6 +461,25 @@ Gruppe – dann steht dort „6 von 8 Geräten gemeldet".
 Dafür braucht der Connector die Verwendung **Funkgeräte** (*Verwaltung →
 Connectoren*). Abgeholt wird im Takt des Standort-Intervalls und auf Knopfdruck.
 
+## THW-Kontakte
+
+Ein eigener Menüpunkt für die Dienststellen, mit denen der Ortsverband zu
+tun hat, und für die Funktionspostfächer – sichtbar für alle, gepflegt von
+Leitung und Administration.
+
+* **Dienststellen** als Baum: THW-Leitung › Landesverband › Regionalstelle
+  › Ortsverbände, dazu sonstige Dienststellen (Logistikzentrum,
+  Ausbildungszentrum). Je Dienststelle Kürzel, Anschrift, Telefon, E-Mail
+  und Website, alles anklickbar; der „+" am Eintrag legt eine Dienststelle
+  darunter an, „✉+" ein Postfach dazu.
+* **Funktionspostfächer**: Bezeichnung (Einsatz, Verwaltung, Ausbildung),
+  Adresse, wofür das Postfach da ist, Dienststelle und die Erreichbarkeit
+  als zwei Haken – **offizielles Netz** (Internet) und **Behördennetz**.
+  Die Postfächer stehen in der Tabelle und als Chips an ihrer Dienststelle.
+* **Suche** über Dienststellen (Name, Kürzel, Ort, PLZ, E-Mail) und
+  Postfächer (Name, Adresse, Zweck, Dienststelle); im Baum bleiben die
+  Vorfahren eines Treffers stehen, damit der Pfad erkennbar ist.
+
 ## Kalender
 
 Ein Termin gilt für ein Ziel (Ortsverband, Fachgruppe, Funktion, Person)

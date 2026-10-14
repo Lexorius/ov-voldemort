@@ -1,5 +1,15 @@
 # Änderungsverlauf
 
+## 2.1.31.0
+
+- **THW-Kontakte:** Neuer Menüpunkt. Dienststellen als Baum – THW-Leitung,
+  Landesverband, Regionalstelle, Ortsverbände, sonstige – mit Kürzel,
+  Anschrift, Telefon, E-Mail und Website. Davon getrennt die
+  Funktionspostfächer: Bezeichnung, Adresse, wofür sie da sind, zugehörige
+  Dienststelle und die Erreichbarkeit über das offizielle Netz und/oder
+  das Behördennetz. Suche über beides; Pflege durch die Leitung, sichtbar
+  für alle. Der Menüname ist einstellbar.
+
 ## 2.1.30.1
 
 - Prüfung des zweiten Faktors zeitfest gemacht: Sie kippte, wenn das

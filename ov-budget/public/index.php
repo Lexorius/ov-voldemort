@@ -70,6 +70,9 @@ $routes = [
     'admin_standort_edit' => 'admin/standort_edit',
     'standort_bild'      => 'standort_bild',
     'standorte'          => 'standorte',
+    'thw'                => 'thw',
+    'thw_dienststelle_edit' => 'thw_dienststelle_edit',
+    'thw_postfach_edit'  => 'thw_postfach_edit',
 
     'meetings'           => 'meetings',
     'meeting'            => 'meeting',

@@ -41,6 +41,8 @@ function nav_module(): array
                         'route' => 'events', 'aktiv' => ['events', 'event', 'event_edit', 'verpflegung_saetze', 'verpflegung_satz_edit'], 'darf' => can('view_events')],
         'standorte' => ['label' => (string)setting('standort_modul_name', 'Standorte'), 'icon' => '🏢',
                         'route' => 'standorte', 'aktiv' => ['standorte'], 'darf' => true],
+        'thw'       => ['label' => (string)setting('thw_modul_name', 'THW-Kontakte'), 'icon' => '⛑',
+                        'route' => 'thw', 'aktiv' => ['thw', 'thw_dienststelle_edit', 'thw_postfach_edit'], 'darf' => true],
         'kalender'  => ['label' => (string)setting('kalender_modul_name', 'Kalender'), 'icon' => '▤',
                         'route' => 'kalender', 'aktiv' => ['kalender', 'kalender_edit'], 'darf' => true],
         'meetings'  => ['label' => (string)setting('besprechung_modul_name', 'Besprechungen'), 'icon' => '☰',

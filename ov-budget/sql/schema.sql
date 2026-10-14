@@ -565,6 +565,48 @@ CREATE TABLE IF NOT EXISTS expense_links (
 -- ------------------------------------------------------------
 -- Kontakte (Behoerden, Feuerwehr, Firmen, Foerderer ...)
 -- ------------------------------------------------------------
+-- THW-Kontakte: Dienststellen als Baum (THW-Leitung, Landesverband, Regionalstelle, Ortsverband)
+CREATE TABLE IF NOT EXISTS thw_dienststellen (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  parent_id   INT UNSIGNED NULL,
+  typ         ENUM('leitung','landesverband','regionalstelle','ortsverband','sonstige') NOT NULL DEFAULT 'ortsverband',
+  name        VARCHAR(150) NOT NULL,
+  kurz        VARCHAR(30)  NOT NULL DEFAULT '',
+  strasse     VARCHAR(150) NOT NULL DEFAULT '',
+  plz         VARCHAR(15)  NOT NULL DEFAULT '',
+  ort         VARCHAR(100) NOT NULL DEFAULT '',
+  telefon     VARCHAR(60)  NOT NULL DEFAULT '',
+  email       VARCHAR(150) NOT NULL DEFAULT '',
+  web         VARCHAR(200) NOT NULL DEFAULT '',
+  notiz       TEXT         NULL,
+  sort_order  INT          NOT NULL DEFAULT 0,
+  is_active   TINYINT(1)   NOT NULL DEFAULT 1,
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_thw_parent (parent_id, sort_order),
+  CONSTRAINT fk_thw_parent FOREIGN KEY (parent_id) REFERENCES thw_dienststellen(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Funktionspostfaecher: E-Mail-Postfaecher mit Zweck und Erreichbarkeit (offizielles Netz, Behoerdennetz)
+CREATE TABLE IF NOT EXISTS thw_postfaecher (
+  id               INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  dienststelle_id  INT UNSIGNED NULL,
+  name             VARCHAR(150) NOT NULL,
+  email            VARCHAR(150) NOT NULL,
+  beschreibung     VARCHAR(500) NOT NULL DEFAULT '',
+  offiziell        TINYINT(1)   NOT NULL DEFAULT 1,
+  behoerdennetz    TINYINT(1)   NOT NULL DEFAULT 0,
+  notiz            TEXT         NULL,
+  sort_order       INT          NOT NULL DEFAULT 0,
+  is_active        TINYINT(1)   NOT NULL DEFAULT 1,
+  created_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_thw_pf_dst (dienststelle_id, sort_order),
+  CONSTRAINT fk_thw_pf_dst FOREIGN KEY (dienststelle_id) REFERENCES thw_dienststellen(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS contacts (
   id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
   anrede        VARCHAR(30)  NOT NULL DEFAULT '',
