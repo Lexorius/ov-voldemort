@@ -2,22 +2,134 @@
 
 *Bis Fassung 1.48 hieß die Anwendung OV-Budget.*
 
-Kleine, handytaugliche Webanwendung (PHP + MySQL, ohne Framework) für die interne
-Beschaffungsplanung eines Ortsverbands:
+Handytaugliche Webanwendung (PHP 8.1+, MariaDB/MySQL, ohne Framework) für die
+Verwaltung eines THW-Ortsverbands – von der Beschaffungsplanung über
+Fahrzeuge, Funkgeräte und Zähler bis zu Besprechungen und Veranstaltungen.
+Gedacht als **Home-Assistant-Add-on**, das alles mitbringt (Datenbank,
+Webserver, Anwendung in einem Container); läuft aber genauso als
+**Docker-Container** oder klassisch auf einem **Webserver**.
 
-* **Wünsch dir was** – Fachgruppen und Zugführer tragen Bedarfe ein, alle priorisieren gemeinsam
-* **Aufgaben** – ToDos für den OV, einzelne Fachgruppen, Funktionen oder Personen
-* **Budget** – Jahresbudget, Ausgaben und Einnahmen (Einsätze, technische Hilfeleistung), Übersicht nach Kategorie und Monat, Freigabe von Wünschen zur Bestellung („Freigegeben, bitte bestellen") mit Bestellberechtigungen je Rolle und Funktion
-* **Kontakte** – Ansprechpartner und Verteiler für Einladungen, Import aus Excel, Outlook, Google und vCard
-* **Fahrzeuge** – Fahrzeugakte mit unveränderbarem Journal, Instandsetzungsauftraegen und Fristen (HU, SP, UVV), Abgleich mit der Stein.APP
-* **Besprechungen** – Talking Points sammeln, Tagesordnung, Ergebnisse und Protokoll, wiederkehrende Termine, Anwesenheit (teilgenommen, entschuldigt, nicht erschienen)
-* **Divera 24/7** – Formulare abrufen und deren Einträge als Wünsche übernehmen
-* **Verwaltung** – Benutzer, Rollen sowie *alle* Auswahllisten und Texte frei konfigurierbar
+> Die Zahlen sind eine interne Planungshilfe – bewusst „pseudo", keine
+> offizielle Haushaltsstelle. Privates Projekt, kein offizielles Angebot des THW.
 
-> Die Zahlen sind eine interne Planungshilfe – bewusst „pseudo“, keine offizielle Haushaltsstelle.
+## Was drin ist
 
-Drei Betriebsarten: als **Home-Assistant-Add-on**, als **Docker-Container** oder
-klassisch auf einem **Webserver**.
+### Planen und Geld
+
+* **Wünsch dir was** – Fachgruppen und Zugführer tragen Bedarfe ein (Bezeichnung,
+  Anzahl, Betrag, Dringlichkeit, Fachgruppe, Kategorie, Frist, eigene
+  Zusatzfelder), alle priorisieren gemeinsam per Abstimmung und Kommentar.
+  Angebote als Anlage, CSV-Export, Übernahme aus Divera-Formularen.
+  **„Freigegeben, bitte bestellen"** mit Bestellberechtigungen je Rolle und
+  Funktion, Betragsgrenze und Vier-Augen-Prinzip; **Bestellungen** fassen
+  mehrere Wünsche zusammen.
+* **Budget** – Jahresbudget und Budgettöpfe, Ausgaben und Einnahmen (Einsätze,
+  technische Hilfeleistung, Spenden …), Übersicht nach Kategorie und Monat mit
+  Grafik, Stand je Ausgabe (bezahlt, gebucht, geplant). **Objektkonten** als
+  zweite Auswertung: mehrere Kategorien laufen auf ein Konto, die Statistik
+  nach Kategorien bleibt daneben bestehen. **Auslagen**: welcher Helfer
+  vorgestreckt hat, wann es zur Regionalstelle weiterging und wann erstattet
+  wurde – die Liste zeigt, wer noch auf sein Geld wartet.
+* **Aufgaben** – ToDos für den Ortsverband, Fachgruppen, Funktionen oder
+  Personen; mit Fälligkeit erscheinen sie im Kalender.
+
+### Termine und Leute
+
+* **Kalender** – alle Termine an einem Ort: eigene Termine für sich, die
+  Fachgruppe, eine Funktion oder den OV, dazu Besprechungen, Veranstaltungen,
+  Fristen, fällige Aufgaben und Budget-Stichtage. Feiertage des Bundeslands,
+  Kalender aus Home Assistant. **Je Termin**: mehrere Fahrzeuge, mehrere Plätze
+  aus den Stell- und Lagerplätzen plus freier Ort, mehrere Fachgruppen,
+  Instandsetzungsaufträge (Werkstatttermine), Kontakte, THW-Dienststellen und
+  Dateien wie Einladungen. **Doppelbuchungen** von Fahrzeugen werden farbig
+  markiert und beim Speichern gemeldet. Terminseite als Zusammenfassung mit
+  Druckansicht und **„Navigation starten"** fürs Handy. Startseite mit
+  Zwei-Wochen-Übersicht und den in der Woche verplanten Fahrzeugen.
+* **Besprechungen** – Talking Points im Themenspeicher, Tagesordnung mit
+  Zeitplan, Anmerkungen und Diskussion je Punkt, Themenarchiv, Aufgaben aus
+  der Besprechung, Bezüge zu Terminen, Veranstaltungen, Fahrzeugen und
+  Funkgeräten, Budgetübersicht als Tagesordnungspunkt, wiederkehrende
+  Termine, Anwesenheit, Protokoll zum Drucken. Themen über Divera einreichen,
+  Status-Rückmeldung an Divera.
+* **Veranstaltungen** – Termin, Ort, Art (Ausbildung, Übung, Helferversammlung,
+  Feier …), Budgettopf und geplante gegen tatsächliche Kosten, mehrere Plätze,
+  Dateien, Gästeliste aus den Kontakten oder nur eine Teilnehmerzahl,
+  **Einladung per kurzer Adresse** mit Zu-/Absage, Begleitern und Vertretung
+  (verschlüsselt über den Connector), Einlassliste zum Drucken, Serienbrief-CSV
+  mit QR-Code, **Verpflegungskalkulation** nach Tagessatz.
+* **Kontakte** – Ansprechpartner mit Zusatzfeldern, anrufen und mailen mit einem
+  Tipp, Verteiler für Einladungen, Import aus Excel/CSV, Outlook, Google und
+  vCard mit Dublettenerkennung.
+* **THW-Kontakte** – Dienststellen als Baum (Landesverband › Regionalstelle ›
+  Ortsverbände) mit Anschrift und Erreichbarkeit, Funktionspostfächer mit Zweck
+  und den Haken „offizielles Netz" / „Behördennetz"; Kontakte aus dem
+  Kontaktmodul lassen sich Dienststellen zuordnen und umgekehrt.
+
+### Technik und Bestand
+
+* **Fahrzeuge** – Fahrzeugakte mit Funkrufname, Kennzeichen, ISSI, OPTA, RIC,
+  Fristen HU/SP/UVV, Sitzplätzen und Zuladung; **Kapazitätsliste** zum Planen
+  von Fahrten. **Journal, das sich nicht nachträglich ändern lässt**
+  (Prüfsummen-Kette). **Instandsetzungsaufträge** mit Nummer, Werkstatt,
+  Kosten und Stand, Fotos direkt aus der Kamera. **Boote auf Anhängern**:
+  Trägerfahrzeug, Kennzeichen und Stellplatz werden vererbt, der Anhänger
+  wird bei Terminen automatisch mitgebucht. Bilder mit Titelbild, Dokumente,
+  Karte mit letzter Position, QR-Code zur Standortmeldung ohne Anmeldung,
+  Wünsche je Fahrzeug, Stempel „Nicht einsatzbereit".
+* **Funkgeräte** – HRT, MRT, Feststationen, Meldeempfänger mit Seriennummer,
+  Inventarnummer, Funkrufname und Prüffrist; Karten hineinbuchen, Geräte
+  Fahrzeugen und Plätzen zuordnen, Gruppen für Koffer und Sätze, „Gerät ist
+  da" per QR-Code.
+* **SIM- und TETRA-Karten** – Mobilfunk (Rufnummer, ICCID, Vertrag) oder
+  TETRA-Sicherheitskarte (ISSI, OPTA), Zuordnung zu Fahrzeug, Fachgruppe,
+  Person oder OV, PIN/PUK verdeckt, Warnung vor Vertragsende.
+* **Verbrauch** – Strom-, Gas- und Wasserzähler mit Ständen aus Home
+  Assistant, von Hand oder per QR-Code; Tarife, Kosten je Monat und Jahr,
+  **Kosten je Bereich** entlang der Stell- und Lagerplätze, Unterzähler mit
+  Zeiträumen, Solaranlage mit Eigenverbrauch und Autarkie, auffälliger
+  Verbrauch als Warnung, Verbrauchsprofil je Wochentag und Stunde, Berichte
+  zum Drucken, CSV-Export.
+* **Stell- und Lagerplätze** – Gebäude, Hallen und Höfe mit Stockwerken,
+  Räumen, Stellplätzen, Schränken und Regalen als Baum (Serien wie
+  „Raum 1–16" auf einmal), je Platz Bilder, GPS-Koordinaten und Karte.
+  Fahrzeuge, Zähler, Funkgeräte und Funkgruppen hängen an Plätzen.
+  **Standortübersicht** zum Durchklicken, **Hallenplan** als Foto oder
+  Skizze mit jedem Fahrzeug an seinem Platz, Belegung aus dem Kalender.
+
+### Anbindungen
+
+* **Home Assistant** – Kennzahlen aller Module über MQTT mit Auto-Discovery
+  (nur Zahlen, Zeitpunkte, Beträge – keine Namen oder Kennungen), optional
+  Entitäten je Fahrzeug mit Standort, Benachrichtigungen über die
+  Companion-App und als **Web Push** im Browser.
+* **Stein.APP** – Abgleich von Status, HU, SP, Kennzeichen, ISSI und
+  Funkrufname, schonend gegenüber dem Rate Limit, optional per Webhook.
+* **Divera 24/7** – Formulare als Wünsche oder Besprechungsthemen übernehmen;
+  Fahrzeuge mit Funkstatus (FMS) als Fahrtenbuch, Position und Besatzung.
+* **Connector** – kleines PHP-Skript auf einem öffentlichen Webserver für
+  alles, was ohne Anmeldung erreichbar sein muss: Einladungen,
+  Standortmeldung, „Gerät ist da", Zählerstand. Ende-zu-Ende verschlüsselt,
+  der Connector sieht nur Chiffrate; Störungsmeldung und Integritätsprüfung
+  („Ist der Connector sauber?").
+* **KI-Auswertung der Dateien (Ollama)** – ein Ollama im eigenen Netz fasst
+  hochgeladene Dokumente und Fotos zusammen und vergibt Schlagwörter;
+  Dateisuche über alle Ablagen. **Standardmäßig aus und jederzeit
+  abschaltbar**, nur Adressen im eigenen Netz werden angenommen.
+
+### Betrieb
+
+* **Sicherung** – Datenbank und Dateiablage als ZIP sichern, herunterladen,
+  hochladen und wiederherstellen; automatisch alle *n* Tage.
+* **Verwaltung** – Benutzer mit Rollen und Funktionen, **zweiter Faktor**
+  (Authenticator-App, Backup-Codes, als Pflicht je Rolle), alle Auswahllisten,
+  Texte und Regeln frei einstellbar, Menüleiste in eigener Reihenfolge,
+  Speicherplatz von Datenbank und Dateiablage, Änderungsprotokoll. Jede
+  Veröffentlichung hat eine vierstellige Fassungsnummer; unten auf jeder Seite
+  steht sie, ein Klick zeigt, was neu ist.
+
+Die ausführliche Anleitung steht in [ov-budget/DOCS.md](ov-budget/DOCS.md)
+(im Add-on als Reiter *Dokumentation*), der Änderungsverlauf in
+[ov-budget/CHANGELOG.md](ov-budget/CHANGELOG.md).
 
 ## Home-Assistant-Add-on
 
@@ -42,20 +154,22 @@ https://github.com/Lexorius/ov-voldemort
 Beim ersten Start richtet sich alles selbst ein: MariaDB wird initialisiert, ein
 zufälliges Datenbankpasswort erzeugt, Datenbank und Benutzer angelegt, Schema und
 Grunddaten eingespielt und der Administrator erstellt. Spätere Starts erkennen den
-Bestand und ändern nichts daran.
+Bestand, spielen die Datenbank-Wanderungen ein und ändern sonst nichts.
 
 Alles Dauerhafte liegt unter `/data`:
 
 ```
 /data/mysql      Datenbank
-/data/uploads    hochgeladene Angebote
+/data/uploads    Dateiablage: Angebote, Fahrzeuge, Veranstaltungen, Termine,
+                 Stell- und Lagerplätze, Sicherungen
 /data/sessions   Anmeldesitzungen
 /data/dbpass     erzeugtes Datenbankpasswort
 ```
 
 Das HA-Backup erfasst diesen Ordner vollständig. Wegen `backup: cold` hält der
 Supervisor das Add-on währenddessen an, damit die Datenbankdateien in sich
-stimmig sind.
+stimmig sind. Zusätzlich gibt es in der Anwendung eine eigene Sicherung als ZIP
+(Datenbank und Dateiablage), auf Wunsch automatisch.
 
 ### Optionen
 
@@ -77,6 +191,14 @@ der Container seine eigene Datenbank nicht.
 
 Für den direkten Aufruf im Heimnetz in der Add-on-Konfiguration unter *Netzwerk*
 einen Port für `8099/tcp` vergeben, dann `http://homeassistant.local:8099`.
+
+### Automatische Abrufe
+
+Im Add-on ruft der Container jede Minute `cron.php` auf. Darüber laufen der
+Stein.APP- und Divera-Abgleich, das Abholen der Connector-Meldungen, die
+Kalender aus Home Assistant, die automatische Sicherung, die
+Benachrichtigungen, die MQTT-Meldungen und die KI-Auswertung. Jeder Abruf
+prüft selbst, ob er an der Reihe ist.
 
 ## Docker ohne Home Assistant
 
@@ -106,9 +228,12 @@ docker compose exec app mariadb-dump -uovbudget -p"$(docker compose exec -T app 
 
 ### Anforderungen
 
-* PHP 8.1 oder neuer (`pdo_mysql`, `mbstring`; empfohlen `curl` und `fileinfo`)
+* PHP 8.1 oder neuer (`pdo_mysql`, `mbstring`; empfohlen `curl`, `fileinfo`,
+  `gd` für Vorschaubilder, `zip` für Sicherung und Office-Dateien, `openssl`
+  für die Connector-Kopplung)
 * MySQL 5.7+ / MariaDB 10.3+
 * Webserver mit Document-Root auf `public/`
+* optional `poppler-utils` (pdftotext, pdftoppm) für die KI-Auswertung von PDFs
 
 ### Einrichtung
 
@@ -134,7 +259,8 @@ mysql -u ov_budget -p ov_budget < sql/seed.sql
 ```
 
 einspielen. Danach einen Administrator anlegen (Passwort-Hash z.B. per
-`php -r 'echo password_hash("...", PASSWORD_DEFAULT);'`).
+`php -r 'echo password_hash("...", PASSWORD_DEFAULT);'`). Für die automatischen
+Abrufe einen Cronjob auf `php public/cron.php` (jede Minute) einrichten.
 
 ### Läuft die App in einem Unterverzeichnis?
 
@@ -171,51 +297,58 @@ Das Repository ist ein Home-Assistant-Add-on-Repository: oben liegt nur
 repository.yaml     macht das Repository im Add-on Store nutzbar
 docker-compose.yml  Betrieb ohne Home Assistant
 scripts/            kleine Helfer (z. B. QR-Bibliothek aktualisieren)
-connector/          eigenstaendiger Briefkasten: Standort per QR-Code, Einladungen
+connector/          eigenständiger Briefkasten: Standort per QR-Code, Einladungen,
+                    „Gerät ist da", Zählerstand – siehe connector/README.md
   public/           Dokumentenverzeichnis: index.php, melden.js, einladung.js
-  src/              Ablage, Kopplung, Signaturen, Melde- und Einladungsseite
-  daten/            entsteht beim ersten Aufruf; gehoert NICHT ins Web
-ov-budget/          das Add-on – zugleich die vollstaendige Anwendung
+  src/              Ablage, Kopplung, Signaturen, Melde- und Einladungsseiten
+  daten/            entsteht beim ersten Aufruf; gehört NICHT ins Web
+ov-budget/          das Add-on – zugleich die vollständige Anwendung
   config.yaml, build.yaml, Dockerfile, DOCS.md, CHANGELOG.md, translations/
   docker/rootfs/    nginx, php-fpm, MariaDB und Startskript des Containers
   public/           Webroot: index.php (Front-Controller), install.php, cron.php, assets/
   src/bootstrap.php Laufzeitumgebung
-  src/lib/          Datenbank, Auth, Einstellungen, Listen, Wuensche, Aufgaben, Uploads, Divera
-  src/pages/        eine Datei je Route (admin/ fuer den Verwaltungsbereich)
-  src/cli/setup.php Einrichtung beim Containerstart
-  views/            HTML-Templates, views/layout.php als Rahmen
-  sql/              schema.sql (Tabellen) und seed.sql (Grunddaten)
-  config/           Konfiguration fuer die klassische Installation
-  storage/uploads/  hochgeladene Angebote, ausserhalb des Webroots
+  src/lib/          eine Bibliothek je Modul: Datenbank, Auth, Einstellungen, Wünsche,
+                    Budget, Fahrzeuge, Funkgeräte, SIM-Karten, Verbrauch, Kalender,
+                    Standorte, THW-Kontakte, Connector, MQTT, Stein, Divera, KI, Sicherung …
+  src/pages/        eine Datei je Route (admin/ für den Verwaltungsbereich)
+  src/cli/          setup.php (Einrichtung beim Containerstart), migrate.php (Wanderungen)
+  views/            HTML-Templates, views/layout.php als Rahmen, views/partials/ Bausteine
+  sql/              schema.sql (Tabellen) und seed.sql (Grunddaten, Einstellungen)
+  tests/            Prüfungen ohne Datenbank (php tests/alle.php) und Rundlauf der Sicherung
+  config/           Konfiguration für die klassische Installation
+  storage/uploads/  Dateiablage außerhalb des Webroots
                     (im Container stattdessen /data/uploads)
 ```
 
-Ausgeliefert werden Uploads ausschließlich über `index.php?p=download&id=…` – also nur
-für angemeldete Benutzer und mit `nosniff`-Header.
+Dateien werden ausschließlich über `index.php` ausgeliefert – also nur für
+angemeldete Benutzer, nach Rechteprüfung und mit `nosniff`-Header.
 
 ## Rollen
 
 | Rolle | Darf |
 |---|---|
-| `user` (Mitglied) | Wünsche anlegen und die eigenen bearbeiten, abstimmen, kommentieren, Aufgaben im eigenen Zuständigkeitsbereich bearbeiten |
-| `leitung` | zusätzlich: alle Wünsche bearbeiten, Status und Priorität setzen, Budgettöpfe pflegen, alle Aufgaben verwalten, Veranstaltungen anlegen und die Gästeliste führen |
-| `admin` | zusätzlich: Benutzerverwaltung, Auswahllisten, Einstellungen, Divera-Anbindung, Protokoll |
+| `user` (Mitglied) | Wünsche anlegen und die eigenen bearbeiten, abstimmen, kommentieren, Aufgaben im eigenen Zuständigkeitsbereich bearbeiten, Termine für sich und die eigene Fachgruppe anlegen, Fahrzeugmeldungen abgeben |
+| `leitung` | zusätzlich: alle Wünsche bearbeiten, Status und Priorität setzen, Budget und Budgettöpfe pflegen, alle Aufgaben und Termine verwalten, Fahrzeuge, Funkgeräte, SIM-Karten und Zähler pflegen, Veranstaltungen anlegen und die Gästeliste führen |
+| `admin` | zusätzlich: Benutzerverwaltung, Auswahllisten, Einstellungen, Stell- und Lagerplätze, Anbindungen (Divera, Stein.APP, Home Assistant, Connectoren, KI), Sicherung, Protokoll |
 
-Ob Mitglieder Aufgaben anlegen oder Status ändern dürfen, ist in den Einstellungen umschaltbar.
+Viele Rechte lassen sich in den Einstellungen feiner stellen, etwa ob Mitglieder
+Aufgaben anlegen oder Fahrzeugmeldungen abgeben dürfen, und wer bestellen darf.
 
 ## Was ist konfigurierbar?
 
 **Verwaltung → Auswahllisten** – Fachgruppen, Funktionen, Kategorien, Dringlichkeiten,
-Status (Wünsche und Aufgaben), Mengeneinheiten, Anlagen-Typen. Je Eintrag: Bezeichnung,
-Farbe, Reihenfolge, Gewicht (steuert die Sortierung), Vorgabewert und – bei Status – ob er
-als „abgeschlossen“ gilt. Einträge, die noch verwendet werden, lassen sich auf *inaktiv*
-setzen, statt sie zu löschen.
+Status (Wünsche und Aufgaben), Mengeneinheiten, Anlagen-Typen, Fahrzeugarten,
+Veranstaltungsarten, Arten und Status der SIM-Karten und vieles mehr. Je Eintrag:
+Bezeichnung, Farbe, Reihenfolge, Gewicht (steuert die Sortierung), Vorgabewert und –
+bei Status – ob er als „abgeschlossen" gilt. Einträge, die noch verwendet werden,
+lassen sich auf *inaktiv* setzen, statt sie zu löschen.
 
-**Verwaltung → Einstellungen** – Name der Anwendung und des OV, Akzentfarbe, Fuß- und
-Einleitungstexte, Modulbezeichnungen („Wünsch dir was“ heißt bei euch anders? Kein Problem),
-Haushaltsjahr, MwSt-Satz, Warnschwelle der Budgetauslastung, Pflichtfelder, ab welchem
-Betrag ein Angebot verpflichtend ist, Upload-Grenzen und erlaubte Dateitypen, Abstimmung
-und Stimmenzahl, Session-Laufzeit und Sperre nach Fehlversuchen.
+**Verwaltung → Einstellungen** – nach Gruppen: Name der Anwendung und des OV,
+Akzentfarbe, Fuß- und Einleitungstexte, Modulbezeichnungen („Wünsch dir was" heißt bei
+euch anders? Kein Problem), Haushaltsjahr, MwSt-Satz, Warnschwellen, Pflichtfelder,
+Upload-Grenzen und erlaubte Dateitypen, Abstimmung, Session-Laufzeit, Sperre nach
+Fehlversuchen, zweiter Faktor, Fristen der Fahrzeuge, Takt der Abrufe, Sicherung,
+KI-Auswertung.
 
 **Unscharfe Budgetübersicht** – `budget_rundung` stellt die Übersichtsseite auf
 gerundete Beträge um (10, 100 oder 1.000). Praktisch für Aushänge und Vorträge,
@@ -242,9 +375,9 @@ nichts fest verdrahtet:
    Accesskey (System-Benutzer), Pfade und Übergabeart (`?accesskey=…` oder Bearer-Header)
    eintragen. Die Standardwerte (`/v2/forms`, `/v2/forms/{form_id}/entries`) passen zur
    üblichen v2-API; weicht eure Instanz ab, einfach den Pfad ändern.
-2. **Verwaltung → Divera 24/7 → „Formulare aus Divera abrufen“**: Die Antwort wird tolerant
+2. **Verwaltung → Divera 24/7 → „Formulare aus Divera abrufen"**: Die Antwort wird tolerant
    nach einer Liste von Datensätzen durchsucht. Passende Formulare einbinden.
-3. **Feldzuordnung**: „Formularfelder abrufen“ liest die vorhandenen Einträge und sammelt
+3. **Feldzuordnung**: „Formularfelder abrufen" liest die vorhandenen Einträge und sammelt
    daraus die Feldnamen. Danach wird je Wunschfeld (Bezeichnung, Anzahl, Nettobetrag,
    Dringlichkeit, Fachgruppe, nice to have …) der Name des Divera-Feldes ausgewählt.
    Fachgruppe und Dringlichkeit werden über Bezeichnung bzw. Schlüssel der Auswahllisten
@@ -255,30 +388,36 @@ nichts fest verdrahtet:
    Bereits importierte Einträge erkennt die App an Formular- und Eintrags-ID und
    überspringt sie.
 
-Automatischer Abruf: in den Einstellungen `divera_cron_token` setzen, beim Formular
-„automatisch importieren“ ankreuzen und einrichten:
+Formulare lassen sich genauso in den **Themenspeicher der Besprechungen** leiten;
+der Bearbeitungsstand geht an Divera zurück. **Verwaltung → Divera-Fahrzeuge**
+holt Funkstatus, Position und Besatzung der Fahrzeuge.
+
+Automatischer Abruf: in den Einstellungen `cron_token` setzen, beim Formular
+„automatisch importieren" ankreuzen und einrichten:
 
 ```bash
 curl -s "https://DEINE-DOMAIN/cron.php?token=DEIN_TOKEN"
 ```
 
-Auf der Konsole geht es auch ohne Token: `php public/cron.php`.
+Auf der Konsole geht es auch ohne Token: `php public/cron.php`. Im Add-on ist
+das schon eingerichtet.
 
 ## Connectoren
 
 Manches kommt von außen: der Standort eines Fahrzeugs, das jemand ohne Zugang
-abgestellt hat, oder die Rückmeldung auf eine Einladung. Dafür gibt es den
-**Connector** im Ordner `connector/` – eine kleine PHP-Anwendung für einen
-öffentlich erreichbaren Webserver. Die Anleitung steht in
-[connector/README.md](connector/README.md).
+abgestellt hat, die Rückmeldung auf eine Einladung, ein Zählerstand oder „das
+Gerät ist am Lagerort". Dafür gibt es den **Connector** im Ordner `connector/`
+– eine kleine PHP-Anwendung für einen öffentlich erreichbaren Webserver. Die
+Anleitung steht in [connector/README.md](connector/README.md).
 
 ```
-Handy / Browser  --verschluesselt-->  Connector  <--holt ab--  OV-Multitool (Add-on)
+Handy / Browser  --verschlüsselt-->  Connector  <--holt ab--  OV-Multitool (Add-on)
 ```
 
 Unter *Verwaltung → Connectoren* lassen sich beliebig viele anlegen. Jeder
 bekommt eine eigene Kopplung und trägt, wofür er zuständig ist: **Fahrzeuge**
-(Standort per QR-Code), **Veranstaltungen** (Einladungen) oder beides.
+(Standort per QR-Code), **Veranstaltungen** (Einladungen), **Bestand** („Gerät
+ist da"), **Zähler** (Stand per QR-Code) – auch mehreres zugleich.
 
 ### Standortmeldung per QR-Code
 
@@ -286,14 +425,6 @@ In jedem Fahrzeug kann ein QR-Code hängen. Wer ihn scannt, meldet den Standort
 des Fahrzeugs – ohne Anmeldung, ohne Zugang zu OV-Multitool und ohne Home
 Assistant. Gedacht für Helferinnen und Helfer, die ein Fahrzeug irgendwo
 abstellen oder wiederfinden.
-
-Dafür gibt es den **Connector** im Ordner `connector/`: eine kleine
-PHP-Anwendung für einen öffentlich erreichbaren Webserver. Die Anleitung steht
-in [connector/README.md](connector/README.md).
-
-```
-Handy (QR)  --verschluesselt-->  Connector  <--holt ab--  OV-Multitool (Add-on)
-```
 
 * Das Handy verschlüsselt die Position **im Browser** für den öffentlichen
   Schlüssel von OV-Multitool (ECDH P-256, AES-256-GCM). Der Connector speichert
@@ -333,31 +464,80 @@ https://i.example.de/AB23CD
 * Von den Einladungscodes liegen dort nur Prüfsummen. Ein Code lässt sich
   jederzeit neu erzeugen; der alte gilt dann nicht mehr.
 * OV-Multitool meldet Veranstaltungen und Codes selbstständig an und holt die
-  Rückmeldungen ab (Vorgabe: alle zehn Minuten). Beides geht auch von Hand.
+  Rückmeldungen ab (Vorgabe: alle zwei Minuten). Beides geht auch von Hand.
 * Ohne Connector funktioniert das Modul trotzdem – Rückmeldungen werden dann
   von Hand eingetragen.
+
+### Ist der Connector sauber?
+
+OV-Multitool kennt die Prüfsummen aller Connector-Dateien und prüft täglich,
+ob sie stimmen und ob fremde Dateien aufgetaucht sind. Bei Befund geht eine
+Meldung an Home Assistant. Antwortet ein Connector länger nicht, gibt es eine
+Störungsmeldung und später die Entwarnung.
+
+## KI-Auswertung der Dateien
+
+Optional fasst ein [Ollama](https://ollama.com) im eigenen Netz hochgeladene
+Dokumente und Fotos zusammen und vergibt Schlagwörter – in der Fahrzeugakte
+und an Aufträgen, an Veranstaltungen, Terminen und Plätzen. Unter der Datei
+stehen Zusammenfassung und Schlagwort-Chips, die **Dateisuche** findet über
+alle Ablagen hinweg; wer die Datei bearbeiten darf, kann die Auswertung
+anpassen, neu anstoßen oder entfernen.
+
+* **Standardmäßig aus.** Hauptschalter und ein Schalter je Ablage in den
+  Einstellungen. Aus heißt: nichts wird eingereiht, keine Verbindung, nichts
+  verändert; vorhandene Zusammenfassungen bleiben sichtbar.
+* **Nur das eigene Netz.** Erlaubt sind private IP-Adressen, Rechnernamen ohne
+  Punkt und Namen auf `.local`, `.lan`, `.home`, `.internal`. Öffentliche
+  Adressen lehnt die Einstellung ab – die Dokumente verlassen das Haus nicht.
+* Texte aus PDFs liest `pdftotext` (im Add-on enthalten), Office-Dateien
+  werden direkt gelesen; Bilder und gescannte PDFs gehen an ein optionales
+  Vision-Modell (z. B. `llava:7b`). Voreinstellung für Text: `qwen2.5:7b`.
+* Verwaltungsseite mit Verbindungstest, Warteschlange, Fehlerliste und
+  „Vorhandene Dateien nachholen".
 
 ## Sicherheit
 
 * Passwörter als `password_hash()` (bcrypt/argon2, automatischer Rehash beim Anmelden)
+* **Zweiter Faktor** mit Authenticator-App (TOTP) und Backup-Codes, als Pflicht je Rolle
 * CSRF-Token für jedes POST-Formular
 * Bremse gegen Passwortraten (Anzahl und Sperrdauer einstellbar)
 * Startpasswörter müssen beim ersten Anmelden geändert werden
 * durchgängig vorbereitete Statements, Ausgabe HTML-escaped
-* Uploads mit Endungs- und Größenprüfung, Ablage außerhalb des Webroots unter zufälligem Namen
-* Änderungsprotokoll unter *Verwaltung → Protokoll*
-* Standortmeldungen per QR-Code: Ende-zu-Ende verschlüsselt, signierte
-  Kopplung, Begrenzung je Fahrzeug und Anschluss – Einzelheiten in
+* Uploads mit Endungs-, Typ- und Größenprüfung, Ablage außerhalb des Webroots
+  unter zufälligem Namen; Fotos verlieren beim Speichern ihre Metadaten (Aufnahmeort)
+* Fahrzeugjournal mit Prüfsummen-Kette, Änderungsprotokoll unter *Verwaltung → Protokoll*
+* Connector-Meldungen Ende-zu-Ende verschlüsselt, signierte Kopplung,
+  Begrenzung je Fahrzeug und Anschluss – Einzelheiten in
   [connector/README.md](connector/README.md)
+* Nach außen gehen nur Kennzahlen (MQTT) – keine Namen, Kennungen oder Rufnummern;
+  die KI-Auswertung spricht nur mit Rechnern im eigenen Netz
 
 ## Datensicherung
+
+In der Anwendung: *Verwaltung → Sicherung* sichert Datenbank und Dateiablage als
+ZIP, lädt sie herunter oder hoch und stellt sie wieder her – mit Sicherheitskopie
+vorher; auf Wunsch automatisch alle *n* Tage, ältere werden ausgedünnt.
+
+Von Hand:
 
 ```bash
 mysqldump -u ov_budget -p ov_budget > backup-$(date +%F).sql
 tar czf uploads-$(date +%F).tar.gz storage/uploads
 ```
 
-Als Home-Assistant-Add-on genügt das normale HA-Backup: Datenbank, Angebote und
-Sitzungen liegen alle unter `/data` und werden mitgesichert. Das Add-on wird für
-die Dauer der Sicherung angehalten (`backup: cold`), damit die Datenbankdateien
-konsistent sind.
+Als Home-Assistant-Add-on genügt daneben das normale HA-Backup: Datenbank,
+Dateiablage und Sitzungen liegen alle unter `/data` und werden mitgesichert. Das
+Add-on wird für die Dauer der Sicherung angehalten (`backup: cold`), damit die
+Datenbankdateien konsistent sind.
+
+## Prüfungen für Entwickler
+
+```bash
+cd ov-budget
+php tests/alle.php            # alle Prüfungen, ohne Datenbank
+php tests/alle.php kalender   # nur t_kalender.php
+```
+
+Jede Veröffentlichung läuft durch GitHub Actions (PHP 8.2); die Fassungsnummer
+steht in `ov-budget/config.yaml`, der Änderungsverlauf in `ov-budget/CHANGELOG.md`.

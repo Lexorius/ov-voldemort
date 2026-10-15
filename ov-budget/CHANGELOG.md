@@ -1,5 +1,9 @@
 # Änderungsverlauf
 
+## 2.1.37.2
+
+- README des Repositories auf den Stand der Anwendung gebracht: alle Module, Anbindungen, KI-Auswertung, Sicherheit, Rollen, Verzeichnisse; Beschreibung und Themen auf GitHub gesetzt.
+
 ## 2.1.37.1
 
 - Prüfung der KI-Adressregel unabhängig von der PHP-Fassung; Dateisuche ohne Warnung, wenn eine Datei kein Datum hat.
