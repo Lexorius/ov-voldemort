@@ -48,8 +48,7 @@
           <div class="doc__text">
             <a href="<?= e($t['link']) ?>"><?= e((string)($t['datei']['titel'] ?: $t['datei']['orig_name'])) ?></a>
             <span class="badge badge--outline"><?= e($t['label']) ?></span>
-            <div class="small"><a href="<?= e($t['eltern']['url']) ?>"><?= e($t['eltern']['text']) ?></a>
-              · <span class="muted"><?= e(de_datetime((string)$t['datei']['created_at'])) ?></span></div>
+            <div class="small"><a href="<?= e($t['eltern']['url']) ?>"><?= e($t['eltern']['text']) ?></a><?= !empty($t['datei']['created_at']) ? ' · <span class="muted">' . e(de_datetime((string)$t['datei']['created_at'])) . '</span>' : '' ?></div>
             <?php if ($t['ki']['zusammenfassung'] !== ''): ?>
               <div class="small ki__text"><?= e((string)$t['ki']['zusammenfassung']) ?></div>
             <?php endif; ?>

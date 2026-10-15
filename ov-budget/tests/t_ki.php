@@ -57,7 +57,7 @@ $einstellen = static function (array $w): void { $GLOBALS['settings'] = array_me
 
 /* ---------- Adresse: nur das eigene Netz ---------- */
 $check('private IPv4 und IPv6 sind privat', ki_host_privat('192.168.1.20') && ki_host_privat('10.0.0.5') && ki_host_privat('172.20.1.1') && ki_host_privat('127.0.0.1') && ki_host_privat('::1') && ki_host_privat('fd12::1'));
-$check('öffentliche Adressen nicht', !ki_host_privat('8.8.8.8') && !ki_host_privat('172.32.0.1') && !ki_host_privat('2001:db8::1') && !ki_host_privat(''));
+$check('öffentliche Adressen nicht', !ki_host_privat('8.8.8.8') && !ki_host_privat('172.32.0.1') && !ki_host_privat('2606:4700::1111') && !ki_host_privat(''));
 $check('Rechnername ohne Punkt, .local und .lan ja – fremde Domain nein', ki_host_privat('ollama') && ki_host_privat('Ollama.local') && ki_host_privat('nas.lan') && ki_host_privat('localhost') && !ki_host_privat('ollama.example.com') && !ki_host_privat('api.openai.com'));
 $check('Adresse passt', ki_url_pruefen('http://192.168.1.20:11434') === null && ki_url_pruefen('http://ollama:11434/') === null && ki_url_pruefen('https://ki.home/ollama') === null);
 $check('Adresse taugt nicht: leer, falsches Schema, Benutzer, öffentlich', ki_url_pruefen('') !== null && ki_url_pruefen('ftp://ollama') !== null && ki_url_pruefen('192.168.1.20:11434') !== null

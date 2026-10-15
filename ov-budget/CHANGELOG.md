@@ -1,5 +1,9 @@
 # Änderungsverlauf
 
+## 2.1.37.1
+
+- Prüfung der KI-Adressregel unabhängig von der PHP-Fassung; Dateisuche ohne Warnung, wenn eine Datei kein Datum hat.
+
 ## 2.1.37.0
 
 - **KI-Auswertung der Dateien (Ollama):** Ein Ollama im eigenen Netz fasst
