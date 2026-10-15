@@ -614,6 +614,9 @@ function standort_bilder_speichern(int $standortId, string $feld, string $titel,
             'size_bytes'  => (int)filesize($ziel),
             'uploaded_by' => (int)$user['id'],
         ]);
+        if (function_exists('ki_einreihen')) {
+            ki_einreihen('standort', $id);
+        }
         if ($anzahl === 0 && !standort_bilder_hat_cover($standortId)) {
             standort_bild_cover_setzen($standortId, $id);
         }
@@ -644,6 +647,9 @@ function standort_bild_delete(array $bild): void
     }
     db_exec('UPDATE standorte SET plan_bild_id = NULL WHERE plan_bild_id = ?', [(int)$bild['id']]);
     db_exec('DELETE FROM standort_bilder WHERE id = ?', [(int)$bild['id']]);
+    if (function_exists('ki_vergessen')) {
+        ki_vergessen('standort', (int)$bild['id']);
+    }
     audit('standort.bild_geloescht', 'standort', (int)$bild['standort_id'], (string)$bild['titel']);
     // bleibt ein Bild übrig, wird das erste Titelbild
     if ((int)$bild['is_cover'] === 1) {

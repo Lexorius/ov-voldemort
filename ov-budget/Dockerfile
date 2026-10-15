@@ -19,7 +19,7 @@ ENV OVB_UPLOAD_DIR=/data/uploads
 # Die PHP-Version wird beim Bauen ermittelt, weil Alpine sie im Paketnamen
 # führt (php84, php83 ...) und je Alpine-Fassung wechselt.
 RUN set -eux; \
-    apk add --no-cache nginx tzdata mariadb mariadb-client; \
+    apk add --no-cache nginx tzdata mariadb mariadb-client poppler-utils; \
     PHPV=""; \
     for v in 85 84 83 82; do \
         set -- "php$v" "php$v-fpm" "php$v-pdo" "php$v-pdo_mysql" "php$v-mbstring" \

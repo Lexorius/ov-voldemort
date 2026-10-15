@@ -255,12 +255,14 @@ $ausser = $isNew ? [] : array_merge([(int)$s['id']], standort_nachkommen((int)$s
       <span class="muted small"><?= count($bilder) ?></span>
     </div>
     <?php if ($bilder): ?>
+      <?php $kiDaten = function_exists('ki_fuer_dateien') ? ki_fuer_dateien('standort', array_column($bilder, 'id')) : ['ergebnisse' => [], 'auftraege' => []]; ?>
       <div class="galerie">
         <?php foreach ($bilder as $b): ?>
           <figure class="galerie__bild<?= (int)$b['is_cover'] === 1 ? ' galerie__bild--titel' : '' ?>">
             <a href="<?= e(url('standort_bild', ['id' => $b['id']])) ?>" target="_blank" rel="noopener">
               <img src="<?= e(url('standort_bild', ['id' => $b['id'], 'vorschau' => 1])) ?>" alt="<?= e((string)$b['titel']) ?>" loading="lazy"></a>
             <figcaption><?= e((string)$b['titel']) ?><?= (int)$b['is_cover'] === 1 ? ' <span class="badge badge--outline">Titelbild</span>' : '' ?><?= (int)($s['plan_bild_id'] ?? 0) === (int)$b['id'] ? ' <span class="badge badge--outline">Plan</span>' : '' ?>
+              <?= function_exists('ki_hinweis_html') ? ki_hinweis_html('standort', $b, $kiDaten, true) : '' ?>
               <span class="btnrow" style="margin-top:.3rem">
                 <?php if (($planKinder ?? []) && (int)($s['plan_bild_id'] ?? 0) !== (int)$b['id']): ?>
                   <form method="post" class="inline-form" action="<?= e(url('admin_standort_edit', ['id' => $s['id']])) ?>"><?= csrf_field() ?>

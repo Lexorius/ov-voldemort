@@ -1,5 +1,21 @@
 # Änderungsverlauf
 
+## 2.1.37.0
+
+- **KI-Auswertung der Dateien (Ollama):** Ein Ollama im eigenen Netz fasst
+  hochgeladene Dokumente und Fotos zusammen und vergibt Schlagwörter – in
+  der Fahrzeugakte und an Aufträgen, an Veranstaltungen, Terminen und
+  Plätzen. Unter der Datei stehen Zusammenfassung und Schlagwort-Chips;
+  die neue Dateisuche findet über alle Ablagen hinweg. Wer die Datei
+  bearbeiten darf, kann die Auswertung anpassen, neu anstoßen oder
+  entfernen. **Standardmäßig aus und jederzeit abschaltbar** – Hauptschalter
+  und ein Schalter je Ablage; aus heißt: nichts wird eingereiht, keine
+  Verbindung, nichts verändert. Nur Adressen im eigenen Netz werden
+  angenommen. Verwaltungsseite mit Verbindungstest, Warteschlange,
+  Fehlerliste und „Vorhandene Dateien nachholen". PDFs über pdftotext
+  (neu im Add-on), Office-Dateien direkt, Bilder und gescannte PDFs über
+  ein optionales Vision-Modell.
+
 ## 2.1.36.0
 
 - **Boote auf Anhängern:** Fahrzeuge haben ein Trägerfahrzeug („Steht auf

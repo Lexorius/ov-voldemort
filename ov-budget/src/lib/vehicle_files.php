@@ -293,6 +293,10 @@ function vfile_store_uploads(int $vehicleId, ?int $orderId, string $feld, string
             'uploaded_by'  => (int)$user['id'],
         ]);
 
+        if (function_exists('ki_einreihen')) {
+            ki_einreihen('fahrzeug', $id);
+        }
+
         // Das erste Bild eines Fahrzeugs wird Titelbild
         if ($zielArt === 'bild' && $orderId === null && !vfile_cover($vehicleId)) {
             vfile_set_cover($vehicleId, $id);
@@ -383,6 +387,9 @@ function vfile_delete(array $datei, array $user): void
         }
     }
     db_exec('DELETE FROM vehicle_files WHERE id = ?', [(int)$datei['id']]);
+    if (function_exists('ki_vergessen')) {
+        ki_vergessen('fahrzeug', (int)$datei['id']);
+    }
 
     // War es das Titelbild, rückt das nächste Bild nach
     if ((int)$datei['is_cover'] === 1) {

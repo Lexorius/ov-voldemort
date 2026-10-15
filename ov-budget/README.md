@@ -32,6 +32,9 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
   Plätze aus den Stell- und Lagerplätzen plus freier Ort, auch bei
   Veranstaltungen; die Platzseite zeigt ihre Belegung; die Fahrzeugakte zeigt ihre
   Termine, die Startseite, welche Fahrzeuge diese Woche verplant sind
+- **KI-Auswertung der Dateien** (abschaltbar, standardmäßig aus): ein Ollama im
+  eigenen Netz fasst Dokumente und Fotos zusammen und vergibt Schlagwörter;
+  Dateisuche über alle Ablagen
 - **Objektkonten** als zweite Auswertung: mehrere Kategorien laufen auf ein
   Konto (etwa Getränke und Lebensmittel auf Verpflegung), die Statistik nach
   Kategorien bleibt daneben bestehen

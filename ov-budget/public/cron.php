@@ -137,6 +137,17 @@ $abrufe = [
         $n = connector_ausfall_melden();
         return $n === 0 ? [] : [['status' => 'fehler', 'message' => sprintf('Ausfall gemeldet an %d Empfänger', $n)]];
     },
+    'KI-Auswertung'     => static function (): array {
+        if (!ki_aktiv()) {
+            return [];
+        }
+        $r = ki_warteschlange_abarbeiten();
+        if ($r['bearbeitet'] === 0) {
+            return [];
+        }
+        return [['status' => $r['fehler'] ? 'fehler' : 'ok', 'message' => sprintf('%d Datei(en) ausgewertet, %d fehlgeschlagen%s',
+            $r['fertig'], $r['fehler'], $r['meldungen'] ? ': ' . implode('; ', $r['meldungen']) : '')]];
+    },
     'Sicherung'         => static function (): array {
         $m = backup_automatisch();
         return $m === null ? [] : [['status' => 'ok', 'message' => $m]];

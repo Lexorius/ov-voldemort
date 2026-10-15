@@ -757,7 +757,7 @@ function efile_store_uploads(int $eventId, string $feld, string $titel, ?float $
             continue;
         }
 
-        db_insert('event_files', [
+        $id = db_insert('event_files', [
             'event_id'    => $eventId,
             'art'         => $istBild ? 'bild' : 'dokument',
             'titel'       => mb_substr(trim($titel) !== '' ? trim($titel) : pathinfo($name, PATHINFO_FILENAME), 0, 200),
@@ -769,6 +769,9 @@ function efile_store_uploads(int $eventId, string $feld, string $titel, ?float $
             'betrag'      => $betrag !== null && $betrag > 0 ? $betrag : null,
             'uploaded_by' => (int)$user['id'],
         ]);
+        if (function_exists('ki_einreihen')) {
+            ki_einreihen('veranstaltung', $id);
+        }
         $anzahl++;
     }
     return [$anzahl, $fehler];
@@ -785,6 +788,9 @@ function efile_delete(array $datei): void
         }
     }
     db_exec('DELETE FROM event_files WHERE id = ?', [(int)$datei['id']]);
+    if (function_exists('ki_vergessen')) {
+        ki_vergessen('veranstaltung', (int)$datei['id']);
+    }
 }
 
 /** Pfad zur Datei oder zur Vorschau – oder null */

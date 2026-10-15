@@ -1279,6 +1279,59 @@ achtet darauf, dass die Art zum übergeordneten Platz passt.
   freien Felder „Standort" und „Lagerort" bleiben für Hinweise wie
   „oberstes Fach". Material folgt.
 
+## KI-Auswertung der Dateien (Ollama)
+
+Ein Ollama im eigenen Netz fasst hochgeladene Dateien zusammen und vergibt
+Schlagwörter: Dokumente und Fotos der Fahrzeugakte und der
+Instandsetzungsaufträge, Dateien an Veranstaltungen, Anhänge an Terminen
+und Bilder der Stell- und Lagerplätze. Unter jeder Datei stehen dann zwei
+bis vier Sätze und Schlagwort-Chips; ein Klick auf ein Schlagwort öffnet
+die **Dateisuche**, die über alle Ablagen hinweg sucht – jeder sieht nur,
+was er auch sonst sehen darf.
+
+**Ausgeschaltet ist der Normalzustand.** Der Hauptschalter steht in
+Verwaltung → Einstellungen → KI-Auswertung. Solange er aus ist, wird
+nichts eingereiht, keine Verbindung aufgebaut und nichts verändert; schon
+vorhandene Zusammenfassungen bleiben sichtbar und lassen sich weiter von
+Hand bearbeiten. Jede Ablage hat zusätzlich einen eigenen Schalter.
+
+**Datenschutz:** Die Adresse von Ollama muss im eigenen Netz liegen –
+private IP-Adressen (10.x, 172.16–31.x, 192.168.x), Rechnernamen ohne
+Punkt oder Namen auf .local, .lan, .home, .internal. Öffentliche Adressen
+nimmt die Einstellung nicht an; die Dokumente verlassen das Haus nicht.
+
+**Einrichten:**
+
+1. Auf einem Rechner im Netz [Ollama](https://ollama.com) installieren und
+   ein Modell laden: `ollama pull qwen2.5:7b` für Texte, optional
+   `ollama pull llava:7b` für Bilder und gescannte PDFs. Ollama muss aus
+   dem Netz erreichbar sein (`OLLAMA_HOST=0.0.0.0`).
+2. In den Einstellungen Adresse und Modellnamen eintragen, Hauptschalter an.
+3. Verwaltung → KI-Auswertung: „Verbindung testen" zeigt, ob Ollama
+   antwortet und ob die eingetragenen Modelle dort liegen.
+4. Neue Uploads werden ab dann ausgewertet. „Vorhandene Dateien nachholen"
+   reiht den Bestand ein.
+
+**Ablauf:** Beim Hochladen landet die Datei in einer Warteschlange. Der
+minütliche Abruf (derselbe wie für Stein.APP, Divera und die Sicherung)
+nimmt sich jeweils bis zu drei Dateien vor; je nach Rechner dauert eine
+Datei einige Sekunden bis gut eine Minute. Texte aus PDFs liest
+`pdftotext` (im Add-on enthalten), Office-Dateien (docx, xlsx, pptx, odt,
+ods, odp) werden direkt gelesen, Textdateien sowieso. Bilder und PDFs ohne
+Text (gescannt) gehen als Bild ans Vision-Modell – ohne Vision-Modell
+bleiben sie außen vor. Nach drei Fehlversuchen bleibt ein Auftrag als
+„fehlgeschlagen" liegen; die Verwaltungsseite zeigt den Grund und bietet
+„Fehlgeschlagene erneut" an.
+
+**Nachbessern:** Wer die Datei bearbeiten darf, kann unter ihr
+„KI-Auswertung bearbeiten" aufklappen, Zusammenfassung und Schlagwörter
+ändern, die Datei neu auswerten lassen oder die Auswertung entfernen. Beim
+Löschen einer Datei verschwindet ihre Auswertung mit.
+
+**Grenzen:** Ein 7B-Modell macht Fehler – Beträge und Daten im Text lieber
+in der Datei nachsehen. Die Zusammenfassung ist eine Lesehilfe und ein
+Suchindex, kein Beleg.
+
 ## Rollen
 
 | Rolle | Darf |

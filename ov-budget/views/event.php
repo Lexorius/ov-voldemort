@@ -537,6 +537,7 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
     <div class="empty">Noch nichts abgelegt – hier gehören Rechnungen, Angebote und das Programm hin.</div>
   <?php else: ?>
     <div class="tablewrap">
+      <?php $kiDaten = function_exists('ki_fuer_dateien') ? ki_fuer_dateien('veranstaltung', array_column($dateien, 'id')) : ['ergebnisse' => [], 'auftraege' => []]; ?>
       <table class="data">
         <thead><tr><th>Datei</th><th>Größe</th><th style="text-align:right">Betrag</th>
           <?php if ($darf): ?><th></th><?php endif; ?></tr></thead>
@@ -548,6 +549,7 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
               <div class="small muted"><?= e((string)$f['orig_name']) ?>
                 · <?= e(de_datetime((string)$f['created_at'])) ?>
                 <?= $f['hochgeladen_von'] ? '· ' . e((string)$f['hochgeladen_von']) : '' ?></div>
+              <?= function_exists('ki_hinweis_html') ? ki_hinweis_html('veranstaltung', $f, $kiDaten, $darf) : '' ?>
             </td>
             <td class="small"><?= e(bytes_human((int)$f['size_bytes'])) ?></td>
             <td class="small" style="text-align:right"><?= $f['betrag'] !== null

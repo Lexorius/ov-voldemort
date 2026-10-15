@@ -87,6 +87,7 @@ $weitere = implode(', ', array_map(static fn($f) => (string)$f['label'], $fachgr
 <?php if ($dateien): ?>
 <section class="card" id="dateien">
   <h2>Dateien</h2>
+  <?php $kiDaten = function_exists('ki_fuer_dateien') ? ki_fuer_dateien('termin', array_column($dateien, 'id')) : ['ergebnisse' => [], 'auftraege' => []]; ?>
   <ul class="wahl__liste">
     <?php foreach ($dateien as $f): ?>
       <li class="wahl__eintrag" style="background:transparent">
@@ -94,7 +95,8 @@ $weitere = implode(', ', array_map(static fn($f) => (string)$f['label'], $fachgr
           <a href="<?= e(url('kalender_file', ['id' => $f['id']])) ?>" target="_blank" rel="noopener"><img src="<?= e(url('kalender_file', ['id' => $f['id'], 'vorschau' => 1])) ?>" alt="" loading="lazy" style="width:2.6rem;height:2.6rem;object-fit:cover;border-radius:6px"></a>
         <?php endif; ?>
         <span class="wahl__text"><a href="<?= e(url('kalender_file', ['id' => $f['id']])) ?>">📎 <?= e((string)($f['titel'] ?: $f['orig_name'])) ?></a>
-          <span class="muted small"><?= e((string)$f['orig_name']) ?> · <?= e(bytes_human((int)$f['size_bytes'])) ?></span></span>
+          <span class="muted small"><?= e((string)$f['orig_name']) ?> · <?= e(bytes_human((int)$f['size_bytes'])) ?></span>
+          <?= function_exists('ki_hinweis_html') ? ki_hinweis_html('termin', $f, $kiDaten, (bool)($darfBearbeiten ?? false)) : '' ?></span>
       </li>
     <?php endforeach; ?>
   </ul>

@@ -117,6 +117,9 @@ $speicher ??= null; ?>
     <p>Haushaltsjahre und Budgettöpfe pflegen.</p></div></a>
   <a href="<?= e(url('admin_nav')) ?>"><div class="card"><h3>Menüleiste</h3>
     <p>Die Reihenfolge der Module in der Leiste – für alle Benutzer.</p></div></a>
+  <a href="<?= e(url('admin_ki')) ?>"><div class="card"><h3>KI-Auswertung</h3>
+    <p>Ein Ollama im eigenen Netz fasst hochgeladene Dateien zusammen und vergibt Schlagwörter –
+       abschaltbar, mit Dateisuche.</p></div></a>
   <a href="<?= e(url('admin_backup')) ?>"><div class="card"><h3>Sicherung</h3>
     <p>Datenbank und Dateiablage als ZIP sichern, herunterladen, hochladen und wiederherstellen –
        auf Wunsch automatisch.</p></div></a>

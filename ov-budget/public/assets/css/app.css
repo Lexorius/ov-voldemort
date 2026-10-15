@@ -699,3 +699,14 @@ pre.raw {
   .legend--ein { background: #4ade80; }
   .legend--aus { background: #6f9dff; }
 }
+
+/* KI-Auswertung an Dateien: Zusammenfassung, Schlagwort-Chips, Bearbeiten */
+.ki { margin-top: .3rem; font-size: .85rem; }
+.ki__text { white-space: pre-line; }
+.ki__marke { opacity: .8; }
+.ki__tags { margin: .25rem 0; }
+.chip--link { text-decoration: none; color: inherit; padding: .15rem .5rem; cursor: pointer; }
+.chip--link:hover, .chip--aktiv { border-color: var(--accent); }
+.ki__edit summary { cursor: pointer; }
+.ki__edit textarea { min-height: 4rem; }
+.ki__edit .form { margin-top: .4rem; }

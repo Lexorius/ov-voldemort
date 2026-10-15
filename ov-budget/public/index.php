@@ -66,6 +66,8 @@ $routes = [
     'kalender_termin'    => 'kalender_termin',
     'kalender_edit'      => 'kalender_edit',
     'kalender_file'      => 'kalender_file',
+    'ki_action'          => 'ki_action',
+    'ki_suche'           => 'ki_suche',
     'admin_kalender'     => 'admin/kalender',
     'admin_standorte'    => 'admin/standorte',
     'admin_standort_edit' => 'admin/standort_edit',
@@ -155,6 +157,7 @@ $routes = [
     'admin_divera_form'  => 'admin/divera_form',
     'admin_log'          => 'admin/log',
     'admin_backup'       => 'admin/backup',
+    'admin_ki'           => 'admin/ki',
     'admin_nav'          => 'admin/nav',
 ];
 

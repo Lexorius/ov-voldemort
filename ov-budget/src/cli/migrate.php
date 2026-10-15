@@ -1854,6 +1854,41 @@ SQL);
         }
     }
     $merken('070_traeger');
+
+    /* ---------- 071: KI-Auswertung der Dateien (Ollama) ---------- */
+    if (!ovb_table_exists($pdo, 'ki_auftraege')) {
+        $pdo->exec("CREATE TABLE ki_auftraege (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  typ          VARCHAR(20)  NOT NULL,
+  datei_id     INT UNSIGNED NOT NULL,
+  status       ENUM('offen','laeuft','fertig','fehler') NOT NULL DEFAULT 'offen',
+  versuche     TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  fehler       VARCHAR(500) NOT NULL DEFAULT '',
+  erstellt_am  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gestartet_am DATETIME     NULL,
+  erledigt_am  DATETIME     NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_ki_auftrag (typ, datei_id),
+  KEY idx_ki_status (status, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    if (!ovb_table_exists($pdo, 'datei_ki')) {
+        $pdo->exec("CREATE TABLE datei_ki (
+  id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  typ             VARCHAR(20)  NOT NULL,
+  datei_id        INT UNSIGNED NOT NULL,
+  zusammenfassung TEXT         NOT NULL,
+  tags            VARCHAR(500) NOT NULL DEFAULT '',
+  modell          VARCHAR(100) NOT NULL DEFAULT '',
+  quelle          VARCHAR(20)  NOT NULL DEFAULT 'text',
+  erstellt_am     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  geaendert_am    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_datei_ki (typ, datei_id),
+  KEY idx_datei_ki_tags (tags(191))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    $merken('071_ki');
 }
 
 /**

@@ -1468,4 +1468,36 @@ CREATE TABLE IF NOT EXISTS login_attempts (
   KEY idx_user (username, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- KI-Auswertung der Dateien (Ollama): Warteschlange und Ergebnis je Datei; ohne Fremdschlüssel,
+-- weil datei_id je nach typ auf vehicle_files, event_files, calendar_files oder standort_bilder zeigt
+CREATE TABLE IF NOT EXISTS ki_auftraege (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  typ          VARCHAR(20)  NOT NULL,
+  datei_id     INT UNSIGNED NOT NULL,
+  status       ENUM('offen','laeuft','fertig','fehler') NOT NULL DEFAULT 'offen',
+  versuche     TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  fehler       VARCHAR(500) NOT NULL DEFAULT '',
+  erstellt_am  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gestartet_am DATETIME     NULL,
+  erledigt_am  DATETIME     NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_ki_auftrag (typ, datei_id),
+  KEY idx_ki_status (status, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS datei_ki (
+  id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  typ             VARCHAR(20)  NOT NULL,
+  datei_id        INT UNSIGNED NOT NULL,
+  zusammenfassung TEXT         NOT NULL,
+  tags            VARCHAR(500) NOT NULL DEFAULT '',
+  modell          VARCHAR(100) NOT NULL DEFAULT '',
+  quelle          VARCHAR(20)  NOT NULL DEFAULT 'text',
+  erstellt_am     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  geaendert_am    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_datei_ki (typ, datei_id),
+  KEY idx_datei_ki_tags (tags(191))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS=1;

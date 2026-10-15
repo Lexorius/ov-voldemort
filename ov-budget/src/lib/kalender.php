@@ -1002,7 +1002,7 @@ function kfile_store_uploads(int $entryId, string $feld, string $titel, array $u
             $fehler[] = sprintf('„%s" konnte nicht gespeichert werden.', $name);
             continue;
         }
-        db_insert('calendar_files', [
+        $id = db_insert('calendar_files', [
             'entry_id'    => $entryId,
             'art'         => $istBild ? 'bild' : 'dokument',
             'titel'       => mb_substr(trim($titel) !== '' ? trim($titel) : pathinfo($name, PATHINFO_FILENAME), 0, 200),
@@ -1013,6 +1013,9 @@ function kfile_store_uploads(int $entryId, string $feld, string $titel, array $u
             'size_bytes'  => $groesse,
             'uploaded_by' => (int)$user['id'],
         ]);
+        if (function_exists('ki_einreihen')) {
+            ki_einreihen('termin', $id);
+        }
         $anzahl++;
     }
     return [$anzahl, $fehler];
@@ -1044,6 +1047,9 @@ function kfile_delete(array $datei): void
         }
     }
     db_exec('DELETE FROM calendar_files WHERE id = ?', [(int)$datei['id']]);
+    if (function_exists('ki_vergessen')) {
+        ki_vergessen('termin', (int)$datei['id']);
+    }
 }
 
 /** Pfad zur Datei oder zur Vorschau – oder null */

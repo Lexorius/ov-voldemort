@@ -449,7 +449,17 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('passwort_min_laenge','10','Mindestlänge Passwort','','number','Sicherheit',40),
 ('totp_pflicht','leitung','Zweiter Faktor (Authenticator-App)','Wer ihn einrichten muss. Pflichtige ohne zweiten Faktor kommen nach der Anmeldung nur ins Profil, bis er eingerichtet ist.','select','Sicherheit',50),
 ('backup_automatisch_tage','0','Automatische Sicherung alle … Tage','0 = aus. Läuft nachts mit dem Abruf über cron.php (im Add-on eingerichtet). Die Sicherungen liegen im Datenordner unter sicherungen/.','number','Sicherung',10),
-('backup_aufheben_anzahl','7','Automatische Sicherungen aufheben','So viele der automatischen Sicherungen bleiben, ältere werden gelöscht. Von Hand angelegte bleiben immer.','number','Sicherung',20);
+('backup_aufheben_anzahl','7','Automatische Sicherungen aufheben','So viele der automatischen Sicherungen bleiben, ältere werden gelöscht. Von Hand angelegte bleiben immer.','number','Sicherung',20),
+('ki_aktiv','0','KI-Auswertung einschalten','Hauptschalter. Aus = es wird nichts eingereiht, keine Verbindung aufgebaut und nichts verändert; schon vorhandene Zusammenfassungen bleiben sichtbar.','bool','KI-Auswertung',10),
+('ki_ollama_url','','Adresse von Ollama','Nur im eigenen Netz, z. B. http://192.168.1.20:11434 oder http://ollama:11434. Öffentliche Adressen werden abgelehnt – die Dokumente verlassen das Haus nicht.','text','KI-Auswertung',20),
+('ki_modell','qwen2.5:7b','Textmodell','Name des Modells in Ollama, das Texte zusammenfasst (ollama pull qwen2.5:7b). Bewährt: qwen2.5:7b, llama3.1:8b, mistral.','text','KI-Auswertung',30),
+('ki_vision_modell','','Vision-Modell (optional)','Modell, das Bilder und gescannte PDFs beschreibt, z. B. llava:7b oder minicpm-v. Leer = Bilder und gescannte PDFs werden nicht ausgewertet.','text','KI-Auswertung',40),
+('ki_timeout_sek','120','Zeitlimit je Datei (Sekunden)','Kleine Rechner brauchen für ein 7B-Modell gut eine Minute je Dokument. Zwischen 10 und 600.','number','KI-Auswertung',50),
+('ki_max_zeichen','12000','Höchstens … Zeichen Text je Datei','Längere Dokumente werden für das Modell gekürzt, der Anfang zählt. Mehr Zeichen = genauer, aber langsamer.','number','KI-Auswertung',60),
+('ki_fahrzeuge','1','Fahrzeugakte und Aufträge auswerten','Dokumente und Fotos an Fahrzeugen und Instandsetzungsaufträgen.','bool','KI-Auswertung',70),
+('ki_veranstaltungen','1','Dateien der Veranstaltungen auswerten','Rechnungen, Angebote, Pläne an Veranstaltungen.','bool','KI-Auswertung',80),
+('ki_termine','1','Anhänge der Termine auswerten','Einladungen und Unterlagen am Termin.','bool','KI-Auswertung',90),
+('ki_standorte','1','Bilder der Stell- und Lagerplätze auswerten','Nur mit Vision-Modell sinnvoll.','bool','KI-Auswertung',100);
 
 -- ---------- Bestellberechtigungen ----------
 -- Nur Vorgaben: vorhandene Zeilen bleiben unberührt, Änderungen in der

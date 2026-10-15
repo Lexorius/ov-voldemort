@@ -12,6 +12,8 @@ $verwalten = can('manage_vehicles');
 $hochladen = can('report_vehicle');
 $aktion = url('vehicle_action');
 $typen = implode(', ', array_map(static fn($t) => '.' . $t, vfile_document_types()));
+$kiDaten = function_exists('ki_fuer_dateien') ? ki_fuer_dateien('fahrzeug', array_column(array_merge($bilder, $dokumente), 'id')) : ['ergebnisse' => [], 'auftraege' => []];
+$kiZeile = static fn(array $f): string => function_exists('ki_hinweis_html') ? ki_hinweis_html('fahrzeug', $f, $kiDaten, $verwalten) : '';
 
 /** Löschen- und Titelbild-Knöpfe */
 $knoepfe = static function (array $f, bool $mitTitelbild) use ($aktion, $verwalten): string {
@@ -56,7 +58,7 @@ $formular = static function (string $art, string $knopf, string $hinweis) use ($
         . '</form>';
 };
 
-$dateiZeile = static function (array $f) use ($knoepfe, $order): string {
+$dateiZeile = static function (array $f) use ($knoepfe, $order, $kiZeile): string {
     $link = e(url('vehicle_file', ['id' => $f['id']]));
     $vorschau = $f['art'] === 'bild'
         ? '<img src="' . e(url('vehicle_file', ['id' => $f['id'], 'vorschau' => 1])) . '" alt="" loading="lazy" class="doc__thumb">'
@@ -69,13 +71,13 @@ $dateiZeile = static function (array $f) use ($knoepfe, $order): string {
     ]);
     return '<div class="doc">' . $vorschau
         . '<div class="doc__text"><a href="' . $link . '">' . e($f['titel'] ?: $f['orig_name']) . '</a>'
-        . '<div class="small muted">' . e(implode(' · ', $zusatz)) . '</div></div>'
+        . '<div class="small muted">' . e(implode(' · ', $zusatz)) . '</div>' . $kiZeile($f) . '</div>'
         . '<div class="doc__aktion">' . $knoepfe($f, false) . '</div></div>';
 };
 ?>
 <?php
 /** Galerie – am Fahrzeug mit Titelbild, am Auftrag ohne */
-$galerie = static function (array $liste, bool $mitTitelbild) use ($knoepfe): string {
+$galerie = static function (array $liste, bool $mitTitelbild) use ($knoepfe, $kiZeile): string {
     $html = '<div class="galerie">';
     foreach ($liste as $f) {
         $html .= '<figure class="galerie__bild' . ((int)$f['is_cover'] ? ' is-cover' : '') . '">'
@@ -86,6 +88,7 @@ $galerie = static function (array $liste, bool $mitTitelbild) use ($knoepfe): st
             . ((int)$f['is_cover'] ? ' <span class="badge badge--outline">Titelbild</span>' : '')
             . '<div class="small muted">' . e(de_datetime($f['created_at'])
                 . ($f['hochgeladen_von'] ? ' · ' . $f['hochgeladen_von'] : '')) . '</div>'
+            . $kiZeile($f)
             . '<div class="btnrow">' . $knoepfe($f, $mitTitelbild) . '</div>'
             . '</figcaption></figure>';
     }
