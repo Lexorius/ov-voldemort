@@ -615,7 +615,7 @@ function standort_bilder_speichern(int $standortId, string $feld, string $titel,
             'uploaded_by' => (int)$user['id'],
         ]);
         if (function_exists('ki_einreihen')) {
-            ki_einreihen('standort', $id);
+            ki_einreihen('standort', $id, 'bild');
         }
         if ($anzahl === 0 && !standort_bilder_hat_cover($standortId)) {
             standort_bild_cover_setzen($standortId, $id);

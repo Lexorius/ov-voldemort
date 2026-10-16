@@ -1,5 +1,5 @@
 <?php
-/** @var string $fehler @var string $hinweis @var ?array $test @var array $status @var array $fehlerliste
+/** @var string $fehler @var string $hinweis @var ?array $test @var array $status @var array $fehlerliste @var array $gruende
  *  @var bool $aktiv @var string $url @var ?string $urlGrund @var bool $pdftotext @var bool $pdftoppm @var array $module */
 $hauptschalter = setting_bool('ki_aktiv', false);
 ?>
@@ -73,15 +73,31 @@ $hauptschalter = setting_bool('ki_aktiv', false);
   </div>
 </div>
 
+<?php $gruende ??= []; if ($gruende): ?>
+<div class="card">
+  <div class="card__head"><h2>Woran es scheitert</h2><span class="muted small"><?= (int)$status['fehler'] ?> Datei(en)</span></div>
+  <table class="data">
+    <thead><tr><th>Grund</th><th style="text-align:right">Dateien</th></tr></thead>
+    <tbody>
+    <?php foreach ($gruende as $g): ?>
+      <tr><td><?= e((string)$g['fehler']) ?></td><td style="text-align:right"><?= (int)$g['n'] ?></td></tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table>
+  <p class="small muted">Dauerhafte Gründe (kein Vision-Modell, Dateiart nicht lesbar, Datei fehlt) werden nicht wiederholt.
+     Nach dem Beheben – etwa einem eingetragenen Vision-Modell – „Fehlgeschlagene erneut".</p>
+</div>
+<?php endif; ?>
+
 <?php if ($fehlerliste): ?>
 <div class="card">
-  <div class="card__head"><h2>Fehlgeschlagen</h2><span class="muted small"><?= count($fehlerliste) ?></span></div>
+  <div class="card__head"><h2>Zuletzt fehlgeschlagen</h2><span class="muted small"><?= count($fehlerliste) ?> von <?= (int)$status['fehler'] ?></span></div>
   <table class="data">
     <thead><tr><th>Datei</th><th>Ablage</th><th>Grund</th><th>Versuche</th><th>Wann</th></tr></thead>
     <tbody>
     <?php foreach ($fehlerliste as $a): ?>
       <tr>
-        <td><?= $a['eltern'] ? '<a href="' . e($a['eltern']['url']) . '">' . e($a['name']) . '</a><div class="small muted">' . e($a['eltern']['text']) . '</div>' : e($a['name']) ?></td>
+        <td><?= $a['eltern'] ? '<a href="' . e($a['eltern']['url']) . '">' . e($a['name']) . '</a>' . ($a['eltern']['text'] !== $a['name'] ? '<div class="small muted">' . e($a['eltern']['text']) . '</div>' : '') : e($a['name']) ?></td>
         <td class="small"><?= e(KI_TYPEN[$a['typ']]['label'] ?? $a['typ']) ?></td>
         <td class="small"><?= e((string)$a['fehler']) ?></td>
         <td class="small"><?= (int)$a['versuche'] ?></td>

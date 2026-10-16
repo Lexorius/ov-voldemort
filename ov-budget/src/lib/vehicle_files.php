@@ -294,7 +294,7 @@ function vfile_store_uploads(int $vehicleId, ?int $orderId, string $feld, string
         ]);
 
         if (function_exists('ki_einreihen')) {
-            ki_einreihen('fahrzeug', $id);
+            ki_einreihen('fahrzeug', $id, $zielArt);
         }
 
         // Das erste Bild eines Fahrzeugs wird Titelbild

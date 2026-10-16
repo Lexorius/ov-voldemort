@@ -145,8 +145,8 @@ $abrufe = [
         if ($r['bearbeitet'] === 0) {
             return [];
         }
-        return [['status' => $r['fehler'] ? 'fehler' : 'ok', 'message' => sprintf('%d Datei(en) ausgewertet, %d fehlgeschlagen%s',
-            $r['fertig'], $r['fehler'], $r['meldungen'] ? ': ' . implode('; ', $r['meldungen']) : '')]];
+        return [['status' => $r['fehler'] ? 'fehler' : 'ok', 'message' => sprintf('%d Datei(en) ausgewertet, %d übersprungen, %d fehlgeschlagen%s',
+            $r['fertig'], $r['uebersprungen'], $r['fehler'], $r['meldungen'] ? ': ' . implode('; ', $r['meldungen']) : '')]];
     },
     'Sicherung'         => static function (): array {
         $m = backup_automatisch();

@@ -18,6 +18,11 @@ class KiException extends RuntimeException
 {
 }
 
+/** Dauerhafter Grund (kein Vision-Modell, Dateiart nicht lesbar): wird nicht wiederholt */
+class KiUebersprungen extends KiException
+{
+}
+
 /** Dateiablagen, die ausgewertet werden können */
 const KI_TYPEN = [
     'fahrzeug'      => ['schalter' => 'ki_fahrzeuge',       'label' => 'Fahrzeugakte',          'tabelle' => 'vehicle_files',   'route' => 'vehicle_file'],
@@ -98,14 +103,26 @@ function ki_timeout(): int
     return max(10, min(600, setting_int('ki_timeout_sek', 120)));
 }
 
+/** Eingetragenes Vision-Modell oder leer – ohne eines werden Bilder gar nicht erst eingereiht */
+function ki_vision_modell(): string
+{
+    return trim((string)setting('ki_vision_modell', ''));
+}
+
 /* ==================================================================== */
 /* Warteschlange                                                         */
 /* ==================================================================== */
 
-/** Datei zur Auswertung vormerken. Tut nichts, wenn die Auswertung aus ist. */
-function ki_einreihen(string $typ, int $dateiId): bool
+/**
+ * Datei zur Auswertung vormerken. Tut nichts, wenn die Auswertung aus ist –
+ * und nichts für Bilder, solange kein Vision-Modell eingetragen ist.
+ */
+function ki_einreihen(string $typ, int $dateiId, string $art = ''): bool
 {
     if ($dateiId <= 0 || !ki_modul_aktiv($typ)) {
+        return false;
+    }
+    if ($art === 'bild' && ki_vision_modell() === '') {
         return false;
     }
     db_exec(
@@ -127,13 +144,14 @@ function ki_vergessen(string $typ, int $dateiId): void
 function ki_alle_einreihen(): int
 {
     $n = 0;
+    $ohneBilder = ki_vision_modell() === '';
     foreach (KI_TYPEN as $typ => $def) {
-        if (!ki_modul_aktiv($typ)) {
-            continue;
+        if (!ki_modul_aktiv($typ) || ($ohneBilder && $typ === 'standort')) {
+            continue;   // Plätze haben nur Bilder
         }
         $n += db_exec(
             "INSERT INTO ki_auftraege (typ, datei_id, status) SELECT ?, f.id, 'offen' FROM `{$def['tabelle']}` f
-             WHERE f.id NOT IN (SELECT a.datei_id FROM ki_auftraege a WHERE a.typ = ?)",
+             WHERE f.id NOT IN (SELECT a.datei_id FROM ki_auftraege a WHERE a.typ = ?)" . ($ohneBilder ? " AND f.art <> 'bild'" : ''),
             [$typ, $typ]
         );
     }
@@ -157,6 +175,12 @@ function ki_warteschlange_status(): array
     return $out;
 }
 
+/** Woran es scheitert, gezählt: [['fehler' => …, 'n' => …], …] */
+function ki_fehler_gruende(): array
+{
+    return db_all("SELECT fehler, COUNT(*) AS n FROM ki_auftraege WHERE status = 'fehler' GROUP BY fehler ORDER BY n DESC, fehler");
+}
+
 /** Die letzten fehlgeschlagenen Aufträge mit Dateinamen */
 function ki_fehler_liste(int $limit = 20): array
 {
@@ -176,7 +200,7 @@ function ki_fehler_liste(int $limit = 20): array
  */
 function ki_warteschlange_abarbeiten(int $max = 3, int $sekunden = 50): array
 {
-    $r = ['bearbeitet' => 0, 'fertig' => 0, 'fehler' => 0, 'meldungen' => []];
+    $r = ['bearbeitet' => 0, 'fertig' => 0, 'uebersprungen' => 0, 'fehler' => 0, 'meldungen' => []];
     if (!ki_aktiv() || !db_lock('ki_warteschlange')) {
         return $r;
     }
@@ -202,6 +226,11 @@ function ki_warteschlange_abarbeiten(int $max = 3, int $sekunden = 50): array
                 ki_datei_auswerten($typ, (int)$a['datei_id']);
                 db_exec("UPDATE ki_auftraege SET status = 'fertig', fehler = '', erledigt_am = NOW() WHERE id = ?", [(int)$a['id']]);
                 $r['fertig']++;
+            } catch (KiUebersprungen $ex) {
+                // Dauerhafter Grund: gleich ausgeschöpft, damit nichts dreimal vergeblich läuft
+                db_exec("UPDATE ki_auftraege SET status = 'fehler', versuche = ?, fehler = ?, erledigt_am = NOW() WHERE id = ?",
+                    [KI_VERSUCHE_MAX, mb_substr($ex->getMessage(), 0, 500), (int)$a['id']]);
+                $r['uebersprungen']++;
             } catch (Throwable $ex) {
                 $text = mb_substr($ex->getMessage(), 0, 500);
                 db_exec("UPDATE ki_auftraege SET status = 'fehler', fehler = ?, erledigt_am = NOW() WHERE id = ?", [$text, (int)$a['id']]);
@@ -473,7 +502,7 @@ function ki_prompt(string $kontext, string $text): string
         . "Kontext: $kontext\n\n"
         . "Antworte ausschließlich mit einem JSON-Objekt dieser Form:\n"
         . '{"zusammenfassung": "2 bis 4 Sätze: worum es geht, mit den wichtigsten Angaben wie Datum, Beträge, Namen, Nummern", '
-        . '"schlagwoerter": ["5 bis 8 kurze Schlagwörter", "einzelne Wörter oder kurze Begriffe", "keine Sätze"]}' . "\n\n"
+        . '"schlagwoerter": ["5 bis 8 kurze Schlagwörter: Dokumentart, Thema, Gegenstand, Fahrzeug, Werkstatt oder Firma", "einzelne Wörter oder kurze Begriffe, keine Sätze", "keine Daten, Beträge, Kennzeichen oder Nummern – die gehören in die Zusammenfassung"]}' . "\n\n"
         . ($text !== ''
             ? "Inhalt:\n\"\"\"\n$text\n\"\"\""
             : 'Beschreibe das Bild: Was ist zu sehen, welcher Text steht darauf (Schilder, Formulare, Kennzeichen)?');
@@ -500,7 +529,9 @@ function ki_antwort_parsen(string $roh): ?array
     if (is_array($tags)) {
         $tags = implode(', ', array_map(static fn($t) => is_scalar($t) ? (string)$t : '', $tags));
     }
-    $tags = ki_tags_parsen(is_scalar($tags) ? (string)$tags : '');
+    // Daten, Zahlen und Beträge taugen nicht als Schlagwort – die stehen in der Zusammenfassung
+    $tags = array_values(array_filter(ki_tags_parsen(is_scalar($tags) ? (string)$tags : ''),
+        static fn(string $t) => !preg_match('/^[\d.,:\/ €$%-]+(\s?(eur|euro|uhr|kg|km|l|h))?$/iu', $t)));
     $zf = ki_text_kuerzen(is_scalar($zf) ? (string)$zf : '', 2000);
     if ($zf === '' && !$tags) {
         return null;
@@ -629,7 +660,7 @@ function ki_text_aus_datei(string $pfad, string $mime, string $name): array
     if ($mime === 'application/pdf' || $endung === 'pdf') {
         $t = ki_pdf_text($pfad);
         if ($t === null) {
-            throw new KiException('pdftotext fehlt auf dem Rechner – PDFs können nicht gelesen werden.');
+            throw new KiUebersprungen('pdftotext fehlt auf dem Rechner – PDFs können nicht gelesen werden.');
         }
         if (mb_strlen(trim($t)) >= 40) {
             return ['text' => $t, 'bild' => null, 'tmp' => null];
@@ -641,14 +672,14 @@ function ki_text_aus_datei(string $pfad, string $mime, string $name): array
     if (in_array($endung, ['docx', 'xlsx', 'pptx', 'odt', 'ods', 'odp'], true)) {
         $t = ki_zip_text($pfad, $endung);
         if ($t === null) {
-            throw new KiException('Die Office-Datei ließ sich nicht öffnen (ZIP-Erweiterung oder Datei beschädigt).');
+            throw new KiUebersprungen('Die Office-Datei ließ sich nicht öffnen (ZIP-Erweiterung oder Datei beschädigt).');
         }
         return ['text' => $t, 'bild' => null, 'tmp' => null];
     }
     if (in_array($endung, ['txt', 'csv', 'md'], true) || str_starts_with($mime, 'text/')) {
         return ['text' => (string)file_get_contents($pfad), 'bild' => null, 'tmp' => null];
     }
-    throw new KiException('Diese Dateiart wird nicht ausgewertet (' . ($endung ?: $mime) . ').');
+    throw new KiUebersprungen('Diese Dateiart wird nicht ausgewertet (' . ($endung ?: $mime) . ').');
 }
 
 /* ==================================================================== */
@@ -762,25 +793,25 @@ function ki_datei_auswerten(string $typ, int $id): array
 {
     $l = ki_datei_laden($typ, $id);
     if ($l === null) {
-        throw new KiException('Die Datei gibt es nicht mehr.');
+        throw new KiUebersprungen('Die Datei gibt es nicht mehr.');
     }
     if ($l['pfad'] === null) {
-        throw new KiException('Die Datei fehlt in der Ablage.');
+        throw new KiUebersprungen('Die Datei fehlt in der Ablage.');
     }
     $q = ki_text_aus_datei($l['pfad'], (string)$l['datei']['mime'], (string)$l['datei']['orig_name']);
     try {
         $text = $q['text'] !== null ? ki_text_kuerzen((string)$q['text'], max(1000, setting_int('ki_max_zeichen', 12000))) : '';
         $modell = trim((string)setting('ki_modell', ''));
-        $vision = trim((string)setting('ki_vision_modell', ''));
+        $vision = ki_vision_modell();
         if ($text === '') {
             if ($q['bild'] === null) {
-                throw new KiException('Kein lesbarer Text in der Datei – vermutlich gescannt. Dafür ist ein Vision-Modell und pdftoppm nötig.');
+                throw new KiUebersprungen('Kein lesbarer Text in der Datei – vermutlich gescannt. Dafür ist ein Vision-Modell und pdftoppm nötig.');
             }
             if ($vision === '') {
-                throw new KiException('Bilder werden nur mit einem Vision-Modell ausgewertet (Einstellung „Vision-Modell").');
+                throw new KiUebersprungen('Bilder werden nur mit einem Vision-Modell ausgewertet (Einstellung „Vision-Modell").');
             }
             if ((int)filesize($q['bild']) > KI_BILD_MAX_BYTES) {
-                throw new KiException('Das Bild ist zu groß für die Auswertung (über ' . bytes_human(KI_BILD_MAX_BYTES) . ').');
+                throw new KiUebersprungen('Das Bild ist zu groß für die Auswertung (über ' . bytes_human(KI_BILD_MAX_BYTES) . ').');
             }
             $antwort = ki_generieren($vision, ki_prompt($l['kontext'], ''), base64_encode((string)file_get_contents($q['bild'])));
             $benutzt = $vision;

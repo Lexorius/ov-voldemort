@@ -1014,7 +1014,7 @@ function kfile_store_uploads(int $entryId, string $feld, string $titel, array $u
             'uploaded_by' => (int)$user['id'],
         ]);
         if (function_exists('ki_einreihen')) {
-            ki_einreihen('termin', $id);
+            ki_einreihen('termin', $id, $istBild ? 'bild' : 'dokument');
         }
         $anzahl++;
     }

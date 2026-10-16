@@ -1319,9 +1319,12 @@ Datei einige Sekunden bis gut eine Minute. Texte aus PDFs liest
 `pdftotext` (im Add-on enthalten), Office-Dateien (docx, xlsx, pptx, odt,
 ods, odp) werden direkt gelesen, Textdateien sowieso. Bilder und PDFs ohne
 Text (gescannt) gehen als Bild ans Vision-Modell – ohne Vision-Modell
-bleiben sie außen vor. Nach drei Fehlversuchen bleibt ein Auftrag als
-„fehlgeschlagen" liegen; die Verwaltungsseite zeigt den Grund und bietet
-„Fehlgeschlagene erneut" an.
+werden Bilder gar nicht erst eingereiht. Nach drei Fehlversuchen (etwa
+weil Ollama nicht antwortet) bleibt ein Auftrag als „fehlgeschlagen"
+liegen; dauerhafte Gründe wie eine unlesbare Dateiart werden nicht
+wiederholt. Die Verwaltungsseite zählt die Gründe und bietet
+„Fehlgeschlagene erneut" an – etwa nachdem ein Vision-Modell eingetragen
+wurde.
 
 **Nachbessern:** Wer die Datei bearbeiten darf, kann unter ihr
 „KI-Auswertung bearbeiten" aufklappen, Zusammenfassung und Schlagwörter

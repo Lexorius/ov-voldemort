@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 2.1.38.0
+
+- **KI-Auswertung nach dem ersten Lauf nachgeschärft:** Bilder werden ohne
+  eingetragenes Vision-Modell gar nicht erst eingereiht (auch nicht beim
+  Nachholen); dauerhafte Gründe – kein Vision-Modell, Dateiart nicht lesbar,
+  Datei fehlt – werden nicht dreimal wiederholt. Die Verwaltungsseite zählt,
+  woran es scheitert. Schlagwörter ohne Daten, Nummern und Beträge – die
+  gehören in die Zusammenfassung.
+
 ## 2.1.37.2
 
 - README des Repositories auf den Stand der Anwendung gebracht: alle Module, Anbindungen, KI-Auswertung, Sicherheit, Rollen, Verzeichnisse; Beschreibung und Themen auf GitHub gesetzt.

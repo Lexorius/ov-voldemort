@@ -770,7 +770,7 @@ function efile_store_uploads(int $eventId, string $feld, string $titel, ?float $
             'uploaded_by' => (int)$user['id'],
         ]);
         if (function_exists('ki_einreihen')) {
-            ki_einreihen('veranstaltung', $id);
+            ki_einreihen('veranstaltung', $id, $istBild ? 'bild' : 'dokument');
         }
         $anzahl++;
     }

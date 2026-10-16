@@ -89,8 +89,14 @@ $GLOBALS['execs'] = [];
 $r = ki_warteschlange_abarbeiten();
 $check('an, aber leer: Sperre geholt, Hängengebliebene freigegeben, nichts bearbeitet', $r['bearbeitet'] === 0 && $GLOBALS['locks'] === ['ki_warteschlange'] && count($GLOBALS['execs']) === 1 && str_contains($GLOBALS['execs'][0][0], "status = 'laeuft' AND gestartet_am"));
 $GLOBALS['execs'] = [];
-$check('alle einreihen nur für eingeschaltete Ablagen', ki_alle_einreihen() === 3 && count($GLOBALS['execs']) === 3 && !str_contains(implode(' ', array_column($GLOBALS['execs'], 0)), 'vehicle_files'));
-$einstellen(['ki_fahrzeuge' => '1']);
+$check('alle einreihen: nur eingeschaltete Ablagen, ohne Vision-Modell keine Bilder und keine Plätze', ki_alle_einreihen() === 2 && count($GLOBALS['execs']) === 2 && !str_contains(implode(' ', array_column($GLOBALS['execs'], 0)), 'vehicle_files')
+    && !str_contains(implode(' ', array_column($GLOBALS['execs'], 0)), 'standort_bilder') && str_contains($GLOBALS['execs'][0][0], "AND f.art <> 'bild'"));
+$GLOBALS['execs'] = [];
+$check('Bild ohne Vision-Modell wird nicht eingereiht, Dokument schon', !ki_einreihen('veranstaltung', 5, 'bild') && $GLOBALS['execs'] === [] && ki_einreihen('veranstaltung', 5, 'dokument'));
+$einstellen(['ki_vision_modell' => 'llava:7b', 'ki_fahrzeuge' => '1']);
+$GLOBALS['execs'] = [];
+$check('mit Vision-Modell: Bilder und Plätze dabei', ki_einreihen('standort', 3, 'bild') && ki_alle_einreihen() === 4 && !str_contains(implode(' ', array_column($GLOBALS['execs'], 0)), "art <> 'bild'"));
+$einstellen(['ki_vision_modell' => '']);
 
 /* ---------- Schlagwörter und Antwort ---------- */
 $check('Schlagwörter: getrimmt, ohne Dubletten, ohne #', ki_tags_parsen("  Rechnung, HU , rechnung; \"Werkstatt\" #tüv\n") === ['Rechnung', 'HU', 'Werkstatt', 'tüv']);
@@ -101,6 +107,8 @@ $a = ki_antwort_parsen('Gerne! Hier ist das Ergebnis: {"summary": "Einladung zum
 $check('Antwort mit Geplauder, englischen Schlüsseln und Text-Tags', $a !== null && $a['zusammenfassung'] === 'Einladung zum Jahresabschluss.' && $a['tags'] === ['einladung', 'jahresabschluss']);
 $check('unverwertbar: kein JSON, leer, kaputt', ki_antwort_parsen('Ich weiß es nicht.') === null && ki_antwort_parsen('{}') === null && ki_antwort_parsen('{"zusammenfassung": ') === null && ki_antwort_parsen('{"zusammenfassung": "", "schlagwoerter": []}') === null);
 $check('Zusammenfassung wird gekürzt', mb_strlen(ki_antwort_parsen('{"zusammenfassung": "' . str_repeat('a', 3000) . '"}')['zusammenfassung']) <= 2002);
+$check('Daten, Nummern und Beträge sind keine Schlagwörter', ki_antwort_parsen('{"zusammenfassung": "x", "schlagwoerter": ["Volvo", "90440", "15.10.2026", "412,50 €", "Fensterheber", "14:30 Uhr", "OHBR/I-475"]}')['tags'] === ['Volvo', 'Fensterheber', 'OHBR/I-475']);
+$check('Prompt verlangt Schlagwörter ohne Daten und Nummern', str_contains(ki_prompt('x', 'y'), 'keine Daten, Beträge, Kennzeichen oder Nummern'));
 $check('Text glätten: Umbrüche, Leerraum, Kürzung', ki_text_kuerzen("a  b\r\n\r\n\r\n\r\nc \n d", 100) === "a b\n\nc\nd" && ki_text_kuerzen('abcdefghij', 5) === 'abcde …' && ki_text_kuerzen("x\xffy", 10) !== '');
 $p = ki_prompt('Dokument aus der Fahrzeugakte von MTW', 'Hallo Welt');
 $check('Prompt mit Kontext, Text und JSON-Form', str_contains($p, 'Kontext: Dokument aus der Fahrzeugakte von MTW') && str_contains($p, "Inhalt:\n\"\"\"\nHallo Welt\n\"\"\"") && str_contains($p, '"schlagwoerter"') && str_contains(ki_prompt('x', ''), 'Beschreibe das Bild'));
@@ -117,7 +125,7 @@ $check('Textdatei', $q['text'] === "Prüfbericht UVV\nAlles in Ordnung." && $q['
 $q = ki_text_aus_datei($tmp . '/notiz.txt', 'image/jpeg', 'foto.jpg');
 $check('Bild geht als Bild', $q['text'] === null && $q['bild'] === $tmp . '/notiz.txt');
 try { ki_text_aus_datei($tmp . '/notiz.txt', 'application/octet-stream', 'daten.bin'); $check('unbekannte Dateiart wirft', false); }
-catch (KiException $e) { $check('unbekannte Dateiart wirft', str_contains($e->getMessage(), 'bin')); }
+catch (KiException $e) { $check('unbekannte Dateiart wirft', $e instanceof KiUebersprungen && str_contains($e->getMessage(), 'bin')); }
 if (class_exists('ZipArchive')) {
     $z = new ZipArchive();
     $z->open($tmp . '/bericht.docx', ZipArchive::CREATE);
@@ -152,7 +160,7 @@ $check('Auswertung: Ergebnis gespeichert', $e['zusammenfassung'] === 'Prüfberic
     && str_contains($GLOBALS['execs'][0][0], 'INSERT INTO datei_ki') && $GLOBALS['execs'][0][1] === ['fahrzeug', 5, 'Prüfbericht zur UVV ohne Mängel.', 'Prüfbericht, UVV', 'qwen2.5:7b', 'text']);
 $GLOBALS['dateien'][6] = ['id' => 6, 'vehicle_id' => 2, 'order_id' => 9, 'art' => 'bild', 'orig_name' => 'schaden.jpg', 'titel' => 'schaden', 'mime' => 'image/jpeg', 'pfad' => $tmp . '/notiz.txt', 'auftrag_nummer' => 'A-9'];
 try { ki_datei_auswerten('fahrzeug', 6); $check('Bild ohne Vision-Modell wirft', false); }
-catch (KiException $ex) { $check('Bild ohne Vision-Modell wirft', str_contains($ex->getMessage(), 'Vision-Modell')); }
+catch (KiException $ex) { $check('Bild ohne Vision-Modell wirft – als dauerhafter Grund', $ex instanceof KiUebersprungen && str_contains($ex->getMessage(), 'Vision-Modell')); }
 $einstellen(['ki_vision_modell' => 'llava:7b']);
 $e = ki_datei_auswerten('fahrzeug', 6);
 $anfrage = end($GLOBALS['anfragen']);
@@ -173,8 +181,12 @@ $einstellen(['ki_termine' => '0']);
 $GLOBALS['execs'] = [];
 $r = ki_warteschlange_abarbeiten();
 $sql = implode("\n", array_column($GLOBALS['execs'], 0));
-$check('abarbeiten: eine fertig, eine fehlgeschlagen, abgeschaltete Ablage bleibt liegen', $r['bearbeitet'] === 2 && $r['fertig'] === 1 && $r['fehler'] === 1 && count($r['meldungen']) === 1 && str_contains($r['meldungen'][0], 'Fahrzeugakte #8')
-    && str_contains($sql, "status = 'laeuft', versuche = versuche + 1") && str_contains($sql, "status = 'fertig'") && str_contains($sql, "status = 'fehler'") && substr_count($sql, 'laeuft') === 3);
+$check('abarbeiten: eine fertig, eine übersprungen (Datei fehlt – ohne Wiederholung), abgeschaltete Ablage bleibt liegen', $r['bearbeitet'] === 2 && $r['fertig'] === 1 && $r['uebersprungen'] === 1 && $r['fehler'] === 0 && $r['meldungen'] === []
+    && str_contains($sql, "status = 'laeuft', versuche = versuche + 1") && str_contains($sql, "status = 'fertig'") && str_contains($sql, "status = 'fehler', versuche = ?") && substr_count($sql, 'laeuft') === 3);
+$GLOBALS['ki_http_attrappe'] = static function (): array { throw new KiException('Ollama ist nicht erreichbar: Zeitüberschreitung'); };
+$GLOBALS['auftrag_rows'] = [['id' => 1, 'typ' => 'fahrzeug', 'datei_id' => 5, 'status' => 'offen']];
+$r = ki_warteschlange_abarbeiten();
+$check('abarbeiten: Ollama weg = richtiger Fehler mit Meldung, wird wiederholt', $r['fehler'] === 1 && $r['uebersprungen'] === 0 && str_contains($r['meldungen'][0], 'Zeitüberschreitung'));
 $GLOBALS['auftrag_rows'] = [];
 $einstellen(['ki_termine' => '1']);
 
@@ -226,11 +238,13 @@ $htmlS = render_partial('ki_suche', ['q' => '', 'treffer' => [], 'tags' => [], '
 $check('Suchseite ohne Auswertung: Hinweis', str_contains($htmlS, 'ausgeschaltet') && !str_contains($htmlS, 'Treffer für'));
 $htmlA = render_partial('admin/ki', ['fehler' => '', 'hinweis' => '', 'test' => ['ok' => true, 'fehler' => '', 'modelle' => ['qwen2.5:7b']], 'status' => ['offen' => 2, 'laeuft' => 0, 'fertig' => 5, 'fehler' => 1, 'ergebnisse' => 5],
     'fehlerliste' => [['typ' => 'fahrzeug', 'datei_id' => 8, 'fehler' => 'Die Datei fehlt in der Ablage.', 'versuche' => 3, 'erledigt_am' => '2026-10-15 10:00:00', 'name' => 'weg.pdf', 'eltern' => ['text' => 'MTW', 'url' => '?p=vehicle&id=2']]],
+    'gruende' => [['fehler' => 'Bilder werden nur mit einem Vision-Modell ausgewertet (Einstellung „Vision-Modell").', 'n' => 61], ['fehler' => 'Die Datei fehlt in der Ablage.', 'n' => 1]],
     'aktiv' => true, 'url' => 'http://192.168.1.20:11434', 'urlGrund' => null, 'pdftotext' => true, 'pdftoppm' => false, 'module' => [['label' => 'Fahrzeugakte', 'an' => true], ['label' => 'Termin', 'an' => false]]]);
-$check('Verwaltungsseite: Verbindung, Modelle, Warteschlange, Fehler, Knöpfe', str_contains($htmlA, 'http://192.168.1.20:11434') && str_contains($htmlA, '<code>qwen2.5:7b</code>') && str_contains($htmlA, 'pdftoppm ✘ fehlt') && str_contains($htmlA, 'Termin (aus)')
-    && str_contains($htmlA, 'value="abarbeiten"') && str_contains($htmlA, 'value="alle"') && str_contains($htmlA, 'value="erneut"') && str_contains($htmlA, 'weg.pdf') && str_contains($htmlA, 'Die Datei fehlt'));
+$check('Verwaltungsseite: Verbindung, Modelle, Warteschlange, Gründe, Fehler, Knöpfe', str_contains($htmlA, 'http://192.168.1.20:11434') && str_contains($htmlA, '<code>qwen2.5:7b</code>') && str_contains($htmlA, 'pdftoppm ✘ fehlt') && str_contains($htmlA, 'Termin (aus)')
+    && str_contains($htmlA, 'value="abarbeiten"') && str_contains($htmlA, 'value="alle"') && str_contains($htmlA, 'value="erneut"') && str_contains($htmlA, 'weg.pdf') && str_contains($htmlA, 'Die Datei fehlt')
+    && str_contains($htmlA, 'Woran es scheitert') && str_contains($htmlA, '<td style="text-align:right">61</td>') && str_contains($htmlA, '1 von 1'));
 $einstellen(['ki_aktiv' => '0']);
-$htmlA = render_partial('admin/ki', ['fehler' => '', 'hinweis' => '', 'test' => null, 'status' => ['offen' => 0, 'laeuft' => 0, 'fertig' => 0, 'fehler' => 0, 'ergebnisse' => 0], 'fehlerliste' => [], 'aktiv' => false, 'url' => '', 'urlGrund' => 'Keine Adresse eingetragen.', 'pdftotext' => false, 'pdftoppm' => false, 'module' => []]);
+$htmlA = render_partial('admin/ki', ['fehler' => '', 'hinweis' => '', 'test' => null, 'status' => ['offen' => 0, 'laeuft' => 0, 'fertig' => 0, 'fehler' => 0, 'ergebnisse' => 0], 'fehlerliste' => [], 'gruende' => [], 'aktiv' => false, 'url' => '', 'urlGrund' => 'Keine Adresse eingetragen.', 'pdftotext' => false, 'pdftoppm' => false, 'module' => []]);
 $check('Verwaltungsseite aus: Warnung, Knöpfe gesperrt', str_contains($htmlA, 'ausgeschaltet') && str_contains($htmlA, 'value="abarbeiten" disabled') && str_contains($htmlA, 'value="test" disabled') && !str_contains($htmlA, 'value="erneut"'));
 
 // aufräumen

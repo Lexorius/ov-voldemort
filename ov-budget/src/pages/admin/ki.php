@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             set_time_limit(300);
             $r = ki_warteschlange_abarbeiten(3, 240);
-            $hinweis = sprintf('%d Datei(en) bearbeitet: %d fertig, %d fehlgeschlagen.', $r['bearbeitet'], $r['fertig'], $r['fehler']);
+            $hinweis = sprintf('%d Datei(en) bearbeitet: %d fertig, %d übersprungen, %d fehlgeschlagen.', $r['bearbeitet'], $r['fertig'], $r['uebersprungen'], $r['fehler']);
             if ($r['meldungen']) {
                 $fehler = implode(' · ', $r['meldungen']);
             }
@@ -52,7 +52,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
             }
             $n = ki_alle_einreihen();
-            $hinweis = sprintf('%d Datei(en) eingereiht. Der minütliche Abruf arbeitet sie nach und nach ab.', $n);
+            $hinweis = sprintf('%d Datei(en) eingereiht. Der minütliche Abruf arbeitet sie nach und nach ab.', $n)
+                . (ki_vision_modell() === '' ? ' Bilder bleiben außen vor, solange kein Vision-Modell eingetragen ist.' : '');
             audit('ki.alle', 'ki', null, (string)$n);
             break;
 
@@ -71,6 +72,7 @@ render('admin/ki', [
     'test'     => $test,
     'status'   => ki_warteschlange_status(),
     'fehlerliste' => ki_fehler_liste(15),
+    'gruende'  => ki_fehler_gruende(),
     'aktiv'    => ki_aktiv(),
     'url'      => ki_url(),
     'urlGrund' => ki_url_pruefen((string)setting('ki_ollama_url', '')),
