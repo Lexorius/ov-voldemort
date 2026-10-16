@@ -109,9 +109,11 @@ $check('unverwertbar: kein JSON, leer, kaputt', ki_antwort_parsen('Ich weiß es 
 $check('Zusammenfassung wird gekürzt', mb_strlen(ki_antwort_parsen('{"zusammenfassung": "' . str_repeat('a', 3000) . '"}')['zusammenfassung']) <= 2002);
 $check('Daten, Nummern und Beträge sind keine Schlagwörter', ki_antwort_parsen('{"zusammenfassung": "x", "schlagwoerter": ["Volvo", "90440", "15.10.2026", "412,50 €", "Fensterheber", "14:30 Uhr", "OHBR/I-475"]}')['tags'] === ['Volvo', 'Fensterheber', 'OHBR/I-475']);
 $check('Prompt verlangt Schlagwörter ohne Daten und Nummern', str_contains(ki_prompt('x', 'y'), 'keine Daten, Beträge, Kennzeichen oder Nummern'));
+$check('Bild-Prompt: nur, was zu sehen ist, nichts über Fehlendes', str_contains(ki_prompt('x', ''), 'Keine Sätze darüber, was fehlt') && !str_contains(ki_prompt('x', ''), 'Beträge, Namen, Nummern'));
+$check('Satzfetzen sind keine Schlagwörter', ki_antwort_parsen('{"zusammenfassung": "x", "schlagwoerter": ["THW-Lkw", "Fahrzeug für den THW-Ortsverbands", "Garagenraum", "Kran mit Haken"]}')['tags'] === ['THW-Lkw', 'Garagenraum', 'Kran mit Haken']);
 $check('Text glätten: Umbrüche, Leerraum, Kürzung', ki_text_kuerzen("a  b\r\n\r\n\r\n\r\nc \n d", 100) === "a b\n\nc\nd" && ki_text_kuerzen('abcdefghij', 5) === 'abcde …' && ki_text_kuerzen("x\xffy", 10) !== '');
 $p = ki_prompt('Dokument aus der Fahrzeugakte von MTW', 'Hallo Welt');
-$check('Prompt mit Kontext, Text und JSON-Form', str_contains($p, 'Kontext: Dokument aus der Fahrzeugakte von MTW') && str_contains($p, "Inhalt:\n\"\"\"\nHallo Welt\n\"\"\"") && str_contains($p, '"schlagwoerter"') && str_contains(ki_prompt('x', ''), 'Beschreibe das Bild'));
+$check('Prompt mit Kontext, Text und JSON-Form', str_contains($p, 'Kontext: Dokument aus der Fahrzeugakte von MTW') && str_contains($p, "Inhalt:\n\"\"\"\nHallo Welt\n\"\"\"") && str_contains($p, '"schlagwoerter"') && str_contains(ki_prompt('x', ''), 'was auf dem Bild zu sehen ist'));
 $check('Modell in der Liste', ki_modell_vorhanden('qwen2.5:7b', ['llava:7b', 'qwen2.5:7b']) && ki_modell_vorhanden('llama3', ['llama3:latest']) && ki_modell_vorhanden('Llama3:latest', ['llama3']) && !ki_modell_vorhanden('mistral', ['llama3']) && !ki_modell_vorhanden('', ['x']));
 $check('häufigste Schlagwörter', ki_tags_zaehlen(['Rechnung, HU', 'rechnung, Einladung', 'HU'], 2) === [['tag' => 'Rechnung', 'n' => 2], ['tag' => 'HU', 'n' => 2]] && ki_tags_zaehlen([]) === []);
 
@@ -154,7 +156,8 @@ $GLOBALS['dateien'][5] = ['id' => 5, 'vehicle_id' => 2, 'order_id' => null, 'art
 $GLOBALS['execs'] = [];
 $e = ki_datei_auswerten('fahrzeug', 5);
 $anfrage = end($GLOBALS['anfragen']);
-$check('Auswertung: Prompt mit Fahrzeug, Kennzeichen, Titel und Inhalt, JSON-Format, kein Bild', $anfrage[1] === '/api/generate' && $anfrage[2]['model'] === 'qwen2.5:7b' && $anfrage[2]['format'] === 'json' && $anfrage[2]['stream'] === false && !isset($anfrage[2]['images'])
+$check('Auswertung: Prompt mit Fahrzeug, Kennzeichen, Titel und Inhalt, JSON-Format, kein Bild, Antwort begrenzt', $anfrage[1] === '/api/generate' && $anfrage[2]['model'] === 'qwen2.5:7b' && $anfrage[2]['format'] === 'json' && $anfrage[2]['stream'] === false && !isset($anfrage[2]['images'])
+    && $anfrage[2]['options']['num_predict'] === 600 && $anfrage[2]['options']['repeat_penalty'] === 1.15
     && str_contains($anfrage[2]['prompt'], 'MTW (THW-12345)') && str_contains($anfrage[2]['prompt'], 'Titel: UVV 2026') && str_contains($anfrage[2]['prompt'], 'Alles in Ordnung.'));
 $check('Auswertung: Ergebnis gespeichert', $e['zusammenfassung'] === 'Prüfbericht zur UVV ohne Mängel.' && $e['tags'] === ['Prüfbericht', 'UVV'] && $e['quelle'] === 'text'
     && str_contains($GLOBALS['execs'][0][0], 'INSERT INTO datei_ki') && $GLOBALS['execs'][0][1] === ['fahrzeug', 5, 'Prüfbericht zur UVV ohne Mängel.', 'Prüfbericht, UVV', 'qwen2.5:7b', 'text']);
@@ -187,6 +190,8 @@ $GLOBALS['ki_http_attrappe'] = static function (): array { throw new KiException
 $GLOBALS['auftrag_rows'] = [['id' => 1, 'typ' => 'fahrzeug', 'datei_id' => 5, 'status' => 'offen']];
 $r = ki_warteschlange_abarbeiten();
 $check('abarbeiten: Ollama weg = richtiger Fehler mit Meldung, wird wiederholt', $r['fehler'] === 1 && $r['uebersprungen'] === 0 && str_contains($r['meldungen'][0], 'Zeitüberschreitung'));
+$GLOBALS['execs'] = [];
+$check('alles neu: zurück auf offen, Laufendes bleibt', ki_alles_neu() === 1 && str_contains($GLOBALS['execs'][0][0], "SET status = 'offen', versuche = 0") && str_contains($GLOBALS['execs'][0][0], "status <> 'laeuft'"));
 $GLOBALS['auftrag_rows'] = [];
 $einstellen(['ki_termine' => '1']);
 
@@ -242,7 +247,7 @@ $htmlA = render_partial('admin/ki', ['fehler' => '', 'hinweis' => '', 'test' => 
     'aktiv' => true, 'url' => 'http://192.168.1.20:11434', 'urlGrund' => null, 'pdftotext' => true, 'pdftoppm' => false, 'module' => [['label' => 'Fahrzeugakte', 'an' => true], ['label' => 'Termin', 'an' => false]]]);
 $check('Verwaltungsseite: Verbindung, Modelle, Warteschlange, Gründe, Fehler, Knöpfe', str_contains($htmlA, 'http://192.168.1.20:11434') && str_contains($htmlA, '<code>qwen2.5:7b</code>') && str_contains($htmlA, 'pdftoppm ✘ fehlt') && str_contains($htmlA, 'Termin (aus)')
     && str_contains($htmlA, 'value="abarbeiten"') && str_contains($htmlA, 'value="alle"') && str_contains($htmlA, 'value="erneut"') && str_contains($htmlA, 'weg.pdf') && str_contains($htmlA, 'Die Datei fehlt')
-    && str_contains($htmlA, 'Woran es scheitert') && str_contains($htmlA, '<td style="text-align:right">61</td>') && str_contains($htmlA, '1 von 1'));
+    && str_contains($htmlA, 'Woran es scheitert') && str_contains($htmlA, '<td style="text-align:right">61</td>') && str_contains($htmlA, '1 von 1') && str_contains($htmlA, 'value="alle_neu"'));
 $einstellen(['ki_aktiv' => '0']);
 $htmlA = render_partial('admin/ki', ['fehler' => '', 'hinweis' => '', 'test' => null, 'status' => ['offen' => 0, 'laeuft' => 0, 'fertig' => 0, 'fehler' => 0, 'ergebnisse' => 0], 'fehlerliste' => [], 'gruende' => [], 'aktiv' => false, 'url' => '', 'urlGrund' => 'Keine Adresse eingetragen.', 'pdftotext' => false, 'pdftoppm' => false, 'module' => []]);
 $check('Verwaltungsseite aus: Warnung, Knöpfe gesperrt', str_contains($htmlA, 'ausgeschaltet') && str_contains($htmlA, 'value="abarbeiten" disabled') && str_contains($htmlA, 'value="test" disabled') && !str_contains($htmlA, 'value="erneut"'));

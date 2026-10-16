@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.38.1
+
+- **Bilder besser beschrieben:** eigener Prompt für das Vision-Modell (nur,
+  was zu sehen ist – keine Sätze über Fehlendes), Antwortlänge begrenzt und
+  Wiederholungsschleifen gebremst („token repeat limit reached"),
+  Satzfetzen aus vier und mehr Wörtern sind keine Schlagwörter mehr.
+  Neuer Knopf „Alles neu auswerten" für den Modellwechsel.
+
 ## 2.1.38.0
 
 - **KI-Auswertung nach dem ersten Lauf nachgeschärft:** Bilder werden ohne

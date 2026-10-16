@@ -57,6 +57,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             audit('ki.alle', 'ki', null, (string)$n);
             break;
 
+        case 'alle_neu':
+            if (!ki_aktiv()) {
+                $fehler = 'Die KI-Auswertung ist ausgeschaltet.';
+                break;
+            }
+            $n = ki_alle_einreihen() + ki_alles_neu();
+            $hinweis = sprintf('%d Datei(en) werden neu ausgewertet. Vorhandene Zusammenfassungen bleiben, bis die neue da ist.', $n);
+            audit('ki.alles_neu', 'ki', null, (string)$n);
+            break;
+
         case 'erneut':
             $n = ki_erneut_versuchen();
             $hinweis = sprintf('%d fehlgeschlagene(r) Auftrag/Aufträge werden erneut versucht.', $n);

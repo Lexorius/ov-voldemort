@@ -1324,7 +1324,8 @@ weil Ollama nicht antwortet) bleibt ein Auftrag als „fehlgeschlagen"
 liegen; dauerhafte Gründe wie eine unlesbare Dateiart werden nicht
 wiederholt. Die Verwaltungsseite zählt die Gründe und bietet
 „Fehlgeschlagene erneut" an – etwa nachdem ein Vision-Modell eingetragen
-wurde.
+wurde. „Alles neu auswerten" schickt sämtliche Dateien noch einmal durch,
+etwa nach einem Modellwechsel.
 
 **Nachbessern:** Wer die Datei bearbeiten darf, kann unter ihr
 „KI-Auswertung bearbeiten" aufklappen, Zusammenfassung und Schlagwörter

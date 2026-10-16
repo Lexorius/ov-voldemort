@@ -69,6 +69,9 @@ $hauptschalter = setting_bool('ki_aktiv', false);
       <?php if ((int)$status['fehler'] > 0): ?>
         <button class="btn btn--sec" type="submit" name="action" value="erneut">Fehlgeschlagene erneut</button>
       <?php endif; ?>
+      <?php if ((int)$status['fertig'] > 0 || (int)$status['fehler'] > 0): ?>
+        <button class="btn btn--sec" type="submit" name="action" value="alle_neu"<?= $aktiv ? '' : ' disabled' ?> data-confirm="Alle Dateien noch einmal auswerten lassen – etwa nach einem Modellwechsel? Das dauert je Datei einige Sekunden bis gut eine Minute.">Alles neu auswerten</button>
+      <?php endif; ?>
     </form>
   </div>
 </div>

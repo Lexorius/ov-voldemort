@@ -158,6 +158,12 @@ function ki_alle_einreihen(): int
     return $n;
 }
 
+/** Alle Aufträge zurück auf Anfang – nach einem Modellwechsel oder einer neuen Fassung des Prompts */
+function ki_alles_neu(): int
+{
+    return db_exec("UPDATE ki_auftraege SET status = 'offen', versuche = 0, fehler = '', gestartet_am = NULL, erledigt_am = NULL WHERE status <> 'laeuft'");
+}
+
 /** Fehlgeschlagene Aufträge noch einmal versuchen */
 function ki_erneut_versuchen(): int
 {
@@ -498,14 +504,19 @@ function ki_text_kuerzen(string $t, int $max): string
 /** Die Bitte an das Modell. Ohne Text wird das mitgeschickte Bild beschrieben. Reine Funktion. */
 function ki_prompt(string $kontext, string $text): string
 {
-    return "Du hilfst beim Archiv eines THW-Ortsverbands. Fasse den Inhalt auf Deutsch zusammen.\n"
+    $kopf = "Du hilfst beim Archiv eines THW-Ortsverbands. Antworte auf Deutsch.\n"
         . "Kontext: $kontext\n\n"
-        . "Antworte ausschließlich mit einem JSON-Objekt dieser Form:\n"
-        . '{"zusammenfassung": "2 bis 4 Sätze: worum es geht, mit den wichtigsten Angaben wie Datum, Beträge, Namen, Nummern", '
-        . '"schlagwoerter": ["5 bis 8 kurze Schlagwörter: Dokumentart, Thema, Gegenstand, Fahrzeug, Werkstatt oder Firma", "einzelne Wörter oder kurze Begriffe, keine Sätze", "keine Daten, Beträge, Kennzeichen oder Nummern – die gehören in die Zusammenfassung"]}' . "\n\n"
-        . ($text !== ''
-            ? "Inhalt:\n\"\"\"\n$text\n\"\"\""
-            : 'Beschreibe das Bild: Was ist zu sehen, welcher Text steht darauf (Schilder, Formulare, Kennzeichen)?');
+        . "Antworte ausschließlich mit einem JSON-Objekt dieser Form:\n";
+    if ($text !== '') {
+        return $kopf
+            . '{"zusammenfassung": "2 bis 4 Sätze: worum es geht, mit den wichtigsten Angaben wie Datum, Beträge, Namen, Nummern", '
+            . '"schlagwoerter": ["5 bis 8 kurze Schlagwörter: Dokumentart, Thema, Gegenstand, Fahrzeug, Werkstatt oder Firma", "einzelne Wörter oder kurze Begriffe, keine Sätze", "keine Daten, Beträge, Kennzeichen oder Nummern – die gehören in die Zusammenfassung"]}' . "\n\n"
+            . "Inhalt:\n\"\"\"\n$text\n\"\"\"";
+    }
+    return $kopf
+        . '{"zusammenfassung": "2 bis 3 Sätze: was auf dem Bild zu sehen ist – Ort, Raum, Fahrzeuge, Geräte, Zustand, lesbarer Text auf Schildern oder Kennzeichen", '
+        . '"schlagwoerter": ["5 bis 8 Schlagwörter aus je einem Wort oder zwei Wörtern: Gegenstände, Fahrzeugart, Raumart, Zustand"]}' . "\n\n"
+        . 'Nenne nur, was tatsächlich zu sehen ist. Keine Sätze darüber, was fehlt oder nicht erkennbar ist. Keine Wiederholungen.';
 }
 
 /**
@@ -530,8 +541,9 @@ function ki_antwort_parsen(string $roh): ?array
         $tags = implode(', ', array_map(static fn($t) => is_scalar($t) ? (string)$t : '', $tags));
     }
     // Daten, Zahlen und Beträge taugen nicht als Schlagwort – die stehen in der Zusammenfassung
+    // … und Satzfetzen aus vier und mehr Wörtern auch nicht
     $tags = array_values(array_filter(ki_tags_parsen(is_scalar($tags) ? (string)$tags : ''),
-        static fn(string $t) => !preg_match('/^[\d.,:\/ €$%-]+(\s?(eur|euro|uhr|kg|km|l|h))?$/iu', $t)));
+        static fn(string $t) => !preg_match('/^[\d.,:\/ €$%-]+(\s?(eur|euro|uhr|kg|km|l|h))?$/iu', $t) && count(preg_split('/\s+/u', $t)) <= 3));
     $zf = ki_text_kuerzen(is_scalar($zf) ? (string)$zf : '', 2000);
     if ($zf === '' && !$tags) {
         return null;
@@ -776,7 +788,8 @@ function ki_generieren(string $modell, string $prompt, ?string $bildBase64 = nul
         'prompt'  => $prompt,
         'stream'  => false,
         'format'  => 'json',
-        'options' => ['temperature' => 0.2],
+        // num_predict: Schluss nach gut 400 Wörtern; repeat_penalty: gegen Schleifen („token repeat limit reached")
+        'options' => ['temperature' => 0.2, 'num_predict' => 600, 'repeat_penalty' => 1.15],
     ];
     if ($bildBase64 !== null) {
         $daten['images'] = [$bildBase64];
