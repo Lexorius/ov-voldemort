@@ -84,7 +84,8 @@ $ovName = (string)setting('ov_name', '');
       . ($meeting['ende'] ? ' bis ' . substr((string)$meeting['ende'], 0, 5) . ' Uhr' : '');
   ?>
   <tr><td>Datum</td><td><?= e($wann) ?></td></tr>
-  <?php if ($meeting['ort']): ?><tr><td>Ort</td><td><?= e($meeting['ort']) ?></td></tr><?php endif; ?>
+  <?php if ($meeting['ort']): ?><tr><td>Ort</td><td><?= e($meeting['ort']) ?><?= meeting_treffen_text($meeting) !== '' ? ' (' . e(meeting_treffen_text($meeting)) . ')' : '' ?></td></tr><?php endif; ?>
+  <?php if (meeting_treffen((string)($meeting['treffen'] ?? '')) === 'online' && !empty($meeting['link'])): ?><tr><td>Teilnahme</td><td><?= e(meeting_treffen_text($meeting)) ?> · <?= e((string)$meeting['link']) ?></td></tr><?php endif; ?>
   <?php if ($meeting['typ_label']): ?><tr><td>Art</td><td><?= e($meeting['typ_label']) ?></td></tr><?php endif; ?>
   <?php if ($meeting['leitung']): ?><tr><td>Leitung</td><td><?= e($meeting['leitung']) ?></td></tr><?php endif; ?>
   <?php if ($protokoll): ?>

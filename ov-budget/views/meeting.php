@@ -47,6 +47,7 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
       <?php if (!empty($meeting['series_id'])): ?>
         <span class="badge badge--outline" title="Wiederkehrende Besprechung">↻ <?= e(series_describe(meeting_series_rule($meeting))) ?></span>
       <?php endif; ?>
+      <?php if (meeting_treffen_text($meeting) !== ''): ?><span class="badge badge--outline"><?= e(meeting_treffen_text($meeting)) ?></span><?php endif; ?>
     </p>
     <?php if (!empty($meeting['serien_datum']) && $meeting['serien_datum'] !== $meeting['datum']): ?>
       <p class="small muted">Verschoben vom regulären Termin am <?= e(de_date($meeting['serien_datum'])) ?>.</p>
@@ -57,12 +58,23 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
       <?php if ($meeting['ort']): ?> · <?= e($meeting['ort']) ?><?php endif; ?>
       <?php if ($meeting['leitung']): ?> · Leitung: <?= e($meeting['leitung']) ?><?php endif; ?>
     </p>
+    <?php $navi ??= null; $entfernung ??= null; if ($navi): ?>
+      <p class="muted small">🧭 Ziel: <?= e($navi['ziel']['text']) ?> ·
+        <a href="<?= e($navi['links']['google']) ?>" target="_blank" rel="noopener">Google Maps</a> · <a href="<?= e($navi['links']['apple']) ?>" target="_blank" rel="noopener">Apple Karten</a><?= isset($navi['links']['geo']) ? ' · <a href="' . e($navi['links']['geo']) . '">Karten-App (Android)</a>' : '' ?>
+        <?php if ($entfernung && function_exists('geo_entfernung_text')): ?><br>🚗 <?= e(geo_entfernung_text($entfernung)) ?> ab <?= e((string)$entfernung['heim']) ?> <span class="badge badge--warn" title="Testbetrieb: Adressen über OpenStreetMap, Strecken über den OSRM-Demoserver – ohne Gewähr">Test</span><?php endif; ?></p>
+    <?php endif; ?>
     <?php $fahrzeuge ??= []; if ($fahrzeuge): ?>
       <p class="muted small">⛟ <?php foreach ($fahrzeuge as $i => $v): ?><?= $i ? ' · ' : '' ?><a href="<?= e(url('vehicle', ['id' => $v['id']])) ?>"><?= e((string)$v['bezeichnung']) ?></a><?= !empty($v['funkrufname']) ? ' <span class="small">' . e((string)$v['funkrufname']) . '</span>' : '' ?><?php endforeach; ?></p>
     <?php endif; ?>
     <?php if ($meeting['beschreibung']): ?><p><?= nl2br(e((string)$meeting['beschreibung'])) ?></p><?php endif; ?>
   </div>
   <div class="btnrow">
+    <?php if (meeting_treffen((string)($meeting['treffen'] ?? '')) === 'online' && !empty($meeting['link'])): ?>
+      <a class="btn" href="<?= e((string)$meeting['link']) ?>" target="_blank" rel="noopener">💻 Jetzt beitreten</a>
+    <?php endif; ?>
+    <?php if ($navi): ?>
+      <a class="btn" href="<?= e($navi['links']['google']) ?>" target="_blank" rel="noopener" title="<?= e('Ziel: ' . $navi['ziel']['text']) ?>">🧭 Navigation starten</a>
+    <?php endif; ?>
     <a class="btn btn--sec" href="<?= e(url('meeting_print', ['id' => $meeting['id']])) ?>">Tagesordnung</a>
     <a class="btn btn--sec" href="<?= e(url('meeting_print', ['id' => $meeting['id'], 'art' => 'protokoll'])) ?>">Protokoll</a>
     <?php if ($verwalten): ?>

@@ -44,8 +44,22 @@ $uhr = static fn($v) => $v ? substr((string)$v, 0, 5) : '';
       <small class="muted">Leer = gleicher Tag. Für Klausur, Lehrgang oder Wochenende.</small>
     </div>
     <div class="field">
-      <label for="ort">Ort</label>
-      <input type="text" id="ort" name="ort" value="<?= e((string)$meeting['ort']) ?>" placeholder="z.B. Unterkunft, Besprechungsraum">
+      <label for="treffen">Wo</label>
+      <?php $treffen = meeting_treffen((string)($meeting['treffen'] ?? 'inhaus')); ?>
+      <select id="treffen" name="treffen">
+        <?php foreach (MEETING_TREFFEN as $k => $t): ?>
+          <option value="<?= e($k) ?>"<?= $treffen === $k ? ' selected' : '' ?>><?= e($t['icon'] . ' ' . $t['label']) ?></option>
+        <?php endforeach; ?>
+      </select>
+      <small class="muted">Online zeigt die Besprechung einen Knopf „Jetzt beitreten", außer Haus einen Navi-Link zur Anschrift.</small>
+    </div>
+    <div class="field">
+      <label for="ort">Ort <span class="muted small">– außer Haus: Anschrift mit Straße, PLZ und Ort (fürs Navi)</span></label>
+      <input type="text" id="ort" name="ort" value="<?= e((string)$meeting['ort']) ?>" placeholder="z.B. Unterkunft, Besprechungsraum – oder Musterstraße 1, 74072 Heilbronn">
+    </div>
+    <div class="field">
+      <label for="link">Link zur Online-Besprechung <span class="muted small">(Webex, Teams, Jitsi …)</span></label>
+      <input type="url" id="link" name="link" maxlength="500" value="<?= e((string)($meeting['link'] ?? '')) ?>" placeholder="https://…">
     </div>
     <?php $fahrzeuge ??= []; $fahrzeugeGewaehlt ??= []; $belegt ??= []; if ($fahrzeuge): ?>
       <?php $fzOptionen = []; $bloecke = kalender_fahrzeuge_bloecke($fahrzeuge);

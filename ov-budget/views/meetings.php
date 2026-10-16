@@ -8,7 +8,7 @@ $karte = static function (array $m): string {
     $html = '<a class="item' . ($abgesagt ? ' item--done' : '') . '" href="' . e(url('meeting', ['id' => $m['id']])) . '" style="border-left-color:'
         . e($m['typ_color'] ?: '#94a3b8') . '">'
         . '<div class="item__top"><div style="min-width:0">'
-        . '<div class="item__title">' . e($m['titel']) . '</div>'
+        . '<div class="item__title">' . (meeting_treffen_text($m) !== '' ? MEETING_TREFFEN[meeting_treffen((string)$m['treffen'])]['icon'] . ' ' : '') . e($m['titel']) . '</div>'
         . '<div class="item__sub">' . e(meeting_datum_text($m) . $zeit) . ($m['ort'] ? ' · ' . e($m['ort']) : '') . '</div>'
         . '</div><div class="item__amount">' . (int)$m['punkte'] . '</div></div>'
         . '<div class="item__meta">';

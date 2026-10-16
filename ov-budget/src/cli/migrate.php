@@ -1960,6 +1960,12 @@ SQL);
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
     }
     $merken('074_besprechung_tage_fahrzeuge');
+
+    /* ---------- 075: Besprechung online, in der Unterkunft oder außer Haus ---------- */
+    if (ovb_table_exists($pdo, 'meetings') && !ovb_column_exists($pdo, 'meetings', 'treffen')) {
+        $pdo->exec("ALTER TABLE meetings ADD COLUMN treffen ENUM('inhaus','online','ausserhaus') NOT NULL DEFAULT 'inhaus' AFTER ort, ADD COLUMN link VARCHAR(500) NOT NULL DEFAULT '' AFTER treffen");
+    }
+    $merken('075_besprechung_treffen');
 }
 
 /**

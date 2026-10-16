@@ -901,12 +901,13 @@ function kalender_quelle(string $quelle, string $von, string $bis, array $u): ar
         }
     }
     if (in_array('besprechung', $quellen, true)) {
-        foreach (db_all("SELECT m.id, m.titel, m.datum, m.beginn, m.ende, m.ende_datum, m.ort, m.status,
+        foreach (db_all("SELECT m.id, m.titel, m.datum, m.beginn, m.ende, m.ende_datum, m.ort, m.status, m.treffen,
                                 " . (function_exists('meeting_fahrzeuge_sub') ? meeting_fahrzeuge_sub('m') : "''") . " AS fahrzeuge_namen
                          FROM meetings m WHERE m.datum <= ? AND COALESCE(m.ende_datum, m.datum) >= ? AND m.status <> 'abgesagt'", [$bis, $von]) as $m) {
             $z = kalender_besprechung_zeitraum($m);
             $out[] = kalender_eintrag('besprechung', (string)$m['titel'], $z['beginn'], $z['ende'], ['ort' => $m['ort'], 'id' => $m['id'],
-                'url' => url('meeting', ['id' => $m['id']]), 'ganztag' => $z['ganztag'], 'fahrzeuge' => (string)($m['fahrzeuge_namen'] ?? '')]);
+                'url' => url('meeting', ['id' => $m['id']]), 'ganztag' => $z['ganztag'], 'fahrzeuge' => (string)($m['fahrzeuge_namen'] ?? ''),
+                'untertitel' => function_exists('meeting_treffen_text') ? meeting_treffen_text($m) : '']);
         }
     }
     if (in_array('veranstaltung', $quellen, true)) {

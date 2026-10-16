@@ -154,11 +154,67 @@ function meeting_next(): ?array
     return meeting_query(['zeit' => 'kommend', 'limit' => 1])[0] ?? null;
 }
 
+/** Wo getroffen wird */
+const MEETING_TREFFEN = [
+    'inhaus'     => ['label' => 'In der Unterkunft', 'icon' => '🏠'],
+    'online'     => ['label' => 'Online',            'icon' => '💻'],
+    'ausserhaus' => ['label' => 'Außer Haus',        'icon' => '📍'],
+];
+
+/** Gültige Art oder die Vorgabe. Reine Funktion. */
+function meeting_treffen(string $t): string
+{
+    return isset(MEETING_TREFFEN[$t]) ? $t : 'inhaus';
+}
+
+/** Warum der Besprechungslink nicht taugt – null = er passt. Reine Funktion. */
+function meeting_link_pruefen(string $url): ?string
+{
+    $url = trim($url);
+    if ($url === '') {
+        return null;
+    }
+    if (mb_strlen($url) > 500) {
+        return 'Der Link ist zu lang (höchstens 500 Zeichen).';
+    }
+    $t = parse_url($url);
+    if (!is_array($t) || strtolower((string)($t['scheme'] ?? '')) !== 'https' || empty($t['host']) || !str_contains((string)$t['host'], '.')) {
+        return 'Der Link muss mit https:// beginnen, z. B. https://teams.microsoft.com/… oder https://….webex.com/….';
+    }
+    return null;
+}
+
+/** „💻 Online" oder „📍 Außer Haus"; leer für die Unterkunft. Reine Funktion. */
+function meeting_treffen_text(array $m): string
+{
+    $t = meeting_treffen((string)($m['treffen'] ?? 'inhaus'));
+    return $t === 'inhaus' ? '' : MEETING_TREFFEN[$t]['icon'] . ' ' . MEETING_TREFFEN[$t]['label'];
+}
+
+/** Bei Besprechungen außer Haus: Navi-Ziel und Karten-Links aus dem Ort. null, wenn nichts da ist. */
+function meeting_navi(array $m): ?array
+{
+    if (meeting_treffen((string)($m['treffen'] ?? '')) !== 'ausserhaus' || trim((string)($m['ort'] ?? '')) === '' || !function_exists('kalender_navi_links')) {
+        return null;
+    }
+    $ziel = ['text' => trim((string)$m['ort']), 'ziel' => trim((string)$m['ort']), 'koordinaten' => false];
+    return ['ziel' => $ziel, 'links' => kalender_navi_links($ziel)];
+}
+
 function meeting_save_from_post(?array $existing, array $user): array
 {
     $errors = [];
     $titel = post_str('titel');
     $datum = post_date('datum');
+    $treffen = meeting_treffen(post_str('treffen') ?: 'inhaus');
+    $link = trim(post_str('link'));
+    if (($grund = meeting_link_pruefen($link)) !== null) {
+        $errors[] = $grund;
+    } elseif ($treffen === 'online' && $link === '') {
+        $errors[] = 'Für eine Online-Besprechung bitte den Link (Webex, Teams …) angeben.';
+    } elseif ($treffen === 'ausserhaus' && trim(post_str('ort')) === '') {
+        $errors[] = 'Für eine Besprechung außer Haus bitte die Anschrift unter „Ort" angeben – daraus wird der Navi-Link.';
+    }
 
     if ($titel === '') {
         $errors[] = 'Bitte einen Titel angeben.';
@@ -192,6 +248,8 @@ function meeting_save_from_post(?array $existing, array $user): array
         'ende'          => $uhrzeit('ende'),
         'ende_datum'    => $endeDatum,
         'ort'           => mb_substr(post_str('ort'), 0, 150),
+        'treffen'       => $treffen,
+        'link'          => $link,
         'leitung'       => mb_substr(post_str('leitung'), 0, 150),
         'protokoll_von' => mb_substr(post_str('protokoll_von'), 0, 150),
         'teilnehmer'    => post_str('teilnehmer'),

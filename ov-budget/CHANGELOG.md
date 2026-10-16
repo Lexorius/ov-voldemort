@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 2.1.42.0
+
+- **Besprechung in der Unterkunft, online oder außer Haus:** neue Auswahl
+  „Wo" im Formular. Online mit Link (Webex, Teams, Jitsi) – die
+  Besprechungsseite zeigt „Jetzt beitreten", der Ausdruck den Link. Außer
+  Haus mit Anschrift im Feld „Ort" – die Seite zeigt „Navigation starten"
+  (Google Maps, Apple Karten, Karten-App) und, wenn eingeschaltet, die
+  Entfernung ab der Unterkunft. Liste und Kalender kennzeichnen 💻 und 📍.
+
 ## 2.1.41.0
 
 - **Besprechungen über mehrere Tage:** neues Feld „Ende am" für Klausur,

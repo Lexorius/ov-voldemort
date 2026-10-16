@@ -48,5 +48,11 @@ is_it('Datumstext mehrtägig', meeting_datum_text(['datum' => '2026-12-05', 'end
 is_it('Datumstext gleicher Tag', meeting_datum_text(['datum' => '2026-12-05', 'ende_datum' => '2026-12-05']), '05.12.2026');
 is_it('Fahrzeug-Unterabfrage', str_contains(meeting_fahrzeuge_sub('m'), 'FROM meeting_vehicles mv JOIN vehicles v') && str_ends_with(meeting_fahrzeuge_sub('x'), 'mv.meeting_id = x.id)'), true);
 
+is_it('Art des Treffens: gültig oder Vorgabe', [meeting_treffen('online'), meeting_treffen('ausserhaus'), meeting_treffen('quatsch'), meeting_treffen('')], ['online', 'ausserhaus', 'inhaus', 'inhaus']);
+is_it('Link: leer geht, https mit Rechner geht', [meeting_link_pruefen(''), meeting_link_pruefen('https://teams.microsoft.com/l/meetup-join/abc'), meeting_link_pruefen('https://thw.webex.com/meet/ov')], [null, null, null]);
+is_it('Link: http, ohne Punkt, zu lang werden abgewiesen', [meeting_link_pruefen('http://teams.microsoft.com/x') !== null, meeting_link_pruefen('https://localhost/x') !== null, meeting_link_pruefen('https://a.de/' . str_repeat('x', 500)) !== null, meeting_link_pruefen('teams.microsoft.com') !== null], [true, true, true, true]);
+is_it('Treffen-Text', [meeting_treffen_text(['treffen' => 'inhaus']), meeting_treffen_text(['treffen' => 'online']), meeting_treffen_text(['treffen' => 'ausserhaus']), meeting_treffen_text([])], ['', '💻 Online', '📍 Außer Haus', '']);
+is_it('Navi nur außer Haus mit Ort', [meeting_navi(['treffen' => 'inhaus', 'ort' => 'Musterstraße 1']), meeting_navi(['treffen' => 'ausserhaus', 'ort' => '  '])], [null, null]);
+
 echo "\n$ok bestanden, $bad fehlgeschlagen\n";
 exit($bad > 0 ? 1 : 0);

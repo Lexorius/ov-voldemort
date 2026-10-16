@@ -139,6 +139,8 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - **Wiederkehrende Termine** („alle 2 Wochen montags", „jeden 2. Montag im Monat")
 - **Mehrere Tage** (Klausur, Lehrgang), **Fahrzeuge** mit Warnung vor
   Doppelbuchungen und **externe Teilnehmer** aus den Kontakten je Besprechung
+- **In der Unterkunft, online oder außer Haus**: „Jetzt beitreten" mit dem
+  Webex- oder Teams-Link, „Navigation starten" zur Anschrift
 - **Anwesenheit**: teilgenommen, entschuldigt, nicht erschienen
 - Tagesordnung und Protokoll zum Drucken
 

@@ -356,6 +356,16 @@ Besprechung steckt; speichern geht trotzdem, die Seite meldet dann die
 Doppelbuchung. Fahrzeugakte und Startseite zeigen die Besprechung als
 Verplanung.
 
+**Wo getroffen wird:** „In der Unterkunft", „Online" oder „Außer Haus".
+Online braucht den Link zur Besprechung (Webex, Teams, Jitsi – alles mit
+https://); die Besprechungsseite zeigt dann den Knopf **„Jetzt
+beitreten"**, der Ausdruck nennt den Link. Außer Haus braucht die
+Anschrift im Feld „Ort" (Straße, PLZ, Ort); die Seite zeigt **„Navigation
+starten"** mit Google Maps, Apple Karten und der Karten-App unter Android
+und, wenn die Entfernungsrechnung eingeschaltet ist, Fahrstrecke und
+Fahrzeit ab der Unterkunft. Liste und Kalender kennzeichnen Online- und
+Außer-Haus-Besprechungen mit 💻 und 📍.
+
 **Externe Teilnehmer** kommen aus dem Kontaktmodul: im Formular unter
 „Externe Teilnehmer" wählen – sie landen auf der Anwesenheitsliste der
 Besprechung, wo sich auch Mitglieder, ganze Verteiler und frei

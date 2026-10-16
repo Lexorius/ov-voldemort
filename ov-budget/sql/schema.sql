@@ -740,6 +740,9 @@ CREATE TABLE IF NOT EXISTS meetings (
   -- Ende an einem anderen Tag (Klausur, Lehrgang); NULL = gleicher Tag
   ende_datum     DATE         NULL,
   ort            VARCHAR(150) NOT NULL DEFAULT '',
+  -- wo getroffen wird: in der Unterkunft, online (Webex, Teams …) oder außer Haus (ort = Anschrift fürs Navi)
+  treffen        ENUM('inhaus','online','ausserhaus') NOT NULL DEFAULT 'inhaus',
+  link           VARCHAR(500) NOT NULL DEFAULT '',
   leitung        VARCHAR(150) NOT NULL DEFAULT '',
   protokoll_von  VARCHAR(150) NOT NULL DEFAULT '',
   teilnehmer     TEXT         NULL,

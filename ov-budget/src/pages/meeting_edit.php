@@ -67,6 +67,8 @@ if (!$meeting) {
         'beginn' => $letzte['beginn'] ?? '19:30:00',
         'ende' => $letzte['ende'] ?? null,
         'ende_datum' => null,
+        'treffen' => $letzte['treffen'] ?? 'inhaus',
+        'link' => '',
         'ort' => $letzte['ort'] ?? '',
         'leitung' => $letzte['leitung'] ?? '',
         'protokoll_von' => '',
