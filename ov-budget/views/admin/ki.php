@@ -1,5 +1,5 @@
 <?php
-/** @var string $fehler @var string $hinweis @var ?array $test @var array $status @var array $fehlerliste @var array $gruende
+/** @var string $fehler @var string $hinweis @var ?array $test @var array $status @var array $fehlerliste @var array $gruende @var int $ruheBis
  *  @var bool $aktiv @var string $url @var ?string $urlGrund @var bool $pdftotext @var bool $pdftoppm @var array $module */
 $hauptschalter = setting_bool('ki_aktiv', false);
 ?>
@@ -18,6 +18,12 @@ $hauptschalter = setting_bool('ki_aktiv', false);
 
 <?php if ($fehler !== ''): ?><div class="alert alert--error"><?= e($fehler) ?></div><?php endif; ?>
 <?php if ($hinweis !== ''): ?><div class="alert alert--success"><?= e($hinweis) ?></div><?php endif; ?>
+
+<?php $ruheBis ??= 0; if ($ruheBis > time()): ?>
+  <div class="alert alert--warn">Ollama war zuletzt <strong>nicht erreichbar</strong> – Rechner im Ruhezustand oder Netz weg?
+    Die Warteschlange ruht bis <?= e(date('H:i', $ruheBis)) ?> Uhr und versucht es dann von selbst wieder; nichts ist verloren.
+    „Jetzt abarbeiten" probiert es sofort.</div>
+<?php endif; ?>
 
 <?php if (!$hauptschalter): ?>
   <div class="alert alert--warn">Die KI-Auswertung ist <strong>ausgeschaltet</strong>. Es wird nichts eingereiht und keine

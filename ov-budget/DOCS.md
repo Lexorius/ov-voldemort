@@ -1325,7 +1325,11 @@ liegen; dauerhafte Gründe wie eine unlesbare Dateiart werden nicht
 wiederholt. Die Verwaltungsseite zählt die Gründe und bietet
 „Fehlgeschlagene erneut" an – etwa nachdem ein Vision-Modell eingetragen
 wurde. „Alles neu auswerten" schickt sämtliche Dateien noch einmal durch,
-etwa nach einem Modellwechsel.
+etwa nach einem Modellwechsel. Ist Ollama gar nicht erreichbar – der
+Rechner schläft, das Netz ist weg –, verbraucht das keinen Versuch: der
+Auftrag geht zurück in die Reihe, die Warteschlange ruht zehn Minuten und
+probiert es dann von selbst wieder. Ein Rechner, der nachts in den
+Ruhezustand geht, sollte das also nicht tun, solange Dateien warten.
 
 **Nachbessern:** Wer die Datei bearbeiten darf, kann unter ihr
 „KI-Auswertung bearbeiten" aufklappen, Zusammenfassung und Schlagwörter

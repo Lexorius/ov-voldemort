@@ -186,10 +186,18 @@ $r = ki_warteschlange_abarbeiten();
 $sql = implode("\n", array_column($GLOBALS['execs'], 0));
 $check('abarbeiten: eine fertig, eine übersprungen (Datei fehlt – ohne Wiederholung), abgeschaltete Ablage bleibt liegen', $r['bearbeitet'] === 2 && $r['fertig'] === 1 && $r['uebersprungen'] === 1 && $r['fehler'] === 0 && $r['meldungen'] === []
     && str_contains($sql, "status = 'laeuft', versuche = versuche + 1") && str_contains($sql, "status = 'fertig'") && str_contains($sql, "status = 'fehler', versuche = ?") && substr_count($sql, 'laeuft') === 3);
-$GLOBALS['ki_http_attrappe'] = static function (): array { throw new KiException('Ollama ist nicht erreichbar: Zeitüberschreitung'); };
+$GLOBALS['ki_http_attrappe'] = static function (): array { throw new KiException('Ollama hat nicht rechtzeitig geantwortet (Zeitlimit 120 s): Zeitüberschreitung'); };
 $GLOBALS['auftrag_rows'] = [['id' => 1, 'typ' => 'fahrzeug', 'datei_id' => 5, 'status' => 'offen']];
 $r = ki_warteschlange_abarbeiten();
-$check('abarbeiten: Ollama weg = richtiger Fehler mit Meldung, wird wiederholt', $r['fehler'] === 1 && $r['uebersprungen'] === 0 && str_contains($r['meldungen'][0], 'Zeitüberschreitung'));
+$check('abarbeiten: Ollama zu langsam = richtiger Fehler mit Meldung, wird wiederholt', $r['fehler'] === 1 && $r['uebersprungen'] === 0 && !$r['ruhe'] && str_contains($r['meldungen'][0], 'Zeitüberschreitung'));
+$GLOBALS['ki_http_attrappe'] = static function (): array { throw new KiNichtErreichbar('Ollama ist nicht erreichbar: Connection timed out after 10001 milliseconds'); };
+$GLOBALS['auftrag_rows'] = [['id' => 1, 'typ' => 'fahrzeug', 'datei_id' => 5, 'status' => 'offen'], ['id' => 2, 'typ' => 'fahrzeug', 'datei_id' => 6, 'status' => 'offen']];
+$GLOBALS['execs'] = [];
+$r = ki_warteschlange_abarbeiten();
+$sql = implode("\n", array_column($GLOBALS['execs'], 0));
+$check('abarbeiten: Rechner schläft = Auftrag unverbraucht zurück, Ruhe, kein zweiter Versuch', $r['bearbeitet'] === 0 && $r['fehler'] === 0 && $r['ruhe'] && str_contains($r['meldungen'][0], 'ruht 10 Minuten')
+    && str_contains($sql, "status = 'offen', versuche = versuche - 1") && substr_count($sql, "SET status = 'laeuft'") === 1 && in_array('ki_ruhe_bis', array_merge(...array_column($GLOBALS['execs'], 1)), true));
+$check('Verbindung testen bei schlafendem Rechner: Fehler, kein Absturz', !ki_verbindung_testen()['ok']);
 $GLOBALS['execs'] = [];
 $check('alles neu: zurück auf offen, Laufendes bleibt', ki_alles_neu() === 1 && str_contains($GLOBALS['execs'][0][0], "SET status = 'offen', versuche = 0") && str_contains($GLOBALS['execs'][0][0], "status <> 'laeuft'"));
 $GLOBALS['auftrag_rows'] = [];
@@ -243,13 +251,13 @@ $htmlS = render_partial('ki_suche', ['q' => '', 'treffer' => [], 'tags' => [], '
 $check('Suchseite ohne Auswertung: Hinweis', str_contains($htmlS, 'ausgeschaltet') && !str_contains($htmlS, 'Treffer für'));
 $htmlA = render_partial('admin/ki', ['fehler' => '', 'hinweis' => '', 'test' => ['ok' => true, 'fehler' => '', 'modelle' => ['qwen2.5:7b']], 'status' => ['offen' => 2, 'laeuft' => 0, 'fertig' => 5, 'fehler' => 1, 'ergebnisse' => 5],
     'fehlerliste' => [['typ' => 'fahrzeug', 'datei_id' => 8, 'fehler' => 'Die Datei fehlt in der Ablage.', 'versuche' => 3, 'erledigt_am' => '2026-10-15 10:00:00', 'name' => 'weg.pdf', 'eltern' => ['text' => 'MTW', 'url' => '?p=vehicle&id=2']]],
-    'gruende' => [['fehler' => 'Bilder werden nur mit einem Vision-Modell ausgewertet (Einstellung „Vision-Modell").', 'n' => 61], ['fehler' => 'Die Datei fehlt in der Ablage.', 'n' => 1]],
+    'gruende' => [['fehler' => 'Bilder werden nur mit einem Vision-Modell ausgewertet (Einstellung „Vision-Modell").', 'n' => 61], ['fehler' => 'Die Datei fehlt in der Ablage.', 'n' => 1]], 'ruheBis' => time() + 500,
     'aktiv' => true, 'url' => 'http://192.168.1.20:11434', 'urlGrund' => null, 'pdftotext' => true, 'pdftoppm' => false, 'module' => [['label' => 'Fahrzeugakte', 'an' => true], ['label' => 'Termin', 'an' => false]]]);
 $check('Verwaltungsseite: Verbindung, Modelle, Warteschlange, Gründe, Fehler, Knöpfe', str_contains($htmlA, 'http://192.168.1.20:11434') && str_contains($htmlA, '<code>qwen2.5:7b</code>') && str_contains($htmlA, 'pdftoppm ✘ fehlt') && str_contains($htmlA, 'Termin (aus)')
     && str_contains($htmlA, 'value="abarbeiten"') && str_contains($htmlA, 'value="alle"') && str_contains($htmlA, 'value="erneut"') && str_contains($htmlA, 'weg.pdf') && str_contains($htmlA, 'Die Datei fehlt')
-    && str_contains($htmlA, 'Woran es scheitert') && str_contains($htmlA, '<td style="text-align:right">61</td>') && str_contains($htmlA, '1 von 1') && str_contains($htmlA, 'value="alle_neu"'));
+    && str_contains($htmlA, 'Woran es scheitert') && str_contains($htmlA, '<td style="text-align:right">61</td>') && str_contains($htmlA, '1 von 1') && str_contains($htmlA, 'value="alle_neu"') && str_contains($htmlA, 'Die Warteschlange ruht bis'));
 $einstellen(['ki_aktiv' => '0']);
-$htmlA = render_partial('admin/ki', ['fehler' => '', 'hinweis' => '', 'test' => null, 'status' => ['offen' => 0, 'laeuft' => 0, 'fertig' => 0, 'fehler' => 0, 'ergebnisse' => 0], 'fehlerliste' => [], 'gruende' => [], 'aktiv' => false, 'url' => '', 'urlGrund' => 'Keine Adresse eingetragen.', 'pdftotext' => false, 'pdftoppm' => false, 'module' => []]);
+$htmlA = render_partial('admin/ki', ['fehler' => '', 'hinweis' => '', 'test' => null, 'status' => ['offen' => 0, 'laeuft' => 0, 'fertig' => 0, 'fehler' => 0, 'ergebnisse' => 0], 'fehlerliste' => [], 'gruende' => [], 'ruheBis' => 0, 'aktiv' => false, 'url' => '', 'urlGrund' => 'Keine Adresse eingetragen.', 'pdftotext' => false, 'pdftoppm' => false, 'module' => []]);
 $check('Verwaltungsseite aus: Warnung, Knöpfe gesperrt', str_contains($htmlA, 'ausgeschaltet') && str_contains($htmlA, 'value="abarbeiten" disabled') && str_contains($htmlA, 'value="test" disabled') && !str_contains($htmlA, 'value="erneut"'));
 
 // aufräumen

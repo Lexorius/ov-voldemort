@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 2.1.38.2
+
+- **Schlafender Ollama-Rechner verbraucht keine Versuche mehr:** Kommt keine
+  Verbindung zustande, geht der Auftrag unverbraucht zurück, die
+  Warteschlange ruht zehn Minuten und probiert es dann wieder; die
+  Verwaltungsseite zeigt die Ruhe an, „Jetzt abarbeiten" übergeht sie.
+  Zeitüberschreitung beim Rechnen und fehlende Verbindung sind jetzt
+  getrennte Meldungen.
+
 ## 2.1.38.1
 
 - **Bilder besser beschrieben:** eigener Prompt für das Vision-Modell (nur,
