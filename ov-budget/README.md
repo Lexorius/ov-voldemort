@@ -147,6 +147,8 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - **Ausgaben im Blick**: Buchungen aus dem Budgetmodul lassen sich der
   Veranstaltung zuordnen, die Seite zeigt geplant gegen tatsächlich
 - **Dateien** wie Rechnungen, Angebote und Programm
+- **Fahrzeuge** je Veranstaltung mit Warnung vor Doppelbuchungen – Fahrzeugakte
+  und Startseite zeigen sie als verplant
 - **Gästeliste aus den Kontakten** – einzeln, als ganzer Verteiler oder frei
   mit Namen
 - **Oder nur eine Zahl**: Ausbildungen und Übungen kommen ohne Gästeliste aus –

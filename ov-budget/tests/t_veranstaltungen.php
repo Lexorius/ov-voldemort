@@ -181,6 +181,17 @@ $GLOBALS['inserts'] = [];
 $daten = $GLOBALS['inserts'][0][1];
 $check('ohne Endzeit kein Ende', array_key_exists('ende', $daten) && $daten['ende'] === null);
 
+$_POST['fahrzeuge_feld'] = '1'; $_POST['vehicles'] = ['3', '3', '0']; $_POST['vehicles_neu'] = '5';
+$GLOBALS['inserts'] = [];
+[$id, $fehler] = event_save_from_post(null, ['id' => 1]);
+$fz = array_values(array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'event_vehicles'));
+$check('Fahrzeuge an der Veranstaltung: aus Liste und Auswahl, ohne Dubletten und Nullen', count($fz) === 2 && $fz[0][1]['vehicle_id'] === 3 && $fz[1][1]['vehicle_id'] === 5 && $fz[0][1]['event_id'] === $id);
+unset($_POST['fahrzeuge_feld'], $_POST['vehicles'], $_POST['vehicles_neu']);
+$GLOBALS['inserts'] = [];
+[$id, $fehler] = event_save_from_post(null, ['id' => 1]);
+$check('ohne das Feld im Formular bleiben die Fahrzeuge unangetastet', array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'event_vehicles') === []);
+$check('Fahrzeug-Unterabfrage', str_contains(event_fahrzeuge_sub('e'), 'FROM event_vehicles ev JOIN vehicles v') && str_ends_with(event_fahrzeuge_sub('x'), 'ev.event_id = x.id)'));
+
 /* ================= Gästeliste oder nur eine Zahl ================= */
 $check('Kurznamen gelesen',
     event_typen_ohne_liste('ausbildung, uebung ,, dienstabend') === ['ausbildung', 'uebung', 'dienstabend']);

@@ -305,7 +305,7 @@ $check('Akte: Stein-Eintrag gekennzeichnet', str_contains($html, 'journal__row--
 $check('Akte: Prüf-Link', str_contains($html, 'pruefen=1'));
 $check('Akte: Eingabefeld für Journal', str_contains($html, 'name="text"'));
 $check('Akte: Stellplatz verlinkt zur Standortseite', str_contains($html, 'p=standorte&amp;id=5') && str_contains($html, '>Halle 1 › Stellplatz 3</a>'));
-$check('Akte: Termine-Abschnitt ohne Termine', str_contains($html, 'Termine mit diesem Fahrzeug') && str_contains($html, 'in keinem Termin eingeplant'));
+$check('Akte: Termine-Abschnitt ohne Termine', str_contains($html, 'Termine und Veranstaltungen mit diesem Fahrzeug') && str_contains($html, 'in keinem Termin und keiner Veranstaltung eingeplant'));
 $check('Akte: Sitzplätze und Zuladung', str_contains($html, '9 Personen') && str_contains($html, '1.200 kg'));
 $check('Akte: Träger verlinkt, Ladung genannt', str_contains($html, 'FwA Boot (HN-TH 123)</a>') && str_contains($html, 'p=vehicle&amp;id=2') && str_contains($html, '>Pumpe</a>'));
 

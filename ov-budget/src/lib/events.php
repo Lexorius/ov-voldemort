@@ -59,7 +59,8 @@ function event_find(?int $id): ?array
         'SELECT e.*, b.name AS budget_name, b.betrag_netto AS budget_betrag,
                 fg.label AS fachgruppe_label, t.label AS typ_label, t.color AS typ_color, t.slug AS typ_slug,
                 c.name AS connector_name, u.display_name AS ersteller,
-                ' . (function_exists('standort_namen_subquery') ? standort_namen_subquery('event_standorte', 'event_id', 'e') : "''") . ' AS standorte_namen
+                ' . (function_exists('standort_namen_subquery') ? standort_namen_subquery('event_standorte', 'event_id', 'e') : "''") . ' AS standorte_namen,
+                ' . event_fahrzeuge_sub('e') . ' AS fahrzeuge_namen
          FROM events e
          LEFT JOIN budgets    b  ON b.id  = e.budget_id
          LEFT JOIN list_items fg ON fg.id = e.fachgruppe_id
@@ -246,7 +247,36 @@ function event_save_from_post(?array $e, array $user): array
     if (post_str('standorte_feld') === '1' && function_exists('standort_links_setzen')) {
         standort_links_setzen('event_standorte', 'event_id', $id, wahl_ids('standorte'));
     }
+    // Fahrzeuge nur, wenn das Feld im Formular war (sonst bliebe eine fremde Maske ohne Fahrzeuge)
+    if (post_str('fahrzeuge_feld') === '1') {
+        event_fahrzeuge_setzen($id, wahl_ids('vehicles'));
+    }
     return [$id, []];
+}
+
+/* ==================================================================== */
+/* Fahrzeuge je Veranstaltung                                            */
+/* ==================================================================== */
+
+function event_fahrzeuge(int $eventId): array
+{
+    return db_all('SELECT v.id, v.bezeichnung, v.funkrufname, v.kennzeichen, v.is_active FROM event_vehicles ev
+                   JOIN vehicles v ON v.id = ev.vehicle_id WHERE ev.event_id = ? ORDER BY v.bezeichnung', [$eventId]);
+}
+
+/** Genau diese Fahrzeuge gehören zur Veranstaltung */
+function event_fahrzeuge_setzen(int $eventId, array $ids): void
+{
+    db_exec('DELETE FROM event_vehicles WHERE event_id = ?', [$eventId]);
+    foreach (array_values(array_unique(array_filter(array_map('intval', $ids), static fn($i) => $i > 0))) as $vid) {
+        db_insert('event_vehicles', ['event_id' => $eventId, 'vehicle_id' => $vid]);
+    }
+}
+
+/** Unterabfrage „GKW 1 · MTW" für Listen und Kalender. Reine Funktion. */
+function event_fahrzeuge_sub(string $alias = 'e'): string
+{
+    return "(SELECT GROUP_CONCAT(v.bezeichnung ORDER BY v.bezeichnung SEPARATOR ' · ') FROM event_vehicles ev JOIN vehicles v ON v.id = ev.vehicle_id WHERE ev.event_id = $alias.id)";
 }
 
 /** Plätze und freier Ort als ein Text: „Gute Stube · Küche · Festzelt hinter dem Haus". Reine Funktion. */

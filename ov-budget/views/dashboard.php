@@ -115,7 +115,7 @@ $quoteCls = ($zahlen['verfuegbar'] > 0 && $zahlen['ausgaben'] > $zahlen['verfueg
           </a>
           <div class="chips" style="margin-top:.4rem">
             <?php foreach ($g['termine'] as $t): $tag = substr($t['beginn'], 0, 10); $zeit = kalender_zeit($t); ?>
-              <a class="chip<?= !empty($t['konflikt']) ? ' chip--konflikt' : '' ?>" href="<?= e(url('kalender_termin', ['id' => $t['id']])) ?>"<?= !empty($t['konflikt']) ? ' title="Überschneidet sich mit einem anderen Termin dieses Fahrzeugs"' : '' ?>><strong><?= e($tageKurz[(int)date('N', strtotime($tag)) - 1] . ' ' . date('d.m.', strtotime($tag))) ?></strong>
+              <a class="chip<?= !empty($t['konflikt']) ? ' chip--konflikt' : '' ?>" href="<?= e(!empty($t['url']) ? (string)$t['url'] : url('kalender_termin', ['id' => $t['id']])) ?>"<?= !empty($t['konflikt']) ? ' title="Überschneidet sich mit einem anderen Termin dieses Fahrzeugs"' : '' ?>><strong><?= e($tageKurz[(int)date('N', strtotime($tag)) - 1] . ' ' . date('d.m.', strtotime($tag))) ?></strong>
                 <?= $zeit !== '' ? e($zeit) : 'ganztägig' ?> · <?= e($t['titel']) ?><?= $t['ort'] !== '' ? ' <span class="muted small">' . e($t['ort']) . '</span>' : '' ?></a>
             <?php endforeach; ?>
           </div>

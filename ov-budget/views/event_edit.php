@@ -56,6 +56,18 @@ $endeZeit = substr((string)($event['ende'] ?? ''), 11, 5);
     </div>
     <?= render_partial('partials/standorte_wahl', ['standorte' => $standorte ?? [], 'gewaehlt' => $standorteGewaehlt ?? [],
         'hinweis' => 'Aus den Stell- und Lagerplätzen – eine Veranstaltung kann mehrere Plätze belegen, etwa Gute Stube, Küche und Schulungsraum.']) ?>
+    <?php $fahrzeuge ??= []; $fahrzeugeGewaehlt ??= []; $belegt ??= []; if ($fahrzeuge): ?>
+      <?php $fzOptionen = []; $bloecke = kalender_fahrzeuge_bloecke($fahrzeuge);
+      foreach (['fahrzeuge' => 'Autos und LKW', 'anhaenger' => 'Anhänger', 'geraete' => 'Geräte'] as $key => $gruppe) {
+          foreach ($bloecke[$key] ?? [] as $v) {
+              $andere = $belegt[(int)$v['id']] ?? [];
+              $fzOptionen[] = ['id' => (int)$v['id'], 'text' => (string)$v['bezeichnung'], 'sub' => implode(' · ', array_filter([(string)($v['funkrufname'] ?? ''), function_exists('vehicle_kapazitaet_text') ? vehicle_kapazitaet_text($v) : ''])), 'gruppe' => $gruppe,
+                               'warn' => $andere ? 'schon verplant: ' . implode(' und ', array_map(static fn($t) => '„' . $t['titel'] . '" (' . kalender_wann($t) . ')', $andere)) : ''];
+          }
+      } ?>
+      <?= render_partial('partials/wahl_liste', ['name' => 'vehicles', 'feld' => 'fahrzeuge_feld', 'label' => 'Fahrzeuge', 'optionen' => $fzOptionen, 'gewaehlt' => $fahrzeugeGewaehlt, 'leer' => '– Fahrzeug wählen –',
+          'hinweis' => 'Welche Fahrzeuge die Veranstaltung braucht – Fahrzeugakte und Startseite zeigen sie dann als verplant. Ein ⚠ heißt: zu der Zeit schon in einem Termin oder einer anderen Veranstaltung; hinzufügen geht trotzdem, dann warnt die Seite.']) ?>
+    <?php endif; ?>
     <div class="grid2">
       <div class="field">
         <label for="status">Status</label>

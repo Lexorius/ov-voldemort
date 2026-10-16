@@ -1931,6 +1931,19 @@ SQL);
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
     }
     $merken('072_geo');
+
+    /* ---------- 073: Fahrzeuge je Veranstaltung ---------- */
+    if (!ovb_table_exists($pdo, 'event_vehicles') && ovb_table_exists($pdo, 'events') && ovb_table_exists($pdo, 'vehicles')) {
+        $pdo->exec("CREATE TABLE event_vehicles (
+  event_id    INT UNSIGNED NOT NULL,
+  vehicle_id  INT UNSIGNED NOT NULL,
+  PRIMARY KEY (event_id, vehicle_id),
+  KEY idx_ev_vehicle (vehicle_id),
+  CONSTRAINT fk_ev_event   FOREIGN KEY (event_id)   REFERENCES events(id)   ON DELETE CASCADE,
+  CONSTRAINT fk_ev_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    $merken('073_event_fahrzeuge');
 }
 
 /**

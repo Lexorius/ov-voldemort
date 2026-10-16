@@ -1,5 +1,15 @@
 # Änderungsverlauf
 
+## 2.1.40.0
+
+- **Fahrzeuge an Veranstaltungen:** Im Veranstaltungsformular lassen sich
+  Fahrzeuge wie am Termin zuordnen (Autos und LKW, Anhänger, Geräte; Boote
+  bringen ihren Anhänger mit). Doppelbuchungen mit Terminen und anderen
+  Veranstaltungen werden markiert und beim Speichern gemeldet – in beide
+  Richtungen. Die Veranstaltungsseite zeigt die Fahrzeuge, die Fahrzeugakte
+  ihre Veranstaltungen, die Startseite zählt sie bei den in der Woche
+  verplanten Fahrzeugen mit, der Kalender nennt sie am Eintrag.
+
 ## 2.1.39.0
 
 - **Entfernungen (!! TEST !!):** Luftlinie und Fahrstrecke von der

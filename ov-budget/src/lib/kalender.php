@@ -241,6 +241,9 @@ function kalender_termine_auftrag(int $orderId, array $u): array
 /** Untertitel eines Termins: für wen – dazu Dienststellen (⛑), Aufträge (🔧) und Kontakte (👤, nur wer Kontakte sehen darf). */
 function kalender_untertitel(array $t): string
 {
+    if (($t['quelle'] ?? '') === 'veranstaltung') {
+        return (string)($t['untertitel_text'] ?? 'Veranstaltung');
+    }
     $d = trim((string)($t['dienststellen_namen'] ?? ''));
     $a = trim((string)($t['auftraege_namen'] ?? ''));
     $k = can('view_contacts') ? trim((string)($t['kontakte_namen'] ?? '')) : '';
@@ -376,7 +379,42 @@ function kalender_termine_fahrzeug(int $vehicleId, string $von, string $bis, arr
          ORDER BY k.beginn, k.id',
         [$vehicleId, $bis . ' 23:59:59', $von . ' 00:00:00']
     );
-    return array_values(array_filter($rows, static fn($t) => kalender_sichtbar($t, $u)));
+    $rows = array_values(array_filter($rows, static fn($t) => kalender_sichtbar($t, $u)));
+    if (can('view_events')) {
+        foreach (db_all("SELECT e.id, e.titel, e.beginn, e.ende, e.ort, t.color AS typ_color, t.label AS typ_label,
+                                " . kalender_standorte_sub('event_standorte', 'event_id', 'e') . " AS standort_name
+                         FROM event_vehicles ev JOIN events e ON e.id = ev.event_id LEFT JOIN list_items t ON t.id = e.typ_id
+                         WHERE ev.vehicle_id = ? AND e.beginn < ? AND COALESCE(e.ende, e.beginn) >= ? AND e.status <> 'abgesagt'
+                         ORDER BY e.beginn", [$vehicleId, $bis . ' 23:59:59', $von . ' 00:00:00']) as $e) {
+            $rows[] = kalender_veranstaltung_als_termin($e);
+        }
+        usort($rows, static fn($a, $b) => [$a['beginn'], $a['titel']] <=> [$b['beginn'], $b['titel']]);
+    }
+    return $rows;
+}
+
+/**
+ * Eine Veranstaltung in der Form eines Termins – für Fahrzeugakte, Startseite
+ * und Doppelbuchungen. Fahrzeugspalten (vehicle_*) bleiben erhalten. Reine Funktion.
+ */
+function kalender_veranstaltung_als_termin(array $e): array
+{
+    return array_merge($e, [
+        'id'         => (int)$e['id'],
+        'titel'      => (string)$e['titel'],
+        'beginn'     => (string)$e['beginn'],
+        'ende'       => $e['ende'] ?? null,
+        'ganztag'    => substr((string)$e['beginn'], 11, 5) === '00:00' ? 1 : 0,
+        'ort'        => (string)($e['ort'] ?? ''),
+        'standort_name' => (string)($e['standort_name'] ?? ''),
+        'farbe'      => (string)(($e['typ_color'] ?? '') ?: KALENDER_QUELLEN['veranstaltung']['color']),
+        'quelle'     => 'veranstaltung',
+        'url'        => url('event', ['id' => (int)$e['id']]),
+        'untertitel_text' => 'Veranstaltung' . (!empty($e['typ_label']) ? ' · ' . $e['typ_label'] : ''),
+        'ziel'       => 'ov',
+        'ziel_id'    => null,
+        'fachgruppen_ids' => '',
+    ]);
 }
 
 /** Alle Fahrzeuge, die im Zeitraum in Terminen verplant sind – je Fahrzeug seine Termine */
@@ -393,7 +431,18 @@ function kalender_fahrzeuge_zeitraum(string $von, string $bis, array $u): array
          ORDER BY v.bezeichnung, k.beginn, k.id',
         [$bis . ' 23:59:59', $von . ' 00:00:00']
     );
-    return kalender_fahrzeuge_gruppieren(array_values(array_filter($rows, static fn($t) => kalender_sichtbar($t, $u))));
+    $rows = array_values(array_filter($rows, static fn($t) => kalender_sichtbar($t, $u)));
+    if (can('view_events')) {
+        foreach (db_all("SELECT e.id, e.titel, e.beginn, e.ende, e.ort, t.color AS typ_color, t.label AS typ_label,
+                                " . kalender_standorte_sub('event_standorte', 'event_id', 'e') . " AS standort_name,
+                                v.id AS vehicle_id, v.bezeichnung AS vehicle_bezeichnung, v.funkrufname AS vehicle_funkrufname, v.kennzeichen AS vehicle_kennzeichen
+                         FROM event_vehicles ev JOIN events e ON e.id = ev.event_id JOIN vehicles v ON v.id = ev.vehicle_id LEFT JOIN list_items t ON t.id = e.typ_id
+                         WHERE e.beginn < ? AND COALESCE(e.ende, e.beginn) >= ? AND e.status <> 'abgesagt'
+                         ORDER BY v.bezeichnung, e.beginn", [$bis . ' 23:59:59', $von . ' 00:00:00']) as $e) {
+            $rows[] = kalender_veranstaltung_als_termin($e);
+        }
+    }
+    return kalender_fahrzeuge_gruppieren($rows);
 }
 
 /** Zeilen (Termin + Fahrzeugspalten) je Fahrzeug bündeln, Fahrzeuge nach dem frühesten Termin. Reine Funktion. */
@@ -407,7 +456,8 @@ function kalender_fahrzeuge_gruppieren(array $rows): array
                                          'kennzeichen' => (string)($r['vehicle_kennzeichen'] ?? '')], 'termine' => []];
         }
         $out[$vid]['termine'][] = ['id' => (int)$r['id'], 'titel' => (string)$r['titel'], 'beginn' => (string)$r['beginn'], 'ende' => $r['ende'] ?? null,
-                                   'ganztag' => (int)($r['ganztag'] ?? 0) === 1, 'ort' => kalender_ort_text($r)];
+                                   'ganztag' => (int)($r['ganztag'] ?? 0) === 1, 'ort' => kalender_ort_text($r),
+                                   'quelle' => (string)($r['quelle'] ?? 'termin'), 'url' => (string)($r['url'] ?? '')];
     }
     foreach ($out as &$g) {
         usort($g['termine'], static fn($a, $b) => $a['beginn'] <=> $b['beginn']);
@@ -448,7 +498,7 @@ function kalender_zeitraum_aus_feldern(array $t): ?array
  * Welche dieser Fahrzeuge stecken im Zeitraum schon in einem anderen Termin?
  * Rückgabe: [vehicle_id => [[id, titel, beginn, ende, ganztag]]]. $ausser: der eigene Termin.
  */
-function kalender_fahrzeug_konflikte(array $vehicleIds, string $beginn, string $ende, int $ausser = 0): array
+function kalender_fahrzeug_konflikte(array $vehicleIds, string $beginn, string $ende, int $ausser = 0, int $ausserVeranstaltung = 0): array
 {
     $ids = array_values(array_filter(array_map('intval', $vehicleIds), static fn($i) => $i > 0));
     if (!$ids) {
@@ -456,12 +506,23 @@ function kalender_fahrzeug_konflikte(array $vehicleIds, string $beginn, string $
     }
     $platz = implode(',', array_fill(0, count($ids), '?'));
     $rows = db_all(
-        "SELECT cv.vehicle_id, k.id, k.titel, k.beginn, k.ende, k.ganztag
+        "SELECT cv.vehicle_id, k.id, k.titel, k.beginn, k.ende, k.ganztag, 'termin' AS quelle
          FROM calendar_vehicles cv JOIN calendar_entries k ON k.id = cv.entry_id
          WHERE cv.vehicle_id IN ($platz) AND k.id <> ? AND k.beginn <= ? AND COALESCE(k.ende, k.beginn) >= ?
          ORDER BY k.beginn, k.id",
         array_merge($ids, [$ausser, $ende, $beginn])
     );
+    // Veranstaltungen belegen Fahrzeuge genauso
+    foreach (db_all(
+        "SELECT ev.vehicle_id, e.id, e.titel, e.beginn, e.ende, 'veranstaltung' AS quelle
+         FROM event_vehicles ev JOIN events e ON e.id = ev.event_id
+         WHERE ev.vehicle_id IN ($platz) AND e.id <> ? AND e.beginn <= ? AND COALESCE(e.ende, e.beginn) >= ? AND e.status <> 'abgesagt'
+         ORDER BY e.beginn, e.id",
+        array_merge($ids, [$ausserVeranstaltung, $ende, $beginn])
+    ) as $e) {
+        $e['ganztag'] = substr((string)$e['beginn'], 11, 5) === '00:00' ? 1 : 0;
+        $rows[] = $e;
+    }
     return kalender_konflikte_gruppieren($rows, $beginn, $ende);
 }
 
@@ -472,7 +533,7 @@ function kalender_konflikte_gruppieren(array $rows, string $beginn, string $ende
     foreach ($rows as $r) {
         if (kalender_ueberschneidung($beginn, $ende, (string)$r['beginn'], $r['ende'] ?? null)) {
             $out[(int)$r['vehicle_id']][] = ['id' => (int)$r['id'], 'titel' => (string)$r['titel'], 'beginn' => (string)$r['beginn'],
-                                             'ende' => $r['ende'] ?? null, 'ganztag' => (int)($r['ganztag'] ?? 0) === 1];
+                                             'ende' => $r['ende'] ?? null, 'ganztag' => (int)($r['ganztag'] ?? 0) === 1, 'quelle' => (string)($r['quelle'] ?? 'termin')];
         }
     }
     return $out;
@@ -495,7 +556,8 @@ function kalender_konflikt_text(array $konflikte, array $fahrzeuge): string
     }
     $teile = [];
     foreach ($konflikte as $vid => $termine) {
-        $teile[] = ($namen[(int)$vid] ?? ('Fahrzeug #' . $vid)) . ' ist auch im Termin ' . implode(' und ', array_map(static fn($t) => '„' . $t['titel'] . '" (' . kalender_wann($t) . ')', $termine));
+        $teile[] = ($namen[(int)$vid] ?? ('Fahrzeug #' . $vid)) . ' ist auch ' . implode(' und ', array_map(static fn($t) =>
+            (($t['quelle'] ?? 'termin') === 'veranstaltung' ? 'in der Veranstaltung „' : 'im Termin „') . $t['titel'] . '" (' . kalender_wann($t) . ')', $termine));
     }
     return $teile ? 'Doppelbuchung: ' . implode('; ', $teile) . '.' : '';
 }
@@ -664,11 +726,12 @@ function standort_belegung(int $standortId, string $von, string $bis, array $u):
         ]);
     }
     if (can('view_events')) {
-        foreach (db_all("SELECT e.id, e.titel, e.beginn, e.ende, e.ort, t.color AS typ_color, t.label AS typ_label
+        foreach (db_all("SELECT e.id, e.titel, e.beginn, e.ende, e.ort, t.color AS typ_color, t.label AS typ_label,
+                                " . (function_exists('event_fahrzeuge_sub') ? event_fahrzeuge_sub('e') : "''") . " AS fahrzeuge_namen
                          FROM event_standorte es JOIN events e ON e.id = es.event_id LEFT JOIN list_items t ON t.id = e.typ_id
                          WHERE es.standort_id = ? AND e.beginn <= ? AND COALESCE(e.ende, e.beginn) >= ? AND e.status <> 'abgesagt'
                          ORDER BY e.beginn", [$standortId, $bis . ' 23:59:59', $von . ' 00:00:00']) as $e) {
-            $out[] = kalender_eintrag('veranstaltung', (string)$e['titel'], (string)$e['beginn'], $e['ende'], ['ort' => (string)$e['ort'], 'id' => $e['id'],
+            $out[] = kalender_eintrag('veranstaltung', (string)$e['titel'], (string)$e['beginn'], $e['ende'], ['ort' => (string)$e['ort'], 'id' => $e['id'], 'fahrzeuge' => (string)($e['fahrzeuge_namen'] ?? ''),
                 'url' => url('event', ['id' => $e['id']]), 'farbe' => $e['typ_color'] ?: KALENDER_QUELLEN['veranstaltung']['color'],
                 'untertitel' => (string)($e['typ_label'] ?? ''), 'ganztag' => substr((string)$e['beginn'], 11, 5) === '00:00']);
         }
@@ -771,10 +834,11 @@ function kalender_quelle(string $quelle, string $von, string $bis, array $u): ar
     }
     if (in_array('veranstaltung', $quellen, true)) {
         foreach (db_all("SELECT e.id, e.titel, e.beginn, e.ende, e.ort, t.color AS typ_color, t.label AS typ_label,
-                                " . kalender_standorte_sub('event_standorte', 'event_id', 'e') . " AS standort_name
+                                " . kalender_standorte_sub('event_standorte', 'event_id', 'e') . " AS standort_name,
+                                " . (function_exists('event_fahrzeuge_sub') ? event_fahrzeuge_sub('e') : "''") . " AS fahrzeuge_namen
                          FROM events e LEFT JOIN list_items t ON t.id = e.typ_id
                          WHERE e.beginn <= ? AND COALESCE(e.ende, e.beginn) >= ? AND e.status <> 'abgesagt'", [$bis . ' 23:59:59', $von . ' 00:00:00']) as $e) {
-            $out[] = kalender_eintrag('veranstaltung', (string)$e['titel'], (string)$e['beginn'], $e['ende'], ['ort' => kalender_ort_text($e), 'id' => $e['id'],
+            $out[] = kalender_eintrag('veranstaltung', (string)$e['titel'], (string)$e['beginn'], $e['ende'], ['ort' => kalender_ort_text($e), 'id' => $e['id'], 'fahrzeuge' => (string)($e['fahrzeuge_namen'] ?? ''),
                 'url' => url('event', ['id' => $e['id']]), 'farbe' => $e['typ_color'] ?: KALENDER_QUELLEN['veranstaltung']['color'],
                 'untertitel' => (string)($e['typ_label'] ?? ''), 'ganztag' => substr((string)$e['beginn'], 11, 5) === '00:00']);
         }

@@ -762,6 +762,18 @@ und die Prüfung sagt, ob das so eingerichtet ist.
 Anlegen und ändern darf die **OV-Leitung**; ob alle Mitglieder Veranstaltungen
 sehen, steht unter *Einstellungen → Veranstaltungen*.
 
+### Fahrzeuge
+
+Jede Veranstaltung kann Fahrzeuge brauchen – den MTW für die Fahrt, den
+Anhänger mit dem Zelt, das Boot. Im Formular steht dieselbe Auswahl wie am
+Termin: Fahrzeug wählen, „+", Mülleimer zum Entfernen; Boote bringen ihren
+Anhänger automatisch mit. Ein ⚠ warnt, wenn ein Fahrzeug zu der Zeit schon
+in einem Termin oder einer anderen Veranstaltung steckt; speichern geht
+trotzdem, die Seite meldet dann die Doppelbuchung. Die Fahrzeugakte zeigt
+Veranstaltungen unter „Termine und Veranstaltungen mit diesem Fahrzeug", die
+Startseite zählt sie bei den in der Woche verplanten Fahrzeugen mit, und
+auch Termine warnen vor Fahrzeugen, die eine Veranstaltung belegt.
+
 ### Gästeliste
 
 Eingeladen wird aus dem Kontaktmodul: einzeln über die Suche, als ganzer

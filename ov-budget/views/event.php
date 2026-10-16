@@ -93,6 +93,10 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
       <div class="dl__item"><div class="dl__label">Ort</div>
         <div class="dl__value"><?= e((string)$event['ort']) ?><?= !empty($entfernung) ? '<div class="small muted">🚗 ' . e(geo_entfernung_text($entfernung)) . ' ab ' . e((string)$entfernung['heim']) . ' <span class="badge badge--warn" title="Testbetrieb: Adressen über OpenStreetMap, Strecken über den OSRM-Demoserver – ohne Gewähr">Test</span></div>' : '' ?></div></div>
     <?php endif; ?>
+    <?php $fahrzeuge ??= []; if ($fahrzeuge): ?>
+      <div class="dl__item"><div class="dl__label">Fahrzeuge</div>
+        <div class="dl__value"><?php foreach ($fahrzeuge as $i => $v): ?><?= $i ? ' · ' : '' ?><a href="<?= e(url('vehicle', ['id' => $v['id']])) ?>"><?= e((string)$v['bezeichnung']) ?></a><?= !empty($v['funkrufname']) ? ' <span class="muted small">' . e((string)$v['funkrufname']) . '</span>' : '' ?><?php endforeach; ?></div></div>
+    <?php endif; ?>
     <?php if (!empty($event['typ_label'])): ?>
       <div class="dl__item"><div class="dl__label">Art</div>
         <div class="dl__value"><?= e((string)$event['typ_label']) ?></div></div>
