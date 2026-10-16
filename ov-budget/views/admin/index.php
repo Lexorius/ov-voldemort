@@ -117,6 +117,9 @@ $speicher ??= null; ?>
     <p>Haushaltsjahre und Budgettöpfe pflegen.</p></div></a>
   <a href="<?= e(url('admin_nav')) ?>"><div class="card"><h3>Menüleiste</h3>
     <p>Die Reihenfolge der Module in der Leiste – für alle Benutzer.</p></div></a>
+  <a href="<?= e(url('admin_geo')) ?>"><div class="card"><h3>Entfernungen <span class="badge badge--warn">!! TEST !!</span></h3>
+    <p>Luftlinie und Fahrstrecke von der Unterkunft zu Terminen, Veranstaltungen und Dienststellen –
+       über OpenStreetMap und den OSRM-Demoserver, eine Anfrage je Abruf.</p></div></a>
   <a href="<?= e(url('admin_ki')) ?>"><div class="card"><h3>KI-Auswertung</h3>
     <p>Ein Ollama im eigenen Netz fasst hochgeladene Dateien zusammen und vergibt Schlagwörter –
        abschaltbar, mit Dateisuche.</p></div></a>

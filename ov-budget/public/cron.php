@@ -137,6 +137,11 @@ $abrufe = [
         $n = connector_ausfall_melden();
         return $n === 0 ? [] : [['status' => 'fehler', 'message' => sprintf('Ausfall gemeldet an %d Empfänger', $n)]];
     },
+    'Entfernungen'      => static function (): array {
+        // !! TEST !! – genau eine Anfrage je Abruf, nur nach der eingestellten Pause
+        $r = geo_warteschlange_abarbeiten();
+        return $r['art'] === null ? [] : [['status' => $r['ok'] ? 'ok' : 'fehler', 'message' => $r['text']]];
+    },
     'KI-Auswertung'     => static function (): array {
         if (!ki_aktiv()) {
             return [];

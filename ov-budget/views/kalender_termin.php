@@ -27,7 +27,8 @@ $weitere = implode(', ', array_map(static fn($f) => (string)$f['label'], $fachgr
       <?= trim((string)($termin['ort'] ?? '')) !== '' ? e((string)$termin['ort']) : '' ?></div></div><?php endif; ?>
     <?php if ($navi): ?>
       <div class="dl__item"><div class="dl__label">Navigation</div><div class="dl__value">Ziel: <?= e($navi['text']) ?><?= $navi['koordinaten'] ? ' <span class="muted small">(GPS-Koordinaten des Platzes)' : ' <span class="muted small">(als Adresse)' ?></span><br>
-        <span class="small"><a href="<?= e($naviLinks['google']) ?>" target="_blank" rel="noopener">Google Maps</a> · <a href="<?= e($naviLinks['apple']) ?>" target="_blank" rel="noopener">Apple Karten</a><?= isset($naviLinks['geo']) ? ' · <a href="' . e($naviLinks['geo']) . '">Karten-App (Android)</a>' : '' ?></span></div></div>
+        <span class="small"><a href="<?= e($naviLinks['google']) ?>" target="_blank" rel="noopener">Google Maps</a> · <a href="<?= e($naviLinks['apple']) ?>" target="_blank" rel="noopener">Apple Karten</a><?= isset($naviLinks['geo']) ? ' · <a href="' . e($naviLinks['geo']) . '">Karten-App (Android)</a>' : '' ?></span>
+        <?php $entfernung ??= null; if ($entfernung): ?><br><span class="small">🚗 <?= e(geo_entfernung_text($entfernung)) ?> <span class="muted">ab <?= e((string)$entfernung['heim']) ?></span> <span class="badge badge--warn" title="Testbetrieb: Adressen über OpenStreetMap, Strecken über den OSRM-Demoserver – ohne Gewähr">Test</span></span><?php endif; ?></div></div>
     <?php endif; ?>
     <div class="dl__item"><div class="dl__label">Für wen</div><div class="dl__value"><?= e($fuerWen) ?><?= $weitere !== '' ? '<br><span class="muted small">auch für ' . e($weitere) . '</span>' : '' ?></div></div>
     <?php if (!empty($termin['erfasser'])): ?><div class="dl__item"><div class="dl__label">Eingetragen von</div><div class="dl__value"><?= e((string)$termin['erfasser']) ?></div></div><?php endif; ?>

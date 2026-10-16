@@ -1,5 +1,18 @@
 # Änderungsverlauf
 
+## 2.1.39.0
+
+- **Entfernungen (!! TEST !!):** Luftlinie und Fahrstrecke von der
+  Unterkunft zu Terminen (neben „Navigation starten"), THW-Dienststellen
+  (hinter der Anschrift) und Veranstaltungen (unter dem Ort). Adressen
+  übersetzt Nominatim (OpenStreetMap), Strecken rechnet der öffentliche
+  OSRM-Demoserver – beides ohne Gewähr, deshalb überall als Test
+  gekennzeichnet und standardmäßig aus. Warteschlange mit langen Pausen:
+  genau eine Anfrage je Abruf, Vorgabe alle 120 Sekunden; jede Adresse und
+  jede Strecke wird nur einmal angefragt und dann gemerkt. Verwaltungsseite
+  mit Ausgangspunkt (Platz mit GPS-Koordinaten), Zählern, Fehlerliste und
+  „Dienststellen vormerken".
+
 ## 2.1.38.2
 
 - **Schlafender Ollama-Rechner verbraucht keine Versuche mehr:** Kommt keine

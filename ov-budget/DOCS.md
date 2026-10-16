@@ -1279,6 +1279,47 @@ achtet darauf, dass die Art zum übergeordneten Platz passt.
   freien Felder „Standort" und „Lagerort" bleiben für Hinweise wie
   „oberstes Fach". Material folgt.
 
+## Entfernungen (!! TEST !!)
+
+Luftlinie und Fahrstrecke von der Unterkunft zu einem Ziel: auf der
+Terminseite neben „Navigation starten", in der Liste der THW-Kontakte
+hinter jeder Anschrift und an der Veranstaltung unter dem Ort. Etwa
+„38 km · etwa 45 min · (Luftlinie 29 km)".
+
+**Testbetrieb.** Die Zahlen kommen von zwei öffentlichen, kostenlosen
+Diensten ohne Zusage: **Nominatim** (OpenStreetMap) übersetzt Anschriften
+in Koordinaten, der **OSRM-Demoserver** rechnet die Fahrstrecke. Beide
+können langsam sein oder wegfallen und vertragen keine Last. Darum ist
+alles mit **!! TEST !!** gekennzeichnet und so gebaut, dass es die Dienste
+schont:
+
+* Standardmäßig **aus**; Hauptschalter in Verwaltung → Einstellungen →
+  Entfernungen. Aus heißt: nichts wird angefragt, gemerkte Entfernungen
+  bleiben sichtbar.
+* **Warteschlange mit Pause.** Jede unbekannte Adresse und jede unbekannte
+  Strecke wird vorgemerkt. Der minütliche Abruf nimmt sich genau **eine**
+  Anfrage vor – und nur, wenn seit der letzten die eingestellte Pause
+  (Vorgabe 120 Sekunden) vergangen ist. Dreißig Dienststellen brauchen
+  also rund eine Stunde für die Adressen und noch einmal so lang für die
+  Strecken.
+* **Einmal gefragt, immer gemerkt.** Dieselbe Adresse und dieselbe Strecke
+  gehen nie zweimal hinaus. Beim ersten Aufruf einer Seite steht „wird
+  ermittelt …", später die Zahl; die Luftlinie erscheint, sobald die
+  Koordinaten da sind.
+* Antwortet ein Dienst mit „zu viele Anfragen" (HTTP 429), bleibt der
+  Eintrag offen und wird später erneut versucht; eine nicht gefundene
+  Adresse ist endgültig – meist hilft eine genauere Schreibweise.
+
+**Einrichten:** Der Unterkunft unter Stell- und Lagerplätze die Lage geben
+(GPS-Koordinaten), dann in Verwaltung → Entfernungen diesen Platz als
+Ausgangspunkt wählen und in den Einstellungen den Hauptschalter setzen.
+„Dienststellen vormerken" stellt alle Anschriften der THW-Kontakte in die
+Reihe. Wer OSRM oder Nominatim selbst im Netz betreibt, trägt die eigene
+Adresse in den Einstellungen ein – dann ist es kein Test mehr, die
+Kennzeichnung bleibt trotzdem.
+
+**Nicht geokodiert** werden Kontakte: das sind Privatadressen.
+
 ## KI-Auswertung der Dateien (Ollama)
 
 Ein Ollama im eigenen Netz fasst hochgeladene Dateien zusammen und vergibt

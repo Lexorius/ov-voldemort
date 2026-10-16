@@ -35,6 +35,7 @@ render('event', [
     'gaeste'    => $gaeste,
     'stats'     => event_stats($gaeste),
     'dateien'   => efile_list($id),
+    'entfernung' => trim((string)$event['ort']) !== '' && function_exists('geo_entfernung') ? geo_entfernung(['ziel' => (string)$event['ort'], 'koordinaten' => false]) : null,
     'buchungen' => can('view_expenses') ? event_expenses($id) : [],
     'kosten'    => event_kosten($id),
     'besprochen' => can('view_meetings') && function_exists('tps_fuer') ? tps_fuer('event', $id) : [],

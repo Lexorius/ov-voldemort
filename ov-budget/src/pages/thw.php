@@ -32,5 +32,6 @@ render('thw', [
     'postfaecher' => postfach_suchen($postfaecher, $q),
     'jeDienststelle' => postfach_je_dienststelle($postfaecher),
     'kontakteJe'  => can('view_contacts') ? thw_kontakte_je_dienststelle() : [],
+    'entfernungen' => function_exists('geo_dienststellen_entfernungen') ? geo_dienststellen_entfernungen($alle) : [],
     'darfPflegen' => in_array((string)($user['role'] ?? ''), ['admin', 'leitung'], true),
 ]);

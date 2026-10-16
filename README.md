@@ -115,6 +115,10 @@ Webserver, Anwendung in einem Container); läuft aber genauso als
   hochgeladene Dokumente und Fotos zusammen und vergibt Schlagwörter;
   Dateisuche über alle Ablagen. **Standardmäßig aus und jederzeit
   abschaltbar**, nur Adressen im eigenen Netz werden angenommen.
+* **Entfernungen (!! TEST !!)** – Luftlinie und Fahrstrecke von der Unterkunft
+  zu Terminen, Veranstaltungen und THW-Dienststellen über OpenStreetMap und
+  den OSRM-Demoserver; standardmäßig aus, eine Anfrage je Abruf mit Pause,
+  jede Adresse nur einmal angefragt.
 
 ### Betrieb
 

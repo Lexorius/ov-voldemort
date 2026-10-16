@@ -29,6 +29,7 @@ $zeile = static function (array $d, int $tiefe) use (&$zeile, $jeDienststelle, $
           <?php $anschrift = thw_anschrift($d); if ($anschrift !== '' || $d['telefon'] !== '' || $d['email'] !== '' || $d['web'] !== ''): ?>
             <div class="small muted">
               <?= $anschrift !== '' ? e($anschrift) : '' ?>
+              <?php if (isset($entfernungen[(int)$d['id']])): ?> · 🚗 <?= e(geo_entfernung_text($entfernungen[(int)$d['id']])) ?> <span class="badge badge--warn" title="Testbetrieb: Adressen über OpenStreetMap, Strecken über den OSRM-Demoserver – ohne Gewähr">Test</span><?php endif; ?>
               <?php if ($d['telefon'] !== ''): ?> · <a href="tel:<?= e(preg_replace('/[^0-9+]/', '', (string)$d['telefon'])) ?>"><?= e((string)$d['telefon']) ?></a><?php endif; ?>
               <?php if ($d['email'] !== ''): ?> · <a href="mailto:<?= e((string)$d['email']) ?>"><?= e((string)$d['email']) ?></a><?php endif; ?>
               <?php if ($d['web'] !== ''): ?> · <a href="<?= e(str_starts_with((string)$d['web'], 'http') ? (string)$d['web'] : 'https://' . $d['web']) ?>" target="_blank" rel="noopener">Website</a><?php endif; ?>

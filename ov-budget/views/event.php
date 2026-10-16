@@ -91,7 +91,7 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
     <?php endif; ?>
     <?php if ($event['ort']): ?>
       <div class="dl__item"><div class="dl__label">Ort</div>
-        <div class="dl__value"><?= e((string)$event['ort']) ?></div></div>
+        <div class="dl__value"><?= e((string)$event['ort']) ?><?= !empty($entfernung) ? '<div class="small muted">🚗 ' . e(geo_entfernung_text($entfernung)) . ' ab ' . e((string)$entfernung['heim']) . ' <span class="badge badge--warn" title="Testbetrieb: Adressen über OpenStreetMap, Strecken über den OSRM-Demoserver – ohne Gewähr">Test</span></div>' : '' ?></div></div>
     <?php endif; ?>
     <?php if (!empty($event['typ_label'])): ?>
       <div class="dl__item"><div class="dl__label">Art</div>

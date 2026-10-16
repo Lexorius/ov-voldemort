@@ -710,3 +710,6 @@ pre.raw {
 .ki__edit summary { cursor: pointer; }
 .ki__edit textarea { min-height: 4rem; }
 .ki__edit .form { margin-top: .4rem; }
+
+/* Testbetrieb kennzeichnen (Entfernungen über öffentliche Dienste) */
+.badge--warn { background: #fde68a; border-color: #f59e0b; color: #92400e; }

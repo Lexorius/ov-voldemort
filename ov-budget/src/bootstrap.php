@@ -62,6 +62,7 @@ require __DIR__ . '/lib/tp_links.php';
 require __DIR__ . '/lib/standorte.php';
 require __DIR__ . '/lib/thw.php';
 require __DIR__ . '/lib/ki.php';
+require __DIR__ . '/lib/geo.php';
 require __DIR__ . '/lib/nav.php';
 
 /** Ist die Anwendung eingerichtet? */

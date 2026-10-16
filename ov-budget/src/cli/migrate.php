@@ -1889,6 +1889,48 @@ SQL);
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
     }
     $merken('071_ki');
+
+    /* ---------- 072: Entfernungen (!! TEST !!) ---------- */
+    if (!ovb_table_exists($pdo, 'geo_adressen')) {
+        $pdo->exec("CREATE TABLE geo_adressen (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  adresse      VARCHAR(255) NOT NULL,
+  text         VARCHAR(255) NOT NULL DEFAULT '',
+  lat          DECIMAL(9,6) NULL,
+  lng          DECIMAL(9,6) NULL,
+  status       ENUM('offen','fertig','fehler') NOT NULL DEFAULT 'offen',
+  versuche     TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  fehler       VARCHAR(255) NOT NULL DEFAULT '',
+  quelle       VARCHAR(40)  NOT NULL DEFAULT '',
+  treffer      VARCHAR(255) NOT NULL DEFAULT '',
+  erstellt_am  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  erledigt_am  DATETIME     NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_geo_adresse (adresse),
+  KEY idx_geo_adr_status (status, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    if (!ovb_table_exists($pdo, 'geo_routen')) {
+        $pdo->exec("CREATE TABLE geo_routen (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  von_lat      DECIMAL(9,6) NOT NULL,
+  von_lng      DECIMAL(9,6) NOT NULL,
+  nach_lat     DECIMAL(9,6) NOT NULL,
+  nach_lng     DECIMAL(9,6) NOT NULL,
+  km           DECIMAL(8,1) NULL,
+  minuten      INT UNSIGNED NULL,
+  status       ENUM('offen','fertig','fehler') NOT NULL DEFAULT 'offen',
+  versuche     TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  fehler       VARCHAR(255) NOT NULL DEFAULT '',
+  quelle       VARCHAR(40)  NOT NULL DEFAULT '',
+  erstellt_am  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  erledigt_am  DATETIME     NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_geo_route (von_lat, von_lng, nach_lat, nach_lng),
+  KEY idx_geo_route_status (status, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    $merken('072_geo');
 }
 
 /**

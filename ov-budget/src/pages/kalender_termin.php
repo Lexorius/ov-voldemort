@@ -26,6 +26,7 @@ $daten = [
 
 $daten['navi'] = kalender_navi_ziel($termin, $daten['standorte'], $daten['dienststellen']);
 $daten['naviLinks'] = $daten['navi'] ? kalender_navi_links($daten['navi']) : [];
+$daten['entfernung'] = $daten['navi'] && function_exists('geo_entfernung') ? geo_entfernung($daten['navi']) : null;
 
 if (get_str('druck') === '1') {
     echo render_partial('kalender_termin_druck', $daten);

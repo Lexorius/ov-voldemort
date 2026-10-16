@@ -1500,4 +1500,43 @@ CREATE TABLE IF NOT EXISTS datei_ki (
   KEY idx_datei_ki_tags (tags(191))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Entfernungen (!! TEST !!): Adressen zu Koordinaten (Nominatim) und Strecken (OSRM-Demoserver),
+-- jeweils einmal angefragt und gemerkt
+CREATE TABLE IF NOT EXISTS geo_adressen (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  adresse      VARCHAR(255) NOT NULL,
+  text         VARCHAR(255) NOT NULL DEFAULT '',
+  lat          DECIMAL(9,6) NULL,
+  lng          DECIMAL(9,6) NULL,
+  status       ENUM('offen','fertig','fehler') NOT NULL DEFAULT 'offen',
+  versuche     TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  fehler       VARCHAR(255) NOT NULL DEFAULT '',
+  quelle       VARCHAR(40)  NOT NULL DEFAULT '',
+  treffer      VARCHAR(255) NOT NULL DEFAULT '',
+  erstellt_am  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  erledigt_am  DATETIME     NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_geo_adresse (adresse),
+  KEY idx_geo_adr_status (status, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS geo_routen (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  von_lat      DECIMAL(9,6) NOT NULL,
+  von_lng      DECIMAL(9,6) NOT NULL,
+  nach_lat     DECIMAL(9,6) NOT NULL,
+  nach_lng     DECIMAL(9,6) NOT NULL,
+  km           DECIMAL(8,1) NULL,
+  minuten      INT UNSIGNED NULL,
+  status       ENUM('offen','fertig','fehler') NOT NULL DEFAULT 'offen',
+  versuche     TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  fehler       VARCHAR(255) NOT NULL DEFAULT '',
+  quelle       VARCHAR(40)  NOT NULL DEFAULT '',
+  erstellt_am  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  erledigt_am  DATETIME     NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_geo_route (von_lat, von_lng, nach_lat, nach_lng),
+  KEY idx_geo_route_status (status, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS=1;

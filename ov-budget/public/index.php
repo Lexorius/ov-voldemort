@@ -158,6 +158,7 @@ $routes = [
     'admin_log'          => 'admin/log',
     'admin_backup'       => 'admin/backup',
     'admin_ki'           => 'admin/ki',
+    'admin_geo'          => 'admin/geo',
     'admin_nav'          => 'admin/nav',
 ];
 

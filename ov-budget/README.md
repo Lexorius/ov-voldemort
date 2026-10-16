@@ -239,6 +239,9 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
   Fahrzeuge, Zähler, Funkgeräte und Funkgruppen werden Plätzen zugeordnet;
   **Standortübersicht** für alle zum Durchklicken, was wo ist, mit
   **Hallenplan**: Foto oder Skizze, auf der jedes Fahrzeug an seinem Platz steht
+- **Entfernungen (!! TEST !!)**: Luftlinie und Fahrstrecke von der Unterkunft
+  zu Terminen, Veranstaltungen und THW-Dienststellen – über OpenStreetMap
+  und den OSRM-Demoserver, standardmäßig aus, eine Anfrage je Abruf
 - **Zweiter Faktor** mit Authenticator-App und Backup-Codes, als Pflicht je
   Rolle einstellbar
 - Alle Auswahllisten, Texte und Regeln frei einstellbar; **Menüleiste in
