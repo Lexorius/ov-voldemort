@@ -342,6 +342,28 @@ einem Konto; wer sie in einem anderen anhakt, nimmt sie dem bisherigen weg.
   sammelt Kategorien ohne Konto und Buchungen ohne Kategorie. Gezählt wird
   wie in der Übersicht, was gebucht ist (bezahlt oder offen).
 
+## Besprechungen: mehrere Tage, Fahrzeuge, externe Teilnehmer
+
+**Mehrere Tage.** Eine Besprechung kann über mehrere Tage gehen – Klausur,
+Lehrgang, Wochenende: im Formular „Ende am" setzen, leer heißt gleicher
+Tag. Liste, Seite, Ausdruck und Kalender zeigen dann „20.11.2026 bis
+22.11.2026"; die Uhrzeiten gelten für den ersten und den letzten Tag.
+
+**Fahrzeuge** lassen sich wie am Termin zuordnen, etwa der MTW für die
+Anfahrt; Boote bringen ihren Anhänger mit. Ein ⚠ warnt, wenn ein Fahrzeug
+zu der Zeit schon in einem Termin, einer Veranstaltung oder einer anderen
+Besprechung steckt; speichern geht trotzdem, die Seite meldet dann die
+Doppelbuchung. Fahrzeugakte und Startseite zeigen die Besprechung als
+Verplanung.
+
+**Externe Teilnehmer** kommen aus dem Kontaktmodul: im Formular unter
+„Externe Teilnehmer" wählen – sie landen auf der Anwesenheitsliste der
+Besprechung, wo sich auch Mitglieder, ganze Verteiler und frei
+eingetragene Namen aufnehmen und Status (teilgenommen, entschuldigt,
+nicht erschienen) setzen lassen. Wer einen Kontakt im Formular abwählt,
+nimmt ihn von der Liste; Mitglieder und freie Namen bleiben. Das Feld
+sehen nur Personen, die das Kontaktmodul sehen dürfen.
+
 ## Anmerkungen zu Talking Points
 
 Jeder Talking Point hat eine eigene Seite – erreichbar über seinen Titel im

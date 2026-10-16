@@ -121,6 +121,32 @@ function attendance_add(int $meetingId, string $art, int|string $wert, ?int $sta
     ]) > 0;
 }
 
+/** Kontakte, die schon auf der Liste stehen: [contact_id, …] */
+function attendance_contact_ids(int $meetingId): array
+{
+    return array_map('intval', array_column(db_all('SELECT contact_id FROM meeting_attendees WHERE meeting_id = ? AND contact_id IS NOT NULL', [$meetingId]), 'contact_id'));
+}
+
+/**
+ * Genau diese Kontakte als externe Teilnehmer – aus dem Bearbeitungsformular.
+ * Neue kommen mit dem Vorgabestatus dazu, abgewählte fliegen von der Liste;
+ * Mitglieder und frei eingetragene Namen bleiben unberührt.
+ */
+function attendance_set_contacts(int $meetingId, array $ids): array
+{
+    $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static fn($i) => $i > 0)));
+    $vorher = attendance_contact_ids($meetingId);
+    $neu = 0;
+    foreach (array_diff($ids, $vorher) as $cid) {
+        $neu += attendance_add($meetingId, 'contact', $cid) ? 1 : 0;
+    }
+    $weg = array_values(array_diff($vorher, $ids));
+    if ($weg) {
+        db_exec('DELETE FROM meeting_attendees WHERE meeting_id = ? AND contact_id IN (' . implode(',', array_fill(0, count($weg), '?')) . ')', array_merge([$meetingId], $weg));
+    }
+    return ['neu' => $neu, 'weg' => count($weg)];
+}
+
 /** Alle Kontakte eines Verteilers einladen */
 function attendance_add_group(int $meetingId, int $groupId): int
 {

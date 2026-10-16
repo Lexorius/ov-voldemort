@@ -137,6 +137,8 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - **Budgetübersicht als Tagesordnungspunkt**: Stand und Verwendung nach
   Zweck mit Anteilen für Ausgaben und Einnahmen, auch im Protokoll
 - **Wiederkehrende Termine** („alle 2 Wochen montags", „jeden 2. Montag im Monat")
+- **Mehrere Tage** (Klausur, Lehrgang), **Fahrzeuge** mit Warnung vor
+  Doppelbuchungen und **externe Teilnehmer** aus den Kontakten je Besprechung
 - **Anwesenheit**: teilgenommen, entschuldigt, nicht erschienen
 - Tagesordnung und Protokoll zum Drucken
 

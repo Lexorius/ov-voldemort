@@ -52,11 +52,14 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
       <p class="small muted">Verschoben vom regulären Termin am <?= e(de_date($meeting['serien_datum'])) ?>.</p>
     <?php endif; ?>
     <p class="muted">
-      <?= e(de_date($meeting['datum'])) ?>
-      <?php if ($meeting['beginn']): ?>, <?= e(substr((string)$meeting['beginn'], 0, 5)) ?> Uhr<?php endif; ?>
+      <?= e(meeting_datum_text($meeting)) ?>
+      <?php if ($meeting['beginn']): ?>, <?= e(substr((string)$meeting['beginn'], 0, 5)) ?> Uhr<?php endif; ?><?php if ($meeting['ende']): ?> bis <?= e(substr((string)$meeting['ende'], 0, 5)) ?> Uhr<?php endif; ?>
       <?php if ($meeting['ort']): ?> · <?= e($meeting['ort']) ?><?php endif; ?>
       <?php if ($meeting['leitung']): ?> · Leitung: <?= e($meeting['leitung']) ?><?php endif; ?>
     </p>
+    <?php $fahrzeuge ??= []; if ($fahrzeuge): ?>
+      <p class="muted small">⛟ <?php foreach ($fahrzeuge as $i => $v): ?><?= $i ? ' · ' : '' ?><a href="<?= e(url('vehicle', ['id' => $v['id']])) ?>"><?= e((string)$v['bezeichnung']) ?></a><?= !empty($v['funkrufname']) ? ' <span class="small">' . e((string)$v['funkrufname']) . '</span>' : '' ?><?php endforeach; ?></p>
+    <?php endif; ?>
     <?php if ($meeting['beschreibung']): ?><p><?= nl2br(e((string)$meeting['beschreibung'])) ?></p><?php endif; ?>
   </div>
   <div class="btnrow">

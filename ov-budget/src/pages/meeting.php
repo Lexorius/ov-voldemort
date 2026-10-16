@@ -22,6 +22,7 @@ $dauern = array_map(static fn($p) => $p['dauer_min'] !== null ? (int)$p['dauer_m
 render('meeting', [
     'title'    => $meeting['titel'],
     'meeting'  => $meeting,
+    'fahrzeuge' => can('view_vehicles') && function_exists('meeting_fahrzeuge') ? meeting_fahrzeuge((int)$meeting['id']) : [],
     'punkte'   => $punkte,
     'tpLinks'  => $tpLinks = tp_links_fuer(array_column($punkte, 'id')),
     'tpEvents' => tp_event_kurzberichte($tpLinks),

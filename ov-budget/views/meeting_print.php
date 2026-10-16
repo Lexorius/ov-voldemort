@@ -79,7 +79,7 @@ $ovName = (string)setting('ov_name', '');
 <table class="eck">
   <?php
   // In einer Zeile zusammensetzen – Zeilenumbrüche im Template würden vor dem Komma als Leerzeichen erscheinen
-  $wann = de_date($meeting['datum'])
+  $wann = meeting_datum_text($meeting)
       . ($meeting['beginn'] ? ', ' . substr((string)$meeting['beginn'], 0, 5) . ' Uhr' : '')
       . ($meeting['ende'] ? ' bis ' . substr((string)$meeting['ende'], 0, 5) . ' Uhr' : '');
   ?>

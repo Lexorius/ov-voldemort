@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require dirname(__DIR__) . '/src/lib/meetings.php';
+if (!function_exists('de_date')) { function de_date(?string $d): string { return $d ? date('d.m.Y', strtotime($d)) : ''; } }
 
 $ok = 0;
 $bad = 0;
@@ -41,6 +42,11 @@ is_it('oben am Rand bleibt', tp_reorder([1, 2, 3], 1, 'hoch'), [1, 2, 3]);
 is_it('unten am Rand bleibt', tp_reorder([1, 2, 3], 3, 'runter'), [1, 2, 3]);
 is_it('unbekannte id bleibt', tp_reorder([1, 2, 3], 9, 'hoch'), [1, 2, 3]);
 is_it('Zeichenketten aus der Datenbank', tp_reorder(['4', '7'], 7, 'hoch'), [7, 4]);
+
+is_it('Datumstext eintägig', meeting_datum_text(['datum' => '2026-12-05', 'ende_datum' => null]), '05.12.2026');
+is_it('Datumstext mehrtägig', meeting_datum_text(['datum' => '2026-12-05', 'ende_datum' => '2026-12-06']), '05.12.2026 bis 06.12.2026');
+is_it('Datumstext gleicher Tag', meeting_datum_text(['datum' => '2026-12-05', 'ende_datum' => '2026-12-05']), '05.12.2026');
+is_it('Fahrzeug-Unterabfrage', str_contains(meeting_fahrzeuge_sub('m'), 'FROM meeting_vehicles mv JOIN vehicles v') && str_ends_with(meeting_fahrzeuge_sub('x'), 'mv.meeting_id = x.id)'), true);
 
 echo "\n$ok bestanden, $bad fehlgeschlagen\n";
 exit($bad > 0 ? 1 : 0);

@@ -241,8 +241,8 @@ function kalender_termine_auftrag(int $orderId, array $u): array
 /** Untertitel eines Termins: für wen – dazu Dienststellen (⛑), Aufträge (🔧) und Kontakte (👤, nur wer Kontakte sehen darf). */
 function kalender_untertitel(array $t): string
 {
-    if (($t['quelle'] ?? '') === 'veranstaltung') {
-        return (string)($t['untertitel_text'] ?? 'Veranstaltung');
+    if (in_array($t['quelle'] ?? '', ['veranstaltung', 'besprechung'], true)) {
+        return (string)($t['untertitel_text'] ?? ucfirst((string)$t['quelle']));
     }
     $d = trim((string)($t['dienststellen_namen'] ?? ''));
     $a = trim((string)($t['auftraege_namen'] ?? ''));
@@ -388,8 +388,16 @@ function kalender_termine_fahrzeug(int $vehicleId, string $von, string $bis, arr
                          ORDER BY e.beginn", [$vehicleId, $bis . ' 23:59:59', $von . ' 00:00:00']) as $e) {
             $rows[] = kalender_veranstaltung_als_termin($e);
         }
-        usort($rows, static fn($a, $b) => [$a['beginn'], $a['titel']] <=> [$b['beginn'], $b['titel']]);
     }
+    if (can('view_meetings')) {
+        foreach (db_all("SELECT m.id, m.titel, m.datum, m.beginn, m.ende, m.ende_datum, m.ort, t.color AS typ_color, t.label AS typ_label
+                         FROM meeting_vehicles mv JOIN meetings m ON m.id = mv.meeting_id LEFT JOIN list_items t ON t.id = m.typ_id
+                         WHERE mv.vehicle_id = ? AND m.datum <= ? AND COALESCE(m.ende_datum, m.datum) >= ? AND m.status <> 'abgesagt'
+                         ORDER BY m.datum", [$vehicleId, $bis, $von]) as $m) {
+            $rows[] = kalender_besprechung_als_termin($m);
+        }
+    }
+    usort($rows, static fn($a, $b) => [$a['beginn'], $a['titel']] <=> [$b['beginn'], $b['titel']]);
     return $rows;
 }
 
@@ -411,6 +419,54 @@ function kalender_veranstaltung_als_termin(array $e): array
         'quelle'     => 'veranstaltung',
         'url'        => url('event', ['id' => (int)$e['id']]),
         'untertitel_text' => 'Veranstaltung' . (!empty($e['typ_label']) ? ' · ' . $e['typ_label'] : ''),
+        'ziel'       => 'ov',
+        'ziel_id'    => null,
+        'fachgruppen_ids' => '',
+    ]);
+}
+
+/**
+ * Zeitraum einer Besprechung aus datum, beginn, ende, ende_datum. Reine Funktion.
+ * 'ende' ist für die Anzeige (null = offen), 'bis' das rechnerische Ende für Überschneidungen.
+ */
+function kalender_besprechung_zeitraum(array $m): array
+{
+    $zeit = static fn($t): string => !empty($t) ? (strlen((string)$t) === 5 ? (string)$t . ':00' : substr((string)$t, 0, 8)) : '';
+    $datum = substr((string)$m['datum'], 0, 10);
+    $endeDatum = !empty($m['ende_datum']) ? substr((string)$m['ende_datum'], 0, 10) : $datum;
+    if ($endeDatum < $datum) {
+        $endeDatum = $datum;
+    }
+    $beginnZeit = $zeit($m['beginn'] ?? null);
+    $endeZeit = $zeit($m['ende'] ?? null);
+    $ganztag = $beginnZeit === '';
+    $beginn = $datum . ' ' . ($ganztag ? '00:00:00' : $beginnZeit);
+    if ($endeZeit !== '') {
+        $ende = $endeDatum . ' ' . $endeZeit;
+    } elseif ($endeDatum !== $datum) {
+        $ende = $endeDatum . ' 23:59:59';
+    } else {
+        $ende = null;
+    }
+    return ['beginn' => $beginn, 'ende' => $ende, 'bis' => $ende ?? ($ganztag ? $datum . ' 23:59:59' : $beginn), 'ganztag' => $ganztag, 'mehrtaegig' => $endeDatum !== $datum];
+}
+
+/** Eine Besprechung in der Form eines Termins – für Fahrzeugakte, Startseite und Doppelbuchungen. Reine Funktion. */
+function kalender_besprechung_als_termin(array $m): array
+{
+    $z = kalender_besprechung_zeitraum($m);
+    return array_merge($m, [
+        'id'         => (int)$m['id'],
+        'titel'      => (string)$m['titel'],
+        'beginn'     => $z['beginn'],
+        'ende'       => $z['ende'],
+        'ganztag'    => $z['ganztag'] ? 1 : 0,
+        'ort'        => (string)($m['ort'] ?? ''),
+        'standort_name' => '',
+        'farbe'      => (string)(($m['typ_color'] ?? '') ?: KALENDER_QUELLEN['besprechung']['color']),
+        'quelle'     => 'besprechung',
+        'url'        => url('meeting', ['id' => (int)$m['id']]),
+        'untertitel_text' => 'Besprechung' . (!empty($m['typ_label']) ? ' · ' . $m['typ_label'] : ''),
         'ziel'       => 'ov',
         'ziel_id'    => null,
         'fachgruppen_ids' => '',
@@ -440,6 +496,15 @@ function kalender_fahrzeuge_zeitraum(string $von, string $bis, array $u): array
                          WHERE e.beginn < ? AND COALESCE(e.ende, e.beginn) >= ? AND e.status <> 'abgesagt'
                          ORDER BY v.bezeichnung, e.beginn", [$bis . ' 23:59:59', $von . ' 00:00:00']) as $e) {
             $rows[] = kalender_veranstaltung_als_termin($e);
+        }
+    }
+    if (can('view_meetings')) {
+        foreach (db_all("SELECT m.id, m.titel, m.datum, m.beginn, m.ende, m.ende_datum, m.ort, t.color AS typ_color, t.label AS typ_label,
+                                v.id AS vehicle_id, v.bezeichnung AS vehicle_bezeichnung, v.funkrufname AS vehicle_funkrufname, v.kennzeichen AS vehicle_kennzeichen
+                         FROM meeting_vehicles mv JOIN meetings m ON m.id = mv.meeting_id JOIN vehicles v ON v.id = mv.vehicle_id LEFT JOIN list_items t ON t.id = m.typ_id
+                         WHERE m.datum <= ? AND COALESCE(m.ende_datum, m.datum) >= ? AND m.status <> 'abgesagt'
+                         ORDER BY v.bezeichnung, m.datum", [$bis, $von]) as $m) {
+            $rows[] = kalender_besprechung_als_termin($m);
         }
     }
     return kalender_fahrzeuge_gruppieren($rows);
@@ -498,7 +563,7 @@ function kalender_zeitraum_aus_feldern(array $t): ?array
  * Welche dieser Fahrzeuge stecken im Zeitraum schon in einem anderen Termin?
  * Rückgabe: [vehicle_id => [[id, titel, beginn, ende, ganztag]]]. $ausser: der eigene Termin.
  */
-function kalender_fahrzeug_konflikte(array $vehicleIds, string $beginn, string $ende, int $ausser = 0, int $ausserVeranstaltung = 0): array
+function kalender_fahrzeug_konflikte(array $vehicleIds, string $beginn, string $ende, int $ausser = 0, int $ausserVeranstaltung = 0, int $ausserBesprechung = 0): array
 {
     $ids = array_values(array_filter(array_map('intval', $vehicleIds), static fn($i) => $i > 0));
     if (!$ids) {
@@ -522,6 +587,17 @@ function kalender_fahrzeug_konflikte(array $vehicleIds, string $beginn, string $
     ) as $e) {
         $e['ganztag'] = substr((string)$e['beginn'], 11, 5) === '00:00' ? 1 : 0;
         $rows[] = $e;
+    }
+    // … und Besprechungen (Zeiten aus datum, beginn, ende, ende_datum gerechnet)
+    foreach (db_all(
+        "SELECT mv.vehicle_id, m.id, m.titel, m.datum, m.beginn, m.ende, m.ende_datum
+         FROM meeting_vehicles mv JOIN meetings m ON m.id = mv.meeting_id
+         WHERE mv.vehicle_id IN ($platz) AND m.id <> ? AND m.datum <= ? AND COALESCE(m.ende_datum, m.datum) >= ? AND m.status <> 'abgesagt'
+         ORDER BY m.datum, m.id",
+        array_merge($ids, [$ausserBesprechung, substr($ende, 0, 10), substr($beginn, 0, 10)])
+    ) as $m) {
+        $z = kalender_besprechung_zeitraum($m);
+        $rows[] = ['vehicle_id' => $m['vehicle_id'], 'id' => $m['id'], 'titel' => $m['titel'], 'beginn' => $z['beginn'], 'ende' => $z['bis'], 'ganztag' => $z['ganztag'] ? 1 : 0, 'quelle' => 'besprechung'];
     }
     return kalender_konflikte_gruppieren($rows, $beginn, $ende);
 }
@@ -557,7 +633,7 @@ function kalender_konflikt_text(array $konflikte, array $fahrzeuge): string
     $teile = [];
     foreach ($konflikte as $vid => $termine) {
         $teile[] = ($namen[(int)$vid] ?? ('Fahrzeug #' . $vid)) . ' ist auch ' . implode(' und ', array_map(static fn($t) =>
-            (($t['quelle'] ?? 'termin') === 'veranstaltung' ? 'in der Veranstaltung „' : 'im Termin „') . $t['titel'] . '" (' . kalender_wann($t) . ')', $termine));
+            match ($t['quelle'] ?? 'termin') { 'veranstaltung' => 'in der Veranstaltung „', 'besprechung' => 'in der Besprechung „', default => 'im Termin „' } . $t['titel'] . '" (' . kalender_wann($t) . ')', $termine));
     }
     return $teile ? 'Doppelbuchung: ' . implode('; ', $teile) . '.' : '';
 }
@@ -825,11 +901,12 @@ function kalender_quelle(string $quelle, string $von, string $bis, array $u): ar
         }
     }
     if (in_array('besprechung', $quellen, true)) {
-        foreach (db_all("SELECT id, titel, datum, beginn, ende, ort, status FROM meetings WHERE datum BETWEEN ? AND ? AND status <> 'abgesagt'", [$von, $bis]) as $m) {
-            $b = $m['beginn'] ? $m['datum'] . ' ' . substr((string)$m['beginn'], 0, 8) : $m['datum'];
-            $e = $m['ende'] ? $m['datum'] . ' ' . substr((string)$m['ende'], 0, 8) : null;
-            $out[] = kalender_eintrag('besprechung', (string)$m['titel'], $b, $e, ['ort' => $m['ort'], 'id' => $m['id'],
-                'url' => url('meeting', ['id' => $m['id']]), 'ganztag' => !$m['beginn']]);
+        foreach (db_all("SELECT m.id, m.titel, m.datum, m.beginn, m.ende, m.ende_datum, m.ort, m.status,
+                                " . (function_exists('meeting_fahrzeuge_sub') ? meeting_fahrzeuge_sub('m') : "''") . " AS fahrzeuge_namen
+                         FROM meetings m WHERE m.datum <= ? AND COALESCE(m.ende_datum, m.datum) >= ? AND m.status <> 'abgesagt'", [$bis, $von]) as $m) {
+            $z = kalender_besprechung_zeitraum($m);
+            $out[] = kalender_eintrag('besprechung', (string)$m['titel'], $z['beginn'], $z['ende'], ['ort' => $m['ort'], 'id' => $m['id'],
+                'url' => url('meeting', ['id' => $m['id']]), 'ganztag' => $z['ganztag'], 'fahrzeuge' => (string)($m['fahrzeuge_namen'] ?? '')]);
         }
     }
     if (in_array('veranstaltung', $quellen, true)) {

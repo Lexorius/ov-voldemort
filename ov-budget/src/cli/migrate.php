@@ -1944,6 +1944,22 @@ SQL);
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
     }
     $merken('073_event_fahrzeuge');
+
+    /* ---------- 074: Besprechungen über mehrere Tage, Fahrzeuge je Besprechung ---------- */
+    if (ovb_table_exists($pdo, 'meetings') && !ovb_column_exists($pdo, 'meetings', 'ende_datum')) {
+        $pdo->exec('ALTER TABLE meetings ADD COLUMN ende_datum DATE NULL AFTER ende');
+    }
+    if (!ovb_table_exists($pdo, 'meeting_vehicles') && ovb_table_exists($pdo, 'meetings') && ovb_table_exists($pdo, 'vehicles')) {
+        $pdo->exec("CREATE TABLE meeting_vehicles (
+  meeting_id  INT UNSIGNED NOT NULL,
+  vehicle_id  INT UNSIGNED NOT NULL,
+  PRIMARY KEY (meeting_id, vehicle_id),
+  KEY idx_mv_vehicle (vehicle_id),
+  CONSTRAINT fk_mv_meeting FOREIGN KEY (meeting_id) REFERENCES meetings(id) ON DELETE CASCADE,
+  CONSTRAINT fk_mv_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    $merken('074_besprechung_tage_fahrzeuge');
 }
 
 /**

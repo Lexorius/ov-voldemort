@@ -39,9 +39,26 @@ $uhr = static fn($v) => $v ? substr((string)$v, 0, 5) : '';
       <input type="time" id="ende" name="ende" value="<?= e($uhr($meeting['ende'] ?? null)) ?>">
     </div>
     <div class="field">
+      <label for="ende_datum">Ende am (bei mehreren Tagen)</label>
+      <input type="date" id="ende_datum" name="ende_datum" value="<?= e((string)($meeting['ende_datum'] ?? '')) ?>">
+      <small class="muted">Leer = gleicher Tag. Für Klausur, Lehrgang oder Wochenende.</small>
+    </div>
+    <div class="field">
       <label for="ort">Ort</label>
       <input type="text" id="ort" name="ort" value="<?= e((string)$meeting['ort']) ?>" placeholder="z.B. Unterkunft, Besprechungsraum">
     </div>
+    <?php $fahrzeuge ??= []; $fahrzeugeGewaehlt ??= []; $belegt ??= []; if ($fahrzeuge): ?>
+      <?php $fzOptionen = []; $bloecke = kalender_fahrzeuge_bloecke($fahrzeuge);
+      foreach (['fahrzeuge' => 'Autos und LKW', 'anhaenger' => 'Anhänger', 'geraete' => 'Geräte'] as $key => $gruppe) {
+          foreach ($bloecke[$key] ?? [] as $v) {
+              $andere = $belegt[(int)$v['id']] ?? [];
+              $fzOptionen[] = ['id' => (int)$v['id'], 'text' => (string)$v['bezeichnung'], 'sub' => implode(' · ', array_filter([(string)($v['funkrufname'] ?? ''), function_exists('vehicle_kapazitaet_text') ? vehicle_kapazitaet_text($v) : ''])), 'gruppe' => $gruppe,
+                               'warn' => $andere ? 'schon verplant: ' . implode(' und ', array_map(static fn($t) => '„' . $t['titel'] . '" (' . kalender_wann($t) . ')', $andere)) : ''];
+          }
+      } ?>
+      <?= render_partial('partials/wahl_liste', ['name' => 'vehicles', 'feld' => 'fahrzeuge_feld', 'label' => 'Fahrzeuge', 'optionen' => $fzOptionen, 'gewaehlt' => $fahrzeugeGewaehlt, 'leer' => '– Fahrzeug wählen –',
+          'hinweis' => 'Welche Fahrzeuge die Besprechung braucht, etwa für die Anfahrt zu einer Klausur – Fahrzeugakte und Startseite zeigen sie dann als verplant. Ein ⚠ heißt: zu der Zeit schon anderswo eingeplant; hinzufügen geht trotzdem, dann warnt die Seite.']) ?>
+    <?php endif; ?>
     <div class="field">
       <label for="leitung">Leitung</label>
       <input type="text" id="leitung" name="leitung" value="<?= e((string)$meeting['leitung']) ?>">
@@ -55,6 +72,10 @@ $uhr = static fn($v) => $v ? substr((string)$v, 0, 5) : '';
     <label for="teilnehmer">Eingeladen / Teilnehmende</label>
     <textarea id="teilnehmer" name="teilnehmer" rows="3"><?= e((string)$meeting['teilnehmer']) ?></textarea>
   </div>
+  <?php if (!empty($mitKontakten)): ?>
+    <?= render_partial('partials/wahl_liste', ['name' => 'kontakte', 'feld' => 'kontakte_feld', 'label' => 'Externe Teilnehmer (aus den Kontakten)', 'optionen' => $kontaktOptionen ?? [], 'gewaehlt' => $kontakteGewaehlt ?? [], 'leer' => '– Kontakt wählen –',
+        'hinweis' => 'Tippen zum Suchen, dann „+". Die Gewählten stehen auf der Anwesenheitsliste der Besprechung – dort lassen sich auch Mitglieder, ganze Verteiler und freie Namen aufnehmen und Status setzen.']) ?>
+  <?php endif; ?>
   <div class="field">
     <label for="beschreibung">Hinweise zur Besprechung</label>
     <textarea id="beschreibung" name="beschreibung"><?= e((string)$meeting['beschreibung']) ?></textarea>

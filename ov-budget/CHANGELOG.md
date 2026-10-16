@@ -1,5 +1,18 @@
 # Änderungsverlauf
 
+## 2.1.41.0
+
+- **Besprechungen über mehrere Tage:** neues Feld „Ende am" für Klausur,
+  Lehrgang oder Wochenende; Liste, Seite, Ausdruck und Kalender zeigen den
+  Zeitraum.
+- **Fahrzeuge an Besprechungen:** dieselbe Auswahl wie an Terminen und
+  Veranstaltungen, mit Anhänger-Automatik und Warnung vor Doppelbuchungen in
+  alle Richtungen (Termin, Veranstaltung, Besprechung). Fahrzeugakte und
+  Startseite zeigen Besprechungen als Verplanung, der Kalender nennt die
+  Fahrzeuge am Eintrag.
+- **Externe Teilnehmer an Besprechungen:** im Formular Kontakte wählen – sie
+  stehen dann auf der Anwesenheitsliste, abgewählte verschwinden von ihr.
+
 ## 2.1.40.0
 
 - **Fahrzeuge an Veranstaltungen:** Im Veranstaltungsformular lassen sich

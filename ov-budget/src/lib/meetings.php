@@ -170,6 +170,15 @@ function meeting_save_from_post(?array $existing, array $user): array
         $v = post_str($feld);
         return preg_match('/^\d{1,2}:\d{2}$/', $v) ? $v . ':00' : null;
     };
+    // Ende an einem anderen Tag – leer oder derselbe Tag heißt: eintägig
+    $endeDatum = post_str('ende_datum') !== '' ? post_date('ende_datum') : null;
+    if (post_str('ende_datum') !== '' && !$endeDatum) {
+        $errors[] = 'Das Enddatum ist kein gültiges Datum.';
+    } elseif ($endeDatum && $datum && $endeDatum < $datum) {
+        $errors[] = 'Das Ende liegt vor dem Beginn.';
+    } elseif ($endeDatum === $datum) {
+        $endeDatum = null;
+    }
 
     if ($errors) {
         return [null, $errors];
@@ -181,6 +190,7 @@ function meeting_save_from_post(?array $existing, array $user): array
         'datum'         => $datum,
         'beginn'        => $uhrzeit('beginn'),
         'ende'          => $uhrzeit('ende'),
+        'ende_datum'    => $endeDatum,
         'ort'           => mb_substr(post_str('ort'), 0, 150),
         'leitung'       => mb_substr(post_str('leitung'), 0, 150),
         'protokoll_von' => mb_substr(post_str('protokoll_von'), 0, 150),
@@ -197,7 +207,46 @@ function meeting_save_from_post(?array $existing, array $user): array
         $id = db_insert('meetings', $data);
         audit('besprechung.angelegt', 'meeting', $id, $data['titel']);
     }
+    // Fahrzeuge und externe Teilnehmer nur, wenn das Feld im Formular war
+    if (post_str('fahrzeuge_feld') === '1') {
+        meeting_fahrzeuge_setzen($id, wahl_ids('vehicles'));
+    }
+    if (post_str('kontakte_feld') === '1' && function_exists('attendance_set_contacts')) {
+        attendance_set_contacts($id, wahl_ids('kontakte'));
+    }
     return [$id, []];
+}
+
+/* ==================================================================== */
+/* Fahrzeuge je Besprechung                                              */
+/* ==================================================================== */
+
+function meeting_fahrzeuge(int $meetingId): array
+{
+    return db_all('SELECT v.id, v.bezeichnung, v.funkrufname, v.kennzeichen, v.is_active FROM meeting_vehicles mv
+                   JOIN vehicles v ON v.id = mv.vehicle_id WHERE mv.meeting_id = ? ORDER BY v.bezeichnung', [$meetingId]);
+}
+
+/** Genau diese Fahrzeuge gehören zur Besprechung */
+function meeting_fahrzeuge_setzen(int $meetingId, array $ids): void
+{
+    db_exec('DELETE FROM meeting_vehicles WHERE meeting_id = ?', [$meetingId]);
+    foreach (array_values(array_unique(array_filter(array_map('intval', $ids), static fn($i) => $i > 0))) as $vid) {
+        db_insert('meeting_vehicles', ['meeting_id' => $meetingId, 'vehicle_id' => $vid]);
+    }
+}
+
+/** Unterabfrage „GKW 1 · MTW" für Listen und Kalender. Reine Funktion. */
+function meeting_fahrzeuge_sub(string $alias = 'm'): string
+{
+    return "(SELECT GROUP_CONCAT(v.bezeichnung ORDER BY v.bezeichnung SEPARATOR ' · ') FROM meeting_vehicles mv JOIN vehicles v ON v.id = mv.vehicle_id WHERE mv.meeting_id = $alias.id)";
+}
+
+/** „05.12.2026" oder „05.12.2026 bis 06.12.2026". Reine Funktion. */
+function meeting_datum_text(array $m): string
+{
+    $von = de_date((string)$m['datum']);
+    return !empty($m['ende_datum']) && $m['ende_datum'] !== $m['datum'] ? $von . ' bis ' . de_date((string)$m['ende_datum']) : $von;
 }
 
 /* ==================================================================== */
