@@ -38,12 +38,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
             }
             set_time_limit(300);
-            $r = ki_warteschlange_abarbeiten(3, 240);
+            $r = ki_warteschlange_abarbeiten(3, 240, true);
             $hinweis = sprintf('%d Datei(en) bearbeitet: %d fertig, %d übersprungen, %d fehlgeschlagen.', $r['bearbeitet'], $r['fertig'], $r['uebersprungen'], $r['fehler']);
             if ($r['meldungen']) {
                 $fehler = implode(' · ', $r['meldungen']);
             }
-            audit('ki.abarbeiten', 'ki', null, $hinweis);
+            if ($r['ruhe']) {
+                $hinweis = '';
+            }
+            audit('ki.abarbeiten', 'ki', null, $hinweis !== '' ? $hinweis : $fehler);
             break;
 
         case 'alle':
@@ -83,6 +86,7 @@ render('admin/ki', [
     'status'   => ki_warteschlange_status(),
     'fehlerliste' => ki_fehler_liste(15),
     'gruende'  => ki_fehler_gruende(),
+    'ruheBis'  => ki_ruhe_bis(),
     'aktiv'    => ki_aktiv(),
     'url'      => ki_url(),
     'urlGrund' => ki_url_pruefen((string)setting('ki_ollama_url', '')),

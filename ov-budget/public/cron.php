@@ -142,10 +142,10 @@ $abrufe = [
             return [];
         }
         $r = ki_warteschlange_abarbeiten();
-        if ($r['bearbeitet'] === 0) {
+        if ($r['bearbeitet'] === 0 && !$r['ruhe']) {
             return [];
         }
-        return [['status' => $r['fehler'] ? 'fehler' : 'ok', 'message' => sprintf('%d Datei(en) ausgewertet, %d übersprungen, %d fehlgeschlagen%s',
+        return [['status' => $r['fehler'] || $r['ruhe'] ? 'fehler' : 'ok', 'message' => sprintf('%d Datei(en) ausgewertet, %d übersprungen, %d fehlgeschlagen%s',
             $r['fertig'], $r['uebersprungen'], $r['fehler'], $r['meldungen'] ? ': ' . implode('; ', $r['meldungen']) : '')]];
     },
     'Sicherung'         => static function (): array {

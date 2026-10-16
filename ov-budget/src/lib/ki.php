@@ -23,6 +23,11 @@ class KiUebersprungen extends KiException
 {
 }
 
+/** Ollama antwortet gar nicht (Rechner schläft, Netz weg): Auftrag zurück, Warteschlange ruht eine Weile */
+class KiNichtErreichbar extends KiException
+{
+}
+
 /** Dateiablagen, die ausgewertet werden können */
 const KI_TYPEN = [
     'fahrzeug'      => ['schalter' => 'ki_fahrzeuge',       'label' => 'Fahrzeugakte',          'tabelle' => 'vehicle_files',   'route' => 'vehicle_file'],
@@ -31,6 +36,7 @@ const KI_TYPEN = [
     'standort'      => ['schalter' => 'ki_standorte',       'label' => 'Stell- und Lagerplatz', 'tabelle' => 'standort_bilder', 'route' => 'standort_bild'],
 ];
 const KI_VERSUCHE_MAX = 3;
+const KI_RUHE_SEK = 600;   // so lange ruht die Warteschlange, wenn Ollama nicht erreichbar war
 const KI_BILD_MAX_BYTES = 8 * 1024 * 1024;
 
 /* ==================================================================== */
@@ -200,14 +206,22 @@ function ki_fehler_liste(int $limit = 20): array
     return $out;
 }
 
+/** Bis wann die Warteschlange ruht (Ollama war nicht erreichbar) – 0 = sie läuft */
+function ki_ruhe_bis(): int
+{
+    return (int)state_get('ki_ruhe_bis', '0');
+}
+
 /**
  * Ein paar Aufträge abarbeiten – vom minütlichen Abruf. Höchstens $max
  * Dateien und höchstens etwa $sekunden lang, damit der Abruf nicht hängt.
+ * War Ollama zuletzt nicht erreichbar, ruht die Warteschlange KI_RUHE_SEK
+ * lang; $trotzRuhe = true (Knopf „Jetzt abarbeiten") übergeht das.
  */
-function ki_warteschlange_abarbeiten(int $max = 3, int $sekunden = 50): array
+function ki_warteschlange_abarbeiten(int $max = 3, int $sekunden = 50, bool $trotzRuhe = false): array
 {
-    $r = ['bearbeitet' => 0, 'fertig' => 0, 'uebersprungen' => 0, 'fehler' => 0, 'meldungen' => []];
-    if (!ki_aktiv() || !db_lock('ki_warteschlange')) {
+    $r = ['bearbeitet' => 0, 'fertig' => 0, 'uebersprungen' => 0, 'fehler' => 0, 'ruhe' => false, 'meldungen' => []];
+    if (!ki_aktiv() || (!$trotzRuhe && ki_ruhe_bis() > time()) || !db_lock('ki_warteschlange')) {
         return $r;
     }
     try {
@@ -232,6 +246,15 @@ function ki_warteschlange_abarbeiten(int $max = 3, int $sekunden = 50): array
                 ki_datei_auswerten($typ, (int)$a['datei_id']);
                 db_exec("UPDATE ki_auftraege SET status = 'fertig', fehler = '', erledigt_am = NOW() WHERE id = ?", [(int)$a['id']]);
                 $r['fertig']++;
+            } catch (KiNichtErreichbar $ex) {
+                // Rechner schläft oder Netz weg: Auftrag unverbraucht zurück, Versuch nicht zählen, eine Weile Ruhe
+                db_exec("UPDATE ki_auftraege SET status = 'offen', versuche = versuche - 1, fehler = ?, gestartet_am = NULL WHERE id = ?",
+                    [mb_substr($ex->getMessage(), 0, 500), (int)$a['id']]);
+                state_save('ki_ruhe_bis', (string)(time() + KI_RUHE_SEK));
+                $r['bearbeitet']--;
+                $r['ruhe'] = true;
+                $r['meldungen'][] = $ex->getMessage() . ' – die Warteschlange ruht ' . intdiv(KI_RUHE_SEK, 60) . ' Minuten';
+                break;
             } catch (KiUebersprungen $ex) {
                 // Dauerhafter Grund: gleich ausgeschöpft, damit nichts dreimal vergeblich läuft
                 db_exec("UPDATE ki_auftraege SET status = 'fehler', versuche = ?, fehler = ?, erledigt_am = NOW() WHERE id = ?",
@@ -733,7 +756,12 @@ function ki_http(string $methode, string $pfad, ?array $daten, int $timeout): ar
         $fehler = curl_error($ch);
         curl_close($ch);
         if ($roh === false) {
-            throw new KiException('Ollama ist nicht erreichbar: ' . ($fehler ?: 'Zeitüberschreitung'));
+            // Verbindung kam gar nicht zustande (Rechner schläft, Netz weg) – oder Ollama hat zu lange gerechnet
+            $verbindung = $code === 0 && (stripos((string)$fehler, 'connect') !== false || stripos((string)$fehler, 'resolve') !== false || stripos((string)$fehler, 'refused') !== false);
+            if ($verbindung) {
+                throw new KiNichtErreichbar('Ollama ist nicht erreichbar: ' . ($fehler ?: 'keine Verbindung'));
+            }
+            throw new KiException('Ollama hat nicht rechtzeitig geantwortet (Zeitlimit ' . $timeout . ' s): ' . ($fehler ?: 'Zeitüberschreitung'));
         }
     } else {
         $ctx = stream_context_create(['http' => [
@@ -745,7 +773,7 @@ function ki_http(string $methode, string $pfad, ?array $daten, int $timeout): ar
         ]]);
         $roh = @file_get_contents($url . $pfad, false, $ctx);
         if ($roh === false) {
-            throw new KiException('Ollama ist nicht erreichbar.');
+            throw new KiNichtErreichbar('Ollama ist nicht erreichbar.');
         }
         foreach ($http_response_header ?? [] as $h) {
             if (preg_match('#^HTTP/\S+\s+(\d+)#', (string)$h, $m)) {
