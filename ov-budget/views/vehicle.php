@@ -67,6 +67,7 @@ $arten = [
   <section class="card">
     <?php if ($titelbild): ?>
       <a href="<?= e(url('vehicle_file', ['id' => $titelbild['id']])) ?>" class="titelbild">
+        <?php if (($stempel = vehicle_stamp($vehicle)) !== null): ?><span class="stempel stempel--gross<?= ($sk = vehicle_stamp_class($vehicle)) !== '' ? ' ' . $sk : '' ?>"><?= e($stempel) ?></span><?php endif; ?>
         <img src="<?= e(url('vehicle_file', ['id' => $titelbild['id'], 'vorschau' => 1])) ?>"
              alt="<?= e($vehicle['bezeichnung']) ?>">
       </a>

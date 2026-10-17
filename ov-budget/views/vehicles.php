@@ -158,7 +158,7 @@ $fristBadges = static fn(array $liste): string => vehicle_frist_badges($liste);
                    src="<?= e(url('vehicle_file', ['id' => $titelbilder[(int)$v['id']]['id'], 'vorschau' => 1])) ?>">
             <?php endif; ?>
             <div style="min-width:0;flex:1">
-              <div class="item__title"><?= e($v['bezeichnung']) ?></div>
+              <div class="item__title"><?= e($v['bezeichnung']) ?><?php if (($stempel = vehicle_stamp($v)) !== null): ?> <span class="marke<?= ($sk = vehicle_stamp_class($v)) !== '' ? ' ' . $sk : '' ?>"><?= e($stempel) ?></span><?php endif; ?></div>
               <div class="item__sub">
                 <?= e(implode(' · ', array_filter([
                     $v['funkrufname'], $v['kennzeichen'], vehicle_traeger_text($v), $v['typ_label'], $v['fachgruppe_label'],

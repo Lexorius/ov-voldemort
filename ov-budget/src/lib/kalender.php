@@ -478,7 +478,8 @@ function kalender_fahrzeuge_zeitraum(string $von, string $bis, array $u): array
 {
     $rows = db_all(
         'SELECT k.*, u.display_name AS ziel_name, ' . kalender_standorte_sub('calendar_standorte', 'entry_id', 'k') . ' AS standort_name, ' . kalender_fachgruppen_sub() . ',
-                v.id AS vehicle_id, v.bezeichnung AS vehicle_bezeichnung, v.funkrufname AS vehicle_funkrufname, v.kennzeichen AS vehicle_kennzeichen
+                v.id AS vehicle_id, v.bezeichnung AS vehicle_bezeichnung, v.funkrufname AS vehicle_funkrufname, v.kennzeichen AS vehicle_kennzeichen,
+                v.is_active AS vehicle_is_active, v.fms_status AS vehicle_fms_status, (SELECT li.slug FROM list_items li WHERE li.id = v.status_id) AS vehicle_status_slug
          FROM calendar_vehicles cv
          JOIN calendar_entries k ON k.id = cv.entry_id
          JOIN vehicles v ON v.id = cv.vehicle_id
@@ -491,7 +492,8 @@ function kalender_fahrzeuge_zeitraum(string $von, string $bis, array $u): array
     if (can('view_events')) {
         foreach (db_all("SELECT e.id, e.titel, e.beginn, e.ende, e.ort, t.color AS typ_color, t.label AS typ_label,
                                 " . kalender_standorte_sub('event_standorte', 'event_id', 'e') . " AS standort_name,
-                                v.id AS vehicle_id, v.bezeichnung AS vehicle_bezeichnung, v.funkrufname AS vehicle_funkrufname, v.kennzeichen AS vehicle_kennzeichen
+                                v.id AS vehicle_id, v.bezeichnung AS vehicle_bezeichnung, v.funkrufname AS vehicle_funkrufname, v.kennzeichen AS vehicle_kennzeichen,
+                v.is_active AS vehicle_is_active, v.fms_status AS vehicle_fms_status, (SELECT li.slug FROM list_items li WHERE li.id = v.status_id) AS vehicle_status_slug
                          FROM event_vehicles ev JOIN events e ON e.id = ev.event_id JOIN vehicles v ON v.id = ev.vehicle_id LEFT JOIN list_items t ON t.id = e.typ_id
                          WHERE e.beginn < ? AND COALESCE(e.ende, e.beginn) >= ? AND e.status <> 'abgesagt'
                          ORDER BY v.bezeichnung, e.beginn", [$bis . ' 23:59:59', $von . ' 00:00:00']) as $e) {
@@ -500,7 +502,8 @@ function kalender_fahrzeuge_zeitraum(string $von, string $bis, array $u): array
     }
     if (can('view_meetings')) {
         foreach (db_all("SELECT m.id, m.titel, m.datum, m.beginn, m.ende, m.ende_datum, m.ort, t.color AS typ_color, t.label AS typ_label,
-                                v.id AS vehicle_id, v.bezeichnung AS vehicle_bezeichnung, v.funkrufname AS vehicle_funkrufname, v.kennzeichen AS vehicle_kennzeichen
+                                v.id AS vehicle_id, v.bezeichnung AS vehicle_bezeichnung, v.funkrufname AS vehicle_funkrufname, v.kennzeichen AS vehicle_kennzeichen,
+                v.is_active AS vehicle_is_active, v.fms_status AS vehicle_fms_status, (SELECT li.slug FROM list_items li WHERE li.id = v.status_id) AS vehicle_status_slug
                          FROM meeting_vehicles mv JOIN meetings m ON m.id = mv.meeting_id JOIN vehicles v ON v.id = mv.vehicle_id LEFT JOIN list_items t ON t.id = m.typ_id
                          WHERE m.datum <= ? AND COALESCE(m.ende_datum, m.datum) >= ? AND m.status <> 'abgesagt'
                          ORDER BY v.bezeichnung, m.datum", [$bis, $von]) as $m) {
@@ -518,7 +521,8 @@ function kalender_fahrzeuge_gruppieren(array $rows): array
         $vid = (int)$r['vehicle_id'];
         if (!isset($out[$vid])) {
             $out[$vid] = ['fahrzeug' => ['id' => $vid, 'bezeichnung' => (string)$r['vehicle_bezeichnung'], 'funkrufname' => (string)($r['vehicle_funkrufname'] ?? ''),
-                                         'kennzeichen' => (string)($r['vehicle_kennzeichen'] ?? '')], 'termine' => []];
+                                         'kennzeichen' => (string)($r['vehicle_kennzeichen'] ?? ''), 'is_active' => (int)($r['vehicle_is_active'] ?? 1),
+                                         'fms_status' => $r['vehicle_fms_status'] ?? null, 'status_slug' => (string)($r['vehicle_status_slug'] ?? '')], 'termine' => []];
         }
         $out[$vid]['termine'][] = ['id' => (int)$r['id'], 'titel' => (string)$r['titel'], 'beginn' => (string)$r['beginn'], 'ende' => $r['ende'] ?? null,
                                    'ganztag' => (int)($r['ganztag'] ?? 0) === 1, 'ort' => kalender_ort_text($r),

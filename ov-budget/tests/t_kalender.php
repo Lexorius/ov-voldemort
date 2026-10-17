@@ -437,6 +437,15 @@ $html = render_partial('dashboard', ['termine' => [], 'termineGesamt' => 0, 'use
     'zahlen' => ['budget' => 0.0, 'einnahmen' => 0.0, 'ausgaben' => 0.0, 'verfuegbar' => 0.0, 'frei' => 0.0, 'quote' => 0.0], 'budgetVerplant' => 0.0, 'todos' => [], 'todosGesamt' => 0, 'ueberfaellig' => 0, 'zuBestellen' => [], 'fahrzeuge' => [],
     'fahrzeugeWoche' => $mk, 'woche' => ['2026-10-12', '2026-10-18'], 'fzBilder' => [2 => ['id' => 77]],
     'zweiWochen' => ['von' => '2026-10-01', 'bis' => '2026-10-14', 'jeTag' => kalender_je_tag($alle, '2026-10-01', '2026-10-14')], 'darfTermin' => true]);
+if (!function_exists('vehicle_stamp')) {
+    // Attrappe der Fahrzeugbibliothek – hier zählt nur, dass die Startseite den Stempel setzt
+    function vehicle_stamp(array $v): ?string { return (int)($v['fms_status'] ?? 0) === 3 ? 'Im Einsatz' : null; }
+    function vehicle_stamp_class(array $v): string { return vehicle_stamp($v) === 'Im Einsatz' ? 'stempel--blau' : ''; }
+}
+$htmlS = render_partial('dashboard', ['termine' => [], 'termineGesamt' => 0, 'user' => $u, 'jahr' => 2026, 'wuensche' => [], 'statsW' => ['anzahl' => 0, 'summe' => 0.0], 'budgets' => [],
+    'zahlen' => ['budget' => 0.0, 'einnahmen' => 0.0, 'ausgaben' => 0.0, 'verfuegbar' => 0.0, 'frei' => 0.0, 'quote' => 0.0], 'budgetVerplant' => 0.0, 'todos' => [], 'todosGesamt' => 0, 'ueberfaellig' => 0, 'zuBestellen' => [], 'fahrzeuge' => [],
+    'zweiWochen' => ['von' => '2026-10-01', 'bis' => '2026-10-14', 'jeTag' => kalender_je_tag($alle, '2026-10-01', '2026-10-14')], 'darfTermin' => true, 'fahrzeugeWoche' => [['fahrzeug' => ['id' => 2, 'bezeichnung' => 'GKW 1', 'funkrufname' => '', 'kennzeichen' => '', 'is_active' => 1, 'fms_status' => 3, 'status_slug' => 'einsatzbereit'], 'termine' => [['id' => 1, 'titel' => 'Einsatz', 'beginn' => '2026-10-15 08:00:00', 'ende' => null, 'ganztag' => false, 'ort' => '', 'quelle' => 'termin', 'url' => '']], 'konflikte' => 0]], 'woche' => ['2026-10-12', '2026-10-18'], 'fzBilder' => []]);
+$check('Startseite: Stempel „Im Einsatz" blau aus dem Funkstatus auf der Fahrzeugkarte', str_contains($htmlS, 'stempel stempel--blau') && str_contains($htmlS, '>Im Einsatz<'));
 $check('Startseite: Doppelbuchung rot gewarnt, Bild auf der Karte', str_contains($html, 'fzwoche__karte--konflikt') && substr_count($html, 'chip--konflikt') === 2 && str_contains($html, '<strong>Doppelbuchung:</strong>')
     && str_contains($html, 'vehicle_file') && str_contains($html, '>Doppelbuchung</span>'));
 $check('Startseite: zwei Wochen als Raster', str_contains($html, 'Nächste zwei Wochen') && substr_count($html, 'class="kal__tag') === 14 && str_contains($html, 'Tag der Deutschen Einheit') && str_contains($html, 'OV-Runde')

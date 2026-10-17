@@ -1,5 +1,11 @@
 # Änderungsverlauf
 
+## 2.1.48.2
+
+- **Stempel überall:** auch auf den Fahrzeugkarten der Startseite, auf dem
+  Titelbild in der Fahrzeugakte (groß) und als kleine Marke neben dem Namen
+  in der Fahrzeugliste – in denselben Farben wie auf den Kacheln.
+
 ## 2.1.48.1
 
 - **Startseite zeigt nur noch aktuelle Fahrzeuge:** „Fahrzeuge jetzt und

@@ -106,9 +106,12 @@ $quoteCls = ($zahlen['verfuegbar'] > 0 && $zahlen['ausgaben'] > $zahlen['verfueg
       <?php foreach ($fahrzeugeWoche as $g): $v = $g['fahrzeug']; $hatKonflikt = (int)($g['konflikte'] ?? 0) > 0; ?>
         <div class="fzwoche__karte<?= $hatKonflikt ? ' fzwoche__karte--konflikt' : '' ?>">
           <a href="<?= e(url('vehicle', ['id' => $v['id']])) ?>" class="fzwoche__kopf">
-            <?php if (isset($fzBilder[(int)$v['id']])): ?>
-              <img class="fzwoche__bild" alt="" loading="lazy" src="<?= e(url('vehicle_file', ['id' => $fzBilder[(int)$v['id']]['id'], 'vorschau' => 1])) ?>">
-            <?php else: ?><span class="fzwoche__bild fzwoche__leer">⛟</span><?php endif; ?>
+            <span class="fzwoche__rahmen">
+              <?php if (($stempel = function_exists('vehicle_stamp') ? vehicle_stamp($v) : null) !== null): ?><span class="stempel<?= ($sk = vehicle_stamp_class($v)) !== '' ? ' ' . $sk : '' ?>"><?= e($stempel) ?></span><?php endif; ?>
+              <?php if (isset($fzBilder[(int)$v['id']])): ?>
+                <img class="fzwoche__bild" alt="" loading="lazy" src="<?= e(url('vehicle_file', ['id' => $fzBilder[(int)$v['id']]['id'], 'vorschau' => 1])) ?>">
+              <?php else: ?><span class="fzwoche__bild fzwoche__leer">⛟</span><?php endif; ?>
+            </span>
             <strong><?= e((string)$v['bezeichnung']) ?></strong>
             <span class="muted small"><?= e(implode(' · ', array_filter([$v['funkrufname'], $v['kennzeichen']]))) ?></span>
             <?php if ($hatKonflikt): ?><span class="badge" style="background:#b91c1c">Doppelbuchung</span><?php endif; ?>
