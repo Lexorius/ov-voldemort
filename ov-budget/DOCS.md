@@ -518,9 +518,13 @@ Verwaltung.
   von der kleinen Upload-Grenze der Anlagen. Das Add-on lässt bis 2 GB je
   Upload durch; ausgepackt sind höchstens 500 Dateien und 4 GB je Paket
   erlaubt. Ein Paket von einigen hundert MB braucht je nach Leitung ein
-  paar Minuten – das Fenster offen lassen. Bricht der Upload über die
-  Home-Assistant-Oberfläche ab, hilft es, die Anwendung direkt über ihren
-  Port aufzurufen (Add-on-Konfiguration → Netzwerk).
+  paar Minuten – das Fenster offen lassen. Die Home-Assistant-Oberfläche
+  lässt nur 16 MB je Anfrage durch („Maximum request body size 16777216
+  exceeded"); darum schneidet der Browser große Dateien in Stücke von 8 MB
+  und die Anwendung setzt sie zusammen – mit Fortschrittsanzeige. Ohne
+  JavaScript bleibt der normale Upload, der dann über die Oberfläche bei
+  16 MB endet; direkt über den Port des Add-ons (Add-on-Konfiguration →
+  Netzwerk) gehen bis 2 GB am Stück.
 * PDFs und Bilder öffnen im Browser, alles andere wird heruntergeladen.
   Die Ablage liegt unter `uploads/stan`, die Sicherung nimmt sie mit.
 

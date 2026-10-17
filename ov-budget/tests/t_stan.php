@@ -106,6 +106,33 @@ $sql = implode("\n", array_column($GLOBALS['execs'], 0));
 $check('Version löschen: Dateien und ZIP weg, Zeilen gelöscht', !is_file($GLOBALS['upload_dir'] . '/stan/' . $dateien[0][1]['stored_name']) && !is_file($GLOBALS['upload_dir'] . '/stan/' . $v[1]['zip_name'])
     && substr_count($sql, 'DELETE FROM stan_dateien') === 2 && str_contains($sql, 'DELETE FROM stan_versionen'));
 
+/* ---------- stückweiser Upload ---------- */
+$check('Upload-Kennung: 32 Hex-Zeichen', stan_upload_id_ok(str_repeat('ab', 16)) && !stan_upload_id_ok('../x') && !stan_upload_id_ok(str_repeat('ab', 15)) && !stan_upload_id_ok(strtoupper(str_repeat('ab', 16))));
+$kid = str_repeat('cd', 16);
+$teile = ["%PDF-1.4\n", "1 0 obj\n", "%%EOF\n"];
+$r = [];
+foreach ($teile as $i => $t) {
+    file_put_contents($tmp . '/teil', $t);
+    $r[] = stan_teil_anfuegen($kid, $i, 3, 'Ordner\\STAN Anlage.pdf', $tmp . '/teil');
+}
+$check('Stücke der Reihe nach angehängt', $r[0]['ok'] && $r[0]['next'] === 1 && $r[2]['ok'] && $r[2]['next'] === 3 && stan_teile_fertig($kid)['size'] === strlen(implode('', $teile)));
+file_put_contents($tmp . '/teil', 'x');
+$check('Stück außer der Reihe: abgelehnt', !stan_teil_anfuegen(str_repeat('ef', 16), 1, 3, 'a.pdf', $tmp . '/teil')['ok'] && !stan_teil_anfuegen('kaputt', 0, 1, 'a.pdf', $tmp . '/teil')['ok'] && !stan_teil_anfuegen(str_repeat('ef', 16), 0, 0, 'a.pdf', $tmp . '/teil')['ok']);
+file_put_contents($tmp . '/teil', 'x');
+stan_teil_anfuegen(str_repeat('ef', 16), 0, 2, 'halb.pdf', $tmp . '/teil');
+$check('unvollständig: nicht fertig', stan_teile_fertig(str_repeat('ef', 16)) === null && stan_teile_fertig('kaputt') === null);
+file_put_contents($tmp . '/teil', "%PDF-1.4\n%%EOF\n");
+$fertig = stan_teil_anfuegen(str_repeat('ef', 16), 1, 2, 'halb.pdf', $tmp . '/teil') ? stan_teile_fertig(str_repeat('ef', 16)) : null;
+$check('vollständig: Datei mit Namen (nur Basisname) und Größe', $fertig !== null && $fertig['name'] === 'halb.pdf' && is_file($fertig['pfad']) && $fertig['size'] > 0);
+$GLOBALS['inserts'] = [];
+$check('zusammengesetzte Datei nachreichen', stan_datei_nachreichen_pfad(101, $fertig['pfad'], $fertig['name'], $fertig['size'], 'Zug') === null && $GLOBALS['inserts'][0][1]['pfad'] === 'Zug/halb.pdf' && !is_file($fertig['pfad']));
+$alt = stan_tmp_dir() . '/' . str_repeat('ab', 16) . '.part';
+file_put_contents($alt, 'alt');
+touch($alt, time() - 90000);
+$check('Liegengebliebenes wird weggeräumt', stan_teile_aufraeumen() >= 1 && !is_file($alt));
+foreach (glob(stan_tmp_dir() . '/*') ?: [] as $f) { @unlink($f); }
+@rmdir(stan_tmp_dir());
+
 /* ---------- Ansicht ---------- */
 $versionen = [
     ['id' => 5, 'nummer' => 3, 'bemerkung' => 'Stand 10/2026', 'zip_name' => 'v003_x.zip', 'orig_name' => 'STAN_2026.zip', 'zip_bytes' => 1000, 'uploaded_by' => 1, 'created_at' => '2026-10-17 10:00:00', 'hochgeladen_von' => 'Thomas', 'anzahl' => 2, 'bytes' => 500],
@@ -113,6 +140,7 @@ $versionen = [
 ];
 $liste = [['id' => 21, 'version_id' => 5, 'pfad' => 'STAN/Fachgruppe N/FGr N.pdf', 'name' => 'FGr N.pdf', 'stored_name' => 'a.pdf', 'mime' => 'application/pdf', 'size_bytes' => 400], ['id' => 22, 'version_id' => 5, 'pfad' => 'Lies mich.txt', 'name' => 'Lies mich.txt', 'stored_name' => 'b.txt', 'mime' => 'text/plain', 'size_bytes' => 100]];
 $html = render_partial('stan', ['title' => 'STAN', 'versionen' => $versionen, 'aktuell' => $versionen[0], 'gezeigt' => $versionen[0], 'dateien' => $liste, 'darf' => true, 'maxMb' => 10]);
+$check('Ansicht: stückweiser Upload an beiden Formularen', substr_count($html, 'data-stueckweise=') === 2 && str_contains($html, 'data-ziel="paket"') && str_contains($html, 'data-ziel="nachreichen"') && str_contains($html, '16 MB je Anfrage'));
 $check('Ansicht: Versionen als Chips mit „aktuell", Dateien nach Ordner, Links, Upload als Version 4', str_contains($html, 'Version 3 – Stand 10/2026') && str_contains($html, '>aktuell</span>') && str_contains($html, 'p=stan&amp;version=4')
     && str_contains($html, '📁 STAN/Fachgruppe N') && str_contains($html, 'p=stan_file&amp;id=21') && str_contains($html, 'Neues Paket als Version 4 hochladen') && str_contains($html, 'value="nachreichen"') && str_contains($html, 'value="version_weg"'));
 $html = render_partial('stan', ['title' => 'STAN', 'versionen' => $versionen, 'aktuell' => $versionen[0], 'gezeigt' => $versionen[1], 'dateien' => [], 'darf' => false, 'maxMb' => 10]);

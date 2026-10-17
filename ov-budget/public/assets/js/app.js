@@ -567,6 +567,90 @@
     });
   });
 
+  // Große Dateien in Stücken hochladen (STAN): Home Assistant lässt nur 16 MB je Anfrage durch
+  document.querySelectorAll('form[data-stueckweise]').forEach(function (form) {
+    if (!window.fetch || !window.FormData || !window.File || !File.prototype.slice) { return; }
+    var ziel = form.getAttribute('data-stueckweise');
+    var stueck = (parseFloat(form.getAttribute('data-stueck-mb')) || 8) * 1048576;
+    var anzeige = form.querySelector('.stan__fortschritt');
+    var knopf = form.querySelector('button[type=submit]');
+    function zeigen(text, fehler) {
+      if (!anzeige) { return; }
+      anzeige.hidden = false;
+      anzeige.textContent = text;
+      anzeige.className = 'stan__fortschritt small' + (fehler ? ' alert alert--error' : ' muted');
+    }
+    function kennung() {
+      var b = new Uint8Array(16);
+      (window.crypto || window.msCrypto).getRandomValues(b);
+      return Array.prototype.map.call(b, function (x) { return ('0' + x.toString(16)).slice(-2); }).join('');
+    }
+    function senden(daten) {
+      return fetch(ziel, { method: 'POST', body: daten, credentials: 'same-origin' }).then(function (r) {
+        return r.json().catch(function () { return { ok: false, fehler: 'Unerwartete Antwort (HTTP ' + r.status + ').' }; });
+      });
+    }
+    function hochladen(datei, nr, gesamt) {
+      var id = kennung();
+      var teile = Math.max(1, Math.ceil(datei.size / stueck));
+      var csrf = form.querySelector('input[name=_csrf]');
+      var index = 0;
+      function naechstes() {
+        if (index >= teile) { return Promise.resolve(); }
+        var fd = new FormData();
+        fd.append('_csrf', csrf ? csrf.value : '');
+        fd.append('action', 'chunk');
+        fd.append('upload_id', id);
+        fd.append('index', String(index));
+        fd.append('total', String(teile));
+        fd.append('name', datei.name);
+        fd.append('chunk', datei.slice(index * stueck, Math.min(datei.size, (index + 1) * stueck)), 'stueck.bin');
+        zeigen((gesamt > 1 ? 'Datei ' + nr + ' von ' + gesamt + ': ' : '') + datei.name + ' – ' + Math.round(100 * index / teile) + ' % hochgeladen …');
+        return senden(fd).then(function (a) {
+          if (!a.ok) { throw new Error(a.fehler || 'Upload abgebrochen.'); }
+          index++;
+          return naechstes();
+        });
+      }
+      return naechstes().then(function () {
+        var fd = new FormData();
+        fd.append('_csrf', csrf ? csrf.value : '');
+        fd.append('action', 'fertig');
+        fd.append('upload_id', id);
+        fd.append('ziel', form.getAttribute('data-ziel') || 'paket');
+        ['bemerkung', 'version_id', 'ordner'].forEach(function (n) {
+          var el = form.querySelector('[name=' + n + ']');
+          if (el) { fd.append(n, el.value); }
+        });
+        zeigen(datei.name + ' – wird eingespielt …');
+        return senden(fd).then(function (a) {
+          if (!a.ok) { throw new Error(a.fehler || 'Einspielen fehlgeschlagen.'); }
+          return a.redirect;
+        });
+      });
+    }
+    form.addEventListener('submit', function (ev) {
+      var eingaben = Array.prototype.slice.call(form.querySelectorAll('input[type=file]'));
+      var dateien = [];
+      eingaben.forEach(function (inp) { Array.prototype.push.apply(dateien, inp.files || []); });
+      if (!dateien.length) { return; }
+      ev.preventDefault();
+      if (knopf) { knopf.disabled = true; }
+      var weiter = null;
+      var kette = Promise.resolve();
+      dateien.forEach(function (d, i) {
+        kette = kette.then(function () { return hochladen(d, i + 1, dateien.length); }).then(function (r) { weiter = r || weiter; });
+      });
+      kette.then(function () {
+        zeigen('Fertig – Seite wird neu geladen …');
+        window.location.href = weiter || window.location.href;
+      }).catch(function (err) {
+        zeigen('Fehler: ' + err.message, true);
+        if (knopf) { knopf.disabled = false; }
+      });
+    });
+  });
+
   // Statusauswahl der Anwesenheit sofort sichtbar machen
   document.querySelectorAll('.chips').forEach(function (gruppe) {
     gruppe.addEventListener('change', function (ev) {

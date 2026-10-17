@@ -68,7 +68,7 @@ $icon = static function (array $d): string {
     <?php if ($darf): ?>
       <details class="mt">
         <summary>Dateien zu dieser Version nachreichen</summary>
-        <form method="post" action="<?= e(url('stan', ['version' => $gezeigt['id']])) ?>" enctype="multipart/form-data" class="form upload">
+        <form method="post" action="<?= e(url('stan', ['version' => $gezeigt['id']])) ?>" enctype="multipart/form-data" class="form upload" data-stueckweise="<?= e(url('stan_upload')) ?>" data-stueck-mb="<?= STAN_STUECK_MB ?>" data-ziel="nachreichen">
           <?= csrf_field() ?>
           <input type="hidden" name="action" value="nachreichen">
           <input type="hidden" name="version_id" value="<?= (int)$gezeigt['id'] ?>">
@@ -78,6 +78,7 @@ $icon = static function (array $d): string {
           </div>
           <small class="muted">Einzelne PDFs, die im Paket fehlen oder sich geändert haben. Für ein ganz neues Paket lieber unten ein ZIP als neue Version hochladen.</small>
           <div class="btnrow" style="margin-top:.5rem"><button class="btn btn--sm" type="submit">Nachreichen</button></div>
+          <div class="stan__fortschritt small" hidden></div>
         </form>
       </details>
       <details class="mt">
@@ -93,7 +94,7 @@ $icon = static function (array $d): string {
 <?php if ($darf): ?>
 <section class="card" id="paket">
   <div class="card__head"><h2>Neues Paket als Version <?= $aktuell ? (int)$aktuell['nummer'] + 1 : 1 ?> hochladen</h2></div>
-  <form method="post" action="<?= e(url('stan')) ?>" enctype="multipart/form-data" class="form upload">
+  <form method="post" action="<?= e(url('stan')) ?>" enctype="multipart/form-data" class="form upload" data-stueckweise="<?= e(url('stan_upload')) ?>" data-stueck-mb="<?= STAN_STUECK_MB ?>" data-ziel="paket">
     <?= csrf_field() ?>
     <input type="hidden" name="action" value="paket">
     <div class="grid2">
@@ -103,8 +104,9 @@ $icon = static function (array $d): string {
         <input type="text" id="bemerkung" name="bemerkung" maxlength="200" placeholder="z. B. Stand 10/2026"></div>
     </div>
     <small class="muted">Erlaubt im Paket: <?= e(implode(', ', array_map('strtoupper', STAN_ERLAUBT))) ?>; Unterordner bleiben erhalten, Systemdateien werden übergangen.
-      Höchstens <?= (int)$maxMb ?> MB je Upload (Einstellungen → Allgemein → „STAN-Paket höchstens … MB"). Große Pakete brauchen je nach Leitung einige Minuten – das Fenster offen lassen. Das ZIP bleibt zum Herunterladen liegen.</small>
+      Höchstens <?= (int)$maxMb ?> MB je Upload (Einstellungen → Allgemein → „STAN-Paket höchstens … MB"). Der Browser überträgt in Stücken von <?= STAN_STUECK_MB ?> MB – so geht es auch über die Home-Assistant-Oberfläche, die nur 16 MB je Anfrage durchlässt. Große Pakete brauchen je nach Leitung einige Minuten, das Fenster offen lassen. Das ZIP bleibt zum Herunterladen liegen.</small>
     <div class="btnrow" style="margin-top:.5rem"><button class="btn" type="submit">Als neue Version einspielen</button></div>
+    <div class="stan__fortschritt small" hidden></div>
   </form>
 </section>
 <?php endif; ?>

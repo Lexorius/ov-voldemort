@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.46.0
+
+- **STAN-Pakete über die Home-Assistant-Oberfläche:** Die Oberfläche lässt
+  nur 16 MB je Anfrage durch („Maximum request body size 16777216
+  exceeded"). Der Browser überträgt Pakete und nachgereichte Dateien jetzt
+  in Stücken von 8 MB mit Fortschrittsanzeige, die Anwendung setzt sie
+  zusammen; liegengebliebene Stücke werden nach einem Tag weggeräumt.
+
 ## 2.1.45.1
 
 - **Große STAN-Pakete:** eigene Grenze „STAN-Paket höchstens … MB" (Vorgabe

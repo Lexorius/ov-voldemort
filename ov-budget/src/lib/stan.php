@@ -229,12 +229,23 @@ function stan_version_aus_zip(string $feld, string $bemerkung, array $user): arr
     if (!is_uploaded_file($tmp) && !defined('OVB_TEST_UPLOADS')) {
         return [null, ['Die Datei wurde nicht über das Formular hochgeladen.'], []];
     }
-    if (strtolower(pathinfo((string)$f['name'], PATHINFO_EXTENSION)) !== 'zip') {
+    return stan_version_aus_datei($tmp, (string)$f['name'], (int)$f['size'], $bemerkung, $user);
+}
+
+/**
+ * Eine ZIP-Datei in der Ablage (hochgeladen oder aus Stücken zusammengesetzt)
+ * als neue Version einspielen. Die Datei wird dabei verschoben.
+ * Rückgabe: [version_id oder null, Fehler[], Hinweise[]]
+ */
+function stan_version_aus_datei(string $tmp, string $origName, int $groesse, string $bemerkung, array $user): array
+{
+    if (strtolower(pathinfo($origName, PATHINFO_EXTENSION)) !== 'zip') {
         return [null, ['Das Paket muss ein ZIP sein (.zip). Einzelne PDFs gehen über „Dateien nachreichen".'], []];
     }
-    if ((int)$f['size'] > stan_max_bytes()) {
+    if ($groesse > stan_max_bytes()) {
         return [null, [sprintf('Das Paket ist zu groß (höchstens %s – einstellbar unter Einstellungen → Allgemein → „STAN-Paket höchstens … MB").', bytes_human(stan_max_bytes()))], []];
     }
+    $f = ['name' => $origName, 'size' => $groesse];
     try {
         $inhalt = stan_zip_lesen($tmp);
     } catch (RuntimeException $e) {
@@ -251,7 +262,7 @@ function stan_version_aus_zip(string $feld, string $bemerkung, array $user): arr
         $nummer = (int)db_val('SELECT COALESCE(MAX(nummer), 0) FROM stan_versionen', [], 0) + 1;
         $zipName = sprintf('v%03d_%s.zip', $nummer, bin2hex(random_bytes(6)));
         $zipZiel = stan_dir() . DIRECTORY_SEPARATOR . $zipName;
-        if (!(defined('OVB_TEST_UPLOADS') ? copy($tmp, $zipZiel) : move_uploaded_file($tmp, $zipZiel))) {
+        if (!(defined('OVB_TEST_UPLOADS') ? copy($tmp, $zipZiel) : (rename($tmp, $zipZiel) || copy($tmp, $zipZiel)))) {
             return [null, ['Das Paket ließ sich nicht in der Ablage speichern.'], []];
         }
         $id = db_insert('stan_versionen', [
@@ -324,19 +335,9 @@ function stan_dateien_nachreichen(int $versionId, string $feld, string $ordner, 
             $fehler[] = sprintf('„%s" wurde nicht über das Formular hochgeladen.', $name);
             continue;
         }
-        $groesse = (int)$_FILES[$feld]['size'][$i];
-        $grund = stan_eintrag_pruefen(basename($name), $groesse);
+        $grund = stan_datei_nachreichen_pfad($versionId, $tmp, $name, (int)$_FILES[$feld]['size'][$i], $ordner);
         if ($grund !== null) {
-            $fehler[] = sprintf('„%s": %s.', $name, $grund);
-            continue;
-        }
-        if ($groesse > stan_max_bytes()) {
-            $fehler[] = sprintf('„%s" ist zu groß (höchstens %s).', $name, bytes_human(stan_max_bytes()));
-            continue;
-        }
-        $innen = ($ordner !== '' && stan_eintrag_pruefen($ordner . '/x.pdf', 1) === null ? $ordner . '/' : '') . basename($name);
-        if (stan_datei_ablegen($versionId, $innen, $tmp, $groesse) === null) {
-            $fehler[] = sprintf('„%s": dieser Inhalt ist nicht erlaubt.', $name);
+            $fehler[] = $grund;
             continue;
         }
         $n++;
@@ -345,6 +346,123 @@ function stan_dateien_nachreichen(int $versionId, string $feld, string $ordner, 
         audit('stan.nachgereicht', 'stan', $versionId, sprintf('%d Datei(en)', $n));
     }
     return [$n, $fehler];
+}
+
+/** Eine Datei aus der Ablage zur Version nachreichen (verschiebt sie). null = gut, sonst der Grund. */
+function stan_datei_nachreichen_pfad(int $versionId, string $tmp, string $name, int $groesse, string $ordner): ?string
+{
+    $ordner = trim(str_replace('\\', '/', $ordner), '/ ');
+    $grund = stan_eintrag_pruefen(basename($name), $groesse);
+    if ($grund !== null) {
+        return sprintf('„%s": %s.', $name, $grund);
+    }
+    if ($groesse > stan_max_bytes()) {
+        return sprintf('„%s" ist zu groß (höchstens %s).', $name, bytes_human(stan_max_bytes()));
+    }
+    $innen = ($ordner !== '' && stan_eintrag_pruefen($ordner . '/x.pdf', 1) === null ? $ordner . '/' : '') . basename($name);
+    if (stan_datei_ablegen($versionId, $innen, $tmp, $groesse) === null) {
+        return sprintf('„%s": dieser Inhalt ist nicht erlaubt.', $name);
+    }
+    return null;
+}
+
+/* ==================================================================== */
+/* Stückweiser Upload (Home Assistant lässt nur 16 MB je Anfrage durch)  */
+/* ==================================================================== */
+
+const STAN_STUECK_MB = 8;                       // so groß schneidet der Browser
+const STAN_STUECK_MAX = 15 * 1024 * 1024;       // mehr nimmt die Anwendung je Stück nicht an
+const STAN_STUECKE_MAX = 4096;
+
+function stan_tmp_dir(): string
+{
+    $dir = stan_dir() . DIRECTORY_SEPARATOR . 'tmp';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0770, true);
+    }
+    return $dir;
+}
+
+/** Upload-Kennung aus dem Browser: 32 Hex-Zeichen, sonst nichts. Reine Funktion. */
+function stan_upload_id_ok(string $id): bool
+{
+    return (bool)preg_match('/^[a-f0-9]{32}$/', $id);
+}
+
+/**
+ * Ein Stück anhängen. Die Stücke müssen der Reihe nach kommen (index 0, 1, 2 …).
+ * Rückgabe: ['ok' => bool, 'next' => int, 'fehler' => string]
+ */
+function stan_teil_anfuegen(string $id, int $index, int $total, string $name, string $quelle): array
+{
+    if (!stan_upload_id_ok($id)) {
+        return ['ok' => false, 'next' => 0, 'fehler' => 'Ungültige Upload-Kennung.'];
+    }
+    if ($total < 1 || $total > STAN_STUECKE_MAX || $index < 0 || $index >= $total) {
+        return ['ok' => false, 'next' => 0, 'fehler' => 'Stückzahl oder Nummer passt nicht.'];
+    }
+    $groesse = (int)@filesize($quelle);
+    if ($groesse <= 0 || $groesse > STAN_STUECK_MAX) {
+        return ['ok' => false, 'next' => 0, 'fehler' => 'Das Stück ist leer oder zu groß.'];
+    }
+    $teil = stan_tmp_dir() . DIRECTORY_SEPARATOR . $id . '.part';
+    $metaPfad = stan_tmp_dir() . DIRECTORY_SEPARATOR . $id . '.meta';
+    $meta = is_file($metaPfad) ? json_decode((string)file_get_contents($metaPfad), true) : null;
+    if ($index === 0) {
+        $meta = ['name' => mb_substr(basename(str_replace('\\', '/', $name)), 0, 255), 'total' => $total, 'next' => 0, 'size' => 0];
+        @unlink($teil);
+    }
+    if (!is_array($meta) || (int)($meta['next'] ?? -1) !== $index || (int)($meta['total'] ?? 0) !== $total) {
+        return ['ok' => false, 'next' => (int)($meta['next'] ?? 0), 'fehler' => 'Die Stücke kamen durcheinander – bitte den Upload neu starten.'];
+    }
+    if ((int)$meta['size'] + $groesse > stan_max_bytes()) {
+        @unlink($teil);
+        @unlink($metaPfad);
+        return ['ok' => false, 'next' => 0, 'fehler' => sprintf('Die Datei ist größer als erlaubt (höchstens %s).', bytes_human(stan_max_bytes()))];
+    }
+    $ziel = fopen($teil, 'ab');
+    $von = fopen($quelle, 'rb');
+    if (!$ziel || !$von) {
+        return ['ok' => false, 'next' => $index, 'fehler' => 'Das Stück ließ sich nicht ablegen.'];
+    }
+    stream_copy_to_stream($von, $ziel);
+    fclose($von);
+    fclose($ziel);
+    @unlink($quelle);
+    $meta['next'] = $index + 1;
+    $meta['size'] = (int)$meta['size'] + $groesse;
+    $meta['zeit'] = time();
+    file_put_contents($metaPfad, json_encode($meta));
+    return ['ok' => true, 'next' => $index + 1, 'fehler' => ''];
+}
+
+/** Sind alle Stücke da? Dann ['pfad', 'name', 'size'] der zusammengesetzten Datei, sonst null. */
+function stan_teile_fertig(string $id): ?array
+{
+    if (!stan_upload_id_ok($id)) {
+        return null;
+    }
+    $teil = stan_tmp_dir() . DIRECTORY_SEPARATOR . $id . '.part';
+    $metaPfad = stan_tmp_dir() . DIRECTORY_SEPARATOR . $id . '.meta';
+    $meta = is_file($metaPfad) ? json_decode((string)file_get_contents($metaPfad), true) : null;
+    if (!is_array($meta) || !is_file($teil) || (int)$meta['next'] !== (int)$meta['total']) {
+        return null;
+    }
+    @unlink($metaPfad);
+    return ['pfad' => $teil, 'name' => (string)$meta['name'], 'size' => (int)filesize($teil)];
+}
+
+/** Liegengebliebene Stücke (abgebrochene Uploads) nach einem Tag wegräumen */
+function stan_teile_aufraeumen(int $alterSek = 86400): int
+{
+    $n = 0;
+    foreach (glob(stan_tmp_dir() . DIRECTORY_SEPARATOR . '*.{part,meta}', GLOB_BRACE) ?: [] as $f) {
+        if (is_file($f) && filemtime($f) < time() - $alterSek) {
+            @unlink($f);
+            $n++;
+        }
+    }
+    return $n;
 }
 
 function stan_datei_loeschen(array $datei): void

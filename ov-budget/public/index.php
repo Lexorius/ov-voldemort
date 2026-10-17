@@ -77,6 +77,7 @@ $routes = [
     'stan'               => 'stan',
     'stan_file'          => 'stan_file',
     'stan_zip'           => 'stan_zip',
+    'stan_upload'        => 'stan_upload',
     'thw_dienststelle_edit' => 'thw_dienststelle_edit',
     'thw_postfach_edit'  => 'thw_postfach_edit',
 

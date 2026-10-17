@@ -720,3 +720,6 @@ pre.raw {
 .seiten__zahlen a, .seiten__aktiv { min-width: 1.8rem; text-align: center; padding: .15rem .35rem; border-radius: 6px; }
 .seiten__aktiv { background: var(--accent); color: #fff; }
 .seiten .is-disabled { opacity: .45; pointer-events: none; }
+
+/* Fortschritt beim stückweisen Upload (STAN) */
+.stan__fortschritt { margin-top: .5rem; }
