@@ -1,5 +1,11 @@
 # Änderungsverlauf
 
+## 2.1.46.2
+
+- **STAN-Upload:** Der Fehlerfänger der Stück-Schnittstelle machte auch
+  unterdrückte Warnungen zu Fehlern („unlink … No such file or directory")
+  und brach damit gleich beim ersten Stück ab. Behoben.
+
 ## 2.1.46.1
 
 - **STAN-Upload im Add-on repariert:** Das Aufräumen alter Stücke nutzte ein

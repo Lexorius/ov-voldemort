@@ -410,14 +410,20 @@ function stan_teil_anfuegen(string $id, int $index, int $total, string $name, st
     $meta = is_file($metaPfad) ? json_decode((string)file_get_contents($metaPfad), true) : null;
     if ($index === 0) {
         $meta = ['name' => mb_substr(basename(str_replace('\\', '/', $name)), 0, 255), 'total' => $total, 'next' => 0, 'size' => 0];
-        @unlink($teil);
+        if (is_file($teil)) {
+            unlink($teil);
+        }
     }
     if (!is_array($meta) || (int)($meta['next'] ?? -1) !== $index || (int)($meta['total'] ?? 0) !== $total) {
         return ['ok' => false, 'next' => (int)($meta['next'] ?? 0), 'fehler' => 'Die Stücke kamen durcheinander – bitte den Upload neu starten.'];
     }
     if ((int)$meta['size'] + $groesse > stan_max_bytes()) {
-        @unlink($teil);
-        @unlink($metaPfad);
+        if (is_file($teil)) {
+            unlink($teil);
+        }
+        if (is_file($metaPfad)) {
+            unlink($metaPfad);
+        }
         return ['ok' => false, 'next' => 0, 'fehler' => sprintf('Die Datei ist größer als erlaubt (höchstens %s).', bytes_human(stan_max_bytes()))];
     }
     $ziel = fopen($teil, 'ab');

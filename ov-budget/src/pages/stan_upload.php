@@ -21,6 +21,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 // Was hier schiefgeht, soll der Browser als Text sehen – nicht als nackter HTTP 500
 set_error_handler(static function (int $nr, string $text, string $datei, int $zeile): bool {
+    if (!(error_reporting() & $nr)) {
+        return false;   // mit @ unterdrückt – etwa unlink() einer Datei, die es noch nicht gibt
+    }
     throw new ErrorException($text, 0, $nr, $datei, $zeile);
 });
 try {
