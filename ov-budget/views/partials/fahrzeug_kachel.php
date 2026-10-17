@@ -21,7 +21,7 @@ $id = (int)$v['id'];
   <?php if ($stern !== ''): ?><div class="kachel__stern"><?= $stern ?></div><?php endif; ?>
   <a class="kachel__bild" href="<?= e(url('vehicle', ['id' => $id])) ?>">
     <?php if ($stempel !== null): ?>
-      <span class="stempel<?= $aktiv ? '' : ' stempel--grau' ?>"><?= e($stempel) ?></span>
+      <span class="stempel<?= ($sk = vehicle_stamp_class($v)) !== '' ? ' ' . $sk : '' ?>"><?= e($stempel) ?></span>
     <?php endif; ?>
     <?php if (isset($titelbilder[$id])): ?>
       <img alt="" loading="lazy" src="<?= e(url('vehicle_file', ['id' => $titelbilder[$id]['id'], 'vorschau' => 1])) ?>">

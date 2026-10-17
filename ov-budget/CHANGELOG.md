@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.48.0
+
+- **Mehr Stempel auf den Fahrzeugkacheln:** neben „Nicht einsatzbereit",
+  „In Wartung" und „Ausgemustert" jetzt auch „Bedingt einsatzbereit" (gelb)
+  und „Im Einsatz" (blau) – letzteres auch, wenn Divera den Funkstatus 3, 4,
+  7 oder 8 meldet. Gilt auf der Fahrzeugübersicht, der Startseite, der
+  Standortübersicht und im Hallenplan.
+
 ## 2.1.47.1
 
 - **QR-Standortmeldung gegen Divera geschützt:** Bisher überschrieb der

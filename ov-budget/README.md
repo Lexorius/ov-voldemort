@@ -182,8 +182,9 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
   Auftragsschritt, jede Meldung; eine Prüfsummen-Kette zeigt Manipulationen an
 - **Instandsetzungsaufträge** mit eigener Nummer, der Nummer der
   THW-Verwaltung, Werkstatt, Kosten und Bearbeitungsstand
-- **Sortierbare Liste und Kachelansicht** mit Stempel „Nicht einsatzbereit",
-  Favoriten je Person
+- **Sortierbare Liste und Kachelansicht** mit Stempeln „Nicht einsatzbereit",
+  „In Wartung", „Bedingt einsatzbereit" und „Im Einsatz" (auch aus dem
+  Divera-Funkstatus), Favoriten je Person
 - **Wünsche je Fahrzeug**: Ersatzteile und Ausstattung hängen an der Akte
 - **Karte in der Fahrzeugakte** (OpenStreetMap) mit der letzten Position
 - **„Jetzt Position setzen"** am Handy: Standort des Geräts übernehmen

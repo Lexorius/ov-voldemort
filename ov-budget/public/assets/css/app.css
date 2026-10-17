@@ -284,6 +284,11 @@ h3 { font-size: 1rem; }
   text-align: center; white-space: nowrap; opacity: .9; pointer-events: none;
 }
 .stempel--grau { border-color: #475569; color: #475569; }
+.stempel--gelb { border-color: #a16207; color: #a16207; }
+.stempel--blau { border-color: #0284c7; color: #0284c7; }
+.plan__stempel--gelb { color: #a16207; }
+.plan__stempel--blau { color: #0284c7; }
+.plan__stempel--grau { color: #475569; }
 @media (prefers-color-scheme: dark) { .stempel { background: rgba(15, 23, 42, .68); } }
 
 .item-mit-stern { display: flex; align-items: flex-start; gap: .3rem; }

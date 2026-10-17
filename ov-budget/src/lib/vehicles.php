@@ -109,10 +109,32 @@ function vehicle_stamp(array $v): ?string
     if (!(int)($v['is_active'] ?? 1)) {
         return 'Ausgemustert';
     }
-    return match ((string)($v['status_slug'] ?? '')) {
-        'nicht-einsatzbereit' => 'Nicht einsatzbereit',
-        'wartung'             => 'In Wartung',
-        default               => null,
+    $slug = (string)($v['status_slug'] ?? '');
+    if ($slug === 'nicht-einsatzbereit') {
+        return 'Nicht einsatzbereit';
+    }
+    if ($slug === 'wartung') {
+        return 'In Wartung';
+    }
+    // Divera-Funkstatus 3, 4, 7, 8 heißt: gerade unterwegs im Einsatz
+    $fms = isset($v['fms_status']) && $v['fms_status'] !== null && $v['fms_status'] !== '' ? (int)$v['fms_status'] : null;
+    if ($slug === 'im-einsatz' || in_array($fms, [3, 4, 7, 8], true)) {
+        return 'Im Einsatz';
+    }
+    if ($slug === 'bedingt') {
+        return 'Bedingt einsatzbereit';
+    }
+    return null;
+}
+
+/** Farbe des Stempels als CSS-Zusatz: leer = rot, sonst stempel--gelb, stempel--blau, stempel--grau. Reine Funktion. */
+function vehicle_stamp_class(array $v): string
+{
+    return match (vehicle_stamp($v)) {
+        'Ausgemustert'          => 'stempel--grau',
+        'Im Einsatz'            => 'stempel--blau',
+        'Bedingt einsatzbereit' => 'stempel--gelb',
+        default                 => '',
     };
 }
 

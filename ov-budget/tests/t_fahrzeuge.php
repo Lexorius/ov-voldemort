@@ -382,7 +382,11 @@ $_POST = [];
 
 /* ---------- Stempel auf der Kachel ---------- */
 $check('einsatzbereit ohne Stempel', vehicle_stamp(['is_active' => 1, 'status_slug' => 'einsatzbereit']) === null);
-$check('bedingt ohne Stempel', vehicle_stamp(['is_active' => 1, 'status_slug' => 'bedingt']) === null);
+$check('bedingt: gelber Stempel', vehicle_stamp(['is_active' => 1, 'status_slug' => 'bedingt']) === 'Bedingt einsatzbereit' && vehicle_stamp_class(['is_active' => 1, 'status_slug' => 'bedingt']) === 'stempel--gelb');
+$check('im Einsatz: blauer Stempel, auch über den Funkstatus 3/4/7/8', vehicle_stamp(['is_active' => 1, 'status_slug' => 'im-einsatz']) === 'Im Einsatz' && vehicle_stamp_class(['is_active' => 1, 'status_slug' => 'im-einsatz']) === 'stempel--blau'
+    && vehicle_stamp(['is_active' => 1, 'status_slug' => 'einsatzbereit', 'fms_status' => 3]) === 'Im Einsatz' && vehicle_stamp(['is_active' => 1, 'status_slug' => 'bedingt', 'fms_status' => 4]) === 'Im Einsatz'
+    && vehicle_stamp(['is_active' => 1, 'status_slug' => 'einsatzbereit', 'fms_status' => 2]) === null && vehicle_stamp(['is_active' => 1, 'status_slug' => 'einsatzbereit', 'fms_status' => null]) === null);
+$check('Werkstatt und nicht einsatzbereit schlagen den Funkstatus, rot', vehicle_stamp(['is_active' => 1, 'status_slug' => 'wartung', 'fms_status' => 3]) === 'In Wartung' && vehicle_stamp_class(['is_active' => 1, 'status_slug' => 'wartung']) === '' && vehicle_stamp_class(['is_active' => 0]) === 'stempel--grau');
 $check('nicht einsatzbereit', vehicle_stamp(['is_active' => 1, 'status_slug' => 'nicht-einsatzbereit']) === 'Nicht einsatzbereit');
 $check('in Wartung', vehicle_stamp(['is_active' => 1, 'status_slug' => 'wartung']) === 'In Wartung');
 $check('ausgemustert schlägt den Status',

@@ -77,7 +77,7 @@ $darunterText = $s ? standort_inventar_text($darunter) : '';
               <img alt="" loading="lazy" src="<?= e(url('vehicle_file', ['id' => $fzTitelbilder[(int)$v['id']]['id'], 'vorschau' => 1])) ?>">
             <?php else: ?><span class="plan__fzleer">⛟</span><?php endif; ?>
             <span class="plan__fzname"><?= e((string)$v['bezeichnung']) ?><?= count($fz) > 1 ? ' +' . (count($fz) - 1) : '' ?></span>
-            <?php if ($stempel !== null): ?><span class="plan__stempel"><?= e($stempel) ?></span><?php endif; ?>
+            <?php if ($stempel !== null): ?><span class="plan__stempel<?= ($sk = vehicle_stamp_class($v)) !== '' ? ' plan__' . $sk : '' ?>"><?= e($stempel) ?></span><?php endif; ?>
             <span class="plan__platz"><?= e($m['name']) ?></span>
           </a>
         <?php else: ?>
@@ -118,7 +118,7 @@ $darunterText = $s ? standort_inventar_text($darunter) : '';
               <?php foreach ($kindFahrzeuge[(int)$k['id']] as $v): $stempel = vehicle_stamp($v); $vAktiv = (int)($v['is_active'] ?? 1) === 1; ?>
                 <a class="platz__fzeintrag<?= $vAktiv ? '' : ' platz__fzeintrag--aus' ?>" href="<?= e(url('vehicle', ['id' => $v['id']])) ?>">
                   <span class="kachel__bild platz__fzbild">
-                    <?php if ($stempel !== null): ?><span class="stempel<?= $vAktiv ? '' : ' stempel--grau' ?>"><?= e($stempel) ?></span><?php endif; ?>
+                    <?php if ($stempel !== null): ?><span class="stempel<?= ($sk = vehicle_stamp_class($v)) !== '' ? ' ' . $sk : '' ?>"><?= e($stempel) ?></span><?php endif; ?>
                     <?php if (isset($fzTitelbilder[(int)$v['id']])): ?>
                       <img alt="" loading="lazy" src="<?= e(url('vehicle_file', ['id' => $fzTitelbilder[(int)$v['id']]['id'], 'vorschau' => 1])) ?>">
                     <?php else: ?>
