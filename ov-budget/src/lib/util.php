@@ -583,6 +583,45 @@ function csv_sicher(array $zeile): array
     return $zeile;
 }
 
+/**
+ * Seitenweise blättern: welche Seite, wie viele, welcher Ausschnitt. Reine Funktion.
+ * Rückgabe: seite, seiten, offset, von, bis (1-basiert), gesamt, pro_seite.
+ */
+function seiten_blaettern(int $gesamt, int $seite, int $proSeite = 50): array
+{
+    $proSeite = max(1, $proSeite);
+    $gesamt = max(0, $gesamt);
+    $seiten = max(1, (int)ceil($gesamt / $proSeite));
+    $seite = min(max(1, $seite), $seiten);
+    $offset = ($seite - 1) * $proSeite;
+    return [
+        'seite' => $seite, 'seiten' => $seiten, 'offset' => $offset, 'pro_seite' => $proSeite, 'gesamt' => $gesamt,
+        'von' => $gesamt === 0 ? 0 : $offset + 1, 'bis' => min($gesamt, $offset + $proSeite),
+    ];
+}
+
+/** Welche Seitenzahlen der Blätterer zeigt: erste, letzte, rund um die aktuelle; null = Lücke. Reine Funktion. */
+function seiten_zahlen(int $seite, int $seiten, int $umfeld = 2): array
+{
+    if ($seiten <= 7) {
+        return range(1, $seiten);
+    }
+    $out = [1];
+    $von = max(2, $seite - $umfeld);
+    $bis = min($seiten - 1, $seite + $umfeld);
+    if ($von > 2) {
+        $out[] = null;
+    }
+    for ($i = $von; $i <= $bis; $i++) {
+        $out[] = $i;
+    }
+    if ($bis < $seiten - 1) {
+        $out[] = null;
+    }
+    $out[] = $seiten;
+    return $out;
+}
+
 function bytes_human(int $b): string
 {
     $u = ['B', 'KB', 'MB', 'GB'];

@@ -39,6 +39,9 @@ const READING_QUELLEN = ['manuell' => 'von Hand', 'ha' => 'Home Assistant', 'qr'
 const METER_WARN_TAGE = 35;
 
 /** Nur bekannte Arten zulassen. Reine Funktion. */
+/** So viele Stände je Seite auf der Zählerseite */
+const READINGS_JE_SEITE = 50;
+
 function meter_art(string $art): string
 {
     return array_key_exists($art, METER_ARTEN) ? $art : 'strom';
@@ -276,7 +279,13 @@ function meter_unterzaehler_mit_anteil(array $parent, int $jahr): array
 /* Zählerstände                                                          */
 /* ==================================================================== */
 
-function readings_query(int $meterId, ?int $jahr = null, int $limit = 0): array
+/** Wie viele Stände ein Zähler hat – für den Blätterer */
+function readings_anzahl(int $meterId): int
+{
+    return (int)db_val('SELECT COUNT(*) FROM meter_readings WHERE meter_id = ?', [$meterId], 0);
+}
+
+function readings_query(int $meterId, ?int $jahr = null, int $limit = 0, int $offset = 0): array
 {
     $w = ['meter_id = ?'];
     $p = [$meterId];
@@ -287,7 +296,7 @@ function readings_query(int $meterId, ?int $jahr = null, int $limit = 0): array
     return db_all('SELECT r.*, u.display_name AS erfasser FROM meter_readings r
                    LEFT JOIN users u ON u.id = r.created_by
                    WHERE ' . implode(' AND ', $w) . ' ORDER BY gelesen_am DESC, id DESC'
-        . ($limit > 0 ? ' LIMIT ' . (int)$limit : ''), $p);
+        . ($limit > 0 ? ' LIMIT ' . (int)$limit . ($offset > 0 ? ' OFFSET ' . (int)$offset : '') : ''), $p);
 }
 
 /** Alle Stände eines Zählers, älteste zuerst – die Reihenfolge für die Rechnung */

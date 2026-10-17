@@ -399,4 +399,16 @@ $check('Tarife rendern', str_contains($html, 'gilt') && str_contains($html, 'kei
 $html = render_partial('tarif_edit', ['tarif' => ['id' => null, 'art' => 'gas', 'name' => '', 'anbieter' => '', 'gueltig_von' => '2026-01-01', 'gueltig_bis' => null, 'arbeitspreis' => '', 'grundpreis_monat' => '', 'einheit' => 'kWh', 'notiz' => ''], 'errors' => []]);
 $check('Tarifformular rendert', str_contains($html, 'Arbeitspreis'));
 
+/* ---------- Blättern ---------- */
+$b = seiten_blaettern(123, 2, 50);
+$check('Blättern: Seite 2 von 3, Ausschnitt 51–100', $b === ['seite' => 2, 'seiten' => 3, 'offset' => 50, 'pro_seite' => 50, 'gesamt' => 123, 'von' => 51, 'bis' => 100]);
+$check('Blättern: zu große und zu kleine Seite werden eingefangen, leer ist Seite 1 von 1', seiten_blaettern(123, 9, 50)['seite'] === 3 && seiten_blaettern(123, 0, 50)['seite'] === 1 && seiten_blaettern(0, 3, 50) === ['seite' => 1, 'seiten' => 1, 'offset' => 0, 'pro_seite' => 50, 'gesamt' => 0, 'von' => 0, 'bis' => 0]
+    && seiten_blaettern(50, 1, 50)['seiten'] === 1 && seiten_blaettern(51, 1, 50)['seiten'] === 2);
+$check('Seitenzahlen: kurz komplett, lang mit Lücken', seiten_zahlen(1, 5) === [1, 2, 3, 4, 5] && seiten_zahlen(10, 40) === [1, null, 8, 9, 10, 11, 12, null, 40] && seiten_zahlen(2, 40) === [1, 2, 3, 4, null, 40] && seiten_zahlen(39, 40) === [1, null, 37, 38, 39, 40]);
+$htmlB = render_partial('partials/seiten', ['blatt' => seiten_blaettern(123, 2, 50), 'route' => 'meter', 'params' => ['id' => 4, 'jahr' => 2026], 'anker' => 'staende']);
+$check('Blätterer: Zurück und Weiter mit Seite, Sprungziel, aktive Seite', str_contains($htmlB, 'seite=1#staende') && str_contains($htmlB, 'seite=3#staende') && str_contains($htmlB, 'aria-current="page">2<') && str_contains($htmlB, 'Seite 2 von 3') && str_contains($htmlB, 'id=4'));
+$check('Blätterer: eine Seite = nichts', trim(render_partial('partials/seiten', ['blatt' => seiten_blaettern(10, 1, 50), 'route' => 'meter', 'params' => ['id' => 4]])) === '');
+$htmlB = render_partial('partials/seiten', ['blatt' => seiten_blaettern(123, 3, 50), 'route' => 'meter', 'params' => ['id' => 4]]);
+$check('Blätterer: letzte Seite ohne Weiter', str_contains($htmlB, 'is-disabled" aria-disabled="true">Älter') && str_contains($htmlB, 'seite=2'));
+
 echo "$ok bestanden, $fail fehlgeschlagen\n";

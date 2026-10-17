@@ -241,10 +241,11 @@ $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Se
 </section>
 <?php endif; ?>
 
-<section class="card">
+<section class="card" id="staende">
   <div class="card__head">
     <h2>Zählerstände</h2>
-    <span class="muted small">die letzten <?= count($staende) ?></span>
+    <?php $blatt ??= seiten_blaettern(count($staende), 1, max(1, count($staende))); ?>
+    <span class="muted small"><?= $blatt['gesamt'] > 0 ? e(sprintf('%d–%d von %d, neueste zuerst', $blatt['von'], $blatt['bis'], $blatt['gesamt'])) : '' ?></span>
   </div>
   <?php if (!$staende): ?>
     <div class="empty">Noch kein Stand eingetragen.</div>
@@ -277,6 +278,7 @@ $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Se
         </tbody>
       </table>
     </div>
+    <?= render_partial('partials/seiten', ['blatt' => $blatt, 'route' => 'meter', 'params' => ['id' => $id, 'jahr' => $jahr], 'anker' => 'staende']) ?>
   <?php endif; ?>
 </section>
 

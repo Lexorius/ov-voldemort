@@ -629,6 +629,10 @@ und ausblenden:
 
 ## Verbrauch: Strom, Gas und Wasser
 
+Die Zählerstände auf der Zählerseite stehen seitenweise, 50 je Seite, neueste
+zuerst – bei stündlichen Ständen aus Home Assistant wären es sonst Tausende
+Zeilen. Unter der Tabelle wird geblättert.
+
 Das Modul führt Zähler und ihre Stände und rechnet daraus Verbrauch und Kosten.
 
 * **Zähler:** Art (Strom, Gas, Wasser), Name, Zählernummer, Standort, Einheit

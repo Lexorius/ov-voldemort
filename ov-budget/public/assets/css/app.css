@@ -713,3 +713,10 @@ pre.raw {
 
 /* Testbetrieb kennzeichnen (Entfernungen über öffentliche Dienste) */
 .badge--warn { background: #fde68a; border-color: #f59e0b; color: #92400e; }
+
+/* Blätterer unter langen Listen */
+.seiten { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: .7rem; }
+.seiten__zahlen { display: inline-flex; gap: .35rem; align-items: center; }
+.seiten__zahlen a, .seiten__aktiv { min-width: 1.8rem; text-align: center; padding: .15rem .35rem; border-radius: 6px; }
+.seiten__aktiv { background: var(--accent); color: #fff; }
+.seiten .is-disabled { opacity: .45; pointer-events: none; }

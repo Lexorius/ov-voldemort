@@ -19,6 +19,9 @@ $jahr = get_int('jahr') ?: (int)date('Y');
 $staende = readings_bereich((int)$meter['id'], $von, $bis);
 $tarife = tarif_query((string)$meter['art']);
 
+// Stände seitenweise – sonst wird die Liste bei stündlichen Ständen aus Home Assistant endlos
+$blatt = seiten_blaettern(readings_anzahl((int)$meter['id']), get_int('seite') ?: 1, READINGS_JE_SEITE);
+
 $jahre = verbrauch_jahre((int)$meter['id']);
 if (!in_array($jahr, $jahre, true)) {
     $jahre[] = $jahr;
@@ -32,7 +35,8 @@ render('meter', [
     'meter'      => $meter,
     'jahr'       => $jahr,
     'jahre'      => $jahre,
-    'staende'    => readings_query((int)$meter['id'], null, 60),
+    'staende'    => readings_query((int)$meter['id'], null, READINGS_JE_SEITE, $blatt['offset']),
+    'blatt'      => $blatt,
     'monate'     => verbrauch_monate($staende, $jahr),
     'kosten'     => verbrauch_kosten_jahr($staende, $tarife, $meter, $jahr),
     'abschnitte' => array_reverse(array_slice(verbrauch_abschnitte($staende), -12)),

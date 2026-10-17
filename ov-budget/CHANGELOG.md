@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## 2.1.43.0
+
+- **Zählerstände seitenweise:** Die Liste der Stände auf der Zählerseite zeigt
+  50 je Seite, neueste zuerst, mit Blätterer („‹ Neuer", Seitenzahlen,
+  „Älter ›") – bei stündlichen Ständen aus Home Assistant wurde sie sonst
+  endlos. Der Blätterer ist ein Baustein für weitere lange Listen.
+
 ## 2.1.42.0
 
 - **Besprechung in der Unterkunft, online oder außer Haus:** neue Auswahl
