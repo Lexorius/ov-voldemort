@@ -80,5 +80,5 @@ render('stan', [
     'gezeigt'   => $gezeigt,
     'dateien'   => $gezeigt ? stan_dateien((int)$gezeigt['id']) : [],
     'darf'      => $darf,
-    'maxMb'     => (int)setting_int('upload_max_mb', 10),
+    'maxMb'     => (int)(stan_max_bytes() / 1024 / 1024),
 ]);

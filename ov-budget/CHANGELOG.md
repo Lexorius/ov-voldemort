@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## 2.1.45.1
+
+- **Große STAN-Pakete:** eigene Grenze „STAN-Paket höchstens … MB" (Vorgabe
+  1024 MB) statt der 10-MB-Grenze der Anlagen; das Add-on lässt jetzt bis
+  2 GB je Upload durch und wartet bis 15 Minuten auf große Dateien;
+  ausgepackt bis 4 GB je Paket.
+
 ## 2.1.45.0
 
 - **Neuer Reiter STAN:** Die Stärke- und Ausstattungsnachweisung als

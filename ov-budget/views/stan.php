@@ -103,7 +103,7 @@ $icon = static function (array $d): string {
         <input type="text" id="bemerkung" name="bemerkung" maxlength="200" placeholder="z. B. Stand 10/2026"></div>
     </div>
     <small class="muted">Erlaubt im Paket: <?= e(implode(', ', array_map('strtoupper', STAN_ERLAUBT))) ?>; Unterordner bleiben erhalten, Systemdateien werden übergangen.
-      Höchstens <?= (int)$maxMb ?> MB je Upload (Einstellungen → Allgemein → Upload-Grenze). Das ZIP bleibt zum Herunterladen liegen.</small>
+      Höchstens <?= (int)$maxMb ?> MB je Upload (Einstellungen → Allgemein → „STAN-Paket höchstens … MB"). Große Pakete brauchen je nach Leitung einige Minuten – das Fenster offen lassen. Das ZIP bleibt zum Herunterladen liegen.</small>
     <div class="btnrow" style="margin-top:.5rem"><button class="btn" type="submit">Als neue Version einspielen</button></div>
   </form>
 </section>

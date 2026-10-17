@@ -513,10 +513,14 @@ Verwaltung.
 * **Dateien nachreichen.** Einzelne PDFs, die im Paket fehlen oder sich
   geändert haben, kommen zur gezeigten Version dazu, auf Wunsch in einen
   Ordner; einzelne Dateien lassen sich auch entfernen.
-* **Grenze:** ein Upload darf so groß sein wie die Upload-Grenze unter
-  Einstellungen → Allgemein (Vorgabe 10 MB) – für ein STAN-Paket also
-  anheben, etwa auf 200 MB. Ausgepackt sind höchstens 500 Dateien und 1 GB
-  je Paket erlaubt.
+* **Grenze:** STAN-Pakete haben eine eigene Grenze unter Einstellungen →
+  Allgemein → „STAN-Paket höchstens … MB" (Vorgabe 1024 MB), unabhängig
+  von der kleinen Upload-Grenze der Anlagen. Das Add-on lässt bis 2 GB je
+  Upload durch; ausgepackt sind höchstens 500 Dateien und 4 GB je Paket
+  erlaubt. Ein Paket von einigen hundert MB braucht je nach Leitung ein
+  paar Minuten – das Fenster offen lassen. Bricht der Upload über die
+  Home-Assistant-Oberfläche ab, hilft es, die Anwendung direkt über ihren
+  Port aufzurufen (Add-on-Konfiguration → Netzwerk).
 * PDFs und Bilder öffnen im Browser, alles andere wird heruntergeladen.
   Die Ablage liegt unter `uploads/stan`, die Sicherung nimmt sie mit.
 

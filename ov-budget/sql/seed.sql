@@ -428,6 +428,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('verbrauch_modul_name','Verbrauch','Bezeichnung des Verbrauchsmoduls','','text','Verbrauch',10),
 ('thw_modul_name','THW-Kontakte','Bezeichnung des Moduls THW-Kontakte','Dienststellen (Landesverband, Regionalstelle, Ortsverbände) und Funktionspostfächer.','text','Allgemein',16),
 ('stan_modul_name','STAN','Bezeichnung des Moduls STAN','Die Stärke- und Ausstattungsnachweisung als Dokumentenpaket in Versionen.','text','Allgemein',17),
+('stan_max_mb','1024','STAN-Paket höchstens … MB','Eigene Grenze für STAN-Pakete und nachgereichte Dateien, unabhängig von der Upload-Grenze der Anlagen. Das Add-on lässt bis 2048 MB durch.','number','Allgemein',18),
 ('standort_modul_name','Standorte','Bezeichnung der Standortübersicht','Menüpunkt, unter dem alle durch Gebäude, Stockwerke und Räume klicken und sehen, was dort ist.','text','Allgemein',15),
 ('verbrauch_intro','Zählerstände für Strom, Gas und Wasser – aus Home Assistant, von Hand oder per QR-Code am Zähler.','Einleitungstext im Verbrauchsmodul','','textarea','Verbrauch',20),
 ('verbrauch_user_darf_sehen','0','Alle Mitglieder dürfen den Verbrauch sehen','Sonst nur Leitung und Administration','bool','Verbrauch',30),

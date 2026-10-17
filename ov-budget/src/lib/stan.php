@@ -13,7 +13,13 @@ declare(strict_types=1);
 
 const STAN_ERLAUBT = ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'odt', 'ods', 'odp', 'txt', 'csv', 'md', 'png', 'jpg', 'jpeg', 'webp'];
 const STAN_MAX_DATEIEN = 500;
-const STAN_MAX_ENTPACKT = 1024 * 1024 * 1024;   // 1 GB je Paket ausgepackt
+const STAN_MAX_ENTPACKT = 4 * 1024 * 1024 * 1024;   // 4 GB je Paket ausgepackt
+
+/** Obergrenze für ein STAN-Paket und nachgereichte Dateien – eigene Einstellung, unabhängig von den Anlagen */
+function stan_max_bytes(): int
+{
+    return max(1, setting_int('stan_max_mb', 1024)) * 1024 * 1024;
+}
 
 function stan_dir(): string
 {
@@ -214,7 +220,7 @@ function stan_version_aus_zip(string $feld, string $bemerkung, array $user): arr
 {
     $f = $_FILES[$feld] ?? null;
     if (!$f || (int)($f['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE || (string)($f['name'] ?? '') === '') {
-        return [null, ['Es kam keine Datei an. Bei sehr großen Paketen bricht der Browser den Upload ab, bevor die Anwendung ihn sieht – dann die Upload-Grenze in den Einstellungen anheben.'], []];
+        return [null, ['Es kam keine Datei an. Bei sehr großen Paketen bricht der Upload ab, bevor die Anwendung ihn sieht – im Add-on sind bis 2 GB vorgesehen; über die Home-Assistant-Oberfläche kann es helfen, die Anwendung direkt über ihren Port aufzurufen.'], []];
     }
     if ((int)$f['error'] !== UPLOAD_ERR_OK) {
         return [null, [sprintf('„%s" konnte nicht hochgeladen werden (Fehlercode %d).', $f['name'], (int)$f['error'])], []];
@@ -226,8 +232,8 @@ function stan_version_aus_zip(string $feld, string $bemerkung, array $user): arr
     if (strtolower(pathinfo((string)$f['name'], PATHINFO_EXTENSION)) !== 'zip') {
         return [null, ['Das Paket muss ein ZIP sein (.zip). Einzelne PDFs gehen über „Dateien nachreichen".'], []];
     }
-    if ((int)$f['size'] > upload_max_bytes()) {
-        return [null, [sprintf('Das Paket ist zu groß (höchstens %s – einstellbar unter Einstellungen → Allgemein).', bytes_human(upload_max_bytes()))], []];
+    if ((int)$f['size'] > stan_max_bytes()) {
+        return [null, [sprintf('Das Paket ist zu groß (höchstens %s – einstellbar unter Einstellungen → Allgemein → „STAN-Paket höchstens … MB").', bytes_human(stan_max_bytes()))], []];
     }
     try {
         $inhalt = stan_zip_lesen($tmp);
@@ -324,8 +330,8 @@ function stan_dateien_nachreichen(int $versionId, string $feld, string $ordner, 
             $fehler[] = sprintf('„%s": %s.', $name, $grund);
             continue;
         }
-        if ($groesse > upload_max_bytes()) {
-            $fehler[] = sprintf('„%s" ist zu groß (höchstens %s).', $name, bytes_human(upload_max_bytes()));
+        if ($groesse > stan_max_bytes()) {
+            $fehler[] = sprintf('„%s" ist zu groß (höchstens %s).', $name, bytes_human(stan_max_bytes()));
             continue;
         }
         $innen = ($ordner !== '' && stan_eintrag_pruefen($ordner . '/x.pdf', 1) === null ? $ordner . '/' : '') . basename($name);

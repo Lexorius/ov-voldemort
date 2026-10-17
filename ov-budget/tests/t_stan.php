@@ -6,7 +6,7 @@ declare(strict_types=1);
  */
 session_start();
 define('OVB_TEST_UPLOADS', true);
-$GLOBALS['settings'] = ['upload_max_mb' => '10', 'stan_modul_name' => 'STAN'];
+$GLOBALS['settings'] = ['upload_max_mb' => '10', 'stan_max_mb' => '1', 'stan_modul_name' => 'STAN'];
 $GLOBALS['inserts'] = [];
 $GLOBALS['execs'] = [];
 $GLOBALS['max'] = 2;
@@ -82,9 +82,12 @@ $check('Dateien ausgepackt: PDF und Text mit Pfad, Name, Typ; falsches PDF (HTML
 $_FILES = ['paket' => ['name' => 'x.pdf', 'tmp_name' => $tmp . '/upload.zip', 'error' => UPLOAD_ERR_OK, 'size' => 100]];
 [$id2, $fehler] = stan_version_aus_zip('paket', '', $u);
 $check('kein ZIP als Paket: abgelehnt', $id2 === null && str_contains($fehler[0], 'muss ein ZIP sein'));
+$_FILES = ['paket' => ['name' => 'gross.zip', 'tmp_name' => $tmp . '/upload.zip', 'error' => UPLOAD_ERR_OK, 'size' => 1024 * 1024 + 1]];
+[$id2, $fehler] = stan_version_aus_zip('paket', '', $u);
+$check('über der STAN-Grenze (eigene Einstellung, nicht die der Anlagen): abgelehnt', $id2 === null && str_contains($fehler[0], 'zu groß') && stan_max_bytes() === 1024 * 1024 && upload_max_bytes() === 10 * 1024 * 1024);
 $_FILES = [];
 [$id2, $fehler] = stan_version_aus_zip('paket', '', $u);
-$check('nichts angekommen: Hinweis auf Upload-Grenze', $id2 === null && str_contains($fehler[0], 'Upload-Grenze'));
+$check('nichts angekommen: Hinweis', $id2 === null && str_contains($fehler[0], 'keine Datei an'));
 
 /* ---------- nachreichen ---------- */
 file_put_contents($tmp . '/nach.pdf', "%PDF-1.4\n%%EOF\n");
