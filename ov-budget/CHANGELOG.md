@@ -1,5 +1,15 @@
 # Änderungsverlauf
 
+## 2.1.45.0
+
+- **Neuer Reiter STAN:** Die Stärke- und Ausstattungsnachweisung als
+  Dokumentenpaket. Ein ZIP mit allen PDFs hochladen – jedes Paket wird eine
+  neue Version (1, 2, 3 …), die Dateien werden ausgepackt und einzeln
+  gezeigt, nach Ordnern gruppiert; das ZIP bleibt zum Herunterladen liegen.
+  Ältere Versionen bleiben erhalten und lassen sich durchblättern, einzelne
+  Dateien lassen sich nachreichen oder entfernen, eine Version samt Paket
+  löschen. Systemdateien und fremde Dateiarten im ZIP werden übergangen.
+
 ## 2.1.44.0
 
 - **Zentrale Rufnummern bei den THW-Kontakten:** Ein Funktionspostfach kann

@@ -493,6 +493,33 @@ Gruppe – dann steht dort „6 von 8 Geräten gemeldet".
 Dafür braucht der Connector die Verwendung **Funkgeräte** (*Verwaltung →
 Connectoren*). Abgeholt wird im Takt des Standort-Intervalls und auf Knopfdruck.
 
+## STAN
+
+Die Stärke- und Ausstattungsnachweisung liegt als Dokumentenpaket im Reiter
+**STAN** – für alle angemeldeten Personen lesbar, gepflegt von Leitung und
+Verwaltung.
+
+* **Paket hochladen = neue Version.** Das ganze Paket als ZIP auswählen,
+  optional eine Bemerkung („Stand 10/2026"); es wird Version 1, 2, 3 …
+  Die Dateien im ZIP (PDF, Office, Text, Bilder) werden ausgepackt und
+  einzeln aufgelistet, Unterordner bleiben als Gruppen erhalten,
+  Systemdateien (`__MACOSX`, `.DS_Store`, `Thumbs.db`) und fremde
+  Dateiarten werden übergangen und gemeldet. Das ZIP selbst bleibt liegen
+  und lässt sich als Ganzes wieder herunterladen.
+* **Versionen bleiben.** Die höchste Nummer ist die aktuelle; ältere
+  Versionen stehen als Chips daneben und lassen sich durchblättern –
+  praktisch, um nachzusehen, was sich geändert hat. Eine Version lässt sich
+  samt Dateien und ZIP löschen, dann ist die nächsthöhere die aktuelle.
+* **Dateien nachreichen.** Einzelne PDFs, die im Paket fehlen oder sich
+  geändert haben, kommen zur gezeigten Version dazu, auf Wunsch in einen
+  Ordner; einzelne Dateien lassen sich auch entfernen.
+* **Grenze:** ein Upload darf so groß sein wie die Upload-Grenze unter
+  Einstellungen → Allgemein (Vorgabe 10 MB) – für ein STAN-Paket also
+  anheben, etwa auf 200 MB. Ausgepackt sind höchstens 500 Dateien und 1 GB
+  je Paket erlaubt.
+* PDFs und Bilder öffnen im Browser, alles andere wird heruntergeladen.
+  Die Ablage liegt unter `uploads/stan`, die Sicherung nimmt sie mit.
+
 ## THW-Kontakte
 
 Ein eigener Menüpunkt für die Dienststellen, mit denen der Ortsverband zu

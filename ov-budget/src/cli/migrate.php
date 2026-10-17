@@ -1972,6 +1972,39 @@ SQL);
         $pdo->exec("ALTER TABLE thw_postfaecher MODIFY email VARCHAR(150) NOT NULL DEFAULT '', ADD COLUMN telefon VARCHAR(40) NOT NULL DEFAULT '' AFTER email");
     }
     $merken('076_postfach_telefon');
+
+    /* ---------- 077: STAN als Dokumentenpaket in Versionen ---------- */
+    if (!ovb_table_exists($pdo, 'stan_versionen')) {
+        $pdo->exec("CREATE TABLE stan_versionen (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nummer       INT UNSIGNED NOT NULL,
+  bemerkung    VARCHAR(200) NOT NULL DEFAULT '',
+  zip_name     VARCHAR(255) NOT NULL DEFAULT '',
+  orig_name    VARCHAR(255) NOT NULL DEFAULT '',
+  zip_bytes    BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  uploaded_by  INT UNSIGNED NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_stan_nummer (nummer),
+  CONSTRAINT fk_stan_ub FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    if (!ovb_table_exists($pdo, 'stan_dateien')) {
+        $pdo->exec("CREATE TABLE stan_dateien (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  version_id   INT UNSIGNED NOT NULL,
+  pfad         VARCHAR(500) NOT NULL,
+  name         VARCHAR(255) NOT NULL,
+  stored_name  VARCHAR(255) NOT NULL,
+  mime         VARCHAR(120) NOT NULL DEFAULT '',
+  size_bytes   BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_stan_version (version_id),
+  CONSTRAINT fk_stan_version FOREIGN KEY (version_id) REFERENCES stan_versionen(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    $merken('077_stan');
 }
 
 /**

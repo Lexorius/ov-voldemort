@@ -193,6 +193,11 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - **Fotogalerie je Auftrag**: Fotos beim Melden direkt aus der Kamera anhängen,
   Dokumente getrennt davon; Fotos verlieren beim Speichern den Aufnahmeort
 
+### STAN
+- Die **Stärke- und Ausstattungsnachweisung** als Dokumentenpaket: ein ZIP
+  hochladen, jedes Paket zählt als neue Version; Dateien ausgepackt und
+  einzeln abrufbar, ältere Versionen bleiben, einzelne PDFs nachreichbar
+
 ### Connector
 - Kleines PHP-Skript auf einem öffentlichen Webserver für alles, was ohne
   Anmeldung erreichbar sein muss: Einladungen, Standortmeldung, „Gerät ist
