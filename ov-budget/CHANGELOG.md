@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.44.0
+
+- **Zentrale Rufnummern bei den THW-Kontakten:** Ein Funktionspostfach kann
+  jetzt eine E-Mail-Adresse, eine zentrale Rufnummer oder beides tragen
+  (etwa „Zentrale" der Regionalstelle). Rufnummern werden international
+  gespeichert, sind in Tabelle und Chips mit einem Tipp wählbar, die Suche
+  findet sie.
+
 ## 2.1.43.0
 
 - **Zählerstände seitenweise:** Die Liste der Stände auf der Zählerseite zeigt

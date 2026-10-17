@@ -17,8 +17,13 @@ $isNew = empty($p['id']);
       <input type="text" id="name" name="name" required maxlength="150" value="<?= e((string)$p['name']) ?>" placeholder="z. B. Einsatz, Verwaltung, Ausbildung">
     </div>
     <div class="field">
-      <label for="email">E-Mail-Adresse *</label>
-      <input type="email" id="email" name="email" required maxlength="150" value="<?= e((string)$p['email']) ?>" placeholder="z. B. einsatz.rst-heilbronn@thw.de">
+      <label for="email">E-Mail-Adresse</label>
+      <input type="email" id="email" name="email" maxlength="150" value="<?= e((string)$p['email']) ?>" placeholder="z. B. einsatz.rst-heilbronn@thw.de">
+    </div>
+    <div class="field">
+      <label for="telefon">Zentrale Rufnummer</label>
+      <input type="tel" id="telefon" name="telefon" maxlength="40" value="<?= e(postfach_telefon_text($p)) ?>" placeholder="z. B. 07131 1234 oder +49 7131 1234">
+      <small class="muted">E-Mail, Rufnummer oder beides – eines davon muss da sein. Die Nummer wird international gespeichert (+49 …).</small>
     </div>
     <div class="field">
       <label for="dienststelle_id">Dienststelle</label>

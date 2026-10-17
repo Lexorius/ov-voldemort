@@ -39,7 +39,8 @@ $zeile = static function (array $d, int $tiefe) use (&$zeile, $jeDienststelle, $
           <?php if ($pf): ?>
             <div class="chips" style="margin-top:.25rem">
               <?php foreach ($pf as $p): ?>
-                <a class="chip<?= (int)$p['is_active'] !== 1 ? ' is-muted' : '' ?>" href="mailto:<?= e((string)$p['email']) ?>" title="<?= e((string)$p['beschreibung'] . ' – ' . postfach_netz_text($p)) ?>">✉ <?= e((string)$p['name']) ?> <span class="muted small"><?= e((string)$p['email']) ?></span></a>
+                <?php $tel = postfach_telefon_text($p); $hat = $p['email'] !== '' ? 'mailto:' . $p['email'] : (phone_link((string)$p['telefon']) ?? '#'); ?>
+                <a class="chip<?= (int)$p['is_active'] !== 1 ? ' is-muted' : '' ?>" href="<?= e($hat) ?>" title="<?= e((string)$p['beschreibung'] . ' – ' . postfach_netz_text($p)) ?>"><?= $p['email'] !== '' ? '✉' : '☎' ?> <?= e((string)$p['name']) ?> <span class="muted small"><?= e(implode(' · ', array_filter([(string)$p['email'], $tel]))) ?></span></a>
               <?php endforeach; ?>
             </div>
           <?php endif; ?>
@@ -54,7 +55,7 @@ $zeile = static function (array $d, int $tiefe) use (&$zeile, $jeDienststelle, $
         <?php if ($darfPflegen): ?>
           <span class="standort__knoepfe">
             <a class="btn btn--sec btn--sm" href="<?= e(url('thw_dienststelle_edit', ['parent_id' => $d['id']])) ?>" title="Dienststelle darunter anlegen">+</a>
-            <a class="btn btn--sec btn--sm" href="<?= e(url('thw_postfach_edit', ['dienststelle_id' => $d['id']])) ?>" title="Postfach anlegen">✉+</a>
+            <a class="btn btn--sec btn--sm" href="<?= e(url('thw_postfach_edit', ['dienststelle_id' => $d['id']])) ?>" title="Postfach oder Rufnummer anlegen">✉+</a>
             <a class="btn btn--sec btn--sm" href="<?= e(url('thw_dienststelle_edit', ['id' => $d['id']])) ?>">Bearbeiten</a>
           </span>
         <?php endif; ?>
@@ -70,12 +71,12 @@ $zeile = static function (array $d, int $tiefe) use (&$zeile, $jeDienststelle, $
   <div>
     <h1><?= e((string)setting('thw_modul_name', 'THW-Kontakte')) ?></h1>
     <p>Die Dienststellen, mit denen der Ortsverband zu tun hat – Landesverband, Regionalstelle, Nachbar-Ortsverbände – als Baum,
-      und die Funktionspostfächer: welches Postfach wofür da ist und ob es über das offizielle Netz oder das Behördennetz erreichbar ist.</p>
+      und die Funktionspostfächer samt zentralen Rufnummern: welches Postfach oder welche Nummer wofür da ist und ob es über das offizielle Netz oder das Behördennetz erreichbar ist.</p>
   </div>
   <?php if ($darfPflegen): ?>
   <div class="btnrow">
     <a class="btn" href="<?= e(url('thw_dienststelle_edit')) ?>">+ Dienststelle</a>
-    <a class="btn btn--sec" href="<?= e(url('thw_postfach_edit')) ?>">+ Postfach</a>
+    <a class="btn btn--sec" href="<?= e(url('thw_postfach_edit')) ?>">+ Postfach / Rufnummer</a>
   </div>
   <?php endif; ?>
 </div>
@@ -84,7 +85,7 @@ $zeile = static function (array $d, int $tiefe) use (&$zeile, $jeDienststelle, $
   <input type="hidden" name="p" value="thw">
   <div class="field">
     <label for="q">Suche</label>
-    <input type="search" id="q" name="q" value="<?= e($q) ?>" placeholder="Dienststelle, Ort, Postfach, Zweck …">
+    <input type="search" id="q" name="q" value="<?= e($q) ?>" placeholder="Dienststelle, Ort, Postfach, Rufnummer, Zweck …">
   </div>
   <noscript><button class="btn btn--sec" type="submit">Suchen</button></noscript>
 </form>
@@ -109,18 +110,19 @@ $zeile = static function (array $d, int $tiefe) use (&$zeile, $jeDienststelle, $
 </section>
 
 <section class="card" id="postfaecher">
-  <div class="card__head"><h2>Funktionspostfächer</h2><span class="muted small"><?= count($postfaecher) ?></span></div>
+  <div class="card__head"><h2>Funktionspostfächer und zentrale Rufnummern</h2><span class="muted small"><?= count($postfaecher) ?></span></div>
   <?php if (!$postfaecher): ?>
-    <div class="empty"><?= $q !== '' ? 'Kein Postfach passt zu „' . e($q) . '".' : 'Noch kein Postfach angelegt – etwa Einsatz, Verwaltung oder Ausbildung mit der jeweiligen Adresse.' ?></div>
+    <div class="empty"><?= $q !== '' ? 'Kein Postfach und keine Rufnummer passt zu „' . e($q) . '".' : 'Noch nichts angelegt – etwa Einsatz, Verwaltung oder Ausbildung mit der jeweiligen Adresse, oder die Zentrale mit ihrer Rufnummer.' ?></div>
   <?php else: ?>
     <div class="tablewrap">
       <table class="data">
-        <thead><tr><th>Postfach</th><th>Wofür</th><th>Dienststelle</th><th>Erreichbar über</th><?php if ($darfPflegen): ?><th></th><?php endif; ?></tr></thead>
+        <thead><tr><th>Postfach / Rufnummer</th><th>Wofür</th><th>Dienststelle</th><th>Erreichbar über</th><?php if ($darfPflegen): ?><th></th><?php endif; ?></tr></thead>
         <tbody>
         <?php foreach ($postfaecher as $p): ?>
           <tr<?= (int)$p['is_active'] !== 1 ? ' class="is-muted"' : '' ?>>
             <td><strong><?= e((string)$p['name']) ?></strong><?= (int)$p['is_active'] !== 1 ? ' <span class="badge badge--muted">stillgelegt</span>' : '' ?>
-              <div class="small"><a href="mailto:<?= e((string)$p['email']) ?>"><?= e((string)$p['email']) ?></a></div></td>
+              <?php if ($p['email'] !== ''): ?><div class="small">✉ <a href="mailto:<?= e((string)$p['email']) ?>"><?= e((string)$p['email']) ?></a></div><?php endif; ?>
+              <?php if (($tel = postfach_telefon_text($p)) !== ''): ?><div class="small">☎ <a href="<?= e(phone_link((string)$p['telefon']) ?? '#') ?>"><?= e($tel) ?></a></div><?php endif; ?></td>
             <td class="small"><?= e((string)$p['beschreibung']) ?: '<span class="muted">–</span>' ?></td>
             <td class="small"><?= e((string)($p['dienststelle_name'] ?? '') ?: '–') ?></td>
             <td><?= $netzBadges($p) ?></td>

@@ -214,7 +214,21 @@ function postfach_suchen(array $rows, string $q): array
     if ($q === '') {
         return $rows;
     }
-    return array_values(array_filter($rows, static fn($p) => str_contains(mb_strtolower(implode(' ', [(string)$p['name'], (string)$p['email'], (string)($p['beschreibung'] ?? ''), (string)($p['dienststelle_name'] ?? '')])), $q)));
+    return array_values(array_filter($rows, static fn($p) => str_contains(mb_strtolower(implode(' ', [(string)$p['name'], (string)$p['email'], (string)($p['telefon'] ?? ''), postfach_telefon_text($p), postfach_telefon_national($p), (string)($p['beschreibung'] ?? ''), (string)($p['dienststelle_name'] ?? '')])), $q)));
+}
+
+/** Rufnummer in Inlandsschreibweise nur aus Ziffern („07131123450") – damit die Suche nach „07131" trifft. Reine Funktion. */
+function postfach_telefon_national(array $p): string
+{
+    $ziffern = preg_replace('/\D+/', '', (string)($p['telefon'] ?? '')) ?? '';
+    return str_starts_with($ziffern, '49') ? '0' . substr($ziffern, 2) : $ziffern;
+}
+
+/** Rufnummer lesbar („07131 1234") oder leer. */
+function postfach_telefon_text(array $p): string
+{
+    $nr = trim((string)($p['telefon'] ?? ''));
+    return $nr === '' ? '' : phone_human($nr);
 }
 
 /** Erreichbarkeit als Text: „offizielles Netz · Behördennetz". Reine Funktion. */
@@ -235,12 +249,20 @@ function postfach_save_from_post(?array $existing, array $user): array
 {
     $name = mb_substr(trim(post_str('name')), 0, 150);
     $email = mb_substr(trim(post_str('email')), 0, 150);
+    $telefonRoh = trim(post_str('telefon'));
+    $telefon = $telefonRoh === '' ? '' : (phone_e164($telefonRoh, phone_land()) ?? '');
     $fehler = [];
     if ($name === '') {
-        $fehler[] = 'Bitte eine Bezeichnung angeben – etwa „Einsatz" oder „Verwaltung".';
+        $fehler[] = 'Bitte eine Bezeichnung angeben – etwa „Einsatz", „Verwaltung" oder „Zentrale".';
     }
-    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $fehler[] = 'Bitte eine gültige E-Mail-Adresse angeben.';
+    if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $fehler[] = 'Die E-Mail-Adresse ist nicht gültig.';
+    }
+    if ($telefonRoh !== '' && $telefon === '') {
+        $fehler[] = 'Die Rufnummer ist nicht lesbar – etwa „07131 1234" oder „+49 7131 1234".';
+    }
+    if ($email === '' && $telefonRoh === '') {
+        $fehler[] = 'Bitte eine E-Mail-Adresse oder eine Rufnummer angeben – oder beides.';
     }
     $dst = post_int('dienststelle_id');
     if ($dst && !thw_find($dst)) {
@@ -253,6 +275,7 @@ function postfach_save_from_post(?array $existing, array $user): array
         'dienststelle_id' => $dst ?: null,
         'name'            => $name,
         'email'           => $email,
+        'telefon'         => $telefon,
         'beschreibung'    => mb_substr(trim(post_str('beschreibung')), 0, 500),
         'offiziell'       => post_bool('offiziell'),
         'behoerdennetz'   => post_bool('behoerdennetz'),

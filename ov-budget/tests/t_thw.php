@@ -94,11 +94,14 @@ $pf = [
     ['id' => 10, 'dienststelle_id' => 2, 'name' => 'Einsatz', 'email' => 'einsatz.rst@example.org', 'beschreibung' => 'Einsatzabrechnungen', 'offiziell' => 1, 'behoerdennetz' => 1, 'notiz' => '', 'sort_order' => 10, 'is_active' => 1, 'dienststelle_name' => 'Regionalstelle Heilbronn'],
     ['id' => 11, 'dienststelle_id' => 2, 'name' => 'Verwaltung', 'email' => 'verwaltung.rst@example.org', 'beschreibung' => 'Personal und Haushalt', 'offiziell' => 0, 'behoerdennetz' => 1, 'notiz' => '', 'sort_order' => 20, 'is_active' => 1, 'dienststelle_name' => 'Regionalstelle Heilbronn'],
     ['id' => 12, 'dienststelle_id' => null, 'name' => 'Ausbildung', 'email' => 'ausbildung@example.org', 'beschreibung' => '', 'offiziell' => 1, 'behoerdennetz' => 0, 'notiz' => '', 'sort_order' => 10, 'is_active' => 0, 'dienststelle_name' => null],
+    ['id' => 13, 'dienststelle_id' => 2, 'name' => 'Zentrale', 'email' => '', 'telefon' => '+497131123450', 'beschreibung' => 'Vermittlung der Regionalstelle', 'offiziell' => 1, 'behoerdennetz' => 0, 'notiz' => '', 'sort_order' => 5, 'is_active' => 1, 'dienststelle_name' => 'Regionalstelle Heilbronn'],
 ];
 $check('Erreichbarkeit als Text', postfach_netz_text($pf[0]) === 'offizielles Netz · Behördennetz' && postfach_netz_text($pf[1]) === 'Behördennetz' && postfach_netz_text(['offiziell' => 0]) === 'Erreichbarkeit nicht angegeben');
 $je = postfach_je_dienststelle($pf);
-$check('Postfächer je Dienststelle, 0 = ohne', count($je[2]) === 2 && count($je[0]) === 1);
-$check('Postfachsuche', array_column(postfach_suchen($pf, 'haushalt'), 'id') === [11] && array_column(postfach_suchen($pf, 'heilbronn'), 'id') === [10, 11] && count(postfach_suchen($pf, '')) === 3);
+$check('Postfächer je Dienststelle, 0 = ohne', count($je[2]) === 3 && count($je[0]) === 1);
+$check('Postfachsuche, auch nach der Rufnummer', array_column(postfach_suchen($pf, 'haushalt'), 'id') === [11] && array_column(postfach_suchen($pf, 'heilbronn'), 'id') === [10, 11, 13] && count(postfach_suchen($pf, '')) === 4
+    && array_column(postfach_suchen($pf, '07131'), 'id') === [13] && array_column(postfach_suchen($pf, 'vermittlung'), 'id') === [13]);
+$check('Rufnummer lesbar und Inlandsform für die Suche', str_starts_with(postfach_telefon_text($pf[3]), '+49 ') && postfach_telefon_text($pf[0]) === '' && postfach_telefon_national($pf[3]) === '07131123450' && postfach_telefon_national($pf[0]) === '');
 $GLOBALS['inserts'] = [];
 $_POST = ['name' => 'Einsatz', 'email' => 'einsatz@example.org', 'dienststelle_id' => '2', 'beschreibung' => 'Alarmierung', 'offiziell' => '1', 'is_active' => '1'];
 [$id, $fehler] = postfach_save_from_post(null, $u);
@@ -107,6 +110,17 @@ $check('Postfach angelegt, Behördennetz aus wenn nicht angehakt', $fehler === [
 $_POST = ['name' => 'x', 'email' => 'keine-adresse', 'dienststelle_id' => '77'];
 [$id, $fehler] = postfach_save_from_post(null, $u);
 $check('Postfach: falsche Adresse und unbekannte Dienststelle', $id === null && count($fehler) === 2);
+$GLOBALS['inserts'] = [];
+$_POST = ['name' => 'Zentrale', 'telefon' => '07131 12345-0', 'beschreibung' => 'Vermittlung', 'offiziell' => '1', 'is_active' => '1'];
+[$id, $fehler] = postfach_save_from_post(null, $u);
+$p = $GLOBALS['inserts'][0][1] ?? [];
+$check('Rufnummer ohne E-Mail reicht, international gespeichert', $fehler === [] && $p['email'] === '' && $p['telefon'] === '+497131123450');
+$_POST = ['name' => 'Zentrale'];
+[$id, $fehler] = postfach_save_from_post(null, $u);
+$check('weder E-Mail noch Rufnummer: abgelehnt', $id === null && count($fehler) === 1 && str_contains($fehler[0], 'oder beides'));
+$_POST = ['name' => 'Zentrale', 'telefon' => 'keine nummer'];
+[$id, $fehler] = postfach_save_from_post(null, $u);
+$check('unlesbare Rufnummer: abgelehnt', $id === null && count($fehler) === 1 && str_contains($fehler[0], 'nicht lesbar'));
 $_POST = [];
 
 /* ---------- Ansichten ---------- */
@@ -126,10 +140,11 @@ $htmlC = render_partial('contact_edit', ['contact' => ['id' => 30, 'anrede' => '
 $rows = $dstZeilen; $GLOBALS['rows'] = $rows;
 $check('Kontaktformular: Dienststellen wählbar', str_contains($htmlC, '>THW-Dienststellen</h3>') && str_contains($htmlC, 'data-wahl="dienststellen"') && str_contains($htmlC, 'name="dienststellen[]" value="4"') && str_contains($htmlC, '<optgroup label="Ortsverbände">'));
 $check('Übersicht: Postfachtabelle mit Erreichbarkeit', str_contains($html, '>Behördennetz</span>') && str_contains($html, '>offizielles Netz</span>') && str_contains($html, 'Personal und Haushalt') && str_contains($html, 'value="postfach_aktiv"'));
+$check('Übersicht: Rufnummer als Anruf-Link in Tabelle und Chip', substr_count($html, 'href="tel:+497131123450"') >= 2 && str_contains($html, '☎ Zentrale') && str_contains($html, 'Funktionspostfächer und zentrale Rufnummern'));
 $html = render_partial('thw', ['q' => '', 'alle' => $rows, 'baum' => standort_baum($rows), 'zaehlung' => standort_zaehlung($rows), 'postfaecher' => $pf, 'jeDienststelle' => $je, 'darfPflegen' => false]);
 $check('ohne Pflegerecht keine Knöpfe', !str_contains($html, '+ Dienststelle') && !str_contains($html, 'value="postfach_aktiv"') && str_contains($html, 'mailto:einsatz.rst@example.org'));
 $html = render_partial('thw', ['q' => 'xyz', 'alle' => $rows, 'baum' => [], 'zaehlung' => standort_zaehlung($rows), 'postfaecher' => [], 'jeDienststelle' => $je, 'darfPflegen' => true]);
-$check('Suche ohne Treffer', str_contains($html, 'Keine Dienststelle passt zu „xyz"') && str_contains($html, 'Kein Postfach passt'));
+$check('Suche ohne Treffer', str_contains($html, 'Keine Dienststelle passt zu „xyz"') && str_contains($html, 'Kein Postfach und keine Rufnummer passt'));
 $html = render_partial('thw_dienststelle_edit', ['d' => $rows[2], 'errors' => [], 'alle' => $rows, 'ausser' => [3]]);
 $check('Dienststellenformular: Art, Elternteil ohne sich selbst, Löschen', str_contains($html, 'value="ortsverband" selected') && str_contains($html, 'value="2" selected') && !str_contains($html, 'value="3"') && str_contains($html, 'Dienststelle löschen'));
 $html = render_partial('thw_postfach_edit', ['p' => $pf[1], 'errors' => [], 'alle' => $rows]);

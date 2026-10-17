@@ -1966,6 +1966,12 @@ SQL);
         $pdo->exec("ALTER TABLE meetings ADD COLUMN treffen ENUM('inhaus','online','ausserhaus') NOT NULL DEFAULT 'inhaus' AFTER ort, ADD COLUMN link VARCHAR(500) NOT NULL DEFAULT '' AFTER treffen");
     }
     $merken('075_besprechung_treffen');
+
+    /* ---------- 076: zentrale Rufnummern bei den Funktionspostfächern ---------- */
+    if (ovb_table_exists($pdo, 'thw_postfaecher') && !ovb_column_exists($pdo, 'thw_postfaecher', 'telefon')) {
+        $pdo->exec("ALTER TABLE thw_postfaecher MODIFY email VARCHAR(150) NOT NULL DEFAULT '', ADD COLUMN telefon VARCHAR(40) NOT NULL DEFAULT '' AFTER email");
+    }
+    $merken('076_postfach_telefon');
 }
 
 /**

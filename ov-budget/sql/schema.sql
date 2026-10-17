@@ -593,7 +593,9 @@ CREATE TABLE IF NOT EXISTS thw_postfaecher (
   id               INT UNSIGNED NOT NULL AUTO_INCREMENT,
   dienststelle_id  INT UNSIGNED NULL,
   name             VARCHAR(150) NOT NULL,
-  email            VARCHAR(150) NOT NULL,
+  -- E-Mail, zentrale Rufnummer (international gespeichert) oder beides
+  email            VARCHAR(150) NOT NULL DEFAULT '',
+  telefon          VARCHAR(40)  NOT NULL DEFAULT '',
   beschreibung     VARCHAR(500) NOT NULL DEFAULT '',
   offiziell        TINYINT(1)   NOT NULL DEFAULT 1,
   behoerdennetz    TINYINT(1)   NOT NULL DEFAULT 0,

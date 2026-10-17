@@ -504,10 +504,13 @@ Leitung und Administration.
   Ausbildungszentrum). Je Dienststelle Kürzel, Anschrift, Telefon, E-Mail
   und Website, alles anklickbar; der „+" am Eintrag legt eine Dienststelle
   darunter an, „✉+" ein Postfach dazu.
-* **Funktionspostfächer**: Bezeichnung (Einsatz, Verwaltung, Ausbildung),
-  Adresse, wofür das Postfach da ist, Dienststelle und die Erreichbarkeit
-  als zwei Haken – **offizielles Netz** (Internet) und **Behördennetz**.
-  Die Postfächer stehen in der Tabelle und als Chips an ihrer Dienststelle.
+* **Funktionspostfächer und zentrale Rufnummern**: Bezeichnung (Einsatz,
+  Verwaltung, Ausbildung, Zentrale), E-Mail-Adresse und/oder Rufnummer –
+  eines von beiden muss da sein –, wofür es da ist, Dienststelle und die
+  Erreichbarkeit als zwei Haken – **offizielles Netz** (Internet) und
+  **Behördennetz**. Rufnummern werden international gespeichert und sind
+  am Handy mit einem Tipp wählbar. Alles steht in der Tabelle und als Chips
+  (✉ oder ☎) an der Dienststelle; die Suche findet auch Rufnummern.
 * **Ansprechpartner:** Kontakte aus dem Kontaktmodul – etwa der
   Ortsbeauftragte von OV Neckarsulm – lassen sich einer Dienststelle
   zuordnen, in beide Richtungen: im Formular der Dienststelle unter
