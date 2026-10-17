@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## 2.1.46.1
+
+- **STAN-Upload im Add-on repariert:** Das Aufräumen alter Stücke nutzte ein
+  Glob-Muster, das es auf Alpine Linux nicht gibt – daher „HTTP 500" beim
+  stückweisen Upload. Fehler der Stück-Schnittstelle kommen jetzt als
+  lesbare Meldung im Browser an.
+
 ## 2.1.46.0
 
 - **STAN-Pakete über die Home-Assistant-Oberfläche:** Die Oberfläche lässt

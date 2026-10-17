@@ -456,7 +456,9 @@ function stan_teile_fertig(string $id): ?array
 function stan_teile_aufraeumen(int $alterSek = 86400): int
 {
     $n = 0;
-    foreach (glob(stan_tmp_dir() . DIRECTORY_SEPARATOR . '*.{part,meta}', GLOB_BRACE) ?: [] as $f) {
+    // ohne Klammer-Muster im Glob – das gibt es auf Alpine (musl) nicht
+    $dateien = array_merge(glob(stan_tmp_dir() . DIRECTORY_SEPARATOR . '*.part') ?: [], glob(stan_tmp_dir() . DIRECTORY_SEPARATOR . '*.meta') ?: []);
+    foreach ($dateien as $f) {
         if (is_file($f) && filemtime($f) < time() - $alterSek) {
             @unlink($f);
             $n++;

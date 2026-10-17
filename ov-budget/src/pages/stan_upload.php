@@ -19,10 +19,20 @@ if (!in_array((string)($user['role'] ?? ''), ['admin', 'leitung'], true)) {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $antwort(['ok' => false, 'fehler' => 'Nur per POST.'], 405);
 }
-stan_teile_aufraeumen();
-$id = post_str('upload_id');
+// Was hier schiefgeht, soll der Browser als Text sehen – nicht als nackter HTTP 500
+set_error_handler(static function (int $nr, string $text, string $datei, int $zeile): bool {
+    throw new ErrorException($text, 0, $nr, $datei, $zeile);
+});
+try {
+    stan_teile_aufraeumen();
+    $id = post_str('upload_id');
+    $aktion = post_str('action');
+} catch (Throwable $e) {
+    $antwort(['ok' => false, 'fehler' => 'Fehler in der Anwendung: ' . $e->getMessage() . ' (' . basename($e->getFile()) . ':' . $e->getLine() . ')'], 500);
+}
 
-switch (post_str('action')) {
+try {
+switch ($aktion) {
     case 'chunk':
         $f = $_FILES['chunk'] ?? null;
         if (!$f || (int)($f['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
@@ -68,4 +78,7 @@ switch (post_str('action')) {
 
     default:
         $antwort(['ok' => false, 'fehler' => 'Unbekannte Aktion.'], 400);
+}
+} catch (Throwable $e) {
+    $antwort(['ok' => false, 'fehler' => 'Fehler in der Anwendung: ' . $e->getMessage() . ' (' . basename($e->getFile()) . ':' . $e->getLine() . ')'], 500);
 }

@@ -133,6 +133,9 @@ $check('Liegengebliebenes wird weggeräumt', stan_teile_aufraeumen() >= 1 && !is
 foreach (glob(stan_tmp_dir() . '/*') ?: [] as $f) { @unlink($f); }
 @rmdir(stan_tmp_dir());
 
+$check('kein GLOB_BRACE – gibt es auf Alpine nicht', !str_contains((string)file_get_contents($app . '/src/lib/stan.php'), 'GLOB_BRACE') && !str_contains((string)file_get_contents($app . '/src/pages/stan_upload.php'), 'GLOB_BRACE'));
+$check('Stück-Schnittstelle fängt Fehler als JSON ab', substr_count((string)file_get_contents($app . '/src/pages/stan_upload.php'), 'catch (Throwable') === 2);
+
 /* ---------- Ansicht ---------- */
 $versionen = [
     ['id' => 5, 'nummer' => 3, 'bemerkung' => 'Stand 10/2026', 'zip_name' => 'v003_x.zip', 'orig_name' => 'STAN_2026.zip', 'zip_bytes' => 1000, 'uploaded_by' => 1, 'created_at' => '2026-10-17 10:00:00', 'hochgeladen_von' => 'Thomas', 'anzahl' => 2, 'bytes' => 500],
