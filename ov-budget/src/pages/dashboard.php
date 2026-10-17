@@ -56,9 +56,12 @@ $zweiWochenBis = date('Y-m-d', time() + 13 * 86400);
 $alleEintraege = kalender_sammeln(date('Y-m-d'), date('Y-m-d', time() + 14 * 86400), $user);
 $termine = array_values(array_filter($alleEintraege, static fn($e) => $e['quelle'] !== 'feiertag'));
 
-// Fahrzeuge, die diese Woche in Terminen stecken
+// Fahrzeuge, die jetzt oder noch diese Woche in Terminen stecken – Vergangenes interessiert auf der Startseite nicht
 $woche = kalender_woche(date('Y-m-d'));
-$fahrzeugeWoche = can('view_vehicles') ? kalender_konflikte_markieren(kalender_fahrzeuge_zeitraum($woche[0], $woche[1], $user)) : [];
+$woche[0] = date('Y-m-d');
+$fahrzeugeWoche = can('view_vehicles')
+    ? kalender_konflikte_markieren(kalender_fahrzeuge_ab(kalender_fahrzeuge_zeitraum($woche[0], $woche[1], $user), date('Y-m-d H:i:s')))
+    : [];
 
 render('dashboard', [
     'fahrzeugeWoche' => $fahrzeugeWoche,

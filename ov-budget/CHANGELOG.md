@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## 2.1.48.1
+
+- **Startseite zeigt nur noch aktuelle Fahrzeuge:** „Fahrzeuge jetzt und
+  diese Woche verplant" lässt Termine weg, die schon zu Ende sind, und
+  beginnt beim heutigen Tag statt am Montag. Vergangene Verplanungen stehen
+  weiter in der Fahrzeugakte und im Kalender.
+
 ## 2.1.48.0
 
 - **Mehr Stempel auf den Fahrzeugkacheln:** neben „Nicht einsatzbereit",

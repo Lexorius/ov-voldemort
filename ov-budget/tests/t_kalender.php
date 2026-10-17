@@ -181,6 +181,15 @@ $bl = kalender_fahrzeuge_bloecke([['id' => 1, 'typ_slug' => 'gkw', 'typ_label' =
 $check('drei Blöcke nach Fahrzeugart', array_column($bl['fahrzeuge'], 'id') === [1, 5, 7] && array_column($bl['anhaenger'], 'id') === [2, 4] && array_column($bl['geraete'], 'id') === [3, 6]);
 $mk = kalender_konflikte_markieren([['fahrzeug' => ['id' => 2, 'bezeichnung' => 'GKW 1'], 'termine' => [
     ['id' => 1, 'titel' => 'A', 'beginn' => '2026-10-14 19:00:00', 'ende' => '2026-10-14 21:00:00'], ['id' => 2, 'titel' => 'B', 'beginn' => '2026-10-14 20:00:00', 'ende' => '2026-10-14 22:00:00'], ['id' => 3, 'titel' => 'C', 'beginn' => '2026-10-15 10:00:00', 'ende' => null]]]]);
+$ab = kalender_fahrzeuge_ab([
+    ['fahrzeug' => ['id' => 2, 'bezeichnung' => 'GKW 1'], 'termine' => [
+        ['id' => 1, 'titel' => 'vorbei', 'beginn' => '2026-10-13 08:00:00', 'ende' => '2026-10-13 12:00:00', 'ganztag' => false, 'ort' => ''],
+        ['id' => 2, 'titel' => 'läuft', 'beginn' => '2026-10-15 08:00:00', 'ende' => '2026-10-15 16:00:00', 'ganztag' => false, 'ort' => ''],
+        ['id' => 3, 'titel' => 'ganztags heute ohne Ende', 'beginn' => '2026-10-15 00:00:00', 'ende' => null, 'ganztag' => true, 'ort' => ''],
+        ['id' => 4, 'titel' => 'kommt', 'beginn' => '2026-10-17 08:00:00', 'ende' => null, 'ganztag' => false, 'ort' => '']]],
+    ['fahrzeug' => ['id' => 7, 'bezeichnung' => 'MTW'], 'termine' => [['id' => 5, 'titel' => 'gestern', 'beginn' => '2026-10-14 18:00:00', 'ende' => null, 'ganztag' => false, 'ort' => '']]],
+], '2026-10-15 10:00:00');
+$check('Startseite: nur laufende und kommende Termine, Fahrzeuge ohne Rest fallen weg', count($ab) === 1 && array_column($ab[0]['termine'], 'id') === [2, 3, 4]);
 $check('Konflikte in der Woche markiert', $mk[0]['konflikte'] === 2 && $mk[0]['termine'][0]['konflikt'] && $mk[0]['termine'][1]['konflikt'] && !$mk[0]['termine'][2]['konflikt']);
 $check('Woche Montag bis Sonntag', kalender_woche('2026-10-14') === ['2026-10-12', '2026-10-18'] && kalender_woche('2026-10-12') === ['2026-10-12', '2026-10-18'] && kalender_woche('2026-10-18') === ['2026-10-12', '2026-10-18']);
 $gr = kalender_fahrzeuge_gruppieren([
@@ -421,7 +430,7 @@ $GLOBALS['tabellen'] = [];
 $html = render_partial('dashboard', ['termine' => [], 'termineGesamt' => 0, 'user' => $u, 'jahr' => 2026, 'wuensche' => [], 'statsW' => ['anzahl' => 0, 'summe' => 0.0], 'budgets' => [],
     'zahlen' => ['budget' => 0.0, 'einnahmen' => 0.0, 'ausgaben' => 0.0, 'verfuegbar' => 0.0, 'frei' => 0.0, 'quote' => 0.0], 'budgetVerplant' => 0.0, 'todos' => [], 'todosGesamt' => 0, 'ueberfaellig' => 0, 'zuBestellen' => [], 'fahrzeuge' => [],
     'fahrzeugeWoche' => $gr, 'woche' => ['2026-10-12', '2026-10-18']]);
-$check('Startseite: Fahrzeuge diese Woche als Karten', str_contains($html, 'Fahrzeuge diese Woche verplant') && str_contains($html, '12.10.2026 – 18.10.2026') && str_contains($html, 'fzwoche__karte') && str_contains($html, 'GKW 1')
+$check('Startseite: Fahrzeuge diese Woche als Karten', str_contains($html, 'Fahrzeuge jetzt und diese Woche verplant') && str_contains($html, '12.10.2026 – 18.10.2026') && str_contains($html, 'fzwoche__karte') && str_contains($html, 'GKW 1')
     && str_contains($html, 'Mi 14.10.') && str_contains($html, '19:00 · Dienstabend') && str_contains($html, 'Übungsgelände') && str_contains($html, 'p=vehicle&amp;id=2') && str_contains($html, 'p=kalender_termin&amp;id=3')
     && !str_contains($html, 'Doppelbuchung') && str_contains($html, 'fzwoche__leer'));
 $html = render_partial('dashboard', ['termine' => [], 'termineGesamt' => 0, 'user' => $u, 'jahr' => 2026, 'wuensche' => [], 'statsW' => ['anzahl' => 0, 'summe' => 0.0], 'budgets' => [],

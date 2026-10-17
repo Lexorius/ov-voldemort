@@ -532,6 +532,29 @@ function kalender_fahrzeuge_gruppieren(array $rows): array
     return array_values($out);
 }
 
+/**
+ * Nur, was noch läuft oder noch kommt: Termine, die vor $jetzt zu Ende waren,
+ * fliegen aus den Wochengruppen, Fahrzeuge ohne Rest ganz. Ein Termin ohne
+ * Ende gilt bis zum Ende seines Tages. Reine Funktion.
+ */
+function kalender_fahrzeuge_ab(array $gruppen, string $jetzt): array
+{
+    $out = [];
+    foreach ($gruppen as $g) {
+        $g['termine'] = array_values(array_filter($g['termine'], static function (array $t) use ($jetzt): bool {
+            $ende = (string)($t['ende'] ?? '');
+            if ($ende === '') {
+                $ende = substr((string)$t['beginn'], 0, 10) . ' 23:59:59';
+            }
+            return $ende >= $jetzt;
+        }));
+        if ($g['termine']) {
+            $out[] = $g;
+        }
+    }
+    return $out;
+}
+
 /** Überschneiden sich zwei Zeiträume? Gleicher Beginn zählt mit. Reine Funktion. */
 function kalender_ueberschneidung(string $b1, ?string $e1, string $b2, ?string $e2): bool
 {

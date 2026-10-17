@@ -95,7 +95,7 @@ $quoteCls = ($zahlen['verfuegbar'] > 0 && $zahlen['ausgaben'] > $zahlen['verfueg
 <?php $fahrzeugeWoche ??= []; $woche ??= ['', '']; $fzBilder ??= []; if ($fahrzeugeWoche): $konflikte = array_sum(array_map(static fn($g) => (int)($g['konflikte'] ?? 0), $fahrzeugeWoche)); ?>
   <section class="card" id="fahrzeuge-woche">
     <div class="card__head">
-      <h2>⛟ Fahrzeuge diese Woche verplant</h2>
+      <h2>⛟ Fahrzeuge jetzt und diese Woche verplant</h2>
       <span class="muted small"><?= e(de_date($woche[0])) ?> – <?= e(de_date($woche[1])) ?> · <?= count($fahrzeugeWoche) ?> Fahrzeug(e)</span>
     </div>
     <?php if ($konflikte > 0): ?>
