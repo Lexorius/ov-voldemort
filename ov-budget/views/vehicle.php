@@ -171,7 +171,7 @@ $arten = [
                 <?= e(number_format((float)$vehicle['geo_lat'], 5, ',', '') . ' / ' . number_format((float)$vehicle['geo_lng'], 5, ',', '')) ?></a>
               <?php if ($vehicle['geo_at']): ?>
                 <span class="small muted">
-                  <?= ($vehicle['geo_quelle'] ?? '') === 'mensch' ? 'von Hand gesetzt' : 'abgerufen' ?>
+                  <?= match ((string)($vehicle['geo_quelle'] ?? '')) { 'mensch' => 'von Hand gesetzt', 'qr' => 'per QR-Code gemeldet', 'divera' => 'aus Divera', default => 'abgerufen' } ?>
                   <?= e(de_datetime($vehicle['geo_at'])) ?></span>
               <?php endif; ?>
             </div></div>

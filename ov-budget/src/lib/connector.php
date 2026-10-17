@@ -1232,22 +1232,34 @@ function connector_fetch(array $c): array
     // für die Parkerkennung laufen aber alle der Reihe nach durch
     usort($meldungen, static fn($a, $b) => (int)($a['ts'] ?? 0) <=> (int)($b['ts'] ?? 0));
 
+    $verworfen = [];
     foreach ($meldungen as $m) {
         $fz = $fahrzeuge[(string)($m['fz'] ?? '')] ?? null;
         if ($fz === null) {
             $res['fehler']++;
+            $verworfen[] = 'kein Fahrzeug zu Zugang ' . substr((string)($m['fz'] ?? '?'), 0, 8) . '… (Code zurückgezogen, neu erzeugt oder an einem anderen Connector?)';
             continue;
         }
         try {
             $daten = connector_entschluesseln((string)($m['daten'] ?? ''), (string)$c['pem']);
         } catch (Throwable $ex) {
             $res['fehler']++;
+            $verworfen[] = $fz['bezeichnung'] . ': ' . $ex->getMessage();
             continue;
         }
         $ergebnis = connector_position_anwenden($fz, $daten, (int)($m['ts'] ?? time()));
+        if (!empty($ergebnis['verworfen'])) {
+            $res['fehler']++;
+            $verworfen[] = $fz['bezeichnung'] . ': ' . $ergebnis['verworfen'];
+            continue;
+        }
         $fahrzeuge[connector_kennung((string)$fz['qr_token'])] = $ergebnis['fahrzeug'];
         $res['uebernommen']++;
         $res['parkpositionen'] += $ergebnis['park'] ? 1 : 0;
+    }
+    if ($verworfen) {
+        // Sonst sieht niemand, warum eine Meldung nicht ankam
+        audit('connector.verworfen', 'connector', (int)$c['id'], sprintf('%d Meldung(en) verworfen: %s', count($verworfen), implode(' · ', array_slice(array_unique($verworfen), 0, 5))));
     }
 
     return $res;
@@ -1276,12 +1288,12 @@ function connector_position_anwenden(array $fz, array $daten, int $ts): array
     $lat = (float)$daten['lat'];
     $lng = (float)$daten['lng'];
     if (abs($lat) > 90 || abs($lng) > 180 || ($lat === 0.0 && $lng === 0.0)) {
-        return ['fahrzeug' => $fz, 'park' => false];
+        return ['fahrzeug' => $fz, 'park' => false, 'verworfen' => 'Position unbrauchbar'];
     }
     // Uralte oder in der Zukunft liegende Meldungen ignorieren
     $gemeldet = (int)($daten['zeit'] ?? 0);
     if ($gemeldet > 0 && abs(time() - $gemeldet) > 86400) {
-        return ['fahrzeug' => $fz, 'park' => false];
+        return ['fahrzeug' => $fz, 'park' => false, 'verworfen' => 'Meldung älter als ein Tag oder Uhr des Handys falsch (' . date('d.m.Y H:i', $gemeldet) . ')'];
     }
 
     $radius = max(5, setting_int('connector_park_radius_meter', 50));

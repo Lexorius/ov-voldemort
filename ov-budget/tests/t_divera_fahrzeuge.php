@@ -145,6 +145,11 @@ $zwischendurch = array_merge($st, ['fmsstatus_ts' => $ts + 600]);
 $check('gleicher Status, neuer Zeitpunkt: zählt als Wechsel',
     dv_status_update($zwischendurch, $gleich, true, $jetzt)['statuswechsel'] !== null);
 $check('Position abgeschaltet', !isset(dv_status_update($st, $f[1], false, $jetzt)['daten']['geo_lat']));
+$qr = array_merge($f[1], ['geo_lat' => 49.1, 'geo_lng' => 9.2, 'geo_at' => date('Y-m-d H:i:s', $jetzt - 3600), 'geo_quelle' => 'qr']);
+$check('frische QR-Position ist geschützt, Divera überschreibt nicht', dv_position_geschuetzt($qr, $jetzt, 720) && !isset(dv_status_update($st, $qr, true, $jetzt, 0, 720)['daten']['geo_lat']));
+$check('Schutz läuft ab, Schutz 0 = immer Divera, Divera-Position nie geschützt', !dv_position_geschuetzt(array_merge($qr, ['geo_at' => date('Y-m-d H:i:s', $jetzt - 13 * 3600)]), $jetzt, 720)
+    && isset(dv_status_update($st, $qr, true, $jetzt, 0, 0)['daten']['geo_lat']) && !dv_position_geschuetzt(array_merge($qr, ['geo_quelle' => 'divera']), $jetzt, 720)
+    && dv_position_geschuetzt(array_merge($qr, ['geo_quelle' => 'mensch']), $jetzt, 720) && !dv_position_geschuetzt(array_merge($qr, ['geo_at' => null]), $jetzt, 720));
 $check('Position 0/0 wird verworfen',
     !isset(dv_status_update(array_merge($st, ['lat' => 0, 'lng' => 0]), $f[1], true, $jetzt)['daten']['geo_lat']));
 $check('unsinnige Position wird verworfen',

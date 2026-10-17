@@ -175,7 +175,22 @@ function dv_position_due(?string $letzteMeldung, int $intervall, int $jetzt): bo
     return $ts === false || $jetzt - $ts >= $intervall * 60;
 }
 
-function dv_status_update(array $st, array $fahrzeug, bool $mitPosition, int $jetzt, int $posIntervall = 0): array
+/**
+ * Ist die gespeicherte Position geschützt? Eine Meldung per QR-Code oder eine
+ * von Hand gesetzte Position bleibt $minuten lang stehen – sonst würde der
+ * nächste Divera-Abruf sie mit Diveras (oft älterem) Standort überschreiben,
+ * und die Parkerkennung des QR-Codes käme nie auf ihre Zeit. Reine Funktion.
+ */
+function dv_position_geschuetzt(array $fahrzeug, int $jetzt, int $minuten): bool
+{
+    if ($minuten <= 0 || !in_array((string)($fahrzeug['geo_quelle'] ?? ''), ['qr', 'mensch'], true)) {
+        return false;
+    }
+    $ts = !empty($fahrzeug['geo_at']) ? strtotime((string)$fahrzeug['geo_at']) : false;
+    return $ts !== false && $jetzt - $ts < $minuten * 60;
+}
+
+function dv_status_update(array $st, array $fahrzeug, bool $mitPosition, int $jetzt, int $posIntervall = 0, int $schutzMinuten = 720): array
 {
     $daten = ['divera_sync_at' => date('Y-m-d H:i:s', $jetzt)];
     $wechsel = null;
@@ -199,7 +214,7 @@ function dv_status_update(array $st, array $fahrzeug, bool $mitPosition, int $je
         $daten['fms_note'] = mb_substr($notiz, 0, 255);
     }
 
-    if ($mitPosition && dv_position_due($fahrzeug['geo_at'] ?? null, $posIntervall, $jetzt)) {
+    if ($mitPosition && dv_position_due($fahrzeug['geo_at'] ?? null, $posIntervall, $jetzt) && !dv_position_geschuetzt($fahrzeug, $jetzt, $schutzMinuten)) {
         $lat = $st['lat'] ?? null;
         $lng = $st['lng'] ?? null;
         if (is_numeric($lat) && is_numeric($lng) && ((float)$lat !== 0.0 || (float)$lng !== 0.0)
@@ -352,7 +367,7 @@ function dv_sync_status_locked(int $jetzt): array
         }
 
         $ergebnis = dv_status_update($st, $fz, $mitPosition, $jetzt,
-            setting_int('divera_position_intervall_minuten', 0));
+            setting_int('divera_position_intervall_minuten', 0), setting_int('divera_position_schutz_minuten', 720));
         $ergebnis['daten']['divera_daten'] = json_encode($st, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         db_update('vehicles', $ergebnis['daten'], 'id = ?', [$id]);
 

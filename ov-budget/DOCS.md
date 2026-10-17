@@ -1184,7 +1184,13 @@ Dann holt die Anwendung:
   Bezeichnung und Kennzeichen stehen im Anker der Adresse (hinter dem `#`) und
   erreichen den Server nie. Auf der Karte erscheint jede Meldung sofort; ins Journal kommt
   nur eine **Parkposition**, wenn das Fahrzeug länger als die eingestellte Zeit
-  im selben Umkreis steht.
+  im selben Umkreis steht. Eine per QR-Code gemeldete oder von Hand gesetzte
+  Position bleibt gegenüber Divera **12 Stunden geschützt** (*Einstellungen →
+  Divera 24/7 → QR- und Handposition schützen*); vorher überschrieb der
+  nächste Divera-Abruf sie mit Diveras oft älterem Standort, und die
+  Parkerkennung kam nie auf ihre Zeit. Verworfene Meldungen – unbekannter
+  Zugang, nicht entschlüsselbar, Uhr des Handys falsch – stehen mit Grund
+  im Protokoll (*Verwaltung → Protokoll*, Aktion „connector.verworfen").
 * **Karte in der Fahrzeugakte:** Zur letzten Position zeigt die Akte eine
   Karte von OpenStreetMap. Der Browser lädt sie direkt von dort; wer das nicht
   möchte, schaltet sie unter *Einstellungen → Fahrzeuge* ab

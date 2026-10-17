@@ -1,5 +1,19 @@
 # Änderungsverlauf
 
+## 2.1.47.1
+
+- **QR-Standortmeldung gegen Divera geschützt:** Bisher überschrieb der
+  nächste Divera-Abruf (Vorgabe: bei jedem Funkstatus-Abruf) eine gerade
+  per QR-Code gemeldete oder von Hand gesetzte Position mit Diveras oft
+  älterem Standort – die Meldung war nach Minuten wieder weg, und die
+  Parkerkennung kam nie auf ihre 60 Minuten. Jetzt bleibt eine solche
+  Position 12 Stunden geschützt (Einstellung „QR- und Handposition
+  schützen", 0 = wie bisher). Die Fahrzeugakte nennt die Quelle der Position
+  („per QR-Code gemeldet", „aus Divera", „von Hand gesetzt").
+- **Verworfene Connector-Meldungen im Protokoll:** unbekannter Zugang,
+  nicht entschlüsselbar oder Uhr des Handys falsch stehen jetzt mit Grund
+  unter Verwaltung → Protokoll statt stumm verloren zu gehen.
+
 ## 2.1.47.0
 
 - **STAN durchsuchbar:** Suchfeld auf der STAN-Seite über Dateiname, Ordner
