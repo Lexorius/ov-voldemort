@@ -1,5 +1,8 @@
 <?php
-/** @var array $versionen @var ?array $aktuell @var ?array $gezeigt @var array $dateien @var bool $darf @var int $maxMb */
+/** @var array $versionen @var ?array $aktuell @var ?array $gezeigt @var array $dateien @var bool $darf @var int $maxMb
+ *  @var string $q @var bool $alleVersionen @var array $treffer @var array $kiDaten @var int $textOffen */
+$q ??= ''; $alleVersionen ??= false; $treffer ??= []; $kiDaten ??= ['ergebnisse' => [], 'auftraege' => []]; $textOffen ??= 0;
+$kiZeile = static fn(array $d): string => function_exists('ki_hinweis_html') ? ki_hinweis_html('stan', $d, $kiDaten, $darf) : '';
 $baum = stan_baum($dateien);
 $istAktuell = $gezeigt && $aktuell && (int)$gezeigt['id'] === (int)$aktuell['id'];
 $icon = static function (array $d): string {
@@ -37,6 +40,39 @@ $icon = static function (array $d): string {
     </div>
   </div>
 
+  <section class="card" id="suche">
+    <div class="card__head"><h2>Suchen</h2><span class="muted small">Dateiname, Ordner, Inhalt<?= function_exists('ki_modul_aktiv') && ki_modul_aktiv('stan') ? ', KI-Schlagwörter' : '' ?></span></div>
+    <form method="get" action="<?= e(url()) ?>" class="form">
+      <input type="hidden" name="p" value="stan">
+      <?php if ($gezeigt): ?><input type="hidden" name="version" value="<?= (int)$gezeigt['id'] ?>"><?php endif; ?>
+      <div class="btnrow">
+        <input type="search" name="q" value="<?= e($q) ?>" placeholder="z. B. Fachgruppe N, Notstromaggregat, 50 kVA" style="flex:1 1 14rem">
+        <label class="chip<?= $alleVersionen ? ' is-on' : '' ?>"><input type="checkbox" name="alle" value="1"<?= $alleVersionen ? ' checked' : '' ?>> alle Versionen</label>
+        <button class="btn" type="submit">Suchen</button>
+      </div>
+    </form>
+    <?php if ($textOffen > 0): ?><p class="small muted" style="margin-top:.4rem">⏳ Bei <?= (int)$textOffen ?> Datei(en) wird der Inhalt noch gelesen – der minütliche Abruf trägt ihn nach, dann findet die Suche auch darin.</p><?php endif; ?>
+    <?php if ($q !== ''): ?>
+      <h3 style="margin-top:.8rem">Treffer für „<?= e($q) ?>" <span class="muted small"><?= count($treffer) ?><?= $alleVersionen ? ' in allen Versionen' : ($gezeigt ? ' in ' . e(stan_version_text($gezeigt)) : '') ?></span></h3>
+      <?php if (!$treffer): ?>
+        <div class="empty">Nichts gefunden.<?= !$alleVersionen && count($versionen) > 1 ? ' Vielleicht in einer anderen Version – Haken „alle Versionen" setzen.' : '' ?></div>
+      <?php else: ?>
+        <div class="doclist">
+          <?php foreach ($treffer as $t): ?>
+            <div class="doc">
+              <span class="doc__icon" aria-hidden="true"><?= $icon($t) ?></span>
+              <div class="doc__text"><a href="<?= e(url('stan_file', ['id' => $t['id']])) ?>" target="_blank" rel="noopener"><?= e((string)$t['name']) ?></a>
+                <span class="badge badge--outline"><?= e((string)$t['wo']) ?></span>
+                <div class="small muted"><?= e('Version ' . (int)$t['version_nummer'] . (dirname((string)$t['pfad']) !== '.' ? ' · 📁 ' . dirname((string)$t['pfad']) : '') . ' · ' . bytes_human((int)$t['size_bytes'])) ?></div>
+                <?php if ($t['ausschnitt'] !== ''): ?><div class="small"><?= e((string)$t['ausschnitt']) ?></div><?php endif; ?>
+                <?= $kiZeile($t) ?></div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+    <?php endif; ?>
+  </section>
+
   <section class="card" id="dateien">
     <div class="card__head">
       <h2><?= e(stan_version_text($gezeigt)) ?><?= $istAktuell ? ' <span class="badge">aktuell</span>' : ' <span class="badge badge--muted">ältere Version</span>' ?></h2>
@@ -52,7 +88,7 @@ $icon = static function (array $d): string {
             <div class="doc">
               <span class="doc__icon" aria-hidden="true"><?= $icon($d) ?></span>
               <div class="doc__text"><a href="<?= e(url('stan_file', ['id' => $d['id']])) ?>" target="_blank" rel="noopener"><?= e((string)$d['name']) ?></a>
-                <div class="small muted"><?= e(bytes_human((int)$d['size_bytes'])) ?></div></div>
+                <div class="small muted"><?= e(bytes_human((int)$d['size_bytes'])) ?></div><?= $kiZeile($d) ?></div>
               <?php if ($darf): ?>
                 <div class="doc__aktion">
                   <form method="post" action="<?= e(url('stan', ['version' => $gezeigt['id']])) ?>" class="inline-form"><?= csrf_field() ?>

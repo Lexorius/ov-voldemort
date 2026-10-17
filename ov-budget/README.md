@@ -197,6 +197,8 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - Die **Stärke- und Ausstattungsnachweisung** als Dokumentenpaket: ein ZIP
   hochladen, jedes Paket zählt als neue Version; Dateien ausgepackt und
   einzeln abrufbar, ältere Versionen bleiben, einzelne PDFs nachreichbar
+- **Durchsuchbar** nach Name, Inhalt (Volltext aus PDF und Office) und, mit
+  KI-Auswertung, nach Zusammenfassung und Schlagwörtern je Dokument
 
 ### Connector
 - Kleines PHP-Skript auf einem öffentlichen Webserver für alles, was ohne

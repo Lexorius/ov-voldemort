@@ -21,10 +21,12 @@ function db_all(string $sql, array $p = []): array {
         return $r;
     }
     if (str_contains($sql, 'FROM stan_dateien WHERE version_id')) { return $GLOBALS['dateien_rows']; }
+    if (str_contains($sql, 'FROM stan_dateien WHERE text IS NULL')) { return $GLOBALS['text_offen'] ?? []; }
+    if (str_contains($sql, 'FROM stan_dateien d')) { $GLOBALS['such_sql'] = [$sql, $p]; return $GLOBALS['treffer_rows'] ?? []; }
     return [];
 }
 function db_row(string $sql, array $p = []): ?array { return null; }
-function db_val(string $sql, array $p = [], mixed $d = null) { return str_contains($sql, 'MAX(nummer)') ? $GLOBALS['max'] : $d; }
+function db_val(string $sql, array $p = [], mixed $d = null) { return str_contains($sql, 'MAX(nummer)') ? $GLOBALS['max'] : (str_contains($sql, 'text IS NULL') ? 3 : $d); }
 function db_exec(string $sql, array $p = []): int { $GLOBALS['execs'][] = [$sql, $p]; return 1; }
 function db_insert(string $t, array $d): int { $GLOBALS['inserts'][] = [$t, $d]; return 100 + count($GLOBALS['inserts']); }
 function db_update(string $t, array $d, string $w, array $p): int { return 1; }
@@ -33,7 +35,7 @@ function db_unlock(string $name): void {}
 function can(string $was, mixed $ctx = null): bool { return true; }
 function current_user(): ?array { return ['id' => 1, 'role' => 'leitung']; }
 $app = dirname(__DIR__);
-foreach (['util', 'settings', 'lists', 'view', 'uploads', 'stan'] as $lib) { require $app . '/src/lib/' . $lib . '.php'; }
+foreach (['util', 'settings', 'lists', 'view', 'uploads', 'ki', 'stan'] as $lib) { require $app . '/src/lib/' . $lib . '.php'; }
 
 $ok = 0; $fail = 0;
 $check = function (string $n, bool $c) use (&$ok, &$fail) { if ($c) { $ok++; } else { $fail++; echo "FAIL: $n\n"; } };
@@ -138,18 +140,41 @@ $check('Stück-Schnittstelle fängt Fehler als JSON ab', substr_count((string)fi
 
 $check('Fehlerfänger lässt unterdrückte Warnungen durch', str_contains((string)file_get_contents($app . '/src/pages/stan_upload.php'), 'error_reporting() & $nr'));
 
+/* ---------- durchsuchbar ---------- */
+$aus = stan_ausschnitt('Die Fachgruppe N hat ein Notstromaggregat 50 kVA auf Anhänger und weitere Ausstattung im Bestand.', 'notstrom', 40);
+$check('Ausschnitt um den Treffer (Groß/Klein egal)', str_starts_with($aus, '… ') && str_contains($aus, 'Notstromaggregat') && str_ends_with($aus, ' …') && mb_strlen($aus) <= 46
+    && stan_ausschnitt("kurz\n\nund   knapp", 'x', 40) === 'kurz und knapp' && stan_ausschnitt('', 'x') === '');
+file_put_contents($GLOBALS['upload_dir'] . '/stan/volltext.txt', "Fachgruppe N\nNotstromaggregat 50 kVA\n");
+$check('Text aus Textdatei', stan_text_gewinnen(['name' => 'Lies mich.txt', 'stored_name' => 'volltext.txt']) === "Fachgruppe N\nNotstromaggregat 50 kVA" && stan_text_gewinnen(['name' => 'weg.pdf', 'stored_name' => 'gibtsnicht.pdf']) === '');
+$zd = new ZipArchive(); $zd->open($GLOBALS['upload_dir'] . '/stan/doc.docx', ZipArchive::CREATE); $zd->addFromString('word/document.xml', '<w:document><w:body><w:p><w:r><w:t>Zugtrupp Bestand</w:t></w:r></w:p></w:body></w:document>'); $zd->close();
+$check('Text aus DOCX', str_contains(stan_text_gewinnen(['name' => 'doc.docx', 'stored_name' => 'doc.docx']), 'Zugtrupp Bestand'));
+$GLOBALS['text_offen'] = [['id' => 5, 'name' => 'Lies mich.txt', 'stored_name' => 'volltext.txt'], ['id' => 6, 'name' => 'leer.pdf', 'stored_name' => 'gibtsnicht.pdf']];
+$GLOBALS['execs'] = [];
+$r = stan_text_nachholen(10);
+$check('Volltext nachholen: zwei gelesen, einer mit Text, Updates geschrieben', $r['bearbeitet'] === 2 && $r['mit_text'] === 1 && count($GLOBALS['execs']) === 2 && str_contains($GLOBALS['execs'][0][0], 'SET text = ?') && $GLOBALS['execs'][0][1][0] !== '' && $GLOBALS['execs'][1][1][0] === '' && stan_text_offen() === 3);
+$GLOBALS['treffer_rows'] = [['id' => 21, 'version_id' => 5, 'pfad' => 'STAN/FGr N.pdf', 'name' => 'FGr N.pdf', 'mime' => 'application/pdf', 'size_bytes' => 400, 'version_nummer' => 3, 'ki_zusammenfassung' => 'Ausstattung der Fachgruppe N.', 'ki_tags' => 'Fachgruppe N, Notstrom', 'ki_modell' => 'qwen2.5:7b', 'ki_quelle' => 'text', 'ki_geaendert_am' => '2026-10-17 10:00:00', 'wo' => 'Text', 'ausschnitt' => 'blabla Notstromaggregat 50 kVA steht bereit']];
+$t = stan_suche('Notstrom', 5);
+$check('Suche: Abfrage mit Version, Treffer mit Ausschnitt und KI', str_contains($GLOBALS['such_sql'][0], 'd.version_id = ?') && end($GLOBALS['such_sql'][1]) === 5 && $GLOBALS['such_sql'][1][5] === 'Notstrom' && $GLOBALS['such_sql'][1][0] === '%Notstrom%'
+    && count($t) === 1 && str_contains($t[0]['ausschnitt'], 'Notstromaggregat') && $t[0]['ki']['tags'] === ['Fachgruppe N', 'Notstrom'] && stan_suche('', 5) === []);
+stan_suche('x', null);
+$GLOBALS['treffer_rows'] = [];
+$check('Suche in allen Versionen ohne Versionsfilter, LIKE-Zeichen maskiert', !str_contains($GLOBALS['such_sql'][0], 'd.version_id = ?') && stan_suche('50%', null) === [] && $GLOBALS['such_sql'][1][0] === '%50\\%%');
+
 /* ---------- Ansicht ---------- */
 $versionen = [
     ['id' => 5, 'nummer' => 3, 'bemerkung' => 'Stand 10/2026', 'zip_name' => 'v003_x.zip', 'orig_name' => 'STAN_2026.zip', 'zip_bytes' => 1000, 'uploaded_by' => 1, 'created_at' => '2026-10-17 10:00:00', 'hochgeladen_von' => 'Thomas', 'anzahl' => 2, 'bytes' => 500],
     ['id' => 4, 'nummer' => 2, 'bemerkung' => '', 'zip_name' => '', 'orig_name' => 'alt.zip', 'zip_bytes' => 900, 'uploaded_by' => 1, 'created_at' => '2026-09-01 10:00:00', 'hochgeladen_von' => 'Thomas', 'anzahl' => 1, 'bytes' => 100],
 ];
 $liste = [['id' => 21, 'version_id' => 5, 'pfad' => 'STAN/Fachgruppe N/FGr N.pdf', 'name' => 'FGr N.pdf', 'stored_name' => 'a.pdf', 'mime' => 'application/pdf', 'size_bytes' => 400], ['id' => 22, 'version_id' => 5, 'pfad' => 'Lies mich.txt', 'name' => 'Lies mich.txt', 'stored_name' => 'b.txt', 'mime' => 'text/plain', 'size_bytes' => 100]];
-$html = render_partial('stan', ['title' => 'STAN', 'versionen' => $versionen, 'aktuell' => $versionen[0], 'gezeigt' => $versionen[0], 'dateien' => $liste, 'darf' => true, 'maxMb' => 10]);
+$html = render_partial('stan', ['title' => 'STAN', 'versionen' => $versionen, 'aktuell' => $versionen[0], 'gezeigt' => $versionen[0], 'dateien' => $liste, 'darf' => true, 'maxMb' => 10,
+    'q' => 'Notstrom', 'alleVersionen' => false, 'treffer' => $t, 'textOffen' => 2, 'kiDaten' => ['ergebnisse' => [21 => ['datei_id' => 21, 'zusammenfassung' => 'Ausstattung der Fachgruppe N.', 'tags' => ['Fachgruppe N', 'Notstrom'], 'modell' => 'qwen2.5:7b', 'quelle' => 'text', 'geaendert_am' => '2026-10-17 10:00:00']], 'auftraege' => []]]);
+$check('Ansicht: Suchfeld, Treffer mit Ausschnitt und Fundort, KI-Chips an der Datei, Hinweis auf offene Texte', str_contains($html, 'name="q" value="Notstrom"') && str_contains($html, 'Treffer für „Notstrom"') && str_contains($html, '>Text</span>') && str_contains($html, 'Notstromaggregat')
+    && str_contains($html, '#Notstrom</a>') && str_contains($html, 'Bei 2 Datei(en) wird der Inhalt noch gelesen') && str_contains($html, 'name="alle"'));
 $check('Ansicht: stückweiser Upload an beiden Formularen', substr_count($html, 'data-stueckweise=') === 2 && str_contains($html, 'data-ziel="paket"') && str_contains($html, 'data-ziel="nachreichen"') && str_contains($html, '16 MB je Anfrage'));
 $check('Ansicht: Versionen als Chips mit „aktuell", Dateien nach Ordner, Links, Upload als Version 4', str_contains($html, 'Version 3 – Stand 10/2026') && str_contains($html, '>aktuell</span>') && str_contains($html, 'p=stan&amp;version=4')
     && str_contains($html, '📁 STAN/Fachgruppe N') && str_contains($html, 'p=stan_file&amp;id=21') && str_contains($html, 'Neues Paket als Version 4 hochladen') && str_contains($html, 'value="nachreichen"') && str_contains($html, 'value="version_weg"'));
 $html = render_partial('stan', ['title' => 'STAN', 'versionen' => $versionen, 'aktuell' => $versionen[0], 'gezeigt' => $versionen[1], 'dateien' => [], 'darf' => false, 'maxMb' => 10]);
-$check('Ansicht ohne Recht und ältere Version: keine Formulare, Hinweis „ältere Version"', !str_contains($html, '<form') && str_contains($html, 'ältere Version') && !str_contains($html, 'Neues Paket'));
+$check('Ansicht ohne Recht und ältere Version: keine Formulare außer der Suche, Hinweis „ältere Version"', !str_contains($html, 'method="post"') && str_contains($html, 'name="q"') && str_contains($html, 'ältere Version') && !str_contains($html, 'Neues Paket'));
 $html = render_partial('stan', ['title' => 'STAN', 'versionen' => [], 'aktuell' => null, 'gezeigt' => null, 'dateien' => [], 'darf' => true, 'maxMb' => 10]);
 $check('Ansicht leer: Aufforderung, Version 1', str_contains($html, 'es wird Version 1') && str_contains($html, 'Neues Paket als Version 1 hochladen'));
 

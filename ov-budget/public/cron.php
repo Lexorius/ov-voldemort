@@ -142,6 +142,10 @@ $abrufe = [
         $r = geo_warteschlange_abarbeiten();
         return $r['art'] === null ? [] : [['status' => $r['ok'] ? 'ok' : 'fehler', 'message' => $r['text']]];
     },
+    'STAN-Text'         => static function (): array {
+        $r = stan_text_nachholen(10);
+        return $r['bearbeitet'] === 0 ? [] : [['status' => 'ok', 'message' => sprintf('%d Datei(en) gelesen, %d mit Text', $r['bearbeitet'], $r['mit_text'])]];
+    },
     'KI-Auswertung'     => static function (): array {
         if (!ki_aktiv()) {
             return [];

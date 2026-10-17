@@ -202,14 +202,122 @@ function stan_datei_ablegen(int $versionId, string $innerPfad, string $quelle, i
         @unlink($ziel);
         return null;
     }
-    return db_insert('stan_dateien', [
+    $id = db_insert('stan_dateien', [
         'version_id'  => $versionId,
         'pfad'        => mb_substr($innerPfad, 0, 500),
         'name'        => mb_substr(basename($innerPfad), 0, 255),
         'stored_name' => $gespeichert,
         'mime'        => $mime,
         'size_bytes'  => $groesse,
+        'text'        => null,   // Volltext trägt der minütliche Abruf nach
     ]);
+    if (function_exists('ki_einreihen')) {
+        ki_einreihen('stan', $id, str_starts_with($mime, 'image/') ? 'bild' : 'dokument');
+    }
+    return $id;
+}
+
+/* ==================================================================== */
+/* Durchsuchbar: Volltext je Datei, Suche über Name, Text und KI        */
+/* ==================================================================== */
+
+const STAN_TEXT_MAX = 300000;   // Zeichen Volltext je Datei
+
+/** Lesbaren Text aus einer abgelegten Datei holen (PDF über pdftotext, Office, Text). '' = nichts lesbar. */
+function stan_text_gewinnen(array $datei): string
+{
+    $pfad = stan_datei_pfad($datei);
+    if ($pfad === null) {
+        return '';
+    }
+    $endung = strtolower(pathinfo((string)$datei['name'], PATHINFO_EXTENSION));
+    $text = null;
+    if ($endung === 'pdf' && function_exists('ki_pdf_text')) {
+        $text = ki_pdf_text($pfad);
+    } elseif (in_array($endung, ['docx', 'xlsx', 'pptx', 'odt', 'ods', 'odp'], true) && function_exists('ki_zip_text')) {
+        $text = ki_zip_text($pfad, $endung);
+    } elseif (in_array($endung, ['txt', 'csv', 'md'], true)) {
+        $text = (string)file_get_contents($pfad);
+    }
+    if ($text === null || trim($text) === '') {
+        return '';
+    }
+    return function_exists('ki_text_kuerzen') ? ki_text_kuerzen($text, STAN_TEXT_MAX) : mb_substr(trim($text), 0, STAN_TEXT_MAX);
+}
+
+/** Volltext nachtragen, wo er noch fehlt – ein paar Dateien je Abruf. Rückgabe: ['bearbeitet', 'mit_text'] */
+function stan_text_nachholen(int $max = 10): array
+{
+    $r = ['bearbeitet' => 0, 'mit_text' => 0];
+    foreach (db_all('SELECT * FROM stan_dateien WHERE text IS NULL ORDER BY id LIMIT ' . max(1, $max)) as $d) {
+        $text = stan_text_gewinnen($d);
+        db_exec('UPDATE stan_dateien SET text = ? WHERE id = ?', [$text, (int)$d['id']]);
+        $r['bearbeitet']++;
+        if ($text !== '') {
+            $r['mit_text']++;
+        }
+    }
+    return $r;
+}
+
+function stan_text_offen(): int
+{
+    return (int)db_val('SELECT COUNT(*) FROM stan_dateien WHERE text IS NULL', [], 0);
+}
+
+/** Ausschnitt um den ersten Treffer, etwa 160 Zeichen, mit … davor und danach. Reine Funktion. */
+function stan_ausschnitt(string $text, string $q, int $breite = 160): string
+{
+    $text = trim((string)preg_replace('/\s+/u', ' ', $text));
+    if ($text === '') {
+        return '';
+    }
+    $pos = $q !== '' ? mb_strpos(mb_strtolower($text), mb_strtolower($q)) : false;
+    if ($pos === false) {
+        return mb_substr($text, 0, $breite) . (mb_strlen($text) > $breite ? ' …' : '');
+    }
+    $von = max(0, $pos - intdiv($breite, 3));
+    $aus = mb_substr($text, $von, $breite);
+    return ($von > 0 ? '… ' : '') . $aus . ($von + $breite < mb_strlen($text) ? ' …' : '');
+}
+
+/**
+ * Dateien suchen: in Name und Pfad, im Volltext und in Zusammenfassung und
+ * Schlagwörtern der KI. $versionId = null sucht in allen Versionen.
+ * Rückgabe je Treffer: Datei plus 'version_nummer', 'wo' (Name|Text|KI), 'ausschnitt', 'ki' (Zeile oder null).
+ */
+function stan_suche(string $q, ?int $versionId = null, int $limit = 100): array
+{
+    $q = trim($q);
+    if ($q === '') {
+        return [];
+    }
+    $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $q) . '%';
+    $w = ['(d.name LIKE ? OR d.pfad LIKE ? OR d.text LIKE ? OR k.tags LIKE ? OR k.zusammenfassung LIKE ?)'];
+    $p = [$like, $like, $like, $like, $like];
+    if ($versionId !== null) {
+        $w[] = 'd.version_id = ?';
+        $p[] = $versionId;
+    }
+    $rows = db_all(
+        "SELECT d.id, d.version_id, d.pfad, d.name, d.mime, d.size_bytes, v.nummer AS version_nummer,
+                k.zusammenfassung AS ki_zusammenfassung, k.tags AS ki_tags, k.modell AS ki_modell, k.quelle AS ki_quelle, k.geaendert_am AS ki_geaendert_am,
+                CASE WHEN d.name LIKE ? OR d.pfad LIKE ? THEN 'Name' WHEN k.tags LIKE ? OR k.zusammenfassung LIKE ? THEN 'KI' ELSE 'Text' END AS wo,
+                CASE WHEN d.text LIKE ? THEN SUBSTRING(d.text, GREATEST(1, LOCATE(?, d.text) - 60), 260) ELSE '' END AS ausschnitt
+         FROM stan_dateien d
+         JOIN stan_versionen v ON v.id = d.version_id
+         LEFT JOIN datei_ki k ON k.typ = 'stan' AND k.datei_id = d.id
+         WHERE " . implode(' AND ', $w) . '
+         ORDER BY v.nummer DESC, d.pfad, d.name LIMIT ' . max(1, $limit),
+        array_merge([$like, $like, $like, $like, $like, $q], $p)
+    );
+    foreach ($rows as &$r) {
+        $r['ausschnitt'] = $r['ausschnitt'] !== '' ? stan_ausschnitt((string)$r['ausschnitt'], $q) : '';
+        $r['ki'] = $r['ki_zusammenfassung'] !== null ? ['zusammenfassung' => (string)$r['ki_zusammenfassung'], 'tags' => function_exists('ki_tags_parsen') ? ki_tags_parsen((string)$r['ki_tags']) : [],
+            'modell' => (string)$r['ki_modell'], 'quelle' => (string)$r['ki_quelle'], 'geaendert_am' => (string)$r['ki_geaendert_am']] : null;
+    }
+    unset($r);
+    return $rows;
 }
 
 /**
@@ -480,6 +588,9 @@ function stan_datei_loeschen(array $datei): void
         @unlink($p);
     }
     db_exec('DELETE FROM stan_dateien WHERE id = ?', [(int)$datei['id']]);
+    if (function_exists('ki_vergessen')) {
+        ki_vergessen('stan', (int)$datei['id']);
+    }
 }
 
 /** Eine Version samt Dateien und ZIP entfernen – die nächsthöhere wird dann die aktuelle */

@@ -97,3 +97,16 @@ function mb_strimwidth(string $s, int $start, int $breite, string $ende = '', ?s
     }
     return mb_substr($s, 0, max(0, $breite - mb_strlen($ende))) . $ende;
 }
+
+/** Fundstelle in Zeichen statt Bytes – reicht für Suche und Ausschnitte */
+function mb_strpos(string $haystack, string $needle, int $offset = 0, ?string $encoding = null): int|false
+{
+    $byteOffset = $offset > 0 ? strlen(mb_substr($haystack, 0, $offset)) : 0;
+    $b = strpos($haystack, $needle, $byteOffset);
+    return $b === false ? false : mb_strlen(substr($haystack, 0, $b));
+}
+
+function mb_stripos(string $haystack, string $needle, int $offset = 0, ?string $encoding = null): int|false
+{
+    return mb_strpos(mb_strtolower($haystack), mb_strtolower($needle), $offset);
+}

@@ -47,6 +47,8 @@ function kalender_darf_bearbeiten(array $t, array $u): bool { return $GLOBALS['r
 function standort_bild_find(int $id): ?array { return null; }
 function standort_bild_pfad(array $b, bool $v = false): ?string { return null; }
 function standort_find(?int $id): ?array { return null; }
+function stan_datei_find(?int $id): ?array { return $id === 3 ? ['id' => 3, 'version_id' => 9, 'version_nummer' => 2, 'pfad' => 'STAN/Fachgruppe N/FGr N.pdf', 'name' => 'FGr N.pdf', 'mime' => 'application/pdf', 'stored_name' => 'x.pdf'] : null; }
+function stan_datei_pfad(array $d): ?string { return null; }
 $app = dirname(__DIR__);
 foreach (['util', 'settings', 'lists', 'view', 'ki'] as $lib) { require $app . '/src/lib/' . $lib . '.php'; }
 
@@ -89,13 +91,13 @@ $GLOBALS['execs'] = [];
 $r = ki_warteschlange_abarbeiten();
 $check('an, aber leer: Sperre geholt, Hängengebliebene freigegeben, nichts bearbeitet', $r['bearbeitet'] === 0 && $GLOBALS['locks'] === ['ki_warteschlange'] && count($GLOBALS['execs']) === 1 && str_contains($GLOBALS['execs'][0][0], "status = 'laeuft' AND gestartet_am"));
 $GLOBALS['execs'] = [];
-$check('alle einreihen: nur eingeschaltete Ablagen, ohne Vision-Modell keine Bilder und keine Plätze', ki_alle_einreihen() === 2 && count($GLOBALS['execs']) === 2 && !str_contains(implode(' ', array_column($GLOBALS['execs'], 0)), 'vehicle_files')
+$check('alle einreihen: nur eingeschaltete Ablagen, ohne Vision-Modell keine Bilder und keine Plätze, STAN nach Mime gefiltert', ki_alle_einreihen() === 3 && count($GLOBALS['execs']) === 3 && !str_contains(implode(' ', array_column($GLOBALS['execs'], 0)), 'vehicle_files') && str_contains($GLOBALS['execs'][2][0], "f.mime NOT LIKE 'image/%'")
     && !str_contains(implode(' ', array_column($GLOBALS['execs'], 0)), 'standort_bilder') && str_contains($GLOBALS['execs'][0][0], "AND f.art <> 'bild'"));
 $GLOBALS['execs'] = [];
 $check('Bild ohne Vision-Modell wird nicht eingereiht, Dokument schon', !ki_einreihen('veranstaltung', 5, 'bild') && $GLOBALS['execs'] === [] && ki_einreihen('veranstaltung', 5, 'dokument'));
 $einstellen(['ki_vision_modell' => 'llava:7b', 'ki_fahrzeuge' => '1']);
 $GLOBALS['execs'] = [];
-$check('mit Vision-Modell: Bilder und Plätze dabei', ki_einreihen('standort', 3, 'bild') && ki_alle_einreihen() === 4 && !str_contains(implode(' ', array_column($GLOBALS['execs'], 0)), "art <> 'bild'"));
+$check('mit Vision-Modell: Bilder und Plätze dabei', ki_einreihen('standort', 3, 'bild') && ki_alle_einreihen() === 5 && !str_contains(implode(' ', array_column($GLOBALS['execs'], 0)), "art <> 'bild'"));
 $einstellen(['ki_vision_modell' => '']);
 
 /* ---------- Schlagwörter und Antwort ---------- */
@@ -239,6 +241,9 @@ $check('Suche: Treffer mit Link, Eltern und Ablage; gelöschte Datei fällt weg'
 $GLOBALS['rechte'] = ['view_vehicles' => false, 'termin_sehen' => false];
 $check('Suche: nur, was man sehen darf', ki_suche('einladung', $u) === [] && ki_suche('', $u) === []);
 $GLOBALS['rechte'] = [];
+$l = ki_datei_laden('stan', 3);
+$check('STAN-Datei: Kontext mit Version und Ordner, Eltern-Link, jeder darf sehen, Leitung bearbeiten', $l !== null && str_contains($l['kontext'], 'STAN (Stärke- und Ausstattungsnachweisung), Version 2, Ordner „STAN/Fachgruppe N". Dateiname: FGr N.pdf') && str_contains($l['eltern']['url'], 'p=stan&version=9')
+    && ki_darf_sehen('stan', $l['datei'], $u) && ki_darf_bearbeiten('stan', $l['datei'], ['role' => 'leitung']) && !ki_darf_bearbeiten('stan', $l['datei'], ['role' => 'user']) && ki_datei_laden('stan', 4) === null);
 $check('Dateiname im Kontext, Titel nur, wenn er abweicht', str_ends_with(ki_datei_laden('fahrzeug', 5)['kontext'], 'Dateiname: notiz.txt, Titel: UVV 2026') && str_contains(ki_datei_laden('termin', 7)['kontext'], 'Anhang zum Termin „Jahresabschluss". Dateiname: einladung.pdf') && ki_datei_laden('standort', 1) === null);
 $GLOBALS['execs'] = [];
 ki_hand_speichern('fahrzeug', 5, "  Von Hand.\r\n", 'a, a, b');

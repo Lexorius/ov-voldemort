@@ -73,12 +73,23 @@ if (get_int('version')) {
 }
 $gezeigt ??= $aktuell;
 
+$q = trim(get_str('q'));
+$alleVersionen = get_str('alle') === '1';
+$dateien = $gezeigt ? stan_dateien((int)$gezeigt['id']) : [];
+$treffer = $q !== '' ? stan_suche($q, $alleVersionen || !$gezeigt ? null : (int)$gezeigt['id']) : [];
+$kiIds = array_merge(array_column($dateien, 'id'), array_column($treffer, 'id'));
+
 render('stan', [
+    'q'         => $q,
+    'alleVersionen' => $alleVersionen,
+    'treffer'   => $treffer,
+    'kiDaten'   => function_exists('ki_fuer_dateien') && $kiIds ? ki_fuer_dateien('stan', $kiIds) : ['ergebnisse' => [], 'auftraege' => []],
+    'textOffen' => stan_text_offen(),
     'title'     => (string)setting('stan_modul_name', 'STAN'),
     'versionen' => $versionen,
     'aktuell'   => $aktuell,
     'gezeigt'   => $gezeigt,
-    'dateien'   => $gezeigt ? stan_dateien((int)$gezeigt['id']) : [],
+    'dateien'   => $dateien,
     'darf'      => $darf,
     'maxMb'     => (int)(stan_max_bytes() / 1024 / 1024),
 ]);

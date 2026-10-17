@@ -34,6 +34,7 @@ const KI_TYPEN = [
     'veranstaltung' => ['schalter' => 'ki_veranstaltungen', 'label' => 'Veranstaltung',         'tabelle' => 'event_files',     'route' => 'event_file'],
     'termin'        => ['schalter' => 'ki_termine',         'label' => 'Termin',                'tabelle' => 'calendar_files',  'route' => 'kalender_file'],
     'standort'      => ['schalter' => 'ki_standorte',       'label' => 'Stell- und Lagerplatz', 'tabelle' => 'standort_bilder', 'route' => 'standort_bild'],
+    'stan'          => ['schalter' => 'ki_stan',            'label' => 'STAN',                  'tabelle' => 'stan_dateien',    'route' => 'stan_file', 'bildfilter' => "f.mime NOT LIKE 'image/%'"],
 ];
 const KI_VERSUCHE_MAX = 3;
 const KI_RUHE_SEK = 600;   // so lange ruht die Warteschlange, wenn Ollama nicht erreichbar war
@@ -157,7 +158,7 @@ function ki_alle_einreihen(): int
         }
         $n += db_exec(
             "INSERT INTO ki_auftraege (typ, datei_id, status) SELECT ?, f.id, 'offen' FROM `{$def['tabelle']}` f
-             WHERE f.id NOT IN (SELECT a.datei_id FROM ki_auftraege a WHERE a.typ = ?)" . ($ohneBilder ? " AND f.art <> 'bild'" : ''),
+             WHERE f.id NOT IN (SELECT a.datei_id FROM ki_auftraege a WHERE a.typ = ?)" . ($ohneBilder ? ' AND ' . ($def['bildfilter'] ?? "f.art <> 'bild'") : ''),
             [$typ, $typ]
         );
     }
@@ -382,6 +383,19 @@ function ki_datei_laden(string $typ, int $id): ?array
             $eltern = ['text' => $s ? (string)$s['name'] : 'Platz', 'url' => (can('admin') ? url('admin_standort_edit', ['id' => (int)$d['standort_id']]) : url('standorte', ['id' => (int)$d['standort_id']])) . '#bilder'];
             $pfad = standort_bild_pfad($d);
             break;
+        case 'stan':
+            $d = stan_datei_find($id);
+            if (!$d) {
+                return null;
+            }
+            $ordner = str_replace('\\', '/', dirname((string)$d['pfad']));
+            $kontext = 'Dokument aus der STAN (Stärke- und Ausstattungsnachweisung), Version ' . (int)$d['version_nummer'] . ($ordner !== '.' && $ordner !== '' ? ', Ordner „' . $ordner . '"' : '');
+            $eltern = ['text' => 'STAN Version ' . (int)$d['version_nummer'], 'url' => url('stan', ['version' => (int)$d['version_id']]) . '#dateien'];
+            $pfad = stan_datei_pfad($d);
+            // Für den Rest wie die anderen Ablagen: orig_name / titel
+            $d['orig_name'] = (string)$d['name'];
+            $d['titel'] = '';
+            break;
         default:
             return null;
     }
@@ -400,6 +414,7 @@ function ki_darf_sehen(string $typ, array $datei, array $user): bool
             $t = kalender_find((int)($datei['entry_id'] ?? 0));
             return $t !== null && kalender_sichtbar($t, $user);
         case 'standort':
+        case 'stan':
             return true;
     }
     return false;
@@ -417,6 +432,8 @@ function ki_darf_bearbeiten(string $typ, array $datei, array $user): bool
             return $t !== null && kalender_darf_bearbeiten($t, $user);
         case 'standort':
             return can('admin');
+        case 'stan':
+            return in_array((string)($user['role'] ?? ''), ['admin', 'leitung'], true);
     }
     return false;
 }

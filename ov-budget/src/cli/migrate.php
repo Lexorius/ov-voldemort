@@ -2005,6 +2005,12 @@ SQL);
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
     }
     $merken('077_stan');
+
+    /* ---------- 078: STAN durchsuchbar – Volltext je Datei ---------- */
+    if (ovb_table_exists($pdo, 'stan_dateien') && !ovb_column_exists($pdo, 'stan_dateien', 'text')) {
+        $pdo->exec('ALTER TABLE stan_dateien ADD COLUMN text MEDIUMTEXT NULL AFTER size_bytes');
+    }
+    $merken('078_stan_text');
 }
 
 /**

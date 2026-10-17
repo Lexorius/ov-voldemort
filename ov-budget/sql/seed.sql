@@ -462,6 +462,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('ki_veranstaltungen','1','Dateien der Veranstaltungen auswerten','Rechnungen, Angebote, Pläne an Veranstaltungen.','bool','KI-Auswertung',80),
 ('ki_termine','1','Anhänge der Termine auswerten','Einladungen und Unterlagen am Termin.','bool','KI-Auswertung',90),
 ('ki_standorte','1','Bilder der Stell- und Lagerplätze auswerten','Nur mit Vision-Modell sinnvoll.','bool','KI-Auswertung',100),
+('ki_stan','1','STAN-Dokumente auswerten','Zusammenfassung und Schlagwörter je Dokument im STAN-Paket – macht die STAN durchsuchbar.','bool','KI-Auswertung',110),
 ('geo_aktiv','0','Entfernungen rechnen (!! TEST !!)','Testbetrieb über öffentliche Dienste ohne Gewähr: Nominatim (OpenStreetMap) übersetzt Adressen, der OSRM-Demoserver rechnet Strecken. Aus = es wird nichts angefragt; schon gemerkte Entfernungen bleiben sichtbar.','bool','Entfernungen (!! TEST !!)',10),
 ('geo_pause_sek','120','Pause zwischen zwei Anfragen (Sekunden)','Höchstens eine Anfrage je Abruf und nur nach dieser Pause – die öffentlichen Dienste vertragen keine Last. Mindestens 30, höchstens 3600.','number','Entfernungen (!! TEST !!)',20),
 ('geo_nominatim_url','https://nominatim.openstreetmap.org','Adressdienst (Nominatim)','Übersetzt Anschriften in Koordinaten. Wer Nominatim oder Photon selbst betreibt, trägt hier seine Adresse ein.','text','Entfernungen (!! TEST !!)',30),

@@ -1,5 +1,16 @@
 # Änderungsverlauf
 
+## 2.1.47.0
+
+- **STAN durchsuchbar:** Suchfeld auf der STAN-Seite über Dateiname, Ordner
+  und Inhalt – der minütliche Abruf liest PDFs (pdftotext), Office- und
+  Textdateien ein und trägt den Volltext nach. Treffer zeigen Fundort und
+  einen Ausschnitt; wahlweise in der gezeigten oder in allen Versionen.
+- **STAN mit KI katalogisiert:** Ist die KI-Auswertung an (neuer Schalter
+  „STAN-Dokumente auswerten"), bekommt jedes Dokument Zusammenfassung und
+  Schlagwörter, sichtbar unter der Datei, in der STAN-Suche und in der
+  allgemeinen Dateisuche.
+
 ## 2.1.46.2
 
 - **STAN-Upload:** Der Fehlerfänger der Stück-Schnittstelle machte auch

@@ -525,6 +525,18 @@ Verwaltung.
   JavaScript bleibt der normale Upload, der dann über die Oberfläche bei
   16 MB endet; direkt über den Port des Add-ons (Add-on-Konfiguration →
   Netzwerk) gehen bis 2 GB am Stück.
+* **Durchsuchbar.** Das Suchfeld oben auf der STAN-Seite findet Dateien
+  nach Name und Ordner, nach dem Inhalt (der minütliche Abruf liest PDFs
+  über pdftotext, Office- und Textdateien ein und trägt den Volltext nach –
+  solange das läuft, steht ein Hinweis) und, wenn die KI-Auswertung
+  eingeschaltet ist, nach Zusammenfassung und Schlagwörtern. Gesucht wird
+  in der gezeigten Version, mit Haken „alle Versionen" überall. Jeder
+  Treffer zeigt, wo er gefunden wurde (Name, Text oder KI) und einen
+  Ausschnitt um die Fundstelle.
+* **KI-Katalog.** Ist die KI-Auswertung eingeschaltet (Schalter „STAN-Dokumente
+  auswerten"), bekommt jedes Dokument im Paket eine Zusammenfassung und
+  Schlagwörter – wie die Dateien der Fahrzeugakte –, sichtbar unter der
+  Datei und in der allgemeinen Dateisuche. Bilder nur mit Vision-Modell.
 * PDFs und Bilder öffnen im Browser, alles andere wird heruntergeladen.
   Die Ablage liegt unter `uploads/stan`, die Sicherung nimmt sie mit.
 

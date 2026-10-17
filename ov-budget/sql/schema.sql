@@ -1589,6 +1589,8 @@ CREATE TABLE IF NOT EXISTS stan_dateien (
   stored_name  VARCHAR(255) NOT NULL,
   mime         VARCHAR(120) NOT NULL DEFAULT '',
   size_bytes   BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  -- lesbarer Text der Datei für die Suche; NULL = noch nicht nachgetragen, '' = nichts lesbar
+  text         MEDIUMTEXT   NULL,
   created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_stan_version (version_id),
