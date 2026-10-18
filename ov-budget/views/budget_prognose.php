@@ -16,8 +16,9 @@ $schwankungBadge = static fn(string $t): string => '<span class="badge badge--ou
     <h1>Hochrechnung <?= (int)$jahr ?></h1>
     <p>Was das Jahr voraussichtlich kostet: Rechnungen, die an der Ausgabe als <strong>wiederkehrend</strong> markiert sind
       (Telefon, Versicherung), laufen mit dem zuletzt gebuchten Betrag weiter; alle übrigen Ausgaben je Kategorie aus dem
-      Durchschnitt der letzten zwölf vollen Monate (<?= e($fensterText) ?>) – schwankende wie Tanken also gemittelt; dazu Energie
-      und Wasser aus den Zählern.</p>
+      Monatsdurchschnitt dieses Jahres (bisher gebucht durch vergangene Monate) – schwankende wie Tanken also gemittelt;
+      Kategorien mit Buchungen in weniger als drei Monaten werden nicht hochgerechnet, da zählt nur das Gebuchte.
+      Dazu Energie und Wasser aus den Zählern. Im jungen Jahr zählt das Fenster <?= e($fensterText) ?>.</p>
   </div>
   <div class="btnrow">
     <a class="btn btn--sec" href="<?= e(url('budget', ['jahr' => $jahr])) ?>">Zur Übersicht</a>
@@ -89,7 +90,11 @@ $schwankungBadge = static fn(string $t): string => '<span class="badge badge--ou
               <?php if ($r['empfehlung'] === 'fest'): ?><div class="small muted">läuft regelmäßig – als fester Betrag von <?= e(money($st['durchschnitt'])) ?> je Monat eintragen?</div><?php endif; ?>
               <?php if ($r['notiz'] !== '' && !$darf): ?><div class="small muted"><?= e($r['notiz']) ?></div><?php endif; ?></td>
             <td class="num"><?= $r['bisher'] > 0 ? e(money($r['bisher'])) : '<span class="muted">–</span>' ?></td>
-            <td class="num"><?= $st['monate'] > 0 ? e(money($st['durchschnitt'])) . '<div class="small muted">' . (int)$st['monate_mit'] . ' von ' . (int)$st['monate'] . ' Monaten</div>' : '<span class="muted">–</span>' ?></td>
+            <td class="num"><?= match ($r['basis']) {
+                'jahr'    => e(money($r['schnitt'])) . '<div class="small muted">' . e(number_format($monate['vergangen'], 1, ',', '.')) . ' Monate dieses Jahr</div>',
+                'fenster' => e(money($r['schnitt'])) . '<div class="small muted">letzte ' . (int)$st['monate'] . ' Monate</div>',
+                default   => '<span class="muted">–</span><div class="small muted">Buchungen in ' . (int)$st['monate_mit'] . ' Monat(en) – nicht hochgerechnet</div>',
+            } ?></td>
             <td><?= $schwankungBadge($r['schwankung_text']) ?></td>
             <td class="nowrap">
               <?php if ($darf): ?>

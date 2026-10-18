@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 const PROGNOSE_ARTEN = ['auto' => 'Durchschnitt', 'fest' => 'fester Betrag je Monat', 'aus' => 'nicht hochrechnen'];
 const PROGNOSE_FENSTER = 12;
+const PROGNOSE_MIN_MONATE = 3;   // so viele Monate mit Buchungen braucht ein Durchschnitt, sonst wird nicht hochgerechnet
 
 /* ==================================================================== */
 /* Einstellungen je Kategorie                                             */
@@ -270,12 +271,27 @@ function prognose_kategorien(array $kategorien, array $monatswerte, array $bishe
         $st = prognose_statistik($monatswerte[$id] ?? [], $fenster);
         $e = $einstellungen[$id] ?? ['art' => 'auto', 'betrag_monat' => 0, 'notiz' => ''];
         $art = prognose_art((string)$e['art']);
+        $b = (float)($bisher[$id] ?? 0.0);
+        // Durchschnitt: im laufenden Jahr das bisher Gebuchte durch die vergangenen Monate – das trägt
+        // auch dann, wenn alles in einem Monat gebucht wurde (Import, Nachbuchung). Erst im jungen Jahr
+        // (unter drei Monaten) zählt das Zwölf-Monats-Fenster. Unter drei Monaten mit Buchungen gibt es
+        // keinen belastbaren Durchschnitt – dann wird nicht hochgerechnet, nur das Gebuchte zählt.
+        $hj = (int)substr($heute, 0, 4);
+        if ($st['monate_mit'] < PROGNOSE_MIN_MONATE) {
+            $basis = 'keine';
+            $schnitt = 0.0;
+        } elseif ($jahr === $hj && $monate['vergangen'] >= PROGNOSE_MIN_MONATE) {
+            $basis = 'jahr';
+            $schnitt = $b / $monate['vergangen'];
+        } else {
+            $basis = 'fenster';
+            $schnitt = (float)$st['durchschnitt'];
+        }
         $jeMonat = match ($art) {
             'fest' => (float)$e['betrag_monat'],
             'aus'  => 0.0,
-            default => (float)$st['durchschnitt'],
+            default => $schnitt,
         };
-        $b = (float)($bisher[$id] ?? 0.0);
         $rest = round($jeMonat * $monate['rest'], 2);
         if ($b <= 0 && $st['monate_mit'] === 0 && $art !== 'fest') {
             continue;   // nichts gebucht, nichts erwartet
@@ -285,6 +301,7 @@ function prognose_kategorien(array $kategorien, array $monatswerte, array $bishe
             'bisher' => $b, 'statistik' => $st, 'schwankung_text' => prognose_schwankung_text($st),
             'art' => $art, 'betrag_monat' => (float)$e['betrag_monat'], 'notiz' => (string)($e['notiz'] ?? ''),
             'je_monat' => round($jeMonat, 2), 'rest' => $rest, 'hochrechnung' => round($b + $rest, 2),
+            'basis' => $basis, 'schnitt' => round($schnitt, 2),
             'empfehlung' => $art === 'auto' && prognose_schwankung_text($st) === 'regelmäßig' ? 'fest' : '',
         ];
         $summe['bisher'] += $b;

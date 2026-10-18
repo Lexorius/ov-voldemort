@@ -60,7 +60,13 @@ $einst = [1 => ['art' => 'fest', 'betrag_monat' => 49.9, 'notiz' => 'neuer Vertr
 $k = prognose_kategorien($kategorien, $monatswerte, $bisher, $einst, 2026, '2026-10-18');
 $je = array_column($k['zeilen'], null, 'id');
 $check('Telefon fest: 49,90 × Rest', $je[1]['art'] === 'fest' && $je[1]['je_monat'] === 49.9 && abs($je[1]['rest'] - 49.9 * 2.452) < 0.05 && abs($je[1]['hochrechnung'] - (405 + 49.9 * 2.452)) < 0.05 && $je[1]['notiz'] === 'neuer Vertrag ab Oktober');
-$check('Tanken auto: Durchschnitt × Rest, Empfehlung bleibt aus (schwankend)', $je[2]['art'] === 'auto' && abs($je[2]['je_monat'] - 146.67) < 0.01 && abs($je[2]['hochrechnung'] - (1340 + 146.67 * 2.452)) < 0.1 && $je[2]['empfehlung'] === '');
+$check('Tanken auto: Jahresdurchschnitt (1340 / 9,548 Monate) × Rest, Empfehlung bleibt aus (schwankend)', $je[2]['art'] === 'auto' && $je[2]['basis'] === 'jahr' && abs($je[2]['je_monat'] - 140.34) < 0.01 && abs($je[2]['hochrechnung'] - (1340 + 1340 / 9.548 * 2.452)) < 0.1 && $je[2]['empfehlung'] === '');
+$check('ohne Kategorie mit einer Buchung: nicht hochgerechnet', $je[0]['basis'] === 'keine' && $je[0]['rest'] === 0.0 && $je[0]['hochrechnung'] === 30.0);
+$alles = ['2026-09' => 32611.57];
+$kImport = prognose_kategorien([['id' => 9, 'label' => 'Import', 'color' => '']], [9 => $alles], [9 => 32611.57], [], 2026, '2026-10-18');
+$check('alles in einem Monat gebucht: kein Durchschnitt, Hochrechnung = Gebuchtes', $kImport['zeilen'][0]['basis'] === 'keine' && $kImport['zeilen'][0]['hochrechnung'] === 32611.57);
+$kJung = prognose_kategorien([['id' => 2, 'label' => 'Tanken', 'color' => '']], [2 => $tanken], [2 => 200.0], [], 2026, '2026-02-10');
+$check('junges Jahr: Fenster der letzten zwölf Monate', $kJung['zeilen'][0]['basis'] === 'fenster' && abs($kJung['zeilen'][0]['je_monat'] - prognose_statistik($tanken, prognose_fenster('2026-02-10'))['durchschnitt']) < 0.01);
 $check('Anschaffungen aus: nur das Bisherige', $je[3]['art'] === 'aus' && $je[3]['rest'] === 0.0 && $je[3]['hochrechnung'] === 2500.0);
 $check('ohne Kategorie ergänzt, leere Kategorie weggelassen', $je[0]['label'] === 'Ohne Kategorie' && !isset($je[4]) && count($k['zeilen']) === 4);
 $check('Summe und Reihenfolge nach Hochrechnung', abs($k['summe']['bisher'] - 4275.0) < 0.01 && $k['zeilen'][0]['id'] === 3 && abs($k['summe']['hochrechnung'] - array_sum(array_column($k['zeilen'], 'hochrechnung'))) < 0.01);

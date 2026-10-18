@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 2.1.50.2
+
+- **Hochrechnung entschärft:** Der Monatsdurchschnitt je Kategorie ist jetzt
+  das bisher Gebuchte geteilt durch die vergangenen Monate des Jahres –
+  vorher zählte nur das Zwölf-Monats-Fenster, und wer alles in einem Monat
+  gebucht hatte, bekam diesen Monat mal Restmonate obendrauf. Kategorien
+  mit Buchungen in weniger als drei Monaten werden nicht mehr hochgerechnet;
+  die Spalte „Ø je Monat" nennt die Grundlage.
+
 ## 2.1.50.1
 
 - Hochrechnung: Die Kategorien hießen „Kategorie #281", weil die falsche
