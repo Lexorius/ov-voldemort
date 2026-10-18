@@ -14,6 +14,8 @@ $listeAktiv = in_array($cur, ['expenses', 'expense_edit'], true);
   <?php if (can('view_expenses')): ?>
     <a class="tab<?= in_array($cur, ['budget_objektkonten', 'objektkonten', 'objektkonto_edit'], true) ? ' is-active' : '' ?>"
        href="<?= e(url('budget_objektkonten', ['jahr' => $jahr])) ?>">Objektkonten</a>
+    <a class="tab<?= $cur === 'budget_prognose' ? ' is-active' : '' ?>"
+       href="<?= e(url('budget_prognose', ['jahr' => $jahr])) ?>">Hochrechnung</a>
   <?php endif; ?>
   <a class="tab<?= in_array($cur, ['bestellungen', 'bestellung', 'bestellung_edit'], true) ? ' is-active' : '' ?>"
      href="<?= e(url('bestellungen')) ?>">Bestellungen</a>

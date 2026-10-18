@@ -1,5 +1,15 @@
 # Änderungsverlauf
 
+## 2.1.49.0
+
+- **Hochrechnung aufs Jahresende:** neuer Reiter im Budget. Je Kategorie der
+  Durchschnitt der letzten zwölf vollen Monate (Tanken schwankt, zählt
+  gemittelt), wahlweise ein fester Betrag je Monat (Telefon) oder „nicht
+  hochrechnen" (einmalige Anschaffungen); Verlauf als regelmäßig/schwankend
+  mit Vorschlag. Energie und Wasser kommen aus den Zählern dazu, Einspeisung
+  als Erlös. Unterm Strich: voraussichtlich frei oder überzogen, auch nach
+  den geplanten Vorhaben – die Budgetübersicht zeigt die Zeile mit.
+
 ## 2.1.48.2
 
 - **Stempel überall:** auch auf den Fahrzeugkarten der Startseite, auf dem

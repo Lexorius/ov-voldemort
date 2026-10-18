@@ -324,6 +324,35 @@ Regionalstelle liegt, jede Buchung trägt eine Plakette (orange: noch nicht
 weitergegeben, blau: bei der Regionalstelle), und der Filter „Auslagen"
 trennt die Stufen. Der CSV-Export führt alle drei Spalten mit.
 
+## Hochrechnung aufs Jahresende
+
+*Budget → Hochrechnung* zeigt, was das Jahr voraussichtlich kostet, damit
+niemand im November von der Telefonrechnung überrascht wird.
+
+* **Je Kategorie** nimmt die Anwendung den Durchschnitt der letzten zwölf
+  vollen Monate – auch über den Jahreswechsel hinweg – und rechnet ihn auf
+  die verbleibenden Monate hoch: *Hochrechnung = bisher gebucht + Durchschnitt
+  × Restmonate*. Gezählt wird ab dem ersten Monat mit Buchung; Monate ohne
+  Buchung danach zählen als 0, so dass Tanken (mal 60 €, mal 300 €, mal gar
+  nichts) und ein Jahresbeitrag (einmal 1.200 €) sinnvoll gemittelt werden.
+* **Verlauf**: *regelmäßig* (jeden Monat etwa gleich, wie Telefon),
+  *schwankend*, *stark schwankend*, *zu wenig Daten*. Bei regelmäßigen
+  Posten schlägt die Seite vor, den Betrag fest einzutragen.
+* **Hochrechnen als**: *Durchschnitt* (Vorgabe), *fester Betrag je Monat*
+  (etwa 49,90 € Telefon ab dem neuen Vertrag) oder *nicht hochrechnen* (für
+  einmalige Anschaffungen, die sich nicht wiederholen). Dazu eine Notiz. Die
+  Einstellung gilt je Jahr und Kategorie; speichern darf die Leitung.
+* **Energie und Wasser aus den Zählern**: je Hauptzähler mit Tarif die
+  Kosten der Monate mit Zählerstand, deren Durchschnitt und die fehlenden
+  Monate bis zum Jahresende; Einspeisung als Erlös gegengerechnet. Werden die
+  Abschläge auch als Ausgaben gebucht, die Kategorie auf „nicht hochrechnen"
+  stellen, sonst zählt es doppelt.
+* **Unterm Strich**: Verfügbar (Jahresbudget plus Einnahmen) minus
+  Hochrechnung = voraussichtlich frei; dazu, was nach den geplanten Vorhaben
+  (geplante Buchungen, Veranstaltungen) bleibt. Die Budgetübersicht zeigt
+  diese Zeile ebenfalls. Für vergangene Jahre ist die Hochrechnung das
+  Gebuchte; die Durchschnitte helfen bei der Planung des nächsten Jahres.
+
 ## Objektkonten
 
 Eine zweite Sicht auf die Buchungen, neben der Statistik nach Kategorien.

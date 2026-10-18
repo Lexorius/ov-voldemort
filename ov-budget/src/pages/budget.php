@@ -43,6 +43,7 @@ $zuBestellen = wish_query(['status_slug' => 'freigegeben', 'sort' => 'prio']);
 $zurFreigabe = wish_query(['freigabe_offen' => 1, 'sort' => 'prio']);
 
 render('budget', [
+    'prognose'       => function_exists('prognose_jahr') && can('view_expenses') ? prognose_jahr($jahr) : null,
     'title'          => (string)setting('budget_modul_name', 'Budget'),
     'jahr'           => $jahr,
     'jahre'          => $jahre,

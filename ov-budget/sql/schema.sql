@@ -1597,4 +1597,17 @@ CREATE TABLE IF NOT EXISTS stan_dateien (
   CONSTRAINT fk_stan_version FOREIGN KEY (version_id) REFERENCES stan_versionen(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Hochrechnung: je Jahr und Kategorie, wie hochgerechnet wird (Durchschnitt, fester Betrag, gar nicht)
+CREATE TABLE IF NOT EXISTS budget_prognosen (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  jahr          SMALLINT      NOT NULL,
+  -- 0 = Buchungen ohne Kategorie; kein Fremdschluessel, damit die Einstellung eine geloeschte Kategorie ueberlebt
+  kategorie_id  INT UNSIGNED  NOT NULL DEFAULT 0,
+  art           ENUM('auto','fest','aus') NOT NULL DEFAULT 'auto',
+  betrag_monat  DECIMAL(12,2) NOT NULL DEFAULT 0,
+  notiz         VARCHAR(200)  NOT NULL DEFAULT '',
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_prognose (jahr, kategorie_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS=1;

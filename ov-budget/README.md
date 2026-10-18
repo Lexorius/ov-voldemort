@@ -35,6 +35,10 @@ Seitenleiste von Home Assistant, ohne Port nach außen.
 - **KI-Auswertung der Dateien** (abschaltbar, standardmäßig aus): ein Ollama im
   eigenen Netz fasst Dokumente und Fotos zusammen und vergibt Schlagwörter;
   Dateisuche über alle Ablagen
+- **Hochrechnung aufs Jahresende**: wiederkehrende Ausgaben je Kategorie aus
+  dem Durchschnitt der letzten zwölf Monate (Tanken) oder als fester Betrag
+  (Telefon), dazu Energie und Wasser aus den Zählern – voraussichtlich frei
+  oder überzogen, auch in der Budgetübersicht
 - **Objektkonten** als zweite Auswertung: mehrere Kategorien laufen auf ein
   Konto (etwa Getränke und Lebensmittel auf Verpflegung), die Statistik nach
   Kategorien bleibt daneben bestehen

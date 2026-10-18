@@ -2011,6 +2011,22 @@ SQL);
         $pdo->exec('ALTER TABLE stan_dateien ADD COLUMN text MEDIUMTEXT NULL AFTER size_bytes');
     }
     $merken('078_stan_text');
+
+    /* ---------- 079: Hochrechnung je Kategorie ---------- */
+    if (!ovb_table_exists($pdo, 'budget_prognosen')) {
+        $pdo->exec("CREATE TABLE budget_prognosen (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  jahr          SMALLINT      NOT NULL,
+  -- 0 = Buchungen ohne Kategorie; kein Fremdschluessel, damit die Einstellung eine geloeschte Kategorie ueberlebt
+  kategorie_id  INT UNSIGNED  NOT NULL DEFAULT 0,
+  art           ENUM('auto','fest','aus') NOT NULL DEFAULT 'auto',
+  betrag_monat  DECIMAL(12,2) NOT NULL DEFAULT 0,
+  notiz         VARCHAR(200)  NOT NULL DEFAULT '',
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_prognose (jahr, kategorie_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    $merken('079_prognose');
 }
 
 /**
