@@ -49,6 +49,27 @@ const EINNAHME_STUFEN_FELDER = [
  * Abgerechnet und gestellt sind Forderungen, geplant ist Planung.
  */
 const BUCHUNG_IST = "status IN ('bezahlt','offen')";
+
+/** Wiederkehrende Rechnung: Rhythmus und wie oft im Jahr */
+const WIEDERKEHREND = [
+    ''                 => ['label' => 'einmalig',         'je_jahr' => 0],
+    'monatlich'        => ['label' => 'monatlich',        'je_jahr' => 12],
+    'vierteljaehrlich' => ['label' => 'vierteljährlich',  'je_jahr' => 4],
+    'jaehrlich'        => ['label' => 'jährlich',         'je_jahr' => 1],
+];
+
+/** Gültiger Rhythmus oder einmalig. Reine Funktion. */
+function wiederkehrend(string $w): string
+{
+    return isset(WIEDERKEHREND[$w]) ? $w : '';
+}
+
+/** „↻ monatlich" als Abzeichen, leer bei einmaligen Buchungen. Reine Funktion. */
+function wiederkehrend_badge(array $e): string
+{
+    $w = wiederkehrend((string)($e['wiederkehrend'] ?? ''));
+    return $w === '' ? '' : '<span class="badge badge--outline" title="Wiederkehrende Rechnung – geht in die Hochrechnung">↻ ' . e(WIEDERKEHREND[$w]['label']) . '</span>';
+}
 /** Forderungen: Einnahmen, die dem OV zustehen, aber weder zugesagt noch da sind */
 const EINNAHME_FORDERUNG = ['abgerechnet', 'gestellt'];
 /** Stufen, in denen eine Abrechnung wartet – vom Einreichen bis zum Geld */
@@ -993,6 +1014,7 @@ function expense_save_from_post(?array $existing, array $user): array
         'lieferant'     => mb_substr(post_str('lieferant'), 0, 150),
         'beleg_nr'      => mb_substr(post_str('beleg_nr'), 0, 100),
         'referenz'      => mb_substr(post_str('referenz'), 0, 100),
+        'wiederkehrend' => $art === 'ausgabe' ? wiederkehrend(post_str('wiederkehrend')) : '',
         'bezahlt_am'    => post_date('bezahlt_am'),
         // Auslage: nur bei Ausgaben – ein Helfer mit Zugang oder ein freier Name
         'ausgelegt_von' => $art === 'ausgabe' ? post_int('ausgelegt_von') : null,

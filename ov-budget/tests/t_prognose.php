@@ -69,6 +69,24 @@ $check('regelmäßig und auto: Empfehlung „fest"', $k2['zeilen'][0]['empfehlun
 $k3 = prognose_kategorien($kategorien, $monatswerte, $bisher, $einst, 2025, '2026-10-18');
 $check('vergangenes Jahr: Hochrechnung = bisher', $k3['monate']['rest'] === 0.0 && array_column($k3['zeilen'], 'rest') === [0.0, 0.0, 0.0, 0.0]);
 
+/* ---------- wiederkehrende Rechnungen ---------- */
+$check('Rhythmus geprüft, Abzeichen', wiederkehrend('monatlich') === 'monatlich' && wiederkehrend('quatsch') === '' && wiederkehrend_badge(['wiederkehrend' => 'jaehrlich']) === '<span class="badge badge--outline" title="Wiederkehrende Rechnung – geht in die Hochrechnung">↻ jährlich</span>' && wiederkehrend_badge(['wiederkehrend' => '']) === '');
+$b = [];
+foreach (range(1, 9) as $mo) { $b[] = ['id' => $mo, 'jahr' => 2026, 'datum' => sprintf('2026-%02d-05', $mo), 'bezeichnung' => 'Telefon', 'lieferant' => 'Telekom', 'betrag_brutto' => $mo === 9 ? 49.9 : 45.0, 'wiederkehrend' => 'monatlich', 'kategorie_id' => 1, 'kategorie_label' => 'Telefon', 'kategorie_color' => '#111']; }
+$b[] = ['id' => 20, 'jahr' => 2025, 'datum' => '2025-11-10', 'bezeichnung' => 'KFZ-Versicherung', 'lieferant' => 'HUK', 'betrag_brutto' => 1200.0, 'wiederkehrend' => 'jaehrlich', 'kategorie_id' => 2, 'kategorie_label' => 'Versicherung', 'kategorie_color' => '#222'];
+$b[] = ['id' => 21, 'jahr' => 2026, 'datum' => '2026-02-01', 'bezeichnung' => 'Haftpflicht', 'lieferant' => '', 'betrag_brutto' => 300.0, 'wiederkehrend' => 'jaehrlich', 'kategorie_id' => 2, 'kategorie_label' => 'Versicherung', 'kategorie_color' => '#222'];
+$b[] = ['id' => 22, 'jahr' => 2026, 'datum' => '2026-04-15', 'bezeichnung' => 'Wartung Aufzug', 'lieferant' => 'Fa. Lift', 'betrag_brutto' => 250.0, 'wiederkehrend' => 'vierteljaehrlich', 'kategorie_id' => 0, 'kategorie_label' => null, 'kategorie_color' => null];
+$b[] = ['id' => 23, 'jahr' => 2026, 'datum' => '2026-03-03', 'bezeichnung' => 'Einmalig', 'lieferant' => '', 'betrag_brutto' => 99.0, 'wiederkehrend' => '', 'kategorie_id' => 0];
+$se = prognose_serien($b, 2026, '2026-10-18');
+$je = array_column($se['zeilen'], null, 'bezeichnung');
+$check('Telefon monatlich: letzter Betrag 49,90 × 3 offene Monate (Okt–Dez)', $je['Telefon']['betrag'] === 49.9 && $je['Telefon']['anzahl_jahr'] === 9 && $je['Telefon']['offen'] === 3 && abs($je['Telefon']['rest'] - 149.7) < 0.01 && abs($je['Telefon']['hochrechnung'] - (8 * 45 + 49.9 + 149.7)) < 0.01);
+$check('KFZ-Versicherung jährlich, zuletzt im Vorjahr: einmal offen', $je['KFZ-Versicherung']['bisher'] === 0.0 && $je['KFZ-Versicherung']['offen'] === 1 && $je['KFZ-Versicherung']['rest'] === 1200.0 && $je['KFZ-Versicherung']['letzte'] === '2025-11-10');
+$check('Haftpflicht jährlich, dieses Jahr gebucht: nichts offen', $je['Haftpflicht']['offen'] === 0 && $je['Haftpflicht']['hochrechnung'] === 300.0);
+$check('Wartung vierteljährlich, zuletzt im 2. Quartal: 4. Quartal offen (3. zählt als vorbei)', $je['Wartung Aufzug']['offen'] === 1 && $je['Wartung Aufzug']['rest'] === 250.0);
+$check('einmalige Buchung bleibt draußen, Reihenfolge nach Jahresende, Summe', !isset($je['Einmalig']) && $se['zeilen'][0]['bezeichnung'] === 'KFZ-Versicherung' && abs($se['summe']['hochrechnung'] - array_sum(array_column($se['zeilen'], 'hochrechnung'))) < 0.01);
+$check('Telefon im Oktober schon gebucht: zwei offen', prognose_serien(array_merge($b, [['id' => 30, 'jahr' => 2026, 'datum' => '2026-10-05', 'bezeichnung' => 'Telefon', 'lieferant' => 'Telekom', 'betrag_brutto' => 49.9, 'wiederkehrend' => 'monatlich', 'kategorie_id' => 1]]), 2026, '2026-10-18')['zeilen'] !== [] && array_column(prognose_serien(array_merge($b, [['id' => 30, 'jahr' => 2026, 'datum' => '2026-10-05', 'bezeichnung' => 'Telefon', 'lieferant' => 'Telekom', 'betrag_brutto' => 49.9, 'wiederkehrend' => 'monatlich', 'kategorie_id' => 1]]), 2026, '2026-10-18')['zeilen'], 'offen', 'bezeichnung')['Telefon'] === 2);
+$check('vergangenes und künftiges Jahr', array_column(prognose_serien($b, 2025, '2026-10-18')['zeilen'], 'offen') === [0, 0, 0, 0] && array_column(prognose_serien($b, 2027, '2026-10-18')['zeilen'], 'offen', 'bezeichnung')['Telefon'] === 12);
+
 /* ---------- Zähler ---------- */
 $kosten = [1 => 120.0, 2 => 110.0, 3 => 100.0, 4 => 80.0, 5 => 70.0, 6 => 60.0, 7 => 60.0, 8 => 65.0, 9 => 75.0, 10 => null, 11 => null, 12 => null];
 $zr = prognose_zaehler_rechnen($kosten, 2026, '2026-10-18');
@@ -85,13 +103,14 @@ $check('speichern: eine Abfrage mit geprüften Werten', count($GLOBALS['execs'])
 /* ---------- Ansicht ---------- */
 $zahlen = ['verfuegbar' => 20000.0, 'ausgaben' => 9000.0, 'geplant' => 1500.0];
 $html = render_partial('budget_prognose', ['jahr' => 2026, 'jahre' => [2026, 2025], 'darf' => true, 'prognose' => [
-    'jahr' => 2026, 'heute' => '2026-10-18', 'kategorien' => $k, 'zahlen' => $zahlen,
+    'jahr' => 2026, 'heute' => '2026-10-18', 'kategorien' => $k, 'zahlen' => $zahlen, 'serien' => $se,
     'zaehler' => ['zeilen' => [$zr + ['id' => 5, 'name' => 'Hauptanschluss', 'art' => 'strom', 'erloes' => false, 'ohne_tarif' => 1]], 'summe' => 986.67, 'erloes' => 0.0],
     'hochrechnung' => 9800.0, 'frei' => 10200.0, 'frei_mit_planung' => 8700.0]]);
 $check('Ansicht: Kennzahlen, Kategorien mit Auswahl, Empfehlung, Zähler, Hinweis auf fehlenden Tarif', str_contains($html, 'Hochrechnung Jahresende') && str_contains($html, 'name="art[1]"') && str_contains($html, 'value="fest" selected') && str_contains($html, 'name="betrag[2]"')
-    && str_contains($html, '>regelmäßig<') && str_contains($html, '>schwankend<') && str_contains($html, 'Hauptanschluss') && str_contains($html, '1 Monat(e) ohne Tarif') && str_contains($html, 'nach geplanten Vorhaben') && str_contains($html, 'Speichern'));
+    && str_contains($html, '>regelmäßig<') && str_contains($html, '>schwankend<') && str_contains($html, 'Hauptanschluss') && str_contains($html, '1 Monat(e) ohne Tarif') && str_contains($html, 'nach geplanten Vorhaben') && str_contains($html, 'Speichern')
+    && str_contains($html, 'Wiederkehrende Rechnungen') && str_contains($html, '↻ monatlich') && str_contains($html, 'KFZ-Versicherung') && str_contains($html, 'wiederkehrend · '));
 $html = render_partial('budget_prognose', ['jahr' => 2025, 'jahre' => [2026, 2025], 'darf' => false, 'prognose' => [
-    'jahr' => 2025, 'heute' => '2026-10-18', 'kategorien' => $k3, 'zahlen' => $zahlen, 'zaehler' => ['zeilen' => [], 'summe' => 0.0, 'erloes' => 0.0], 'hochrechnung' => 4275.0, 'frei' => 15725.0, 'frei_mit_planung' => 14225.0]]);
-$check('Ansicht ohne Recht und vergangenes Jahr: keine Felder, Hinweis', !str_contains($html, '<select') && !str_contains($html, 'Speichern') && str_contains($html, 'ist um') && str_contains($html, 'Kein Zähler mit Tarif'));
+    'jahr' => 2025, 'heute' => '2026-10-18', 'kategorien' => $k3, 'zahlen' => $zahlen, 'serien' => ['zeilen' => [], 'summe' => ['bisher' => 0.0, 'rest' => 0.0, 'hochrechnung' => 0.0]], 'zaehler' => ['zeilen' => [], 'summe' => 0.0, 'erloes' => 0.0], 'hochrechnung' => 4275.0, 'frei' => 15725.0, 'frei_mit_planung' => 14225.0]]);
+$check('Ansicht ohne Recht und vergangenes Jahr: keine Felder, Hinweis', !str_contains($html, '<select') && !str_contains($html, 'Speichern') && str_contains($html, 'ist um') && str_contains($html, 'Kein Zähler mit Tarif') && str_contains($html, 'Noch keine Ausgabe als wiederkehrend markiert'));
 
 echo "$ok bestanden, $fail fehlgeschlagen\n";

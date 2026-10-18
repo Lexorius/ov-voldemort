@@ -329,7 +329,16 @@ trennt die Stufen. Der CSV-Export führt alle drei Spalten mit.
 *Budget → Hochrechnung* zeigt, was das Jahr voraussichtlich kostet, damit
 niemand im November von der Telefonrechnung überrascht wird.
 
-* **Je Kategorie** nimmt die Anwendung den Durchschnitt der letzten zwölf
+* **Wiederkehrende Rechnungen** markiert man an der Ausgabe selbst: beim
+  Anlegen oder Bearbeiten unter „Beleg" das Feld *Wiederkehrende Rechnung*
+  auf *monatlich*, *vierteljährlich* oder *jährlich* stellen (Vorgabe:
+  einmalig). Die Hochrechnung bündelt gleich benannte Buchungen zu einer
+  Serie und rechnet mit dem zuletzt gebuchten Betrag weiter – monatlich für
+  die Monate nach der letzten Buchung, vierteljährlich je Quartal, jährlich
+  einmal, falls dieses Jahr noch nicht gebucht. Die Liste der Ausgaben zeigt
+  ein „↻". Diese Buchungen fallen aus dem Kategorie-Durchschnitt heraus,
+  damit nichts doppelt zählt.
+* **Je Kategorie** (für alle übrigen Ausgaben) nimmt die Anwendung den Durchschnitt der letzten zwölf
   vollen Monate – auch über den Jahreswechsel hinweg – und rechnet ihn auf
   die verbleibenden Monate hoch: *Hochrechnung = bisher gebucht + Durchschnitt
   × Restmonate*. Gezählt wird ab dem ersten Monat mit Buchung; Monate ohne

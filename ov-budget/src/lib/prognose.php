@@ -68,13 +68,103 @@ function prognose_monatswerte(string $von, string $bis): array
     $out = [];
     foreach (db_all(
         "SELECT COALESCE(kategorie_id, 0) AS k, DATE_FORMAT(datum, '%Y-%m') AS ym, SUM(betrag_brutto) AS betrag
-         FROM expenses WHERE art = 'ausgabe' AND " . BUCHUNG_IST . " AND datum BETWEEN ? AND ?
+         FROM expenses WHERE art = 'ausgabe' AND " . BUCHUNG_IST . " AND COALESCE(wiederkehrend, '') = '' AND datum BETWEEN ? AND ?
          GROUP BY k, ym",
         [$von, $bis]
     ) as $r) {
         $out[(int)$r['k']][(string)$r['ym']] = (float)$r['betrag'];
     }
     return $out;
+}
+
+/** Einmalige (nicht als wiederkehrend markierte) Ausgaben dieses Jahres je Kategorie: [kategorie_id => Betrag] */
+function prognose_bisher_einmalig(int $jahr): array
+{
+    $out = [];
+    foreach (db_all(
+        "SELECT COALESCE(kategorie_id, 0) AS k, SUM(betrag_brutto) AS betrag FROM expenses
+         WHERE jahr = ? AND art = 'ausgabe' AND " . BUCHUNG_IST . " AND COALESCE(wiederkehrend, '') = '' GROUP BY k",
+        [$jahr]
+    ) as $r) {
+        $out[(int)$r['k']] = (float)$r['betrag'];
+    }
+    return $out;
+}
+
+/** Als wiederkehrend markierte Ausgaben des Jahres und des Vorjahres, älteste zuerst */
+function prognose_wiederkehrende_buchungen(int $jahr): array
+{
+    return db_all(
+        "SELECT e.id, e.jahr, e.datum, e.bezeichnung, e.lieferant, e.betrag_brutto, e.wiederkehrend, COALESCE(e.kategorie_id, 0) AS kategorie_id, k.label AS kategorie_label, k.color AS kategorie_color
+         FROM expenses e LEFT JOIN list_items k ON k.id = e.kategorie_id
+         WHERE e.art = 'ausgabe' AND " . BUCHUNG_IST . " AND COALESCE(e.wiederkehrend, '') <> '' AND e.jahr BETWEEN ? AND ?
+         ORDER BY e.datum, e.id",
+        [$jahr - 1, $jahr]
+    );
+}
+
+/**
+ * Wiederkehrende Rechnungen zu Serien bündeln (gleiche Bezeichnung, gleicher
+ * Rhythmus, gleiche Kategorie) und je Serie den Rest bis Jahresende rechnen:
+ * zuletzt gebuchter Betrag × noch ausstehende Termine. Monatlich: Monate nach
+ * der letzten Buchung dieses Jahres (mindestens ab dem laufenden Monat),
+ * vierteljährlich entsprechend je Quartal, jährlich: einmal, falls dieses
+ * Jahr noch nicht gebucht. Reine Funktion.
+ */
+function prognose_serien(array $buchungen, int $jahr, string $heute): array
+{
+    $monate = prognose_monate($jahr, $heute);
+    $hj = (int)substr($heute, 0, 4);
+    $hm = (int)substr($heute, 5, 2);
+    $serien = [];
+    foreach ($buchungen as $b) {
+        $w = wiederkehrend((string)$b['wiederkehrend']);
+        if ($w === '') {
+            continue;
+        }
+        $key = $w . '|' . (int)$b['kategorie_id'] . '|' . mb_strtolower(trim((string)$b['bezeichnung']));
+        $s = $serien[$key] ?? ['key' => $key, 'bezeichnung' => (string)$b['bezeichnung'], 'lieferant' => (string)$b['lieferant'], 'rhythmus' => $w,
+            'kategorie_id' => (int)$b['kategorie_id'], 'kategorie_label' => (string)($b['kategorie_label'] ?? ''), 'kategorie_color' => (string)($b['kategorie_color'] ?? ''),
+            'betrag' => 0.0, 'letzte' => '', 'bisher' => 0.0, 'anzahl_jahr' => 0, 'letzter_monat' => 0];
+        $s['betrag'] = (float)$b['betrag_brutto'];
+        $s['letzte'] = (string)$b['datum'];
+        $s['lieferant'] = (string)$b['lieferant'] ?: $s['lieferant'];
+        if ((int)$b['jahr'] === $jahr) {
+            $s['bisher'] += (float)$b['betrag_brutto'];
+            $s['anzahl_jahr']++;
+            $s['letzter_monat'] = max($s['letzter_monat'], (int)substr((string)$b['datum'], 5, 2));
+        }
+        $serien[$key] = $s;
+    }
+    $zeilen = [];
+    $summe = ['bisher' => 0.0, 'rest' => 0.0, 'hochrechnung' => 0.0];
+    foreach ($serien as $s) {
+        $jeJahr = WIEDERKEHREND[$s['rhythmus']]['je_jahr'];
+        if ($jahr < $hj) {
+            $offen = 0;
+        } elseif ($jahr > $hj) {
+            $offen = $jeJahr;
+        } else {
+            // Termine je Jahr, davon die schon vorbei sind: bis zur letzten Buchung oder bis zum Vormonat
+            $takt = intdiv(12, $jeJahr);
+            $vorbei = max((int)ceil($s['letzter_monat'] / $takt), (int)floor(($hm - 1) / $takt));
+            $offen = max(0, $jeJahr - $vorbei);
+            if ($jeJahr === 1) {
+                $offen = $s['anzahl_jahr'] > 0 ? 0 : 1;
+            }
+        }
+        $rest = round($s['betrag'] * $offen, 2);
+        $s['offen'] = $offen;
+        $s['rest'] = $rest;
+        $s['hochrechnung'] = round($s['bisher'] + $rest, 2);
+        $s['rhythmus_label'] = WIEDERKEHREND[$s['rhythmus']]['label'];
+        $zeilen[] = $s;
+        $summe['bisher'] += $s['bisher'];
+        $summe['rest'] += $rest;
+        $summe['hochrechnung'] += $s['bisher'] + $rest;
+    }
+    usort($zeilen, static fn($a, $b) => [$b['hochrechnung'], $a['bezeichnung']] <=> [$a['hochrechnung'], $b['bezeichnung']]);
+    return ['zeilen' => $zeilen, 'summe' => array_map(static fn($v) => round($v, 2), $summe), 'monate' => $monate];
 }
 
 /* ==================================================================== */
@@ -263,17 +353,14 @@ function prognose_jahr(int $jahr, ?string $heute = null): array
     $fenster = prognose_fenster($heute);
     $von = $fenster[0] . '-01';
     $bis = date('Y-m-t', strtotime(end($fenster) . '-01'));
-    $bisher = [];
-    foreach (expense_by_category($jahr) as $r) {
-        $bisher[(int)($r['id'] ?? 0)] = (float)$r['betrag'];
-    }
     $kategorien = array_map(static fn($k) => ['id' => (int)$k['id'], 'label' => (string)$k['label'], 'color' => (string)($k['color'] ?? '')], list_items('kategorie'));
-    $kat = prognose_kategorien($kategorien, prognose_monatswerte($von, $bis), $bisher, prognose_einstellungen($jahr), $jahr, $heute);
+    $kat = prognose_kategorien($kategorien, prognose_monatswerte($von, $bis), prognose_bisher_einmalig($jahr), prognose_einstellungen($jahr), $jahr, $heute);
+    $serien = prognose_serien(prognose_wiederkehrende_buchungen($jahr), $jahr, $heute);
     $zaehler = prognose_zaehler($jahr, $heute);
     $zahlen = budget_jahr_zahlen($jahr);
-    $laufend = $kat['summe']['hochrechnung'] + $zaehler['summe'] - $zaehler['erloes'];
+    $laufend = $kat['summe']['hochrechnung'] + $serien['summe']['hochrechnung'] + $zaehler['summe'] - $zaehler['erloes'];
     return [
-        'jahr' => $jahr, 'heute' => $heute, 'kategorien' => $kat, 'zaehler' => $zaehler, 'zahlen' => $zahlen,
+        'jahr' => $jahr, 'heute' => $heute, 'kategorien' => $kat, 'serien' => $serien, 'zaehler' => $zaehler, 'zahlen' => $zahlen,
         'hochrechnung' => round($laufend, 2),
         'frei' => round($zahlen['verfuegbar'] - $laufend, 2),
         'frei_mit_planung' => round($zahlen['verfuegbar'] - $laufend - (float)$zahlen['geplant'], 2),

@@ -3,6 +3,7 @@
 $p = $prognose;
 $k = $p['kategorien'];
 $z = $p['zaehler'];
+$s = $p['serien'] ?? ['zeilen' => [], 'summe' => ['bisher' => 0.0, 'rest' => 0.0, 'hochrechnung' => 0.0]];
 $zahlen = $p['zahlen'];
 $monate = $k['monate'];
 $fenster = $k['fenster'];
@@ -13,9 +14,10 @@ $schwankungBadge = static fn(string $t): string => '<span class="badge badge--ou
 <div class="pagehead">
   <div>
     <h1>Hochrechnung <?= (int)$jahr ?></h1>
-    <p>Was das Jahr voraussichtlich kostet: wiederkehrende Ausgaben je Kategorie aus dem Durchschnitt der letzten
-      zwölf vollen Monate (<?= e($fensterText) ?>), dazu Energie und Wasser aus den Zählern. Regelmäßige Posten wie die
-      Telefonrechnung lassen sich als fester Betrag je Monat eintragen, schwankende wie Tanken laufen über den Durchschnitt.</p>
+    <p>Was das Jahr voraussichtlich kostet: Rechnungen, die an der Ausgabe als <strong>wiederkehrend</strong> markiert sind
+      (Telefon, Versicherung), laufen mit dem zuletzt gebuchten Betrag weiter; alle übrigen Ausgaben je Kategorie aus dem
+      Durchschnitt der letzten zwölf vollen Monate (<?= e($fensterText) ?>) – schwankende wie Tanken also gemittelt; dazu Energie
+      und Wasser aus den Zählern.</p>
   </div>
   <div class="btnrow">
     <a class="btn btn--sec" href="<?= e(url('budget', ['jahr' => $jahr])) ?>">Zur Übersicht</a>
@@ -33,7 +35,7 @@ $schwankungBadge = static fn(string $t): string => '<span class="badge badge--ou
 <div class="stats">
   <div class="stat"><div class="stat__label">Verfügbar <?= (int)$jahr ?></div><div class="stat__value"><?= e(money_rounded($zahlen['verfuegbar'], false)) ?></div><div class="stat__hint">Jahresbudget plus Einnahmen</div></div>
   <div class="stat"><div class="stat__label">Ausgaben bisher</div><div class="stat__value"><?= e(money_rounded($zahlen['ausgaben'], false)) ?></div><div class="stat__hint"><?= e(number_format($monate['vergangen'], 1, ',', '.')) ?> von 12 Monaten um</div></div>
-  <div class="stat"><div class="stat__label">Hochrechnung Jahresende</div><div class="stat__value"><?= e(money_rounded($p['hochrechnung'], false)) ?></div><div class="stat__hint">laufende Ausgaben<?= $z['summe'] > 0 ? ' inkl. ' . e(money_rounded($z['summe'] - $z['erloes'], false)) . ' Energie und Wasser' : '' ?></div></div>
+  <div class="stat"><div class="stat__label">Hochrechnung Jahresende</div><div class="stat__value"><?= e(money_rounded($p['hochrechnung'], false)) ?></div><div class="stat__hint"><?= $s['summe']['hochrechnung'] > 0 ? e(money_rounded($s['summe']['hochrechnung'], false)) . ' wiederkehrend · ' : '' ?><?= e(money_rounded($k['summe']['hochrechnung'], false)) ?> übrige<?= $z['summe'] > 0 ? ' · ' . e(money_rounded($z['summe'] - $z['erloes'], false)) . ' Energie und Wasser' : '' ?></div></div>
   <div class="stat"><div class="stat__label"><?= $p['frei'] >= 0 ? 'Voraussichtlich frei' : 'Voraussichtlich überzogen um' ?></div>
     <div class="stat__value" style="<?= $p['frei'] < 0 ? 'color:var(--bad)' : '' ?>"><?= e(money_rounded(abs($p['frei']), false)) ?></div>
     <div class="stat__hint"><?= $zahlen['geplant'] > 0 ? 'nach geplanten Vorhaben (' . e(money_rounded($zahlen['geplant'], false)) . ') noch <strong' . ($p['frei_mit_planung'] < 0 ? ' style="color:var(--bad)"' : '') . '>' . e(money_rounded($p['frei_mit_planung'], false)) . '</strong>' : 'am Jahresende' ?></div></div>
@@ -43,12 +45,39 @@ $schwankungBadge = static fn(string $t): string => '<span class="badge badge--ou
   <div class="alert alert--info">Das Jahr <?= (int)$jahr ?> ist um – die Hochrechnung entspricht den gebuchten Ausgaben. Die Durchschnitte zeigen, womit im nächsten Jahr zu rechnen ist.</div>
 <?php endif; ?>
 
+<section class="card">
+  <div class="card__head"><h2>Wiederkehrende Rechnungen</h2><span class="muted small"><?= count($s['zeilen']) ?> Serien · an der Ausgabe als monatlich, vierteljährlich oder jährlich markiert</span></div>
+  <?php if (!$s['zeilen']): ?>
+    <div class="empty">Noch keine Ausgabe als wiederkehrend markiert. Beim Anlegen oder Bearbeiten einer Ausgabe unter „Beleg" den Rhythmus wählen – etwa die Telefonrechnung monatlich, die Versicherung jährlich.</div>
+  <?php else: ?>
+    <div class="tablewrap">
+      <table class="data">
+        <thead><tr><th>Rechnung</th><th>Rhythmus</th><th class="num">Zuletzt</th><th class="num">Bisher <?= (int)$jahr ?></th><th class="num">Noch offen</th><th class="num">Rest</th><th class="num">Jahresende</th></tr></thead>
+        <tbody>
+        <?php foreach ($s['zeilen'] as $r): ?>
+          <tr>
+            <td><strong><?= e($r['bezeichnung']) ?></strong><div class="small muted"><?= e(implode(' · ', array_filter([$r['lieferant'], $r['kategorie_label']]))) ?></div></td>
+            <td><span class="badge badge--outline">↻ <?= e($r['rhythmus_label']) ?></span></td>
+            <td class="num"><?= e(money($r['betrag'])) ?><div class="small muted"><?= e(de_date($r['letzte'])) ?></div></td>
+            <td class="num"><?= $r['bisher'] > 0 ? e(money($r['bisher'])) . '<div class="small muted">' . (int)$r['anzahl_jahr'] . '×</div>' : '<span class="muted">–</span>' ?></td>
+            <td class="num"><?= (int)$r['offen'] ?>×</td>
+            <td class="num"><?= $r['rest'] > 0 ? e(money($r['rest'])) : '<span class="muted">–</span>' ?></td>
+            <td class="num"><strong><?= e(money($r['hochrechnung'])) ?></strong></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+        <tfoot><tr><th>Summe</th><th></th><th></th><th class="num"><?= e(money($s['summe']['bisher'])) ?></th><th></th><th class="num"><?= e(money($s['summe']['rest'])) ?></th><th class="num"><?= e(money($s['summe']['hochrechnung'])) ?></th></tr></tfoot>
+      </table>
+    </div>
+  <?php endif; ?>
+</section>
+
 <form method="post" action="<?= e(url('budget_prognose', ['jahr' => $jahr])) ?>">
 <?= csrf_field() ?>
 <section class="card">
-  <div class="card__head"><h2>Ausgaben je Kategorie</h2><span class="muted small"><?= count($k['zeilen']) ?> Kategorien · gebucht = bezahlt oder offen</span></div>
+  <div class="card__head"><h2>Übrige Ausgaben je Kategorie</h2><span class="muted small"><?= count($k['zeilen']) ?> Kategorien · ohne die markierten wiederkehrenden Rechnungen · gebucht = bezahlt oder offen</span></div>
   <?php if (!$k['zeilen']): ?>
-    <div class="empty">Noch keine Ausgaben in den letzten zwölf Monaten – ohne Buchungen gibt es nichts hochzurechnen.</div>
+    <div class="empty">Keine übrigen Ausgaben in den letzten zwölf Monaten.</div>
   <?php else: ?>
     <div class="tablewrap">
       <table class="data">

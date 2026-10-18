@@ -153,6 +153,17 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
         <label for="beleg_nr"><?= $istEinnahme ? 'Aktenzeichen / Vorgangsnummer' : 'Belegnummer' ?></label>
         <input type="text" id="beleg_nr" name="beleg_nr" value="<?= e((string)($expense['beleg_nr'] ?? '')) ?>">
       </div>
+      <?php if (!$istEinnahme): ?>
+      <div class="field">
+        <label for="wiederkehrend">Wiederkehrende Rechnung</label>
+        <select id="wiederkehrend" name="wiederkehrend">
+          <?php foreach (WIEDERKEHREND as $w => $def): ?>
+            <option value="<?= e($w) ?>"<?= wiederkehrend((string)($expense['wiederkehrend'] ?? '')) === $w ? ' selected' : '' ?>><?= e($def['label']) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <small class="muted">Telefon, Versicherung, Wartungsvertrag … – die Hochrechnung rechnet mit dem zuletzt gebuchten Betrag weiter.</small>
+      </div>
+      <?php endif; ?>
       <div class="field">
         <label for="referenz"><?= $istEinnahme ? 'Einsatz- / Auftragsnummer' : 'Referenz' ?></label>
         <input type="text" id="referenz" name="referenz" value="<?= e((string)($expense['referenz'] ?? '')) ?>"

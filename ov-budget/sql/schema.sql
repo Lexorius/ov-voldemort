@@ -513,6 +513,8 @@ CREATE TABLE IF NOT EXISTS expenses (
   lieferant     VARCHAR(150)  NOT NULL DEFAULT '',
   beleg_nr      VARCHAR(100)  NOT NULL DEFAULT '',
   referenz      VARCHAR(100)  NOT NULL DEFAULT '',
+  -- wiederkehrende Rechnung (Telefon, Versicherung): fuer die Hochrechnung; '' = einmalig
+  wiederkehrend ENUM('','monatlich','vierteljaehrlich','jaehrlich') NOT NULL DEFAULT '',
   bezahlt_am    DATE          NULL,
   -- Auslage: welcher Helfer vorgestreckt hat (Zugang oder freier Name) und wann der OV erstattet hat
   ausgelegt_von INT UNSIGNED  NULL,

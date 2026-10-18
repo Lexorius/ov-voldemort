@@ -2027,6 +2027,12 @@ SQL);
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
     }
     $merken('079_prognose');
+
+    /* ---------- 080: wiederkehrende Rechnungen an der Ausgabe ---------- */
+    if (ovb_table_exists($pdo, 'expenses') && !ovb_column_exists($pdo, 'expenses', 'wiederkehrend')) {
+        $pdo->exec("ALTER TABLE expenses ADD COLUMN wiederkehrend ENUM('','monatlich','vierteljaehrlich','jaehrlich') NOT NULL DEFAULT '' AFTER referenz");
+    }
+    $merken('080_wiederkehrend');
 }
 
 /**

@@ -176,7 +176,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
            href="<?= can('manage_budget') ? e(url('expense_edit', ['id' => $r['id']])) : '#' ?>">
           <div class="item__top">
             <div style="min-width:0">
-              <div class="item__title"><?= e($r['bezeichnung']) ?><?= $istEinnahme ? ' ' . einnahme_alter_badge(einnahme_alter($r)) : '' ?></div>
+              <div class="item__title"><?= e($r['bezeichnung']) ?><?= $istEinnahme ? ' ' . einnahme_alter_badge(einnahme_alter($r)) : '' ?><?= ($wb = wiederkehrend_badge($r)) !== '' ? ' ' . $wb : '' ?></div>
               <div class="item__sub"><?= e(de_date($r['datum'])) ?>
                 <?php if ($r['lieferant']): ?> · <?= e($r['lieferant']) ?><?php endif; ?>
                 <?php if ($r['referenz']): ?> · <?= e($r['referenz']) ?><?php endif; ?></div>
@@ -209,7 +209,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
           <tr>
             <td class="nowrap small"><?= e(de_date($r['datum'])) ?></td>
             <td>
-              <strong><?= e($r['bezeichnung']) ?></strong> <?= buchung_status_badge((string)($r['status'] ?? 'bezahlt')) ?><?= $istEinnahme ? ' ' . einnahme_alter_badge(einnahme_alter($r)) : '' ?>
+              <strong><?= e($r['bezeichnung']) ?></strong> <?= buchung_status_badge((string)($r['status'] ?? 'bezahlt')) ?><?= $istEinnahme ? ' ' . einnahme_alter_badge(einnahme_alter($r)) : '' ?><?= ($wb = wiederkehrend_badge($r)) !== '' ? ' ' . $wb : '' ?>
               <?php if ($r['lieferant']): ?><div class="small muted"><?= e($r['lieferant']) ?></div><?php endif; ?>
               <?php if (($ab = auslage_badge($r)) !== ''): ?><div class="small" style="margin-top:.2rem"><?= $ab ?></div><?php endif; ?>
               <?php if ($istEinnahme && ($weg = einnahme_weg($r)) !== ''): ?><div class="small muted"><?= e($weg) ?></div><?php endif; ?>

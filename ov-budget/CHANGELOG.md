@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 2.1.50.0
+
+- **Wiederkehrende Rechnung an der Ausgabe:** neues Feld „Wiederkehrende
+  Rechnung" (monatlich, vierteljährlich, jährlich; Vorgabe einmalig). Die
+  Hochrechnung führt solche Buchungen als Serien mit dem zuletzt gebuchten
+  Betrag weiter und zeigt, was noch offen ist; der Kategorie-Durchschnitt
+  gilt nur noch für die übrigen, einmaligen Ausgaben. Die Ausgabenliste
+  kennzeichnet wiederkehrende Rechnungen mit „↻".
+
 ## 2.1.49.0
 
 - **Hochrechnung aufs Jahresende:** neuer Reiter im Budget. Je Kategorie der
