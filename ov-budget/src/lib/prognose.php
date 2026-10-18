@@ -105,12 +105,16 @@ function prognose_wiederkehrende_buchungen(int $jahr): array
 }
 
 /**
- * Wiederkehrende Rechnungen zu Serien bündeln (gleiche Bezeichnung, gleicher
- * Rhythmus, gleiche Kategorie) und je Serie den Rest bis Jahresende rechnen:
- * zuletzt gebuchter Betrag × noch ausstehende Termine. Monatlich: Monate nach
- * der letzten Buchung dieses Jahres (mindestens ab dem laufenden Monat),
- * vierteljährlich entsprechend je Quartal, jährlich: einmal, falls dieses
- * Jahr noch nicht gebucht. Reine Funktion.
+ * Wiederkehrende Rechnungen zu Serien bündeln – gleicher Rhythmus, gleiche
+ * Kategorie und gleicher Lieferant (ohne Lieferant: gleiche Bezeichnung),
+ * damit „Nebenkostenabrechnung 2025" und „Nebenkosten 2026" eine Serie sind –
+ * und je Serie den Rest bis Jahresende rechnen: zuletzt gebuchter Betrag ×
+ * noch ausstehende Termine. Monatlich: Monate nach der letzten Buchung dieses
+ * Jahres (mindestens ab dem laufenden Monat), vierteljährlich je Quartal,
+ * jährlich: einmal, falls dieses Jahr noch nicht gebucht. Geplante Buchungen
+ * der Serie zählen als schon erfasste Termine. Eine Serie ohne eine einzige
+ * bezahlte oder offene Buchung schätzt nichts – ihre geplanten Beträge stehen
+ * in der Planung. Reine Funktion.
  */
 function prognose_serien(array $buchungen, int $jahr, string $heute): array
 {
@@ -123,7 +127,8 @@ function prognose_serien(array $buchungen, int $jahr, string $heute): array
         if ($w === '') {
             continue;
         }
-        $key = $w . '|' . (int)$b['kategorie_id'] . '|' . mb_strtolower(trim((string)$b['bezeichnung']));
+        $lieferant = mb_strtolower(trim((string)($b['lieferant'] ?? '')));
+        $key = $w . '|' . (int)$b['kategorie_id'] . '|' . ($lieferant !== '' ? 'l:' . $lieferant : 'b:' . mb_strtolower(trim((string)$b['bezeichnung'])));
         $s = $serien[$key] ?? ['key' => $key, 'bezeichnung' => (string)$b['bezeichnung'], 'lieferant' => (string)$b['lieferant'], 'rhythmus' => $w,
             'kategorie_id' => (int)$b['kategorie_id'], 'kategorie_label' => (string)($b['kategorie_label'] ?? ''), 'kategorie_color' => (string)($b['kategorie_color'] ?? ''),
             'betrag' => 0.0, 'letzte' => '', 'bisher' => 0.0, 'anzahl_jahr' => 0, 'letzter_monat' => 0, 'geplant_anzahl' => 0, 'geplant_summe' => 0.0];
@@ -138,6 +143,7 @@ function prognose_serien(array $buchungen, int $jahr, string $heute): array
         }
         $s['betrag'] = (float)$b['betrag_brutto'];
         $s['letzte'] = (string)$b['datum'];
+        $s['bezeichnung'] = (string)$b['bezeichnung'];
         $s['lieferant'] = (string)$b['lieferant'] ?: $s['lieferant'];
         if ((int)$b['jahr'] === $jahr) {
             $s['bisher'] += (float)$b['betrag_brutto'];
@@ -149,6 +155,9 @@ function prognose_serien(array $buchungen, int $jahr, string $heute): array
     $zeilen = [];
     $summe = ['bisher' => 0.0, 'rest' => 0.0, 'hochrechnung' => 0.0];
     foreach ($serien as $s) {
+        if ($s['letzte'] === '') {
+            continue;   // nur geplant, nie gebucht: nichts zu schätzen, die Planung zählt
+        }
         $jeJahr = WIEDERKEHREND[$s['rhythmus']]['je_jahr'];
         if ($jahr < $hj) {
             $offen = 0;

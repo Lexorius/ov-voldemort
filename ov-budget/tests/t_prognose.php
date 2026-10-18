@@ -95,6 +95,14 @@ $mitPlan = array_merge($b, [['id' => 40, 'jahr' => 2026, 'datum' => '2026-11-05'
     ['id' => 41, 'jahr' => 2026, 'datum' => '2026-12-05', 'bezeichnung' => 'Telefon', 'lieferant' => 'Telekom', 'betrag_brutto' => 49.9, 'wiederkehrend' => 'monatlich', 'kategorie_id' => 1, 'status' => 'geplant']]);
 $tp = array_column(prognose_serien($mitPlan, 2026, '2026-10-18')['zeilen'], null, 'bezeichnung')['Telefon'];
 $check('geplante Buchungen der Serie: zählen bei der Planung, nicht noch einmal als Schätzung', $tp['geplant_anzahl'] === 2 && abs($tp['geplant_summe'] - 99.8) < 0.01 && $tp['offen'] === 1 && abs($tp['rest'] - 49.9) < 0.01 && $tp['bisher'] === 8 * 45 + 49.9 && $tp['letzte'] === '2026-09-05');
+$neben = [
+    ['id' => 50, 'jahr' => 2026, 'datum' => '2026-03-10', 'bezeichnung' => 'Nebenkostenabrechnung 2025', 'lieferant' => 'BIMA', 'betrag_brutto' => 7100.0, 'wiederkehrend' => 'jaehrlich', 'kategorie_id' => 5, 'status' => 'bezahlt'],
+    ['id' => 51, 'jahr' => 2027, 'datum' => '2027-03-01', 'bezeichnung' => 'Nebenkosten 2026', 'lieferant' => 'BIMA', 'betrag_brutto' => 7500.0, 'wiederkehrend' => 'jaehrlich', 'kategorie_id' => 5, 'status' => 'geplant'],
+    ['id' => 52, 'jahr' => 2027, 'datum' => '2027-01-01', 'bezeichnung' => 'Spritt', 'lieferant' => '', 'betrag_brutto' => 2000.0, 'wiederkehrend' => 'monatlich', 'kategorie_id' => 6, 'status' => 'geplant'],
+];
+$sn = array_column(prognose_serien($neben, 2027, '2027-02-10')['zeilen'], null, 'lieferant');
+$check('gleicher Lieferant trotz anderer Bezeichnung = eine Serie; geplante 2027-Buchung deckt den Termin, nichts doppelt', count($sn) === 1 && isset($sn['BIMA']) && $sn['BIMA']['betrag'] === 7100.0 && $sn['BIMA']['geplant_anzahl'] === 1 && $sn['BIMA']['offen'] === 0 && $sn['BIMA']['rest'] === 0.0 && $sn['BIMA']['bezeichnung'] === 'Nebenkostenabrechnung 2025');
+$check('nur geplant, nie gebucht (Sprit-Pauschale): keine Serie, keine Schätzung', !isset(array_column(prognose_serien($neben, 2027, '2027-02-10')['zeilen'], null, 'bezeichnung')['Spritt']));
 $check('vergangenes und künftiges Jahr', array_column(prognose_serien($b, 2025, '2026-10-18')['zeilen'], 'offen') === [0, 0, 0, 0] && array_column(prognose_serien($b, 2027, '2026-10-18')['zeilen'], 'offen', 'bezeichnung')['Telefon'] === 12);
 
 $check('Hochrechnung liest die Ausgabenkategorien, nicht eine fremde Liste', str_contains((string)file_get_contents($app . '/src/lib/prognose.php'), "list_items(buchung_list_key('ausgabe'))") && !str_contains((string)file_get_contents($app . '/src/lib/prognose.php'), "list_items('kategorie')"));

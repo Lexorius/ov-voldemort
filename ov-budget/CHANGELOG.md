@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 2.1.50.4
+
+- **Wiederkehrende Serien sauberer:** Zusammengefasst wird jetzt über
+  Lieferant und Kategorie, so dass jährliche Rechnungen mit wechselndem
+  Namen („Nebenkostenabrechnung 2025", „Nebenkosten 2026") eine Serie sind
+  statt zwei. Serien, die nur aus geplanten Buchungen bestehen und nie
+  bezahlt wurden, schätzen nichts mehr – ihr Betrag zählt bei der Planung,
+  nicht doppelt.
+
 ## 2.1.50.3
 
 - **Hochrechnung zieht Geplantes ab:** Geplante Buchungen und Veranstaltungen

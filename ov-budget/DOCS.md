@@ -335,7 +335,11 @@ niemand im November von der Telefonrechnung überrascht wird.
   einmalig). Die Hochrechnung bündelt gleich benannte Buchungen zu einer
   Serie und rechnet mit dem zuletzt gebuchten Betrag weiter – monatlich für
   die Monate nach der letzten Buchung, vierteljährlich je Quartal, jährlich
-  einmal, falls dieses Jahr noch nicht gebucht. Die Liste der Ausgaben zeigt
+  einmal, falls dieses Jahr noch nicht gebucht. Zusammengefasst wird über
+  Lieferant und Kategorie, so dass „Nebenkostenabrechnung 2025" und
+  „Nebenkosten 2026" eine Serie sind. Eine Serie, die nur aus geplanten
+  Buchungen besteht und nie bezahlt wurde (etwa eine Sprit-Pauschale fürs
+  Jahr), schätzt nichts – ihr Betrag zählt bei der Planung. Die Liste der Ausgaben zeigt
   ein „↻". Diese Buchungen fallen aus dem Kategorie-Durchschnitt heraus,
   damit nichts doppelt zählt.
 * **Je Kategorie** (für alle übrigen Ausgaben) nimmt die Anwendung den Durchschnitt der letzten zwölf
