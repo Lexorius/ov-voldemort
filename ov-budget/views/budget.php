@@ -196,8 +196,8 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
 
 <?php $prognose ??= null; if ($prognose && $prognose['kategorien']['monate']['rest'] > 0 && ($prognose['hochrechnung'] > 0)): ?>
   <div class="alert <?= $prognose['frei_mit_planung'] < 0 ? 'alert--warn' : 'alert--info' ?>">
-    <strong>Hochrechnung Jahresende:</strong> laufende Ausgaben voraussichtlich <?= e(money_rounded($prognose['hochrechnung'], false)) ?>,
-    damit <?= $prognose['frei'] >= 0 ? 'noch ' . e(money_rounded($prognose['frei'], false)) . ' frei' : e(money_rounded(abs($prognose['frei']), false)) . ' überzogen' ?><?= $zahlen['geplant'] > 0 ? ' – nach geplanten Vorhaben ' . ($prognose['frei_mit_planung'] >= 0 ? 'noch ' . e(money_rounded($prognose['frei_mit_planung'], false)) : e(money_rounded(abs($prognose['frei_mit_planung']), false)) . ' überzogen') : '' ?>.
+    <strong>Hochrechnung Jahresende:</strong> voraussichtlich <?= e(money_rounded($prognose['hochrechnung'], false)) ?> Ausgaben<?= ($prognose['geplant'] ?? 0) > 0 ? ' (laufend ' . e(money_rounded($prognose['laufend'], false)) . ', geplante Buchungen und Veranstaltungen ' . e(money_rounded($prognose['geplant'], false)) . ')' : '' ?>,
+    damit <?= $prognose['frei'] >= 0 ? 'noch ' . e(money_rounded($prognose['frei'], false)) . ' frei' : e(money_rounded(abs($prognose['frei']), false)) . ' überzogen' ?>.
     <a href="<?= e(url('budget_prognose', ['jahr' => $jahr])) ?>">Zur Hochrechnung</a>
   </div>
 <?php endif; ?>

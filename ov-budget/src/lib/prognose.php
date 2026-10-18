@@ -96,9 +96,9 @@ function prognose_bisher_einmalig(int $jahr): array
 function prognose_wiederkehrende_buchungen(int $jahr): array
 {
     return db_all(
-        "SELECT e.id, e.jahr, e.datum, e.bezeichnung, e.lieferant, e.betrag_brutto, e.wiederkehrend, COALESCE(e.kategorie_id, 0) AS kategorie_id, k.label AS kategorie_label, k.color AS kategorie_color
+        "SELECT e.id, e.jahr, e.datum, e.bezeichnung, e.lieferant, e.betrag_brutto, e.wiederkehrend, e.status, COALESCE(e.kategorie_id, 0) AS kategorie_id, k.label AS kategorie_label, k.color AS kategorie_color
          FROM expenses e LEFT JOIN list_items k ON k.id = e.kategorie_id
-         WHERE e.art = 'ausgabe' AND " . BUCHUNG_IST . " AND COALESCE(e.wiederkehrend, '') <> '' AND e.jahr BETWEEN ? AND ?
+         WHERE e.art = 'ausgabe' AND (" . BUCHUNG_IST . " OR e.status = 'geplant') AND COALESCE(e.wiederkehrend, '') <> '' AND e.jahr BETWEEN ? AND ?
          ORDER BY e.datum, e.id",
         [$jahr - 1, $jahr]
     );
@@ -126,7 +126,16 @@ function prognose_serien(array $buchungen, int $jahr, string $heute): array
         $key = $w . '|' . (int)$b['kategorie_id'] . '|' . mb_strtolower(trim((string)$b['bezeichnung']));
         $s = $serien[$key] ?? ['key' => $key, 'bezeichnung' => (string)$b['bezeichnung'], 'lieferant' => (string)$b['lieferant'], 'rhythmus' => $w,
             'kategorie_id' => (int)$b['kategorie_id'], 'kategorie_label' => (string)($b['kategorie_label'] ?? ''), 'kategorie_color' => (string)($b['kategorie_color'] ?? ''),
-            'betrag' => 0.0, 'letzte' => '', 'bisher' => 0.0, 'anzahl_jahr' => 0, 'letzter_monat' => 0];
+            'betrag' => 0.0, 'letzte' => '', 'bisher' => 0.0, 'anzahl_jahr' => 0, 'letzter_monat' => 0, 'geplant_anzahl' => 0, 'geplant_summe' => 0.0];
+        if ((string)($b['status'] ?? 'bezahlt') === 'geplant') {
+            // Schon als geplante Buchung erfasst: zählt bei der Planung, nicht noch einmal als Schätzung
+            if ((int)$b['jahr'] === $jahr) {
+                $s['geplant_anzahl']++;
+                $s['geplant_summe'] += (float)$b['betrag_brutto'];
+            }
+            $serien[$key] = $s;
+            continue;
+        }
         $s['betrag'] = (float)$b['betrag_brutto'];
         $s['letzte'] = (string)$b['datum'];
         $s['lieferant'] = (string)$b['lieferant'] ?: $s['lieferant'];
@@ -154,6 +163,8 @@ function prognose_serien(array $buchungen, int $jahr, string $heute): array
                 $offen = $s['anzahl_jahr'] > 0 ? 0 : 1;
             }
         }
+        // Was schon als geplante Buchung im System steht, wird nicht noch einmal geschätzt
+        $offen = max(0, $offen - (int)$s['geplant_anzahl']);
         $rest = round($s['betrag'] * $offen, 2);
         $s['offen'] = $offen;
         $s['rest'] = $rest;
@@ -376,10 +387,13 @@ function prognose_jahr(int $jahr, ?string $heute = null): array
     $zaehler = prognose_zaehler($jahr, $heute);
     $zahlen = budget_jahr_zahlen($jahr);
     $laufend = $kat['summe']['hochrechnung'] + $serien['summe']['hochrechnung'] + $zaehler['summe'] - $zaehler['erloes'];
+    $geplant = (float)$zahlen['geplant'];   // geplante Buchungen und Veranstaltungen – gehören mit aufs Jahresende
     return [
         'jahr' => $jahr, 'heute' => $heute, 'kategorien' => $kat, 'serien' => $serien, 'zaehler' => $zaehler, 'zahlen' => $zahlen,
-        'hochrechnung' => round($laufend, 2),
-        'frei' => round($zahlen['verfuegbar'] - $laufend, 2),
-        'frei_mit_planung' => round($zahlen['verfuegbar'] - $laufend - (float)$zahlen['geplant'], 2),
+        'laufend' => round($laufend, 2),
+        'geplant' => round($geplant, 2),
+        'hochrechnung' => round($laufend + $geplant, 2),
+        'frei' => round($zahlen['verfuegbar'] - $laufend - $geplant, 2),
+        'frei_mit_planung' => round($zahlen['verfuegbar'] - $laufend - $geplant, 2),
     ];
 }

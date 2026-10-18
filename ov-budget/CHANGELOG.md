@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.50.3
+
+- **Hochrechnung zieht Geplantes ab:** Geplante Buchungen und Veranstaltungen
+  gehören jetzt in die Hochrechnung aufs Jahresende und werden vom
+  Verfügbaren abgezogen – vorher standen sie nur als Nebensatz daneben.
+  Geplante Buchungen einer wiederkehrenden Serie zählen dabei nur einmal:
+  als Planung, nicht noch einmal als Schätzung.
+
 ## 2.1.50.2
 
 - **Hochrechnung entschärft:** Der Monatsdurchschnitt je Kategorie ist jetzt

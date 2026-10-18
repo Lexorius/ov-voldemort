@@ -36,10 +36,10 @@ $schwankungBadge = static fn(string $t): string => '<span class="badge badge--ou
 <div class="stats">
   <div class="stat"><div class="stat__label">Verfügbar <?= (int)$jahr ?></div><div class="stat__value"><?= e(money_rounded($zahlen['verfuegbar'], false)) ?></div><div class="stat__hint">Jahresbudget plus Einnahmen</div></div>
   <div class="stat"><div class="stat__label">Ausgaben bisher</div><div class="stat__value"><?= e(money_rounded($zahlen['ausgaben'], false)) ?></div><div class="stat__hint"><?= e(number_format($monate['vergangen'], 1, ',', '.')) ?> von 12 Monaten um</div></div>
-  <div class="stat"><div class="stat__label">Hochrechnung Jahresende</div><div class="stat__value"><?= e(money_rounded($p['hochrechnung'], false)) ?></div><div class="stat__hint"><?= $s['summe']['hochrechnung'] > 0 ? e(money_rounded($s['summe']['hochrechnung'], false)) . ' wiederkehrend · ' : '' ?><?= e(money_rounded($k['summe']['hochrechnung'], false)) ?> übrige<?= $z['summe'] > 0 ? ' · ' . e(money_rounded($z['summe'] - $z['erloes'], false)) . ' Energie und Wasser' : '' ?></div></div>
+  <div class="stat"><div class="stat__label">Hochrechnung Jahresende</div><div class="stat__value"><?= e(money_rounded($p['hochrechnung'], false)) ?></div><div class="stat__hint"><?= $s['summe']['hochrechnung'] > 0 ? e(money_rounded($s['summe']['hochrechnung'], false)) . ' wiederkehrend · ' : '' ?><?= e(money_rounded($k['summe']['hochrechnung'], false)) ?> übrige<?= $z['summe'] > 0 ? ' · ' . e(money_rounded($z['summe'] - $z['erloes'], false)) . ' Energie und Wasser' : '' ?><?= ($p['geplant'] ?? 0) > 0 ? ' · ' . e(money_rounded($p['geplant'], false)) . ' geplant' : '' ?></div></div>
   <div class="stat"><div class="stat__label"><?= $p['frei'] >= 0 ? 'Voraussichtlich frei' : 'Voraussichtlich überzogen um' ?></div>
     <div class="stat__value" style="<?= $p['frei'] < 0 ? 'color:var(--bad)' : '' ?>"><?= e(money_rounded(abs($p['frei']), false)) ?></div>
-    <div class="stat__hint"><?= $zahlen['geplant'] > 0 ? 'nach geplanten Vorhaben (' . e(money_rounded($zahlen['geplant'], false)) . ') noch <strong' . ($p['frei_mit_planung'] < 0 ? ' style="color:var(--bad)"' : '') . '>' . e(money_rounded($p['frei_mit_planung'], false)) . '</strong>' : 'am Jahresende' ?></div></div>
+    <div class="stat__hint">am Jahresende<?= ($p['geplant'] ?? 0) > 0 ? ', geplante Buchungen und Veranstaltungen (' . e(money_rounded($p['geplant'], false)) . ') sind abgezogen' : '' ?></div></div>
 </div>
 
 <?php if ($monate['rest'] <= 0): ?>
@@ -61,7 +61,7 @@ $schwankungBadge = static fn(string $t): string => '<span class="badge badge--ou
             <td><span class="badge badge--outline">↻ <?= e($r['rhythmus_label']) ?></span></td>
             <td class="num"><?= e(money($r['betrag'])) ?><div class="small muted"><?= e(de_date($r['letzte'])) ?></div></td>
             <td class="num"><?= $r['bisher'] > 0 ? e(money($r['bisher'])) . '<div class="small muted">' . (int)$r['anzahl_jahr'] . '×</div>' : '<span class="muted">–</span>' ?></td>
-            <td class="num"><?= (int)$r['offen'] ?>×</td>
+            <td class="num"><?= (int)$r['offen'] ?>×<?= (int)($r['geplant_anzahl'] ?? 0) > 0 ? '<div class="small muted">' . (int)$r['geplant_anzahl'] . '× schon als geplante Buchung erfasst</div>' : '' ?></td>
             <td class="num"><?= $r['rest'] > 0 ? e(money($r['rest'])) : '<span class="muted">–</span>' ?></td>
             <td class="num"><strong><?= e(money($r['hochrechnung'])) ?></strong></td>
           </tr>

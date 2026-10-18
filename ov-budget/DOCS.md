@@ -357,9 +357,11 @@ niemand im November von der Telefonrechnung überrascht wird.
   Abschläge auch als Ausgaben gebucht, die Kategorie auf „nicht hochrechnen"
   stellen, sonst zählt es doppelt.
 * **Unterm Strich**: Verfügbar (Jahresbudget plus Einnahmen) minus
-  Hochrechnung = voraussichtlich frei; dazu, was nach den geplanten Vorhaben
-  (geplante Buchungen, Veranstaltungen) bleibt. Die Budgetübersicht zeigt
-  diese Zeile ebenfalls. Für vergangene Jahre ist die Hochrechnung das
+  laufende Hochrechnung minus geplante Buchungen und Veranstaltungen =
+  voraussichtlich frei oder überzogen. Geplante Buchungen einer
+  wiederkehrenden Serie (etwa die schon eingetragene Novemberrechnung) zählen
+  dabei nur einmal – als Planung, nicht noch einmal als Schätzung. Die
+  Budgetübersicht zeigt diese Zeile ebenfalls. Für vergangene Jahre ist die Hochrechnung das
   Gebuchte; die Durchschnitte helfen bei der Planung des nächsten Jahres.
 
 ## Objektkonten
