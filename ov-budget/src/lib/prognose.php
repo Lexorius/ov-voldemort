@@ -353,7 +353,7 @@ function prognose_jahr(int $jahr, ?string $heute = null): array
     $fenster = prognose_fenster($heute);
     $von = $fenster[0] . '-01';
     $bis = date('Y-m-t', strtotime(end($fenster) . '-01'));
-    $kategorien = array_map(static fn($k) => ['id' => (int)$k['id'], 'label' => (string)$k['label'], 'color' => (string)($k['color'] ?? '')], list_items('kategorie'));
+    $kategorien = array_map(static fn($k) => ['id' => (int)$k['id'], 'label' => (string)$k['label'], 'color' => (string)($k['color'] ?? '')], list_items(buchung_list_key('ausgabe')));
     $kat = prognose_kategorien($kategorien, prognose_monatswerte($von, $bis), prognose_bisher_einmalig($jahr), prognose_einstellungen($jahr), $jahr, $heute);
     $serien = prognose_serien(prognose_wiederkehrende_buchungen($jahr), $jahr, $heute);
     $zaehler = prognose_zaehler($jahr, $heute);

@@ -87,6 +87,8 @@ $check('einmalige Buchung bleibt draußen, Reihenfolge nach Jahresende, Summe', 
 $check('Telefon im Oktober schon gebucht: zwei offen', prognose_serien(array_merge($b, [['id' => 30, 'jahr' => 2026, 'datum' => '2026-10-05', 'bezeichnung' => 'Telefon', 'lieferant' => 'Telekom', 'betrag_brutto' => 49.9, 'wiederkehrend' => 'monatlich', 'kategorie_id' => 1]]), 2026, '2026-10-18')['zeilen'] !== [] && array_column(prognose_serien(array_merge($b, [['id' => 30, 'jahr' => 2026, 'datum' => '2026-10-05', 'bezeichnung' => 'Telefon', 'lieferant' => 'Telekom', 'betrag_brutto' => 49.9, 'wiederkehrend' => 'monatlich', 'kategorie_id' => 1]]), 2026, '2026-10-18')['zeilen'], 'offen', 'bezeichnung')['Telefon'] === 2);
 $check('vergangenes und künftiges Jahr', array_column(prognose_serien($b, 2025, '2026-10-18')['zeilen'], 'offen') === [0, 0, 0, 0] && array_column(prognose_serien($b, 2027, '2026-10-18')['zeilen'], 'offen', 'bezeichnung')['Telefon'] === 12);
 
+$check('Hochrechnung liest die Ausgabenkategorien, nicht eine fremde Liste', str_contains((string)file_get_contents($app . '/src/lib/prognose.php'), "list_items(buchung_list_key('ausgabe'))") && !str_contains((string)file_get_contents($app . '/src/lib/prognose.php'), "list_items('kategorie')"));
+
 /* ---------- Zähler ---------- */
 $kosten = [1 => 120.0, 2 => 110.0, 3 => 100.0, 4 => 80.0, 5 => 70.0, 6 => 60.0, 7 => 60.0, 8 => 65.0, 9 => 75.0, 10 => null, 11 => null, 12 => null];
 $zr = prognose_zaehler_rechnen($kosten, 2026, '2026-10-18');

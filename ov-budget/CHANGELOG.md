@@ -1,5 +1,11 @@
 # Änderungsverlauf
 
+## 2.1.50.1
+
+- Hochrechnung: Die Kategorien hießen „Kategorie #281", weil die falsche
+  Auswahlliste gelesen wurde – jetzt die Ausgabenkategorien mit Namen und
+  Farbe.
+
 ## 2.1.50.0
 
 - **Wiederkehrende Rechnung an der Ausgabe:** neues Feld „Wiederkehrende
