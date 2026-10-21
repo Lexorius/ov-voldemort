@@ -11,6 +11,7 @@ $versatz = $dbZeit !== '' ? abs(time() - strtotime($dbZeit)) : 0;
 $ablage = vfile_storage_status();
 
 render('admin/index', [
+    'php'    => php_lage(),
     'ablage' => $ablage,
     'speicher' => speicher_uebersicht(),
     'title' => 'Verwaltung',

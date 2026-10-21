@@ -183,7 +183,8 @@ $neu = $c === null;
   <dl class="dl">
     <div class="dl__item"><div class="dl__label">Fassung</div>
       <div class="dl__value"><?= e((string)($zustand['version'] ?? '?')) ?>
-        <span class="muted small">· PHP <?= e((string)($zustand['php'] ?? '?')) ?></span></div></div>
+        <span class="muted small">· PHP <?= e((string)($zustand['php'] ?? '?')) ?></span>
+        <?php if (function_exists('php_verwundbar') && ($g = php_verwundbar((string)($zustand['php'] ?? ''))) !== null): ?><div class="small" style="color:var(--bad)">⚠ <?= e($g) ?> Beim Hoster die PHP-Fassung umstellen.</div><?php endif; ?></div></div>
     <div class="dl__item"><div class="dl__label">Fahrzeuge dort angemeldet</div>
       <div class="dl__value"><?= (int)($zustand['fahrzeuge'] ?? 0) ?></div></div>
     <div class="dl__item"><div class="dl__label">Veranstaltungen</div>

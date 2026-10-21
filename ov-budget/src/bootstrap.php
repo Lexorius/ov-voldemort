@@ -14,6 +14,7 @@ if ($tz === '' || !@date_default_timezone_set($tz)) {
 }
 
 require __DIR__ . '/lib/util.php';
+require __DIR__ . '/lib/sicherheit.php';
 
 if (app_config('debug', false)) {
     ini_set('display_errors', '1');

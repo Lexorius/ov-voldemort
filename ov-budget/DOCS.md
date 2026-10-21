@@ -559,16 +559,15 @@ Verwaltung.
   Ordner; einzelne Dateien lassen sich auch entfernen.
 * **Grenze:** STAN-Pakete haben eine eigene Grenze unter Einstellungen →
   Allgemein → „STAN-Paket höchstens … MB" (Vorgabe 1024 MB), unabhängig
-  von der kleinen Upload-Grenze der Anlagen. Das Add-on lässt bis 2 GB je
-  Upload durch; ausgepackt sind höchstens 500 Dateien und 4 GB je Paket
+  von der kleinen Upload-Grenze der Anlagen. Ausgepackt sind höchstens 500 Dateien und 4 GB je Paket
   erlaubt. Ein Paket von einigen hundert MB braucht je nach Leitung ein
   paar Minuten – das Fenster offen lassen. Die Home-Assistant-Oberfläche
   lässt nur 16 MB je Anfrage durch („Maximum request body size 16777216
   exceeded"); darum schneidet der Browser große Dateien in Stücke von 8 MB
   und die Anwendung setzt sie zusammen – mit Fortschrittsanzeige. Ohne
   JavaScript bleibt der normale Upload, der dann über die Oberfläche bei
-  16 MB endet; direkt über den Port des Add-ons (Add-on-Konfiguration →
-  Netzwerk) gehen bis 2 GB am Stück.
+  16 MB endet. Auch direkt über den Port des Add-ons läuft der Upload in
+  Stücken; eine einzelne Anfrage ist bewusst auf 48 MB begrenzt.
 * **Durchsuchbar.** Das Suchfeld oben auf der STAN-Seite findet Dateien
   nach Name und Ordner, nach dem Inhalt (der minütliche Abruf liest PDFs
   über pdftotext, Office- und Textdateien ein und trägt den Volltext nach –
@@ -1528,6 +1527,39 @@ Löschen einer Datei verschwindet ihre Auswertung mit.
 **Grenzen:** Ein 7B-Modell macht Fehler – Beträge und Daten im Text lieber
 in der Datei nachsehen. Die Zusammenfassung ist eine Lesehilfe und ein
 Suchindex, kein Beleg.
+
+## Sicherheitslücke PHP2Shell (Oktober 2026)
+
+Am 21.10.2026 hat das PHP-Projekt zwei kritische Lücken geschlossen
+(CVE-2026-109618, CVE-2026-109619, „PHP2Shell"): unauthentifizierte
+Codeausführung über Multipart-Anfragen und den Sitzungs-Upload-Fortschritt,
+ausgelöst beim Einlesen der Anfrage, vor jedem Skript und unabhängig von der
+Anwendung. Behoben ab PHP 8.5.12, 8.4.27, 8.3.36 und 8.2.35; PHP 8.1 und
+älter bekommen keine Releases mehr.
+
+**Wo wir stehen**
+
+* **Add-on:** PHP kommt aus den Alpine-Paketen des Home-Assistant-Basisimages.
+  Beim Bauen prüft das Add-on die Fassung gegen die gepatchten, versucht bei
+  Bedarf das Paket aus Alpine edge und warnt, wenn beides zu alt ist. Die
+  Verwaltungsseite zeigt die laufende PHP-Fassung mit Urteil. Solange kein
+  gepatchtes PHP da ist, greifen die vom PHP-Projekt empfohlenen Maßnahmen
+  (`session.upload_progress.enabled=Off`, `fatal_error_backtraces=Off`,
+  `memory_limit=-1`, kleine Anfragen, ein FPM-Worker je Anfrage) – sie
+  mindern, ersetzen aber kein Update. Das Add-on ist über die
+  Home-Assistant-Oberfläche nur für angemeldete Personen erreichbar; ein
+  direkt freigegebener Port (Add-on-Konfiguration → Netzwerk) sollte bis zum
+  Update nicht aus dem Internet erreichbar sein.
+* **Connector:** läuft auf einem fremden Webserver mit dem PHP des Hosters.
+  „Ist der Connector sauber?" meldet seit dieser Fassung einen Alarm, wenn
+  dort ein verwundbares PHP läuft; auch die Connector-Seite zeigt es. Beheben
+  kann das nur der Hoster – in dessen Verwaltung die PHP-Fassung auf eine
+  gepatchte umstellen (8.4.27 oder neuer). Der Connector selbst nutzt weder
+  Sitzungen noch Uploads, PHP liest Multipart-Anfragen aber trotzdem ein.
+
+**Sobald Alpine die gepatchte Fassung liefert:** die nächste Add-on-Fassung
+einspielen (jede Fassung baut das Image neu), dann in der Verwaltung prüfen,
+dass die Meldung grün ist. Die php.ini-Maßnahmen können danach bleiben.
 
 ## Rollen
 

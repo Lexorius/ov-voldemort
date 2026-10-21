@@ -544,6 +544,11 @@ function connector_pruefung_auswerten(array $bericht, array $manifest, array $ne
     if ($soll === []) {
         $befunde[] = ['stufe' => 'hinweis', 'text' => 'OV-Multitool hat keinen Maßstab (connector-manifest.json fehlt) – nur die Selbstprüfung zählt.'];
     }
+    // Läuft der Connector auf einem verwundbaren PHP? Das kann nur der Hoster beheben – aber wir sagen es.
+    $phpGrund = function_exists('php_verwundbar') ? php_verwundbar((string)($bericht['php'] ?? '')) : null;
+    if ($phpGrund !== null) {
+        $befunde[] = ['stufe' => 'alarm', 'text' => 'Webserver des Connectors: ' . $phpGrund . ' Beim Hoster die PHP-Fassung umstellen.'];
+    }
     if ((string)($bericht['version'] ?? '') !== (string)($manifest['version'] ?? '') && $soll !== []) {
         $befunde[] = ['stufe' => 'hinweis', 'text' => sprintf('Der Connector läuft als Fassung %s, OV-Multitool erwartet %s – bitte die Dateien auf dem Webserver aktualisieren.',
             (string)($bericht['version'] ?? '?'), (string)$manifest['version'])];

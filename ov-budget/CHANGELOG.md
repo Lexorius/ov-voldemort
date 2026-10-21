@@ -1,5 +1,17 @@
 # Änderungsverlauf
 
+## 2.1.51.0
+
+- **PHP2Shell (CVE-2026-109618, CVE-2026-109619):** Das Add-on prüft beim
+  Bauen die PHP-Fassung gegen die gepatchten (8.5.12/8.4.27/8.3.36/8.2.35),
+  lädt bei Bedarf das Paket aus Alpine edge und warnt sonst; die Verwaltung
+  zeigt die laufende Fassung mit Urteil. Bis ein gepatchtes PHP da ist,
+  greifen die vom PHP-Projekt empfohlenen Maßnahmen: kein
+  Sitzungs-Upload-Fortschritt, keine Backtraces, keine PHP-Speichergrenze,
+  Anfragen auf 48 MB begrenzt (Uploads laufen ohnehin in 8-MB-Stücken), ein
+  FPM-Worker je Anfrage. „Ist der Connector sauber?" schlägt Alarm, wenn der
+  Connector auf einem verwundbaren PHP läuft.
+
 ## 2.1.50.4
 
 - **Wiederkehrende Serien sauberer:** Zusammengefasst wird jetzt über

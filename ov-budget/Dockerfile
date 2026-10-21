@@ -19,6 +19,7 @@ ENV OVB_UPLOAD_DIR=/data/uploads
 # Die PHP-Version wird beim Bauen ermittelt, weil Alpine sie im Paketnamen
 # führt (php84, php83 ...) und je Alpine-Fassung wechselt.
 RUN set -eux; \
+    apk upgrade --no-cache; \
     apk add --no-cache nginx tzdata mariadb mariadb-client poppler-utils; \
     PHPV=""; \
     for v in 85 84 83 82; do \
@@ -33,6 +34,23 @@ RUN set -eux; \
         fi; \
     done; \
     if [ -z "$PHPV" ]; then echo "Kein vollstaendiges PHP-Paketset gefunden"; exit 1; fi; \
+    # PHP2Shell (CVE-2026-109618/-109619): gepatcht ab 8.5.12 / 8.4.27 / 8.3.36 / 8.2.35. Liefert das
+    # stabile Alpine-Repo noch eine aeltere Fassung, aus Alpine edge nachladen; reicht auch das nicht,
+    # laut warnen – die Anwendung zeigt die Lage in der Verwaltung und hat Schutzmaßnahmen in der php.ini.
+    case "$PHPV" in 85) SOLL=8.5.12;; 84) SOLL=8.4.27;; 83) SOLL=8.3.36;; *) SOLL=8.2.35;; esac; \
+    IST="$(php$PHPV -r 'echo PHP_VERSION;')"; \
+    if php$PHPV -r 'exit(version_compare($argv[1], $argv[2], "<") ? 1 : 0);' "$IST" "$SOLL"; then \
+        echo "PHP $IST ist gegen PHP2Shell gepatcht (ab $SOLL)"; \
+    else \
+        echo "WARNUNG: PHP $IST ist verwundbar (PHP2Shell), gepatcht ab $SOLL – versuche Alpine edge"; \
+        apk add --no-cache --upgrade --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community "$@" || echo "edge nicht verwendbar"; \
+        IST="$(php$PHPV -r 'echo PHP_VERSION;')"; \
+        if php$PHPV -r 'exit(version_compare($argv[1], $argv[2], "<") ? 1 : 0);' "$IST" "$SOLL"; then \
+            echo "PHP $IST aus Alpine edge – gepatcht"; \
+        else \
+            echo "WARNUNG: weiterhin PHP $IST – Schutzmaßnahmen der php.ini greifen; das Add-on neu bauen, sobald Alpine $SOLL liefert"; \
+        fi; \
+    fi; \
     ln -sf "/usr/bin/php$PHPV" /usr/bin/php; \
     ln -sf "/usr/sbin/php-fpm$PHPV" /usr/sbin/php-fpm; \
     ln -sfn "/etc/php$PHPV" /etc/php-current; \
