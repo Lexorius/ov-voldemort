@@ -9,6 +9,16 @@ Das Add-on bringt **alles mit**: Datenbank (MariaDB), Webserver und Anwendung
 stecken im Container. Weitere Add-ons sind nicht nötig. Erreichbar über die
 Seitenleiste von Home Assistant, ohne Port nach außen.
 
+## ⚠ Sicherheitshinweis: PHP2Shell (Oktober 2026)
+
+PHP hat am 21.10.2026 zwei kritische Lücken geschlossen (CVE-2026-109618,
+CVE-2026-109619; behoben ab 8.5.12 / 8.4.27 / 8.3.36 / 8.2.35). Das Add-on
+prüft beim Bauen seine PHP-Fassung, warnt in der Verwaltung und hat die vom
+PHP-Projekt empfohlenen Schutzmaßnahmen an Bord; der Connector meldet die
+PHP-Fassung des Hosters. Bis die Meldung in der Verwaltung grün ist, keinen
+Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
+**Dokumentation** unter „Sicherheitslücke PHP2Shell".
+
 ## Funktionen
 
 ### Wünsch dir was

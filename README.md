@@ -12,6 +12,39 @@ Webserver, Anwendung in einem Container); läuft aber genauso als
 > Die Zahlen sind eine interne Planungshilfe – bewusst „pseudo", keine
 > offizielle Haushaltsstelle. Privates Projekt, kein offizielles Angebot des THW.
 
+## ⚠ Sicherheitshinweis: PHP2Shell (Oktober 2026)
+
+Am 21.10.2026 hat das PHP-Projekt zwei kritische Lücken geschlossen
+([CVE-2026-109618, CVE-2026-109619](https://www.php.net/archive/2026.php#2026-10-21-5)):
+unauthentifizierte Codeausführung über Multipart-Anfragen, ausgelöst beim
+Einlesen der Anfrage, vor jedem Skript und unabhängig von der Anwendung.
+Behoben ab **PHP 8.5.12, 8.4.27, 8.3.36 und 8.2.35**; 8.1 und älter bekommen
+keine Releases mehr.
+
+**Was das für OV-Multitool heißt**
+
+* **Add-on:** PHP kommt aus den Alpine-Paketen des Home-Assistant-Basisimages.
+  Ab Fassung 2.1.51.0 prüft der Bauvorgang die PHP-Fassung, lädt bei Bedarf
+  das Paket aus Alpine edge nach und warnt, wenn beides zu alt ist; die
+  Verwaltungsseite zeigt die laufende Fassung mit Urteil. Bis ein gepatchtes
+  PHP da ist, greifen die vom PHP-Projekt empfohlenen Maßnahmen in der
+  php.ini (kein Sitzungs-Upload-Fortschritt, keine Backtraces, keine
+  PHP-Speichergrenze, Anfragen auf 48 MB begrenzt, ein FPM-Worker je
+  Anfrage) – sie mindern, ersetzen aber kein Update. **Bis die Meldung in der
+  Verwaltung grün ist, keinen Port des Add-ons aus dem Internet erreichbar
+  machen**; über die Home-Assistant-Oberfläche kommen nur Angemeldete an
+  die Anwendung.
+* **Connector:** läuft mit dem PHP des Hosters. *Verwaltung → Connectoren*
+  zeigt dessen Fassung und schlägt Alarm, wenn sie verwundbar ist. Beheben
+  kann das nur der Hoster – dort die PHP-Fassung auf 8.4.27 oder neuer
+  umstellen.
+* **Eigene Installation (Docker, Webserver):** PHP auf eine gepatchte Fassung
+  bringen und alle PHP-Worker neu starten.
+
+Sobald Alpine die gepatchte Fassung liefert, baut die nächste Add-on-Fassung
+sie automatisch ein. Einzelheiten in [ov-budget/DOCS.md](ov-budget/DOCS.md)
+unter „Sicherheitslücke PHP2Shell".
+
 ## Was drin ist
 
 ### Planen und Geld

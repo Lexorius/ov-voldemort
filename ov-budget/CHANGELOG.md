@@ -1,5 +1,10 @@
 # Änderungsverlauf
 
+## 2.1.51.1
+
+- Sicherheitshinweis zu PHP2Shell (CVE-2026-109618/-109619) in beiden
+  README-Dateien: Lage, Maßnahmen des Add-ons, was Betreiber tun müssen.
+
 ## 2.1.51.0
 
 - **PHP2Shell (CVE-2026-109618, CVE-2026-109619):** Das Add-on prüft beim
