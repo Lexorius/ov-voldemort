@@ -21,6 +21,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         render('error', ['title' => 'Kein Zugriff', 'message' => 'Die Hochrechnung stellt nur die Leitung ein.']);
         return;
     }
+    if (post_str('action') === 'zaehler') {
+        $an = post_str('zaehler_an') === '1';
+        prognose_zaehler_schalten($jahr, $an);
+        audit('prognose.zaehler', 'budget', $jahr, $an ? 'an' : 'aus');
+        flash('success', $an ? 'Nebenkosten aus den Zählern zählen in der Hochrechnung mit.' : 'Nebenkosten aus den Zählern bleiben außen vor.');
+        redirect_route('budget_prognose', ['jahr' => $jahr]);
+    }
     $n = 0;
     foreach (prognose_aus_post($_POST) as $id => $e) {
         prognose_einstellung_speichern($jahr, $id, $e['art'], $e['betrag'], $e['notiz']);

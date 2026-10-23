@@ -355,11 +355,15 @@ niemand im November von der Telefonrechnung überrascht wird.
   (etwa 49,90 € Telefon ab dem neuen Vertrag) oder *nicht hochrechnen* (für
   einmalige Anschaffungen, die sich nicht wiederholen). Dazu eine Notiz. Die
   Einstellung gilt je Jahr und Kategorie; speichern darf die Leitung.
-* **Energie und Wasser aus den Zählern**: je Hauptzähler mit Tarif die
-  Kosten der Monate mit Zählerstand, deren Durchschnitt und die fehlenden
-  Monate bis zum Jahresende; Einspeisung als Erlös gegengerechnet. Werden die
-  Abschläge auch als Ausgaben gebucht, die Kategorie auf „nicht hochrechnen"
-  stellen, sonst zählt es doppelt.
+* **Nebenkosten aus den Zählern**: je Hauptzähler mit Tarif die Kosten der
+  Monate mit Zählerstand dieses Jahres; die fehlenden Monate bis zum
+  Jahresende werden mit dem **gleichen Monat des Vorjahres** gefüllt (Heizung
+  im Winter, Wasser im Sommer), ohne Vorjahreswert mit dem Durchschnitt
+  dieses Jahres. Die Tabelle zeigt das Vorjahr als Summe und Durchschnitt
+  mit. Einspeisung wird als Erlös gegengerechnet. Ein Knopf über der
+  Tabelle nimmt die Zähler aus der Hochrechnung oder wieder hinein, je
+  Jahr gemerkt – sinnvoll, wenn die Abschläge ohnehin als Ausgaben gebucht
+  werden (sonst zählt es doppelt).
 * **Unterm Strich**: Verfügbar (Jahresbudget plus Einnahmen) minus
   laufende Hochrechnung minus geplante Buchungen und Veranstaltungen =
   voraussichtlich frei oder überzogen. Geplante Buchungen einer

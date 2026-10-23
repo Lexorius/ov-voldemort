@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 2.1.52.0
+
+- **Nebenkosten-Hochrechnung aus den Zählern:** Die fehlenden Monate bis
+  zum Jahresende werden jetzt mit dem gleichen Monat des Vorjahres gefüllt
+  statt mit dem Durchschnitt – Heizung im Winter, Wasser im Sommer. Die
+  Tabelle zeigt das Vorjahr als Summe und Durchschnitt je Zähler. Ein Knopf
+  direkt auf der Hochrechnungsseite nimmt die Zähler aus der Hochrechnung
+  oder wieder hinein, je Jahr gemerkt.
+
 ## 2.1.51.1
 
 - Sicherheitshinweis zu PHP2Shell (CVE-2026-109618/-109619) in beiden

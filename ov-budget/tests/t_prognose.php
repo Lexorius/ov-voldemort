@@ -110,8 +110,16 @@ $check('Hochrechnung liest die Ausgabenkategorien, nicht eine fremde Liste', str
 /* ---------- Zähler ---------- */
 $kosten = [1 => 120.0, 2 => 110.0, 3 => 100.0, 4 => 80.0, 5 => 70.0, 6 => 60.0, 7 => 60.0, 8 => 65.0, 9 => 75.0, 10 => null, 11 => null, 12 => null];
 $zr = prognose_zaehler_rechnen($kosten, 2026, '2026-10-18');
-$check('Zähler: neun Monate mit Kosten, drei fehlen aus dem Durchschnitt', $zr['bisher'] === 740.0 && $zr['monate_mit'] === 9 && abs($zr['durchschnitt'] - 82.22) < 0.01 && abs($zr['rest'] - 246.67) < 0.01 && abs($zr['hochrechnung'] - 986.67) < 0.01);
-$check('Zähler im vergangenen Jahr: nichts dazu', prognose_zaehler_rechnen($kosten, 2025, '2026-10-18')['rest'] === 0.0 && prognose_zaehler_rechnen(array_fill(1, 12, null), 2026, '2026-10-18') === ['bisher' => 0.0, 'monate_mit' => 0, 'durchschnitt' => 0.0, 'rest' => 0.0, 'hochrechnung' => 0.0]);
+$check('Zähler ohne Vorjahr: neun Monate mit Kosten, drei fehlen aus dem Durchschnitt', $zr['bisher'] === 740.0 && $zr['monate_mit'] === 9 && abs($zr['durchschnitt'] - 82.22) < 0.01 && abs($zr['rest'] - 246.67) < 0.01 && abs($zr['hochrechnung'] - 986.67) < 0.01 && $zr['aus_schnitt'] === 3 && $zr['aus_vorjahr'] === 0 && $zr['vorjahr']['monate_mit'] === 0);
+$vorjahr = [1 => 130.0, 2 => 120.0, 3 => 100.0, 4 => 85.0, 5 => 70.0, 6 => 60.0, 7 => 60.0, 8 => 62.0, 9 => 78.0, 10 => 95.0, 11 => 118.0, 12 => null];
+$zv = prognose_zaehler_rechnen($kosten, 2026, '2026-10-18', $vorjahr);
+$check('Zähler mit Vorjahr: Oktober und November aus dem Vorjahr (Heizung!), Dezember aus dem Durchschnitt', $zv['aus_vorjahr'] === 2 && $zv['aus_schnitt'] === 1 && abs($zv['rest'] - (95 + 118 + 82.22)) < 0.01 && abs($zv['hochrechnung'] - (740 + 95 + 118 + 82.22)) < 0.01
+    && $zv['vorjahr']['summe'] === 978.0 && $zv['vorjahr']['monate_mit'] === 11 && abs($zv['vorjahr']['durchschnitt'] - 88.91) < 0.01);
+$check('Zähler im Vorjahr-Modus: vergangenes Jahr kein Rest', prognose_zaehler_rechnen($kosten, 2025, '2026-10-18', $vorjahr)['rest'] === 0.0);
+$GLOBALS['execs'] = [];
+prognose_zaehler_schalten(2026, false);
+$check('Schalter: Vorgabe an, abschalten merkt sich je Jahr', prognose_zaehler_aktiv(2026) && count($GLOBALS['execs']) === 1 && $GLOBALS['execs'][0][1][0] === 'prognose_zaehler_an_2026' && $GLOBALS['execs'][0][1][1] === '0');
+$check('Zähler im vergangenen Jahr: nichts dazu', prognose_zaehler_rechnen($kosten, 2025, '2026-10-18')['rest'] === 0.0 && array_slice(prognose_zaehler_rechnen(array_fill(1, 12, null), 2026, '2026-10-18'), 0, 5) === ['bisher' => 0.0, 'monate_mit' => 0, 'durchschnitt' => 0.0, 'rest' => 0.0, 'hochrechnung' => 0.0]);
 
 /* ---------- Formular ---------- */
 $e = prognose_aus_post(['art' => ['1' => 'fest', '2' => 'quatsch', '3' => 'aus'], 'betrag' => ['1' => '49,90', '2' => '1.250,50', '3' => ''], 'notiz' => ['1' => ' neuer Vertrag ']]);
@@ -124,13 +132,19 @@ $check('speichern: eine Abfrage mit geprüften Werten', count($GLOBALS['execs'])
 $zahlen = ['verfuegbar' => 20000.0, 'ausgaben' => 9000.0, 'geplant' => 1500.0];
 $html = render_partial('budget_prognose', ['jahr' => 2026, 'jahre' => [2026, 2025], 'darf' => true, 'prognose' => [
     'jahr' => 2026, 'heute' => '2026-10-18', 'kategorien' => $k, 'zahlen' => $zahlen, 'serien' => $se,
-    'zaehler' => ['zeilen' => [$zr + ['id' => 5, 'name' => 'Hauptanschluss', 'art' => 'strom', 'erloes' => false, 'ohne_tarif' => 1]], 'summe' => 986.67, 'erloes' => 0.0],
+    'zaehler' => ['zeilen' => [$zv + ['id' => 5, 'name' => 'Hauptanschluss', 'art' => 'strom', 'erloes' => false, 'ohne_tarif' => 1]], 'summe' => 1035.22, 'erloes' => 0.0, 'aktiv' => true, 'vorjahr_summe' => 978.0],
     'laufend' => 8300.0, 'geplant' => 1500.0, 'hochrechnung' => 9800.0, 'frei' => 10200.0, 'frei_mit_planung' => 10200.0]]);
 $check('Ansicht: Kennzahlen, Kategorien mit Auswahl, Empfehlung, Zähler, Hinweis auf fehlenden Tarif', str_contains($html, 'Hochrechnung Jahresende') && str_contains($html, 'name="art[1]"') && str_contains($html, 'value="fest" selected') && str_contains($html, 'name="betrag[2]"')
     && str_contains($html, '>regelmäßig<') && str_contains($html, '>schwankend<') && str_contains($html, 'Hauptanschluss') && str_contains($html, '1 Monat(e) ohne Tarif') && str_contains($html, 'sind abgezogen') && str_contains($html, '1.500,00 geplant') && str_contains($html, 'Speichern')
-    && str_contains($html, 'Wiederkehrende Rechnungen') && str_contains($html, '↻ monatlich') && str_contains($html, 'KFZ-Versicherung') && str_contains($html, 'wiederkehrend · '));
+    && str_contains($html, 'Wiederkehrende Rechnungen') && str_contains($html, '↻ monatlich') && str_contains($html, 'KFZ-Versicherung') && str_contains($html, 'wiederkehrend · ')
+    && str_contains($html, 'Nebenkosten aus den Zählern') && str_contains($html, '2 Monat(e) aus dem Vorjahr') && str_contains($html, '1 aus dem Durchschnitt') && str_contains($html, 'Aus der Hochrechnung nehmen') && str_contains($html, 'value="zaehler"') && str_contains($html, 'Nebenkosten aus Zählern'));
+$htmlZ = render_partial('budget_prognose', ['jahr' => 2026, 'jahre' => [2026], 'darf' => true, 'prognose' => [
+    'jahr' => 2026, 'heute' => '2026-10-18', 'kategorien' => $k, 'zahlen' => $zahlen, 'serien' => $se,
+    'zaehler' => ['zeilen' => [$zv + ['id' => 5, 'name' => 'Hauptanschluss', 'art' => 'strom', 'erloes' => false, 'ohne_tarif' => 0]], 'summe' => 1035.22, 'erloes' => 0.0, 'aktiv' => false, 'vorjahr_summe' => 978.0],
+    'laufend' => 8300.0, 'geplant' => 0.0, 'hochrechnung' => 8300.0, 'frei' => 11700.0, 'frei_mit_planung' => 11700.0]]);
+$check('Zähler ausgeschaltet: Knopf zum Aufnehmen, nicht in der Kennzahl', str_contains($htmlZ, 'In die Hochrechnung aufnehmen') && str_contains($htmlZ, 'ausgeschaltet') && !str_contains($htmlZ, 'Nebenkosten aus Zählern'));
 $html = render_partial('budget_prognose', ['jahr' => 2025, 'jahre' => [2026, 2025], 'darf' => false, 'prognose' => [
-    'jahr' => 2025, 'heute' => '2026-10-18', 'kategorien' => $k3, 'zahlen' => $zahlen, 'serien' => ['zeilen' => [], 'summe' => ['bisher' => 0.0, 'rest' => 0.0, 'hochrechnung' => 0.0]], 'zaehler' => ['zeilen' => [], 'summe' => 0.0, 'erloes' => 0.0], 'laufend' => 4275.0, 'geplant' => 0.0, 'hochrechnung' => 4275.0, 'frei' => 15725.0, 'frei_mit_planung' => 15725.0]]);
+    'jahr' => 2025, 'heute' => '2026-10-18', 'kategorien' => $k3, 'zahlen' => $zahlen, 'serien' => ['zeilen' => [], 'summe' => ['bisher' => 0.0, 'rest' => 0.0, 'hochrechnung' => 0.0]], 'zaehler' => ['zeilen' => [], 'summe' => 0.0, 'erloes' => 0.0, 'aktiv' => true, 'vorjahr_summe' => 0.0], 'laufend' => 4275.0, 'geplant' => 0.0, 'hochrechnung' => 4275.0, 'frei' => 15725.0, 'frei_mit_planung' => 15725.0]]);
 $check('Ansicht ohne Recht und vergangenes Jahr: keine Felder, Hinweis', !str_contains($html, '<select') && !str_contains($html, 'Speichern') && str_contains($html, 'ist um') && str_contains($html, 'Kein Zähler mit Tarif') && str_contains($html, 'Noch keine Ausgabe als wiederkehrend markiert'));
 
 echo "$ok bestanden, $fail fehlgeschlagen\n";

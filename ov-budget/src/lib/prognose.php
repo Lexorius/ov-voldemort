@@ -333,54 +333,84 @@ function prognose_kategorien(array $kategorien, array $monatswerte, array $bishe
 }
 
 /**
- * Hochrechnung eines Zählers aus seinen Monatskosten (null = Monat noch ohne
- * Wert): bisher, Durchschnitt der Monate mit Wert, Rest aus den fehlenden
- * Monaten bis zum Jahresende. Reine Funktion.
+ * Nebenkosten-Hochrechnung eines Zählers aus seinen Monatskosten (null =
+ * Monat noch ohne Wert). Fehlende Monate bis zum Jahresende werden mit dem
+ * gleichen Monat des Vorjahres gefüllt – Heizung im Winter, Wasser im Sommer
+ * –, ohne Vorjahreswert mit dem Durchschnitt der Monate dieses Jahres. Reine Funktion.
  */
-function prognose_zaehler_rechnen(array $kostenMonate, int $jahr, string $heute): array
+function prognose_zaehler_rechnen(array $kostenMonate, int $jahr, string $heute, array $vorjahrMonate = []): array
 {
     $monate = prognose_monate($jahr, $heute);
     $mit = array_filter($kostenMonate, static fn($v) => $v !== null);
     $bisher = round(array_sum($mit), 2);
     $schnitt = $mit ? $bisher / count($mit) : 0.0;
-    $fehlend = max(0.0, 12 - count($mit));
-    if ($monate['rest'] <= 0) {
-        $fehlend = 0.0;
+    $vjMit = array_filter($vorjahrMonate, static fn($v) => $v !== null);
+    $vorjahr = ['summe' => round(array_sum($vjMit), 2), 'monate_mit' => count($vjMit), 'durchschnitt' => $vjMit ? round(array_sum($vjMit) / count($vjMit), 2) : 0.0];
+    $rest = 0.0;
+    $ausVorjahr = 0;
+    $ausSchnitt = 0;
+    if ($monate['rest'] > 0) {
+        for ($m = 1; $m <= 12; $m++) {
+            if (($kostenMonate[$m] ?? null) !== null) {
+                continue;
+            }
+            if (($vorjahrMonate[$m] ?? null) !== null) {
+                $rest += (float)$vorjahrMonate[$m];
+                $ausVorjahr++;
+            } else {
+                $rest += $schnitt;
+                $ausSchnitt++;
+            }
+        }
     }
-    $rest = round($schnitt * $fehlend, 2);
-    return ['bisher' => $bisher, 'monate_mit' => count($mit), 'durchschnitt' => round($schnitt, 2), 'rest' => $rest, 'hochrechnung' => round($bisher + $rest, 2)];
+    $rest = round($rest, 2);
+    return ['bisher' => $bisher, 'monate_mit' => count($mit), 'durchschnitt' => round($schnitt, 2), 'rest' => $rest, 'hochrechnung' => round($bisher + $rest, 2),
+        'vorjahr' => $vorjahr, 'aus_vorjahr' => $ausVorjahr, 'aus_schnitt' => $ausSchnitt];
 }
 
-/* ==================================================================== */
-/* Zusammenführen                                                         */
-/* ==================================================================== */
+/** Zählen die Nebenkosten aus den Zählern in der Hochrechnung dieses Jahres mit? Schalter auf der Seite, Vorgabe an. */
+function prognose_zaehler_aktiv(int $jahr): bool
+{
+    return state_get('prognose_zaehler_an_' . $jahr, '1') === '1';
+}
 
-/** Energie und Wasser aus den Zählern: je Hauptzähler Kosten bisher, Durchschnitt und Hochrechnung; Einspeisung als Erlös */
+function prognose_zaehler_schalten(int $jahr, bool $an): void
+{
+    state_save('prognose_zaehler_an_' . $jahr, $an ? '1' : '0');
+}
+
+/** Nebenkosten aus den Zählern: je Hauptzähler Kosten bisher, Vorjahr, Hochrechnung; Einspeisung als Erlös */
 function prognose_zaehler(int $jahr, string $heute): array
 {
+    $aktiv = prognose_zaehler_aktiv($jahr);
     if (!function_exists('meter_query')) {
-        return ['zeilen' => [], 'summe' => 0.0, 'erloes' => 0.0];
+        return ['zeilen' => [], 'summe' => 0.0, 'erloes' => 0.0, 'aktiv' => $aktiv, 'vorjahr_summe' => 0.0];
     }
     [$von, $bis] = verbrauch_zeitraum($jahr);
+    [$vjVon, $vjBis] = verbrauch_zeitraum($jahr - 1);
     $zeilen = [];
     $summe = 0.0;
     $erloes = 0.0;
+    $vorjahrSumme = 0.0;
     foreach (meter_query() as $m) {
         $tarifArt = meter_tarif_art($m);
         if ($tarifArt === null) {
             continue;   // Unterzähler und Erzeugung tragen keine eigenen Kosten
         }
-        $kosten = verbrauch_kosten_jahr(readings_bereich((int)$m['id'], $von, $bis), tarif_query($tarifArt), $m, $jahr);
-        $r = prognose_zaehler_rechnen($kosten['monate'], $jahr, $heute);
+        $tarife = tarif_query($tarifArt);
+        $kosten = verbrauch_kosten_jahr(readings_bereich((int)$m['id'], $von, $bis), $tarife, $m, $jahr);
+        $vorjahr = verbrauch_kosten_jahr(readings_bereich((int)$m['id'], $vjVon, $vjBis), $tarife, $m, $jahr - 1);
+        $r = prognose_zaehler_rechnen($kosten['monate'], $jahr, $heute, $vorjahr['monate']);
         $r += ['id' => (int)$m['id'], 'name' => (string)$m['name'], 'art' => (string)$m['art'], 'erloes' => (bool)$kosten['erloes'], 'ohne_tarif' => (int)$kosten['ohne_tarif']];
         $zeilen[] = $r;
         if ($r['erloes']) {
             $erloes += $r['hochrechnung'];
         } else {
             $summe += $r['hochrechnung'];
+            $vorjahrSumme += $r['vorjahr']['summe'];
         }
     }
-    return ['zeilen' => $zeilen, 'summe' => round($summe, 2), 'erloes' => round($erloes, 2)];
+    return ['zeilen' => $zeilen, 'summe' => round($summe, 2), 'erloes' => round($erloes, 2), 'aktiv' => $aktiv, 'vorjahr_summe' => round($vorjahrSumme, 2)];
 }
 
 /** Alles für die Seite: Kategorien, Zähler, Jahreszahlen und die Summe unterm Strich */
@@ -395,7 +425,7 @@ function prognose_jahr(int $jahr, ?string $heute = null): array
     $serien = prognose_serien(prognose_wiederkehrende_buchungen($jahr), $jahr, $heute);
     $zaehler = prognose_zaehler($jahr, $heute);
     $zahlen = budget_jahr_zahlen($jahr);
-    $laufend = $kat['summe']['hochrechnung'] + $serien['summe']['hochrechnung'] + $zaehler['summe'] - $zaehler['erloes'];
+    $laufend = $kat['summe']['hochrechnung'] + $serien['summe']['hochrechnung'] + ($zaehler['aktiv'] ? $zaehler['summe'] - $zaehler['erloes'] : 0.0);
     $geplant = (float)$zahlen['geplant'];   // geplante Buchungen und Veranstaltungen – gehören mit aufs Jahresende
     return [
         'jahr' => $jahr, 'heute' => $heute, 'kategorien' => $kat, 'serien' => $serien, 'zaehler' => $zaehler, 'zahlen' => $zahlen,
