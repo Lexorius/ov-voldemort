@@ -90,6 +90,11 @@ unter „Sicherheitslücke PHP2Shell".
   **Einladung per kurzer Adresse** mit Zu-/Absage, Begleitern und Vertretung
   (verschlüsselt über den Connector), Einlassliste zum Drucken, Serienbrief-CSV
   mit QR-Code, **Verpflegungskalkulation** nach Tagessatz.
+* **Abstimmungen** – Umfragen mit einer oder mehreren Seiten (Auswahl,
+  Ankreuzen, Ja/Nein, Skala, Freitext), in der Oberfläche zusammengeklickt
+  und über den Connector im Netz: QR-Code zum Scannen, Link zum Weitergeben,
+  Zeitfenster. Die Antworten kommen verschlüsselt an und sind beim Connector
+  nach dem Abholen gelöscht; ausgezählt wird im Multitool, mit CSV-Export.
 * **Kontakte** – Ansprechpartner mit Zusatzfeldern, anrufen und mailen mit einem
   Tipp, Verteiler für Einladungen, Import aus Excel/CSV, Outlook, Google und
   vCard mit Dublettenerkennung.

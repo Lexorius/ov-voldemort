@@ -39,6 +39,7 @@ const CONNECTOR_ZWECKE = [
     'veranstaltungen' => 'Veranstaltungen: Einladungen und Rückmeldungen',
     'bestand'         => 'Funkgeräte: „ist am Lagerort" per QR-Code',
     'verbrauch'       => 'Zähler: Zählerstand ablesen per QR-Code',
+    'umfragen'        => 'Abstimmungen: Umfragen mit verschlüsselten Antworten',
 ];
 
 /* ==================================================================== */
@@ -70,6 +71,7 @@ function connector_taugt(array $c, string $zweck): bool
         'veranstaltungen' => 'fuer_veranstaltungen',
         'bestand'         => 'fuer_bestand',
         'verbrauch'       => 'fuer_verbrauch',
+        'umfragen'        => 'fuer_umfragen',
         default           => 'fuer_fahrzeuge',
     };
     return (int)($c['is_active'] ?? 0) === 1
@@ -155,6 +157,7 @@ function connector_save_from_post(?array $c): array
         'fuer_veranstaltungen' => post_bool('fuer_veranstaltungen') ? 1 : 0,
         'fuer_bestand'         => post_bool('fuer_bestand') ? 1 : 0,
         'fuer_verbrauch'       => post_bool('fuer_verbrauch') ? 1 : 0,
+        'fuer_umfragen'        => post_bool('fuer_umfragen') ? 1 : 0,
         'is_active'            => post_bool('is_active') ? 1 : 0,
         'notiz'                => post_str('notiz'),
     ];
@@ -1154,6 +1157,133 @@ function connector_zaehler_due(?int $jetzt = null): bool
     }
     $intervall = max(1, setting_int('connector_intervall_minuten', 2)) * 60;
     return $jetzt - (int)state_get('connector_zaehler_letzter_abruf', '0') >= $intervall;
+}
+
+/* ==================================================================== */
+/* Abstimmungen: Fragen hin, verschlüsselte Antworten zurück             */
+/* ==================================================================== */
+
+/**
+ * Was der Connector über eine Abstimmung wissen muss, damit die Seite sie
+ * zeigen kann: Titel, Beschreibung, Zeitfenster als Unix-Zeit (die Uhren
+ * und Zeitzonen beider Server müssen nicht übereinstimmen) und die Fragen.
+ * Vom Code nur die Prüfsumme. Reine Funktion.
+ */
+function connector_umfrage_daten(array $u): array
+{
+    $beginn = trim((string)($u['beginn'] ?? '')) !== '' ? (int)strtotime((string)$u['beginn']) : 0;
+    return [
+        'kennung'      => umfrage_kennung((string)$u['code']),
+        'titel'        => (string)$u['titel'],
+        'beschreibung' => (string)($u['beschreibung'] ?? ''),
+        'beginn_ts'    => max(0, $beginn),
+        'ende_ts'      => (int)strtotime((string)$u['ende']),
+        'name_feld'    => (int)($u['name_feld'] ?? 0),
+        'dank'         => (string)($u['dank'] ?? ''),
+        'seiten'       => umfrage_seiten($u),
+    ];
+}
+
+/**
+ * Das Paket für einen Connector: alle freigegebenen Abstimmungen, auch noch
+ * einen Tag nach ihrem Ende – so sagt die Seite „beendet" statt „gibt es
+ * nicht", und was kurz vor Schluss kam, wird sicher noch abgeholt.
+ */
+function connector_umfrage_paket(array $c): array
+{
+    $liste = [];
+    foreach (db_all("SELECT * FROM umfragen WHERE connector_id = ? AND status = 'offen' ORDER BY ende", [(int)$c['id']]) as $u) {
+        if ((int)strtotime((string)$u['ende']) < time() - 86400) {
+            continue;
+        }
+        $liste[] = connector_umfrage_daten($u);
+    }
+    return $liste;
+}
+
+/** Abstimmungen anmelden – geschickt wird nur, wenn sich etwas geändert hat */
+function connector_push_umfragen(array $c, bool $erzwingen = false): array
+{
+    $paket = connector_umfrage_paket($c);
+    $stand = hash('sha256', (string)json_encode($paket, JSON_UNESCAPED_UNICODE));
+    $merker = 'connector_umfragen_' . (int)$c['id'];
+    if (!$erzwingen && state_get($merker, '') === $stand) {
+        return ['gesendet' => false, 'umfragen' => count($paket)];
+    }
+    $antwort = connector_call($c, 'umfragen', ['umfragen' => $paket]);
+    state_save($merker, $stand);
+    return ['gesendet' => true, 'umfragen' => (int)($antwort['umfragen'] ?? count($paket))];
+}
+
+/**
+ * Antworten abholen, entschlüsseln und ablegen. Beim Connector sind sie
+ * danach gelöscht. Rückgabe: ['geholt', 'uebernommen', 'fehler']
+ */
+function connector_fetch_umfragen(array $c): array
+{
+    $res = ['geholt' => 0, 'uebernommen' => 0, 'fehler' => 0];
+    if (!connector_taugt($c, 'umfragen')) {
+        return $res;
+    }
+    $antwort = connector_call($c, 'umfrage_abholen', ['max' => 200]);
+    $liste = (array)($antwort['antworten'] ?? []);
+    $res['geholt'] = count($liste);
+    if (!$liste) {
+        return $res;
+    }
+    // Alle Abstimmungen dieses Connectors, auch geschlossene: Was im Fenster kam, zählt
+    $ziele = [];
+    foreach (db_all('SELECT * FROM umfragen WHERE connector_id = ?', [(int)$c['id']]) as $u) {
+        $ziele[umfrage_kennung((string)$u['code'])] = $u;
+    }
+    usort($liste, static fn($a, $b) => (int)($a['ts'] ?? 0) <=> (int)($b['ts'] ?? 0));
+    foreach ($liste as $m) {
+        $u = $ziele[(string)($m['umfrage'] ?? '')] ?? null;
+        if ($u === null) {
+            $res['fehler']++;
+            continue;
+        }
+        try {
+            $daten = connector_entschluesseln((string)($m['daten'] ?? ''), (string)$c['pem'], ['antworten']);
+        } catch (Throwable $ex) {
+            $res['fehler']++;
+            continue;
+        }
+        umfrage_antwort_speichern($u, $daten, (int)($m['ts'] ?? time()));
+        $res['uebernommen']++;
+    }
+    return $res;
+}
+
+/**
+ * Abholen und anmelden bei allen Connectoren für Abstimmungen – in dieser
+ * Reihenfolge: Beim Anmelden wirft der Connector die Antworten weg, deren
+ * Abstimmung nicht mehr dabei ist. Erst holen, dann die Liste erneuern.
+ */
+function connector_umfragen_sync(): array
+{
+    $res = ['connectoren' => 0, 'gesendet' => 0, 'geholt' => 0, 'uebernommen' => 0, 'fehler' => 0];
+    foreach (connector_liste('umfragen') as $c) {
+        $res['connectoren']++;
+        foreach (connector_fetch_umfragen($c) as $k => $v) {
+            $res[$k] += $v;
+        }
+        $push = connector_push_umfragen($c);
+        $res['gesendet'] += $push['gesendet'] ? 1 : 0;
+    }
+    state_save('umfrage_letzter_abruf', (string)time());
+    return $res;
+}
+
+/** Ist ein Abgleich der Abstimmungen fällig? */
+function connector_umfragen_due(?int $jetzt = null): bool
+{
+    $jetzt ??= time();
+    if (!connector_for('umfragen')) {
+        return false;
+    }
+    $intervall = max(1, setting_int('umfrage_intervall_minuten', 5)) * 60;
+    return $jetzt - (int)state_get('umfrage_letzter_abruf', '0') >= $intervall;
 }
 
 /* ==================================================================== */

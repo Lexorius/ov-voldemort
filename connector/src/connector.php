@@ -11,6 +11,7 @@ declare(strict_types=1);
  *   Veranstaltungen – Rückmeldungen auf Einladungen (kurze Adresse mit Code)
  *   Bestand         – "ist am Lagerort" für Funkgeräte und ganze Gruppen
  *   Zähler          – Zählerstände für Strom, Gas und Wasser
+ *   Abstimmungen    – Umfragen mit einer oder mehreren Seiten, Antworten verschlüsselt
  *
  * Beides nimmt er entgegen und gibt es an OV-Multitool weiter – mehr nicht.
  *
@@ -26,13 +27,16 @@ declare(strict_types=1);
  *    muss: Titel, Zeitpunkt, Ort und den Hinweistext. Wer eingeladen ist,
  *    weiß er nicht – von den Einladungscodes liegen nur Prüfsummen hier,
  *    und die Rückmeldungen sind verschlüsselt.
+ * 1c. Von den Abstimmungen kennt er die Fragen – die Seite muss sie zeigen.
+ *    Die Antworten nicht: Sie kommen verschlüsselt an, liegen verschlüsselt
+ *    und sind nach dem Abholen weg.
  * 2. Er redet nur mit einem gekoppelten OV-Multitool. Die Kopplung passiert
  *    einmalig mit einem Code, danach ist jede Anfrage signiert.
  *
  * Gespeichert wird in Dateien unterhalb von daten/ – keine Datenbank nötig.
  */
 
-const CON_VERSION = '1.5.0';
+const CON_VERSION = '1.6.0';
 
 /** Höchstalter einer signierten Anfrage in Sekunden (gegen Wiedereinspielen) */
 const CON_ZEITFENSTER = 300;
@@ -54,6 +58,12 @@ const CON_LIMIT_FEHLGRIFF = 60;
 const CON_AUFHEBEN_TAGE = 30;
 /** Größte erlaubte Rückmeldung in Byte */
 const CON_MAX_RUECKMELDUNG = 8192;
+/** Antworten je Abstimmung und Stunde – eine Helferversammlung stimmt in Minuten ab */
+const CON_LIMIT_UMFRAGE = 300;
+/** Größte erlaubte Antwort auf eine Abstimmung in Byte */
+const CON_MAX_ANTWORT = 16384;
+/** Was eine Frage sein kann */
+const CON_UMFRAGE_TYPEN = ['einfach', 'mehrfach', 'skala', 'janein', 'text', 'hinweis'];
 
 class ConException extends RuntimeException
 {
@@ -846,6 +856,207 @@ function con_zaehlerstaende_abholen(int $max = 200): array
 }
 
 /* ==================================================================== */
+/* Abstimmungen: Umfragen mit einer oder mehreren Seiten                */
+/* ==================================================================== */
+
+/** So steht der Code einer Abstimmung in der Ablage: als Prüfsumme. Reine Funktion. */
+function con_umfrage_kennung(string $code): string
+{
+    return hash('sha256', 'ovb-umfrage:' . strtoupper(trim($code)));
+}
+
+/**
+ * Die Seiten einer Abstimmung säubern: nur bekannte Fragetypen, Texte
+ * begrenzt, höchstens 20 Seiten mit je 50 Fragen und 30 Antwortmöglichkeiten.
+ * Was nicht taugt, fällt stillschweigend weg. Reine Funktion.
+ */
+function con_umfrage_seiten_saeubern(array $seiten): array
+{
+    $text = static fn(string $wert, int $laenge): string => mb_substr(
+        trim(preg_replace('/[\x00-\x08\x0b\x0c\x0e-\x1f]/u', '', $wert) ?? ''), 0, $laenge);
+    $out = [];
+    foreach (array_slice(array_values($seiten), 0, 20) as $s) {
+        if (!is_array($s)) {
+            continue;
+        }
+        $felder = [];
+        foreach (array_slice(array_values((array)($s['felder'] ?? [])), 0, 50) as $f) {
+            if (!is_array($f)) {
+                continue;
+            }
+            $typ = (string)($f['typ'] ?? '');
+            $id = (string)($f['id'] ?? '');
+            if (!in_array($typ, CON_UMFRAGE_TYPEN, true) || !preg_match('/^[a-z0-9_]{1,20}$/', $id)) {
+                continue;
+            }
+            $e = ['id' => $id, 'typ' => $typ, 'frage' => $text((string)($f['frage'] ?? ''), 500),
+                  'pflicht' => !empty($f['pflicht']) && $typ !== 'hinweis' ? 1 : 0];
+            if ($e['frage'] === '') {
+                continue;
+            }
+            if ($typ === 'einfach' || $typ === 'mehrfach') {
+                $optionen = [];
+                foreach (array_slice(array_values((array)($f['optionen'] ?? [])), 0, 30) as $o) {
+                    $o = $text(is_scalar($o) ? (string)$o : '', 200);
+                    if ($o !== '') {
+                        $optionen[] = $o;
+                    }
+                }
+                if (count($optionen) < 2) {
+                    continue;
+                }
+                $e['optionen'] = $optionen;
+            } elseif ($typ === 'skala') {
+                $min = max(0, min(10, (int)($f['min'] ?? 1)));
+                $e['min'] = $min;
+                $e['max'] = max($min + 1, min(10, (int)($f['max'] ?? 5)));
+                $e['links'] = $text((string)($f['links'] ?? ''), 60);
+                $e['rechts'] = $text((string)($f['rechts'] ?? ''), 60);
+            } elseif ($typ === 'text') {
+                $e['lang'] = !empty($f['lang']) ? 1 : 0;
+            }
+            $felder[] = $e;
+        }
+        if (!$felder) {
+            continue;
+        }
+        $out[] = ['titel' => $text((string)($s['titel'] ?? ''), 200),
+                  'text' => $text((string)($s['text'] ?? ''), 2000), 'felder' => $felder];
+    }
+    return $out;
+}
+
+/**
+ * Was der Connector über eine Abstimmung wissen darf: Titel, Beschreibung,
+ * Zeitfenster und die Fragen – das muss die Seite zeigen. Ohne Ende keine
+ * Abstimmung: Sie ist immer zeitlich begrenzt. Reine Funktion.
+ */
+function con_umfrage_saeubern(array $u): ?array
+{
+    $kennung = strtolower(trim((string)($u['kennung'] ?? '')));
+    if (!preg_match('/^[a-f0-9]{64}$/', $kennung)) {
+        return null;
+    }
+    $seiten = con_umfrage_seiten_saeubern((array)($u['seiten'] ?? []));
+    $ende = (int)($u['ende_ts'] ?? 0);
+    if (!$seiten || $ende <= 0) {
+        return null;
+    }
+    $text = static fn(string $wert, int $laenge): string => mb_substr(
+        trim(preg_replace('/[\x00-\x08\x0b\x0c\x0e-\x1f]/u', '', $wert) ?? ''), 0, $laenge);
+    return [
+        'kennung'      => $kennung,
+        'titel'        => $text((string)($u['titel'] ?? ''), 200),
+        'beschreibung' => $text((string)($u['beschreibung'] ?? ''), 2000),
+        'beginn_ts'    => max(0, (int)($u['beginn_ts'] ?? 0)),
+        'ende_ts'      => $ende,
+        'name_feld'    => !empty($u['name_feld']) ? 1 : 0,
+        'dank'         => $text((string)($u['dank'] ?? ''), 500),
+        'seiten'       => $seiten,
+    ];
+}
+
+/**
+ * Die Liste kommt komplett von OV-Multitool und ersetzt die bisherige.
+ * Antworten auf Abstimmungen, die nicht mehr dabei sind, werden weggeworfen –
+ * OV-Multitool holt deshalb erst ab und meldet dann an.
+ */
+function con_umfragen_setzen(array $liste): int
+{
+    $neu = [];
+    foreach ($liste as $u) {
+        $sauber = is_array($u) ? con_umfrage_saeubern($u) : null;
+        if ($sauber !== null) {
+            $neu[$sauber['kennung']] = $sauber;
+        }
+    }
+    con_schreiben('umfragen.json', $neu);
+    foreach (glob(con_dir('umfrageantworten') . '/*') ?: [] as $ordner) {
+        if (!isset($neu[basename($ordner)])) {
+            con_ordner_leeren($ordner);
+            @rmdir($ordner);
+        }
+    }
+    return count($neu);
+}
+
+/** Zu einem Code die Abstimmung – oder null, wenn es sie nicht (mehr) gibt */
+function con_umfrage(string $code): ?array
+{
+    if (!con_code_gueltig($code)) {
+        return null;
+    }
+    $u = con_lesen('umfragen.json')[con_umfrage_kennung($code)] ?? null;
+    return is_array($u) ? $u : null;
+}
+
+/** 'wartet' (noch nicht offen), 'offen' oder 'vorbei'. Reine Funktion. */
+function con_umfrage_zustand(array $u, ?int $jetzt = null): string
+{
+    $jetzt ??= time();
+    if ((int)($u['beginn_ts'] ?? 0) > $jetzt) {
+        return 'wartet';
+    }
+    return $jetzt > (int)($u['ende_ts'] ?? 0) ? 'vorbei' : 'offen';
+}
+
+/**
+ * Antwort ablegen. $inhalt ist bereits verschlüsselt – der Connector erfährt
+ * weder, was angekreuzt wurde, noch von wem. Außerhalb des Zeitfensters wird
+ * nichts angenommen.
+ */
+function con_umfrage_antwort_ablegen(string $code, string $inhalt): void
+{
+    $u = con_umfrage($code);
+    if ($u === null) {
+        throw new ConException('Diese Abstimmung gibt es nicht (mehr).');
+    }
+    $zustand = con_umfrage_zustand($u);
+    if ($zustand === 'wartet') {
+        throw new ConException('Diese Abstimmung ist noch nicht geöffnet.');
+    }
+    if ($zustand === 'vorbei') {
+        throw new ConException('Diese Abstimmung ist beendet.');
+    }
+    if ($inhalt === '' || strlen($inhalt) > CON_MAX_ANTWORT) {
+        throw new ConException('Die Antwort hat eine unerwartete Größe.');
+    }
+    if (!con_limit_frei('u:' . $u['kennung'], CON_LIMIT_UMFRAGE)) {
+        throw new ConException('Für diese Abstimmung kamen gerade sehr viele Antworten. Bitte gleich noch einmal.');
+    }
+    $ordner = con_dir('umfrageantworten/' . $u['kennung']);
+    $offen = glob($ordner . '/*.json') ?: [];
+    if (count($offen) >= CON_MAX_OFFEN * 4) {
+        sort($offen);
+        @unlink($offen[0]);
+    }
+    file_put_contents($ordner . '/' . sprintf('%d-%s.json', time(), bin2hex(random_bytes(5))),
+        json_encode(['ts' => time(), 'daten' => $inhalt], JSON_UNESCAPED_SLASHES));
+}
+
+/** Antworten abholen und dabei löschen – danach liegt hier nichts mehr */
+function con_umfrage_antworten_abholen(int $max = 200): array
+{
+    $out = [];
+    foreach (glob(con_dir('umfrageantworten') . '/*') ?: [] as $ordner) {
+        $kennung = basename($ordner);
+        $dateien = glob($ordner . '/*.json') ?: [];
+        sort($dateien);
+        foreach ($dateien as $datei) {
+            if (count($out) >= $max) {
+                break 2;
+            }
+            $roh = json_decode((string)@file_get_contents($datei), true);
+            @unlink($datei);
+            if (is_array($roh) && isset($roh['daten'])) {
+                $out[] = ['umfrage' => $kennung, 'ts' => (int)($roh['ts'] ?? 0), 'daten' => (string)$roh['daten']];
+            }
+        }
+    }
+    return $out;
+}
+
+/* ==================================================================== */
 /* Einstellungen von OV-Multitool: Betreiber, Impressum, Datenschutz     */
 /* ==================================================================== */
 
@@ -922,10 +1133,10 @@ function con_manifest_erzeugen(string $wurzel): array
 function con_daten_erwartet(string $name, bool $istOrdner): bool
 {
     if ($istOrdner) {
-        return in_array($name, ['meldungen', 'rueckmeldungen', 'bestandsmeldungen', 'zaehlerstaende'], true);
+        return in_array($name, ['meldungen', 'rueckmeldungen', 'bestandsmeldungen', 'zaehlerstaende', 'umfrageantworten'], true);
     }
     if (in_array($name, ['.htaccess', 'index.html', 'kopplung.json', 'kopplungscode.txt', 'fahrzeuge.json', 'einstellungen.json',
-                         'veranstaltungen.json', 'einladungen.json', 'bestand.json', 'zaehler.json',
+                         'veranstaltungen.json', 'einladungen.json', 'bestand.json', 'zaehler.json', 'umfragen.json',
                          'nonces.json', 'limit.json', 'protokoll.log'], true)) {
         return true;
     }
@@ -1070,6 +1281,8 @@ function con_status(): array
         'bestandsmeldungen' => $zaehlen('bestandsmeldungen'),
         'zaehler'         => count(con_lesen('zaehler.json')),
         'zaehlerstaende'  => $zaehlen('zaehlerstaende'),
+        'umfragen'        => count(con_lesen('umfragen.json')),
+        'umfrageantworten' => $zaehlen('umfrageantworten'),
         'schreibbar'      => is_writable(con_dir()),
         'frei'            => (int)max(0, (float)@disk_free_space(con_dir())),
     ];

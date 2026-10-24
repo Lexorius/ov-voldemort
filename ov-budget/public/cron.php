@@ -107,6 +107,19 @@ $abrufe = [
         }
         return $aus;
     },
+    'Abstimmungen' => static function (): array {
+        if (!connector_umfragen_due()) {
+            return [];
+        }
+        $res = connector_umfragen_sync();
+        if ($res['gesendet'] === 0 && $res['geholt'] === 0 && $res['fehler'] === 0) {
+            return [];
+        }
+        return [['status' => $res['fehler'] ? 'fehler' : 'ok', 'message' => sprintf(
+            '%d Antwort(en) geholt, %d übernommen%s%s', $res['geholt'], $res['uebernommen'],
+            $res['fehler'] ? ', ' . $res['fehler'] . ' unbrauchbar' : '',
+            $res['gesendet'] ? ', ' . $res['gesendet'] . ' Connector(en) neu versorgt' : '')]];
+    },
     'Connector-Fußzeile' => static function (): array {
         $r = connector_push_einstellungen_all();
         if ($r['gesendet'] === 0 && !$r['fehler']) {

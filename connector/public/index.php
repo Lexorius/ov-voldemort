@@ -21,6 +21,11 @@ declare(strict_types=1);
  *   ?p=zaehlerstand         Meldung dazu (POST, verschlüsselt)
  *   ?p=zaehlerliste         Zugänge setzen (POST, signiert)
  *   ?p=zaehler_abholen      Zählerstände abholen (POST, signiert)
+ *   ?p=umfrage&u=<Code>     Abstimmung: Umfrage mit einer oder mehreren Seiten
+ *   /<Code>                 dito über die kurze Adresse, wenn der Code keine Einladung ist
+ *   ?p=umfrage_antwort      Antwort auf eine Abstimmung (POST, verschlüsselt)
+ *   ?p=umfragen             Abstimmungen setzen (POST, signiert)
+ *   ?p=umfrage_abholen      Antworten abholen (POST, signiert)
  *   ?p=zustand              Zahlen für OV-Multitool (POST, signiert)
  *   ?p=pruefung             Selbstprüfung: Dateien und Befunde (POST, signiert)
  *   ?p=einstellungen        Betreiber, Impressum, Datenschutz setzen (POST, signiert)
@@ -56,6 +61,11 @@ if ($token === '') {
 }
 if ($code === '' && ($_SERVER['PATH_INFO'] ?? '') !== '') {
     $code = trim(nur_text($_SERVER['PATH_INFO']), '/');
+}
+// Code einer Abstimmung: ?u=…; über die kurze Adresse kommt er als ?e= an
+if ($code === '' && nur_text($_GET['u'] ?? '') !== '') {
+    $code = nur_text($_GET['u']);
+    $p = $p === '' ? 'umfrage' : $p;
 }
 if ($code !== '' && $p === '') {
     $p = 'einladung';
@@ -259,6 +269,46 @@ try {
             con_alte_wegwerfen('zaehlerstaende');
             antwort(['ok' => true, 'meldungen' => con_zaehlerstaende_abholen((int)($daten['max'] ?? 200))]);
 
+        /* ---------------- Abstimmung: Antwort aus dem Browser ---------------- */
+        case 'umfrage_antwort':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                fehler('Nur POST.', 405);
+            }
+            $daten = json_decode(koerper_lesen(CON_MAX_ANTWORT + 1024), true);
+            if (!is_array($daten)) {
+                fehler('Kein gültiges JSON.');
+            }
+            if (!con_limit_frei('ip:' . substr(sha1((string)($_SERVER['REMOTE_ADDR'] ?? '')), 0, 16), 300)) {
+                fehler('Zu viele Anfragen von diesem Anschluss. Bitte später erneut.', 429);
+            }
+            con_umfrage_antwort_ablegen(nur_text($daten['u'] ?? ''), nur_text($daten['daten'] ?? ''));
+            antwort(['ok' => true]);
+
+        /* ---------------- Abstimmungen: von OV-Multitool, signiert ---------------- */
+        case 'umfragen':
+            $daten = con_pruefe_anfrage(koerper_lesen(1048576),
+                (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'umfragen');
+            $anzahl = con_umfragen_setzen((array)($daten['umfragen'] ?? []));
+            con_notiz('umfragen.gesetzt', (string)$anzahl);
+            antwort(['ok' => true, 'umfragen' => $anzahl]);
+
+        case 'umfrage_abholen':
+            $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'umfrage_abholen');
+            con_alte_wegwerfen('umfrageantworten');
+            antwort(['ok' => true, 'antworten' => con_umfrage_antworten_abholen((int)($daten['max'] ?? 200))]);
+
+        /* ---------------- Abstimmung: die Umfrageseite ---------------- */
+        case 'umfrage':
+            $umfrage = con_umfrage($code);
+            if ($umfrage === null && !con_fehlgriff()) {
+                seiten_kopf();
+                http_response_code(429);
+                exit("Zu viele Versuche von diesem Anschluss. Bitte später erneut.\n");
+            }
+            seiten_kopf(true);
+            require dirname(__DIR__) . '/src/seite_umfrage.php';
+            exit;
+
         /* ---------------- Zähler: Seite am Zähler ---------------- */
         case 'zaehler':
             $eintrag = con_zaehler($token);
@@ -303,6 +353,12 @@ try {
         /* ---------------- Einladungsseite ---------------- */
         case 'einladung':
             $einladung = con_einladung($code);
+            // Einladungen und Abstimmungen teilen sich die kurze Adresse
+            if ($einladung === null && ($umfrage = con_umfrage($code)) !== null) {
+                seiten_kopf(true);
+                require dirname(__DIR__) . '/src/seite_umfrage.php';
+                exit;
+            }
             // Wer die richtige Adresse hat, darf sie beliebig oft öffnen.
             // Wer daneben greift, wird gebremst – sonst ließen sich Codes durchprobieren.
             if ($einladung === null && !con_fehlgriff()) {

@@ -431,7 +431,9 @@ function event_code_neu(int $laenge): string
         for ($i = 0; $i < $laenge; $i++) {
             $code .= $zeichen[random_int(0, $anzahl - 1)];
         }
-        if (!db_val('SELECT id FROM event_guests WHERE code = ?', [$code])) {
+        // Abstimmungen teilen sich die kurze Adresse mit den Einladungen
+        if (!db_val('SELECT id FROM event_guests WHERE code = ?', [$code])
+            && !db_val('SELECT id FROM umfragen WHERE code = ?', [$code])) {
             return $code;
         }
     }

@@ -32,6 +32,15 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
   Lieferant, eine Rechnung; Buchungen gehören zu mehreren Wünschen und
   Fahrzeugen
 
+### Abstimmungen
+- **Umfragen** mit einer oder mehreren Seiten, hier zusammengeklickt: Auswahl,
+  Ankreuzen, Ja/Nein, Skala, Freitext, Hinweistexte, Pflichtfragen
+- Über den Connector im Netz: **QR-Code** zum Scannen, **Link** zum
+  Weitergeben, **Zeitfenster** mit Beginn und Ende
+- Antworten werden im Browser **verschlüsselt**, liegen beim Connector nur
+  als Geheimtext und sind nach dem Abholen dort gelöscht; Auswertung mit
+  Balken, Durchschnitt und CSV
+
 ### Budget
 - Jahresbudget, **Ausgaben** (Haus, Nebenkosten, Getränke, Tanken …) und
   **Einnahmen** (Einsätze, technische Hilfeleistung, Spenden …)

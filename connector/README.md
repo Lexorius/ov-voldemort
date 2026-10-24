@@ -15,6 +15,10 @@ Aufgaben:
   „alle 8 Geräte" oder eine kleinere Zahl.
 * **Zähler** – Zählerstand melden. Am Strom-, Gas- oder Wasserzähler hängt
   ein QR-Code; wer abliest, tippt den Stand ein.
+* **Abstimmungen** – Umfragen mit einer oder mehreren Seiten, in OV-Multitool
+  gestaltet. Hinter einer kurzen Adresse oder einem QR-Code steht die
+  Umfrageseite; sie nimmt nur im Zeitfenster an. Die Antworten kommen
+  verschlüsselt an und sind nach dem Abholen gelöscht.
 
 Beides ohne Anmeldung, ohne Zugang zu OV-Multitool und ohne Home Assistant.
 Welche der beiden Aufgaben ein Connector übernimmt, steht in OV-Multitool unter
@@ -43,6 +47,10 @@ Er weiß auch **nicht, um wen es geht**:
 * **Zähler:** Gespeichert sind nur die Prüfsumme des Zugangs, die Art und die
   Einheit – ohne die ließe sich „kWh" nicht schreiben. Name, Nummer und die
   gemeldeten Stände kennt der Server nicht.
+* **Abstimmungen:** Titel, Beschreibung, Zeitfenster und die Fragen liegen im
+  Klartext hier – die Umfrageseite muss sie zeigen. Vom Code nur die
+  Prüfsumme. **Die Antworten nicht:** Sie werden im Browser verschlüsselt,
+  liegen hier nur als Geheimtext und werden beim Abholen gelöscht.
 * **Bestand:** Gespeichert sind nur die Prüfsumme des Zugangs, ob es ein
   einzelnes Gerät oder eine Gruppe ist und wie viele Geräte dazugehören – ohne
   diese Zahl ließe sich „alle 8 Geräte" nicht schreiben. Bezeichnung und

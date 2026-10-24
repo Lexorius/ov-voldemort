@@ -165,6 +165,13 @@ $routes = [
     'admin_ki'           => 'admin/ki',
     'admin_geo'          => 'admin/geo',
     'admin_nav'          => 'admin/nav',
+
+    // Abstimmungen
+    'umfragen'           => 'umfragen',
+    'umfrage'            => 'umfrage',
+    'umfrage_edit'       => 'umfrage_edit',
+    'umfrage_action'     => 'umfrage_action',
+    'umfrage_export'     => 'umfrage_export',
 ];
 
 $route = (string)($_GET['p'] ?? 'dashboard');

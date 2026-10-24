@@ -1,5 +1,20 @@
 # Änderungsverlauf
 
+## 2.1.53.0
+
+- **Neues Modul Abstimmungen:** Umfragen mit einer oder mehreren Seiten werden
+  in der Oberfläche zusammengeklickt (Auswahl, Ankreuzen, Ja/Nein, Skala,
+  Freitext, Hinweistexte, Pflichtfragen) und über den Connector ins Netz
+  gestellt. QR-Code zum Scannen und Drucken, Link und QR-Bild zum
+  Weitergeben, der Code auch zum Eintippen auf der Startseite des
+  Connectors. Jede Abstimmung hat ein Zeitfenster; außerhalb nimmt die Seite
+  nichts an. Die Antworten werden im Browser verschlüsselt, liegen beim
+  Connector nur als Geheimtext und werden beim Abholen dort gelöscht.
+  Auswertung je Frage mit Balken, Durchschnitt und CSV; Antworten und
+  Abstimmung lassen sich löschen. Connector-Fassung 1.6.0 (Verwendung
+  „Abstimmungen" in der Verwaltung ankreuzen und die Dateien auf dem
+  Webserver erneuern).
+
 ## 2.1.52.0
 
 - **Nebenkosten-Hochrechnung aus den Zählern:** Die fehlenden Monate bis

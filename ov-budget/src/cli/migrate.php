@@ -2033,6 +2033,46 @@ SQL);
         $pdo->exec("ALTER TABLE expenses ADD COLUMN wiederkehrend ENUM('','monatlich','vierteljaehrlich','jaehrlich') NOT NULL DEFAULT '' AFTER referenz");
     }
     $merken('080_wiederkehrend');
+
+    /* ---------- 081: Abstimmungen ---------- */
+    if (ovb_table_exists($pdo, 'connectors') && !ovb_column_exists($pdo, 'connectors', 'fuer_umfragen')) {
+        $pdo->exec('ALTER TABLE connectors ADD COLUMN fuer_umfragen TINYINT(1) NOT NULL DEFAULT 0 AFTER fuer_verbrauch');
+    }
+    if (!ovb_table_exists($pdo, 'umfragen')) {
+        $pdo->exec("CREATE TABLE umfragen (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  titel         VARCHAR(200)  NOT NULL,
+  beschreibung  TEXT          NULL,
+  code          VARCHAR(16)   NOT NULL,
+  connector_id  INT UNSIGNED  NULL,
+  status        ENUM('entwurf','offen','geschlossen') NOT NULL DEFAULT 'entwurf',
+  beginn        DATETIME      NULL,
+  ende          DATETIME      NOT NULL,
+  name_feld     TINYINT(1)    NOT NULL DEFAULT 0,
+  dank          VARCHAR(500)  NOT NULL DEFAULT '',
+  seiten        MEDIUMTEXT    NULL,
+  created_by    INT UNSIGNED  NULL,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_umfrage_code (code),
+  KEY idx_umfrage_status (status, ende)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    if (!ovb_table_exists($pdo, 'umfrage_antworten')) {
+        $pdo->exec("CREATE TABLE umfrage_antworten (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  umfrage_id    INT UNSIGNED  NOT NULL,
+  ts            DATETIME      NOT NULL,
+  name          VARCHAR(60)   NOT NULL DEFAULT '',
+  daten         MEDIUMTEXT    NOT NULL,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_umfrage_antwort (umfrage_id, ts),
+  CONSTRAINT fk_umfrage_antwort FOREIGN KEY (umfrage_id) REFERENCES umfragen(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    $merken('081_umfragen');
 }
 
 /**

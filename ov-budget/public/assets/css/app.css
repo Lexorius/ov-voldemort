@@ -735,3 +735,25 @@ pre.raw {
 
 /* Fortschritt beim stückweisen Upload (STAN) */
 .stan__fortschritt { margin-top: .5rem; }
+
+/* Abstimmungen: Gestalter, Vorschau, Ergebnisse */
+.umfrage-seite { border-left: 4px solid var(--accent); }
+.umfrage-seite h3 { margin: 0; font-size: 1rem; }
+.umfrage-frage { border: 1px solid var(--border); border-radius: 8px; padding: .6rem .8rem; margin: .6rem 0; background: var(--bg, #fff); }
+.umfrage-frage__kopf { display: flex; justify-content: space-between; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .3rem; }
+.umfrage-frage__schalter { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .3rem; }
+.umfrage-frage__schalter input { margin-right: .3rem; }
+.umfrage-plus { align-items: center; margin-top: .4rem; }
+.umfrage-plus select { max-width: 18rem; }
+.umfrage-seite-vorschau { margin-bottom: .8rem; }
+.umfrage-fragen { margin: .3rem 0 0; padding-left: 1.4rem; }
+.umfrage-fragen li { margin-bottom: .3rem; }
+.umfrage-ergebnis { padding: .7rem 0; border-top: 1px solid var(--border); }
+.umfrage-ergebnis:first-of-type { border-top: 0; }
+.umfrage-ergebnis__frage { font-weight: 600; margin-bottom: .4rem; }
+.umfrage-texte { margin: 0; padding-left: 1.2rem; }
+.umfrage-texte li { margin-bottom: .25rem; }
+.balken-zeile { display: grid; grid-template-columns: minmax(6rem, 1fr) 2fr auto; gap: .6rem; align-items: center; margin: .2rem 0; font-size: .92rem; }
+.balken-zeile__zahl { font-variant-numeric: tabular-nums; color: var(--ink-soft); white-space: nowrap; }
+.balken { display: block; height: 10px; background: var(--border); border-radius: 5px; overflow: hidden; }
+.balken span { display: block; height: 100%; background: var(--accent); }

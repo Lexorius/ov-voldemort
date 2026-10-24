@@ -39,6 +39,8 @@ function nav_module(): array
                         'darf' => can('view_contacts')],
         'events'    => ['label' => (string)setting('veranstaltung_modul_name', 'Veranstaltungen'), 'icon' => '◍',
                         'route' => 'events', 'aktiv' => ['events', 'event', 'event_edit', 'verpflegung_saetze', 'verpflegung_satz_edit'], 'darf' => can('view_events')],
+        'umfragen'  => ['label' => (string)setting('umfrage_modul_name', 'Abstimmungen'), 'icon' => '🗳',
+                        'route' => 'umfragen', 'aktiv' => ['umfragen', 'umfrage', 'umfrage_edit'], 'darf' => can('view_umfragen')],
         'standorte' => ['label' => (string)setting('standort_modul_name', 'Standorte'), 'icon' => '🏢',
                         'route' => 'standorte', 'aktiv' => ['standorte'], 'darf' => true],
         'thw'       => ['label' => (string)setting('thw_modul_name', 'THW-Kontakte'), 'icon' => '⛑',

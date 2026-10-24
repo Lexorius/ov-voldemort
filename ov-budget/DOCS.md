@@ -279,6 +279,10 @@ sie enthalten.
   oder 00 beginnen, bleiben bei ihrem Land. Steht im Feld ein Hinweis statt
   einer Nummer („über das Büro"), bleibt der Text unverändert stehen.
   Bestehende Kontakte werden beim nächsten Start einmalig umgeschrieben.
+* **Abstimmungen** – Umfragen mit einer oder mehreren Seiten, hier
+  zusammengeklickt und über den Connector im Netz; QR-Code zum Scannen und
+  Link zum Weitergeben, Zeitfenster, Antworten verschlüsselt – siehe den
+  eigenen Abschnitt unten.
 * **Veranstaltungen** – Termin, Ort, **Art** (Ausbildung, Übung,
   Helferversammlung, Empfang, Grillabend, Feier, Tag der offenen Tür,
   Jugendveranstaltung – in der Verwaltung erweiterbar) und Status, dazu ein Budgettopf mit
@@ -1035,6 +1039,82 @@ daneben, was für die Veranstaltung schon gebucht ist. Im Budget zählt die
 Kalkulation als **geplante Ausgabe**, bis sie gebucht ist; „Als geplante
 Buchung vormerken" legt sie als Buchung mit Stand *geplant* an, die nach der
 Rechnung auf *bezahlt* gesetzt wird.
+
+## Abstimmungen
+
+Umfragen für den Ortsverband: Termin fürs Sommerfest, Verpflegung bei der
+Übung, Stimmungsbild zur Helferversammlung. Gestaltet wird in OV-Multitool,
+beantwortet wird draußen – ohne Anmeldung, über den Connector.
+
+**Gestalten.** *Abstimmungen → + Abstimmung.* Erst die Eckdaten (Titel,
+Beschreibung, Zeitfenster, Connector), dann die Seiten: Jede Seite bekommt
+eine freiwillige Überschrift, eine Einleitung und beliebig viele Fragen.
+Fragetypen:
+
+| Typ | Antwort |
+|---|---|
+| Eine Antwort | genau eine Antwortmöglichkeit (Auswahl) |
+| Mehrere Antworten | mehrere Antwortmöglichkeiten (Ankreuzen) |
+| Ja / Nein | ja oder nein |
+| Skala | eine Zahl zwischen zwei Grenzen (0 bis 10), mit Beschriftung links und rechts |
+| Freitext | ein kurzer oder langer Text |
+| Hinweistext | keine Frage – ein Absatz zwischen den Fragen |
+
+Jede Frage kann Pflicht sein. Mehrere Seiten zeigt das Handy nacheinander
+mit *Weiter* und *Zurück* und einem Fortschrittsbalken; Pflichtfragen werden
+je Seite geprüft. Am Ende lässt sich freiwillig nach dem Namen fragen – aus
+heißt: die Abstimmung ist anonym.
+
+**Zeitlich begrenzt.** Das Ende ist Pflicht, der Beginn freiwillig (leer =
+sofort nach der Freigabe). Außerhalb des Fensters nimmt die Seite nichts an
+und sagt das; einen Tag nach dem Ende verschwindet die Abstimmung vom
+Connector ganz.
+
+**Freigeben.** Eine neue Abstimmung ist ein Entwurf und beim Connector
+unbekannt. *Freigeben* meldet sie an – dann steht sie im Netz. *Schließen*
+holt vorher ab, was noch draußen liegt, und meldet sie ab.
+
+**QR-Code und Link.** Auf der Seite der Abstimmung stehen der QR-Code
+(Leinwand, schwarzes Brett, *Drucken*) und der Link zum Weitergeben
+(*Link kopieren*, *QR als Bild* für Nachrichten). Die Adresse ist dieselbe
+kurze wie bei den Einladungen:
+
+```
+https://i.example.de/AB23CD
+```
+
+Der Code lässt sich auch auf der Startseite des Connectors eintippen.
+*Code neu* macht den alten QR-Code und Link ungültig.
+
+**Verschlüsselt, und beim Connector nichts aufgehoben.** Die Antwort wird im
+Browser für den Schlüssel von OV-Multitool verschlüsselt (ECDH auf P-256,
+AES-256-GCM – derselbe Weg wie bei Standortmeldungen und Einladungen). Beim
+Connector liegt nur Geheimtext; er weiß, dass jemand geantwortet hat, nicht
+was und nicht von wem. Der automatische Abruf holt die Antworten im Takt von
+*Antworten abholen alle (Minuten)* (Vorgabe fünf) und **löscht sie dabei beim
+Connector**. Was dort länger als 30 Tage liegt, weil niemand abholt, wirft
+der Connector selbst weg.
+
+Was der Connector dabei erfährt und was nicht:
+
+| Liegt dort | Liegt dort nicht |
+|---|---|
+| Titel, Beschreibung, Zeitfenster, Fragen | Antworten im Klartext |
+| Prüfsumme des Codes | der Code selbst |
+| verschlüsselte Antworten bis zum Abholen | Namen |
+
+**Ergebnisse.** Die Seite der Abstimmung zählt je Frage aus: Balken mit
+Anzahl und Prozent, bei Skalen der Durchschnitt und die Verteilung, bei
+Freitext die Liste. *CSV* liefert eine Zeile je Antwort. *Antworten
+löschen* räumt alles weg; das Löschen der Abstimmung nimmt die Antworten
+mit. Eine Mehrfachabgabe vom selben Gerät wird auf dem Gerät gemerkt und
+als Hinweis gezeigt, aber nicht verhindert – wer zählen will, wer abstimmt,
+fragt nach dem Namen.
+
+**Rechte.** Gestalten, freigeben und löschen kann die Leitung. Ob alle
+Angemeldeten die Abstimmungen und Ergebnisse sehen, steht in den
+Einstellungen (*Alle Angemeldeten sehen Abstimmungen und Ergebnisse*,
+Vorgabe aus).
 
 ## Zeitzone
 

@@ -59,6 +59,9 @@
             if ((int)($c['fuer_verbrauch'] ?? 0) === 1) {
                 $zwecke[] = 'Zähler';
             }
+            if ((int)($c['fuer_umfragen'] ?? 0) === 1) {
+                $zwecke[] = 'Abstimmungen';
+            }
           ?>
           <tr>
             <td><a href="<?= e(url('admin_connector', ['id' => $c['id']])) ?>"><?= e((string)$c['name']) ?></a>

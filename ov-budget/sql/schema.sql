@@ -887,6 +887,7 @@ CREATE TABLE IF NOT EXISTS connectors (
   fuer_veranstaltungen TINYINT(1)   NOT NULL DEFAULT 0,
   fuer_bestand         TINYINT(1)   NOT NULL DEFAULT 0,
   fuer_verbrauch       TINYINT(1)   NOT NULL DEFAULT 0,
+  fuer_umfragen        TINYINT(1)   NOT NULL DEFAULT 0,
   is_active            TINYINT(1)   NOT NULL DEFAULT 1,
   -- unser Schluesselpaar fuer diesen Connector und sein oeffentlicher Schluessel
   pem                  TEXT         NULL,
@@ -1610,6 +1611,43 @@ CREATE TABLE IF NOT EXISTS budget_prognosen (
   notiz         VARCHAR(200)  NOT NULL DEFAULT '',
   PRIMARY KEY (id),
   UNIQUE KEY uq_prognose (jahr, kategorie_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Abstimmungen: Umfragen mit Seiten (JSON), ueber den Connector im Netz, zeitlich begrenzt
+CREATE TABLE IF NOT EXISTS umfragen (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  titel         VARCHAR(200)  NOT NULL,
+  beschreibung  TEXT          NULL,
+  -- Code hinter der kurzen Adresse; teilt sich den Raum mit den Einladungscodes
+  code          VARCHAR(16)   NOT NULL,
+  connector_id  INT UNSIGNED  NULL,
+  status        ENUM('entwurf','offen','geschlossen') NOT NULL DEFAULT 'entwurf',
+  beginn        DATETIME      NULL,
+  ende          DATETIME      NOT NULL,
+  name_feld     TINYINT(1)    NOT NULL DEFAULT 0,
+  dank          VARCHAR(500)  NOT NULL DEFAULT '',
+  -- Seiten mit Fragen als JSON, siehe src/lib/umfragen.php
+  seiten        MEDIUMTEXT    NULL,
+  created_by    INT UNSIGNED  NULL,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_umfrage_code (code),
+  KEY idx_umfrage_status (status, ende)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Entschluesselte Antworten; beim Connector sind sie nach dem Abholen geloescht
+CREATE TABLE IF NOT EXISTS umfrage_antworten (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  umfrage_id    INT UNSIGNED  NOT NULL,
+  ts            DATETIME      NOT NULL,
+  name          VARCHAR(60)   NOT NULL DEFAULT '',
+  -- Antworten je Frage als JSON {feld: wert}
+  daten         MEDIUMTEXT    NOT NULL,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_umfrage_antwort (umfrage_id, ts),
+  CONSTRAINT fk_umfrage_antwort FOREIGN KEY (umfrage_id) REFERENCES umfragen(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS=1;
