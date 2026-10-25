@@ -164,6 +164,7 @@ $routes = [
     'admin_backup'       => 'admin/backup',
     'admin_ki'           => 'admin/ki',
     'admin_geo'          => 'admin/geo',
+    'admin_mail'         => 'admin/mail',
     'admin_nav'          => 'admin/nav',
 
     // Abstimmungen

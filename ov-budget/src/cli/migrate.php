@@ -2051,6 +2051,11 @@ SQL);
   name_feld     TINYINT(1)    NOT NULL DEFAULT 0,
   dank          VARCHAR(500)  NOT NULL DEFAULT '',
   seiten        MEDIUMTEXT    NULL,
+  bericht_rhythmus   ENUM('','taeglich','woechentlich','ende') NOT NULL DEFAULT '',
+  bericht_kontakt_id INT UNSIGNED NULL,
+  bericht_ki         TINYINT(1)   NOT NULL DEFAULT 0,
+  bericht_zuletzt    DATETIME     NULL,
+  bericht_ende_am    DATETIME     NULL,
   created_by    INT UNSIGNED  NULL,
   created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -2073,6 +2078,17 @@ SQL);
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
     }
     $merken('081_umfragen');
+
+    /* ---------- 082: Bericht per E-Mail an den Abstimmungen ---------- */
+    if (ovb_table_exists($pdo, 'umfragen') && !ovb_column_exists($pdo, 'umfragen', 'bericht_rhythmus')) {
+        $pdo->exec("ALTER TABLE umfragen
+            ADD COLUMN bericht_rhythmus ENUM('','taeglich','woechentlich','ende') NOT NULL DEFAULT '' AFTER seiten,
+            ADD COLUMN bericht_kontakt_id INT UNSIGNED NULL AFTER bericht_rhythmus,
+            ADD COLUMN bericht_ki TINYINT(1) NOT NULL DEFAULT 0 AFTER bericht_kontakt_id,
+            ADD COLUMN bericht_zuletzt DATETIME NULL AFTER bericht_ki,
+            ADD COLUMN bericht_ende_am DATETIME NULL AFTER bericht_zuletzt");
+    }
+    $merken('082_umfrage_bericht');
 }
 
 /**

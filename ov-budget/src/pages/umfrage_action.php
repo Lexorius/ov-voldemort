@@ -92,6 +92,15 @@ switch (post_str('action')) {
         }
         break;
 
+    case 'bericht':
+        if (!mail_eingerichtet()) {
+            flash('error', 'Der E-Mail-Versand ist nicht eingerichtet (Verwaltung → E-Mail).');
+            break;
+        }
+        $r = umfrage_bericht_senden($umfrage, in_array(umfrage_zustand($umfrage), ['abgelaufen', 'geschlossen'], true) ? 'ende' : 'zwischenstand');
+        flash($r['ok'] ? 'success' : 'error', e($r['text']));
+        break;
+
     case 'antworten_loeschen':
         $n = umfrage_antworten_loeschen($umfrage);
         flash('success', sprintf('%d Antwort(en) gelöscht.', $n));

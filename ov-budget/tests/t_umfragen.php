@@ -17,9 +17,10 @@ function db_all(string $sql, array $p = []): array {
         return $r;
     }
     if (str_contains($sql, 'FROM umfrage_antworten')) { return $GLOBALS['zeilen']; }
+    if (str_contains($sql, 'FROM umfragen ')) { return $GLOBALS['umfragen_zeilen'] ?? []; }
     return [];
 }
-function db_row(string $sql, array $p = []): ?array { return null; }
+function db_row(string $sql, array $p = []): ?array { return str_contains($sql, 'FROM contacts') ? ($GLOBALS['kontakt'] ?? null) : null; }
 function db_val(string $sql, array $p = [], mixed $d = null) { return $d; }
 function db_exec(string $sql, array $p = []): int { $GLOBALS['execs'][] = [$sql, $p]; return 3; }
 function db_insert(string $t, array $d): int { $GLOBALS['inserts'][] = [$t, $d]; return 7; }
@@ -27,7 +28,12 @@ function db_update(string $t, array $d, string $w, array $p): int { $GLOBALS['up
 function can(string $was, mixed $ctx = null): bool { return true; }
 function current_user(): ?array { return ['id' => 1, 'role' => 'leitung']; }
 $app = dirname(__DIR__);
-foreach (['util', 'settings', 'lists', 'view', 'events', 'connector', 'umfragen'] as $lib) { require $app . '/src/lib/' . $lib . '.php'; }
+foreach (['util', 'settings', 'lists', 'view', 'events', 'connector', 'contacts', 'mail', 'umfragen'] as $lib) { require $app . '/src/lib/' . $lib . '.php'; }
+// KI-Attrappe: an/aus und eine feste Antwort
+$GLOBALS['ki_an'] = false;
+function ki_aktiv(): bool { return (bool)$GLOBALS['ki_an']; }
+function ki_text_antwort(string $prompt, int $max = 6000): string { $GLOBALS['ki_prompt'] = $prompt; if (!empty($GLOBALS['ki_kaputt'])) { throw new RuntimeException('Ollama weg'); } return "Die Mehrheit will Samstag.\n"; }
+function ki_text_kuerzen(string $t, int $max): string { return mb_substr($t, 0, $max); }
 
 $ok = 0; $fail = 0;
 $check = function (string $n, bool $c) use (&$ok, &$fail) { if ($c) { $ok++; } else { $fail++; echo "FAIL: $n\n"; } };
@@ -186,5 +192,74 @@ $html = render_partial('umfrage_edit', ['umfrage' => $umfrage, 'errors' => ['Bit
 $check('Bearbeiten: Gestalter, JSON-Feld, Fehler, Warnung bei Antworten, Connector gewählt', str_contains($html, 'data-umfrage-editor')
     && str_contains($html, 'id="seiten_json"') && str_contains($html, 'Bitte einen Titel angeben.') && str_contains($html, 'schon 4 Antwort(en)')
     && str_contains($html, 'value="3" selected') && str_contains($html, 'value="2026-11-08T20:00"') && str_contains($html, 'name="name_feld" value="1" checked'));
+
+/* ---------- Bericht per E-Mail ---------- */
+$GLOBALS['kontakt'] = ['id' => 9, 'vorname' => 'Max', 'nachname' => 'Muster', 'organisation' => '', 'email' => 'max@example.de', 'anrede' => '', 'titel' => ''];
+$check('Rhythmus-Texte', umfrage_bericht_text_rhythmus('taeglich') === 'täglich – und zum Abschluss' && umfrage_bericht_text_rhythmus('x') === 'kein Bericht');
+$ub = ['id' => 7, 'titel' => 'Sommerfest', 'beschreibung' => '', 'status' => 'offen', 'beginn' => '2026-10-20 10:00:00', 'ende' => '2026-10-31 20:00:00',
+       'created_at' => '2026-10-19 12:00:00', 'bericht_rhythmus' => 'taeglich', 'bericht_kontakt_id' => 9, 'bericht_ki' => 0,
+       'bericht_zuletzt' => null, 'bericht_ende_am' => null, 'name_feld' => 1, 'seiten' => $neu['seiten']];
+$t = static fn(string $s): int => (int)strtotime($s);
+$check('täglich: erster Bericht am Morgen nach dem Anlegen', umfrage_bericht_faellig($ub, $t('2026-10-24 07:00:00')) === 'taeglich');
+$check('täglich: vor der Stunde nicht', umfrage_bericht_faellig($ub, $t('2026-10-24 06:59:00')) === null);
+$check('täglich: heute schon geschickt', umfrage_bericht_faellig(['bericht_zuletzt' => '2026-10-24 07:01:00'] + $ub, $t('2026-10-24 18:00:00')) === null
+    && umfrage_bericht_faellig(['bericht_zuletzt' => '2026-10-23 07:01:00'] + $ub, $t('2026-10-24 18:00:00')) === 'taeglich');
+$check('vor dem Beginn nichts', umfrage_bericht_faellig($ub, $t('2026-10-19 12:00:00')) === null);
+$check('wöchentlich: sieben Tage nach dem letzten', umfrage_bericht_faellig(['bericht_rhythmus' => 'woechentlich', 'bericht_zuletzt' => '2026-10-20 08:00:00'] + $ub, $t('2026-10-26 12:00:00')) === null
+    && umfrage_bericht_faellig(['bericht_rhythmus' => 'woechentlich', 'bericht_zuletzt' => '2026-10-20 08:00:00'] + $ub, $t('2026-10-27 09:00:00')) === 'woechentlich');
+$check('nur am Ende: vorher nichts, danach nach der Karenz einmal', umfrage_bericht_faellig(['bericht_rhythmus' => 'ende'] + $ub, $t('2026-10-30 09:00:00')) === null
+    && umfrage_bericht_faellig(['bericht_rhythmus' => 'ende'] + $ub, $t('2026-10-31 20:05:00')) === null
+    && umfrage_bericht_faellig(['bericht_rhythmus' => 'ende'] + $ub, $t('2026-10-31 20:11:00')) === 'ende'
+    && umfrage_bericht_faellig(['bericht_rhythmus' => 'ende', 'bericht_ende_am' => '2026-10-31 20:12:00'] + $ub, $t('2026-11-01 09:00:00')) === null);
+$check('täglich bekommt am Ende auch den Abschluss', umfrage_bericht_faellig($ub, $t('2026-11-01 09:00:00')) === 'ende');
+$check('ohne Kontakt, ohne Rhythmus, nicht offen: nichts', umfrage_bericht_faellig(['bericht_kontakt_id' => 0] + $ub, $t('2026-10-24 09:00:00')) === null
+    && umfrage_bericht_faellig(['bericht_rhythmus' => ''] + $ub, $t('2026-10-24 09:00:00')) === null
+    && umfrage_bericht_faellig(['status' => 'entwurf'] + $ub, $t('2026-10-24 09:00:00')) === null);
+
+$text = umfrage_bericht_text($ub, $sauber, $antworten, 'taeglich', null, $t('2026-10-24 07:00:00'), 'Max Muster');
+$check('Berichtstext: Kopf, Zählung, Skala, Freitext, Namen, Fuß', str_contains($text, 'Abstimmung „Sommerfest"') && str_contains($text, 'Zwischenstand vom 24.10.2026, 07:00 Uhr')
+    && str_contains($text, 'Antworten: 4') && str_contains($text, "1. Welcher Tag? (3 Antworten)\n   Samstag: 2 (67 %)") && str_contains($text, 'Mehrfachauswahl')
+    && str_contains($text, 'Durchschnitt 4,0') && str_contains($text, '– Super') && str_contains($text, "– Zeile 1\n     Zeile 2")
+    && str_contains($text, 'Ja: 2 (67 %) · Nein: 1 (33 %)') && str_contains($text, 'Namen (freiwillig angegeben): Anna, Ben') && str_contains($text, 'verschickt an Max Muster'));
+$check('Ergebnisbericht mit KI oben', str_contains(umfrage_bericht_text($ub, $sauber, $antworten, 'ende', 'Alles gut.', $t('2026-11-01 09:00:00')), 'Ergebnis – die Abstimmung ist beendet')
+    && str_contains(umfrage_bericht_text($ub, $sauber, [], 'ende', 'Alles gut.'), "--- Zusammenfassung (KI, ohne Gewähr) ---\nAlles gut."));
+$check('Betreff', umfrage_bericht_betreff($ub, 'ende') === 'Ergebnis der Abstimmung „Sommerfest"'
+    && umfrage_bericht_betreff($ub, 'taeglich', $t('2026-10-24 07:00:00')) === 'Abstimmung „Sommerfest": Zwischenstand 24.10.2026');
+
+$check('KI aus: keine Zusammenfassung', umfrage_bericht_ki('x') === null);
+$GLOBALS['ki_an'] = true;
+$check('KI an: Zusammenfassung, Prompt enthält den Bericht', umfrage_bericht_ki('Zahlen hier') === 'Die Mehrheit will Samstag.'
+    && str_contains($GLOBALS['ki_prompt'], 'Zahlen hier') && str_contains($GLOBALS['ki_prompt'], 'ohne JSON'));
+$GLOBALS['ki_kaputt'] = true;
+$check('KI kaputt: Bericht geht ohne', umfrage_bericht_ki('x') === null);
+$GLOBALS['ki_kaputt'] = false;
+
+$post = [];
+$GLOBALS['mail_attrappe'] = static function (string $an, string $betreff, string $text, string $name) use (&$post): void { $post[] = [$an, $betreff, $text, $name]; };
+$GLOBALS['zeilen'] = array_map(static fn($a) => ['ts' => $a['ts'], 'name' => $a['name'], 'daten' => json_encode($a['antworten'])], $antworten);
+$GLOBALS['updates'] = [];
+$r = umfrage_bericht_senden(['bericht_ki' => 1] + $ub, 'ende', $t('2026-11-01 09:00:00'));
+$check('Bericht verschickt, mit KI, Zeitpunkte gemerkt', $r['ok'] && $r['ki'] && count($post) === 1 && $post[0][0] === 'max@example.de' && $post[0][3] === 'Max Muster'
+    && str_starts_with($post[0][1], 'Ergebnis der Abstimmung') && str_contains($post[0][2], 'Die Mehrheit will Samstag.') && str_contains($post[0][2], 'Samstag: 2')
+    && $GLOBALS['updates'][0][1] === ['bericht_zuletzt' => '2026-11-01 09:00:00', 'bericht_ende_am' => '2026-11-01 09:00:00']);
+$GLOBALS['kontakt'] = null;
+$r = umfrage_bericht_senden($ub, 'taeglich');
+$check('ohne Kontakt kein Versand', !$r['ok'] && str_contains($r['text'], 'kein Kontakt'));
+$GLOBALS['kontakt'] = ['id' => 9, 'vorname' => 'Max', 'nachname' => 'Muster', 'organisation' => '', 'email' => 'max@example.de', 'anrede' => '', 'titel' => ''];
+$GLOBALS['mail_attrappe'] = static function (): void { throw new MailException('Server weg'); };
+$r = umfrage_bericht_senden($ub, 'taeglich');
+$check('Versandfehler kommt als Text', !$r['ok'] && str_contains($r['text'], 'Server weg'));
+
+$GLOBALS['umfragen_zeilen'] = [$ub, ['id' => 8, 'bericht_rhythmus' => 'ende'] + $ub];
+$GLOBALS['settings'] += ['mail_aktiv' => '1', 'mail_host' => 'smtp.example.de', 'mail_absender' => 'ov@example.de'];
+settings_reset_cache();
+$post = [];
+$GLOBALS['updates'] = [];
+$GLOBALS['mail_attrappe'] = static function (string $an, string $betreff, string $text, string $name) use (&$post): void { $post[] = $betreff; };
+$r = umfrage_berichte_senden($t('2026-10-24 07:30:00'));
+$check('fällige Berichte: täglich ja, nur am Ende nein', $r['geprueft'] === 2 && $r['gesendet'] === 1 && $r['fehler'] === [] && count($post) === 1 && str_contains($post[0], 'Zwischenstand'));
+$GLOBALS['settings']['mail_aktiv'] = '0';
+settings_reset_cache();
+$check('Versand aus: nichts geprüft', umfrage_berichte_senden($t('2026-10-24 07:30:00')) === ['geprueft' => 0, 'gesendet' => 0, 'fehler' => []]);
 
 echo "$ok bestanden, $fail fehlgeschlagen\n";

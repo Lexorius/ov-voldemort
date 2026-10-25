@@ -826,21 +826,42 @@ function ki_verbindung_testen(): array
 }
 
 /** Eine Antwort vom Modell holen – mit Bild als Base64, wenn eines mitkommt */
-function ki_generieren(string $modell, string $prompt, ?string $bildBase64 = null): string
+function ki_generieren(string $modell, string $prompt, ?string $bildBase64 = null, bool $json = true): string
 {
     $daten = [
         'model'   => $modell,
         'prompt'  => $prompt,
         'stream'  => false,
-        'format'  => 'json',
         // num_predict: Schluss nach gut 400 Wörtern; repeat_penalty: gegen Schleifen („token repeat limit reached")
         'options' => ['temperature' => 0.2, 'num_predict' => 600, 'repeat_penalty' => 1.15],
     ];
+    if ($json) {
+        $daten['format'] = 'json';
+    }
     if ($bildBase64 !== null) {
         $daten['images'] = [$bildBase64];
     }
     $d = ki_http('POST', '/api/generate', $daten, ki_timeout());
     return (string)($d['response'] ?? '');
+}
+
+/**
+ * Freier Text vom Textmodell – etwa die Zusammenfassung eines Berichts.
+ * Nur wenn die KI eingeschaltet ist und nicht gerade ruht; wirft KiException.
+ */
+function ki_text_antwort(string $prompt, int $maxZeichen = 6000): string
+{
+    if (!ki_aktiv()) {
+        throw new KiException('Die KI-Auswertung ist ausgeschaltet.');
+    }
+    if (ki_ruhe_bis() > time()) {
+        throw new KiException('Ollama war zuletzt nicht erreichbar – die KI ruht noch.');
+    }
+    $modell = trim((string)setting('ki_modell', ''));
+    if ($modell === '') {
+        throw new KiException('Kein Textmodell eingetragen.');
+    }
+    return trim(ki_generieren($modell, ki_text_kuerzen($prompt, $maxZeichen), null, false));
 }
 
 /**

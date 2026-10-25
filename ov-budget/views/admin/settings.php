@@ -63,6 +63,12 @@
               <option value="<?= e($wert) ?>"<?= $val === $wert ? ' selected' : '' ?>><?= e($text) ?></option>
             <?php endforeach; ?>
           </select>
+        <?php elseif ($s['stype'] === 'select' && $s['skey'] === 'mail_sicherheit'): ?>
+          <select id="<?= e($id) ?>" name="<?= e($id) ?>">
+            <?php foreach (MAIL_SICHERHEIT as $wert => $text): ?>
+              <option value="<?= e($wert) ?>"<?= ($val !== '' ? $val : 'starttls') === $wert ? ' selected' : '' ?>><?= e($text) ?></option>
+            <?php endforeach; ?>
+          </select>
         <?php elseif ($s['stype'] === 'select' && $s['skey'] === 'kalender_bundesland'): ?>
           <select id="<?= e($id) ?>" name="<?= e($id) ?>">
             <?php foreach (KALENDER_BUNDESLAENDER as $wert => $text): ?>

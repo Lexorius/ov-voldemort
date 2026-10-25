@@ -1,5 +1,22 @@
 # Änderungsverlauf
 
+## 2.1.54.0
+
+- **E-Mail-Versand:** neue Einstellungsgruppe „E-Mail" (SMTP-Server, Port,
+  STARTTLS/SSL, Benutzer, Passwort, Absender) und eine Verwaltungsseite
+  „E-Mail" mit Zustand und Testnachricht. OV-Multitool spricht den Server
+  selbst an, ohne Mailserver im Add-on.
+- **Abstimmungen: Ergebnis per E-Mail.** Je Abstimmung ein Kontakt und ein
+  Rhythmus – täglich, wöchentlich oder nur am Ende. Zwischenstände gehen ab
+  einer einstellbaren Uhrzeit, das Ergebnis, sobald nach dem Ende die letzten
+  Antworten abgeholt sind. Auf Wunsch fasst die KI (Ollama, wenn
+  eingeschaltet) die Ergebnisse oben im Bericht zusammen, ohne Gewähr; fällt
+  sie aus, geht der Bericht ohne sie. Knopf „jetzt senden" auf der Seite der
+  Abstimmung.
+- **Abstimmungen:** deutlicherer Hinweis im Entwurf, dass der Link erst nach
+  dem Freigeben geht. Connector 1.6.1: bei einer einzigen Seite kein
+  Fortschrittsbalken mehr.
+
 ## 2.1.53.0
 
 - **Neues Modul Abstimmungen:** Umfragen mit einer oder mehreren Seiten werden

@@ -70,6 +70,45 @@ $seitenJson = is_string($umfrage['seiten'] ?? null) ? (string)$umfrage['seiten']
 
   <section class="card">
     <div class="card__head">
+      <h2>Ergebnis per E-Mail</h2>
+      <span class="small muted">Zwischenstand oder Ergebnis an einen Kontakt, automatisch.</span>
+    </div>
+    <?php if (!$mailAktiv): ?>
+      <div class="alert alert--info">Der E-Mail-Versand ist nicht eingerichtet – Berichte bleiben liegen, bis er in der
+        <a href="<?= e(url('admin_mail')) ?>">Verwaltung</a> eingeschaltet ist. Einstellen lässt er sich schon jetzt.</div>
+    <?php endif; ?>
+    <div class="grid2">
+      <div class="field">
+        <label for="bericht_rhythmus">Bericht</label>
+        <select id="bericht_rhythmus" name="bericht_rhythmus">
+          <?php foreach (UMFRAGE_BERICHT as $wert => $text): ?>
+            <option value="<?= e($wert) ?>"<?= (string)($umfrage['bericht_rhythmus'] ?? '') === $wert ? ' selected' : '' ?>><?= e($text) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <small class="muted">Täglich und wöchentlich ab der Uhrzeit aus den Einstellungen; zum Abschluss immer, sobald die letzten
+          Antworten abgeholt sind.</small>
+      </div>
+      <div class="field">
+        <label for="bericht_kontakt_id">An Kontakt</label>
+        <select id="bericht_kontakt_id" name="bericht_kontakt_id">
+          <option value="">– keiner –</option>
+          <?php foreach ($kontakte as $k): ?>
+            <option value="<?= (int)$k['id'] ?>"<?= (int)$k['id'] === (int)($umfrage['bericht_kontakt_id'] ?? 0) ? ' selected' : '' ?>>
+              <?= e(contact_name($k)) ?> · <?= e((string)$k['email']) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <?php if (!$kontakte): ?><small class="muted">Noch kein Kontakt mit E-Mail-Adresse – im Modul Kontakte anlegen.</small><?php endif; ?>
+      </div>
+      <div class="field field--check" style="grid-column:1/-1">
+        <input type="checkbox" id="bericht_ki" name="bericht_ki" value="1" <?= (int)($umfrage['bericht_ki'] ?? 0) === 1 ? 'checked' : '' ?>>
+        <label for="bericht_ki">KI fasst die Ergebnisse zusammen
+          <span class="muted"><?= $kiAktiv ? '(Ollama im eigenen Netz, ohne Gewähr – fällt die KI aus, geht der Bericht ohne Zusammenfassung)' : '(die KI-Auswertung ist gerade ausgeschaltet; die Zusammenfassung kommt, sobald sie läuft)' ?></span></label>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head">
       <h2>Seiten und Fragen</h2>
       <span class="small muted">Jede Seite wird auf dem Handy einzeln gezeigt, mit „Weiter" und „Zurück".</span>
     </div>

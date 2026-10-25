@@ -1116,6 +1116,44 @@ Angemeldeten die Abstimmungen und Ergebnisse sehen, steht in den
 Einstellungen (*Alle Angemeldeten sehen Abstimmungen und Ergebnisse*,
 Vorgabe aus).
 
+### Ergebnis per E-Mail
+
+Jede Abstimmung kann ihre Ergebnisse von allein verschicken – an einen
+Kontakt aus dem Modul Kontakte, der eine E-Mail-Adresse hat. Beim
+Bearbeiten unter *Ergebnis per E-Mail*:
+
+| Bericht | Was kommt |
+|---|---|
+| täglich | jeden Tag ab der eingestellten Uhrzeit ein Zwischenstand, zum Abschluss das Ergebnis |
+| wöchentlich | alle sieben Tage ein Zwischenstand, zum Abschluss das Ergebnis |
+| nur am Ende | ein einziger Bericht mit dem Ergebnis |
+
+Der Abschlussbericht geht hinaus, sobald nach dem Ende der letzte Abruf
+beim Connector Zeit hatte; so fehlt keine Antwort der letzten Minute. Die
+Uhrzeit für Zwischenstände steht in den Einstellungen (*Berichte
+verschicken ab (Uhr)*, Vorgabe sieben). Auf der Seite der Abstimmung lässt
+sich ein Bericht jederzeit von Hand anstoßen.
+
+Der Bericht ist eine schlichte Textmail: Titel, Zeitraum, Zahl der
+Antworten, dann je Frage die Zählung mit Prozent, bei Skalen Durchschnitt
+und Verteilung, bei Freitext die Eingaben, zuletzt die freiwillig
+angegebenen Namen.
+
+**KI-Zusammenfassung.** Ist die KI-Auswertung eingeschaltet (Ollama im
+eigenen Netz, siehe unten), kann der Bericht oben eine Zusammenfassung in
+wenigen Sätzen bekommen – Kernaussagen, Mehrheiten, Stimmung aus den
+Freitexten. Sie ist am Bericht ankreuzbar und ausdrücklich *ohne Gewähr*.
+Ist die KI aus oder nicht erreichbar, geht der Bericht ohne sie hinaus;
+die Zahlen stehen ohnehin darunter.
+
+**Voraussetzung: E-Mail-Versand.** Unter *Verwaltung → E-Mail* beziehungsweise
+*Einstellungen → E-Mail* werden SMTP-Server, Port, Verschlüsselung
+(STARTTLS, SSL/TLS oder keine), Benutzer, Passwort und Absender
+eingetragen und mit einer Testnachricht geprüft. OV-Multitool spricht den
+Server direkt an; es braucht keinen Mailserver im Add-on. Solange der
+Versand aus ist, bleiben Berichte liegen und werden nachgeholt, sobald er
+eingeschaltet wird.
+
 ## Zeitzone
 
 Das Add-on stellt die Zeitzone selbst ein: zuerst die Option `zeitzone` der

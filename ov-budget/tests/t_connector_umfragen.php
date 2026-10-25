@@ -189,9 +189,12 @@ foreach ($geholt as $m) {
     $daten = connector_entschluesseln($m['daten'], $ovPem, ['antworten']);
     umfrage_antwort_speichern($zeile, $daten, (int)$m['ts']);
 }
-$check('zwei Zeilen gespeichert, Unbekanntes weg', count($GLOBALS['inserts']) === 2
-    && json_decode($GLOBALS['inserts'][0][1]['daten'], true) === ['f1' => 1, 'f2' => 4] && $GLOBALS['inserts'][0][1]['name'] === 'Anna'
-    && json_decode($GLOBALS['inserts'][1][1]['daten'], true) === ['f1' => 0]);
+// Innerhalb derselben Sekunde ist die Reihenfolge der Dateien zufällig – darum nach dem Namen sortieren
+$gespeichert = array_map(static fn($i) => $i[1], $GLOBALS['inserts']);
+usort($gespeichert, static fn($a, $b) => strcmp((string)$b['name'], (string)$a['name']));
+$check('zwei Zeilen gespeichert, Unbekanntes weg', count($gespeichert) === 2
+    && json_decode($gespeichert[0]['daten'], true) === ['f1' => 1, 'f2' => 4] && $gespeichert[0]['name'] === 'Anna'
+    && json_decode($gespeichert[1]['daten'], true) === ['f1' => 0] && $gespeichert[1]['name'] === '');
 $antworten = array_map(static fn($i) => ['ts' => $i[1]['ts'], 'name' => $i[1]['name'], 'antworten' => json_decode($i[1]['daten'], true)], $GLOBALS['inserts']);
 $a = umfrage_auswertung(umfrage_seiten($zeile), $antworten);
 $check('Auswertung stimmt', $a['anzahl'] === 2 && $a['felder']['f1']['zaehler'] === [1, 1] && $a['felder']['f2']['schnitt'] === 4.0 && $a['felder']['f2']['beantwortet'] === 1);

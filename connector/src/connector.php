@@ -36,7 +36,7 @@ declare(strict_types=1);
  * Gespeichert wird in Dateien unterhalb von daten/ – keine Datenbank nötig.
  */
 
-const CON_VERSION = '1.6.0';
+const CON_VERSION = '1.6.1';
 
 /** Höchstalter einer signierten Anfrage in Sekunden (gegen Wiedereinspielen) */
 const CON_ZEITFENSTER = 300;

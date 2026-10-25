@@ -1628,6 +1628,12 @@ CREATE TABLE IF NOT EXISTS umfragen (
   dank          VARCHAR(500)  NOT NULL DEFAULT '',
   -- Seiten mit Fragen als JSON, siehe src/lib/umfragen.php
   seiten        MEDIUMTEXT    NULL,
+  -- Bericht per E-Mail: Rhythmus, Empfaenger aus den Kontakten, KI-Zusammenfassung, Zeitpunkte
+  bericht_rhythmus   ENUM('','taeglich','woechentlich','ende') NOT NULL DEFAULT '',
+  bericht_kontakt_id INT UNSIGNED NULL,
+  bericht_ki         TINYINT(1)   NOT NULL DEFAULT 0,
+  bericht_zuletzt    DATETIME     NULL,
+  bericht_ende_am    DATETIME     NULL,
   created_by    INT UNSIGNED  NULL,
   created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

@@ -36,4 +36,6 @@ render('umfrage', [
     'darf'         => can('manage_umfragen'),
     'letzterAbruf' => (int)state_get('umfrage_letzter_abruf', '0'),
     'abholbar'     => $connector !== null && connector_taugt($connector, 'umfragen'),
+    'kontakt'      => (int)($umfrage['bericht_kontakt_id'] ?? 0) > 0 ? contact_find((int)$umfrage['bericht_kontakt_id']) : null,
+    'mailAktiv'    => mail_eingerichtet(),
 ]);

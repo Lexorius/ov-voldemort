@@ -37,6 +37,7 @@ $h = static fn(string $t): string => htmlspecialchars($t, ENT_QUOTES);
   .karte { background: #fff; border: 1px solid var(--rand); border-radius: 12px; padding: 1rem; margin-top: 1rem; }
   .beschreibung, .seitentext { white-space: pre-wrap; }
   .fortschritt { display: flex; align-items: center; gap: .6rem; font-size: .85rem; color: #64748b; margin-top: 1rem; }
+  .fortschritt[hidden] { display: none; }
   .fortschritt .balken { flex: 1; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
   .fortschritt .balken span { display: block; height: 100%; background: var(--akzent); width: 0; transition: width .2s; }
   fieldset { border: 0; padding: 0; margin: 1rem 0 0; }

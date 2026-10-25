@@ -120,6 +120,14 @@ $abrufe = [
             $res['fehler'] ? ', ' . $res['fehler'] . ' unbrauchbar' : '',
             $res['gesendet'] ? ', ' . $res['gesendet'] . ' Connector(en) neu versorgt' : '')]];
     },
+    'Abstimmungsberichte' => static function (): array {
+        $r = umfrage_berichte_senden();
+        if ($r['gesendet'] === 0 && !$r['fehler']) {
+            return [];
+        }
+        return [['status' => $r['fehler'] ? 'fehler' : 'ok', 'message' => sprintf('%d Bericht(e) verschickt%s',
+            $r['gesendet'], $r['fehler'] ? '; Fehler: ' . implode(' · ', $r['fehler']) : '')]];
+    },
     'Connector-Fußzeile' => static function (): array {
         $r = connector_push_einstellungen_all();
         if ($r['gesendet'] === 0 && !$r['fehler']) {

@@ -51,9 +51,10 @@ $aktion = static function (string $action, string $text, string $klasse = 'btn b
     <p class="small">Ohne Connector gibt es keine Adresse. Beim <a href="<?= e(url('umfrage_edit', ['id' => $id])) ?>">Bearbeiten</a> einen
       Connector mit der Verwendung „Abstimmungen" wählen<?= $darf ? '' : ' (Leitung)' ?>.</p>
   <?php elseif ($zustand === 'entwurf'): ?>
-    <p class="small">Die Abstimmung ist ein Entwurf. Nach dem <strong>Freigeben</strong> steht sie beim Connector und
-      der QR-Code erscheint hier. Die Adresse wird lauten:</p>
-    <p class="small muted mono" style="word-break:break-all"><?= e($adresse) ?></p>
+    <p class="small"><strong>Noch nicht im Netz.</strong> Die Abstimmung ist ein Entwurf; der Connector kennt sie erst nach dem
+      <strong>Freigeben</strong> oben rechts. Dann erscheinen hier QR-Code und Link. Die Adresse wird lauten
+      (funktioniert jetzt noch nicht):</p>
+    <p class="small muted mono" style="word-break:break-all;opacity:.6"><?= e($adresse) ?></p>
   <?php elseif ($zustand === 'geschlossen'): ?>
     <p class="small">Geschlossen – beim Connector abgemeldet, die Adresse geht ins Leere.</p>
   <?php elseif ($qrZeigen): ?>
@@ -78,6 +79,28 @@ $aktion = static function (string $action, string $text, string $klasse = 'btn b
   <?php else: ?>
     <p class="small">Der Connector <strong><?= e((string)$connector['name']) ?></strong> ist nicht gekoppelt – bitte in der
       <a href="<?= e(url('admin_connectors')) ?>">Verwaltung</a> nachsehen.</p>
+  <?php endif; ?>
+</section>
+
+<section class="card" id="bericht">
+  <div class="card__head">
+    <h2>Ergebnis per E-Mail</h2>
+    <?php if ($darf && $kontakt !== null && $mailAktiv): ?>
+      <?= $aktion('bericht', in_array($zustand, ['abgelaufen', 'geschlossen'], true) ? 'Ergebnis jetzt senden' : 'Zwischenstand jetzt senden') ?>
+    <?php endif; ?>
+  </div>
+  <?php if ((string)($umfrage['bericht_rhythmus'] ?? '') === '' || $kontakt === null): ?>
+    <p class="small muted">Kein automatischer Bericht. Beim <a href="<?= e(url('umfrage_edit', ['id' => $id])) ?>">Bearbeiten</a> lässt sich
+      ein Kontakt eintragen, der täglich, wöchentlich oder am Ende die Ergebnisse bekommt.</p>
+  <?php else: ?>
+    <p class="small"><strong><?= e(umfrage_bericht_text_rhythmus((string)$umfrage['bericht_rhythmus'])) ?></strong>
+      an <strong><?= e(contact_name($kontakt)) ?></strong> (<?= e((string)$kontakt['email']) ?>)<?= (int)($umfrage['bericht_ki'] ?? 0) === 1 ? ', mit KI-Zusammenfassung' : '' ?>.
+      <?php if (!empty($umfrage['bericht_zuletzt'])): ?>Zuletzt verschickt <?= e(de_datetime((string)$umfrage['bericht_zuletzt'])) ?>.<?php else: ?>Noch nichts verschickt.<?php endif; ?>
+      <?php if (!empty($umfrage['bericht_ende_am'])): ?>Ergebnis verschickt <?= e(de_datetime((string)$umfrage['bericht_ende_am'])) ?>.<?php endif; ?></p>
+    <?php if (!$mailAktiv): ?>
+      <p class="small" style="color:var(--warn)">Der E-Mail-Versand ist nicht eingerichtet – der Bericht bleibt liegen
+        (<a href="<?= e(url('admin_mail')) ?>">Verwaltung → E-Mail</a>).</p>
+    <?php endif; ?>
   <?php endif; ?>
 </section>
 

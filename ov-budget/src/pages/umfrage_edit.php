@@ -29,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'status'    => $umfrage['status'] ?? 'entwurf',
         'seiten'    => post_str('seiten_json'),
         'name_feld' => post_bool('name_feld') ? 1 : 0,
+        'bericht_ki' => post_bool('bericht_ki') ? 1 : 0,
     ]);
 }
 
@@ -39,6 +40,7 @@ if (!$umfrage) {
         'connector_id' => $vorgabe !== null ? (int)$vorgabe['id'] : null,
         'beginn' => '', 'ende' => date('Y-m-d 20:00:00', strtotime('+7 days')),
         'name_feld' => 0, 'dank' => '',
+        'bericht_rhythmus' => '', 'bericht_kontakt_id' => null, 'bericht_ki' => 0,
         'seiten' => json_encode([['titel' => '', 'text' => '', 'felder' => [
             ['id' => 'f1', 'typ' => 'einfach', 'frage' => '', 'pflicht' => 1, 'optionen' => ['Ja', 'Nein', 'Enthaltung']],
         ]]], JSON_UNESCAPED_UNICODE),
@@ -59,4 +61,7 @@ render('umfrage_edit', [
     'errors'      => $errors,
     'connectoren' => $connectoren,
     'antwortenAnzahl' => $umfrage['id'] ? (int)db_val('SELECT COUNT(*) FROM umfrage_antworten WHERE umfrage_id = ?', [(int)$umfrage['id']], 0) : 0,
+    'kontakte'    => contact_query(['nur_mit_email' => 1]),
+    'mailAktiv'   => mail_eingerichtet(),
+    'kiAktiv'     => ki_aktiv(),
 ]);

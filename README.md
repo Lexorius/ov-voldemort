@@ -94,7 +94,11 @@ unter „Sicherheitslücke PHP2Shell".
   Ankreuzen, Ja/Nein, Skala, Freitext), in der Oberfläche zusammengeklickt
   und über den Connector im Netz: QR-Code zum Scannen, Link zum Weitergeben,
   Zeitfenster. Die Antworten kommen verschlüsselt an und sind beim Connector
-  nach dem Abholen gelöscht; ausgezählt wird im Multitool, mit CSV-Export.
+  nach dem Abholen gelöscht; ausgezählt wird im Multitool, mit CSV-Export
+  und **Ergebnisbericht per E-Mail** an einen Kontakt (täglich, wöchentlich
+  oder am Ende, optional von der KI zusammengefasst).
+* **E-Mail-Versand** – Postausgang über einen SMTP-Server (STARTTLS oder
+  SSL/TLS), in der Verwaltung mit Testnachricht eingerichtet.
 * **Kontakte** – Ansprechpartner mit Zusatzfeldern, anrufen und mailen mit einem
   Tipp, Verteiler für Einladungen, Import aus Excel/CSV, Outlook, Google und
   vCard mit Dublettenerkennung.
