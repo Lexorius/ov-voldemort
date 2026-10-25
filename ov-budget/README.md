@@ -40,8 +40,9 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 - Antworten werden im Browser **verschlüsselt**, liegen beim Connector nur
   als Geheimtext und sind nach dem Abholen dort gelöscht; Auswertung mit
   Balken, Durchschnitt und CSV
-- **Ergebnis per E-Mail** an einen oder mehrere Kontakte: täglich, wöchentlich oder am
-  Ende, auf Wunsch mit KI-Zusammenfassung; dafür ein eigener
+- **Ergebnis per E-Mail** an beliebig viele Kontakte (Dropdown mit Suchfeld
+  und „+ Hinzufügen"): täglich, wöchentlich oder am Ende, jeder Empfänger
+  eine eigene Nachricht, auf Wunsch mit KI-Zusammenfassung; dafür ein eigener
   **E-Mail-Versand** über SMTP in der Verwaltung, mit Testnachricht
 
 ### Budget

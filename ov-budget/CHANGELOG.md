@@ -1,5 +1,11 @@
 # Änderungsverlauf
 
+## 2.1.56.1
+
+- **README:** eigene Abschnitte zu Abstimmungen und E-Mail-Versand, der
+  Connector-Abschnitt nennt die Abstimmungen, die KI-Zusammenfassung der
+  Berichte und die neuen Einstellungen sind aufgeführt.
+
 ## 2.1.56.0
 
 - **Abstimmungen:** Die Empfänger des Berichts werden wie überall sonst

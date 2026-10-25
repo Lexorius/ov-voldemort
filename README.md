@@ -241,7 +241,8 @@ einen Port für `8099/tcp` vergeben, dann `http://homeassistant.local:8099`.
 ### Automatische Abrufe
 
 Im Add-on ruft der Container jede Minute `cron.php` auf. Darüber laufen der
-Stein.APP- und Divera-Abgleich, das Abholen der Connector-Meldungen, die
+Stein.APP- und Divera-Abgleich, das Abholen der Connector-Meldungen (auch
+die Antworten auf Abstimmungen), die Ergebnisberichte per E-Mail, die
 Kalender aus Home Assistant, die automatische Sicherung, die
 Benachrichtigungen, die MQTT-Meldungen und die KI-Auswertung. Jeder Abruf
 prüft selbst, ob er an der Reihe ist.
@@ -394,7 +395,8 @@ Akzentfarbe, Fuß- und Einleitungstexte, Modulbezeichnungen („Wünsch dir was"
 euch anders? Kein Problem), Haushaltsjahr, MwSt-Satz, Warnschwellen, Pflichtfelder,
 Upload-Grenzen und erlaubte Dateitypen, Abstimmung, Session-Laufzeit, Sperre nach
 Fehlversuchen, zweiter Faktor, Fristen der Fahrzeuge, Takt der Abrufe, Sicherung,
-KI-Auswertung.
+KI-Auswertung, E-Mail-Versand, Abstimmungen (Sichtbarkeit, Abruf-Takt,
+Codelänge, Uhrzeit der Berichte).
 
 **Unscharfe Budgetübersicht** – `budget_rundung` stellt die Übersichtsseite auf
 gerundete Beträge um (10, 100 oder 1.000). Praktisch für Aushänge und Vorträge,
@@ -463,7 +465,8 @@ Handy / Browser  --verschlüsselt-->  Connector  <--holt ab--  OV-Multitool (Add
 Unter *Verwaltung → Connectoren* lassen sich beliebig viele anlegen. Jeder
 bekommt eine eigene Kopplung und trägt, wofür er zuständig ist: **Fahrzeuge**
 (Standort per QR-Code), **Veranstaltungen** (Einladungen), **Bestand** („Gerät
-ist da"), **Zähler** (Stand per QR-Code) – auch mehreres zugleich.
+ist da"), **Zähler** (Stand per QR-Code), **Abstimmungen** (Umfragen) – auch
+mehreres zugleich.
 
 ### Standortmeldung per QR-Code
 
@@ -514,12 +517,85 @@ https://i.example.de/AB23CD
 * Ohne Connector funktioniert das Modul trotzdem – Rückmeldungen werden dann
   von Hand eingetragen.
 
+### Abstimmungen über den Connector
+
+Eine freigegebene Abstimmung steht hinter derselben kurzen Adresse wie eine
+Einladung (`https://i.example.de/27VC8A`) oder hinter dem QR-Code. Der
+Connector kennt Titel, Beschreibung, Zeitfenster und die Fragen – die Seite
+muss sie zeigen. Die Antworten kennt er nicht: Sie werden im Browser
+verschlüsselt, liegen dort nur als Geheimtext und sind nach dem Abholen
+gelöscht. Außerhalb des Zeitfensters nimmt die Seite nichts an, einen Tag
+nach dem Ende verschwindet die Abstimmung vom Connector. Mehr im Abschnitt
+[Abstimmungen](#abstimmungen).
+
 ### Ist der Connector sauber?
 
 OV-Multitool kennt die Prüfsummen aller Connector-Dateien und prüft täglich,
 ob sie stimmen und ob fremde Dateien aufgetaucht sind. Bei Befund geht eine
 Meldung an Home Assistant. Antwortet ein Connector länger nicht, gibt es eine
 Störungsmeldung und später die Entwarnung.
+
+## Abstimmungen
+
+Umfragen für den Ortsverband: Termin fürs Sommerfest, Verpflegung bei der
+Übung, Stimmungsbild zur Helferversammlung. Gestaltet wird im Multitool,
+beantwortet wird draußen – ohne Anmeldung, über den Connector.
+
+**Gestalten.** Erst die Eckdaten (Titel, Beschreibung, Zeitfenster,
+Connector, freiwillige Namensabfrage, Dankestext), dann die Seiten: Jede
+Seite bekommt Überschrift, Einleitung und beliebig viele Fragen, per
+Dropdown und „+ Frage" zusammengeklickt, verschiebbar.
+
+| Fragetyp | Antwort |
+|---|---|
+| Eine Antwort | genau eine Antwortmöglichkeit |
+| Mehrere Antworten | Ankreuzen, so viele wie man will |
+| Ja / Nein | ja oder nein |
+| Skala | eine Zahl zwischen zwei Grenzen (0 bis 10), Beschriftung links und rechts |
+| Freitext | kurz oder lang |
+| Hinweistext | keine Frage, ein Absatz zwischen den Fragen |
+
+Jede Frage kann Pflicht sein. Mehrere Seiten zeigt das Handy nacheinander
+mit *Weiter*, *Zurück* und Fortschrittsbalken; Pflichtfragen werden je
+Seite geprüft.
+
+**Zeitfenster und Freigabe.** Das Ende ist Pflicht, der Beginn freiwillig.
+Eine neue Abstimmung ist ein Entwurf und beim Connector unbekannt;
+*Freigeben* meldet sie an, *Schließen* holt vorher ab, was noch draußen
+liegt, und meldet sie ab.
+
+**QR-Code und Link.** Auf der Seite der Abstimmung: QR-Code zum Scannen mit
+Druckansicht, *Link kopieren* und *QR als Bild* zum Weitergeben in
+Nachrichten. Der Code lässt sich auch auf der Startseite des Connectors
+eintippen; *Code neu* macht alten Link und QR ungültig.
+
+**Ergebnisse.** Je Frage Balken mit Anzahl und Prozent, bei Skalen
+Durchschnitt und Verteilung, bei Freitext die Liste, dazu CSV-Export.
+Antworten und ganze Abstimmungen lassen sich löschen. Sehen dürfen
+Abstimmungen standardmäßig Leitung und Admin; ein Schalter öffnet sie für
+alle Angemeldeten.
+
+**Ergebnisbericht per E-Mail.** Je Abstimmung ein Rhythmus – täglich,
+wöchentlich oder nur am Ende – und beliebig viele Empfänger aus den
+Kontakten (Dropdown mit Suchfeld und „+ Hinzufügen"). Zwischenstände gehen
+ab einer einstellbaren Uhrzeit, das Ergebnis, sobald nach dem Ende die
+letzten Antworten abgeholt sind. Jeder Empfänger bekommt eine eigene
+Textmail mit Titel, Zeitraum, Zahl der Antworten und der Zählung je Frage.
+Auf Wunsch fasst die KI-Auswertung (Ollama, wenn eingeschaltet) die
+Ergebnisse oben im Bericht in wenigen Sätzen zusammen – ohne Gewähr; ist
+sie aus oder nicht erreichbar, geht der Bericht ohne sie. „Jetzt senden"
+auf der Seite der Abstimmung schickt einen Bericht von Hand.
+
+## E-Mail-Versand
+
+Das Add-on hat keinen Mailserver. Darum spricht OV-Multitool einen
+SMTP-Server direkt an – den des Vereins, des Providers oder ein Postfach
+der Dienststelle. Unter *Verwaltung → Einstellungen → E-Mail* stehen
+Server, Port, Verschlüsselung (STARTTLS, SSL/TLS oder keine), Benutzer,
+Passwort, Absenderadresse und Absendername; die Verwaltungsseite *E-Mail*
+zeigt den Zustand samt letztem Fehler und schickt eine Testnachricht. Der
+Versand ist ein Hauptschalter, standardmäßig aus. Verschickt werden nur
+Textnachrichten; bisher nutzen ihn die Berichte der Abstimmungen.
 
 ## KI-Auswertung der Dateien
 
@@ -541,6 +617,9 @@ anpassen, neu anstoßen oder entfernen.
   Vision-Modell (z. B. `llava:7b`). Voreinstellung für Text: `qwen2.5:7b`.
 * Verwaltungsseite mit Verbindungstest, Warteschlange, Fehlerliste und
   „Vorhandene Dateien nachholen".
+* Dieselbe KI fasst auf Wunsch die **Ergebnisberichte der Abstimmungen**
+  zusammen – nur, wenn sie eingeschaltet ist, und immer als „ohne Gewähr"
+  gekennzeichnet.
 
 ## Sicherheit
 
