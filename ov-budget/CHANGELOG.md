@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## 2.1.56.0
+
+- **Abstimmungen:** Die Empfänger des Berichts werden wie überall sonst
+  gewählt – Dropdown mit Suchfeld und „+ Hinzufügen", die Gewählten als Liste
+  mit Mülleimer. Ohne JavaScript nimmt Speichern den Eintrag aus dem
+  Dropdown mit.
+
 ## 2.1.55.0
 
 - **Abstimmungen: mehrere Empfänger je Bericht.** Statt eines Kontakts

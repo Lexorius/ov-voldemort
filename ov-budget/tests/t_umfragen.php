@@ -145,7 +145,7 @@ $GLOBALS['kontakt'] = ['id' => 9, 'vorname' => 'Max', 'nachname' => 'Muster', 'o
 $GLOBALS['inserts'] = []; $GLOBALS['execs'] = [];
 $_POST = ['titel' => '  Sommerfest 2027 ', 'beschreibung' => 'Bitte abstimmen', 'beginn' => '', 'ende' => '2026-11-08T20:00',
           'seiten_json' => json_encode($seiten), 'name_feld' => '1', 'dank' => 'Danke!', 'connector_id' => '0',
-          'bericht_rhythmus' => 'woechentlich', 'bericht_kontakte' => ['9', '9', 'x', '0'], 'bericht_ki' => '1'];
+          'bericht_rhythmus' => 'woechentlich', 'bericht_kontakte' => ['9', 'x', '0'], 'bericht_kontakte_neu' => '9', 'bericht_ki' => '1'];
 [$id, $f] = umfrage_save_from_post(null);
 $check('angelegt, Empfänger einmal eingetragen', $id === 7 && $f === [] && count($GLOBALS['inserts']) === 2
     && $GLOBALS['inserts'][1] === ['umfrage_empfaenger', ['umfrage_id' => 7, 'contact_id' => 9]]
@@ -207,11 +207,14 @@ $check('Detail: zwei Empfänger, KI, Knopf zum Senden', str_contains($html, '2 E
     && str_contains($html, 'mit KI-Zusammenfassung') && str_contains($html, 'value="bericht"') && str_contains($html, 'Zuletzt verschickt 24.10.2026'));
 $html = render_partial('umfrage_edit', ['umfrage' => ['bericht_rhythmus' => 'taeglich', 'bericht_kontakte' => [10], 'bericht_ki' => 0] + $umfrage, 'errors' => ['Bitte einen Titel angeben.'],
     'connectoren' => [$connector], 'antwortenAnzahl' => 4, 'kontakte' => [$maxK, $annaK], 'mailAktiv' => true, 'kiAktiv' => false]);
-$check('Bearbeiten: Mehrfachauswahl der Empfänger, Anna gewählt', str_contains($html, 'name="bericht_kontakte[]" multiple')
-    && str_contains($html, 'value="10" selected') && !str_contains($html, 'value="9" selected') && str_contains($html, 'option value="taeglich" selected'));
+$check('Bearbeiten: Dropdown mit Hinzufügen, Anna in der Liste, Max im Dropdown', str_contains($html, 'data-wahl="bericht_kontakte"')
+    && str_contains($html, 'name="bericht_kontakte[]" value="10"') && !str_contains($html, 'name="bericht_kontakte[]" value="9"')
+    && str_contains($html, 'data-wahl-add') && str_contains($html, 'anna@example.de') && str_contains($html, 'option value="taeglich" selected'));
 $check('Bearbeiten: Gestalter, JSON-Feld, Fehler, Warnung bei Antworten, Connector gewählt', str_contains($html, 'data-umfrage-editor')
     && str_contains($html, 'id="seiten_json"') && str_contains($html, 'Bitte einen Titel angeben.') && str_contains($html, 'schon 4 Antwort(en)')
     && str_contains($html, 'value="3" selected') && str_contains($html, 'value="2026-11-08T20:00"') && str_contains($html, 'name="name_feld" value="1" checked'));
+$html = render_partial('umfrage_edit', ['umfrage' => $umfrage, 'errors' => [], 'connectoren' => [$connector], 'antwortenAnzahl' => 0, 'kontakte' => [], 'mailAktiv' => true, 'kiAktiv' => false]);
+$check('Bearbeiten ohne Kontakte: Hinweis statt Auswahl', str_contains($html, 'Noch kein Kontakt mit E-Mail-Adresse') && !str_contains($html, 'data-wahl='));
 
 /* ---------- Bericht per E-Mail ---------- */
 $GLOBALS['kontakt'] = ['id' => 9, 'vorname' => 'Max', 'nachname' => 'Muster', 'organisation' => '', 'email' => 'max@example.de', 'anrede' => '', 'titel' => ''];

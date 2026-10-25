@@ -400,7 +400,8 @@ function umfrage_save_from_post(?array $u): array
     if (!isset(UMFRAGE_BERICHT[$rhythmus])) {
         $rhythmus = '';
     }
-    $empfaenger = umfrage_empfaenger_aus_post($_POST['bericht_kontakte'] ?? []);
+    // Die gewählte Liste plus das, was noch im Dropdown steht (ohne JavaScript ist das der Weg hinein)
+    $empfaenger = umfrage_empfaenger_aus_post(array_merge((array)($_POST['bericht_kontakte'] ?? []), [post_str('bericht_kontakte_neu')]));
     if ($rhythmus !== '' && !$empfaenger) {
         $fehler[] = 'Für den Bericht mindestens einen Kontakt mit E-Mail-Adresse wählen.';
     }

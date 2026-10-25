@@ -88,18 +88,23 @@ $seitenJson = is_string($umfrage['seiten'] ?? null) ? (string)$umfrage['seiten']
         <small class="muted">Täglich und wöchentlich ab der Uhrzeit aus den Einstellungen; zum Abschluss immer, sobald die letzten
           Antworten abgeholt sind.</small>
       </div>
-      <div class="field">
-        <label for="bericht_kontakte">An Kontakte <span class="muted">(mehrere mit Strg beziehungsweise Cmd)</span></label>
-        <?php $gewaehlt = array_map('intval', (array)($umfrage['bericht_kontakte'] ?? [])); ?>
-        <select id="bericht_kontakte" name="bericht_kontakte[]" multiple size="<?= max(4, min(10, count($kontakte))) ?>">
-          <?php foreach ($kontakte as $k): ?>
-            <option value="<?= (int)$k['id'] ?>"<?= in_array((int)$k['id'], $gewaehlt, true) ? ' selected' : '' ?>>
-              <?= e(contact_name($k)) ?> · <?= e((string)$k['email']) ?></option>
-          <?php endforeach; ?>
-        </select>
-        <?php if (!$kontakte): ?><small class="muted">Noch kein Kontakt mit E-Mail-Adresse – im Modul Kontakte anlegen.</small>
-        <?php else: ?><small class="muted">Jeder Empfänger bekommt eine eigene Nachricht.</small><?php endif; ?>
-      </div>
+      <?php if (!$kontakte): ?>
+        <div class="field">
+          <label>Empfänger</label>
+          <small class="muted">Noch kein Kontakt mit E-Mail-Adresse – im Modul Kontakte anlegen.</small>
+        </div>
+      <?php else: ?>
+        <?= render_partial('partials/wahl_liste', [
+            'name'     => 'bericht_kontakte',
+            'feld'     => 'bericht_kontakte_feld',
+            'label'    => 'Empfänger',
+            'optionen' => array_map(static fn(array $k) => ['id' => (int)$k['id'], 'text' => contact_name($k), 'sub' => (string)$k['email'],
+                              'gruppe' => (string)($k['kategorie_label'] ?? '')], $kontakte),
+            'gewaehlt' => array_map('intval', (array)($umfrage['bericht_kontakte'] ?? [])),
+            'leer'     => '– Kontakt wählen –',
+            'hinweis'  => 'Jeder Empfänger bekommt eine eigene Nachricht.',
+        ]) ?>
+      <?php endif; ?>
       <div class="field field--check" style="grid-column:1/-1">
         <input type="checkbox" id="bericht_ki" name="bericht_ki" value="1" <?= (int)($umfrage['bericht_ki'] ?? 0) === 1 ? 'checked' : '' ?>>
         <label for="bericht_ki">KI fasst die Ergebnisse zusammen
