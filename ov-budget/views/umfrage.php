@@ -85,16 +85,16 @@ $aktion = static function (string $action, string $text, string $klasse = 'btn b
 <section class="card" id="bericht">
   <div class="card__head">
     <h2>Ergebnis per E-Mail</h2>
-    <?php if ($darf && $kontakt !== null && $mailAktiv): ?>
+    <?php if ($darf && $empfaenger && $mailAktiv): ?>
       <?= $aktion('bericht', in_array($zustand, ['abgelaufen', 'geschlossen'], true) ? 'Ergebnis jetzt senden' : 'Zwischenstand jetzt senden') ?>
     <?php endif; ?>
   </div>
-  <?php if ((string)($umfrage['bericht_rhythmus'] ?? '') === '' || $kontakt === null): ?>
-    <p class="small muted">Kein automatischer Bericht. Beim <a href="<?= e(url('umfrage_edit', ['id' => $id])) ?>">Bearbeiten</a> lässt sich
-      ein Kontakt eintragen, der täglich, wöchentlich oder am Ende die Ergebnisse bekommt.</p>
+  <?php if ((string)($umfrage['bericht_rhythmus'] ?? '') === '' || !$empfaenger): ?>
+    <p class="small muted">Kein automatischer Bericht. Beim <a href="<?= e(url('umfrage_edit', ['id' => $id])) ?>">Bearbeiten</a> lassen sich
+      Kontakte eintragen, die täglich, wöchentlich oder am Ende die Ergebnisse bekommen.</p>
   <?php else: ?>
     <p class="small"><strong><?= e(umfrage_bericht_text_rhythmus((string)$umfrage['bericht_rhythmus'])) ?></strong>
-      an <strong><?= e(contact_name($kontakt)) ?></strong> (<?= e((string)$kontakt['email']) ?>)<?= (int)($umfrage['bericht_ki'] ?? 0) === 1 ? ', mit KI-Zusammenfassung' : '' ?>.
+      an <strong><?= count($empfaenger) ?> Empfänger</strong>: <?= e(implode(', ', array_map(static fn($k) => contact_name($k) . ' (' . $k['email'] . ')', $empfaenger))) ?><?= (int)($umfrage['bericht_ki'] ?? 0) === 1 ? ' – mit KI-Zusammenfassung' : '' ?>.
       <?php if (!empty($umfrage['bericht_zuletzt'])): ?>Zuletzt verschickt <?= e(de_datetime((string)$umfrage['bericht_zuletzt'])) ?>.<?php else: ?>Noch nichts verschickt.<?php endif; ?>
       <?php if (!empty($umfrage['bericht_ende_am'])): ?>Ergebnis verschickt <?= e(de_datetime((string)$umfrage['bericht_ende_am'])) ?>.<?php endif; ?></p>
     <?php if (!$mailAktiv): ?>

@@ -400,10 +400,9 @@ function umfrage_save_from_post(?array $u): array
     if (!isset(UMFRAGE_BERICHT[$rhythmus])) {
         $rhythmus = '';
     }
-    $kontaktId = post_int('bericht_kontakt_id');
-    $kontakt = $kontaktId > 0 && function_exists('contact_find') ? contact_find($kontaktId) : null;
-    if ($rhythmus !== '' && ($kontakt === null || !mail_adresse_gueltig((string)($kontakt['email'] ?? '')))) {
-        $fehler[] = 'Für den Bericht einen Kontakt mit E-Mail-Adresse wählen.';
+    $empfaenger = umfrage_empfaenger_aus_post($_POST['bericht_kontakte'] ?? []);
+    if ($rhythmus !== '' && !$empfaenger) {
+        $fehler[] = 'Für den Bericht mindestens einen Kontakt mit E-Mail-Adresse wählen.';
     }
     if ($fehler) {
         return [null, $fehler];
@@ -419,7 +418,6 @@ function umfrage_save_from_post(?array $u): array
         'dank'         => mb_substr(trim(post_str('dank')), 0, 500),
         'seiten'       => json_encode($seiten, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         'bericht_rhythmus'   => $rhythmus,
-        'bericht_kontakt_id' => $kontakt !== null ? (int)$kontakt['id'] : null,
         'bericht_ki'         => post_bool('bericht_ki') ? 1 : 0,
     ];
     if ($u) {
@@ -433,7 +431,64 @@ function umfrage_save_from_post(?array $u): array
         $id = db_insert('umfragen', $daten);
         audit('umfrage.angelegt', 'umfrage', $id, $titel);
     }
+    umfrage_empfaenger_setzen($id, array_map(static fn(array $k) => (int)$k['id'], $empfaenger));
     return [$id, []];
+}
+
+/* ==================================================================== */
+/* Empfänger der Berichte: Kontakte mit E-Mail-Adresse                   */
+/* ==================================================================== */
+
+/**
+ * Gewählte Kontakte aus dem Formular: nur vorhandene mit gültiger
+ * E-Mail-Adresse, ohne Doppelte. Rückgabe: die Kontaktzeilen.
+ */
+function umfrage_empfaenger_aus_post(mixed $ids): array
+{
+    $out = [];
+    foreach ((array)$ids as $id) {
+        $id = (int)$id;
+        if ($id <= 0 || isset($out[$id]) || !function_exists('contact_find')) {
+            continue;
+        }
+        $k = contact_find($id);
+        if ($k !== null && mail_adresse_gueltig((string)($k['email'] ?? ''))) {
+            $out[$id] = $k;
+        }
+    }
+    return array_values($out);
+}
+
+/** Die Empfänger einer Abstimmung ersetzen */
+function umfrage_empfaenger_setzen(int $umfrageId, array $kontaktIds): void
+{
+    db_exec('DELETE FROM umfrage_empfaenger WHERE umfrage_id = ?', [$umfrageId]);
+    foreach (array_unique(array_map('intval', $kontaktIds)) as $kid) {
+        if ($kid > 0) {
+            db_insert('umfrage_empfaenger', ['umfrage_id' => $umfrageId, 'contact_id' => $kid]);
+        }
+    }
+}
+
+/** Die Empfänger mit ihren Kontaktdaten, nach Namen */
+function umfrage_empfaenger(array|int $u): array
+{
+    $id = is_array($u) ? (int)$u['id'] : $u;
+    return db_all('SELECT c.* FROM umfrage_empfaenger e JOIN contacts c ON c.id = e.contact_id
+                   WHERE e.umfrage_id = ? ORDER BY c.nachname, c.vorname, c.organisation', [$id]);
+}
+
+/** Kennungen der Empfänger – fürs Formular */
+function umfrage_empfaenger_ids(array|int $u): array
+{
+    return array_map(static fn(array $k) => (int)$k['id'], umfrage_empfaenger($u));
+}
+
+/** "Max Muster, Anna Ärztin" – zum Anzeigen. Reine Funktion. */
+function umfrage_empfaenger_text(array $empfaenger): string
+{
+    return implode(', ', array_map(static fn(array $k) => function_exists('contact_name')
+        ? contact_name($k) : trim((string)($k['vorname'] ?? '') . ' ' . (string)($k['nachname'] ?? '')), $empfaenger));
 }
 
 function umfrage_status_setzen(array $u, string $status): void
@@ -456,6 +511,7 @@ function umfrage_code_erneuern(array $u): string
 function umfrage_delete(array $u): void
 {
     db_exec('DELETE FROM umfrage_antworten WHERE umfrage_id = ?', [(int)$u['id']]);
+    db_exec('DELETE FROM umfrage_empfaenger WHERE umfrage_id = ?', [(int)$u['id']]);
     db_exec('DELETE FROM umfragen WHERE id = ?', [(int)$u['id']]);
     audit('umfrage.geloescht', 'umfrage', (int)$u['id'], (string)$u['titel']);
 }
@@ -664,6 +720,7 @@ function umfrage_bericht_text_rhythmus(string $rhythmus): string
 /**
  * Ist ein Bericht fällig – und welcher? Reine Funktion.
  *
+ * $u braucht dafür 'empfaenger_anzahl' (siehe umfrage_berichte_senden).
  * Rückgabe 'taeglich', 'woechentlich', 'ende' oder null. Zwischenberichte
  * gehen frühestens ab $stunde Uhr und nur, solange die Abstimmung läuft.
  * Der Abschlussbericht geht einmal, nachdem der letzte Abruf nach dem Ende
@@ -672,7 +729,7 @@ function umfrage_bericht_text_rhythmus(string $rhythmus): string
 function umfrage_bericht_faellig(array $u, int $jetzt, int $stunde = 7, int $karenz = 600): ?string
 {
     $rhythmus = (string)($u['bericht_rhythmus'] ?? '');
-    if (!isset(UMFRAGE_BERICHT[$rhythmus]) || $rhythmus === '' || (int)($u['bericht_kontakt_id'] ?? 0) <= 0
+    if (!isset(UMFRAGE_BERICHT[$rhythmus]) || $rhythmus === '' || (int)($u['empfaenger_anzahl'] ?? 0) <= 0
         || (string)($u['status'] ?? '') !== 'offen') {
         return null;
     }
@@ -806,38 +863,52 @@ function umfrage_bericht_ki(string $bericht): ?string
 }
 
 /**
- * Einen Bericht an den eingetragenen Kontakt schicken und das festhalten.
- * Rückgabe: ['ok' => bool, 'text' => Meldung für den Benutzer, 'ki' => bool]
+ * Einen Bericht an alle eingetragenen Empfänger schicken und das festhalten.
+ * Jeder bekommt seine eigene Nachricht; die KI-Zusammenfassung wird einmal
+ * geholt. Gilt als gelungen, wenn mindestens einer sie bekommen hat.
+ * Rückgabe: ['ok' => bool, 'text' => Meldung für den Benutzer, 'ki' => bool, 'gesendet' => int, 'fehler' => [Texte]]
  */
 function umfrage_bericht_senden(array $u, string $art, ?int $jetzt = null): array
 {
     $jetzt ??= time();
-    $kontakt = function_exists('contact_find') && (int)($u['bericht_kontakt_id'] ?? 0) > 0 ? contact_find((int)$u['bericht_kontakt_id']) : null;
-    if ($kontakt === null || !mail_adresse_gueltig((string)($kontakt['email'] ?? ''))) {
-        return ['ok' => false, 'text' => 'Für den Bericht ist kein Kontakt mit E-Mail-Adresse eingetragen.', 'ki' => false];
+    $empfaenger = array_values(array_filter(umfrage_empfaenger($u), static fn(array $k) => mail_adresse_gueltig((string)($k['email'] ?? ''))));
+    if (!$empfaenger) {
+        return ['ok' => false, 'text' => 'Für den Bericht ist kein Kontakt mit E-Mail-Adresse eingetragen.', 'ki' => false, 'gesendet' => 0, 'fehler' => []];
     }
     $seiten = umfrage_seiten($u);
     $antworten = umfrage_antworten($u);
-    $name = function_exists('contact_name') ? contact_name($kontakt) : trim((string)($kontakt['vorname'] ?? '') . ' ' . (string)($kontakt['nachname'] ?? ''));
     $ki = null;
     if ((int)($u['bericht_ki'] ?? 0) === 1 && $antworten) {
         $ki = umfrage_bericht_ki(umfrage_bericht_text($u, $seiten, $antworten, $art, null, $jetzt));
     }
-    $text = umfrage_bericht_text($u, $seiten, $antworten, $art, $ki, $jetzt, $name);
-    try {
-        mail_senden((string)$kontakt['email'], umfrage_bericht_betreff($u, $art, $jetzt), $text, $name);
-    } catch (Throwable $ex) {
-        audit('umfrage.bericht_fehler', 'umfrage', (int)$u['id'], mb_substr($ex->getMessage(), 0, 200));
-        return ['ok' => false, 'text' => 'Der Bericht ließ sich nicht verschicken: ' . $ex->getMessage(), 'ki' => $ki !== null];
+    $alle = umfrage_empfaenger_text($empfaenger);
+    $text = umfrage_bericht_text($u, $seiten, $antworten, $art, $ki, $jetzt, $alle);
+    $betreff = umfrage_bericht_betreff($u, $art, $jetzt);
+    $gesendet = [];
+    $fehler = [];
+    foreach ($empfaenger as $k) {
+        $name = umfrage_empfaenger_text([$k]);
+        try {
+            mail_senden((string)$k['email'], $betreff, $text, $name);
+            $gesendet[] = $name . ' (' . (string)$k['email'] . ')';
+        } catch (Throwable $ex) {
+            $fehler[] = $name . ': ' . $ex->getMessage();
+        }
+    }
+    if (!$gesendet) {
+        audit('umfrage.bericht_fehler', 'umfrage', (int)$u['id'], mb_substr(implode(' · ', $fehler), 0, 200));
+        return ['ok' => false, 'text' => 'Der Bericht ließ sich nicht verschicken: ' . implode(' · ', $fehler), 'ki' => $ki !== null,
+                'gesendet' => 0, 'fehler' => $fehler];
     }
     $neu = ['bericht_zuletzt' => date('Y-m-d H:i:s', $jetzt)];
     if ($art === 'ende') {
         $neu['bericht_ende_am'] = date('Y-m-d H:i:s', $jetzt);
     }
     db_update('umfragen', $neu, 'id = ?', [(int)$u['id']]);
-    audit('umfrage.bericht', 'umfrage', (int)$u['id'], $art . ' an ' . (string)$kontakt['email'] . ($ki !== null ? ' mit KI' : ''));
-    return ['ok' => true, 'text' => sprintf('%s an %s (%s) verschickt%s.', $art === 'ende' ? 'Ergebnis' : 'Zwischenstand', $name,
-        (string)$kontakt['email'], $ki !== null ? ', mit KI-Zusammenfassung' : ''), 'ki' => $ki !== null];
+    audit('umfrage.bericht', 'umfrage', (int)$u['id'], $art . ' an ' . count($gesendet) . ' Empfänger' . ($ki !== null ? ' mit KI' : ''));
+    return ['ok' => true, 'ki' => $ki !== null, 'gesendet' => count($gesendet), 'fehler' => $fehler,
+        'text' => sprintf('%s an %s verschickt%s%s.', $art === 'ende' ? 'Ergebnis' : 'Zwischenstand', implode(', ', $gesendet),
+            $ki !== null ? ', mit KI-Zusammenfassung' : '', $fehler ? ' – nicht erreicht: ' . implode(' · ', $fehler) : '')];
 }
 
 /**
@@ -853,7 +924,8 @@ function umfrage_berichte_senden(?int $jetzt = null): array
     }
     $stunde = max(0, min(23, setting_int('umfrage_bericht_stunde', 7)));
     $karenz = max(1, setting_int('umfrage_intervall_minuten', 5)) * 60 + 120;
-    foreach (db_all("SELECT * FROM umfragen WHERE status = 'offen' AND bericht_rhythmus <> '' AND bericht_kontakt_id IS NOT NULL") as $u) {
+    foreach (db_all("SELECT u.*, (SELECT COUNT(*) FROM umfrage_empfaenger e WHERE e.umfrage_id = u.id) AS empfaenger_anzahl
+                     FROM umfragen u WHERE u.status = 'offen' AND u.bericht_rhythmus <> ''") as $u) {
         $res['geprueft']++;
         $art = umfrage_bericht_faellig($u, $jetzt, $stunde, $karenz);
         if ($art === null) {

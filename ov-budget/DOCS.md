@@ -1119,8 +1119,9 @@ Vorgabe aus).
 ### Ergebnis per E-Mail
 
 Jede Abstimmung kann ihre Ergebnisse von allein verschicken – an einen
-Kontakt aus dem Modul Kontakte, der eine E-Mail-Adresse hat. Beim
-Bearbeiten unter *Ergebnis per E-Mail*:
+oder mehrere Kontakte aus dem Modul Kontakte, die eine E-Mail-Adresse
+haben. Jeder Empfänger bekommt eine eigene Nachricht. Beim Bearbeiten
+unter *Ergebnis per E-Mail*:
 
 | Bericht | Was kommt |
 |---|---|

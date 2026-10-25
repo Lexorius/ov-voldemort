@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.55.0
+
+- **Abstimmungen: mehrere Empfänger je Bericht.** Statt eines Kontakts
+  lassen sich beliebig viele Kontakte mit E-Mail-Adresse wählen; jeder
+  bekommt eine eigene Nachricht, die KI-Zusammenfassung wird einmal geholt.
+  Scheitert ein Empfänger, gehen die anderen trotzdem hinaus und der Fehler
+  steht in der Meldung. Der bisher eingetragene Kontakt wird übernommen.
+
 ## 2.1.54.0
 
 - **E-Mail-Versand:** neue Einstellungsgruppe „E-Mail" (SMTP-Server, Port,

@@ -89,15 +89,16 @@ $seitenJson = is_string($umfrage['seiten'] ?? null) ? (string)$umfrage['seiten']
           Antworten abgeholt sind.</small>
       </div>
       <div class="field">
-        <label for="bericht_kontakt_id">An Kontakt</label>
-        <select id="bericht_kontakt_id" name="bericht_kontakt_id">
-          <option value="">– keiner –</option>
+        <label for="bericht_kontakte">An Kontakte <span class="muted">(mehrere mit Strg beziehungsweise Cmd)</span></label>
+        <?php $gewaehlt = array_map('intval', (array)($umfrage['bericht_kontakte'] ?? [])); ?>
+        <select id="bericht_kontakte" name="bericht_kontakte[]" multiple size="<?= max(4, min(10, count($kontakte))) ?>">
           <?php foreach ($kontakte as $k): ?>
-            <option value="<?= (int)$k['id'] ?>"<?= (int)$k['id'] === (int)($umfrage['bericht_kontakt_id'] ?? 0) ? ' selected' : '' ?>>
+            <option value="<?= (int)$k['id'] ?>"<?= in_array((int)$k['id'], $gewaehlt, true) ? ' selected' : '' ?>>
               <?= e(contact_name($k)) ?> · <?= e((string)$k['email']) ?></option>
           <?php endforeach; ?>
         </select>
-        <?php if (!$kontakte): ?><small class="muted">Noch kein Kontakt mit E-Mail-Adresse – im Modul Kontakte anlegen.</small><?php endif; ?>
+        <?php if (!$kontakte): ?><small class="muted">Noch kein Kontakt mit E-Mail-Adresse – im Modul Kontakte anlegen.</small>
+        <?php else: ?><small class="muted">Jeder Empfänger bekommt eine eigene Nachricht.</small><?php endif; ?>
       </div>
       <div class="field field--check" style="grid-column:1/-1">
         <input type="checkbox" id="bericht_ki" name="bericht_ki" value="1" <?= (int)($umfrage['bericht_ki'] ?? 0) === 1 ? 'checked' : '' ?>>

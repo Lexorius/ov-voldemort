@@ -2052,7 +2052,6 @@ SQL);
   dank          VARCHAR(500)  NOT NULL DEFAULT '',
   seiten        MEDIUMTEXT    NULL,
   bericht_rhythmus   ENUM('','taeglich','woechentlich','ende') NOT NULL DEFAULT '',
-  bericht_kontakt_id INT UNSIGNED NULL,
   bericht_ki         TINYINT(1)   NOT NULL DEFAULT 0,
   bericht_zuletzt    DATETIME     NULL,
   bericht_ende_am    DATETIME     NULL,
@@ -2089,6 +2088,25 @@ SQL);
             ADD COLUMN bericht_ende_am DATETIME NULL AFTER bericht_zuletzt");
     }
     $merken('082_umfrage_bericht');
+
+    /* ---------- 083: mehrere Empfänger je Bericht ---------- */
+    if (!ovb_table_exists($pdo, 'umfrage_empfaenger')) {
+        $pdo->exec("CREATE TABLE umfrage_empfaenger (
+  umfrage_id    INT UNSIGNED  NOT NULL,
+  contact_id    INT UNSIGNED  NOT NULL,
+  PRIMARY KEY (umfrage_id, contact_id),
+  CONSTRAINT fk_umfrage_empf_umfrage FOREIGN KEY (umfrage_id) REFERENCES umfragen(id) ON DELETE CASCADE,
+  CONSTRAINT fk_umfrage_empf_kontakt FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    if (ovb_table_exists($pdo, 'umfragen') && ovb_column_exists($pdo, 'umfragen', 'bericht_kontakt_id')) {
+        // Den bisherigen einen Kontakt in die Liste übernehmen, dann die Spalte weg
+        $pdo->exec('INSERT IGNORE INTO umfrage_empfaenger (umfrage_id, contact_id)
+                    SELECT u.id, u.bericht_kontakt_id FROM umfragen u JOIN contacts c ON c.id = u.bericht_kontakt_id
+                    WHERE u.bericht_kontakt_id IS NOT NULL');
+        $pdo->exec('ALTER TABLE umfragen DROP COLUMN bericht_kontakt_id');
+    }
+    $merken('083_umfrage_empfaenger');
 }
 
 /**

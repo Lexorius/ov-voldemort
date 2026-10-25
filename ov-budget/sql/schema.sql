@@ -1630,7 +1630,6 @@ CREATE TABLE IF NOT EXISTS umfragen (
   seiten        MEDIUMTEXT    NULL,
   -- Bericht per E-Mail: Rhythmus, Empfaenger aus den Kontakten, KI-Zusammenfassung, Zeitpunkte
   bericht_rhythmus   ENUM('','taeglich','woechentlich','ende') NOT NULL DEFAULT '',
-  bericht_kontakt_id INT UNSIGNED NULL,
   bericht_ki         TINYINT(1)   NOT NULL DEFAULT 0,
   bericht_zuletzt    DATETIME     NULL,
   bericht_ende_am    DATETIME     NULL,
@@ -1654,6 +1653,15 @@ CREATE TABLE IF NOT EXISTS umfrage_antworten (
   PRIMARY KEY (id),
   KEY idx_umfrage_antwort (umfrage_id, ts),
   CONSTRAINT fk_umfrage_antwort FOREIGN KEY (umfrage_id) REFERENCES umfragen(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Empfaenger der Berichte: Kontakte mit E-Mail-Adresse, beliebig viele je Abstimmung
+CREATE TABLE IF NOT EXISTS umfrage_empfaenger (
+  umfrage_id    INT UNSIGNED  NOT NULL,
+  contact_id    INT UNSIGNED  NOT NULL,
+  PRIMARY KEY (umfrage_id, contact_id),
+  CONSTRAINT fk_umfrage_empf_umfrage FOREIGN KEY (umfrage_id) REFERENCES umfragen(id) ON DELETE CASCADE,
+  CONSTRAINT fk_umfrage_empf_kontakt FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS=1;

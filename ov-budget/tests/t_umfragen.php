@@ -18,6 +18,7 @@ function db_all(string $sql, array $p = []): array {
     }
     if (str_contains($sql, 'FROM umfrage_antworten')) { return $GLOBALS['zeilen']; }
     if (str_contains($sql, 'FROM umfragen ')) { return $GLOBALS['umfragen_zeilen'] ?? []; }
+    if (str_contains($sql, 'FROM umfrage_empfaenger')) { return $GLOBALS['empfaenger'] ?? []; }
     return [];
 }
 function db_row(string $sql, array $p = []): ?array { return str_contains($sql, 'FROM contacts') ? ($GLOBALS['kontakt'] ?? null) : null; }
@@ -137,11 +138,21 @@ $check('Formular: Titel, Beginn, Ende und Seiten bemängelt', $id === null && co
 $_POST = ['titel' => 'Sommerfest', 'beginn' => '2026-11-01T20:00', 'ende' => '2026-11-01T19:00', 'seiten_json' => json_encode($seiten)];
 [$id, $f] = umfrage_save_from_post(null);
 $check('Ende vor Beginn', $id === null && count($f) === 1 && str_contains($f[0], 'nach dem Beginn'));
-$_POST = ['titel' => '  Sommerfest 2027 ', 'beschreibung' => 'Bitte abstimmen', 'beginn' => '', 'ende' => '2026-11-08T20:00',
-          'seiten_json' => json_encode($seiten), 'name_feld' => '1', 'dank' => 'Danke!', 'connector_id' => '0'];
+$_POST = ['titel' => 'X', 'ende' => '2026-11-08T20:00', 'seiten_json' => json_encode($seiten), 'bericht_rhythmus' => 'taeglich', 'bericht_kontakte' => ['5']];
 [$id, $f] = umfrage_save_from_post(null);
-$check('angelegt', $id === 7 && $f === [] && count($GLOBALS['inserts']) === 1);
+$check('Bericht ohne gültigen Kontakt bemängelt', $id === null && count($f) === 1 && str_contains($f[0], 'mindestens einen Kontakt'));
+$GLOBALS['kontakt'] = ['id' => 9, 'vorname' => 'Max', 'nachname' => 'Muster', 'organisation' => '', 'email' => 'max@example.de', 'anrede' => '', 'titel' => ''];
+$GLOBALS['inserts'] = []; $GLOBALS['execs'] = [];
+$_POST = ['titel' => '  Sommerfest 2027 ', 'beschreibung' => 'Bitte abstimmen', 'beginn' => '', 'ende' => '2026-11-08T20:00',
+          'seiten_json' => json_encode($seiten), 'name_feld' => '1', 'dank' => 'Danke!', 'connector_id' => '0',
+          'bericht_rhythmus' => 'woechentlich', 'bericht_kontakte' => ['9', '9', 'x', '0'], 'bericht_ki' => '1'];
+[$id, $f] = umfrage_save_from_post(null);
+$check('angelegt, Empfänger einmal eingetragen', $id === 7 && $f === [] && count($GLOBALS['inserts']) === 2
+    && $GLOBALS['inserts'][1] === ['umfrage_empfaenger', ['umfrage_id' => 7, 'contact_id' => 9]]
+    && str_contains($GLOBALS['execs'][0][0], 'DELETE FROM umfrage_empfaenger'));
 $neu = $GLOBALS['inserts'][0][1];
+$check('Rhythmus und KI gespeichert, kein Kontaktfeld mehr', $neu['bericht_rhythmus'] === 'woechentlich' && $neu['bericht_ki'] === 1 && !array_key_exists('bericht_kontakt_id', $neu));
+$GLOBALS['kontakt'] = null;
 $check('Entwurf mit Code, ohne Beginn, Ende als DATETIME, Seiten als JSON', $neu['status'] === 'entwurf' && strlen($neu['code']) === 6
     && $neu['beginn'] === null && $neu['ende'] === '2026-11-08 20:00:00' && $neu['titel'] === 'Sommerfest 2027'
     && $neu['name_feld'] === 1 && $neu['connector_id'] === null && json_decode($neu['seiten'], true)[0]['felder'][0]['frage'] === 'Welcher Tag?');
@@ -154,6 +165,7 @@ umfrage_antwort_speichern(['id' => 7, 'seiten' => $neu['seiten']], ['antworten' 
 $gespeichert = $GLOBALS['inserts'][0][1];
 $check('Antwort geprüft gespeichert', $GLOBALS['inserts'][0][0] === 'umfrage_antworten' && $gespeichert['umfrage_id'] === 7
     && $gespeichert['name'] === 'Ben' && json_decode($gespeichert['daten'], true) === ['f1' => 1, 'f4' => 'ja'] && $gespeichert['ts'] === date('Y-m-d H:i:s', $jetzt));
+$GLOBALS['execs'] = [];
 $check('Antworten löschen', umfrage_antworten_loeschen(['id' => 7]) === 3 && str_contains($GLOBALS['execs'][0][0], 'DELETE FROM umfrage_antworten'));
 
 /* ---------- Ansichten ---------- */
@@ -163,7 +175,7 @@ $connector = ['id' => 3, 'name' => 'Feedback', 'url' => 'https://ov.example.de/c
               'is_active' => 1, 'fuer_umfragen' => 1, 'pem' => 'x', 'pubkey' => 'y', 'server_pub' => 'z'];
 $vars = ['umfrage' => $umfrage, 'seiten' => $sauber, 'connector' => $connector, 'zustand' => 'laeuft',
          'adresse' => umfrage_url($connector, 'AB23CD'), 'antworten' => $antworten, 'auswertung' => $a, 'darf' => true,
-         'letzterAbruf' => $jetzt, 'abholbar' => true];
+         'letzterAbruf' => $jetzt, 'abholbar' => true, 'empfaenger' => [], 'mailAktiv' => false];
 $html = render_partial('umfrage', $vars);
 $check('Detail: QR mit kurzer Adresse, Link kopieren, Bild laden, Drucken', str_contains($html, 'data-qr="https://i.example.de/AB23CD"')
     && str_contains($html, 'data-kopieren="#umfrage-link"') && str_contains($html, 'id="qr-laden"') && str_contains($html, 'id="qr-drucken"')
@@ -188,7 +200,15 @@ $check('Liste: Gruppe, Zeile, Hinweis auf fehlenden Connector', str_contains($ht
 $html = render_partial('umfragen', ['title' => 'Abstimmungen', 'darf' => false, 'connectoren' => [], 'gruppen' => ['laufend' => [], 'kommend' => [], 'entwurf' => [], 'vorbei' => []]]);
 $check('Liste leer', str_contains($html, 'Noch keine Abstimmung') && !str_contains($html, '+ Abstimmung'));
 
-$html = render_partial('umfrage_edit', ['umfrage' => $umfrage, 'errors' => ['Bitte einen Titel angeben.'], 'connectoren' => [$connector], 'antwortenAnzahl' => 4]);
+$maxK = ['id' => 9, 'vorname' => 'Max', 'nachname' => 'Muster', 'organisation' => '', 'email' => 'max@example.de', 'anrede' => '', 'titel' => ''];
+$annaK = ['id' => 10, 'vorname' => 'Anna', 'nachname' => 'Ärztin', 'organisation' => '', 'email' => 'anna@example.de', 'anrede' => '', 'titel' => ''];
+$html = render_partial('umfrage', ['empfaenger' => [$maxK, $annaK], 'mailAktiv' => true, 'umfrage' => ['bericht_rhythmus' => 'taeglich', 'bericht_ki' => 1, 'bericht_zuletzt' => '2026-10-24 07:00:00'] + $umfrage] + $vars);
+$check('Detail: zwei Empfänger, KI, Knopf zum Senden', str_contains($html, '2 Empfänger') && str_contains($html, 'Max Muster (max@example.de), Anna Ärztin (anna@example.de)')
+    && str_contains($html, 'mit KI-Zusammenfassung') && str_contains($html, 'value="bericht"') && str_contains($html, 'Zuletzt verschickt 24.10.2026'));
+$html = render_partial('umfrage_edit', ['umfrage' => ['bericht_rhythmus' => 'taeglich', 'bericht_kontakte' => [10], 'bericht_ki' => 0] + $umfrage, 'errors' => ['Bitte einen Titel angeben.'],
+    'connectoren' => [$connector], 'antwortenAnzahl' => 4, 'kontakte' => [$maxK, $annaK], 'mailAktiv' => true, 'kiAktiv' => false]);
+$check('Bearbeiten: Mehrfachauswahl der Empfänger, Anna gewählt', str_contains($html, 'name="bericht_kontakte[]" multiple')
+    && str_contains($html, 'value="10" selected') && !str_contains($html, 'value="9" selected') && str_contains($html, 'option value="taeglich" selected'));
 $check('Bearbeiten: Gestalter, JSON-Feld, Fehler, Warnung bei Antworten, Connector gewählt', str_contains($html, 'data-umfrage-editor')
     && str_contains($html, 'id="seiten_json"') && str_contains($html, 'Bitte einen Titel angeben.') && str_contains($html, 'schon 4 Antwort(en)')
     && str_contains($html, 'value="3" selected') && str_contains($html, 'value="2026-11-08T20:00"') && str_contains($html, 'name="name_feld" value="1" checked'));
@@ -197,7 +217,7 @@ $check('Bearbeiten: Gestalter, JSON-Feld, Fehler, Warnung bei Antworten, Connect
 $GLOBALS['kontakt'] = ['id' => 9, 'vorname' => 'Max', 'nachname' => 'Muster', 'organisation' => '', 'email' => 'max@example.de', 'anrede' => '', 'titel' => ''];
 $check('Rhythmus-Texte', umfrage_bericht_text_rhythmus('taeglich') === 'täglich – und zum Abschluss' && umfrage_bericht_text_rhythmus('x') === 'kein Bericht');
 $ub = ['id' => 7, 'titel' => 'Sommerfest', 'beschreibung' => '', 'status' => 'offen', 'beginn' => '2026-10-20 10:00:00', 'ende' => '2026-10-31 20:00:00',
-       'created_at' => '2026-10-19 12:00:00', 'bericht_rhythmus' => 'taeglich', 'bericht_kontakt_id' => 9, 'bericht_ki' => 0,
+       'created_at' => '2026-10-19 12:00:00', 'bericht_rhythmus' => 'taeglich', 'empfaenger_anzahl' => 1, 'bericht_ki' => 0,
        'bericht_zuletzt' => null, 'bericht_ende_am' => null, 'name_feld' => 1, 'seiten' => $neu['seiten']];
 $t = static fn(string $s): int => (int)strtotime($s);
 $check('täglich: erster Bericht am Morgen nach dem Anlegen', umfrage_bericht_faellig($ub, $t('2026-10-24 07:00:00')) === 'taeglich');
@@ -212,7 +232,7 @@ $check('nur am Ende: vorher nichts, danach nach der Karenz einmal', umfrage_beri
     && umfrage_bericht_faellig(['bericht_rhythmus' => 'ende'] + $ub, $t('2026-10-31 20:11:00')) === 'ende'
     && umfrage_bericht_faellig(['bericht_rhythmus' => 'ende', 'bericht_ende_am' => '2026-10-31 20:12:00'] + $ub, $t('2026-11-01 09:00:00')) === null);
 $check('täglich bekommt am Ende auch den Abschluss', umfrage_bericht_faellig($ub, $t('2026-11-01 09:00:00')) === 'ende');
-$check('ohne Kontakt, ohne Rhythmus, nicht offen: nichts', umfrage_bericht_faellig(['bericht_kontakt_id' => 0] + $ub, $t('2026-10-24 09:00:00')) === null
+$check('ohne Kontakt, ohne Rhythmus, nicht offen: nichts', umfrage_bericht_faellig(['empfaenger_anzahl' => 0] + $ub, $t('2026-10-24 09:00:00')) === null
     && umfrage_bericht_faellig(['bericht_rhythmus' => ''] + $ub, $t('2026-10-24 09:00:00')) === null
     && umfrage_bericht_faellig(['status' => 'entwurf'] + $ub, $t('2026-10-24 09:00:00')) === null);
 
@@ -237,18 +257,27 @@ $GLOBALS['ki_kaputt'] = false;
 $post = [];
 $GLOBALS['mail_attrappe'] = static function (string $an, string $betreff, string $text, string $name) use (&$post): void { $post[] = [$an, $betreff, $text, $name]; };
 $GLOBALS['zeilen'] = array_map(static fn($a) => ['ts' => $a['ts'], 'name' => $a['name'], 'daten' => json_encode($a['antworten'])], $antworten);
+$GLOBALS['empfaenger'] = [$maxK, $annaK, ['id' => 11, 'vorname' => 'Ohne', 'nachname' => 'Mail', 'organisation' => '', 'email' => '', 'anrede' => '', 'titel' => '']];
 $GLOBALS['updates'] = [];
 $r = umfrage_bericht_senden(['bericht_ki' => 1] + $ub, 'ende', $t('2026-11-01 09:00:00'));
-$check('Bericht verschickt, mit KI, Zeitpunkte gemerkt', $r['ok'] && $r['ki'] && count($post) === 1 && $post[0][0] === 'max@example.de' && $post[0][3] === 'Max Muster'
+$check('Bericht an beide Empfänger mit Adresse, mit KI, Zeitpunkte gemerkt', $r['ok'] && $r['ki'] && $r['gesendet'] === 2 && count($post) === 2
+    && $post[0][0] === 'max@example.de' && $post[0][3] === 'Max Muster' && $post[1][0] === 'anna@example.de' && $post[1][3] === 'Anna Ärztin'
     && str_starts_with($post[0][1], 'Ergebnis der Abstimmung') && str_contains($post[0][2], 'Die Mehrheit will Samstag.') && str_contains($post[0][2], 'Samstag: 2')
+    && str_contains($post[0][2], 'verschickt an Max Muster, Anna Ärztin') && str_contains($r['text'], 'Max Muster (max@example.de), Anna Ärztin (anna@example.de)')
     && $GLOBALS['updates'][0][1] === ['bericht_zuletzt' => '2026-11-01 09:00:00', 'bericht_ende_am' => '2026-11-01 09:00:00']);
-$GLOBALS['kontakt'] = null;
+$check('KI nur einmal geholt', substr_count($GLOBALS['ki_prompt'], 'Abstimmung „Sommerfest"') === 1);
+$GLOBALS['empfaenger'] = [];
 $r = umfrage_bericht_senden($ub, 'taeglich');
 $check('ohne Kontakt kein Versand', !$r['ok'] && str_contains($r['text'], 'kein Kontakt'));
-$GLOBALS['kontakt'] = ['id' => 9, 'vorname' => 'Max', 'nachname' => 'Muster', 'organisation' => '', 'email' => 'max@example.de', 'anrede' => '', 'titel' => ''];
+$GLOBALS['empfaenger'] = [$maxK, $annaK];
+$GLOBALS['mail_attrappe'] = static function (string $an): void { if ($an === 'max@example.de') { throw new MailException('Server weg'); } };
+$GLOBALS['updates'] = [];
+$r = umfrage_bericht_senden($ub, 'taeglich');
+$check('einer scheitert: trotzdem gelungen, Fehler genannt', $r['ok'] && $r['gesendet'] === 1 && count($r['fehler']) === 1
+    && str_contains($r['text'], 'nicht erreicht: Max Muster: Server weg') && count($GLOBALS['updates']) === 1);
 $GLOBALS['mail_attrappe'] = static function (): void { throw new MailException('Server weg'); };
 $r = umfrage_bericht_senden($ub, 'taeglich');
-$check('Versandfehler kommt als Text', !$r['ok'] && str_contains($r['text'], 'Server weg'));
+$check('alle scheitern: Fehler', !$r['ok'] && $r['gesendet'] === 0 && str_contains($r['text'], 'Server weg'));
 
 $GLOBALS['umfragen_zeilen'] = [$ub, ['id' => 8, 'bericht_rhythmus' => 'ende'] + $ub];
 $GLOBALS['settings'] += ['mail_aktiv' => '1', 'mail_host' => 'smtp.example.de', 'mail_absender' => 'ov@example.de'];
@@ -257,7 +286,7 @@ $post = [];
 $GLOBALS['updates'] = [];
 $GLOBALS['mail_attrappe'] = static function (string $an, string $betreff, string $text, string $name) use (&$post): void { $post[] = $betreff; };
 $r = umfrage_berichte_senden($t('2026-10-24 07:30:00'));
-$check('fällige Berichte: täglich ja, nur am Ende nein', $r['geprueft'] === 2 && $r['gesendet'] === 1 && $r['fehler'] === [] && count($post) === 1 && str_contains($post[0], 'Zwischenstand'));
+$check('fällige Berichte: täglich ja an beide Empfänger, nur am Ende nein', $r['geprueft'] === 2 && $r['gesendet'] === 1 && $r['fehler'] === [] && count($post) === 2 && str_contains($post[0], 'Zwischenstand'));
 $GLOBALS['settings']['mail_aktiv'] = '0';
 settings_reset_cache();
 $check('Versand aus: nichts geprüft', umfrage_berichte_senden($t('2026-10-24 07:30:00')) === ['geprueft' => 0, 'gesendet' => 0, 'fehler' => []]);
