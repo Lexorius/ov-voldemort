@@ -55,6 +55,9 @@ function getraenke_lieferant_save_from_post(?array $l): array
         'email'        => mb_substr($email, 0, 150),
         'telefon'      => mb_substr(trim(post_str('telefon')), 0, 60),
         'kundennummer' => mb_substr(trim(post_str('kundennummer')), 0, 60),
+        'strasse'      => mb_substr(trim(post_str('strasse')), 0, 150),
+        'plz'          => mb_substr(trim(post_str('plz')), 0, 15),
+        'ort'          => mb_substr(trim(post_str('ort')), 0, 100),
         'notiz'        => post_str('notiz'),
         'is_active'    => post_bool('is_active') ? 1 : 0,
     ];
@@ -67,6 +70,13 @@ function getraenke_lieferant_save_from_post(?array $l): array
         audit('getraenke.lieferant_angelegt', 'getraenke_lieferant', $id, $name);
     }
     return [$id, []];
+}
+
+/** Anschrift des Lieferanten in einer Zeile: "Musterstraße 1, 12345 Musterstadt". Reine Funktion. */
+function getraenke_lieferant_anschrift(array $l): string
+{
+    $ort = trim(trim((string)($l['plz'] ?? '')) . ' ' . trim((string)($l['ort'] ?? '')));
+    return implode(', ', array_filter([trim((string)($l['strasse'] ?? '')), $ort]));
 }
 
 /** Löschen – nur ohne Bestellungen; Getränke verlieren ihren Lieferanten. Rückgabe: Fehlertext oder null */

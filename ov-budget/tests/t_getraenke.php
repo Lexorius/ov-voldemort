@@ -133,9 +133,12 @@ $_POST = ['name' => '', 'email' => 'kaputt'];
 [$id, $f] = getraenke_lieferant_save_from_post(null);
 $check('Lieferant: Name und E-Mail bemängelt', $id === null && count($f) === 2);
 $GLOBALS['inserts'] = [];
-$_POST = ['name' => ' Getränke Neu ', 'email' => 'neu@example.de', 'telefon' => '', 'kundennummer' => '', 'notiz' => '', 'is_active' => '1'];
+$_POST = ['name' => ' Getränke Neu ', 'email' => 'neu@example.de', 'telefon' => '', 'kundennummer' => '', 'strasse' => ' Industriestraße 12 ', 'plz' => '74072', 'ort' => 'Heilbronn', 'notiz' => '', 'is_active' => '1'];
 [$id, $f] = getraenke_lieferant_save_from_post(null);
-$check('Lieferant angelegt', $id === 101 && $f === [] && $GLOBALS['inserts'][0][1]['name'] === 'Getränke Neu');
+$check('Lieferant angelegt mit Anschrift', $id === 101 && $f === [] && $GLOBALS['inserts'][0][1]['name'] === 'Getränke Neu'
+    && $GLOBALS['inserts'][0][1]['strasse'] === 'Industriestraße 12' && $GLOBALS['inserts'][0][1]['plz'] === '74072' && $GLOBALS['inserts'][0][1]['ort'] === 'Heilbronn');
+$check('Anschrift in einer Zeile', getraenke_lieferant_anschrift($GLOBALS['inserts'][0][1]) === 'Industriestraße 12, 74072 Heilbronn'
+    && getraenke_lieferant_anschrift(['ort' => 'Heilbronn']) === 'Heilbronn' && getraenke_lieferant_anschrift([]) === '');
 $_POST = ['name' => 'Spezi', 'lieferant_id' => '77'];
 [$id, $f] = getraenk_save_from_post(null);
 $check('Getränk: unbekannter Lieferant bemängelt', $id === null && count($f) === 1);
@@ -237,6 +240,7 @@ $check('Bestellentwurf: nur Getränke des Lieferanten, Vorschlag eingetragen', s
 $html = render_partial('getraenk_edit', ['getraenk' => $getraenke[0], 'errors' => [], 'lieferanten' => $GLOBALS['lieferanten']]);
 $check('Getränk bearbeiten', str_contains($html, 'value="Wasser still"') && str_contains($html, 'value="1" selected') && str_contains($html, 'value="loeschen"'));
 $html = render_partial('getraenke_lieferant_edit', ['lieferant' => $GLOBALS['lieferanten'][0], 'errors' => ['Fehler X']]);
-$check('Lieferant bearbeiten', str_contains($html, 'value="bestellung@mueller.example"') && str_contains($html, 'Fehler X'));
+$check('Lieferant bearbeiten mit Anschriftsfeldern', str_contains($html, 'value="bestellung@mueller.example"') && str_contains($html, 'Fehler X')
+    && str_contains($html, 'name="strasse"') && str_contains($html, 'name="plz"') && str_contains($html, 'name="ort"'));
 
 echo "$ok bestanden, $fail fehlgeschlagen\n";

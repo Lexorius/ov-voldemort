@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if (!$lieferant) {
-    $lieferant = ['id' => null, 'name' => '', 'email' => '', 'telefon' => '', 'kundennummer' => '', 'notiz' => '', 'is_active' => 1];
+    $lieferant = ['id' => null, 'name' => '', 'email' => '', 'telefon' => '', 'kundennummer' => '', 'strasse' => '', 'plz' => '', 'ort' => '', 'notiz' => '', 'is_active' => 1];
 }
 
 render('getraenke_lieferant_edit', [

@@ -162,7 +162,7 @@ $lieferantName = static fn(int $id): string => $id > 0 ? (string)($lieferanten[$
         <div><strong><?= e((string)$l['name']) ?></strong>
           <?php if ((int)$l['is_active'] !== 1): ?><span class="badge badge--muted">nicht aktiv</span><?php endif; ?>
           <?php if ((int)$lid > 0): ?>
-            <span class="small muted"><?= trim((string)$l['email']) !== '' ? e((string)$l['email']) : '<span style="color:var(--warn)">keine E-Mail – Bestellen nicht möglich</span>' ?><?= trim((string)($l['telefon'] ?? '')) !== '' ? ' · ' . e((string)$l['telefon']) : '' ?></span>
+            <span class="small muted"><?= trim((string)$l['email']) !== '' ? e((string)$l['email']) : '<span style="color:var(--warn)">keine E-Mail – Bestellen nicht möglich</span>' ?><?= trim((string)($l['telefon'] ?? '')) !== '' ? ' · ' . e((string)$l['telefon']) : '' ?><?= getraenke_lieferant_anschrift($l) !== '' ? ' · ' . e(getraenke_lieferant_anschrift($l)) : '' ?></span>
           <?php endif; ?></div>
         <?php if ($darf && (int)$lid > 0): ?>
           <span class="btnrow"><a class="btn btn--sec btn--sm" href="<?= e(url('getraenke_lieferant_edit', ['id' => $lid])) ?>">Bearbeiten</a>

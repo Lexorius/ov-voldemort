@@ -1,5 +1,10 @@
 # Änderungsverlauf
 
+## 2.1.57.1
+
+- **Getränke:** Lieferanten haben jetzt Straße und Hausnummer, PLZ und Ort;
+  die Anschrift steht in der Übersicht und am Kopf der Bestellung.
+
 ## 2.1.57.0
 
 - **Neues Modul Getränke:** Lieferanten und Getränkearten (Wasser, Schorle,

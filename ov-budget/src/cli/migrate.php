@@ -2227,6 +2227,15 @@ SQL);
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
     }
     $merken('084_getraenke');
+
+    /* ---------- 085: Anschrift der Lieferanten ---------- */
+    if (ovb_table_exists($pdo, 'getraenke_lieferanten') && !ovb_column_exists($pdo, 'getraenke_lieferanten', 'strasse')) {
+        $pdo->exec("ALTER TABLE getraenke_lieferanten
+            ADD COLUMN strasse VARCHAR(150) NOT NULL DEFAULT '' AFTER kundennummer,
+            ADD COLUMN plz VARCHAR(15) NOT NULL DEFAULT '' AFTER strasse,
+            ADD COLUMN ort VARCHAR(100) NOT NULL DEFAULT '' AFTER plz");
+    }
+    $merken('085_lieferant_anschrift');
 }
 
 /**

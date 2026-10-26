@@ -33,6 +33,18 @@ $isNew = empty($lieferant['id']);
         <input type="text" id="kundennummer" name="kundennummer" maxlength="60" value="<?= e((string)$lieferant['kundennummer']) ?>">
       </div>
       <div class="field" style="grid-column:1/-1">
+        <label for="strasse">Straße und Hausnummer</label>
+        <input type="text" id="strasse" name="strasse" maxlength="150" value="<?= e((string)($lieferant['strasse'] ?? '')) ?>" placeholder="z. B. Industriestraße 12">
+      </div>
+      <div class="field">
+        <label for="plz">PLZ</label>
+        <input type="text" id="plz" name="plz" maxlength="15" value="<?= e((string)($lieferant['plz'] ?? '')) ?>" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label for="ort">Ort</label>
+        <input type="text" id="ort" name="ort" maxlength="100" value="<?= e((string)($lieferant['ort'] ?? '')) ?>">
+      </div>
+      <div class="field" style="grid-column:1/-1">
         <label for="notiz">Notiz <span class="muted">(Lieferzeiten, Pfand, Ansprechpartner)</span></label>
         <textarea id="notiz" name="notiz" rows="3"><?= e((string)$lieferant['notiz']) ?></textarea>
       </div>
