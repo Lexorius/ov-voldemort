@@ -12,6 +12,7 @@ $status = (string)$b['status'];
     <p>Lieferant <strong><?= e((string)($b['lieferant_name'] ?? '–')) ?></strong>
       <?= $lieferant !== null && trim((string)$lieferant['email']) !== '' ? '(' . e((string)$lieferant['email']) . ')' : '<span style="color:var(--warn)">(ohne E-Mail-Adresse)</span>' ?>
       <?= $lieferant !== null && getraenke_lieferant_anschrift($lieferant) !== '' ? '· ' . e(getraenke_lieferant_anschrift($lieferant)) : '' ?>
+      <?php if (trim((string)($b['absender_name'] ?? '')) !== ''): ?>· im Namen von <strong><?= e((string)$b['absender_name']) ?></strong><?php endif; ?>
       · angelegt <?= e(de_datetime((string)$b['created_at'])) ?>
       <?php if (!empty($b['gesendet_am'])): ?> · verschickt <?= e(de_datetime((string)$b['gesendet_am'])) ?> an <?= e((string)$b['gesendet_an']) ?><?php endif; ?>
       <?php if (!empty($b['geliefert_am'])): ?> · geliefert <?= e(de_datetime((string)$b['geliefert_am'])) ?><?php endif; ?></p>

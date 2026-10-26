@@ -1187,6 +1187,14 @@ Getränkenamen, nicht den Platz und nicht die Meldung. *Leer* setzt den
 Bestand am Platz auf null, eine Zahl ist eine Inventur, *reicht noch*
 erledigt offene Meldungen. Alles Offene steht unter **Bedarf**.
 
+**Absender.** Bestellt wird im Namen des Ortsverbands, des Helfervereins
+oder der Regionalstelle: Unter *Absender* stehen Name, Rechnungsanschrift,
+E-Mail und Telefon je Absender. Beim Anlegen einer Bestellung wird der
+Absender gewählt (der erste ist die Vorgabe); die Bestell-Mail nennt ihn
+unter „Besteller und Rechnungsempfänger" und in der Unterschrift, der
+Betreff trägt seinen Namen. Ohne Absender steht der Name des Ortsverbands
+aus den Einstellungen in der Bestellung.
+
 **Bestellen – nach dem Prüfen.** Aus Meldungen und Mindestbestand
 schlägt das Modul je Lieferant vor, was fehlt. *Bestellung vorbereiten*
 legt einen Entwurf mit diesem Vorschlag an; die verantwortliche Person

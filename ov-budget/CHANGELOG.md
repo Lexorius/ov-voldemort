@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.58.0
+
+- **Getränke: Absender der Bestellung.** Ortsverband, Helferverein oder
+  Regionalstelle lassen sich als Absender mit Rechnungsanschrift, E-Mail und
+  Telefon anlegen und je Bestellung wählen. Die Bestell-Mail nennt den
+  Absender unter „Besteller und Rechnungsempfänger" und in der Unterschrift,
+  der Betreff trägt seinen Namen; Übersicht und Bestellung zeigen ihn.
+
 ## 2.1.57.1
 
 - **Getränke:** Lieferanten haben jetzt Straße und Hausnummer, PLZ und Ort;

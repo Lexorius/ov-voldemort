@@ -31,6 +31,7 @@ function db_all(string $sql, array $p = []): array {
         return $r;
     }
     if (str_contains($sql, 'FROM getraenke_lieferanten')) { return $GLOBALS['lieferanten']; }
+    if (str_contains($sql, 'FROM getraenke_absender')) { return $GLOBALS['absender'] ?? []; }
     if (str_contains($sql, 'FROM getraenke g')) { return str_contains($sql, 'is_active = 1') ? array_values(array_filter($GLOBALS['getraenke'], fn($g) => $g['is_active'] === 1)) : $GLOBALS['getraenke']; }
     if (str_contains($sql, 'FROM getraenke_positionen')) { return $GLOBALS['positionen']; }
     if (str_contains($sql, 'FROM getraenke_bestand')) { return $GLOBALS['bestand']; }
@@ -40,6 +41,7 @@ function db_all(string $sql, array $p = []): array {
 }
 function db_row(string $sql, array $p = []): ?array {
     if (str_contains($sql, 'FROM getraenke_lieferanten')) { foreach ($GLOBALS['lieferanten'] as $l) { if ($l['id'] === (int)($p[0] ?? 0)) { return $l; } } return null; }
+    if (str_contains($sql, 'FROM getraenke_absender')) { foreach ($GLOBALS['absender'] ?? [] as $a) { if ($a['id'] === (int)($p[0] ?? 0)) { return $a; } } return null; }
     if (str_contains($sql, 'FROM getraenke g')) { foreach ($GLOBALS['getraenke'] as $g) { if ($g['id'] === (int)($p[0] ?? 0)) { return $g; } } return null; }
     if (str_contains($sql, 'FROM standorte')) { return (int)($p[0] ?? 0) === 5 ? $GLOBALS['standort'] : null; }
     if (str_contains($sql, 'FROM getraenke_bestellungen')) { return $GLOBALS['bestellung']; }
@@ -126,9 +128,22 @@ $text = getraenke_bestellung_text($b, $positionen, $GLOBALS['lieferanten'][0], $
     'lieferadresse' => "THW OV Musterstadt\nMusterstraße 1", 'hinweis' => 'Leergut steht bereit.']);
 $check('Mailtext vollständig', str_contains($text, 'Bestellnummer G-2026-007, Kundennummer K-4711') && str_contains($text, '     4 × Wasser still (Kasten 12 × 0,7 l)')
     && str_contains($text, "Lieferung an:\n  THW OV Musterstadt\n  Musterstraße 1\n  Abladen: Halle 1") && str_contains($text, 'Bitte Donnerstag.')
-    && str_contains($text, 'Leergut steht bereit.') && str_contains($text, "Mit freundlichen Grüßen\nAnna Admin\nTHW OV Musterstadt\nanna@ov.example · 0171 1"));
+    && str_contains($text, 'Leergut steht bereit.') && str_contains($text, "Mit freundlichen Grüßen\nAnna Admin\nTHW OV Musterstadt\nanna@ov.example · 0171 1")
+    && !str_contains($text, 'Rechnungsempfänger'));
+$GLOBALS['absender'] = [['id' => 2, 'name' => 'Helferverein THW Musterstadt e. V.', 'anschrift' => "Vereinsweg 3\n12345 Musterstadt", 'email' => 'kasse@helferverein.example', 'telefon' => '', 'notiz' => '', 'sort_order' => 2, 'is_active' => 1]];
+$textA = getraenke_bestellung_text($b, $positionen, $GLOBALS['lieferanten'][0], null, ['ov_name' => 'THW OV Musterstadt', 'besteller' => 'Anna Admin', 'besteller_email' => 'anna@ov.example', 'absender' => $GLOBALS['absender'][0]]);
+$check('Mailtext mit Absender: Rechnungsempfänger, Unterschrift und Kontakt des Absenders', str_contains($textA, "Besteller und Rechnungsempfänger:\n  Helferverein THW Musterstadt e. V.\n  Vereinsweg 3\n  12345 Musterstadt")
+    && str_contains($textA, "Mit freundlichen Grüßen\nAnna Admin\nHelferverein THW Musterstadt e. V.\nkasse@helferverein.example") && !str_contains($textA, 'anna@ov.example'));
 
 /* ---------- Formulare ---------- */
+$GLOBALS['absender'] = [['id' => 2, 'name' => 'Helferverein THW Musterstadt e. V.', 'anschrift' => "Vereinsweg 3\n12345 Musterstadt", 'email' => 'kasse@helferverein.example', 'telefon' => '', 'notiz' => '', 'sort_order' => 2, 'is_active' => 1]];
+$_POST = ['name' => '', 'email' => 'kaputt'];
+[$id, $f] = getraenke_absender_save_from_post(null);
+$check('Absender: Name und E-Mail bemängelt', $id === null && count($f) === 2);
+$GLOBALS['inserts'] = [];
+$_POST = ['name' => ' Regionalstelle Heilbronn ', 'anschrift' => "Regionalstelle\r\nStraße 9\r\n74072 Heilbronn", 'email' => '', 'telefon' => '', 'notiz' => '', 'sort_order' => '3', 'is_active' => '1'];
+[$id, $f] = getraenke_absender_save_from_post(null);
+$check('Absender angelegt, Anschrift ohne CR', $id === 101 && $f === [] && $GLOBALS['inserts'][0][1]['name'] === 'Regionalstelle Heilbronn' && $GLOBALS['inserts'][0][1]['anschrift'] === "Regionalstelle\nStraße 9\n74072 Heilbronn");
 $_POST = ['name' => '', 'email' => 'kaputt'];
 [$id, $f] = getraenke_lieferant_save_from_post(null);
 $check('Lieferant: Name und E-Mail bemängelt', $id === null && count($f) === 2);
@@ -151,10 +166,13 @@ $_POST = ['lieferant_id' => '0', 'pos' => []];
 [$id, $f] = getraenke_bestellung_save_from_post(null, $user);
 $check('Bestellung: Lieferant und Positionen bemängelt', $id === null && count($f) === 2);
 $GLOBALS['inserts'] = []; $GLOBALS['execs'] = [];
-$_POST = ['lieferant_id' => '1', 'standort_id' => '5', 'notiz' => 'Bitte Donnerstag.', 'pos' => ['1' => '4', '2' => '0', '99' => '3']];
+$_POST = ['lieferant_id' => '1', 'standort_id' => '5', 'absender_id' => '77', 'pos' => ['1' => '4']];
 [$id, $f] = getraenke_bestellung_save_from_post(null, $user);
-$check('Bestellung als Entwurf mit Nummer und Positionen zum Listenpreis', $id === 101 && $f === [] && $GLOBALS['inserts'][0][1]['nummer'] === 'G-' . date('Y') . '-007'
-    && $GLOBALS['inserts'][0][1]['status'] === 'entwurf' && count($GLOBALS['inserts']) === 2
+$check('Bestellung: unbekannter Absender bemängelt', $id === null && count($f) === 1 && str_contains($f[0], 'Absender'));
+$_POST = ['lieferant_id' => '1', 'standort_id' => '5', 'absender_id' => '2', 'notiz' => 'Bitte Donnerstag.', 'pos' => ['1' => '4', '2' => '0', '99' => '3']];
+[$id, $f] = getraenke_bestellung_save_from_post(null, $user);
+$check('Bestellung als Entwurf mit Nummer, Absender und Positionen zum Listenpreis', $id === 101 && $f === [] && $GLOBALS['inserts'][0][1]['nummer'] === 'G-' . date('Y') . '-007'
+    && $GLOBALS['inserts'][0][1]['status'] === 'entwurf' && $GLOBALS['inserts'][0][1]['absender_id'] === 2 && count($GLOBALS['inserts']) === 2
     && $GLOBALS['inserts'][1] === ['getraenke_positionen', ['bestellung_id' => 101, 'getraenk_id' => 1, 'anzahl' => 4, 'preis' => 6.5]]);
 [$id, $f] = getraenke_bestellung_save_from_post(['id' => 9, 'status' => 'bestellt'], $user);
 $check('Bestellte lässt sich nicht ändern', $id === null && str_contains($f[0], 'Entwurf'));
@@ -172,6 +190,9 @@ $GLOBALS['updates'] = []; $GLOBALS['execs'] = [];
 $r = getraenke_bestellung_senden($b, $user);
 $check('verschickt: Mail an den Lieferanten mit Nummer im Betreff', $r['ok'] && count($post) === 1 && $post[0][0] === 'bestellung@mueller.example'
     && $post[0][1] === 'Bestellung G-2026-007 – THW OV Musterstadt' && $post[0][3] === 'Getränke Müller' && str_contains($post[0][2], '4 × Wasser still'));
+$post = [];
+$r = getraenke_bestellung_senden(['absender_id' => 2] + $b, $user);
+$check('verschickt im Namen des Absenders: Betreff und Rechnungsempfänger', $r['ok'] && $post[0][1] === 'Bestellung G-2026-007 – Helferverein THW Musterstadt e. V.' && str_contains($post[0][2], 'Vereinsweg 3'));
 $check('Status bestellt, Mailtext gemerkt, Meldungen erledigt', $GLOBALS['updates'][0][1]['status'] === 'bestellt' && $GLOBALS['updates'][0][1]['gesendet_an'] === 'bestellung@mueller.example'
     && str_contains($GLOBALS['updates'][0][1]['mail_text'], 'Kundennummer K-4711') && str_contains($GLOBALS['execs'][0][0], 'UPDATE getraenke_meldungen SET erledigt_am'));
 $GLOBALS['mail_attrappe'] = static function (): void { throw new MailException('Server weg'); };
@@ -208,12 +229,13 @@ $con = ['id' => 3, 'name' => 'Feedback', 'url' => 'https://ov.example.de/connect
 $html = render_partial('getraenke', ['title' => 'Getränke', 'getraenke' => $getraenke, 'gruppen' => $gruppen, 'lieferanten' => [1 => $GLOBALS['lieferanten'][0], 2 => $GLOBALS['lieferanten'][1]],
     'matrix' => $m, 'summe' => $summe, 'meldungen' => [['id' => 1, 'gemeldet_am' => '2026-10-26 08:00:00', 'getraenk_name' => 'Cola-Mix', 'lieferant_id' => 2, 'standort_id' => 5, 'standort_name' => 'Halle 1', 'stand' => 'leer', 'anzahl' => null, 'melder' => 'Ben']],
     'bedarf' => [1 => [1 => 4], 2 => [2 => 1, 3 => 1]], 'offen' => [['id' => 9, 'nummer' => 'G-2026-007', 'lieferant_name' => 'Getränke Müller', 'gebinde_anzahl' => 4, 'summe' => 26, 'status' => 'bestellt', 'gesendet_am' => '2026-10-26 09:00:00', 'created_at' => '2026-10-26 08:00:00']],
-    'erledigt' => [], 'lagerplaetze' => [$GLOBALS['standort']], 'plaetzeAlle' => [$GLOBALS['standort']], 'darf' => true, 'mailAktiv' => false, 'connectoren' => [$con]]);
+    'erledigt' => [], 'lagerplaetze' => [$GLOBALS['standort']], 'plaetzeAlle' => [$GLOBALS['standort']], 'darf' => true, 'mailAktiv' => false, 'connectoren' => [$con], 'absender' => $GLOBALS['absender']]);
+$check('Übersicht: Absender gelistet', str_contains($html, 'Helferverein THW Musterstadt e. V.') && str_contains($html, '+ Absender') && str_contains($html, 'Vereinsweg 3, 12345 Musterstadt'));
 $check('Übersicht: Bedarf je Lieferant, Meldung, Matrix rot, Bestellung, Lieferanten', str_contains($html, 'Bestellung vorbereiten') && str_contains($html, 'Wasser still: <strong>4 ×')
     && str_contains($html, 'Cola-Mix') && str_contains($html, 'style="color:var(--bad)"') && str_contains($html, 'G-2026-007') && str_contains($html, 'keine E-Mail – Bestellen nicht möglich')
     && str_contains($html, 'Meldungen abholen') && str_contains($html, 'Verwaltung → E-Mail'));
 $html = render_partial('getraenke', ['title' => 'Getränke', 'getraenke' => [], 'gruppen' => [], 'lieferanten' => [], 'matrix' => ['plaetze' => [], 'zeilen' => []], 'summe' => [], 'meldungen' => [],
-    'bedarf' => [], 'offen' => [], 'erledigt' => [], 'lagerplaetze' => [], 'plaetzeAlle' => [], 'darf' => false, 'mailAktiv' => true, 'connectoren' => []]);
+    'bedarf' => [], 'offen' => [], 'erledigt' => [], 'lagerplaetze' => [], 'plaetzeAlle' => [], 'darf' => false, 'mailAktiv' => true, 'connectoren' => [], 'absender' => []]);
 $check('Übersicht leer ohne Rechte', str_contains($html, 'Nichts fehlt') && str_contains($html, 'Erst einen Lieferanten anlegen') && !str_contains($html, '+ Bestellung'));
 
 $html = render_partial('getraenke_bestellung', ['b' => $b, 'positionen' => $positionen, 'lieferant' => $GLOBALS['lieferanten'][0], 'standort' => $GLOBALS['standort'], 'summe' => 26.0,
@@ -235,8 +257,12 @@ $check('Lager: Bestand, Buchen, QR mit Platzname im Anker, Bewegungen', str_cont
     && str_contains($html, 'data-qr-untertitel="Getränke melden"') && str_contains($html, 'Lieferung') && str_contains($html, 'value="qr_weg"'));
 $html = render_partial('getraenke_lager', ['standort' => null, 'plaetze' => [$GLOBALS['standort']], 'lagerplaetze' => [], 'darf' => true]);
 $check('Lager ohne Platz: Auswahl', str_contains($html, 'Platz wählen') && str_contains($html, 'Halle 1'));
-$html = render_partial('getraenke_bestellung_edit', ['b' => null, 'errors' => [], 'lieferanten' => $GLOBALS['lieferanten'], 'lieferantId' => 2, 'standortId' => 0, 'notiz' => '', 'getraenke' => $aktive, 'pos' => [2 => 1, 3 => 1], 'summe' => $summe, 'plaetze' => [$GLOBALS['standort']]]);
-$check('Bestellentwurf: nur Getränke des Lieferanten, Vorschlag eingetragen', str_contains($html, 'name="pos[2]"') && str_contains($html, 'name="pos[2]" min="0" max="9999" value="1"') && !str_contains($html, 'name="pos[1]"') && str_contains($html, 'value="2" selected'));
+$html = render_partial('getraenke_bestellung_edit', ['b' => null, 'errors' => [], 'lieferanten' => $GLOBALS['lieferanten'], 'lieferantId' => 2, 'standortId' => 0, 'notiz' => '', 'getraenke' => $aktive, 'pos' => [2 => 1, 3 => 1], 'summe' => $summe, 'plaetze' => [$GLOBALS['standort']],
+    'absender' => $GLOBALS['absender'], 'absenderId' => 2]);
+$check('Bestellentwurf: nur Getränke des Lieferanten, Vorschlag eingetragen, Absender gewählt', str_contains($html, 'name="pos[2]"') && str_contains($html, 'name="pos[2]" min="0" max="9999" value="1"') && !str_contains($html, 'name="pos[1]"')
+    && str_contains($html, 'id="lieferant_id"') && str_contains($html, 'name="absender_id"') && str_contains($html, '<option value="2" selected>Helferverein'));
+$html = render_partial('getraenke_absender_edit', ['absender' => $GLOBALS['absender'][0], 'errors' => []]);
+$check('Absender bearbeiten', str_contains($html, 'value="Helferverein THW Musterstadt e. V."') && str_contains($html, 'Vereinsweg 3') && str_contains($html, 'value="loeschen"'));
 $html = render_partial('getraenk_edit', ['getraenk' => $getraenke[0], 'errors' => [], 'lieferanten' => $GLOBALS['lieferanten']]);
 $check('Getränk bearbeiten', str_contains($html, 'value="Wasser still"') && str_contains($html, 'value="1" selected') && str_contains($html, 'value="loeschen"'));
 $html = render_partial('getraenke_lieferant_edit', ['lieferant' => $GLOBALS['lieferanten'][0], 'errors' => ['Fehler X']]);

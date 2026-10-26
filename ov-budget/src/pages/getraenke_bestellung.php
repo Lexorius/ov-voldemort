@@ -29,6 +29,7 @@ if ($vorschau === '' && $lieferant !== null) {
         'besteller_telefon' => (string)($user['phone'] ?? ''),
         'lieferadresse'     => (string)setting('getraenke_lieferadresse', ''),
         'hinweis'           => (string)setting('getraenke_bestell_hinweis', ''),
+        'absender'          => getraenke_absender_find((int)($b['absender_id'] ?? 0)),
     ]);
 }
 

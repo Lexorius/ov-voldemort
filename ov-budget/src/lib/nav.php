@@ -43,7 +43,7 @@ function nav_module(): array
                         'route' => 'umfragen', 'aktiv' => ['umfragen', 'umfrage', 'umfrage_edit'], 'darf' => can('view_umfragen')],
         'getraenke' => ['label' => (string)setting('getraenke_modul_name', 'Getränke'), 'icon' => '🥤',
                         'route' => 'getraenke',
-                        'aktiv' => ['getraenke', 'getraenk_edit', 'getraenke_lieferant_edit', 'getraenke_bestellung', 'getraenke_bestellung_edit', 'getraenke_lager'],
+                        'aktiv' => ['getraenke', 'getraenk_edit', 'getraenke_lieferant_edit', 'getraenke_absender_edit', 'getraenke_bestellung', 'getraenke_bestellung_edit', 'getraenke_lager'],
                         'darf' => can('view_getraenke')],
         'standorte' => ['label' => (string)setting('standort_modul_name', 'Standorte'), 'icon' => '🏢',
                         'route' => 'standorte', 'aktiv' => ['standorte'], 'darf' => true],

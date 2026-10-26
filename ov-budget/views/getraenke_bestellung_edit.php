@@ -33,6 +33,16 @@ $isNew = $b === null;
         </select>
       </div>
       <div class="field">
+        <label for="absender_id">Bestellt im Namen von <span class="muted">(Absender und Rechnungsempfänger)</span></label>
+        <select id="absender_id" name="absender_id">
+          <option value="">– <?= e((string)setting('ov_name', 'Ortsverband')) ?> (Vorgabe aus den Einstellungen) –</option>
+          <?php foreach ($absender as $a): ?>
+            <option value="<?= (int)$a['id'] ?>"<?= (int)$a['id'] === $absenderId ? ' selected' : '' ?>><?= e((string)$a['name']) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <?php if (!$absender): ?><small class="muted">Absender wie Helferverein oder Regionalstelle lassen sich in der Übersicht anlegen.</small><?php endif; ?>
+      </div>
+      <div class="field">
         <label for="standort_id">Abladen an <span class="muted">(steht in der E-Mail, freiwillig)</span></label>
         <select id="standort_id" name="standort_id">
           <option value="">– kein Platz –</option>

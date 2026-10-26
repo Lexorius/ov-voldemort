@@ -617,6 +617,8 @@ Lagerplatz und die Bestellungen bis zur Rechnung.
   Vorschlag je Lieferant, als Entwurf angelegt, von einer verantwortlichen
   Person geprüft und erst dann **per E-Mail** an den Lieferanten geschickt
   (Positionen, Lieferadresse, Abladeplatz, Ansprechpartner).
+* **Absender** – im Namen des Ortsverbands, des Helfervereins oder der
+  Regionalstelle bestellen; Name und Rechnungsanschrift stehen in der Mail.
 * **Lieferung und Rechnung** – gelieferte Gebinde gehen als Zugang ins
   Lager, die Rechnung als **Ausgabe ins Budget** mit Kategorie,
   Rechnungsnummer und Zahlungsstand, verknüpft mit der Bestellung.

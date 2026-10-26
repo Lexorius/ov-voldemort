@@ -41,6 +41,7 @@ render('getraenke', [
     'offen'        => getraenke_bestellungen(['entwurf', 'bestellt', 'geliefert']),
     'erledigt'     => array_slice(getraenke_bestellungen(['abgerechnet']), 0, 10),
     'lagerplaetze' => getraenke_lagerplaetze(),
+    'absender'     => getraenke_absender(false),
     'plaetzeAlle'  => standort_all(true),
     'darf'         => can('manage_getraenke'),
     'mailAktiv'    => mail_eingerichtet(),

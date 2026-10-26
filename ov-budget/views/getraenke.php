@@ -132,12 +132,13 @@ $lieferantName = static fn(int $id): string => $id > 0 ? (string)($lieferanten[$
   <?php else: ?>
     <div class="tablewrap">
       <table class="data">
-        <thead><tr><th>Nummer</th><th>Lieferant</th><th class="num">Gebinde</th><th class="num">Summe</th><th>Status</th><th>Wann</th></tr></thead>
+        <thead><tr><th>Nummer</th><th>Lieferant</th><th>Absender</th><th class="num">Gebinde</th><th class="num">Summe</th><th>Status</th><th>Wann</th></tr></thead>
         <tbody>
         <?php foreach (array_merge($offen, $erledigt) as $b): ?>
           <tr<?= (string)$b['status'] === 'abgerechnet' ? ' class="is-muted"' : '' ?>>
             <td><a href="<?= e(url('getraenke_bestellung', ['id' => $b['id']])) ?>"><strong><?= e((string)$b['nummer']) ?></strong></a></td>
             <td><?= e((string)($b['lieferant_name'] ?? '–')) ?></td>
+            <td class="small"><?= trim((string)($b['absender_name'] ?? '')) !== '' ? e((string)$b['absender_name']) : '<span class="muted">–</span>' ?></td>
             <td class="num"><?= (int)$b['gebinde_anzahl'] ?></td>
             <td class="num"><?= (float)$b['summe'] > 0 ? e(money((float)$b['summe'])) : '<span class="muted">–</span>' ?></td>
             <td><?= getraenke_status_badge((string)$b['status']) ?></td>
@@ -147,6 +148,24 @@ $lieferantName = static fn(int $id): string => $id > 0 ? (string)($lieferanten[$
         </tbody>
       </table>
     </div>
+  <?php endif; ?>
+</section>
+
+<section class="card" id="absender">
+  <div class="card__head"><h2>Absender</h2>
+    <?php if ($darf): ?><a class="btn btn--sec btn--sm" href="<?= e(url('getraenke_absender_edit')) ?>">+ Absender</a><?php endif; ?></div>
+  <?php if (!$absender): ?>
+    <p class="small muted">In wessen Namen bestellt wird – Ortsverband, Helferverein, Regionalstelle. Ohne Absender steht der
+      Name des Ortsverbands aus den Einstellungen in der Bestellung.</p>
+  <?php else: ?>
+    <ul class="getraenke-bedarf__liste">
+      <?php foreach ($absender as $a): ?>
+        <li<?= (int)$a['is_active'] !== 1 ? ' class="is-muted"' : '' ?>>
+          <?php if ($darf): ?><a href="<?= e(url('getraenke_absender_edit', ['id' => $a['id']])) ?>"><?= e((string)$a['name']) ?></a><?php else: ?><?= e((string)$a['name']) ?><?php endif; ?>
+          <span class="small muted"><?= e(str_replace("\n", ', ', trim((string)$a['anschrift']))) ?><?= trim((string)$a['email']) !== '' ? ' · ' . e((string)$a['email']) : '' ?></span>
+        </li>
+      <?php endforeach; ?>
+    </ul>
   <?php endif; ?>
 </section>
 

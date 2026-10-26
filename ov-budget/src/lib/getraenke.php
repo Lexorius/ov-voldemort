@@ -92,6 +92,66 @@ function getraenke_lieferant_delete(array $l): ?string
 }
 
 /* ==================================================================== */
+/* Absender: in wessen Namen bestellt wird                               */
+/* ==================================================================== */
+
+function getraenke_absender(bool $nurAktive = false): array
+{
+    return db_all('SELECT * FROM getraenke_absender' . ($nurAktive ? ' WHERE is_active = 1' : '') . ' ORDER BY sort_order, name');
+}
+
+function getraenke_absender_find(?int $id): ?array
+{
+    return $id ? db_row('SELECT * FROM getraenke_absender WHERE id = ?', [$id]) : null;
+}
+
+/** Absender aus dem Formular. Rückgabe: [id, fehler[]] */
+function getraenke_absender_save_from_post(?array $a): array
+{
+    $fehler = [];
+    $name = mb_substr(trim(post_str('name')), 0, 150);
+    $email = trim(post_str('email'));
+    if ($name === '') {
+        $fehler[] = 'Bitte einen Namen angeben – etwa „THW Ortsverband Heilbronn" oder „Helferverein".';
+    }
+    if ($email !== '' && !mail_adresse_gueltig($email)) {
+        $fehler[] = 'Die E-Mail-Adresse ist ungültig.';
+    }
+    if ($fehler) {
+        return [null, $fehler];
+    }
+    $daten = [
+        'name'       => $name,
+        'anschrift'  => mb_substr(trim(str_replace("\r", '', post_str('anschrift'))), 0, 500),
+        'email'      => mb_substr($email, 0, 150),
+        'telefon'    => mb_substr(trim(post_str('telefon')), 0, 60),
+        'notiz'      => mb_substr(trim(post_str('notiz')), 0, 200),
+        'sort_order' => post_int('sort_order'),
+        'is_active'  => post_bool('is_active') ? 1 : 0,
+    ];
+    if ($a) {
+        db_update('getraenke_absender', $daten, 'id = ?', [(int)$a['id']]);
+        $id = (int)$a['id'];
+        audit('getraenke.absender_bearbeitet', 'getraenke_absender', $id, $name);
+    } else {
+        $id = db_insert('getraenke_absender', $daten);
+        audit('getraenke.absender_angelegt', 'getraenke_absender', $id, $name);
+    }
+    return [$id, []];
+}
+
+/** Löschen – nur ohne Bestellungen. Rückgabe: Fehlertext oder null */
+function getraenke_absender_delete(array $a): ?string
+{
+    if ((int)db_val('SELECT COUNT(*) FROM getraenke_bestellungen WHERE absender_id = ?', [(int)$a['id']], 0) > 0) {
+        return 'Mit diesem Absender gibt es Bestellungen – besser auf „nicht aktiv" setzen.';
+    }
+    db_exec('DELETE FROM getraenke_absender WHERE id = ?', [(int)$a['id']]);
+    audit('getraenke.absender_geloescht', 'getraenke_absender', (int)$a['id'], (string)$a['name']);
+    return null;
+}
+
+/* ==================================================================== */
 /* Getränke                                                              */
 /* ==================================================================== */
 
@@ -389,20 +449,22 @@ function getraenke_bestellungen(array $status = []): array
         $w = ' WHERE b.status IN (' . implode(',', array_fill(0, count($status), '?')) . ')';
         $p = array_values($status);
     }
-    return db_all('SELECT b.*, l.name AS lieferant_name, s.name AS standort_name,
+    return db_all('SELECT b.*, l.name AS lieferant_name, s.name AS standort_name, a.name AS absender_name,
                           (SELECT COALESCE(SUM(p.anzahl), 0) FROM getraenke_positionen p WHERE p.bestellung_id = b.id) AS gebinde_anzahl,
                           (SELECT COALESCE(SUM(p.anzahl * p.preis), 0) FROM getraenke_positionen p WHERE p.bestellung_id = b.id) AS summe
                    FROM getraenke_bestellungen b
                    LEFT JOIN getraenke_lieferanten l ON l.id = b.lieferant_id
-                   LEFT JOIN standorte s ON s.id = b.standort_id' . $w . ' ORDER BY b.id DESC', $p);
+                   LEFT JOIN standorte s ON s.id = b.standort_id
+                   LEFT JOIN getraenke_absender a ON a.id = b.absender_id' . $w . ' ORDER BY b.id DESC', $p);
 }
 
 function getraenke_bestellung_find(?int $id): ?array
 {
-    return $id ? db_row('SELECT b.*, l.name AS lieferant_name, l.email AS lieferant_email, l.kundennummer, s.name AS standort_name
+    return $id ? db_row('SELECT b.*, l.name AS lieferant_name, l.email AS lieferant_email, l.kundennummer, s.name AS standort_name, a.name AS absender_name
                          FROM getraenke_bestellungen b
                          LEFT JOIN getraenke_lieferanten l ON l.id = b.lieferant_id
-                         LEFT JOIN standorte s ON s.id = b.standort_id WHERE b.id = ?', [$id]) : null;
+                         LEFT JOIN standorte s ON s.id = b.standort_id
+                         LEFT JOIN getraenke_absender a ON a.id = b.absender_id WHERE b.id = ?', [$id]) : null;
 }
 
 function getraenke_positionen(int $bestellungId): array
@@ -477,6 +539,11 @@ function getraenke_bestellung_save_from_post(?array $b, array $user): array
     if ($standortId > 0 && standort_find($standortId) === null) {
         $fehler[] = 'Diesen Platz gibt es nicht.';
     }
+    $absenderId = post_int('absender_id');
+    $absender = $absenderId > 0 ? getraenke_absender_find($absenderId) : null;
+    if ($absenderId > 0 && $absender === null) {
+        $fehler[] = 'Diesen Absender gibt es nicht.';
+    }
     $positionen = [];
     $preise = [];
     foreach (getraenke_alle(false) as $g) {
@@ -498,6 +565,7 @@ function getraenke_bestellung_save_from_post(?array $b, array $user): array
     $daten = [
         'lieferant_id' => (int)$lieferant['id'],
         'standort_id'  => $standortId > 0 ? $standortId : null,
+        'absender_id'  => $absender !== null ? (int)$absender['id'] : null,
         'notiz'        => mb_substr(trim(post_str('notiz')), 0, 1000),
     ];
     if ($b) {
@@ -543,7 +611,8 @@ function getraenke_status_badge(string $status): string
 
 /**
  * Der Text der Bestell-Mail. Reine Funktion.
- * $ctx: ov_name, besteller, besteller_email, besteller_telefon, lieferadresse, hinweis
+ * $ctx: ov_name, besteller, besteller_email, besteller_telefon, lieferadresse, hinweis,
+ *       absender (?array: name, anschrift, email, telefon – in wessen Namen bestellt wird)
  */
 function getraenke_bestellung_text(array $b, array $positionen, array $lieferant, ?array $standort, array $ctx): string
 {
@@ -571,6 +640,17 @@ function getraenke_bestellung_text(array $b, array $positionen, array $lieferant
         }
         $z[] = '';
     }
+    $absender = is_array($ctx['absender'] ?? null) ? $ctx['absender'] : null;
+    if ($absender !== null) {
+        $z[] = 'Besteller und Rechnungsempfänger:';
+        $z[] = '  ' . trim((string)$absender['name']);
+        foreach (explode("\n", str_replace("\r", '', (string)($absender['anschrift'] ?? ''))) as $zeile) {
+            if (trim($zeile) !== '') {
+                $z[] = '  ' . trim($zeile);
+            }
+        }
+        $z[] = '';
+    }
     if (trim((string)($b['notiz'] ?? '')) !== '') {
         $z[] = trim((string)$b['notiz']);
         $z[] = '';
@@ -581,8 +661,11 @@ function getraenke_bestellung_text(array $b, array $positionen, array $lieferant
     }
     $z[] = 'Mit freundlichen Grüßen';
     $z[] = trim((string)($ctx['besteller'] ?? ''));
-    $z[] = trim((string)($ctx['ov_name'] ?? ''));
+    $z[] = trim((string)($absender['name'] ?? $ctx['ov_name'] ?? ''));
     $kontakt = array_filter([trim((string)($ctx['besteller_email'] ?? '')), trim((string)($ctx['besteller_telefon'] ?? ''))]);
+    if ($absender !== null && (trim((string)($absender['email'] ?? '')) !== '' || trim((string)($absender['telefon'] ?? '')) !== '')) {
+        $kontakt = array_filter([trim((string)($absender['email'] ?? '')), trim((string)($absender['telefon'] ?? ''))]);
+    }
     if ($kontakt) {
         $z[] = implode(' · ', $kontakt);
     }
@@ -607,6 +690,7 @@ function getraenke_bestellung_senden(array $b, array $user): array
         return ['ok' => false, 'text' => 'Die Bestellung hat keine Positionen.'];
     }
     $standort = (int)($b['standort_id'] ?? 0) > 0 ? standort_find((int)$b['standort_id']) : null;
+    $absender = getraenke_absender_find((int)($b['absender_id'] ?? 0));
     $text = getraenke_bestellung_text($b, $positionen, $lieferant, $standort, [
         'ov_name'           => (string)setting('ov_name', ''),
         'besteller'         => (string)($user['display_name'] ?? $user['username'] ?? ''),
@@ -614,8 +698,9 @@ function getraenke_bestellung_senden(array $b, array $user): array
         'besteller_telefon' => (string)($user['phone'] ?? ''),
         'lieferadresse'     => (string)setting('getraenke_lieferadresse', ''),
         'hinweis'           => (string)setting('getraenke_bestell_hinweis', ''),
+        'absender'          => $absender,
     ]);
-    $betreff = sprintf('Bestellung %s – %s', (string)$b['nummer'], (string)setting('ov_name', 'OV-Multitool'));
+    $betreff = sprintf('Bestellung %s – %s', (string)$b['nummer'], $absender !== null ? (string)$absender['name'] : (string)setting('ov_name', 'OV-Multitool'));
     try {
         mail_senden((string)$lieferant['email'], $betreff, $text, (string)$lieferant['name']);
     } catch (Throwable $ex) {

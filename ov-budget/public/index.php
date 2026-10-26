@@ -178,6 +178,7 @@ $routes = [
     'getraenke'          => 'getraenke',
     'getraenk_edit'      => 'getraenk_edit',
     'getraenke_lieferant_edit' => 'getraenke_lieferant_edit',
+    'getraenke_absender_edit' => 'getraenke_absender_edit',
     'getraenke_bestellung' => 'getraenke_bestellung',
     'getraenke_bestellung_edit' => 'getraenke_bestellung_edit',
     'getraenke_lager'    => 'getraenke_lager',

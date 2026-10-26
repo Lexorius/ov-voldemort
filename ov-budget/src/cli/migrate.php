@@ -2236,6 +2236,28 @@ SQL);
             ADD COLUMN ort VARCHAR(100) NOT NULL DEFAULT '' AFTER plz");
     }
     $merken('085_lieferant_anschrift');
+
+    /* ---------- 086: Absender der Bestellungen ---------- */
+    if (!ovb_table_exists($pdo, 'getraenke_absender')) {
+        $pdo->exec("CREATE TABLE getraenke_absender (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  name          VARCHAR(150)  NOT NULL,
+  anschrift     VARCHAR(500)  NOT NULL DEFAULT '',
+  email         VARCHAR(150)  NOT NULL DEFAULT '',
+  telefon       VARCHAR(60)   NOT NULL DEFAULT '',
+  notiz         VARCHAR(200)  NOT NULL DEFAULT '',
+  sort_order    INT           NOT NULL DEFAULT 0,
+  is_active     TINYINT(1)    NOT NULL DEFAULT 1,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    if (ovb_table_exists($pdo, 'getraenke_bestellungen') && !ovb_column_exists($pdo, 'getraenke_bestellungen', 'absender_id')) {
+        $pdo->exec('ALTER TABLE getraenke_bestellungen ADD COLUMN absender_id INT UNSIGNED NULL AFTER standort_id');
+        if (!ovb_constraint_exists($pdo, 'getraenke_bestellungen', 'fk_gbestellung_absender')) {
+            $pdo->exec('ALTER TABLE getraenke_bestellungen ADD CONSTRAINT fk_gbestellung_absender FOREIGN KEY (absender_id) REFERENCES getraenke_absender(id) ON DELETE SET NULL');
+        }
+    }
+    $merken('086_getraenke_absender');
 }
 
 /**

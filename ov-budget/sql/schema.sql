@@ -1715,11 +1715,25 @@ CREATE TABLE IF NOT EXISTS getraenke_bestand (
   CONSTRAINT fk_gbestand_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Absender: in wessen Namen bestellt wird (Ortsverband, Helferverein, Regionalstelle)
+CREATE TABLE IF NOT EXISTS getraenke_absender (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  name          VARCHAR(150)  NOT NULL,
+  anschrift     VARCHAR(500)  NOT NULL DEFAULT '',
+  email         VARCHAR(150)  NOT NULL DEFAULT '',
+  telefon       VARCHAR(60)   NOT NULL DEFAULT '',
+  notiz         VARCHAR(200)  NOT NULL DEFAULT '',
+  sort_order    INT           NOT NULL DEFAULT 0,
+  is_active     TINYINT(1)    NOT NULL DEFAULT 1,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS getraenke_bestellungen (
   id              INT UNSIGNED  NOT NULL AUTO_INCREMENT,
   nummer          VARCHAR(30)   NOT NULL,
   lieferant_id    INT UNSIGNED  NULL,
   standort_id     INT UNSIGNED  NULL,
+  absender_id     INT UNSIGNED  NULL,
   status          ENUM('entwurf','bestellt','geliefert','abgerechnet') NOT NULL DEFAULT 'entwurf',
   notiz           TEXT          NULL,
   mail_text       MEDIUMTEXT    NULL,
@@ -1738,6 +1752,7 @@ CREATE TABLE IF NOT EXISTS getraenke_bestellungen (
   KEY idx_gbestellung_status (status),
   CONSTRAINT fk_gbestellung_lieferant FOREIGN KEY (lieferant_id) REFERENCES getraenke_lieferanten(id) ON DELETE SET NULL,
   CONSTRAINT fk_gbestellung_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE SET NULL,
+  CONSTRAINT fk_gbestellung_absender FOREIGN KEY (absender_id) REFERENCES getraenke_absender(id) ON DELETE SET NULL,
   CONSTRAINT fk_gbestellung_expense FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

@@ -25,6 +25,8 @@ $errors = [];
 $pos = [];
 $lieferantId = $b ? (int)$b['lieferant_id'] : get_int('lieferant_id');
 $standortId = $b ? (int)($b['standort_id'] ?? 0) : 0;
+$absenderListe = getraenke_absender(true);
+$absenderId = $b ? (int)($b['absender_id'] ?? 0) : (int)($absenderListe[0]['id'] ?? 0);
 $notiz = $b ? (string)($b['notiz'] ?? '') : '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -35,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $lieferantId = post_int('lieferant_id');
     $standortId = post_int('standort_id');
+    $absenderId = post_int('absender_id');
     $notiz = post_str('notiz');
     foreach ((array)($_POST['pos'] ?? []) as $gid => $n) {
         $pos[(int)$gid] = (int)$n;
@@ -55,6 +58,8 @@ render('getraenke_bestellung_edit', [
     'lieferanten' => getraenke_lieferanten(true),
     'lieferantId' => $lieferantId,
     'standortId'  => $standortId,
+    'absender'    => $absenderListe,
+    'absenderId'  => $absenderId,
     'notiz'       => $notiz,
     'getraenke'   => $getraenke,
     'pos'         => $pos,
