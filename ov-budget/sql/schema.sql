@@ -1692,6 +1692,9 @@ CREATE TABLE IF NOT EXISTS getraenke (
   name           VARCHAR(100)  NOT NULL,
   lieferant_id   INT UNSIGNED  NULL,
   gebinde        VARCHAR(60)   NOT NULL DEFAULT 'Kasten',
+  -- Inhalt des Gebindes: Zahl der Flaschen und ihre Art (PET 0,5 l, Glas 0,7 l)
+  flaschen       INT           NOT NULL DEFAULT 0,
+  flasche        VARCHAR(60)   NOT NULL DEFAULT '',
   preis          DECIMAL(10,2) NOT NULL DEFAULT 0,
   -- Mindestbestand ueber alle Plaetze zusammen; darunter steht das Getraenk im Bedarf
   mindestbestand INT           NOT NULL DEFAULT 0,
@@ -1737,6 +1740,7 @@ CREATE TABLE IF NOT EXISTS getraenke_bestellungen (
   status          ENUM('entwurf','bestellt','geliefert','abgerechnet') NOT NULL DEFAULT 'entwurf',
   notiz           TEXT          NULL,
   mail_text       MEDIUMTEXT    NULL,
+  mail_betreff    VARCHAR(200)  NOT NULL DEFAULT '',
   gesendet_am     DATETIME      NULL,
   gesendet_an     VARCHAR(150)  NOT NULL DEFAULT '',
   gesendet_von    INT UNSIGNED  NULL,

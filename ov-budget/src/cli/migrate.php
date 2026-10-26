@@ -2258,6 +2258,20 @@ SQL);
         }
     }
     $merken('086_getraenke_absender');
+
+    /* ---------- 087: Betreff der Bestell-Mail, bearbeitbar ---------- */
+    if (ovb_table_exists($pdo, 'getraenke_bestellungen') && !ovb_column_exists($pdo, 'getraenke_bestellungen', 'mail_betreff')) {
+        $pdo->exec("ALTER TABLE getraenke_bestellungen ADD COLUMN mail_betreff VARCHAR(200) NOT NULL DEFAULT '' AFTER mail_text");
+    }
+    $merken('087_getraenke_mail_betreff');
+
+    /* ---------- 088: Flaschen je Gebinde und Flaschenart ---------- */
+    if (ovb_table_exists($pdo, 'getraenke') && !ovb_column_exists($pdo, 'getraenke', 'flaschen')) {
+        $pdo->exec("ALTER TABLE getraenke
+            ADD COLUMN flaschen INT NOT NULL DEFAULT 0 AFTER gebinde,
+            ADD COLUMN flasche VARCHAR(60) NOT NULL DEFAULT '' AFTER flaschen");
+    }
+    $merken('088_getraenke_flaschen');
 }
 
 /**

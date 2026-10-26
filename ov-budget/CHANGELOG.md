@@ -1,5 +1,15 @@
 # Änderungsverlauf
 
+## 2.1.59.0
+
+- **Getränke:** je Getränk die Zahl der Flaschen im Gebinde und die
+  Flaschenart (PET 0,5 l, Glas 0,7 l …); steht in Übersicht, Lager,
+  Bestellung, Bestell-Mail und auf der Meldeseite des Connectors.
+- **Getränke:** Betreff und Text der Bestell-Mail sind vor dem Versand
+  bearbeitbar – mit *Text speichern*, *Vorlage neu erzeugen* und dem
+  Versand direkt aus dem Formular. Geändert wird der Text nur am Entwurf;
+  wer die Positionen ändert, bekommt ihn aus der Vorlage neu.
+
 ## 2.1.58.1
 
 - **Getränke:** Absender lassen sich aus den THW-Kontakten übernehmen – die

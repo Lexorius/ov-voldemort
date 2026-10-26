@@ -1309,7 +1309,7 @@ function connector_getraenke_paket(array $c): array
 {
     $getraenke = [];
     foreach (getraenke_alle(true) as $g) {
-        $getraenke[] = ['id' => (int)$g['id'], 'name' => (string)$g['name'], 'gebinde' => (string)$g['gebinde']];
+        $getraenke[] = ['id' => (int)$g['id'], 'name' => (string)$g['name'], 'gebinde' => getraenk_gebinde_text($g)];
     }
     $liste = [];
     if (!$getraenke) {

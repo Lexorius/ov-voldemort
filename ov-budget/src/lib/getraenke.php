@@ -207,6 +207,8 @@ function getraenk_save_from_post(?array $g): array
         'name'          => $name,
         'lieferant_id'  => $lieferantId > 0 ? $lieferantId : null,
         'gebinde'       => mb_substr(trim(post_str('gebinde')) ?: 'Kasten', 0, 60),
+        'flaschen'      => max(0, min(999, post_int('flaschen'))),
+        'flasche'       => mb_substr(trim(post_str('flasche')), 0, 60),
         'preis'         => round(max(0.0, post_dec('preis')), 2),
         'mindestbestand' => max(0, min(9999, post_int('mindestbestand'))),
         'sort_order'    => post_int('sort_order'),
@@ -249,10 +251,30 @@ function getraenke_nach_lieferant(array $getraenke): array
     return $out;
 }
 
-/** "Wasser still (Kasten)" oder "Wasser still". Reine Funktion. */
-function getraenk_text(array $g): string
+/**
+ * Gebinde mit Inhalt: "Kasten · 12 × PET 0,5 l", "Kasten · 12 Flaschen",
+ * "Kasten" oder "". Reine Funktion.
+ */
+function getraenk_gebinde_text(array $g): string
 {
     $gebinde = trim((string)($g['gebinde'] ?? ''));
+    $flaschen = (int)($g['flaschen'] ?? 0);
+    $flasche = trim((string)($g['flasche'] ?? ''));
+    $inhalt = '';
+    if ($flaschen > 0 && $flasche !== '') {
+        $inhalt = $flaschen . ' × ' . $flasche;
+    } elseif ($flaschen > 0) {
+        $inhalt = $flaschen . ' Flaschen';
+    } elseif ($flasche !== '') {
+        $inhalt = $flasche;
+    }
+    return implode(' · ', array_filter([$gebinde, $inhalt], static fn($t) => $t !== ''));
+}
+
+/** "Wasser still (Kasten · 12 × PET 0,5 l)" oder "Wasser still". Reine Funktion. */
+function getraenk_text(array $g): string
+{
+    $gebinde = getraenk_gebinde_text($g);
     return (string)$g['name'] . ($gebinde !== '' ? ' (' . $gebinde . ')' : '');
 }
 
@@ -490,7 +512,7 @@ function getraenke_bestellung_find(?int $id): ?array
 
 function getraenke_positionen(int $bestellungId): array
 {
-    return db_all('SELECT p.*, g.name AS getraenk_name, g.gebinde FROM getraenke_positionen p
+    return db_all('SELECT p.*, g.name AS getraenk_name, g.gebinde, g.flaschen, g.flasche FROM getraenke_positionen p
                    JOIN getraenke g ON g.id = p.getraenk_id WHERE p.bestellung_id = ? ORDER BY g.sort_order, g.name', [$bestellungId]);
 }
 
@@ -590,6 +612,9 @@ function getraenke_bestellung_save_from_post(?array $b, array $user): array
         'notiz'        => mb_substr(trim(post_str('notiz')), 0, 1000),
     ];
     if ($b) {
+        // Ein von Hand bearbeiteter Mailtext passt nach einer Änderung nicht mehr – zurück zur Vorlage
+        $daten['mail_text'] = '';
+        $daten['mail_betreff'] = '';
         db_update('getraenke_bestellungen', $daten, 'id = ?', [(int)$b['id']]);
         $id = (int)$b['id'];
         db_exec('DELETE FROM getraenke_positionen WHERE bestellung_id = ?', [$id]);
@@ -644,7 +669,7 @@ function getraenke_bestellung_text(array $b, array $positionen, array $lieferant
         trim((string)($lieferant['kundennummer'] ?? '')) !== '' ? ', Kundennummer ' . trim((string)$lieferant['kundennummer']) : '');
     $z[] = '';
     foreach ($positionen as $p) {
-        $gebinde = trim((string)($p['gebinde'] ?? ''));
+        $gebinde = getraenk_gebinde_text($p);
         $z[] = sprintf('  %4d × %s%s', (int)$p['anzahl'], (string)$p['getraenk_name'], $gebinde !== '' ? ' (' . $gebinde . ')' : '');
     }
     $z[] = '';
@@ -694,10 +719,69 @@ function getraenke_bestellung_text(array $b, array $positionen, array $lieferant
 }
 
 /**
- * Bestellung per E-Mail an den Lieferanten schicken – die Prüfung durch
- * die verantwortliche Person ist der Klick. Rückgabe: ['ok', 'text']
+ * Betreff und Text der Bestell-Mail, so wie das Modul sie vorschlägt.
+ * Rückgabe: ['betreff' => …, 'text' => …]; ohne Lieferant bleibt der Text leer.
  */
-function getraenke_bestellung_senden(array $b, array $user): array
+function getraenke_bestellung_vorlage(array $b, array $user, ?array $lieferant = null, ?array $positionen = null): array
+{
+    $lieferant ??= getraenke_lieferant_find((int)($b['lieferant_id'] ?? 0));
+    $positionen ??= getraenke_positionen((int)$b['id']);
+    $standort = (int)($b['standort_id'] ?? 0) > 0 ? standort_find((int)$b['standort_id']) : null;
+    $absender = getraenke_absender_find((int)($b['absender_id'] ?? 0));
+    $text = $lieferant === null ? '' : getraenke_bestellung_text($b, $positionen, $lieferant, $standort, [
+        'ov_name'           => (string)setting('ov_name', ''),
+        'besteller'         => (string)($user['display_name'] ?? $user['username'] ?? ''),
+        'besteller_email'   => (string)($user['email'] ?? ''),
+        'besteller_telefon' => (string)($user['phone'] ?? ''),
+        'lieferadresse'     => (string)setting('getraenke_lieferadresse', ''),
+        'hinweis'           => (string)setting('getraenke_bestell_hinweis', ''),
+        'absender'          => $absender,
+    ]);
+    return [
+        'betreff' => sprintf('Bestellung %s – %s', (string)$b['nummer'], $absender !== null ? (string)$absender['name'] : (string)setting('ov_name', 'OV-Multitool')),
+        'text'    => $text,
+    ];
+}
+
+/**
+ * Was tatsächlich hinausgeht: der bearbeitete Betreff und Text, sonst das
+ * Gespeicherte, sonst die Vorlage. Rückgabe wie getraenke_bestellung_vorlage.
+ */
+function getraenke_bestellung_mail(array $b, array $user, ?string $betreff = null, ?string $text = null): array
+{
+    $vorlage = null;
+    $betreff = trim((string)$betreff);
+    $text = trim(str_replace("\r", '', (string)$text));
+    if ($betreff === '') {
+        $betreff = trim((string)($b['mail_betreff'] ?? ''));
+    }
+    if ($text === '') {
+        $text = trim(str_replace("\r", '', (string)($b['mail_text'] ?? '')));
+    }
+    if ($betreff === '' || $text === '') {
+        $vorlage = getraenke_bestellung_vorlage($b, $user);
+        $betreff = $betreff !== '' ? $betreff : $vorlage['betreff'];
+        $text = $text !== '' ? $text : $vorlage['text'];
+    }
+    return ['betreff' => mb_substr($betreff, 0, 200), 'text' => $text];
+}
+
+/** Bearbeiteten Betreff und Text am Entwurf merken; leer = wieder die Vorlage */
+function getraenke_bestellung_mail_speichern(array $b, string $betreff, string $text): void
+{
+    db_update('getraenke_bestellungen', [
+        'mail_betreff' => mb_substr(trim($betreff), 0, 200),
+        'mail_text'    => trim(str_replace("\r", '', $text)),
+    ], 'id = ?', [(int)$b['id']]);
+    audit('getraenke.mailtext', 'getraenke_bestellung', (int)$b['id'], trim($text) === '' ? 'Vorlage' : 'bearbeitet');
+}
+
+/**
+ * Bestellung per E-Mail an den Lieferanten schicken – die Prüfung durch
+ * die verantwortliche Person ist der Klick. Ein mitgegebener Betreff und
+ * Text gehen so hinaus, wie sie sind. Rückgabe: ['ok', 'text']
+ */
+function getraenke_bestellung_senden(array $b, array $user, ?string $betreff = null, ?string $text = null): array
 {
     if ((string)$b['status'] !== 'entwurf') {
         return ['ok' => false, 'text' => 'Diese Bestellung ist schon ' . (GETRAENKE_BESTELL_STATUS[(string)$b['status']] ?? $b['status']) . '.'];
@@ -710,20 +794,9 @@ function getraenke_bestellung_senden(array $b, array $user): array
     if (!$positionen) {
         return ['ok' => false, 'text' => 'Die Bestellung hat keine Positionen.'];
     }
-    $standort = (int)($b['standort_id'] ?? 0) > 0 ? standort_find((int)$b['standort_id']) : null;
-    $absender = getraenke_absender_find((int)($b['absender_id'] ?? 0));
-    $text = getraenke_bestellung_text($b, $positionen, $lieferant, $standort, [
-        'ov_name'           => (string)setting('ov_name', ''),
-        'besteller'         => (string)($user['display_name'] ?? $user['username'] ?? ''),
-        'besteller_email'   => (string)($user['email'] ?? ''),
-        'besteller_telefon' => (string)($user['phone'] ?? ''),
-        'lieferadresse'     => (string)setting('getraenke_lieferadresse', ''),
-        'hinweis'           => (string)setting('getraenke_bestell_hinweis', ''),
-        'absender'          => $absender,
-    ]);
-    $betreff = sprintf('Bestellung %s – %s', (string)$b['nummer'], $absender !== null ? (string)$absender['name'] : (string)setting('ov_name', 'OV-Multitool'));
+    $mail = getraenke_bestellung_mail($b, $user, $betreff, $text);
     try {
-        mail_senden((string)$lieferant['email'], $betreff, $text, (string)$lieferant['name']);
+        mail_senden((string)$lieferant['email'], $mail['betreff'], $mail['text'], (string)$lieferant['name']);
     } catch (Throwable $ex) {
         return ['ok' => false, 'text' => 'Die Bestellung ließ sich nicht verschicken: ' . $ex->getMessage()];
     }
@@ -733,7 +806,8 @@ function getraenke_bestellung_senden(array $b, array $user): array
         'gesendet_am' => $jetzt,
         'gesendet_an' => (string)$lieferant['email'],
         'gesendet_von' => (int)($user['id'] ?? 0) ?: null,
-        'mail_text'   => $text,
+        'mail_betreff' => $mail['betreff'],
+        'mail_text'   => $mail['text'],
     ], 'id = ?', [(int)$b['id']]);
     // Offene Meldungen zu den bestellten Getränken gelten als erledigt
     $ids = array_map(static fn($p) => (int)$p['getraenk_id'], $positionen);

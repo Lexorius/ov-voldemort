@@ -46,7 +46,7 @@
         <tbody>
         <?php foreach ($getraenke as $g): $gid = (int)$g['id']; $n = (int)($bestand[$gid] ?? 0); ?>
           <tr>
-            <td><?= e((string)$g['name']) ?> <span class="small muted"><?= e((string)$g['gebinde']) ?></span></td>
+            <td><?= e((string)$g['name']) ?> <span class="small muted"><?= e(getraenk_gebinde_text($g)) ?></span></td>
             <td class="num"><strong><?= $n ?></strong></td>
             <td class="num muted"><?= (int)$g['mindestbestand'] ?></td>
             <?php if ($darf): ?>

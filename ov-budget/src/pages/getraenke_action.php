@@ -81,6 +81,8 @@ switch (post_str('action')) {
 
     /* ---------- Bestellungen ---------- */
     case 'senden':
+    case 'mail_speichern':
+    case 'mail_neu':
     case 'liefern':
     case 'abrechnen':
     case 'bestellung_loeschen':
@@ -96,8 +98,21 @@ switch (post_str('action')) {
                 flash('error', 'Der E-Mail-Versand ist nicht eingerichtet (Verwaltung → E-Mail).');
                 break;
             }
-            $r = getraenke_bestellung_senden($b, $user);
+            $r = getraenke_bestellung_senden($b, $user, post_str('mail_betreff'), post_str('mail_text'));
             flash($r['ok'] ? 'success' : 'error', e($r['text']));
+            if (!$r['ok'] && trim(post_str('mail_text')) !== '') {
+                // Den bearbeiteten Text nicht verlieren
+                getraenke_bestellung_mail_speichern($b, post_str('mail_betreff'), post_str('mail_text'));
+            }
+        } elseif ($aktion === 'mail_speichern' || $aktion === 'mail_neu') {
+            if ((string)$b['status'] !== 'entwurf') {
+                flash('error', 'Nur bei einem Entwurf lässt sich der Text ändern.');
+                break;
+            }
+            $neu = $aktion === 'mail_neu';
+            getraenke_bestellung_mail_speichern($b, $neu ? '' : post_str('mail_betreff'), $neu ? '' : post_str('mail_text'));
+            flash('success', $neu ? 'Betreff und Text wieder aus der Vorlage.' : 'Betreff und Text gespeichert – noch nicht verschickt.');
+            $zurueck .= '#mail';
         } elseif ($aktion === 'liefern') {
             $geliefert = [];
             foreach ((array)($_POST['geliefert'] ?? []) as $gid => $n) {

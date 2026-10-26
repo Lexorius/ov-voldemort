@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if (!$getraenk) {
-    $getraenk = ['id' => null, 'name' => '', 'lieferant_id' => get_int('lieferant_id') ?: null, 'gebinde' => 'Kasten',
+    $getraenk = ['id' => null, 'name' => '', 'lieferant_id' => get_int('lieferant_id') ?: null, 'gebinde' => 'Kasten', 'flaschen' => 0, 'flasche' => '',
                  'preis' => '', 'mindestbestand' => 2, 'sort_order' => 0, 'notiz' => '', 'is_active' => 1];
 }
 

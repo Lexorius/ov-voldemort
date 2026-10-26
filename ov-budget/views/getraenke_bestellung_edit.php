@@ -70,7 +70,7 @@ $isNew = $b === null;
           <tbody>
           <?php foreach ($anzeige as $g): $gid = (int)$g['id']; ?>
             <tr>
-              <td><?= e((string)$g['name']) ?> <span class="small muted"><?= e((string)$g['gebinde']) ?></span></td>
+              <td><?= e((string)$g['name']) ?> <span class="small muted"><?= e(getraenk_gebinde_text($g)) ?></span></td>
               <td class="num"><?= (int)($summe[$gid] ?? 0) ?></td>
               <td class="num muted"><?= (int)$g['mindestbestand'] ?></td>
               <td class="num"><?= (float)$g['preis'] > 0 ? e(money((float)$g['preis'])) : '–' ?></td>

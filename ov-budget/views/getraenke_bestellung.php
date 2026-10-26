@@ -1,6 +1,6 @@
 <?php
 /**
- * @var array $b @var array $positionen @var ?array $lieferant @var ?array $standort @var float $summe @var string $vorschau
+ * @var array $b @var array $positionen @var ?array $lieferant @var ?array $standort @var float $summe @var string $vorschau @var string $betreff @var bool $bearbeitet
  * @var array $plaetze @var array $lagerplaetze @var string $kategorien @var bool $darf @var bool $darfBudget @var bool $mailAktiv @var ?array $expense
  */
 $id = (int)$b['id'];
@@ -20,11 +20,8 @@ $status = (string)$b['status'];
   <div class="btnrow">
     <a class="btn btn--sec" href="<?= e(url('getraenke')) ?>#bestellungen">Zur Übersicht</a>
     <?php if ($darf && $status === 'entwurf'): ?>
-      <a class="btn btn--sec" href="<?= e(url('getraenke_bestellung_edit', ['id' => $id])) ?>">Bearbeiten</a>
-      <form method="post" action="<?= e(url('getraenke_action')) ?>" class="inline-form"><?= csrf_field() ?>
-        <input type="hidden" name="action" value="senden"><input type="hidden" name="id" value="<?= $id ?>">
-        <button class="btn" type="submit" <?= $mailAktiv && $lieferant !== null && trim((string)$lieferant['email']) !== '' ? '' : 'disabled' ?>
-                data-confirm="Bestellung jetzt per E-Mail an den Lieferanten schicken?">Geprüft – per E-Mail bestellen</button></form>
+      <a class="btn btn--sec" href="<?= e(url('getraenke_bestellung_edit', ['id' => $id])) ?>">Positionen bearbeiten</a>
+      <a class="btn" href="#mail">E-Mail prüfen und bestellen</a>
     <?php endif; ?>
   </div>
 </div>
@@ -42,7 +39,7 @@ $status = (string)$b['status'];
       <tbody>
       <?php foreach ($positionen as $p): ?>
         <tr>
-          <td><?= e((string)$p['getraenk_name']) ?> <span class="small muted"><?= e((string)$p['gebinde']) ?></span></td>
+          <td><?= e((string)$p['getraenk_name']) ?> <span class="small muted"><?= e(getraenk_gebinde_text($p)) ?></span></td>
           <td class="num"><?= (int)$p['anzahl'] ?></td>
           <?php if ($status !== 'entwurf' && $status !== 'bestellt'): ?><td class="num"><?= $p['geliefert'] !== null ? (int)$p['geliefert'] : '–' ?></td><?php endif; ?>
           <td class="num"><?= (float)$p['preis'] > 0 ? e(money((float)$p['preis'])) : '–' ?></td>
@@ -55,12 +52,34 @@ $status = (string)$b['status'];
   <?php if (trim((string)($b['notiz'] ?? '')) !== ''): ?><p class="small" style="white-space:pre-wrap"><?= e((string)$b['notiz']) ?></p><?php endif; ?>
 </section>
 
-<section class="card">
-  <div class="card__head"><h2><?= $status === 'entwurf' ? 'So geht die E-Mail hinaus' : 'Verschickte E-Mail' ?></h2>
-    <?php if ($standort !== null): ?><span class="small muted">Abladen: <?= e((string)$standort['name']) ?></span><?php endif; ?></div>
-  <pre class="getraenke-mail"><?= e($vorschau) ?></pre>
-  <?php if ($status === 'entwurf'): ?>
-    <p class="small muted">Lieferadresse und Hinweistext kommen aus den Einstellungen (Gruppe „Getränke"), Absender aus den E-Mail-Einstellungen.</p>
+<section class="card" id="mail">
+  <div class="card__head"><h2><?= $status === 'entwurf' ? 'E-Mail prüfen und bestellen' : 'Verschickte E-Mail' ?></h2>
+    <?php if ($status === 'entwurf' && $bearbeitet): ?><span class="badge" style="background:#a16207">von Hand bearbeitet</span>
+    <?php elseif ($standort !== null): ?><span class="small muted">Abladen: <?= e((string)$standort['name']) ?></span><?php endif; ?></div>
+  <?php if ($status === 'entwurf' && $darf): ?>
+    <form method="post" action="<?= e(url('getraenke_action')) ?>" class="form">
+      <?= csrf_field() ?>
+      <input type="hidden" name="id" value="<?= $id ?>">
+      <div class="field">
+        <label for="mail_betreff">Betreff</label>
+        <input type="text" id="mail_betreff" name="mail_betreff" maxlength="200" value="<?= e($betreff) ?>">
+      </div>
+      <div class="field">
+        <label for="mail_text">Text <span class="muted">(so geht er hinaus – Anrede, Positionen, Anschrift, Gruß)</span></label>
+        <textarea id="mail_text" name="mail_text" rows="<?= max(12, min(30, substr_count($vorschau, "\n") + 3)) ?>" class="mono"><?= e($vorschau) ?></textarea>
+      </div>
+      <div class="btnrow">
+        <button class="btn" type="submit" name="action" value="senden" <?= $mailAktiv && $lieferant !== null && trim((string)$lieferant['email']) !== '' ? '' : 'disabled' ?>
+                data-confirm="Bestellung jetzt so per E-Mail an den Lieferanten schicken?">Geprüft – per E-Mail bestellen</button>
+        <button class="btn btn--sec" type="submit" name="action" value="mail_speichern">Text speichern</button>
+        <button class="btn btn--sec" type="submit" name="action" value="mail_neu" data-confirm="Betreff und Text verwerfen und aus der Vorlage neu erzeugen?">Vorlage neu erzeugen</button>
+      </div>
+      <p class="small muted">Die Vorlage nimmt Positionen, Lieferadresse und Hinweistext aus den Einstellungen und den Absender. Wer die
+        Positionen ändert, bekommt den Text neu erzeugt<?= $lieferant !== null && trim((string)$lieferant['email']) !== '' ? '; verschickt wird an ' . e((string)$lieferant['email']) : '' ?>.</p>
+    </form>
+  <?php else: ?>
+    <?php if ($betreff !== ''): ?><p class="small"><strong>Betreff:</strong> <?= e($betreff) ?></p><?php endif; ?>
+    <pre class="getraenke-mail"><?= e($vorschau) ?></pre>
   <?php endif; ?>
 </section>
 

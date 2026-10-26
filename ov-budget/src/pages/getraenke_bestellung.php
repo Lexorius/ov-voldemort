@@ -19,19 +19,9 @@ $positionen = getraenke_positionen((int)$b['id']);
 $lieferant = getraenke_lieferant_find((int)($b['lieferant_id'] ?? 0));
 $standort = (int)($b['standort_id'] ?? 0) > 0 ? standort_find((int)$b['standort_id']) : null;
 
-// Vorschau des Mailtextes, solange nichts verschickt ist
-$vorschau = (string)($b['mail_text'] ?? '');
-if ($vorschau === '' && $lieferant !== null) {
-    $vorschau = getraenke_bestellung_text($b, $positionen, $lieferant, $standort, [
-        'ov_name'           => (string)setting('ov_name', ''),
-        'besteller'         => (string)($user['display_name'] ?? $user['username'] ?? ''),
-        'besteller_email'   => (string)($user['email'] ?? ''),
-        'besteller_telefon' => (string)($user['phone'] ?? ''),
-        'lieferadresse'     => (string)setting('getraenke_lieferadresse', ''),
-        'hinweis'           => (string)setting('getraenke_bestell_hinweis', ''),
-        'absender'          => getraenke_absender_find((int)($b['absender_id'] ?? 0)),
-    ]);
-}
+// Betreff und Text: bearbeitet, sonst die Vorlage – bis zum Versand änderbar
+$mail = getraenke_bestellung_mail($b, $user);
+$vorschau = $mail['text'];
 
 render('getraenke_bestellung', [
     'title'       => 'Bestellung ' . (string)$b['nummer'],
@@ -41,6 +31,8 @@ render('getraenke_bestellung', [
     'standort'    => $standort,
     'summe'       => getraenke_bestellung_summe($positionen),
     'vorschau'    => $vorschau,
+    'betreff'     => $mail['betreff'],
+    'bearbeitet'  => trim((string)($b['mail_text'] ?? '')) !== '' && (string)$b['status'] === 'entwurf',
     'plaetze'     => standort_all(true),
     'lagerplaetze' => getraenke_lagerplaetze(),
     'kategorien'  => list_options(buchung_list_key('ausgabe'), null, '– Kategorie wählen –'),

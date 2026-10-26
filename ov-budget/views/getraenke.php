@@ -113,7 +113,7 @@ $lieferantName = static fn(int $id): string => $id > 0 ? (string)($lieferanten[$
         <tbody>
         <?php foreach ($getraenke as $g): if ((int)$g['is_active'] !== 1 || !isset($matrix['zeilen'][(int)$g['id']])) { continue; } $z = $matrix['zeilen'][(int)$g['id']]; $knapp = $z['summe'] < (int)$g['mindestbestand']; ?>
           <tr<?= $knapp ? ' style="color:var(--bad)"' : '' ?>>
-            <td><?= e((string)$g['name']) ?> <span class="small muted"><?= e((string)$g['gebinde']) ?></span></td>
+            <td><?= e((string)$g['name']) ?> <span class="small muted"><?= e(getraenk_gebinde_text($g)) ?></span></td>
             <?php foreach ($matrix['plaetze'] as $sid => $name): ?><td class="num"><?= isset($z['je'][$sid]) ? (int)$z['je'][$sid] : '<span class="muted">–</span>' ?></td><?php endforeach; ?>
             <td class="num"><strong><?= (int)$z['summe'] ?></strong></td>
             <td class="num muted"><?= (int)$g['mindestbestand'] ?></td>
@@ -193,7 +193,7 @@ $lieferantName = static fn(int $id): string => $id > 0 ? (string)($lieferanten[$
           <?php foreach ($liste as $g): ?>
             <li<?= (int)$g['is_active'] !== 1 ? ' class="is-muted"' : '' ?>>
               <?php if ($darf): ?><a href="<?= e(url('getraenk_edit', ['id' => $g['id']])) ?>"><?= e((string)$g['name']) ?></a><?php else: ?><?= e((string)$g['name']) ?><?php endif; ?>
-              <span class="small muted"><?= e((string)$g['gebinde']) ?><?= (float)$g['preis'] > 0 ? ' · ' . e(money((float)$g['preis'])) : '' ?> · Mindestbestand <?= (int)$g['mindestbestand'] ?> · Bestand <?= (int)($summe[(int)$g['id']] ?? 0) ?></span>
+              <span class="small muted"><?= e(getraenk_gebinde_text($g)) ?><?= (float)$g['preis'] > 0 ? ' · ' . e(money((float)$g['preis'])) : '' ?> · Mindestbestand <?= (int)$g['mindestbestand'] ?> · Bestand <?= (int)($summe[(int)$g['id']] ?? 0) ?></span>
             </li>
           <?php endforeach; ?>
         </ul>

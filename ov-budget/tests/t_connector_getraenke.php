@@ -79,7 +79,7 @@ $check('Seite mit Zugang: Getränke, drei Stände, Zahl, Skript', str_contains($
 /* ---------- Der ganze Weg ---------- */
 $GLOBALS['settings'] = ['waehrung' => 'EUR'];
 $GLOBALS['inserts'] = [];
-$GLOBALS['getraenke'] = [['id' => 1, 'name' => 'Wasser still', 'gebinde' => 'Kasten', 'is_active' => 1, 'lieferant_id' => 1], ['id' => 2, 'name' => 'Apfelschorle', 'gebinde' => 'Kasten', 'is_active' => 1, 'lieferant_id' => 2]];
+$GLOBALS['getraenke'] = [['id' => 1, 'name' => 'Wasser still', 'gebinde' => 'Kasten', 'is_active' => 1, 'lieferant_id' => 1], ['id' => 2, 'name' => 'Apfelschorle', 'gebinde' => 'Kasten', 'flaschen' => 12, 'flasche' => 'PET 0,5 l', 'is_active' => 1, 'lieferant_id' => 2]];
 function db_all(string $sql, array $p = []): array {
     if (str_contains($sql, 'FROM settings')) {
         $r = [];
@@ -114,7 +114,7 @@ $handy = static function (array $inhalt) use ($ovPunkt): string {
 
 $paket = connector_getraenke_paket(['id' => 1]);
 $check('Paket: je Platz die Prüfsumme und alle aktiven Getränke', count($paket) === 1 && $paket[0]['kennung'] === $kennung && count($paket[0]['getraenke']) === 2
-    && $paket[0]['getraenke'][0] === ['id' => 1, 'name' => 'Wasser still', 'gebinde' => 'Kasten'] && !isset($paket[0]['name']));
+    && $paket[0]['getraenke'][0] === ['id' => 1, 'name' => 'Wasser still', 'gebinde' => 'Kasten'] && $paket[0]['getraenke'][1]['gebinde'] === 'Kasten · 12 × PET 0,5 l' && !isset($paket[0]['name']));
 $check('Connector nimmt das Paket an', con_getraenke_setzen($paket) === 1 && con_getraenke('AbCdEfGhIjKlMnOpQrStUvWxYz0123456789-_ab') !== null);
 $adresse = connector_qr_getraenke_url(['url' => 'https://ov.example.de/connector'], 'tok', 'Halle 1');
 $check('QR-Adresse mit Platz im Anker', str_starts_with($adresse, 'https://ov.example.de/connector/index.php?p=getraenke&t=tok#n=') && !str_contains(explode('#', $adresse)[0], 'Halle'));

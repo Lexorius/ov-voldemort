@@ -32,7 +32,15 @@ $isNew = empty($getraenk['id']);
       </div>
       <div class="field">
         <label for="gebinde">Gebinde</label>
-        <input type="text" id="gebinde" name="gebinde" maxlength="60" value="<?= e((string)$getraenk['gebinde']) ?>" placeholder="z. B. Kasten 12 × 0,7 l">
+        <input type="text" id="gebinde" name="gebinde" maxlength="60" value="<?= e((string)$getraenk['gebinde']) ?>" placeholder="z. B. Kasten, Sixpack, Fass">
+      </div>
+      <div class="field">
+        <label for="flaschen">Flaschen je Gebinde</label>
+        <input type="number" id="flaschen" name="flaschen" min="0" max="999" value="<?= (int)($getraenk['flaschen'] ?? 0) ?>" placeholder="z. B. 12">
+      </div>
+      <div class="field">
+        <label for="flasche">Flaschenart <span class="muted">(Material und Größe)</span></label>
+        <input type="text" id="flasche" name="flasche" maxlength="60" value="<?= e((string)($getraenk['flasche'] ?? '')) ?>" placeholder="z. B. PET 0,5 l oder Glas 0,7 l">
       </div>
       <div class="field">
         <label for="preis">Preis je Gebinde <span class="muted">(für die Summe der Bestellung)</span></label>

@@ -1167,7 +1167,8 @@ QR-Code und die Bestellungen bis zur Rechnung.
 
 **Lieferanten und Getränke.** Erst die Lieferanten (Name, E-Mail für
 Bestellungen, Telefon, Kundennummer), dann die Getränke: Name, Lieferant,
-Gebinde („Kasten 12 × 0,7 l"), Preis je Gebinde, Mindestbestand. Jedes
+Gebinde („Kasten"), Flaschen je Gebinde und Flaschenart („12 × PET 0,5 l"),
+Preis je Gebinde, Mindestbestand. Jedes
 Getränk gehört zu genau einem Lieferanten; Bestellungen werden danach
 gebündelt – Wasser beim einen, Cola und Schorle beim anderen.
 
@@ -1199,8 +1200,11 @@ aus den Einstellungen in der Bestellung.
 **Bestellen – nach dem Prüfen.** Aus Meldungen und Mindestbestand
 schlägt das Modul je Lieferant vor, was fehlt. *Bestellung vorbereiten*
 legt einen Entwurf mit diesem Vorschlag an; die verantwortliche Person
-ändert Anzahl und Nachricht, sieht die E-Mail als Vorschau und klickt
-*Geprüft – per E-Mail bestellen*. Erst dann geht die Bestellung an die
+ändert Anzahl und Nachricht, prüft Betreff und Text der E-Mail – beides
+lässt sich vor dem Versand frei bearbeiten, *Text speichern* merkt es am
+Entwurf, *Vorlage neu erzeugen* holt den Vorschlag zurück – und klickt
+*Geprüft – per E-Mail bestellen*. Wer danach die Positionen ändert,
+bekommt den Text aus der Vorlage neu. Erst dann geht die Bestellung an die
 Adresse des Lieferanten (Bestellnummer, Positionen, Lieferadresse aus den
 Einstellungen, Abladeplatz, Ansprechpartner), und die Meldungen zu den
 bestellten Getränken gelten als erledigt. Dafür muss der E-Mail-Versand
