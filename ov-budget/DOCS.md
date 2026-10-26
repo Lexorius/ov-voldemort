@@ -279,6 +279,10 @@ sie enthalten.
   oder 00 beginnen, bleiben bei ihrem Land. Steht im Feld ein Hinweis statt
   einer Nummer („über das Büro"), bleibt der Text unverändert stehen.
   Bestehende Kontakte werden beim nächsten Start einmalig umgeschrieben.
+* **Getränke** – Lieferanten, Getränkearten, Lager je Stell- und
+  Lagerplatz, „ist leer" per QR-Code über den Connector, Bestellungen per
+  E-Mail nach Prüfung, Rechnung als Ausgabe ins Budget – siehe den eigenen
+  Abschnitt unten.
 * **Abstimmungen** – Umfragen mit einer oder mehreren Seiten, hier
   zusammengeklickt und über den Connector im Netz; QR-Code zum Scannen und
   Link zum Weitergeben, Zeitfenster, Antworten verschlüsselt – siehe den
@@ -1154,6 +1158,55 @@ eingetragen und mit einer Testnachricht geprüft. OV-Multitool spricht den
 Server direkt an; es braucht keinen Mailserver im Add-on. Solange der
 Versand aus ist, bleiben Berichte liegen und werden nachgeholt, sobald er
 eingeschaltet wird.
+
+## Getränke
+
+Wasser, Apfelschorle, Cola-Mix: Das Modul führt die Getränkearten mit
+ihren Lieferanten, den Bestand je Lagerplatz, die Leermeldungen vom
+QR-Code und die Bestellungen bis zur Rechnung.
+
+**Lieferanten und Getränke.** Erst die Lieferanten (Name, E-Mail für
+Bestellungen, Telefon, Kundennummer), dann die Getränke: Name, Lieferant,
+Gebinde („Kasten 12 × 0,7 l"), Preis je Gebinde, Mindestbestand. Jedes
+Getränk gehört zu genau einem Lieferanten; Bestellungen werden danach
+gebündelt – Wasser beim einen, Cola und Schorle beim anderen.
+
+**Lager.** Lagerplätze sind die Stell- und Lagerplätze aus dem
+Standortmodul (Halle, Kühlschrank, Regal). Je Getränk und Platz steht eine
+Zahl Gebinde; jede Änderung ist eine Bewegung – *Zugang*, *Abgang* oder
+*Inventur* (neuer Stand) – mit Zeit, Person und Notiz. Die Übersicht zeigt
+Getränke gegen Plätze als Tabelle, rot, was unter dem Mindestbestand liegt.
+Der Mindestbestand gilt über alle Plätze zusammen.
+
+**„Ist leer" per QR-Code.** Je Lagerplatz lässt sich ein QR-Code erzeugen
+(Connector mit der Verwendung *Getränke*). Wer ihn scannt, sieht die
+aktiven Getränke und tippt je Getränk *leer*, *wird knapp* oder *reicht
+noch* an, wahlweise mit der Zahl der Kästen, die noch da sind. Die
+Meldung wird im Browser verschlüsselt; der Connector kennt nur die
+Getränkenamen, nicht den Platz und nicht die Meldung. *Leer* setzt den
+Bestand am Platz auf null, eine Zahl ist eine Inventur, *reicht noch*
+erledigt offene Meldungen. Alles Offene steht unter **Bedarf**.
+
+**Bestellen – nach dem Prüfen.** Aus Meldungen und Mindestbestand
+schlägt das Modul je Lieferant vor, was fehlt. *Bestellung vorbereiten*
+legt einen Entwurf mit diesem Vorschlag an; die verantwortliche Person
+ändert Anzahl und Nachricht, sieht die E-Mail als Vorschau und klickt
+*Geprüft – per E-Mail bestellen*. Erst dann geht die Bestellung an die
+Adresse des Lieferanten (Bestellnummer, Positionen, Lieferadresse aus den
+Einstellungen, Abladeplatz, Ansprechpartner), und die Meldungen zu den
+bestellten Getränken gelten als erledigt. Dafür muss der E-Mail-Versand
+eingerichtet sein (*Verwaltung → E-Mail*).
+
+**Lieferung und Rechnung.** *Lieferung eintragen* bucht die gelieferten
+Gebinde als Zugang auf den gewählten Platz. *Rechnung abrechnen* legt eine
+Ausgabe im Budget an – Betrag, Datum, Kategorie, Rechnungsnummer, bezahlt
+oder noch offen – und verknüpft sie mit der Bestellung; der Stichtag des
+Haushaltsjahres wird dabei geprüft wie bei jeder Ausgabe.
+
+**Rechte.** Sehen dürfen standardmäßig alle Angemeldeten (abschaltbar).
+Buchen, Bestellungen anlegen und verschicken darf die Leitung, oder alle,
+wenn *Alle Angemeldeten dürfen buchen und bestellen* eingeschaltet ist.
+Die Ausgabe im Budget legt immer nur die Leitung an.
 
 ## Zeitzone
 

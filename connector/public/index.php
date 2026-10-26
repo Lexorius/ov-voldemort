@@ -26,6 +26,10 @@ declare(strict_types=1);
  *   ?p=umfrage_antwort      Antwort auf eine Abstimmung (POST, verschlüsselt)
  *   ?p=umfragen             Abstimmungen setzen (POST, signiert)
  *   ?p=umfrage_abholen      Antworten abholen (POST, signiert)
+ *   ?p=getraenke&t=<Zugang> Seite „Getränke melden" (QR am Lagerplatz)
+ *   ?p=getraenkemeldung     Meldung dazu (POST, verschlüsselt)
+ *   ?p=getraenkeliste       Zugänge und Getränke setzen (POST, signiert)
+ *   ?p=getraenke_abholen    Getränkemeldungen abholen (POST, signiert)
  *   ?p=zustand              Zahlen für OV-Multitool (POST, signiert)
  *   ?p=pruefung             Selbstprüfung: Dateien und Befunde (POST, signiert)
  *   ?p=einstellungen        Betreiber, Impressum, Datenschutz setzen (POST, signiert)
@@ -58,6 +62,9 @@ if ($token === '') {
 }
 if ($token === '') {
     $token = nur_text($_GET['z'] ?? '');
+}
+if ($token === '') {
+    $token = nur_text($_GET['t'] ?? '');
 }
 if ($code === '' && ($_SERVER['PATH_INFO'] ?? '') !== '') {
     $code = trim(nur_text($_SERVER['PATH_INFO']), '/');
@@ -296,6 +303,46 @@ try {
             $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'umfrage_abholen');
             con_alte_wegwerfen('umfrageantworten');
             antwort(['ok' => true, 'antworten' => con_umfrage_antworten_abholen((int)($daten['max'] ?? 200))]);
+
+        /* ---------------- Getränke: Meldung vom Handy ---------------- */
+        case 'getraenkemeldung':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                fehler('Nur POST.', 405);
+            }
+            $daten = json_decode(koerper_lesen(), true);
+            if (!is_array($daten)) {
+                fehler('Kein gültiges JSON.');
+            }
+            if (!con_limit_frei('ip:' . substr(sha1((string)($_SERVER['REMOTE_ADDR'] ?? '')), 0, 16), 300)) {
+                fehler('Zu viele Meldungen von diesem Anschluss. Bitte später erneut.', 429);
+            }
+            con_getraenkemeldung_ablegen(nur_text($daten['t'] ?? ''), nur_text($daten['daten'] ?? ''));
+            antwort(['ok' => true]);
+
+        /* ---------------- Getränke: von OV-Multitool, signiert ---------------- */
+        case 'getraenkeliste':
+            $daten = con_pruefe_anfrage(koerper_lesen(262144),
+                (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'getraenkeliste');
+            $anzahl = con_getraenke_setzen((array)($daten['getraenke'] ?? []));
+            con_notiz('getraenke.gesetzt', (string)$anzahl);
+            antwort(['ok' => true, 'getraenke' => $anzahl]);
+
+        case 'getraenke_abholen':
+            $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'getraenke_abholen');
+            con_alte_wegwerfen('getraenkemeldungen');
+            antwort(['ok' => true, 'meldungen' => con_getraenkemeldungen_abholen((int)($daten['max'] ?? 200))]);
+
+        /* ---------------- Getränke: Seite am Lagerplatz ---------------- */
+        case 'getraenke':
+            $eintrag = con_getraenke($token);
+            if ($eintrag === null && !con_fehlgriff()) {
+                seiten_kopf();
+                http_response_code(429);
+                exit("Zu viele Versuche von diesem Anschluss. Bitte später erneut.\n");
+            }
+            seiten_kopf(true);
+            require dirname(__DIR__) . '/src/seite_getraenke.php';
+            exit;
 
         /* ---------------- Abstimmung: die Umfrageseite ---------------- */
         case 'umfrage':

@@ -385,6 +385,9 @@ CREATE TABLE IF NOT EXISTS standorte (
   -- Lage dieses Platzes im Plan des Elternplatzes, in Prozent von links / von oben
   plan_x        DECIMAL(5,2)  NULL,
   plan_y        DECIMAL(5,2)  NULL,
+  -- QR-Code fuer Getraenkemeldungen ("ist leer") an diesem Platz, ueber den Connector
+  getraenke_qr_token        VARCHAR(80)  NOT NULL DEFAULT '',
+  getraenke_qr_connector_id INT UNSIGNED NULL,
   is_active     TINYINT(1)    NOT NULL DEFAULT 1,
   created_by    INT UNSIGNED  NULL,
   updated_by    INT UNSIGNED  NULL,
@@ -888,6 +891,7 @@ CREATE TABLE IF NOT EXISTS connectors (
   fuer_bestand         TINYINT(1)   NOT NULL DEFAULT 0,
   fuer_verbrauch       TINYINT(1)   NOT NULL DEFAULT 0,
   fuer_umfragen        TINYINT(1)   NOT NULL DEFAULT 0,
+  fuer_getraenke       TINYINT(1)   NOT NULL DEFAULT 0,
   is_active            TINYINT(1)   NOT NULL DEFAULT 1,
   -- unser Schluesselpaar fuer diesen Connector und sein oeffentlicher Schluessel
   pem                  TEXT         NULL,
@@ -1662,6 +1666,125 @@ CREATE TABLE IF NOT EXISTS umfrage_empfaenger (
   PRIMARY KEY (umfrage_id, contact_id),
   CONSTRAINT fk_umfrage_empf_umfrage FOREIGN KEY (umfrage_id) REFERENCES umfragen(id) ON DELETE CASCADE,
   CONSTRAINT fk_umfrage_empf_kontakt FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- Getraenke: Lieferanten, Getraenkearten, Lager je Platz, Meldungen, Bestellungen
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS getraenke_lieferanten (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  name          VARCHAR(100)  NOT NULL,
+  email         VARCHAR(150)  NOT NULL DEFAULT '',
+  telefon       VARCHAR(60)   NOT NULL DEFAULT '',
+  kundennummer  VARCHAR(60)   NOT NULL DEFAULT '',
+  notiz         TEXT          NULL,
+  is_active     TINYINT(1)    NOT NULL DEFAULT 1,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS getraenke (
+  id             INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  name           VARCHAR(100)  NOT NULL,
+  lieferant_id   INT UNSIGNED  NULL,
+  gebinde        VARCHAR(60)   NOT NULL DEFAULT 'Kasten',
+  preis          DECIMAL(10,2) NOT NULL DEFAULT 0,
+  -- Mindestbestand ueber alle Plaetze zusammen; darunter steht das Getraenk im Bedarf
+  mindestbestand INT           NOT NULL DEFAULT 0,
+  sort_order     INT           NOT NULL DEFAULT 0,
+  notiz          VARCHAR(200)  NOT NULL DEFAULT '',
+  is_active      TINYINT(1)    NOT NULL DEFAULT 1,
+  created_at     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_getraenk_lieferant (lieferant_id),
+  CONSTRAINT fk_getraenk_lieferant FOREIGN KEY (lieferant_id) REFERENCES getraenke_lieferanten(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS getraenke_bestand (
+  getraenk_id   INT UNSIGNED  NOT NULL,
+  standort_id   INT UNSIGNED  NOT NULL,
+  anzahl        INT           NOT NULL DEFAULT 0,
+  updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (getraenk_id, standort_id),
+  CONSTRAINT fk_gbestand_getraenk FOREIGN KEY (getraenk_id) REFERENCES getraenke(id) ON DELETE CASCADE,
+  CONSTRAINT fk_gbestand_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS getraenke_bestellungen (
+  id              INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  nummer          VARCHAR(30)   NOT NULL,
+  lieferant_id    INT UNSIGNED  NULL,
+  standort_id     INT UNSIGNED  NULL,
+  status          ENUM('entwurf','bestellt','geliefert','abgerechnet') NOT NULL DEFAULT 'entwurf',
+  notiz           TEXT          NULL,
+  mail_text       MEDIUMTEXT    NULL,
+  gesendet_am     DATETIME      NULL,
+  gesendet_an     VARCHAR(150)  NOT NULL DEFAULT '',
+  gesendet_von    INT UNSIGNED  NULL,
+  geliefert_am    DATETIME      NULL,
+  -- die Rechnung als Ausgabe im Budget
+  expense_id      INT UNSIGNED  NULL,
+  rechnungsbetrag DECIMAL(12,2) NULL,
+  created_by      INT UNSIGNED  NULL,
+  created_at      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_gbestellung_nummer (nummer),
+  KEY idx_gbestellung_status (status),
+  CONSTRAINT fk_gbestellung_lieferant FOREIGN KEY (lieferant_id) REFERENCES getraenke_lieferanten(id) ON DELETE SET NULL,
+  CONSTRAINT fk_gbestellung_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE SET NULL,
+  CONSTRAINT fk_gbestellung_expense FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS getraenke_positionen (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  bestellung_id INT UNSIGNED  NOT NULL,
+  getraenk_id   INT UNSIGNED  NOT NULL,
+  anzahl        INT           NOT NULL DEFAULT 0,
+  geliefert     INT           NULL,
+  preis         DECIMAL(10,2) NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  KEY idx_gpos_bestellung (bestellung_id),
+  CONSTRAINT fk_gpos_bestellung FOREIGN KEY (bestellung_id) REFERENCES getraenke_bestellungen(id) ON DELETE CASCADE,
+  CONSTRAINT fk_gpos_getraenk FOREIGN KEY (getraenk_id) REFERENCES getraenke(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS getraenke_bewegungen (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  getraenk_id   INT UNSIGNED  NOT NULL,
+  standort_id   INT UNSIGNED  NOT NULL,
+  art           ENUM('zugang','abgang','inventur') NOT NULL,
+  anzahl        INT           NOT NULL DEFAULT 0,
+  bestand_neu   INT           NOT NULL DEFAULT 0,
+  bestellung_id INT UNSIGNED  NULL,
+  melder        VARCHAR(60)   NOT NULL DEFAULT '',
+  notiz         VARCHAR(200)  NOT NULL DEFAULT '',
+  created_by    INT UNSIGNED  NULL,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_gbewegung_platz (standort_id, id),
+  CONSTRAINT fk_gbew_getraenk FOREIGN KEY (getraenk_id) REFERENCES getraenke(id) ON DELETE CASCADE,
+  CONSTRAINT fk_gbew_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE CASCADE,
+  CONSTRAINT fk_gbew_bestellung FOREIGN KEY (bestellung_id) REFERENCES getraenke_bestellungen(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS getraenke_meldungen (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  standort_id   INT UNSIGNED  NOT NULL,
+  getraenk_id   INT UNSIGNED  NOT NULL,
+  stand         ENUM('leer','knapp','ok') NOT NULL DEFAULT 'leer',
+  anzahl        INT           NULL,
+  melder        VARCHAR(60)   NOT NULL DEFAULT '',
+  gemeldet_am   DATETIME      NOT NULL,
+  erledigt_am   DATETIME      NULL,
+  bestellung_id INT UNSIGNED  NULL,
+  PRIMARY KEY (id),
+  KEY idx_gmeldung_offen (erledigt_am, gemeldet_am),
+  CONSTRAINT fk_gmeld_getraenk FOREIGN KEY (getraenk_id) REFERENCES getraenke(id) ON DELETE CASCADE,
+  CONSTRAINT fk_gmeld_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE CASCADE,
+  CONSTRAINT fk_gmeld_bestellung FOREIGN KEY (bestellung_id) REFERENCES getraenke_bestellungen(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS=1;

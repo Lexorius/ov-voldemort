@@ -120,6 +120,18 @@ $abrufe = [
             $res['fehler'] ? ', ' . $res['fehler'] . ' unbrauchbar' : '',
             $res['gesendet'] ? ', ' . $res['gesendet'] . ' Connector(en) neu versorgt' : '')]];
     },
+    'Getränke' => static function (): array {
+        if (!connector_getraenke_due()) {
+            return [];
+        }
+        $res = connector_getraenke_sync();
+        if ($res['gesendet'] === 0 && $res['geholt'] === 0 && $res['fehler'] === 0) {
+            return [];
+        }
+        return [['status' => $res['fehler'] ? 'fehler' : 'ok', 'message' => sprintf(
+            'QR: %d Meldung(en) geholt, %d übernommen%s', $res['geholt'], $res['uebernommen'],
+            $res['fehler'] ? ', ' . $res['fehler'] . ' unbrauchbar' : '')]];
+    },
     'Abstimmungsberichte' => static function (): array {
         $r = umfrage_berichte_senden();
         if ($r['gesendet'] === 0 && !$r['fehler']) {

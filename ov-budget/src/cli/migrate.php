@@ -2107,6 +2107,126 @@ SQL);
         $pdo->exec('ALTER TABLE umfragen DROP COLUMN bericht_kontakt_id');
     }
     $merken('083_umfrage_empfaenger');
+
+    /* ---------- 084: Getränke ---------- */
+    if (ovb_table_exists($pdo, 'connectors') && !ovb_column_exists($pdo, 'connectors', 'fuer_getraenke')) {
+        $pdo->exec('ALTER TABLE connectors ADD COLUMN fuer_getraenke TINYINT(1) NOT NULL DEFAULT 0 AFTER fuer_umfragen');
+    }
+    if (ovb_table_exists($pdo, 'standorte') && !ovb_column_exists($pdo, 'standorte', 'getraenke_qr_token')) {
+        $pdo->exec("ALTER TABLE standorte
+            ADD COLUMN getraenke_qr_token VARCHAR(80) NOT NULL DEFAULT '' AFTER plan_y,
+            ADD COLUMN getraenke_qr_connector_id INT UNSIGNED NULL AFTER getraenke_qr_token");
+    }
+    if (!ovb_table_exists($pdo, 'getraenke')) {
+        $pdo->exec("CREATE TABLE getraenke (
+  id             INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  name           VARCHAR(100)  NOT NULL,
+  lieferant_id   INT UNSIGNED  NULL,
+  gebinde        VARCHAR(60)   NOT NULL DEFAULT 'Kasten',
+  preis          DECIMAL(10,2) NOT NULL DEFAULT 0,
+  -- Mindestbestand ueber alle Plaetze zusammen; darunter steht das Getraenk im Bedarf
+  mindestbestand INT           NOT NULL DEFAULT 0,
+  sort_order     INT           NOT NULL DEFAULT 0,
+  notiz          VARCHAR(200)  NOT NULL DEFAULT '',
+  is_active      TINYINT(1)    NOT NULL DEFAULT 1,
+  created_at     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_getraenk_lieferant (lieferant_id),
+  CONSTRAINT fk_getraenk_lieferant FOREIGN KEY (lieferant_id) REFERENCES getraenke_lieferanten(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    if (!ovb_table_exists($pdo, 'getraenke_bestand')) {
+        $pdo->exec("CREATE TABLE getraenke_bestand (
+  getraenk_id   INT UNSIGNED  NOT NULL,
+  standort_id   INT UNSIGNED  NOT NULL,
+  anzahl        INT           NOT NULL DEFAULT 0,
+  updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (getraenk_id, standort_id),
+  CONSTRAINT fk_gbestand_getraenk FOREIGN KEY (getraenk_id) REFERENCES getraenke(id) ON DELETE CASCADE,
+  CONSTRAINT fk_gbestand_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    if (!ovb_table_exists($pdo, 'getraenke_bestellungen')) {
+        $pdo->exec("CREATE TABLE getraenke_bestellungen (
+  id              INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  nummer          VARCHAR(30)   NOT NULL,
+  lieferant_id    INT UNSIGNED  NULL,
+  standort_id     INT UNSIGNED  NULL,
+  status          ENUM('entwurf','bestellt','geliefert','abgerechnet') NOT NULL DEFAULT 'entwurf',
+  notiz           TEXT          NULL,
+  mail_text       MEDIUMTEXT    NULL,
+  gesendet_am     DATETIME      NULL,
+  gesendet_an     VARCHAR(150)  NOT NULL DEFAULT '',
+  gesendet_von    INT UNSIGNED  NULL,
+  geliefert_am    DATETIME      NULL,
+  -- die Rechnung als Ausgabe im Budget
+  expense_id      INT UNSIGNED  NULL,
+  rechnungsbetrag DECIMAL(12,2) NULL,
+  created_by      INT UNSIGNED  NULL,
+  created_at      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_gbestellung_nummer (nummer),
+  KEY idx_gbestellung_status (status),
+  CONSTRAINT fk_gbestellung_lieferant FOREIGN KEY (lieferant_id) REFERENCES getraenke_lieferanten(id) ON DELETE SET NULL,
+  CONSTRAINT fk_gbestellung_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE SET NULL,
+  CONSTRAINT fk_gbestellung_expense FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    if (!ovb_table_exists($pdo, 'getraenke_positionen')) {
+        $pdo->exec("CREATE TABLE getraenke_positionen (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  bestellung_id INT UNSIGNED  NOT NULL,
+  getraenk_id   INT UNSIGNED  NOT NULL,
+  anzahl        INT           NOT NULL DEFAULT 0,
+  geliefert     INT           NULL,
+  preis         DECIMAL(10,2) NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  KEY idx_gpos_bestellung (bestellung_id),
+  CONSTRAINT fk_gpos_bestellung FOREIGN KEY (bestellung_id) REFERENCES getraenke_bestellungen(id) ON DELETE CASCADE,
+  CONSTRAINT fk_gpos_getraenk FOREIGN KEY (getraenk_id) REFERENCES getraenke(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    if (!ovb_table_exists($pdo, 'getraenke_bewegungen')) {
+        $pdo->exec("CREATE TABLE getraenke_bewegungen (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  getraenk_id   INT UNSIGNED  NOT NULL,
+  standort_id   INT UNSIGNED  NOT NULL,
+  art           ENUM('zugang','abgang','inventur') NOT NULL,
+  anzahl        INT           NOT NULL DEFAULT 0,
+  bestand_neu   INT           NOT NULL DEFAULT 0,
+  bestellung_id INT UNSIGNED  NULL,
+  melder        VARCHAR(60)   NOT NULL DEFAULT '',
+  notiz         VARCHAR(200)  NOT NULL DEFAULT '',
+  created_by    INT UNSIGNED  NULL,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_gbewegung_platz (standort_id, id),
+  CONSTRAINT fk_gbew_getraenk FOREIGN KEY (getraenk_id) REFERENCES getraenke(id) ON DELETE CASCADE,
+  CONSTRAINT fk_gbew_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE CASCADE,
+  CONSTRAINT fk_gbew_bestellung FOREIGN KEY (bestellung_id) REFERENCES getraenke_bestellungen(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    if (!ovb_table_exists($pdo, 'getraenke_meldungen')) {
+        $pdo->exec("CREATE TABLE getraenke_meldungen (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  standort_id   INT UNSIGNED  NOT NULL,
+  getraenk_id   INT UNSIGNED  NOT NULL,
+  stand         ENUM('leer','knapp','ok') NOT NULL DEFAULT 'leer',
+  anzahl        INT           NULL,
+  melder        VARCHAR(60)   NOT NULL DEFAULT '',
+  gemeldet_am   DATETIME      NOT NULL,
+  erledigt_am   DATETIME      NULL,
+  bestellung_id INT UNSIGNED  NULL,
+  PRIMARY KEY (id),
+  KEY idx_gmeldung_offen (erledigt_am, gemeldet_am),
+  CONSTRAINT fk_gmeld_getraenk FOREIGN KEY (getraenk_id) REFERENCES getraenke(id) ON DELETE CASCADE,
+  CONSTRAINT fk_gmeld_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE CASCADE,
+  CONSTRAINT fk_gmeld_bestellung FOREIGN KEY (bestellung_id) REFERENCES getraenke_bestellungen(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    $merken('084_getraenke');
 }
 
 /**

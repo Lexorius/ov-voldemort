@@ -97,6 +97,11 @@ unter „Sicherheitslücke PHP2Shell".
   nach dem Abholen gelöscht; ausgezählt wird im Multitool, mit CSV-Export
   und **Ergebnisbericht per E-Mail** an einen oder mehrere Kontakte (täglich, wöchentlich
   oder am Ende, optional von der KI zusammengefasst).
+* **Getränke** – Lieferanten und Getränkearten (Wasser, Schorle, Cola-Mix),
+  Lager je Stell- und Lagerplatz mit Zugang, Abgang und Inventur,
+  **„ist leer" per QR-Code** über den Connector, Bedarf je Lieferant,
+  Bestellung als Entwurf, nach dem Prüfen **per E-Mail an den Lieferanten**,
+  Lieferung ins Lager, **Rechnung als Ausgabe ins Budget**.
 * **E-Mail-Versand** – Postausgang über einen SMTP-Server (STARTTLS oder
   SSL/TLS), in der Verwaltung mit Testnachricht eingerichtet.
 * **Kontakte** – Ansprechpartner mit Zusatzfeldern, anrufen und mailen mit einem
@@ -465,8 +470,8 @@ Handy / Browser  --verschlüsselt-->  Connector  <--holt ab--  OV-Multitool (Add
 Unter *Verwaltung → Connectoren* lassen sich beliebig viele anlegen. Jeder
 bekommt eine eigene Kopplung und trägt, wofür er zuständig ist: **Fahrzeuge**
 (Standort per QR-Code), **Veranstaltungen** (Einladungen), **Bestand** („Gerät
-ist da"), **Zähler** (Stand per QR-Code), **Abstimmungen** (Umfragen) – auch
-mehreres zugleich.
+ist da"), **Zähler** (Stand per QR-Code), **Abstimmungen** (Umfragen),
+**Getränke** („ist leer") – auch mehreres zugleich.
 
 ### Standortmeldung per QR-Code
 
@@ -516,6 +521,15 @@ https://i.example.de/AB23CD
   Rückmeldungen ab (Vorgabe: alle zwei Minuten). Beides geht auch von Hand.
 * Ohne Connector funktioniert das Modul trotzdem – Rückmeldungen werden dann
   von Hand eingetragen.
+
+### Getränke über den Connector
+
+Am Getränkeregal oder Kühlschrank hängt ein QR-Code je Lagerplatz. Die
+Seite zeigt die Getränke; wer vorbeikommt, tippt *leer*, *wird knapp* oder
+*reicht noch* an, wahlweise mit der Zahl der Kästen. Der Connector kennt
+nur die Getränkenamen – nicht den Platz (steht im Anker der Adresse) und
+nicht die Meldung (verschlüsselt, nach dem Abholen gelöscht). Im Multitool
+wird daraus Bedarf und Bestand; mehr im Abschnitt [Getränke](#getränke).
 
 ### Abstimmungen über den Connector
 
@@ -585,6 +599,27 @@ Auf Wunsch fasst die KI-Auswertung (Ollama, wenn eingeschaltet) die
 Ergebnisse oben im Bericht in wenigen Sätzen zusammen – ohne Gewähr; ist
 sie aus oder nicht erreichbar, geht der Bericht ohne sie. „Jetzt senden"
 auf der Seite der Abstimmung schickt einen Bericht von Hand.
+
+## Getränke
+
+Das Modul führt Getränkearten mit Lieferanten, den Bestand je Stell- und
+Lagerplatz und die Bestellungen bis zur Rechnung.
+
+* **Lieferanten und Getränke** – Name, E-Mail für Bestellungen,
+  Kundennummer; je Getränk Lieferant, Gebinde, Preis und Mindestbestand.
+  Bestellungen werden je Lieferant gebündelt.
+* **Lager** – Getränke gegen Plätze als Tabelle; Zugang, Abgang und
+  Inventur als Bewegungen mit Zeit, Person und Notiz. Rot, was unter dem
+  Mindestbestand liegt.
+* **„Ist leer" per QR-Code** – je Lagerplatz ein Code über den Connector;
+  *leer* setzt den Bestand auf null, eine Zahl ist eine Inventur.
+* **Bedarf und Bestellung** – aus Meldungen und Mindestbestand ein
+  Vorschlag je Lieferant, als Entwurf angelegt, von einer verantwortlichen
+  Person geprüft und erst dann **per E-Mail** an den Lieferanten geschickt
+  (Positionen, Lieferadresse, Abladeplatz, Ansprechpartner).
+* **Lieferung und Rechnung** – gelieferte Gebinde gehen als Zugang ins
+  Lager, die Rechnung als **Ausgabe ins Budget** mit Kategorie,
+  Rechnungsnummer und Zahlungsstand, verknüpft mit der Bestellung.
 
 ## E-Mail-Versand
 

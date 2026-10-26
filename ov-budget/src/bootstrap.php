@@ -68,6 +68,7 @@ require __DIR__ . '/lib/ki.php';
 require __DIR__ . '/lib/geo.php';
 require __DIR__ . '/lib/stan.php';
 require __DIR__ . '/lib/umfragen.php';
+require __DIR__ . '/lib/getraenke.php';
 require __DIR__ . '/lib/nav.php';
 
 /** Ist die Anwendung eingerichtet? */

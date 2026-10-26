@@ -12,6 +12,7 @@ declare(strict_types=1);
  *   Bestand         – "ist am Lagerort" für Funkgeräte und ganze Gruppen
  *   Zähler          – Zählerstände für Strom, Gas und Wasser
  *   Abstimmungen    – Umfragen mit einer oder mehreren Seiten, Antworten verschlüsselt
+ *   Getränke        – „ist leer" oder „wird knapp" vom QR-Code am Lagerplatz
  *
  * Beides nimmt er entgegen und gibt es an OV-Multitool weiter – mehr nicht.
  *
@@ -36,7 +37,7 @@ declare(strict_types=1);
  * Gespeichert wird in Dateien unterhalb von daten/ – keine Datenbank nötig.
  */
 
-const CON_VERSION = '1.6.1';
+const CON_VERSION = '1.7.0';
 
 /** Höchstalter einer signierten Anfrage in Sekunden (gegen Wiedereinspielen) */
 const CON_ZEITFENSTER = 300;
@@ -64,6 +65,10 @@ const CON_LIMIT_UMFRAGE = 300;
 const CON_MAX_ANTWORT = 16384;
 /** Was eine Frage sein kann */
 const CON_UMFRAGE_TYPEN = ['einfach', 'mehrfach', 'skala', 'janein', 'text', 'hinweis'];
+/** Getränkemeldungen je Lagerplatz und Stunde */
+const CON_LIMIT_GETRAENKE = 60;
+/** Was eine Getränkemeldung sagen kann */
+const CON_GETRAENKE_STAND = ['leer', 'knapp', 'ok'];
 
 class ConException extends RuntimeException
 {
@@ -1057,6 +1062,114 @@ function con_umfrage_antworten_abholen(int $max = 200): array
 }
 
 /* ==================================================================== */
+/* Getränke: „ist leer" vom QR-Code am Lagerplatz                        */
+/* ==================================================================== */
+
+/**
+ * Die Liste kommt komplett von OV-Multitool und ersetzt die bisherige.
+ * Je Zugang (ein QR-Code je Lagerplatz) die Prüfsumme und die Getränke,
+ * die dort gemeldet werden können: Nummer, Name, Gebinde – die Seite muss
+ * „Wasser · Kasten" schreiben können. Der Name des Platzes steht im Anker
+ * der Adresse und erreicht den Server nie.
+ */
+function con_getraenke_setzen(array $liste): int
+{
+    $text = static fn(string $wert, int $laenge): string => mb_substr(
+        trim(preg_replace('/[\x00-\x1f\x7f]/u', ' ', $wert) ?? ''), 0, $laenge);
+    $neu = [];
+    foreach ($liste as $eintrag) {
+        if (!is_array($eintrag)) {
+            continue;
+        }
+        $kennung = strtolower(trim((string)($eintrag['kennung'] ?? '')));
+        if (!preg_match('/^[a-f0-9]{64}$/', $kennung)) {
+            continue;
+        }
+        $getraenke = [];
+        foreach (array_slice(array_values((array)($eintrag['getraenke'] ?? [])), 0, 100) as $g) {
+            if (!is_array($g) || (int)($g['id'] ?? 0) <= 0) {
+                continue;
+            }
+            $name = $text((string)($g['name'] ?? ''), 80);
+            if ($name === '') {
+                continue;
+            }
+            $getraenke[] = ['id' => (int)$g['id'], 'name' => $name, 'gebinde' => $text((string)($g['gebinde'] ?? ''), 40)];
+        }
+        if ($getraenke) {
+            $neu[$kennung] = ['getraenke' => $getraenke];
+        }
+    }
+    con_schreiben('getraenke.json', $neu);
+    foreach (glob(con_dir('getraenkemeldungen') . '/*') ?: [] as $ordner) {
+        if (!isset($neu[basename($ordner)])) {
+            con_ordner_leeren($ordner);
+            @rmdir($ordner);
+        }
+    }
+    return count($neu);
+}
+
+/** Zu einem Zugang die Getränke – oder null */
+function con_getraenke(string $token): ?array
+{
+    if (!con_token_gueltig($token)) {
+        return null;
+    }
+    $kennung = con_kennung($token);
+    $eintrag = con_lesen('getraenke.json')[$kennung] ?? null;
+    if (!is_array($eintrag) || empty($eintrag['getraenke'])) {
+        return null;
+    }
+    return ['kennung' => $kennung, 'getraenke' => (array)$eintrag['getraenke']];
+}
+
+/** Getränkemeldung ablegen – verschlüsselt, der Connector liest sie nicht */
+function con_getraenkemeldung_ablegen(string $token, string $inhalt): void
+{
+    $eintrag = con_getraenke($token);
+    if ($eintrag === null) {
+        throw new ConException('Dieser QR-Code gilt nicht (mehr).');
+    }
+    if ($inhalt === '' || strlen($inhalt) > CON_MAX_RUECKMELDUNG) {
+        throw new ConException('Die Meldung hat eine unerwartete Größe.');
+    }
+    if (!con_limit_frei('g:' . $eintrag['kennung'], CON_LIMIT_GETRAENKE)) {
+        throw new ConException('Für diesen Lagerplatz kamen gerade sehr viele Meldungen. Bitte später erneut.');
+    }
+    $ordner = con_dir('getraenkemeldungen/' . $eintrag['kennung']);
+    $offen = glob($ordner . '/*.json') ?: [];
+    if (count($offen) >= CON_MAX_OFFEN) {
+        sort($offen);
+        @unlink($offen[0]);
+    }
+    file_put_contents($ordner . '/' . sprintf('%d-%s.json', time(), bin2hex(random_bytes(5))),
+        json_encode(['ts' => time(), 'daten' => $inhalt], JSON_UNESCAPED_SLASHES));
+}
+
+/** Getränkemeldungen abholen und dabei löschen */
+function con_getraenkemeldungen_abholen(int $max = 200): array
+{
+    $out = [];
+    foreach (glob(con_dir('getraenkemeldungen') . '/*') ?: [] as $ordner) {
+        $kennung = basename($ordner);
+        $dateien = glob($ordner . '/*.json') ?: [];
+        sort($dateien);
+        foreach ($dateien as $datei) {
+            if (count($out) >= $max) {
+                break 2;
+            }
+            $roh = json_decode((string)@file_get_contents($datei), true);
+            @unlink($datei);
+            if (is_array($roh) && isset($roh['daten'])) {
+                $out[] = ['zugang' => $kennung, 'ts' => (int)($roh['ts'] ?? 0), 'daten' => (string)$roh['daten']];
+            }
+        }
+    }
+    return $out;
+}
+
+/* ==================================================================== */
 /* Einstellungen von OV-Multitool: Betreiber, Impressum, Datenschutz     */
 /* ==================================================================== */
 
@@ -1133,10 +1246,10 @@ function con_manifest_erzeugen(string $wurzel): array
 function con_daten_erwartet(string $name, bool $istOrdner): bool
 {
     if ($istOrdner) {
-        return in_array($name, ['meldungen', 'rueckmeldungen', 'bestandsmeldungen', 'zaehlerstaende', 'umfrageantworten'], true);
+        return in_array($name, ['meldungen', 'rueckmeldungen', 'bestandsmeldungen', 'zaehlerstaende', 'umfrageantworten', 'getraenkemeldungen'], true);
     }
     if (in_array($name, ['.htaccess', 'index.html', 'kopplung.json', 'kopplungscode.txt', 'fahrzeuge.json', 'einstellungen.json',
-                         'veranstaltungen.json', 'einladungen.json', 'bestand.json', 'zaehler.json', 'umfragen.json',
+                         'veranstaltungen.json', 'einladungen.json', 'bestand.json', 'zaehler.json', 'umfragen.json', 'getraenke.json',
                          'nonces.json', 'limit.json', 'protokoll.log'], true)) {
         return true;
     }
@@ -1283,6 +1396,8 @@ function con_status(): array
         'zaehlerstaende'  => $zaehlen('zaehlerstaende'),
         'umfragen'        => count(con_lesen('umfragen.json')),
         'umfrageantworten' => $zaehlen('umfrageantworten'),
+        'getraenke'       => count(con_lesen('getraenke.json')),
+        'getraenkemeldungen' => $zaehlen('getraenkemeldungen'),
         'schreibbar'      => is_writable(con_dir()),
         'frei'            => (int)max(0, (float)@disk_free_space(con_dir())),
     ];

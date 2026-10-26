@@ -1,5 +1,17 @@
 # Änderungsverlauf
 
+## 2.1.57.0
+
+- **Neues Modul Getränke:** Lieferanten und Getränkearten (Wasser, Schorle,
+  Cola-Mix) mit Gebinde, Preis und Mindestbestand; Lager je Stell- und
+  Lagerplatz mit Zugang, Abgang und Inventur; „ist leer" oder „wird knapp"
+  per QR-Code am Regal über den Connector (Verwendung „Getränke", Connector
+  1.7.0); Bedarf je Lieferant aus Meldungen und Mindestbestand; Bestellung
+  als Entwurf, nach dem Prüfen per E-Mail an den Lieferanten; Lieferung als
+  Zugang ins Lager; Rechnung als Ausgabe ins Budget, verknüpft mit der
+  Bestellung. Einstellungsgruppe „Getränke" mit Lieferadresse und
+  Hinweistext für die Bestell-Mail.
+
 ## 2.1.56.1
 
 - **README:** eigene Abschnitte zu Abstimmungen und E-Mail-Versand, der

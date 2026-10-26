@@ -40,6 +40,7 @@ const CONNECTOR_ZWECKE = [
     'bestand'         => 'Funkgeräte: „ist am Lagerort" per QR-Code',
     'verbrauch'       => 'Zähler: Zählerstand ablesen per QR-Code',
     'umfragen'        => 'Abstimmungen: Umfragen mit verschlüsselten Antworten',
+    'getraenke'       => 'Getränke: „ist leer" per QR-Code am Lagerplatz',
 ];
 
 /* ==================================================================== */
@@ -72,6 +73,7 @@ function connector_taugt(array $c, string $zweck): bool
         'bestand'         => 'fuer_bestand',
         'verbrauch'       => 'fuer_verbrauch',
         'umfragen'        => 'fuer_umfragen',
+        'getraenke'       => 'fuer_getraenke',
         default           => 'fuer_fahrzeuge',
     };
     return (int)($c['is_active'] ?? 0) === 1
@@ -158,6 +160,7 @@ function connector_save_from_post(?array $c): array
         'fuer_bestand'         => post_bool('fuer_bestand') ? 1 : 0,
         'fuer_verbrauch'       => post_bool('fuer_verbrauch') ? 1 : 0,
         'fuer_umfragen'        => post_bool('fuer_umfragen') ? 1 : 0,
+        'fuer_getraenke'       => post_bool('fuer_getraenke') ? 1 : 0,
         'is_active'            => post_bool('is_active') ? 1 : 0,
         'notiz'                => post_str('notiz'),
     ];
@@ -1284,6 +1287,127 @@ function connector_umfragen_due(?int $jetzt = null): bool
     }
     $intervall = max(1, setting_int('umfrage_intervall_minuten', 5)) * 60;
     return $jetzt - (int)state_get('umfrage_letzter_abruf', '0') >= $intervall;
+}
+
+/* ==================================================================== */
+/* Getränke: „ist leer" vom QR-Code am Lagerplatz                        */
+/* ==================================================================== */
+
+/** Adresse im QR-Code am Regal. Der Name des Platzes hängt hinter dem # und erreicht den Connector nie. */
+function connector_qr_getraenke_url(array $c, string $token, string $name = ''): string
+{
+    $url = connector_url($c) . '/index.php?p=getraenke&t=' . rawurlencode($token);
+    $name = trim($name);
+    return $name === '' ? $url : $url . '#n=' . b64u_encode($name);
+}
+
+/**
+ * Was der Connector wissen muss: je Zugang die Prüfsumme und die Getränke,
+ * die sich melden lassen – Nummer, Name, Gebinde. Keine Plätze, keine Bestände.
+ */
+function connector_getraenke_paket(array $c): array
+{
+    $getraenke = [];
+    foreach (getraenke_alle(true) as $g) {
+        $getraenke[] = ['id' => (int)$g['id'], 'name' => (string)$g['name'], 'gebinde' => (string)$g['gebinde']];
+    }
+    $liste = [];
+    if (!$getraenke) {
+        return $liste;
+    }
+    foreach (db_all("SELECT getraenke_qr_token FROM standorte
+                     WHERE getraenke_qr_token <> '' AND is_active = 1 AND getraenke_qr_connector_id = ?", [(int)$c['id']]) as $s) {
+        $liste[] = ['kennung' => connector_kennung((string)$s['getraenke_qr_token']), 'getraenke' => $getraenke];
+    }
+    return $liste;
+}
+
+/** Zugänge und Getränke anmelden – geschickt wird nur, wenn sich etwas geändert hat */
+function connector_push_getraenke(array $c, bool $erzwingen = false): array
+{
+    $paket = connector_getraenke_paket($c);
+    $stand = hash('sha256', (string)json_encode($paket, JSON_UNESCAPED_UNICODE));
+    $merker = 'connector_getraenke_' . (int)$c['id'];
+    if (!$erzwingen && state_get($merker, '') === $stand) {
+        return ['gesendet' => false, 'zugaenge' => count($paket)];
+    }
+    $antwort = connector_call($c, 'getraenkeliste', ['getraenke' => $paket]);
+    state_save($merker, $stand);
+    return ['gesendet' => true, 'zugaenge' => (int)($antwort['getraenke'] ?? count($paket))];
+}
+
+/** Getränkemeldungen abholen und übernehmen. Rückgabe: ['geholt', 'uebernommen', 'fehler'] */
+function connector_fetch_getraenke(array $c): array
+{
+    $res = ['geholt' => 0, 'uebernommen' => 0, 'fehler' => 0];
+    if (!connector_taugt($c, 'getraenke')) {
+        return $res;
+    }
+    if (state_get('connector_getraenke_' . (int)$c['id'], '') === '') {
+        connector_push_getraenke($c, true);
+    }
+    $antwort = connector_call($c, 'getraenke_abholen', ['max' => 200]);
+    $meldungen = (array)($antwort['meldungen'] ?? []);
+    $res['geholt'] = count($meldungen);
+    if (!$meldungen) {
+        return $res;
+    }
+    $ziele = [];
+    foreach (db_all("SELECT * FROM standorte WHERE getraenke_qr_token <> '' AND getraenke_qr_connector_id = ?", [(int)$c['id']]) as $s) {
+        $ziele[connector_kennung((string)$s['getraenke_qr_token'])] = $s;
+    }
+    usort($meldungen, static fn($a, $b) => (int)($a['ts'] ?? 0) <=> (int)($b['ts'] ?? 0));
+    foreach ($meldungen as $m) {
+        $standort = $ziele[(string)($m['zugang'] ?? '')] ?? null;
+        if ($standort === null) {
+            $res['fehler']++;
+            continue;
+        }
+        try {
+            $daten = connector_entschluesseln((string)($m['daten'] ?? ''), (string)$c['pem'], ['meldungen']);
+        } catch (Throwable $ex) {
+            $res['fehler']++;
+            continue;
+        }
+        $gemeldet = (int)($daten['zeit'] ?? 0);
+        if ($gemeldet > 0 && abs(time() - $gemeldet) > 86400) {
+            $res['fehler']++;
+            continue;
+        }
+        if (getraenke_meldung_anwenden($standort, $daten, (int)($m['ts'] ?? time())) > 0) {
+            $res['uebernommen']++;
+        } else {
+            $res['fehler']++;
+        }
+    }
+    return $res;
+}
+
+/** Anmelden und abholen bei allen Connectoren für Getränke */
+function connector_getraenke_sync(): array
+{
+    $res = ['connectoren' => 0, 'gesendet' => 0, 'geholt' => 0, 'uebernommen' => 0, 'fehler' => 0];
+    foreach (connector_liste('getraenke') as $c) {
+        $res['connectoren']++;
+        $push = connector_push_getraenke($c);
+        $res['gesendet'] += $push['gesendet'] ? 1 : 0;
+        foreach (connector_fetch_getraenke($c) as $k => $v) {
+            $res[$k] += $v;
+        }
+    }
+    state_save('connector_getraenke_letzter_abruf', (string)time());
+    return $res;
+}
+
+/** Ist ein Abgleich der Getränkemeldungen fällig? */
+function connector_getraenke_due(?int $jetzt = null): bool
+{
+    $jetzt ??= time();
+    if (!connector_for('getraenke')) {
+        return false;
+    }
+    $intervall = max(1, setting_int('getraenke_intervall_minuten', 5)) * 60;
+    return $jetzt - (int)state_get('connector_getraenke_letzter_abruf', '0') >= $intervall;
 }
 
 /* ==================================================================== */

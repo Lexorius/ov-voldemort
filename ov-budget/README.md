@@ -45,6 +45,14 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
   eine eigene Nachricht, auf Wunsch mit KI-Zusammenfassung; dafür ein eigener
   **E-Mail-Versand** über SMTP in der Verwaltung, mit Testnachricht
 
+### Getränke
+- **Lieferanten und Getränkearten** (Wasser, Schorle, Cola-Mix) mit Gebinde,
+  Preis und Mindestbestand; Bestellungen je Lieferant gebündelt
+- **Lager je Stell- und Lagerplatz** mit Zugang, Abgang und Inventur
+- **„Ist leer" per QR-Code** am Regal über den Connector, verschlüsselt
+- **Bestellung per E-Mail** nach Prüfung durch eine verantwortliche Person,
+  Lieferung ins Lager, **Rechnung als Ausgabe ins Budget**
+
 ### Budget
 - Jahresbudget, **Ausgaben** (Haus, Nebenkosten, Getränke, Tanken …) und
   **Einnahmen** (Einsätze, technische Hilfeleistung, Spenden …)

@@ -173,6 +173,15 @@ $routes = [
     'umfrage_edit'       => 'umfrage_edit',
     'umfrage_action'     => 'umfrage_action',
     'umfrage_export'     => 'umfrage_export',
+
+    // Getränke
+    'getraenke'          => 'getraenke',
+    'getraenk_edit'      => 'getraenk_edit',
+    'getraenke_lieferant_edit' => 'getraenke_lieferant_edit',
+    'getraenke_bestellung' => 'getraenke_bestellung',
+    'getraenke_bestellung_edit' => 'getraenke_bestellung_edit',
+    'getraenke_lager'    => 'getraenke_lager',
+    'getraenke_action'   => 'getraenke_action',
 ];
 
 $route = (string)($_GET['p'] ?? 'dashboard');

@@ -757,3 +757,14 @@ pre.raw {
 .balken-zeile__zahl { font-variant-numeric: tabular-nums; color: var(--ink-soft); white-space: nowrap; }
 .balken { display: block; height: 10px; background: var(--border); border-radius: 5px; overflow: hidden; }
 .balken span { display: block; height: 100%; background: var(--accent); }
+
+/* Getränke */
+.getraenke-bedarf, .getraenke-lieferant { padding: .6rem 0; border-top: 1px solid var(--border); }
+.getraenke-bedarf:first-of-type, .getraenke-lieferant:first-of-type { border-top: 0; padding-top: 0; }
+.getraenke-bedarf__kopf { display: flex; justify-content: space-between; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.getraenke-bedarf__liste { margin: .3rem 0 0; padding-left: 1.2rem; }
+.getraenke-bedarf__liste li { margin-bottom: .2rem; }
+.getraenke-buchen { display: flex; gap: .3rem; align-items: center; flex-wrap: wrap; }
+.getraenke-buchen select { max-width: 8rem; }
+.getraenke-mail { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85rem;
+                  background: var(--bg-soft, #f8fafc); border: 1px solid var(--border); border-radius: 8px; padding: .8rem; margin: 0; }

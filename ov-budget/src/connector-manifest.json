@@ -1,7 +1,7 @@
 {
     "programm": "OV-Multitool-Connector",
-    "version": "1.6.1",
-    "erzeugt": "2026-10-25T20:07:53+00:00",
+    "version": "1.7.0",
+    "erzeugt": "2026-10-26T17:56:21+00:00",
     "dateien": {
         "public/.htaccess": {
             "sha256": "75726923baf2ef95ad108fafbe83b626f19802a2e500bd93799b18cc04d7efea",
@@ -14,6 +14,10 @@
         "public/assets/einladung.js": {
             "sha256": "51d13549a01b22bc8f17f848807156f010507302dd4db7018c87614c526b11ec",
             "bytes": 6011
+        },
+        "public/assets/getraenke.js": {
+            "sha256": "59fff08cc17a00d864765d6967c20b4b3407917f3a6bb656817561d2f06f312c",
+            "bytes": 6225
         },
         "public/assets/melden.js": {
             "sha256": "a17b2e2cb3bb7d0ed69144cae5b15b928d252fd766f37eaf44470744b225b169",
@@ -28,12 +32,12 @@
             "bytes": 5440
         },
         "public/index.php": {
-            "sha256": "50fc0f327e803a6e2e5b85fb04ae967eeefcff88febcf8a4482ecaad0ec972a8",
-            "bytes": 18617
+            "sha256": "01f1c17d8a5626e885e14fd324262a77031fd73ac3f9980ff5bdc0edd6bf4cbb",
+            "bytes": 20999
         },
         "src/connector.php": {
-            "sha256": "2d4402b4cd0aeb19962fc672229bbb010669a50350fe9ad0a17fcb39ea1252af",
-            "bytes": 49627
+            "sha256": "5cabe71b539f27e6ca06371ece11ddde724a93d3a434aad53d458b4f4266d896",
+            "bytes": 54243
         },
         "src/fuss.php": {
             "sha256": "e4e80039b3ad186c38d45ea76f0c837c81c712e252a71f9ceb034f6f706ded06",
@@ -46,6 +50,10 @@
         "src/seite_einladung.php": {
             "sha256": "23ddcd0bdfa80fb16ed35a55b35db156ab11d74a89ed4c2be2f9708837ac2d96",
             "bytes": 7967
+        },
+        "src/seite_getraenke.php": {
+            "sha256": "b0f76abd18965642c57241c9c736a066777365d4703201392da2a0a729f3e235",
+            "bytes": 6371
         },
         "src/seite_melden.php": {
             "sha256": "e31cd3e8b92a8a0e9649e9a8096c60e26b24d8051efab207b3b12ddd212a8c56",

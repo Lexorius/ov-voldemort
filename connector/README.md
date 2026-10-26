@@ -15,6 +15,9 @@ Aufgaben:
   „alle 8 Geräte" oder eine kleinere Zahl.
 * **Zähler** – Zählerstand melden. Am Strom-, Gas- oder Wasserzähler hängt
   ein QR-Code; wer abliest, tippt den Stand ein.
+* **Getränke** – „ist leer" oder „wird knapp". Am Lagerplatz oder Kühlschrank
+  hängt ein QR-Code; die Seite listet die Getränke, ein Tipp meldet den
+  Stand, wahlweise mit der Zahl der Kästen, die noch da sind.
 * **Abstimmungen** – Umfragen mit einer oder mehreren Seiten, in OV-Multitool
   gestaltet. Hinter einer kurzen Adresse oder einem QR-Code steht die
   Umfrageseite; sie nimmt nur im Zeitfenster an. Die Antworten kommen
@@ -47,6 +50,10 @@ Er weiß auch **nicht, um wen es geht**:
 * **Zähler:** Gespeichert sind nur die Prüfsumme des Zugangs, die Art und die
   Einheit – ohne die ließe sich „kWh" nicht schreiben. Name, Nummer und die
   gemeldeten Stände kennt der Server nicht.
+* **Getränke:** Je Zugang nur die Prüfsumme und die Namen der Getränke mit
+  Gebinde – die Seite muss „Wasser · Kasten" schreiben können. Welcher
+  Lagerplatz es ist, steht im Anker der Adresse; die Meldungen sind
+  verschlüsselt.
 * **Abstimmungen:** Titel, Beschreibung, Zeitfenster und die Fragen liegen im
   Klartext hier – die Umfrageseite muss sie zeigen. Vom Code nur die
   Prüfsumme. **Die Antworten nicht:** Sie werden im Browser verschlüsselt,
