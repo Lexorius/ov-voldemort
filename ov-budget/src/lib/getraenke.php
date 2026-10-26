@@ -140,6 +140,27 @@ function getraenke_absender_save_from_post(?array $a): array
     return [$id, []];
 }
 
+/**
+ * Vorbelegung eines Absenders aus einer THW-Dienststelle: Name, Anschrift
+ * (Name, Straße, PLZ Ort), E-Mail und Telefon. Reine Funktion.
+ */
+function getraenke_absender_aus_dienststelle(array $d): array
+{
+    $name = trim((string)($d['name'] ?? ''));
+    $ortzeile = trim(trim((string)($d['plz'] ?? '')) . ' ' . trim((string)($d['ort'] ?? '')));
+    $zeilen = array_values(array_filter([$name, trim((string)($d['strasse'] ?? '')), $ortzeile], static fn($z) => $z !== ''));
+    return [
+        'id'         => null,
+        'name'       => $name,
+        'anschrift'  => implode("\n", $zeilen),
+        'email'      => trim((string)($d['email'] ?? '')),
+        'telefon'    => trim((string)($d['telefon'] ?? '')),
+        'notiz'      => trim((string)($d['kurz'] ?? '')) !== '' ? 'aus THW-Kontakte: ' . trim((string)$d['kurz']) : '',
+        'sort_order' => 0,
+        'is_active'  => 1,
+    ];
+}
+
 /** Löschen – nur ohne Bestellungen. Rückgabe: Fehlertext oder null */
 function getraenke_absender_delete(array $a): ?string
 {

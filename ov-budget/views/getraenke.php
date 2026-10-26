@@ -155,8 +155,8 @@ $lieferantName = static fn(int $id): string => $id > 0 ? (string)($lieferanten[$
   <div class="card__head"><h2>Absender</h2>
     <?php if ($darf): ?><a class="btn btn--sec btn--sm" href="<?= e(url('getraenke_absender_edit')) ?>">+ Absender</a><?php endif; ?></div>
   <?php if (!$absender): ?>
-    <p class="small muted">In wessen Namen bestellt wird – Ortsverband, Helferverein, Regionalstelle. Ohne Absender steht der
-      Name des Ortsverbands aus den Einstellungen in der Bestellung.</p>
+    <p class="small muted">In wessen Namen bestellt wird – Ortsverband, Helferverein, Regionalstelle; aus den THW-Kontakten
+      übernehmbar. Ohne Absender steht der Name des Ortsverbands aus den Einstellungen in der Bestellung.</p>
   <?php else: ?>
     <ul class="getraenke-bedarf__liste">
       <?php foreach ($absender as $a): ?>

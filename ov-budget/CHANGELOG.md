@@ -1,5 +1,10 @@
 # Änderungsverlauf
 
+## 2.1.58.1
+
+- **Getränke:** Absender lassen sich aus den THW-Kontakten übernehmen – die
+  Dienststelle wählen, Name, Anschrift, E-Mail und Telefon sind vorbelegt.
+
 ## 2.1.58.0
 
 - **Getränke: Absender der Bestellung.** Ortsverband, Helferverein oder

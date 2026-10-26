@@ -1,5 +1,5 @@
 <?php
-/** @var array $absender @var array $errors */
+/** @var array $absender @var array $errors @var array $dienststellen @var array $pfade @var int $gewaehlt */
 $isNew = empty($absender['id']);
 ?>
 <div class="pagehead">
@@ -12,6 +12,25 @@ $isNew = empty($absender['id']);
 </div>
 
 <?php foreach ($errors as $f): ?><div class="alert alert--error"><?= e($f) ?></div><?php endforeach; ?>
+
+<?php if ($isNew && $dienststellen): ?>
+  <section class="card">
+    <div class="card__head"><h2>Aus den THW-Kontakten übernehmen</h2><span class="small muted">füllt Name, Anschrift, E-Mail und Telefon vor</span></div>
+    <form method="get" class="form">
+      <input type="hidden" name="p" value="getraenke_absender_edit">
+      <div class="field">
+        <label for="dienststelle_id">Dienststelle</label>
+        <select id="dienststelle_id" name="dienststelle_id">
+          <option value="">– Dienststelle wählen –</option>
+          <?php foreach ($dienststellen as $d): ?>
+            <option value="<?= (int)$d['id'] ?>"<?= (int)$d['id'] === $gewaehlt ? ' selected' : '' ?>><?= e((string)($pfade[(int)$d['id']] ?? $d['name'])) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div class="btnrow"><button class="btn btn--sec" type="submit">Übernehmen</button></div>
+    </form>
+  </section>
+<?php endif; ?>
 
 <form method="post" class="form">
   <?= csrf_field() ?>

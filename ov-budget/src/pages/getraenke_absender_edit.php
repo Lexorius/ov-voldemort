@@ -32,11 +32,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if (!$absender) {
-    $absender = ['id' => null, 'name' => '', 'anschrift' => '', 'email' => '', 'telefon' => '', 'notiz' => '', 'sort_order' => 0, 'is_active' => 1];
+    // Vorbelegung aus einer THW-Dienststelle (Ortsverband, Regionalstelle …)
+    $dienststelle = thw_find(get_int('dienststelle_id'));
+    $absender = $dienststelle !== null
+        ? getraenke_absender_aus_dienststelle($dienststelle)
+        : ['id' => null, 'name' => '', 'anschrift' => '', 'email' => '', 'telefon' => '', 'notiz' => '', 'sort_order' => 0, 'is_active' => 1];
 }
 
+$dienststellen = thw_all(true);
 render('getraenke_absender_edit', [
-    'title'    => $absender['id'] ? 'Absender bearbeiten' : 'Absender anlegen',
-    'absender' => $absender,
-    'errors'   => $errors,
+    'title'         => $absender['id'] ? 'Absender bearbeiten' : 'Absender anlegen',
+    'absender'      => $absender,
+    'errors'        => $errors,
+    'dienststellen' => $dienststellen,
+    'pfade'         => array_combine(array_column($dienststellen, 'id'), array_map(static fn(array $d) => thw_pfad((int)$d['id'], $dienststellen), $dienststellen)) ?: [],
+    'gewaehlt'      => get_int('dienststelle_id'),
 ]);

@@ -143,6 +143,10 @@ $check('Absender: Name und E-Mail bemängelt', $id === null && count($f) === 2);
 $GLOBALS['inserts'] = [];
 $_POST = ['name' => ' Regionalstelle Heilbronn ', 'anschrift' => "Regionalstelle\r\nStraße 9\r\n74072 Heilbronn", 'email' => '', 'telefon' => '', 'notiz' => '', 'sort_order' => '3', 'is_active' => '1'];
 [$id, $f] = getraenke_absender_save_from_post(null);
+$v = getraenke_absender_aus_dienststelle(['id' => 4, 'name' => 'Regionalstelle Heilbronn', 'kurz' => 'RSt HN', 'strasse' => 'Straße 9', 'plz' => '74072', 'ort' => 'Heilbronn', 'email' => 'rst@thw.example', 'telefon' => '07131 1']);
+$check('Vorbelegung aus THW-Dienststelle', $v['name'] === 'Regionalstelle Heilbronn' && $v['anschrift'] === "Regionalstelle Heilbronn\nStraße 9\n74072 Heilbronn"
+    && $v['email'] === 'rst@thw.example' && $v['telefon'] === '07131 1' && $v['notiz'] === 'aus THW-Kontakte: RSt HN' && $v['id'] === null);
+$check('Vorbelegung ohne Anschrift', getraenke_absender_aus_dienststelle(['name' => 'LV', 'plz' => '', 'ort' => ''])['anschrift'] === 'LV');
 $check('Absender angelegt, Anschrift ohne CR', $id === 101 && $f === [] && $GLOBALS['inserts'][0][1]['name'] === 'Regionalstelle Heilbronn' && $GLOBALS['inserts'][0][1]['anschrift'] === "Regionalstelle\nStraße 9\n74072 Heilbronn");
 $_POST = ['name' => '', 'email' => 'kaputt'];
 [$id, $f] = getraenke_lieferant_save_from_post(null);
@@ -261,8 +265,10 @@ $html = render_partial('getraenke_bestellung_edit', ['b' => null, 'errors' => []
     'absender' => $GLOBALS['absender'], 'absenderId' => 2]);
 $check('Bestellentwurf: nur Getränke des Lieferanten, Vorschlag eingetragen, Absender gewählt', str_contains($html, 'name="pos[2]"') && str_contains($html, 'name="pos[2]" min="0" max="9999" value="1"') && !str_contains($html, 'name="pos[1]"')
     && str_contains($html, 'id="lieferant_id"') && str_contains($html, 'name="absender_id"') && str_contains($html, '<option value="2" selected>Helferverein'));
-$html = render_partial('getraenke_absender_edit', ['absender' => $GLOBALS['absender'][0], 'errors' => []]);
-$check('Absender bearbeiten', str_contains($html, 'value="Helferverein THW Musterstadt e. V."') && str_contains($html, 'Vereinsweg 3') && str_contains($html, 'value="loeschen"'));
+$html = render_partial('getraenke_absender_edit', ['absender' => $GLOBALS['absender'][0], 'errors' => [], 'dienststellen' => [['id' => 4, 'name' => 'RSt']], 'pfade' => [4 => 'LV › RSt'], 'gewaehlt' => 0]);
+$check('Absender bearbeiten: ohne Übernahme-Block', str_contains($html, 'value="Helferverein THW Musterstadt e. V."') && str_contains($html, 'Vereinsweg 3') && str_contains($html, 'value="loeschen"') && !str_contains($html, 'dienststelle_id'));
+$html = render_partial('getraenke_absender_edit', ['absender' => $v, 'errors' => [], 'dienststellen' => [['id' => 4, 'name' => 'RSt']], 'pfade' => [4 => 'LV › RSt HN'], 'gewaehlt' => 4]);
+$check('Absender neu: Übernahme aus THW-Kontakten vorbelegt', str_contains($html, 'name="dienststelle_id"') && str_contains($html, '<option value="4" selected>LV › RSt HN') && str_contains($html, 'value="Regionalstelle Heilbronn"') && str_contains($html, 'Straße 9'));
 $html = render_partial('getraenk_edit', ['getraenk' => $getraenke[0], 'errors' => [], 'lieferanten' => $GLOBALS['lieferanten']]);
 $check('Getränk bearbeiten', str_contains($html, 'value="Wasser still"') && str_contains($html, 'value="1" selected') && str_contains($html, 'value="loeschen"'));
 $html = render_partial('getraenke_lieferant_edit', ['lieferant' => $GLOBALS['lieferanten'][0], 'errors' => ['Fehler X']]);

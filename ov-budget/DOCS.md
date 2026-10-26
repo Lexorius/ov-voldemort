@@ -1189,7 +1189,8 @@ erledigt offene Meldungen. Alles Offene steht unter **Bedarf**.
 
 **Absender.** Bestellt wird im Namen des Ortsverbands, des Helfervereins
 oder der Regionalstelle: Unter *Absender* stehen Name, Rechnungsanschrift,
-E-Mail und Telefon je Absender. Beim Anlegen einer Bestellung wird der
+E-Mail und Telefon je Absender; Ortsverband und Regionalstelle lassen sich
+mit einem Klick aus den THW-Kontakten übernehmen. Beim Anlegen einer Bestellung wird der
 Absender gewählt (der erste ist die Vorgabe); die Bestell-Mail nennt ihn
 unter „Besteller und Rechnungsempfänger" und in der Unterschrift, der
 Betreff trägt seinen Namen. Ohne Absender steht der Name des Ortsverbands
