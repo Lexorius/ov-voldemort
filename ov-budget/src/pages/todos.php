@@ -34,11 +34,14 @@ switch ($scope) {
         $filters['mine'] = $user;
 }
 
-$rows = todo_query($filters);
+$alle = todo_query($filters);
+$blatt = seiten_blaettern(count($alle), get_int('seite') ?: 1, LISTE_JE_SEITE);
 
 render('todos', [
     'title'   => (string)setting('todo_modul_name', 'Aufgaben'),
-    'rows'    => $rows,
+    'rows'    => array_slice($alle, $blatt['offset'], $blatt['pro_seite']),
+    'blatt'   => $blatt,
+    'blattParams' => seiten_params(),
     'filters' => $filters,
     'scope'   => $scope,
     'users'   => db_all('SELECT id, display_name, username FROM users WHERE is_active = 1 ORDER BY display_name'),

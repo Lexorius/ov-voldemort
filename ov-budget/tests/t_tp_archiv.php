@@ -21,7 +21,7 @@ $check('Parameter in Reihenfolge', $p === ['%Zelt%', '%Zelt%', '%Zelt%', 4, 9, '
 $check('Vorgänger verbunden', str_contains($q, 'LEFT JOIN talking_points vg ON vg.id = tp.vorgaenger_id'));
 $check('Joins des Kopfes bleiben', str_contains($q, 'LEFT JOIN list_items st') && str_contains($q, 'ON m.id  = tp.meeting_id'));
 $check('Nachfolger', str_contains($q, 'AS nachfolger_meeting_id'));
-$check('Obergrenze +1', str_contains($q, 'LIMIT ' . (TP_ARCHIV_LIMIT + 1)));
+$check('keine Obergrenze mehr – geblättert wird in der Seite', !preg_match('/LIMIT \d+\s*$/', trim($q)) && TP_ARCHIV_LIMIT === 50);
 $check('neueste zuerst', str_contains($q, 'ORDER BY COALESCE(m.datum, DATE(tp.updated_at)) DESC'));
 $check('Aufgaben mit ids', $GLOBALS['abfragen'][1][1] === [1, 2]);
 $check('Aufgaben zugeordnet', $rows[0]['aufgaben'] === [] && $rows[1]['aufgaben'][0]['titel'] === 'Angebot holen');

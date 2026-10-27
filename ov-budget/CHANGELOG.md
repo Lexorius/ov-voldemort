@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 2.1.61.0
+
+- **Blättern in allen langen Listen:** vergangene Veranstaltungen (bisher
+  bei 50 abgeschnitten), Themenarchiv (bisher bei 300), Fahrzeugjournal
+  (bisher 100 mit „alle anzeigen"), Buchungen, Aufgaben, Wünsche – je 50 je
+  Seite, Filter bleiben beim Blättern erhalten, Summen und Kacheln zählen
+  weiter alle Treffer. Das Protokoll der Verwaltung blättert mit 100 je
+  Seite direkt in der Datenbank statt bei 300 Einträgen aufzuhören.
+
 ## 2.1.60.1
 
 - **Kontakte:** Die Liste blättert seitenweise, 50 je Seite, mit Suche und

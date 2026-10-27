@@ -110,7 +110,6 @@ $label = tp_label();
       </div>
     <?php endforeach; ?>
   </div>
-  <?php if ($mehr): ?>
-    <p class="small muted mt">Es werden die neuesten <?= TP_ARCHIV_LIMIT ?> Themen gezeigt – für ältere bitte filtern.</p>
-  <?php endif; ?>
+  <?php $blatt ??= seiten_blaettern(count($rows), 1, max(1, count($rows))); $blattParams ??= []; ?>
+  <?= render_partial('partials/seiten', ['blatt' => $blatt, 'route' => 'talking_points', 'params' => ['tab' => 'archiv'] + $blattParams]) ?>
 <?php endif; ?>

@@ -659,10 +659,8 @@ $arten = [
         </div>
       <?php endforeach; ?>
     </div>
-    <?php if ($gesamt > count($journal)): ?>
-      <p class="small muted">Die <?= count($journal) ?> jüngsten von <?= (int)$gesamt ?> Einträgen –
-        <a href="<?= e(url('vehicle', ['id' => $vehicle['id'], 'alles' => 1])) ?>#journal">alle anzeigen</a></p>
-    <?php endif; ?>
+    <?php $blatt ??= seiten_blaettern(count($journal), 1, max(1, count($journal))); ?>
+    <?= render_partial('partials/seiten', ['blatt' => $blatt, 'route' => 'vehicle', 'params' => array_filter(['id' => (int)$vehicle['id'], 'art' => (string)($journalArt ?? '')]), 'anker' => 'journal']) ?>
   <?php endif; ?>
 
   <p class="small muted" style="margin-top:.8rem">

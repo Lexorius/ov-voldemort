@@ -102,4 +102,6 @@ $scopeLink = static fn(string $s, array $extra = []) => url('todos', array_merge
       <?= render_partial('partials/todo_item', ['t' => $t]) ?>
     <?php endforeach; ?>
   </div>
+  <?php $blatt ??= seiten_blaettern(count($rows), 1, max(1, count($rows))); $blattParams ??= []; ?>
+  <?= render_partial('partials/seiten', ['blatt' => $blatt, 'route' => 'todos', 'params' => $blattParams, 'zurueck' => '‹ Zurück', 'weiter' => 'Weiter ›']) ?>
 <?php endif; ?>

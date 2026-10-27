@@ -25,13 +25,16 @@ $filters = [
     'auslage'       => $art === 'ausgabe' ? get_str('auslage') : '',
 ];
 
-$rows = expense_query($filters);
+$alle = expense_query($filters);
+$blatt = seiten_blaettern(count($alle), get_int('seite') ?: 1, LISTE_JE_SEITE);
 
 render('expenses', [
     'title'        => BUCHUNGSARTEN[$art],
     'art'          => $art,
-    'rows'         => $rows,
-    'stats'        => expense_stats($rows),
+    'rows'         => array_slice($alle, $blatt['offset'], $blatt['pro_seite']),
+    'blatt'        => $blatt,
+    'blattParams'  => seiten_params(),
+    'stats'        => expense_stats($alle),
     'filters'      => $filters,
     'jahr'         => $jahr,
     'jahre'        => $jahre,

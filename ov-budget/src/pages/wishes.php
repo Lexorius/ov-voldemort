@@ -17,15 +17,19 @@ $filters = [
     'mine'             => get_str('mine') === '1' ? (int)$user['id'] : null,
 ];
 
-$rows = wish_query($filters);
-$stats = wish_stats($rows);
+$alle = wish_query($filters);
+$stats = wish_stats($alle);
 $votes = wish_votes_of_user((int)$user['id']);
+$blatt = seiten_blaettern(count($alle), get_int('seite') ?: 1, LISTE_JE_SEITE);
+$rows = array_slice($alle, $blatt['offset'], $blatt['pro_seite']);
 
 render('wishes', [
     'fahrzeuge' => can('view_vehicles')
         ? db_all('SELECT id, bezeichnung FROM vehicles WHERE is_active = 1 ORDER BY bezeichnung') : [],
     'title'   => (string)setting('wunsch_modul_name', 'Wünsch dir was'),
     'rows'    => $rows,
+    'blatt'   => $blatt,
+    'blattParams' => seiten_params(),
     'stats'   => $stats,
     'filters' => $filters,
     'votes'   => $votes,

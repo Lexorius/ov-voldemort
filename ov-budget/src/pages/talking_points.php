@@ -16,11 +16,13 @@ if ($tab === 'archiv') {
     $datum = static fn(string $k): ?string => preg_match('/^\d{4}-\d{2}-\d{2}$/', get_str($k)) ? get_str($k) : null;
     $filters += ['status_id' => get_int('status_id'), 'von' => $datum('von'), 'bis' => $datum('bis')];
     $rows = tp_archive($filters);
-    $mehr = count($rows) > TP_ARCHIV_LIMIT;
+    $blatt = seiten_blaettern(count($rows), get_int('seite') ?: 1, TP_ARCHIV_LIMIT);
     render('talking_points_archiv', [
         'title'   => 'Themenarchiv',
-        'rows'    => array_slice($rows, 0, TP_ARCHIV_LIMIT),
-        'mehr'    => $mehr,
+        'rows'    => array_slice($rows, $blatt['offset'], $blatt['pro_seite']),
+        'mehr'    => false,
+        'blatt'   => $blatt,
+        'blattParams' => seiten_params(),
         'filters' => $filters,
     ]);
     return;

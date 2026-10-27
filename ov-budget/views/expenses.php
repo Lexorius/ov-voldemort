@@ -245,5 +245,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
         </tfoot>
       </table>
     </div>
+    <?php $blatt ??= seiten_blaettern(count($rows), 1, max(1, count($rows))); $blattParams ??= []; ?>
+    <?= render_partial('partials/seiten', ['blatt' => $blatt, 'route' => 'expenses', 'params' => $blattParams, 'zurueck' => '‹ Zurück', 'weiter' => 'Weiter ›']) ?>
   </div>
 <?php endif; ?>

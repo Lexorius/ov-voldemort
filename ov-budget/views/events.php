@@ -113,10 +113,11 @@ $karte = static function (array $e): string {
   <?php endif; ?>
 </div>
 
-<div class="card">
+<?php $blatt ??= seiten_blaettern(count($vergangen), 1, max(1, count($vergangen))); $blattParams ??= []; ?>
+<div class="card" id="vergangen">
   <div class="card__head">
     <h2>Vergangen</h2>
-    <span class="muted small"><?= count($vergangen) ?></span>
+    <span class="muted small"><?= (int)$blatt['gesamt'] ?></span>
   </div>
   <?php if (!$vergangen): ?>
     <div class="empty">Noch nichts gewesen.</div>
@@ -124,5 +125,6 @@ $karte = static function (array $e): string {
     <div class="itemlist">
       <?php foreach ($vergangen as $e): ?><?= $karte($e) ?><?php endforeach; ?>
     </div>
+    <?= render_partial('partials/seiten', ['blatt' => $blatt, 'route' => 'events', 'params' => $blattParams, 'anker' => 'vergangen']) ?>
   <?php endif; ?>
 </div>

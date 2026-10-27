@@ -16,6 +16,8 @@ if (!$vehicle) {
 
 $id = (int)$vehicle['id'];
 $art = get_str('art');
+$journalAlle = journal_query($id, ['art' => $art]);
+$blatt = seiten_blaettern(count($journalAlle), get_int('seite') ?: 1, LISTE_JE_SEITE);
 
 render('vehicle', [
     'ladung'   => vehicle_ladung($id),
@@ -29,7 +31,8 @@ render('vehicle', [
     'vehicle'  => $vehicle,
     'fristen'  => vehicle_deadlines($vehicle, setting_int('fahrzeug_frist_warnung_tage', 30)),
     'auftraege' => order_query(['vehicle_id' => $id]),
-    'journal'  => journal_query($id, ['art' => $art, 'limit' => get_int('alles') === 1 ? 0 : 100]),
+    'journal'  => array_slice($journalAlle, $blatt['offset'], $blatt['pro_seite']),
+    'blatt'    => $blatt,
     'journalArt' => $art,
     'gesamt'   => (int)db_val('SELECT COUNT(*) FROM vehicle_journal WHERE vehicle_id = ?', [$id], 0),
     'extraFields' => vehicle_extra_fields(),

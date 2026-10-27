@@ -600,6 +600,25 @@ function seiten_blaettern(int $gesamt, int $seite, int $proSeite = 50): array
     ];
 }
 
+/** So viele Einträge je Seite, wenn eine Liste nichts anderes sagt */
+const LISTE_JE_SEITE = 50;
+
+/**
+ * Die Parameter der aktuellen Adresse für die Links des Blätterers: alles
+ * außer der Route und den Seitenparametern, nur einfache Werte, nichts Leeres.
+ */
+function seiten_params(array $ausser = ['seite']): array
+{
+    $out = [];
+    foreach ($_GET as $k => $v) {
+        if ($k === 'p' || in_array((string)$k, $ausser, true) || !is_scalar($v) || trim((string)$v) === '') {
+            continue;
+        }
+        $out[(string)$k] = (string)$v;
+    }
+    return $out;
+}
+
 /** Welche Seitenzahlen der Blätterer zeigt: erste, letzte, rund um die aktuelle; null = Lücke. Reine Funktion. */
 function seiten_zahlen(int $seite, int $seiten, int $umfeld = 2): array
 {

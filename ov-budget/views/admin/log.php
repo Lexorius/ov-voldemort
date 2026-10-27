@@ -1,10 +1,11 @@
 <?php
-/** @var string $tab @var array $rows */
+/** @var string $tab @var array $rows @var array $blatt */
+$blatt ??= seiten_blaettern(count($rows), 1, max(1, count($rows)));
 ?>
 <div class="pagehead">
   <div>
     <h1>Protokoll</h1>
-    <p>Die letzten 300 Einträge.</p>
+    <p><?= (int)$blatt['gesamt'] ?> Einträge, neueste zuerst, 100 je Seite.</p>
   </div>
   <a class="btn btn--sec" href="<?= e(url('admin')) ?>">Verwaltung</a>
 </div>
@@ -77,4 +78,5 @@
       </table>
     </div>
   <?php endif; ?>
+  <?= render_partial('partials/seiten', ['blatt' => $blatt, 'route' => 'admin_log', 'params' => ['tab' => $tab]]) ?>
 </div>

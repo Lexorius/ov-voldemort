@@ -384,8 +384,8 @@ function tp_backlog(array $f = []): array
     );
 }
 
-/** Höchstzahl Themen, die das Archiv auf einmal zeigt */
-const TP_ARCHIV_LIMIT = 300;
+/** Themen je Seite des Archivs */
+const TP_ARCHIV_LIMIT = 50;
 
 /**
  * Archiv: alles, was nicht (mehr) im Themenspeicher liegt – Themen auf einer
@@ -430,8 +430,7 @@ function tp_archive(array $f = []): array
     );
     $rows = db_all(
         $sql . ' WHERE ' . implode(' AND ', $w)
-        . ' ORDER BY COALESCE(m.datum, DATE(tp.updated_at)) DESC, tp.sort_order, tp.id DESC'
-        . ' LIMIT ' . (TP_ARCHIV_LIMIT + 1),
+        . ' ORDER BY COALESCE(m.datum, DATE(tp.updated_at)) DESC, tp.sort_order, tp.id DESC',
         $p
     );
 

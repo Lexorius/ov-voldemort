@@ -98,4 +98,6 @@ $mine = get_str('mine') === '1';
       </div>
     <?php endforeach; ?>
   </div>
+  <?php $blatt ??= seiten_blaettern(count($rows), 1, max(1, count($rows))); $blattParams ??= []; ?>
+  <?= render_partial('partials/seiten', ['blatt' => $blatt, 'route' => 'wishes', 'params' => $blattParams, 'zurueck' => '‹ Zurück', 'weiter' => 'Weiter ›']) ?>
 <?php endif; ?>

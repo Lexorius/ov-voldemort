@@ -14,10 +14,15 @@ $q = get_str('q');
 
 $filter = ['jahr' => $jahr, 'status' => $status, 'typ_id' => $typ, 'q' => $q];
 
+$vergangenAlle = event_query(array_merge($filter, ['zeit' => 'vergangen']));
+$blatt = seiten_blaettern(count($vergangenAlle), get_int('seite') ?: 1, LISTE_JE_SEITE);
+
 render('events', [
     'title'     => (string)setting('veranstaltung_modul_name', 'Veranstaltungen'),
     'kommend'   => event_query(array_merge($filter, ['zeit' => 'kommend', 'sort' => 'alt'])),
-    'vergangen' => event_query(array_merge($filter, ['zeit' => 'vergangen', 'limit' => 50])),
+    'vergangen' => array_slice($vergangenAlle, $blatt['offset'], $blatt['pro_seite']),
+    'blatt'     => $blatt,
+    'blattParams' => seiten_params(),
     'jahre'     => event_years(),
     'jahr'      => $jahr,
     'status'    => $status,
