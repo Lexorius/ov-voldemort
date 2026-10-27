@@ -92,6 +92,8 @@ foreach (['(THW OV Musterstadt) Tj', '(Dienstbesprechung Oktober) Tj', '(Protoko
           '(Aufgaben) Tj', "(#44 HU-Termin machen \xb7 zu: Fahrzeuge \xb7 bis 15.11.2026) Tj", '(Notizen) Tj', "(N\xe4chstes Mal fr\xfcher.) Tj", '(Kaffee besorgen.) Tj', '(Seite 1 von 1) Tj'] as $t) {
     $check('PDF enthält ' . $t, str_contains($pdf, $t));
 }
+$check('Trennlinien: nach den Eckdaten, zwischen den Themen, vor Aufgaben und Notizen', preg_match_all('/ l S 0 G/', $pdf) === 4
+    && preg_match_all('/ l S 0 G/', meeting_protokoll_pdf(['notizen' => ''] + $meeting, ['aufgaben' => []] + $daten)) === 2);
 $check('Treffen online: Art des Treffens im PDF', (bool)preg_match('/\(Webex \\\\\([^)]*\\\\\)\) Tj/', meeting_protokoll_pdf(['treffen' => 'online', 'ort' => 'Webex', 'link' => 'https://x'] + $meeting, $daten)));
 $check('ohne Punkte: Hinweis', str_contains(meeting_protokoll_pdf($meeting, ['punkte' => [], 'teilnehmer' => [], 'aufgaben' => [], 'anmerkungen' => []] + $daten), '(Keine Themen auf der Tagesordnung.) Tj'));
 

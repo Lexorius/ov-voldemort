@@ -196,6 +196,10 @@ function meeting_protokoll_pdf(array $meeting, array $daten, ?int $jetzt = null)
         $pdf->absatz('Keine Themen auf der Tagesordnung.', false, 0.0, true);
     }
     foreach ($daten['punkte'] as $i => $p) {
+        // Jedes Thema beginnt hinter einer Trennlinie – wie die Kästen der Druckansicht
+        if ($i > 0) {
+            $pdf->linie();
+        }
         $pdf->ueberschrift(sprintf('TOP %d: %s', $i + 1, (string)$p['titel']), 2);
         if (trim((string)($p['fachgruppe_label'] ?? '')) !== '') {
             $pdf->absatz((string)$p['fachgruppe_label'], false, 0.0, true);
@@ -242,6 +246,7 @@ function meeting_protokoll_pdf(array $meeting, array $daten, ?int $jetzt = null)
     }
 
     if ($daten['aufgaben']) {
+        $pdf->linie();
         $pdf->ueberschrift('Aufgaben', 1);
         foreach ($daten['aufgaben'] as $a) {
             $teile = ['#' . (int)$a['id'] . ' ' . (string)$a['titel']];
@@ -262,6 +267,7 @@ function meeting_protokoll_pdf(array $meeting, array $daten, ?int $jetzt = null)
     }
 
     if (trim((string)($meeting['notizen'] ?? '')) !== '') {
+        $pdf->linie();
         $pdf->ueberschrift('Notizen', 1);
         $pdf->absatz((string)$meeting['notizen']);
     }

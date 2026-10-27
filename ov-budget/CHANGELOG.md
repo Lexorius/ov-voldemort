@@ -1,5 +1,10 @@
 # Änderungsverlauf
 
+## 2.1.61.2
+
+- **Protokoll als PDF:** Trennlinien zwischen den Themen sowie vor den
+  Aufgaben und den Notizen – wie die Kästen der Druckansicht.
+
 ## 2.1.61.1
 
 - **Protokoll als PDF:** Im Add-on brach die Erzeugung mit „undefined function
