@@ -28,6 +28,16 @@ function mb_convert_encoding(string $string, string $to, ?string $from = null): 
     return $out === false ? '' : $out;
 }
 
+function mb_substitute_character(string|int|null $substitute_character = null): string|int|bool
+{
+    static $wert = 63;
+    if ($substitute_character === null) {
+        return $wert;
+    }
+    $wert = $substitute_character;
+    return true;
+}
+
 /** In Zeichen zerlegen */
 function mb_shim_chars(string $s): array
 {

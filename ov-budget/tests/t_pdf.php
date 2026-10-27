@@ -9,6 +9,9 @@ $check = function (string $n, bool $c) use (&$ok, &$fail) { if ($c) { $ok++; } e
 /* ---------- Kodierung und Umbruch ---------- */
 $check('Umlaute nach Windows-1252, Klammern maskiert', OvbPdf::kodieren('Grüße (Test) \\ Ärger €') === "Gr\xfc\xdfe \\(Test\\) \\\\ \xc4rger \x80");
 $check('Zeilenumbruch im Text wird Leerzeichen', OvbPdf::kodieren("a\nb") === 'a b');
+$check('Gedankenstrich, Anführungszeichen und Auslassung sind in Windows-1252', OvbPdf::kodieren("\u{2013} \u{201E}x\u{201C} \u{2026}") === "\x96 \x84x\x93 \x85");
+// Im Add-on (mbstring) wird Unbekanntes ein Fragezeichen, im lokalen Shim über iconv fällt es weg – beides kein Fehler
+$check('Unbekanntes wird Fragezeichen oder fällt weg, aber kein Fehler', in_array(OvbPdf::kodieren("Pfeil \u{2192} da"), ['Pfeil ? da', 'Pfeil  da'], true));
 $check('Breite wächst mit dem Text', OvbPdf::textbreite('iii', 10) < OvbPdf::textbreite('WWW', 10) && OvbPdf::textbreite('Hallo Welt', 10) > 40 && OvbPdf::textbreite('Hallo Welt', 10) < 60);
 $zeilen = OvbPdf::umbrechen('Dies ist ein ziemlich langer Satz, der sicher nicht in eine schmale Spalte passt und umgebrochen werden muss.', 120, 10.5);
 $check('Umbruch in mehrere Zeilen, jede passt', count($zeilen) >= 4 && max(array_map(static fn($z) => OvbPdf::textbreite($z, 10.5), $zeilen)) <= 120

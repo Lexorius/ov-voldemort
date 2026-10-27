@@ -186,7 +186,7 @@ class OvbPdf
     {
         $this->platz(8.0);
         $this->y -= 3.0;
-        $this->strom .= sprintf("0.6 G 0.5 w %.2f %.2f m %.2f %.2f l S 0 G\n",
+        $this->strom .= sprintf("0.6 G 0.5 w %.2F %.2F m %.2F %.2F l S 0 G\n",
             self::RAND, $this->y, self::BREITE - self::RAND, $this->y);
         $this->y -= 5.0;
     }
@@ -228,21 +228,32 @@ class OvbPdf
 
     private function text(float $x, float $y, string $text, float $groesse, bool $fett, bool $grau = false): void
     {
-        $this->strom .= sprintf("BT %s/F%d %.1f Tf %.2f %.2f Td (%s) Tj ET%s\n",
+        $this->strom .= sprintf("BT %s/F%d %.1F Tf %.2F %.2F Td (%s) Tj ET%s\n",
             $grau ? '0.35 g ' : '', $fett ? 2 : 1, $groesse, $x, $y, self::kodieren($text), $grau ? ' 0 g' : '');
     }
 
-    /** Text für den PDF-Strom: Windows-1252, Klammern und Backslash maskiert. Reine Funktion. */
+    /**
+     * Text für den PDF-Strom: Windows-1252, Klammern und Backslash maskiert.
+     * Über mbstring, nicht iconv – iconv ist im Add-on nicht installiert.
+     * Was Windows-1252 nicht kennt (etwa Pfeile), wird ein Fragezeichen. Reine Funktion.
+     */
     public static function kodieren(string $text): string
     {
-        $cp = @iconv('UTF-8', 'Windows-1252//TRANSLIT', $text);
-        if ($cp === false) {
-            $cp = @iconv('UTF-8', 'Windows-1252//IGNORE', $text);
+        $text = str_replace(["\r\n", "\r", "\n"], ' ', $text);
+        if (function_exists('mb_convert_encoding')) {
+            $alt = mb_substitute_character();
+            mb_substitute_character(0x3F);
+            $cp = @mb_convert_encoding($text, 'Windows-1252', 'UTF-8');
+            mb_substitute_character($alt);
+        } elseif (function_exists('iconv')) {
+            $cp = @iconv('UTF-8', 'Windows-1252//TRANSLIT', $text);
+        } else {
+            $cp = false;
         }
-        if ($cp === false) {
+        if (!is_string($cp)) {
             $cp = preg_replace('/[^\x20-\x7e]/', '?', $text) ?? '';
         }
-        return strtr((string)$cp, ['\\' => '\\\\', '(' => '\\(', ')' => '\\)', "\r" => '', "\n" => ' ']);
+        return strtr($cp, ['\\' => '\\\\', '(' => '\\(', ')' => '\\)']);
     }
 
     /* ---------------------------------------------------------------- Ausgabe */
@@ -268,12 +279,12 @@ class OvbPdf
             self::kodieren($this->titel), self::kodieren($this->autor), date('YmdHis', $this->jetzt));
 
         foreach ($seiten as $i => $inhalt) {
-            $fuss = sprintf("BT 0.45 g /F1 8 Tf %.2f %.2f Td (%s) Tj ET BT 0.45 g /F1 8 Tf %.2f %.2f Td (%s) Tj ET 0 g\n",
+            $fuss = sprintf("BT 0.45 g /F1 8 Tf %.2F %.2F Td (%s) Tj ET BT 0.45 g /F1 8 Tf %.2F %.2F Td (%s) Tj ET 0 g\n",
                 self::RAND, 34.0, self::kodieren($this->titel),
                 self::BREITE - self::RAND - 60.0, 34.0, self::kodieren(sprintf('Seite %d von %d', $i + 1, $anzahl)));
             $strom = $inhalt . $fuss;
             $nr = 6 + $i * 2;
-            $objekte[$nr] = sprintf("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %.2f %.2f] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents %d 0 R >>",
+            $objekte[$nr] = sprintf("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %.2F %.2F] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents %d 0 R >>",
                 self::BREITE, self::HOEHE, $nr + 1);
             $objekte[$nr + 1] = sprintf("<< /Length %d >>\nstream\n%s\nendstream", strlen($strom), $strom);
         }

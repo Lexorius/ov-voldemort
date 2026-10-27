@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## 2.1.61.1
+
+- **Protokoll als PDF:** Im Add-on brach die Erzeugung mit „undefined function
+  iconv" ab – die Erweiterung ist dort nicht installiert. Die
+  Zeichenumwandlung läuft jetzt über mbstring, das immer da ist; Zahlen im
+  PDF werden unabhängig von der Systemsprache geschrieben.
+
 ## 2.1.61.0
 
 - **Blättern in allen langen Listen:** vergangene Veranstaltungen (bisher
