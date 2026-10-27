@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 /* ---------------- Kontakte ---------------- */
 
+/** So viele Kontakte je Seite der Liste */
+const KONTAKTE_JE_SEITE = 50;
+
 function contact_find(int $id): ?array
 {
     return db_row('SELECT * FROM contacts WHERE id = ?', [$id]);

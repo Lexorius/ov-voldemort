@@ -94,20 +94,29 @@ $karte = static function (array $m): string {
   </section>
 <?php endif; ?>
 
-<section class="card">
-  <h2>Anstehend</h2>
+<?php
+$blattK ??= seiten_blaettern(count($kommend), 1, max(1, count($kommend)));
+$blattV ??= seiten_blaettern(count($vergangen), 1, max(1, count($vergangen)));
+$blattParams = array_filter(['typ_id' => $typ ?? 0, 'seite_k' => (int)$blattK['seite'] > 1 ? (int)$blattK['seite'] : 0, 'seite_v' => (int)$blattV['seite'] > 1 ? (int)$blattV['seite'] : 0]);
+?>
+<section class="card" id="anstehend">
+  <h2>Anstehend<?php if ((int)$blattK['gesamt'] > count($kommend)): ?> <span class="muted small">(<?= (int)$blattK['gesamt'] ?>)</span><?php endif; ?></h2>
   <?php if (!$kommend): ?>
     <div class="empty">Keine Besprechung geplant.
       <?php if (can('manage_meetings')): ?><br><a href="<?= e(url('meeting_edit')) ?>">Besprechung anlegen</a><?php endif; ?>
     </div>
   <?php else: ?>
     <div class="itemlist"><?php foreach ($kommend as $m): ?><?= $karte($m) ?><?php endforeach; ?></div>
+    <?= render_partial('partials/seiten', ['blatt' => $blattK, 'route' => 'meetings', 'param' => 'seite_k', 'params' => array_diff_key($blattParams, ['seite_k' => 0]),
+        'anker' => 'anstehend', 'zurueck' => '‹ Früher', 'weiter' => 'Später ›']) ?>
   <?php endif; ?>
 </section>
 
 <?php if ($vergangen): ?>
-  <section class="card">
-    <h2>Zurückliegend</h2>
+  <section class="card" id="zurueckliegend">
+    <h2>Zurückliegend<?php if ((int)$blattV['gesamt'] > count($vergangen)): ?> <span class="muted small">(<?= (int)$blattV['gesamt'] ?>)</span><?php endif; ?></h2>
     <div class="itemlist"><?php foreach ($vergangen as $m): ?><?= $karte($m) ?><?php endforeach; ?></div>
+    <?= render_partial('partials/seiten', ['blatt' => $blattV, 'route' => 'meetings', 'param' => 'seite_v', 'params' => array_diff_key($blattParams, ['seite_v' => 0]),
+        'anker' => 'zurueckliegend']) ?>
   </section>
 <?php endif; ?>

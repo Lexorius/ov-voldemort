@@ -1,8 +1,10 @@
 <?php
-/** @var array $rows @var array $filters @var array $verteiler */
+/** @var array $rows @var array $filters @var array $verteiler @var array $alle @var array $blatt */
+$alle ??= $rows;
+$blatt ??= seiten_blaettern(count($rows), 1, max(1, count($rows)));
 $mitEmail = 0;
 $mitAnschrift = 0;
-foreach ($rows as $r) {
+foreach ($alle as $r) {
     if (trim((string)$r['email']) !== '') {
         $mitEmail++;
     }
@@ -27,7 +29,7 @@ foreach ($rows as $r) {
 </div>
 
 <div class="stats">
-  <div class="stat"><div class="stat__label">Kontakte</div><div class="stat__value"><?= count($rows) ?></div></div>
+  <div class="stat"><div class="stat__label">Kontakte</div><div class="stat__value"><?= count($alle) ?></div></div>
   <div class="stat"><div class="stat__label">Mit E-Mail</div><div class="stat__value"><?= $mitEmail ?></div></div>
   <div class="stat"><div class="stat__label">Mit Anschrift</div><div class="stat__value"><?= $mitAnschrift ?></div></div>
   <div class="stat"><div class="stat__label">Verteiler</div><div class="stat__value"><?= count($verteiler) ?></div></div>
@@ -72,7 +74,7 @@ foreach ($rows as $r) {
 <?php if ($mitEmail > 0): ?>
   <?php
   $adressen = [];
-  foreach ($rows as $r) {
+  foreach ($alle as $r) {
       if (trim((string)$r['email']) !== '') {
           $adressen[] = $r['email'];
       }
@@ -80,7 +82,7 @@ foreach ($rows as $r) {
   ?>
   <div class="card card--tight">
     <div class="field">
-      <label for="mailliste">E-Mail-Adressen der angezeigten Kontakte (<?= count($adressen) ?>)</label>
+      <label for="mailliste">E-Mail-Adressen aller gefundenen Kontakte (<?= count($adressen) ?>)</label>
       <textarea id="mailliste" readonly rows="2"
                 onclick="this.select()"><?= e(implode('; ', $adressen)) ?></textarea>
       <small>Zum Kopieren anklicken – für das Blindkopie-Feld im Mailprogramm.</small>
@@ -176,5 +178,8 @@ foreach ($rows as $r) {
         </tbody>
       </table>
     </div>
+    <?= !function_exists('render_partial') ? '' : render_partial('partials/seiten', ['blatt' => $blatt, 'route' => 'contacts', 'zurueck' => '‹ Zurück', 'weiter' => 'Weiter ›',
+        'params' => array_filter(['q' => $filters['q'] ?? '', 'kategorie_id' => $filters['kategorie_id'] ?? 0, 'aktiv' => ($filters['aktiv'] ?? '') === 'alle' ? 'alle' : '',
+                                  'sort' => ($filters['sort'] ?? 'name') !== 'name' ? $filters['sort'] : '', 'mit_email' => !empty($filters['nur_mit_email']) ? '1' : ''])]) ?>
   </div>
 <?php endif; ?>

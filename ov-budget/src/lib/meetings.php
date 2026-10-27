@@ -81,6 +81,9 @@ function tp_reorder(array $ids, int $id, string $richtung): array
 /* Besprechungen                                                         */
 /* ==================================================================== */
 
+/** So viele Besprechungen je Seite der Liste – anstehende und zurückliegende getrennt */
+const BESPRECHUNGEN_JE_SEITE = 20;
+
 function meeting_find(int $id): ?array
 {
     return db_row(

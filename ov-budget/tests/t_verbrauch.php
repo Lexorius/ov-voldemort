@@ -408,6 +408,9 @@ $check('Seitenzahlen: kurz komplett, lang mit Lücken', seiten_zahlen(1, 5) === 
 $htmlB = render_partial('partials/seiten', ['blatt' => seiten_blaettern(123, 2, 50), 'route' => 'meter', 'params' => ['id' => 4, 'jahr' => 2026], 'anker' => 'staende']);
 $check('Blätterer: Zurück und Weiter mit Seite, Sprungziel, aktive Seite', str_contains($htmlB, 'seite=1#staende') && str_contains($htmlB, 'seite=3#staende') && str_contains($htmlB, 'aria-current="page">2<') && str_contains($htmlB, 'Seite 2 von 3') && str_contains($htmlB, 'id=4'));
 $check('Blätterer: eine Seite = nichts', trim(render_partial('partials/seiten', ['blatt' => seiten_blaettern(10, 1, 50), 'route' => 'meter', 'params' => ['id' => 4]])) === '');
+$htmlC = render_partial('partials/seiten', ['blatt' => seiten_blaettern(45, 2, 20), 'route' => 'meetings', 'param' => 'seite_v', 'params' => ['typ_id' => 3, 'seite_k' => 2], 'anker' => 'zurueckliegend', 'zurueck' => '‹ Früher', 'weiter' => 'Später ›']);
+$check('Blätterer: eigener Parametername, andere Liste bleibt auf ihrer Seite, eigene Beschriftung, Zählung', str_contains($htmlC, 'seite_v=3') && str_contains($htmlC, 'seite_k=2') && str_contains($htmlC, 'typ_id=3')
+    && str_contains($htmlC, '#zurueckliegend') && str_contains($htmlC, '>‹ Früher<') && str_contains($htmlC, '>Später ›<') && str_contains($htmlC, '21–40 von 45') && !str_contains($htmlC, 'seite=3'));
 $htmlB = render_partial('partials/seiten', ['blatt' => seiten_blaettern(123, 3, 50), 'route' => 'meter', 'params' => ['id' => 4]]);
 $check('Blätterer: letzte Seite ohne Weiter', str_contains($htmlB, 'is-disabled" aria-disabled="true">Älter') && str_contains($htmlB, 'seite=2'));
 

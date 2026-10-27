@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.60.1
+
+- **Kontakte:** Die Liste blättert seitenweise, 50 je Seite, mit Suche und
+  Filtern in den Links. Zahlen und die Adressliste zum Kopieren zählen
+  weiter alle gefundenen Kontakte.
+- **Besprechungen:** Anstehende und zurückliegende blättern getrennt, je 20
+  je Seite; zurückliegende sind nicht mehr auf 50 begrenzt.
+
 ## 2.1.60.0
 
 - **Besprechungen: Protokoll per E-Mail als PDF.** Beim Bearbeiten lassen

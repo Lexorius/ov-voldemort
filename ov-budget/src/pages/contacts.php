@@ -18,11 +18,15 @@ $filters = [
     'nur_mit_email' => get_str('mit_email') === '1' ? 1 : 0,
 ];
 
-$rows = contact_query($filters);
+// Alle Treffer für Zahlen und Adressliste, angezeigt wird seitenweise
+$alle = contact_query($filters);
+$blatt = seiten_blaettern(count($alle), get_int('seite') ?: 1, KONTAKTE_JE_SEITE);
 
 render('contacts', [
     'title'     => (string)setting('kontakte_modul_name', 'Kontakte'),
-    'rows'      => $rows,
+    'rows'      => array_slice($alle, $blatt['offset'], $blatt['pro_seite']),
+    'alle'      => $alle,
+    'blatt'     => $blatt,
     'filters'   => $filters,
     'verteiler' => contact_groups_all(true),
 ]);
