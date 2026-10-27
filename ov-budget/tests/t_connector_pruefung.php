@@ -5,9 +5,11 @@ declare(strict_types=1);
  */
 $tmp = sys_get_temp_dir() . '/ovb-pruefung-test';
 @mkdir($tmp, 0777, true);
+// scandir statt glob mit GLOB_BRACE: nimmt auch .htaccess mit und braucht keine Erweiterung
 $leeren = static function (string $o) use (&$leeren): void {
-    foreach (glob($o . '/{,.}*', GLOB_BRACE) ?: [] as $f) {
-        if (in_array(basename($f), ['.', '..'], true)) { continue; }
+    foreach (scandir($o) ?: [] as $name) {
+        if ($name === '.' || $name === '..') { continue; }
+        $f = $o . '/' . $name;
         if (is_dir($f)) { $leeren($f); @rmdir($f); } else { @unlink($f); }
     }
 };
@@ -54,7 +56,8 @@ $check('manifest.json des Connectors stimmt überein',
     json_decode((string)file_get_contents(dirname(__DIR__, 2) . '/connector/manifest.json'), true)['dateien'] == $manifest['dateien']);
 
 /* ---------- Selbstprüfung auf einem nachgebauten Connector ---------- */
-$w = $tmp . '/con';
+// Nicht „con": unter Windows ein reservierter Gerätename, den PHP ab 8.5.12 als Pfad ablehnt
+$w = $tmp . '/nachbau';
 @mkdir($w . '/public/assets', 0777, true);
 @mkdir($w . '/src', 0777, true);
 file_put_contents($w . '/public/index.php', '<?php echo 1;');

@@ -998,7 +998,7 @@ function verbrauch_anomalie_sprung(array $staende, int $jetzt, float $faktor): ?
 function verbrauch_anomalie_nacht(array $staende, int $jetzt): ?array
 {
     [$ab, $bisStunde] = VERBRAUCH_ANOMALIE_NACHT;
-    $tag = (int)date('G', $jetzt) >= $bisStunde ? strtotime(date('Y-m-d', $jetzt)) : strtotime(date('Y-m-d', $jetzt - 86400));
+    $tag = (int)date('G', $jetzt) >= $bisStunde ? strtotime(date('Y-m-d', $jetzt)) : strtotime(date('Y-m-d', (int)strtotime('-1 day', $jetzt)));
     $von = $tag + $ab * 3600;
     $bis = $tag + $bisStunde * 3600;
     $imFenster = 0;

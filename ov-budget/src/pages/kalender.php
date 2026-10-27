@@ -20,7 +20,7 @@ $quellen = $gewaehlt ?: $erlaubt;
 
 if ($ansicht === 'liste') {
     $von = $heute;
-    $bis = date('Y-m-d', strtotime($heute) + 60 * 86400);
+    $bis = date('Y-m-d', kalender_tage_plus((int)strtotime($heute), 60));
     $raster = null;
 } else {
     $raster = kalender_monatsraster($jahr, $mon);

@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.59.1
+
+- **Kalender:** Am Tag der Zeitumstellung rutschte das Monatsraster um
+  einen Tag – der 25. Oktober 2026 stand doppelt, der 27. unter Mittwoch.
+  Tage werden jetzt als Kalendertage gezählt statt mit 24 Stunden; das gilt
+  auch für Wochenanfang, mehrtägige Einträge, Feiertage und den Blick der
+  Besprechungen.
+
 ## 2.1.59.0
 
 - **Getränke:** je Getränk die Zahl der Flaschen im Gebinde und die

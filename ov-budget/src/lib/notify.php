@@ -506,7 +506,7 @@ function notify_taeglich(?int $jetzt = null): int
 
     // Besprechung am nächsten Tag
     if (notify_ereignis_aktiv('besprechung')) {
-        $morgen = date('Y-m-d', $jetzt + 86400);
+        $morgen = date('Y-m-d', (int)strtotime('+1 day', $jetzt));   // Kalendertag, nicht 24 Stunden (Zeitumstellung)
         foreach (db_all("SELECT id, titel, beginn, ort FROM meetings WHERE datum = ? AND status = 'geplant'", [$morgen]) as $m) {
             $text = sprintf('Morgen %s%s', $m['beginn'] ? 'um ' . substr((string)$m['beginn'], 0, 5) . ' Uhr' : '',
                 $m['ort'] ? ' in ' . $m['ort'] : '');

@@ -202,7 +202,18 @@ $check('je Fahrzeug gebündelt, Termine sortiert, Fahrzeuge nach erstem Termin',
     && count($gr[1]['termine']) === 2 && $gr[1]['termine'][0]['titel'] === 'Dienstabend' && $gr[1]['termine'][1]['ort'] === 'Übungsgelände' && $gr[2]['fahrzeug']['bezeichnung'] === 'MTW' && $gr[0]['termine'][0]['ganztag'] === true);
 
 /* ---------- Monatsraster und Verteilung ---------- */
+$tzVorher = date_default_timezone_get();
+date_default_timezone_set('Europe/Berlin');
 $r = kalender_monatsraster(2026, 10);
+$check('Oktober 2026 über die Zeitumstellung: letzte Woche 26. bis 1. November, kein Tag doppelt', end($r['wochen']) === ['2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29', '2026-10-30', '2026-10-31', '2026-11-01']
+    && count(array_unique(array_merge(...$r['wochen']))) === count(array_merge(...$r['wochen'])) && $r['bis'] === '2026-11-01');
+$check('März 2026 über die Sommerzeit: letzte Woche 30. März bis 5. April', end(kalender_monatsraster(2026, 3)['wochen']) === ['2026-03-30', '2026-03-31', '2026-04-01', '2026-04-02', '2026-04-03', '2026-04-04', '2026-04-05']);
+$check('Woche mit Zeitumstellung', kalender_woche('2026-10-27') === ['2026-10-26', '2026-11-01'] && kalender_woche('2026-10-25') === ['2026-10-19', '2026-10-25']);
+$check('Tage plus über die Umstellung', date('Y-m-d', kalender_tage_plus((int)strtotime('2026-10-24'), 2)) === '2026-10-26' && date('Y-m-d', kalender_tage_plus((int)strtotime('2026-10-26'), -2)) === '2026-10-24');
+$jt = kalender_je_tag([['beginn' => '2026-10-24 10:00:00', 'ende' => '2026-10-27 12:00:00', 'ganztag' => 0, 'quelle' => 'x', 'id' => 1]], '2026-10-01', '2026-10-31');
+$check('mehrtägig über die Umstellung: jeder Tag einmal', array_keys($jt) === ['2026-10-24', '2026-10-25', '2026-10-26', '2026-10-27']);
+$check('Feiertage 2026 BW um die Umstellung herum stimmen', kalender_feiertage(2026, 'BW')['2026-11-01'] === 'Allerheiligen' && kalender_feiertage(2026)['2026-04-06'] === 'Ostermontag');
+date_default_timezone_set($tzVorher);
 $check('Oktober 2026: ab Montag 28.9. bis Sonntag 1.11., fünf Wochen', $r['von'] === '2026-09-28' && $r['bis'] === '2026-11-01' && count($r['wochen']) === 5 && $r['wochen'][0][3] === '2026-10-01');
 $check('Februar 2027: vier Wochen genau', count(kalender_monatsraster(2027, 2)['wochen']) === 4);
 $e1 = kalender_eintrag('termin', 'Lehrgang', '2026-11-02', '2026-11-04');

@@ -63,12 +63,25 @@ function kalender_ostersonntag(int $jahr): int
     return mktime(0, 0, 0, $monat, $tag, $jahr);
 }
 
+/**
+ * Einen Zeitstempel um ganze Kalendertage verschieben. Nicht mit 86400
+ * Sekunden rechnen: Am Tag der Zeitumstellung hat der Tag 23 oder 25 Stunden,
+ * und Mitternacht plus 24 Stunden landet dann am selben Tag um 23 Uhr. Reine Funktion.
+ */
+function kalender_tage_plus(int $ts, int $tage): int
+{
+    if ($tage === 0) {
+        return $ts;
+    }
+    return (int)strtotime(($tage > 0 ? '+' : '') . $tage . ' days', $ts);
+}
+
 /** Gesetzliche Feiertage eines Jahres: [Datum => Name]. Reine Funktion. */
 function kalender_feiertage(int $jahr, string $land = ''): array
 {
     $land = strtoupper($land);
     $ostern = kalender_ostersonntag($jahr);
-    $tag = static fn(int $ts, int $plus = 0): string => date('Y-m-d', $ts + $plus * 86400);
+    $tag = static fn(int $ts, int $plus = 0): string => date('Y-m-d', kalender_tage_plus($ts, $plus));
     $f = [
         $tag(mktime(0, 0, 0, 1, 1, $jahr))   => 'Neujahr',
         $tag($ostern, -2)                     => 'Karfreitag',
@@ -105,7 +118,7 @@ function kalender_feiertage(int $jahr, string $land = ''): array
         // Mittwoch vor dem 23. November
         $t = mktime(0, 0, 0, 11, 22, $jahr);
         while ((int)date('N', $t) !== 3) {
-            $t -= 86400;
+            $t = kalender_tage_plus($t, -1);
         }
         $f[$tag($t)] = 'Buß- und Bettag';
     }
@@ -711,9 +724,9 @@ function kalender_konflikte_markieren(array $gruppen): array
 /** Montag und Sonntag der Woche, in der ein Tag liegt. Reine Funktion. */
 function kalender_woche(string $tag): array
 {
-    $ts = strtotime($tag);
-    $montag = $ts - (((int)date('N', $ts)) - 1) * 86400;
-    return [date('Y-m-d', $montag), date('Y-m-d', $montag + 6 * 86400)];
+    $ts = (int)strtotime($tag);
+    $montag = kalender_tage_plus($ts, -((int)date('N', $ts) - 1));
+    return [date('Y-m-d', $montag), date('Y-m-d', kalender_tage_plus($montag, 6))];
 }
 
 /** Termin aus dem Formular speichern. Gibt [id, fehler[]] zurück. */
@@ -1016,7 +1029,7 @@ function kalender_je_tag(array $eintraege, string $von, string $bis): array
     foreach ($eintraege as $e) {
         $start = max($von, substr($e['beginn'], 0, 10));
         $stop = min($bis, substr((string)($e['ende'] ?? $e['beginn']), 0, 10));
-        for ($t = strtotime($start); $t <= strtotime($stop); $t += 86400) {
+        for ($t = (int)strtotime($start); $t <= strtotime($stop); $t = kalender_tage_plus($t, 1)) {
             $out[date('Y-m-d', $t)][] = $e;
         }
     }
@@ -1027,14 +1040,14 @@ function kalender_je_tag(array $eintraege, string $von, string $bis): array
 function kalender_monatsraster(int $jahr, int $monat): array
 {
     $erster = mktime(0, 0, 0, $monat, 1, $jahr);
-    $start = $erster - (((int)date('N', $erster) - 1) * 86400);
+    $start = kalender_tage_plus($erster, -((int)date('N', $erster) - 1));
     $letzter = mktime(0, 0, 0, $monat + 1, 0, $jahr);
-    $ende = $letzter + ((7 - (int)date('N', $letzter)) * 86400);
+    $ende = kalender_tage_plus($letzter, 7 - (int)date('N', $letzter));
     $wochen = [];
-    for ($t = $start; $t <= $ende; $t += 7 * 86400) {
+    for ($t = $start; $t <= $ende; $t = kalender_tage_plus($t, 7)) {
         $woche = [];
         for ($d = 0; $d < 7; $d++) {
-            $woche[] = date('Y-m-d', $t + $d * 86400);
+            $woche[] = date('Y-m-d', kalender_tage_plus($t, $d));
         }
         $wochen[] = $woche;
     }
@@ -1063,7 +1076,7 @@ function kalender_fuer_besprechung(array $meeting, array $u): array
 {
     $wochen = max(1, setting_int('kalender_besprechung_wochen', 6));
     $von = (string)$meeting['datum'];
-    $bis = date('Y-m-d', strtotime($von) + $wochen * 7 * 86400);
+    $bis = date('Y-m-d', kalender_tage_plus((int)strtotime($von), $wochen * 7));
     return array_values(array_filter(kalender_sammeln($von, $bis, $u),
         static fn($e) => !($e['quelle'] === 'besprechung' && (int)$e['id'] === (int)$meeting['id']) && $e['quelle'] !== 'feiertag'));
 }
