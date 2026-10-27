@@ -202,6 +202,18 @@ switch (post_str('action')) {
         $zurueck .= '#aufgaben';
         break;
 
+    case 'protokoll_senden':
+        if ($meeting) {
+            if (!mail_eingerichtet()) {
+                flash('error', 'Der E-Mail-Versand ist nicht eingerichtet (Verwaltung → E-Mail).');
+            } else {
+                $r = meeting_protokoll_senden($meeting, $user, post_str('betreff'), post_str('text'));
+                flash($r['ok'] ? 'success' : 'error', e($r['text']));
+            }
+            $zurueck .= '#protokoll-versand';
+        }
+        break;
+
     case 'notes':
         if ($meeting) {
             db_update('meetings', [

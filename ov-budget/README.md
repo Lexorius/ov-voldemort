@@ -45,6 +45,12 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
   eine eigene Nachricht, auf Wunsch mit KI-Zusammenfassung; dafür ein eigener
   **E-Mail-Versand** über SMTP in der Verwaltung, mit Testnachricht
 
+### Besprechungen: Protokoll per E-Mail
+- **Protokoll als PDF**, im Add-on selbst erzeugt – Eckdaten, Anwesenheit,
+  Tagesordnungspunkte mit Ergebnis und Anmerkungen, Aufgaben, Notizen
+- **Empfänger aus den Kontakten**: einzelne Kontakte oder ganze Verteiler,
+  jede Person einmal; Betreff und Text vor dem Versand änderbar
+
 ### Getränke
 - **Lieferanten und Getränkearten** (Wasser, Schorle, Cola-Mix) mit Gebinde,
   Preis und Mindestbestand; Bestellungen je Lieferant gebündelt

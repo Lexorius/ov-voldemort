@@ -2272,6 +2272,32 @@ SQL);
             ADD COLUMN flasche VARCHAR(60) NOT NULL DEFAULT '' AFTER flaschen");
     }
     $merken('088_getraenke_flaschen');
+
+    /* ---------- 089: Protokoll per E-Mail an Kontakte und Verteiler ---------- */
+    if (ovb_table_exists($pdo, 'meetings') && !ovb_column_exists($pdo, 'meetings', 'protokoll_gesendet_am')) {
+        $pdo->exec("ALTER TABLE meetings
+            ADD COLUMN protokoll_gesendet_am DATETIME NULL AFTER notizen,
+            ADD COLUMN protokoll_gesendet_an VARCHAR(1000) NOT NULL DEFAULT '' AFTER protokoll_gesendet_am");
+    }
+    if (!ovb_table_exists($pdo, 'meeting_protokoll_empfaenger')) {
+        $pdo->exec("CREATE TABLE meeting_protokoll_empfaenger (
+  meeting_id    INT UNSIGNED  NOT NULL,
+  contact_id    INT UNSIGNED  NOT NULL,
+  PRIMARY KEY (meeting_id, contact_id),
+  CONSTRAINT fk_mprot_meeting FOREIGN KEY (meeting_id) REFERENCES meetings(id) ON DELETE CASCADE,
+  CONSTRAINT fk_mprot_kontakt FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    if (!ovb_table_exists($pdo, 'meeting_protokoll_verteiler')) {
+        $pdo->exec("CREATE TABLE meeting_protokoll_verteiler (
+  meeting_id    INT UNSIGNED  NOT NULL,
+  group_id      INT UNSIGNED  NOT NULL,
+  PRIMARY KEY (meeting_id, group_id),
+  CONSTRAINT fk_mprotv_meeting FOREIGN KEY (meeting_id) REFERENCES meetings(id) ON DELETE CASCADE,
+  CONSTRAINT fk_mprotv_gruppe FOREIGN KEY (group_id) REFERENCES contact_groups(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    $merken('089_protokoll_empfaenger');
 }
 
 /**

@@ -117,7 +117,32 @@ if ($mitKontakten) {
     }
 }
 
+// Empfänger des Protokolls: Kontakte mit E-Mail-Adresse und Verteiler
+$protokollKontakte = [];
+$protokollVerteiler = [];
+$protokollOptionen = [];
+$verteilerOptionen = [];
+if ($mitKontakten) {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $protokollKontakte = wahl_ids('protokoll_kontakte');
+        $protokollVerteiler = wahl_ids('protokoll_verteiler');
+    } elseif (!empty($meeting['id'])) {
+        $protokollKontakte = meeting_protokoll_kontakt_ids((int)$meeting['id']);
+        $protokollVerteiler = meeting_protokoll_verteiler_ids((int)$meeting['id']);
+    }
+    foreach (contact_query(['nur_mit_email' => 1]) as $c) {
+        $protokollOptionen[] = ['id' => (int)$c['id'], 'text' => contact_name($c), 'sub' => (string)$c['email'], 'gruppe' => (string)($c['kategorie_label'] ?? '')];
+    }
+    foreach (contact_groups_all(true) as $g) {
+        $verteilerOptionen[] = ['id' => (int)$g['id'], 'text' => (string)$g['name'], 'sub' => (int)$g['anzahl'] . ' Kontakt(e)', 'gruppe' => ''];
+    }
+}
+
 render('meeting_edit', [
+    'protokollOptionen'  => $protokollOptionen,
+    'protokollKontakte'  => $protokollKontakte,
+    'verteilerOptionen'  => $verteilerOptionen,
+    'protokollVerteiler' => $protokollVerteiler,
     'mitKontakten' => $mitKontakten,
     'kontaktOptionen' => $kontaktOptionen,
     'kontakteGewaehlt' => $kontakteGewaehlt,

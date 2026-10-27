@@ -77,6 +77,7 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
     <?php endif; ?>
     <a class="btn btn--sec" href="<?= e(url('meeting_print', ['id' => $meeting['id']])) ?>">Tagesordnung</a>
     <a class="btn btn--sec" href="<?= e(url('meeting_print', ['id' => $meeting['id'], 'art' => 'protokoll'])) ?>">Protokoll</a>
+    <a class="btn btn--sec" href="<?= e(url('meeting_protokoll', ['id' => $meeting['id']])) ?>" target="_blank" rel="noopener">Protokoll als PDF</a>
     <?php if ($verwalten): ?>
       <a class="btn btn--sec" href="<?= e(url('meeting_edit', ['id' => $meeting['id']])) ?>">Bearbeiten</a>
     <?php endif; ?>
@@ -402,6 +403,48 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
     'verwalten' => $verwalten, 'kandidaten' => $kandidaten, 'kontakte' => $kontakte,
     'kontaktSuche' => $kontaktSuche, 'verteiler' => $verteiler, 'quelle' => $quelle,
 ]) ?>
+
+<section class="card" id="protokoll-versand">
+  <div class="card__head">
+    <h2>Protokoll per E-Mail</h2>
+    <a class="btn btn--sec btn--sm" href="<?= e(url('meeting_protokoll', ['id' => $meeting['id'], 'laden' => '1'])) ?>">PDF herunterladen</a>
+  </div>
+  <?php $protokollEmpfaenger ??= []; $protokollVerteiler ??= []; $protokollVorlage ??= ['betreff' => '', 'text' => '']; $mailAktiv ??= false; ?>
+  <?php if (!$protokollEmpfaenger): ?>
+    <p class="small muted">Noch keine Empfänger. Beim <a href="<?= e(url('meeting_edit', ['id' => $meeting['id']])) ?>">Bearbeiten</a> lassen sich
+      Kontakte mit E-Mail-Adresse oder ganze Verteiler aus dem Kontaktmodul eintragen.</p>
+  <?php else: ?>
+    <p class="small"><strong><?= count($protokollEmpfaenger) ?> Empfänger:</strong>
+      <?= e(implode(', ', array_map(static fn($k) => contact_name($k) . ' (' . $k['email'] . ')', $protokollEmpfaenger))) ?>
+      <?php if ($protokollVerteiler): ?><span class="muted">· aus Verteiler <?= e(implode(', ', array_column($protokollVerteiler, 'name'))) ?></span><?php endif; ?></p>
+    <?php if (!empty($meeting['protokoll_gesendet_am'])): ?>
+      <p class="small muted">Zuletzt verschickt <?= e(de_datetime((string)$meeting['protokoll_gesendet_am'])) ?> an <?= e((string)$meeting['protokoll_gesendet_an']) ?>.</p>
+    <?php endif; ?>
+    <?php if ($verwalten): ?>
+      <?php if (!$mailAktiv): ?>
+        <p class="small" style="color:var(--warn)">Der E-Mail-Versand ist nicht eingerichtet (<a href="<?= e(url('admin_mail')) ?>">Verwaltung → E-Mail</a>).</p>
+      <?php endif; ?>
+      <form method="post" action="<?= e(url('meeting_action')) ?>" class="form">
+        <?= csrf_field() ?>
+        <input type="hidden" name="action" value="protokoll_senden">
+        <input type="hidden" name="meeting_id" value="<?= (int)$meeting['id'] ?>">
+        <div class="field">
+          <label for="protokoll_betreff">Betreff</label>
+          <input type="text" id="protokoll_betreff" name="betreff" maxlength="200" value="<?= e((string)$protokollVorlage['betreff']) ?>">
+        </div>
+        <div class="field">
+          <label for="protokoll_text">Text <span class="muted">(das Protokoll hängt als PDF an)</span></label>
+          <textarea id="protokoll_text" name="text" rows="6"><?= e((string)$protokollVorlage['text']) ?></textarea>
+        </div>
+        <div class="btnrow">
+          <button class="btn" type="submit" <?= $mailAktiv ? '' : 'disabled' ?>
+                  data-confirm="Protokoll als PDF an <?= count($protokollEmpfaenger) ?> Empfänger schicken?">Protokoll als PDF senden</button>
+          <?php if ($geplant): ?><span class="small muted">Die Besprechung ist noch nicht abgeschlossen – das Protokoll zeigt den jetzigen Stand.</span><?php endif; ?>
+        </div>
+      </form>
+    <?php endif; ?>
+  <?php endif; ?>
+</section>
 
 <section class="card" id="protokoll">
   <h2>Protokoll</h2>

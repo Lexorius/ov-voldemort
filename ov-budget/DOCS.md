@@ -279,6 +279,8 @@ sie enthalten.
   oder 00 beginnen, bleiben bei ihrem Land. Steht im Feld ein Hinweis statt
   einer Nummer („über das Büro"), bleibt der Text unverändert stehen.
   Bestehende Kontakte werden beim nächsten Start einmalig umgeschrieben.
+* **Protokoll per E-Mail** – das Besprechungsprotokoll als PDF an Kontakte
+  oder ganze Verteiler aus dem Kontaktmodul, siehe den eigenen Abschnitt.
 * **Getränke** – Lieferanten, Getränkearten, Lager je Stell- und
   Lagerplatz, „ist leer" per QR-Code über den Connector, Bestellungen per
   E-Mail nach Prüfung, Rechnung als Ausgabe ins Budget – siehe den eigenen
@@ -429,6 +431,28 @@ eingetragene Namen aufnehmen und Status (teilgenommen, entschuldigt,
 nicht erschienen) setzen lassen. Wer einen Kontakt im Formular abwählt,
 nimmt ihn von der Liste; Mitglieder und freie Namen bleiben. Das Feld
 sehen nur Personen, die das Kontaktmodul sehen dürfen.
+
+## Protokoll per E-Mail als PDF
+
+Jede Besprechung kann ihr Protokoll als PDF verschicken. Die Empfänger
+kommen aus dem Kontaktmodul und werden beim Bearbeiten der Besprechung
+eingetragen: einzelne **Kontakte** mit E-Mail-Adresse oder ganze
+**Verteiler** – bei einem Verteiler bekommt jedes Mitglied mit Adresse das
+Protokoll, auch wer später in den Verteiler kommt. Jede Person ist nur
+einmal dabei, auch wenn sie in mehreren Verteilern steht.
+
+Das PDF erzeugt OV-Multitool selbst, ohne Zusatzsoftware: Eckdaten der
+Besprechung, Anwesenheit, die Tagesordnungspunkte mit Ergebnis, Status,
+Verantwortlichen und Anmerkungen, die Aufgaben und die Notizen – derselbe
+Inhalt wie die Druckansicht, mit Seitenzahlen. *Protokoll als PDF* auf der
+Seite der Besprechung zeigt es im Browser, *PDF herunterladen* speichert es.
+
+Verschickt wird im Block *Protokoll per E-Mail*: Betreff und Text sind
+vorbelegt und lassen sich ändern, das PDF hängt an, jeder Empfänger
+bekommt seine eigene Nachricht. Wann und an wen zuletzt verschickt wurde,
+steht danach dort. Dafür muss der E-Mail-Versand eingerichtet sein
+(*Verwaltung → E-Mail*). Verschicken geht auch vor dem Abschließen – das
+PDF zeigt dann den jetzigen Stand.
 
 ## Anmerkungen zu Talking Points
 

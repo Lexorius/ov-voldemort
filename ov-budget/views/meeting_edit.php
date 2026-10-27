@@ -94,6 +94,19 @@ $uhr = static fn($v) => $v ? substr((string)$v, 0, 5) : '';
     <label for="beschreibung">Hinweise zur Besprechung</label>
     <textarea id="beschreibung" name="beschreibung"><?= e((string)$meeting['beschreibung']) ?></textarea>
   </div>
+  <?php if (!empty($mitKontakten)): ?>
+    <h3 style="margin:1rem 0 .3rem">Protokoll per E-Mail</h3>
+    <p class="small muted" style="margin:0 0 .6rem">Wer das Protokoll als PDF bekommt – einzelne Kontakte mit E-Mail-Adresse oder ganze Verteiler aus dem
+      Kontaktmodul. Verschickt wird auf der Seite der Besprechung, nach dem Abschließen.</p>
+    <?= render_partial('partials/wahl_liste', ['name' => 'protokoll_kontakte', 'feld' => 'protokoll_kontakte_feld', 'label' => 'Empfänger (Kontakte)', 'optionen' => $protokollOptionen ?? [], 'gewaehlt' => $protokollKontakte ?? [], 'leer' => '– Kontakt wählen –',
+        'hinweis' => 'Nur Kontakte mit E-Mail-Adresse.']) ?>
+    <?php if (!empty($verteilerOptionen)): ?>
+      <?= render_partial('partials/wahl_liste', ['name' => 'protokoll_verteiler', 'feld' => 'protokoll_verteiler_feld', 'label' => 'Empfänger (Verteiler)', 'optionen' => $verteilerOptionen, 'gewaehlt' => $protokollVerteiler ?? [], 'leer' => '– Verteiler wählen –',
+          'hinweis' => 'Alle Mitglieder des Verteilers mit E-Mail-Adresse – auch wer später dazukommt.']) ?>
+    <?php else: ?>
+      <input type="hidden" name="protokoll_verteiler_feld" value="1">
+    <?php endif; ?>
+  <?php endif; ?>
   <?php if ($isNew): ?>
     <p class="small muted mb0">Ort, Leitung und Uhrzeit werden von der letzten Besprechung dieser Art übernommen, sofern es eine gibt.</p>
   <?php endif; ?>

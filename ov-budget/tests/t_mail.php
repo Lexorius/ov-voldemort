@@ -41,6 +41,15 @@ $check('Kopfzeilen vollständig, CRLF, Base64', str_contains($n, "From: OV Muste
 [$kopf, $koerper] = explode("\r\n\r\n", $n, 2);
 $check('Text kommt unversehrt aus dem Base64', base64_decode(str_replace("\r\n", '', $koerper)) === "Zeile 1\n.Punktzeile\nÄöü");
 $check('kein nacktes LF in der Nachricht', !preg_match('/(?<!\r)\n/', $n));
+$m = mail_nachricht_bauen('multitool@ov.example', 'OV', 'ob@example.de', '', 'Protokoll', "Anbei das PDF.", 1792900000,
+    [['name' => 'protokoll_2026-10-27.pdf', 'mime' => 'application/pdf', 'inhalt' => "%PDF-1.4\n\x00\xff bytes"], ['name' => "böse\r\n\"name.txt", 'mime' => 'kaputt', 'inhalt' => 'x']]);
+preg_match('/boundary="([^"]+)"/', $m, $g);
+$check('Anhang: multipart/mixed mit Grenze, Text als erster Teil', isset($g[1]) && str_contains($m, 'Content-Type: multipart/mixed; boundary="' . $g[1] . '"')
+    && substr_count($m, "\r\n--" . $g[1] . "\r\n") === 3 && str_contains($m, "--" . $g[1] . "--\r\n") && str_contains($m, base64_encode('Anbei das PDF.')));
+$check('Anhang: PDF als Base64 mit Dateiname, unbekannter Typ wird octet-stream, Name gesäubert',
+    str_contains($m, 'Content-Type: application/pdf; name="protokoll_2026-10-27.pdf"') && str_contains($m, 'Content-Disposition: attachment; filename="protokoll_2026-10-27.pdf"')
+    && str_contains($m, base64_encode("%PDF-1.4\n\x00\xff bytes")) && str_contains($m, 'Content-Type: application/octet-stream; name="') && !str_contains($m, "b\xc3\xb6se\r\n"));
+$check('ohne Anhang bleibt es eine schlichte Textmail', !str_contains($n, 'multipart'));
 
 /* ---------- Nicht eingerichtet ---------- */
 $GLOBALS['settings']['mail_aktiv'] = '0';

@@ -78,6 +78,9 @@ unter „Sicherheitslücke PHP2Shell".
   markiert und beim Speichern gemeldet. Terminseite als Zusammenfassung mit
   Druckansicht und **„Navigation starten"** fürs Handy. Startseite mit
   Zwei-Wochen-Übersicht und den in der Woche verplanten Fahrzeugen.
+* **Protokoll per E-Mail** – das Besprechungsprotokoll als **PDF**, im
+  Multitool selbst erzeugt, an Kontakte oder ganze Verteiler aus dem
+  Kontaktmodul; Betreff und Text vor dem Versand änderbar.
 * **Besprechungen** – Talking Points im Themenspeicher, Tagesordnung mit
   Zeitplan, Anmerkungen und Diskussion je Punkt, Themenarchiv, Aufgaben aus
   der Besprechung, Bezüge zu Terminen, Veranstaltungen, Fahrzeugen und

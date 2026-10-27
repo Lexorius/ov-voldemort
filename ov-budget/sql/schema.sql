@@ -755,6 +755,9 @@ CREATE TABLE IF NOT EXISTS meetings (
   teilnehmer     TEXT         NULL,
   beschreibung   TEXT         NULL,
   notizen        TEXT         NULL,
+  -- Protokoll per E-Mail: wann und an wen zuletzt verschickt
+  protokoll_gesendet_am DATETIME      NULL,
+  protokoll_gesendet_an VARCHAR(1000) NOT NULL DEFAULT '',
   status         ENUM('geplant','abgeschlossen','abgesagt') NOT NULL DEFAULT 'geplant',
   created_by     INT UNSIGNED NULL,
   created_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -1807,6 +1810,23 @@ CREATE TABLE IF NOT EXISTS getraenke_meldungen (
   CONSTRAINT fk_gmeld_getraenk FOREIGN KEY (getraenk_id) REFERENCES getraenke(id) ON DELETE CASCADE,
   CONSTRAINT fk_gmeld_standort FOREIGN KEY (standort_id) REFERENCES standorte(id) ON DELETE CASCADE,
   CONSTRAINT fk_gmeld_bestellung FOREIGN KEY (bestellung_id) REFERENCES getraenke_bestellungen(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Empfaenger des Besprechungsprotokolls: einzelne Kontakte und ganze Verteiler
+CREATE TABLE IF NOT EXISTS meeting_protokoll_empfaenger (
+  meeting_id    INT UNSIGNED  NOT NULL,
+  contact_id    INT UNSIGNED  NOT NULL,
+  PRIMARY KEY (meeting_id, contact_id),
+  CONSTRAINT fk_mprot_meeting FOREIGN KEY (meeting_id) REFERENCES meetings(id) ON DELETE CASCADE,
+  CONSTRAINT fk_mprot_kontakt FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS meeting_protokoll_verteiler (
+  meeting_id    INT UNSIGNED  NOT NULL,
+  group_id      INT UNSIGNED  NOT NULL,
+  PRIMARY KEY (meeting_id, group_id),
+  CONSTRAINT fk_mprotv_meeting FOREIGN KEY (meeting_id) REFERENCES meetings(id) ON DELETE CASCADE,
+  CONSTRAINT fk_mprotv_gruppe FOREIGN KEY (group_id) REFERENCES contact_groups(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS=1;

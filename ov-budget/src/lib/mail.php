@@ -96,7 +96,7 @@ function mail_adresse_mit_name(string $adresse, string $name): string
  * Die ganze Nachricht mit Kopfzeilen, Zeilenenden CRLF, Text als Base64 –
  * so kommt jede Sprache und jede Zeilenlänge unbeschadet an. Reine Funktion.
  */
-function mail_nachricht_bauen(string $von, string $vonName, string $an, string $anName, string $betreff, string $text, ?int $jetzt = null): string
+function mail_nachricht_bauen(string $von, string $vonName, string $an, string $anName, string $betreff, string $text, ?int $jetzt = null, array $anhaenge = []): string
 {
     $jetzt ??= time();
     $host = preg_replace('/[^A-Za-z0-9.-]/', '', substr(strrchr($von, '@') ?: '@ov-multitool', 1)) ?: 'ov-multitool';
@@ -107,12 +107,28 @@ function mail_nachricht_bauen(string $von, string $vonName, string $an, string $
         'Subject: ' . mail_kopf_kodieren($betreff),
         'Message-ID: <' . bin2hex(random_bytes(12)) . '.' . $jetzt . '@' . $host . '>',
         'MIME-Version: 1.0',
-        'Content-Type: text/plain; charset=UTF-8',
-        'Content-Transfer-Encoding: base64',
         'X-Mailer: OV-Multitool',
     ];
     $text = str_replace(["\r\n", "\r"], "\n", $text);
-    return implode("\r\n", $kopf) . "\r\n\r\n" . chunk_split(base64_encode($text), 76, "\r\n");
+    $textTeil = chunk_split(base64_encode($text), 76, "\r\n");
+    if (!$anhaenge) {
+        $kopf[] = 'Content-Type: text/plain; charset=UTF-8';
+        $kopf[] = 'Content-Transfer-Encoding: base64';
+        return implode("\r\n", $kopf) . "\r\n\r\n" . $textTeil;
+    }
+    // Mit Anhängen: multipart/mixed – erst der Text, dann jede Datei als Base64
+    $grenze = '=_OVB_' . bin2hex(random_bytes(12));
+    $kopf[] = 'Content-Type: multipart/mixed; boundary="' . $grenze . '"';
+    $teile = "--$grenze\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" . $textTeil;
+    foreach ($anhaenge as $a) {
+        $name = trim((string)preg_replace('/[\r\n"\\\\\/]+/', '_', (string)($a['name'] ?? 'anhang')));
+        $mime = preg_match('#^[a-z0-9.+-]+/[a-z0-9.+-]+$#i', (string)($a['mime'] ?? '')) ? (string)$a['mime'] : 'application/octet-stream';
+        $teile .= "\r\n--$grenze\r\nContent-Type: $mime; name=\"" . mail_kopf_kodieren($name) . "\"\r\n"
+            . "Content-Transfer-Encoding: base64\r\nContent-Disposition: attachment; filename=\"" . mail_kopf_kodieren($name) . "\"\r\n\r\n"
+            . chunk_split(base64_encode((string)($a['inhalt'] ?? '')), 76, "\r\n");
+    }
+    $teile .= "\r\n--$grenze--\r\n";
+    return implode("\r\n", $kopf) . "\r\n\r\n" . $teile;
 }
 
 /* ==================================================================== */
@@ -120,23 +136,24 @@ function mail_nachricht_bauen(string $von, string $vonName, string $an, string $
 /* ==================================================================== */
 
 /**
- * Eine Textnachricht verschicken. Wirft MailException mit einem Grund,
- * den man dem Benutzer zeigen kann.
+ * Eine Textnachricht verschicken, wahlweise mit Anhängen
+ * ([['name' => 'x.pdf', 'mime' => 'application/pdf', 'inhalt' => Bytes], …]).
+ * Wirft MailException mit einem Grund, den man dem Benutzer zeigen kann.
  */
-function mail_senden(string $an, string $betreff, string $text, string $anName = ''): void
+function mail_senden(string $an, string $betreff, string $text, string $anName = '', array $anhaenge = []): void
 {
     if (!mail_adresse_gueltig($an)) {
         throw new MailException('Die Empfängeradresse ist ungültig.');
     }
     if (isset($GLOBALS['mail_attrappe']) && is_callable($GLOBALS['mail_attrappe'])) {
-        ($GLOBALS['mail_attrappe'])($an, $betreff, $text, $anName);
+        ($GLOBALS['mail_attrappe'])($an, $betreff, $text, $anName, $anhaenge);
         return;
     }
     if (!mail_eingerichtet()) {
         throw new MailException('Der E-Mail-Versand ist nicht eingerichtet (Verwaltung → Einstellungen → E-Mail).');
     }
     $s = mail_status();
-    $nachricht = mail_nachricht_bauen($s['absender'], $s['absender_name'], $an, $anName, $betreff, $text);
+    $nachricht = mail_nachricht_bauen($s['absender'], $s['absender_name'], $an, $anName, $betreff, $text, null, $anhaenge);
     try {
         mail_smtp_senden($s['host'], $s['port'], $s['sicherheit'], $s['benutzer'], (string)setting('mail_passwort', ''),
             $s['absender'], $an, $nachricht);

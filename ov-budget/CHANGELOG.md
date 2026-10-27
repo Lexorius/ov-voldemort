@@ -1,5 +1,16 @@
 # Änderungsverlauf
 
+## 2.1.60.0
+
+- **Besprechungen: Protokoll per E-Mail als PDF.** Beim Bearbeiten lassen
+  sich Empfänger aus dem Kontaktmodul eintragen – einzelne Kontakte mit
+  E-Mail-Adresse oder ganze Verteiler, deren Mitglieder jeweils eine eigene
+  Nachricht bekommen. Das PDF erzeugt OV-Multitool selbst (Eckdaten,
+  Anwesenheit, TOPs mit Ergebnis und Anmerkungen, Aufgaben, Notizen,
+  Seitenzahlen); „Protokoll als PDF" zeigt es, „PDF herunterladen" speichert
+  es. Betreff und Text sind vorbelegt und änderbar, der letzte Versand wird
+  an der Besprechung vermerkt. Der E-Mail-Versand kann jetzt Anhänge.
+
 ## 2.1.59.1
 
 - **Kalender:** Am Tag der Zeitumstellung rutschte das Monatsraster um

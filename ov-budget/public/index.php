@@ -88,6 +88,7 @@ $routes = [
     'meeting_series_edit' => 'meeting_series_edit',
     'meeting_action'     => 'meeting_action',
     'meeting_print'      => 'meeting_print',
+    'meeting_protokoll'  => 'meeting_protokoll',
     'talking_points'     => 'talking_points',
     'talking_point_edit' => 'talking_point_edit',
     'talking_point'      => 'talking_point',

@@ -272,6 +272,13 @@ function meeting_save_from_post(?array $existing, array $user): array
     if (post_str('kontakte_feld') === '1' && function_exists('attendance_set_contacts')) {
         attendance_set_contacts($id, wahl_ids('kontakte'));
     }
+    // Empfänger des Protokolls: einzelne Kontakte und Verteiler
+    if (post_str('protokoll_kontakte_feld') === '1' && function_exists('meeting_protokoll_empfaenger_setzen')) {
+        meeting_protokoll_empfaenger_setzen($id, wahl_ids('protokoll_kontakte'));
+    }
+    if (post_str('protokoll_verteiler_feld') === '1' && function_exists('meeting_protokoll_verteiler_setzen')) {
+        meeting_protokoll_verteiler_setzen($id, wahl_ids('protokoll_verteiler'));
+    }
     return [$id, []];
 }
 

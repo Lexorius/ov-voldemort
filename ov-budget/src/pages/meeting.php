@@ -19,7 +19,14 @@ $teilnehmer = attendance_list((int)$meeting['id']);
 $vorgabe = setting_int('tp_dauer_vorgabe', 10);
 $dauern = array_map(static fn($p) => $p['dauer_min'] !== null ? (int)$p['dauer_min'] : null, $punkte);
 
+$protokollEmpfaenger = function_exists('meeting_protokoll_empfaenger') ? meeting_protokoll_empfaenger((int)$meeting['id']) : [];
+$protokollVorlage = meeting_protokoll_vorlage($meeting, $user ?? (current_user() ?? []), (string)setting('ov_name', ''));
+
 render('meeting', [
+    'protokollEmpfaenger' => $protokollEmpfaenger,
+    'protokollVerteiler'  => function_exists('meeting_protokoll_verteiler') ? meeting_protokoll_verteiler((int)$meeting['id']) : [],
+    'protokollVorlage'    => $protokollVorlage,
+    'mailAktiv'           => mail_eingerichtet(),
     'title'    => $meeting['titel'],
     'meeting'  => $meeting,
     'navi'     => meeting_navi($meeting),
