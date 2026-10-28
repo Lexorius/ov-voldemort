@@ -82,6 +82,8 @@ unter „Sicherheitslücke PHP2Shell".
   Adressen, zu einem Zeitpunkt oder sofort, in Portionen; Betreff und Text
   vor dem Versand änderbar, **Abmeldelink über den Connector**, eine
   **Sperrliste aus Prüfsummen** statt Adressen, KI-Zusammenfassung des PDFs.
+  **Nur für interne Newsletter** – Adressen nur mit Zustimmung der
+  Empfänger, siehe [Newsletter](#newsletter).
 * **Protokoll per E-Mail** – das Besprechungsprotokoll als **PDF**, im
   Multitool selbst erzeugt, an Kontakte oder ganze Verteiler aus dem
   Kontaktmodul; Betreff und Text vor dem Versand änderbar.
@@ -254,8 +256,9 @@ einen Port für `8099/tcp` vergeben, dann `http://homeassistant.local:8099`.
 
 Im Add-on ruft der Container jede Minute `cron.php` auf. Darüber laufen der
 Stein.APP- und Divera-Abgleich, das Abholen der Connector-Meldungen (auch
-die Antworten auf Abstimmungen), die Ergebnisberichte per E-Mail, die
-Kalender aus Home Assistant, die automatische Sicherung, die
+die Antworten auf Abstimmungen, Getränkemeldungen und Abmeldungen vom
+Newsletter), die Ergebnisberichte per E-Mail, der Newsletter-Versand in
+Portionen, die Kalender aus Home Assistant, die automatische Sicherung, die
 Benachrichtigungen, die MQTT-Meldungen und die KI-Auswertung. Jeder Abruf
 prüft selbst, ob er an der Reihe ist.
 
@@ -408,7 +411,8 @@ euch anders? Kein Problem), Haushaltsjahr, MwSt-Satz, Warnschwellen, Pflichtfeld
 Upload-Grenzen und erlaubte Dateitypen, Abstimmung, Session-Laufzeit, Sperre nach
 Fehlversuchen, zweiter Faktor, Fristen der Fahrzeuge, Takt der Abrufe, Sicherung,
 KI-Auswertung, E-Mail-Versand, Abstimmungen (Sichtbarkeit, Abruf-Takt,
-Codelänge, Uhrzeit der Berichte).
+Codelänge, Uhrzeit der Berichte), Getränke, Newsletter (Sichtbarkeit,
+Portion und Takt des Versands, Fußtext mit dem Abmeldelink).
 
 **Unscharfe Budgetübersicht** – `budget_rundung` stellt die Übersichtsseite auf
 gerundete Beträge um (10, 100 oder 1.000). Praktisch für Aushänge und Vorträge,
@@ -631,6 +635,35 @@ Lagerplatz und die Bestellungen bis zur Rechnung.
   Lager, die Rechnung als **Ausgabe ins Budget** mit Kategorie,
   Rechnungsnummer und Zahlungsstand, verknüpft mit der Bestellung.
 
+## Newsletter
+
+Das Modul schreibt keine Newsletter – es verschickt fertige. Je Newsletter
+wird ein PDF hochgeladen, dazu Betreff und Begleittext, die Empfänger und
+ein Zeitpunkt.
+
+* **Empfänger** – Kontakte mit E-Mail-Adresse, ganze Verteiler aus dem
+  Kontaktmodul und freie Adressen; jede Adresse einmal, Gesperrte nie.
+* **Versand** – sofort oder zu einem Zeitpunkt; beim Einplanen wird die
+  Empfängerliste festgehalten, der automatische Abruf verschickt dann in
+  Portionen (Größe und Takt einstellbar). Betreff und Text sind bis dahin
+  änderbar, eine Probe geht an die eigene Adresse.
+* **Abmeldelink** – jede Mail trägt einen Link auf den Connector. Der kennt
+  nur eine Kennung je Adresse, nie die Adresse selbst; OV-Multitool holt die
+  Abmeldungen ab und setzt die Kennung auf die **Sperrliste**. Die speichert
+  nur Prüfsummen – wer einmal abgemeldet ist, bekommt nichts mehr, auch wenn
+  die Adresse später wieder in einer Liste steht.
+* **KI-Zusammenfassung** – das hochgeladene PDF wird, wenn die KI
+  eingerichtet ist, für die Verwaltung zusammengefasst.
+* Die Liste ist seitenweise, je 50 Newsletter.
+
+**Nur für interne Newsletter.** E-Mail-Adressen nur mit Zustimmung der
+Empfänger verwenden – Mitglieder, Helferinnen und Helfer, Angehörige, die
+den Newsletter ausdrücklich wollen. Für Werbung an Außenstehende ist das
+Modul nicht gedacht. Die rechtlichen Voraussetzungen (Einwilligung,
+Datenschutz, Impressum in der Mail, jederzeit mögliche Abmeldung) liegen in
+der Verantwortung des Ortsverbands; das Modul zeigt diesen Hinweis in der
+Liste, beim Bearbeiten und vor dem Versand.
+
 ## E-Mail-Versand
 
 Das Add-on hat keinen Mailserver. Darum spricht OV-Multitool einen
@@ -639,8 +672,10 @@ der Dienststelle. Unter *Verwaltung → Einstellungen → E-Mail* stehen
 Server, Port, Verschlüsselung (STARTTLS, SSL/TLS oder keine), Benutzer,
 Passwort, Absenderadresse und Absendername; die Verwaltungsseite *E-Mail*
 zeigt den Zustand samt letztem Fehler und schickt eine Testnachricht. Der
-Versand ist ein Hauptschalter, standardmäßig aus. Verschickt werden nur
-Textnachrichten; bisher nutzen ihn die Berichte der Abstimmungen.
+Versand ist ein Hauptschalter, standardmäßig aus. Verschickt werden
+Textnachrichten, bei Bedarf mit PDF-Anhang; genutzt wird er von den
+Berichten der Abstimmungen, den Getränkebestellungen, dem Protokollversand
+der Besprechungen und dem Newsletter.
 
 ## KI-Auswertung der Dateien
 

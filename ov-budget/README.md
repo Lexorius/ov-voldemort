@@ -52,6 +52,9 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
   Prüfsummen, keine Adressen
 - Betreff und Text vor dem Versand änderbar, Probe an sich selbst,
   KI-Zusammenfassung des PDFs für die Verwaltung
+- **Nur für interne Newsletter:** Adressen nur mit Zustimmung der Empfänger,
+  rechtliche Voraussetzungen (Einwilligung, Datenschutz, Impressum,
+  Abmeldung) beachten – das Modul zeigt den Hinweis selbst
 
 ### Besprechungen: Protokoll per E-Mail
 - **Protokoll als PDF**, im Add-on selbst erzeugt – Eckdaten, Anwesenheit,

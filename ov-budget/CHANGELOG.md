@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## 2.1.62.2
+
+- **Doku:** README mit eigenem Abschnitt „Newsletter" samt dem Hinweis
+  „Nur für interne Newsletter"; E-Mail-Versand, automatische Abrufe und
+  Einstellungen auf den Stand gebracht (Getränke, Protokoll, Newsletter).
+  Add-on- und GitHub-Beschreibung nennen die neuen Module.
+
 ## 2.1.62.1
 
 - **Newsletter:** Hinweis „Nur für interne Newsletter – E-Mail-Adressen nur
