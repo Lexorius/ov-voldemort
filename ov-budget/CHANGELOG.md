@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## 2.1.62.1
+
+- **Newsletter:** Hinweis „Nur für interne Newsletter – E-Mail-Adressen nur
+  mit Zustimmung verwenden, rechtliche Voraussetzungen beachten" in der
+  Liste, beim Bearbeiten vor den Empfängern und auf der Seite des
+  Newsletters vor dem Versand; auch in der Dokumentation.
+
 ## 2.1.62.0
 
 - **Neues Modul Newsletter:** hochgeladene PDF-Newsletter an Kontakte,

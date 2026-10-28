@@ -69,6 +69,13 @@ $aktion = static function (string $action, string $text, string $klasse = 'btn b
     <p class="small muted">Statt der x-Zeichen steht in jeder Mail die Kennung des Empfängers; der Text kommt aus den Einstellungen (Gruppe „Newsletter").</p><?php endif; ?>
 </section>
 
+<?php if ($darf && in_array($status, ['entwurf', 'geplant'], true)): ?>
+  <div class="alert alert--warn"><strong>Nur für interne Newsletter.</strong> E-Mail-Adressen nur mit Zustimmung der
+  Empfänger verwenden – Mitglieder, Helferinnen und Helfer, Angehörige, die den Newsletter ausdrücklich wollen. Für Werbung an
+  Außenstehende ist dieses Modul nicht gedacht. Bitte die rechtlichen Voraussetzungen beachten (Einwilligung, Datenschutz,
+  Impressum in der Mail, jederzeit mögliche Abmeldung); die Verantwortung liegt beim Ortsverband.</div>
+<?php endif; ?>
+
 <section class="card" id="versand">
   <div class="card__head"><h2>Versand</h2>
     <?php if ($stand['gesamt'] > 0): ?><span class="small muted"><?= (int)$stand['fertig'] ?> von <?= (int)$stand['gesamt'] ?> verschickt<?= $stand['fehler'] > 0 ? ', ' . (int)$stand['fehler'] . ' Fehler' : '' ?><?= $stand['offen'] > 0 ? ', ' . (int)$stand['offen'] . ' offen' : '' ?></span><?php endif; ?></div>

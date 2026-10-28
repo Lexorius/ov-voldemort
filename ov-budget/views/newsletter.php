@@ -13,6 +13,11 @@
   </div>
 </div>
 
+<div class="alert alert--warn"><strong>Nur für interne Newsletter.</strong> E-Mail-Adressen nur mit Zustimmung der
+  Empfänger verwenden – Mitglieder, Helferinnen und Helfer, Angehörige, die den Newsletter ausdrücklich wollen. Für Werbung an
+  Außenstehende ist dieses Modul nicht gedacht. Bitte die rechtlichen Voraussetzungen beachten (Einwilligung, Datenschutz,
+  Impressum in der Mail, jederzeit mögliche Abmeldung); die Verantwortung liegt beim Ortsverband.</div>
+
 <?php if ($darf && !$mailAktiv): ?>
   <div class="alert alert--warn">Der E-Mail-Versand ist nicht eingerichtet – ohne ihn geht kein Newsletter hinaus
     (<a href="<?= e(url('admin_mail')) ?>">Verwaltung → E-Mail</a>).</div>

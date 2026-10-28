@@ -190,19 +190,23 @@ $check('abbrechen: offene Zeilen weg, Entwurf', str_contains(end($GLOBALS['execs
 /* ---------- Ansichten ---------- */
 $html = render_partial('newsletter', ['title' => 'Newsletter', 'rows' => [['id' => 7, 'titel' => 'OV-Nachrichten', 'orig_name' => 'n.pdf', 'size_bytes' => 1500, 'status' => 'geplant', 'senden_am' => '2026-11-02 08:00:00', 'gesendet_am' => null, 'versand_gesamt' => 2, 'versand_fertig' => 0, 'versand_fehler' => 0]],
     'blatt' => seiten_blaettern(1, 1, 50), 'darf' => true, 'mailAktiv' => false, 'connectoren' => [], 'gesperrt' => 2]);
+$check('Liste: Hinweis nur für interne Newsletter', str_contains($html, 'Nur für interne Newsletter') && str_contains($html, 'nur mit Zustimmung') && str_contains($html, 'rechtlichen Voraussetzungen'));
 $check('Liste', str_contains($html, 'OV-Nachrichten') && str_contains($html, 'ab 02.11.2026') && str_contains($html, 'Sperrliste (2)') && str_contains($html, 'Verwaltung → E-Mail') && str_contains($html, 'Verwendung „Newsletter"'));
 $html = render_partial('newsletter_detail', ['n' => ['stored_name' => $stored, 'size_bytes' => 15] + $n, 'connector' => $GLOBALS['connector'], 'vorlage' => $v, 'fuss' => newsletter_fuss('', 'https://x', 'OV'),
     'empfaenger' => ['empfaenger' => [['email' => 'anna@example.de', 'name' => 'Anna']], 'gesperrt' => 1], 'stand' => ['gesamt' => 0, 'fertig' => 0, 'fehler' => 0, 'offen' => 0], 'versand' => [],
     'kiDaten' => ['ergebnisse' => [], 'auftraege' => []], 'darf' => true, 'mailAktiv' => true, 'meineMail' => 'admin@example.de']);
+$check('Detail Entwurf: Hinweis vor dem Versand', str_contains($html, 'Nur für interne Newsletter'));
 $check('Detail Entwurf: Text bearbeitbar, Planen und Sofort, Probe, Empfänger, Löschen', str_contains($html, 'name="action" value="text"') && str_contains($html, 'value="planen"')
     && str_contains($html, 'value="sofort"') && str_contains($html, 'value="probe"') && str_contains($html, '1 Adressen · 1 gesperrt') && str_contains($html, 'value="loeschen"') && str_contains($html, 'PDF ansehen'));
 $html = render_partial('newsletter_detail', ['n' => ['status' => 'laeuft', 'stored_name' => $stored] + $n, 'connector' => $GLOBALS['connector'], 'vorlage' => $v, 'fuss' => '',
     'empfaenger' => ['empfaenger' => [], 'gesperrt' => 0], 'stand' => ['gesamt' => 2, 'fertig' => 1, 'fehler' => 1, 'offen' => 0],
     'versand' => [['email' => 'a@b.de', 'name' => 'A', 'gesendet_am' => '2026-11-02 08:00:00', 'fehler' => ''], ['email' => 'c@d.de', 'name' => '', 'gesendet_am' => null, 'fehler' => 'Postfach voll']],
     'kiDaten' => ['ergebnisse' => [], 'auftraege' => []], 'darf' => true, 'mailAktiv' => true, 'meineMail' => '']);
+$check('Detail läuft: kein Hinweis mehr', !str_contains($html, 'Nur für interne Newsletter'));
 $check('Detail läuft: Abbrechen, Versandtabelle mit Fehler, kein Text bearbeiten', str_contains($html, 'Versand abbrechen') && str_contains($html, 'Postfach voll') && !str_contains($html, 'name="action" value="text"') && !str_contains($html, 'value="loeschen"'));
 $html = render_partial('newsletter_edit', ['n' => $n, 'errors' => ['Fehler X'], 'connectoren' => [$GLOBALS['connector']], 'kontaktOptionen' => [['id' => 5, 'text' => 'Anna', 'sub' => 'anna@example.de', 'gruppe' => '']], 'kontakteGewaehlt' => [5],
     'verteilerOptionen' => [['id' => 9, 'text' => 'Helfer', 'sub' => '3 Kontakt(e)', 'gruppe' => '']], 'verteilerGewaehlt' => [], 'maxMb' => 10]);
+$check('Bearbeiten: Hinweis vor den Empfängern', str_contains($html, 'Nur für interne Newsletter') && strpos($html, 'Nur für interne Newsletter') < strpos($html, 'data-wahl="kontakte"'));
 $check('Bearbeiten: PDF-Feld, Connector, Zeitpunkt, Kontakte und Verteiler, freie Adressen', str_contains($html, 'name="pdf"') && str_contains($html, 'value="3" selected') && str_contains($html, 'name="senden_am"')
     && str_contains($html, 'data-wahl="kontakte"') && str_contains($html, 'name="kontakte[]" value="5"') && str_contains($html, 'data-wahl="verteiler"') && str_contains($html, 'name="adressen"') && str_contains($html, 'Fehler X'));
 $html = render_partial('newsletter_sperre', ['rows' => [['id' => 1, 'token' => str_repeat('ab', 32), 'grund' => 'Abmeldung', 'gesperrt_am' => '2026-11-01 10:00:00']], 'blatt' => seiten_blaettern(1, 1, 100), 'darf' => true, 'connectoren' => [$GLOBALS['connector']], 'letzterAbruf' => 0]);

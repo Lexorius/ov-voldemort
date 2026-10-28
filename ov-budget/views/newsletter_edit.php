@@ -61,6 +61,11 @@ $isNew = empty($n['id']);
     </div>
   </section>
 
+  <div class="alert alert--warn"><strong>Nur für interne Newsletter.</strong> E-Mail-Adressen nur mit Zustimmung der
+  Empfänger verwenden – Mitglieder, Helferinnen und Helfer, Angehörige, die den Newsletter ausdrücklich wollen. Für Werbung an
+  Außenstehende ist dieses Modul nicht gedacht. Bitte die rechtlichen Voraussetzungen beachten (Einwilligung, Datenschutz,
+  Impressum in der Mail, jederzeit mögliche Abmeldung); die Verantwortung liegt beim Ortsverband.</div>
+
   <section class="card">
     <div class="card__head"><h2>Empfänger</h2><span class="small muted">jede Adresse einmal, Gesperrte nie</span></div>
     <?php if ($kontaktOptionen): ?>

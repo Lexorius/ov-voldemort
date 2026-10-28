@@ -441,6 +441,14 @@ Das Modul schreibt keine Newsletter – es verschickt fertige. Je Newsletter
 wird ein PDF hochgeladen, dazu Betreff und Begleittext, die Empfänger und
 ein Zeitpunkt.
 
+**Nur für interne Newsletter.** E-Mail-Adressen nur mit Zustimmung der
+Empfänger verwenden – Mitglieder, Helferinnen und Helfer, Angehörige, die
+den Newsletter ausdrücklich wollen. Für Werbung an Außenstehende ist das
+Modul nicht gedacht; die rechtlichen Voraussetzungen (Einwilligung,
+Datenschutz, Impressum in der Mail, jederzeit mögliche Abmeldung) liegen in
+der Verantwortung des Ortsverbands. Das Modul zeigt diesen Hinweis in der
+Liste, beim Bearbeiten und vor dem Versand.
+
 **Empfänger** kommen aus dem Kontaktmodul – einzelne Kontakte mit
 E-Mail-Adresse oder ganze Verteiler – und aus einem Feld mit freien
 Adressen (eine je Zeile, auch „Name <adresse>"). Jede Adresse ist einmal
