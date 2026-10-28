@@ -71,6 +71,18 @@ $_POST = ['bezeichnung' => 'Verpflegung', 'datum' => '2026-05-02', 'betrag' => '
 [$id] = expense_save_from_post(null, ['id' => 1]);
 $check('unbekannter Stand wird bezahlt', end($GLOBALS['inserts'])[1]['status'] === 'bezahlt');
 $check('Kennzeichen nur für gebucht und geplant', buchung_status_badge('bezahlt') === '' && str_contains(buchung_status_badge('offen'), 'gebucht') && str_contains(buchung_status_badge('geplant'), 'geplant'));
+$check('Geplantes fällt auf: eigenes Kennzeichen, bei Einnahmen „erwartet"', str_contains(buchung_status_badge('geplant'), 'badge--geplant')
+    && str_contains(buchung_status_badge('geplant', 'einnahme'), '>erwartet<') && str_contains(buchung_status_badge('geplant', 'einnahme'), 'badge--geplant')
+    && !str_contains(buchung_status_badge('offen'), 'badge--geplant'));
+$check('Zeilenklasse nur für Geplantes', buchung_zeile_klasse('geplant') === ' class="zeile-geplant"' && buchung_zeile_klasse('bezahlt') === ''
+    && buchung_zeile_klasse('offen') === '' && buchung_zeile_klasse('geplant', 'muted') === ' class="muted zeile-geplant"' && buchung_zeile_klasse('bezahlt', 'muted') === ' class="muted"');
+$css = (string)file_get_contents($app . '/public/assets/css/app.css');
+$check('Stil für Geplantes vorhanden, auch dunkel', str_contains($css, '.badge--geplant') && str_contains($css, '.zeile-geplant td') && str_contains($css, '.item--geplant')
+    && substr_count($css, '.badge--geplant') >= 2);
+foreach (['views/expenses.php', 'views/budget.php', 'views/vehicle.php', 'views/wish_view.php', 'views/bestellung.php'] as $f) {
+    $check('Zeilenklasse in ' . $f, str_contains((string)file_get_contents($app . '/' . $f), 'buchung_zeile_klasse('));
+}
+$check('Handy-Karte der Liste markiert Geplantes', str_contains((string)file_get_contents($app . '/views/expenses.php'), 'item--geplant'));
 
 /* ---------- Stichtag ---------- */
 $check('Stichtag in den Jahreszahlen', $z['stichtag'] === '2026-11-30' && is_int($z['stichtag_tage']));

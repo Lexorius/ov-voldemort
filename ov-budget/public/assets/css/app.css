@@ -407,6 +407,18 @@ legend { font-size: .85rem; font-weight: 700; color: var(--ink-soft); padding: 0
 .badge--muted { background: var(--border); color: var(--ink-soft); }
 .badge--outline { background: transparent; border: 1px solid var(--border); color: var(--ink-soft); }
 .badge--nice { background: #7c3aed; }
+/* Geplantes und Erwartetes: gestreift wie im Verlauf, damit es in Listen auffällt */
+.badge--geplant {
+  background: repeating-linear-gradient(135deg, #cbd5e1 0 3px, #f8fafc 3px 6px);
+  border: 1px dashed #475569; color: #1e293b;
+}
+.zeile-geplant td, .item.item--geplant { background: rgba(148, 163, 184, .16); }
+.item.item--geplant { border-left-style: dashed; }
+.zeile-geplant td:first-child { box-shadow: inset 3px 0 0 #94a3b8; }
+@media (prefers-color-scheme: dark) {
+  .badge--geplant { background: repeating-linear-gradient(135deg, #334155 0 3px, #1e293b 3px 6px); border-color: #94a3b8; color: #e2e8f0; }
+  .zeile-geplant td, .item.item--geplant { background: rgba(148, 163, 184, .12); }
+}
 
 /* ---------- Listen (Karten statt Tabelle auf dem Handy) ---------- */
 .itemlist { display: grid; gap: .7rem; }

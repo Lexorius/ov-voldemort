@@ -55,7 +55,7 @@ $offen = $summe - $gebucht;
         <table class="data">
           <tbody>
           <?php foreach ($buchungen as $r): ?>
-            <tr>
+            <tr<?= buchung_zeile_klasse((string)($r['status'] ?? 'bezahlt')) ?>>
               <td class="nowrap small"><?= e(de_date((string)$r['datum'])) ?></td>
               <td><?php if ($buchen): ?><a href="<?= e(url('expense_edit', ['id' => $r['id']])) ?>"><?= e((string)$r['bezeichnung']) ?></a><?php else: ?><?= e((string)$r['bezeichnung']) ?><?php endif; ?>
                 <?= buchung_status_badge((string)($r['status'] ?? 'bezahlt')) ?>

@@ -106,17 +106,29 @@ function einnahme_stufe(array $e, string $gewaehlt = 'bezahlt'): string
     return $stufe;
 }
 
-/** Kennzeichen in Listen – bezahlt bleibt unmarkiert, das ist der Normalfall */
-function buchung_status_badge(string $status): string
+/**
+ * Kennzeichen in Listen – bezahlt bleibt unmarkiert, das ist der Normalfall.
+ * Geplantes fällt gestreift auf; bei Einnahmen heißt die Stufe „erwartet".
+ */
+function buchung_status_badge(string $status, string $art = 'ausgabe'): string
 {
     return match (buchung_status($status)) {
         'offen'       => '<span class="badge" style="background:#b45309" title="gebucht – Rechnung liegt vor oder ist bestellt, noch nicht bezahlt">gebucht</span>',
-        'geplant'     => '<span class="badge badge--outline" title="geplant, noch keine Rechnung">geplant</span>',
+        'geplant'     => $art === 'einnahme'
+            ? '<span class="badge badge--geplant" title="erwartet – Abrechnung noch nicht erstellt, Geld noch nicht da">erwartet</span>'
+            : '<span class="badge badge--geplant" title="geplant – noch keine Rechnung, nur vorgemerkt">geplant</span>',
         'abgerechnet' => '<span class="badge" style="background:#0369a1" title="Einsatzabrechnung eingereicht">abgerechnet</span>',
         'gestellt'    => '<span class="badge" style="background:#b45309" title="Rechnung oder Gebührenbescheid gestellt, Geld noch nicht da">gestellt</span>',
         'zugesagt'    => '<span class="badge" style="background:#15803d" title="Mittel zugesagt, noch nicht zugewiesen">zugesagt</span>',
         default       => '',
     };
+}
+
+/** Zeilenklasse für Listen: geplante Buchungen bekommen einen Hintergrund. Reine Funktion. */
+function buchung_zeile_klasse(string $status, string $weitere = ''): string
+{
+    $klassen = array_filter([$weitere, buchung_status($status) === 'geplant' ? 'zeile-geplant' : '']);
+    return $klassen ? ' class="' . implode(' ', $klassen) . '"' : '';
 }
 
 /**

@@ -166,7 +166,9 @@ sie enthalten.
   vor oder ist bestellt, noch nicht bezahlt – zählt schon als Ausgabe und
   wird in den Kacheln gesondert genannt) oder *geplant* (noch keine Rechnung
   – zählt nur in der Planung). Ein Zahlungsdatum setzt den Stand auf
-  bezahlt. Übersicht, Mittel-Balken und Verlauf zeigen gebucht und geplant
+  bezahlt. Geplantes ist in allen Listen gestreift gekennzeichnet und die
+  Zeile hinterlegt, bei Einnahmen heißt es *erwartet*. Übersicht,
+  Mittel-Balken und Verlauf zeigen gebucht und geplant
   getrennt. Das Jahresbudget kann einen **Stichtag** haben: Bis
   einschließlich diesem Tag darf Geld auf das Jahresbudget ausgegeben
   werden, spätere Ausgaben lehnt die Anwendung ab – nur geplante lassen sich

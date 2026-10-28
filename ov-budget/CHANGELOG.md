@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 2.1.63.0
+
+- **Budget:** Geplante Ausgaben und erwartete Einnahmen fallen jetzt auf –
+  eigenes gestreiftes Kennzeichen statt des blassen Umrisses und die ganze
+  Zeile hinterlegt, in der Liste der Ausgaben und Einnahmen (Tabelle und
+  Handy-Karten), unter „Buchungen ohne Zahlung" der Übersicht sowie in den
+  Buchungen von Fahrzeug, Wunsch und Bestellung. Bei Einnahmen heißt das
+  Kennzeichen „erwartet", so wie die Stufe im Filter.
+
 ## 2.1.62.2
 
 - **Doku:** README mit eigenem Abschnitt „Newsletter" samt dem Hinweis

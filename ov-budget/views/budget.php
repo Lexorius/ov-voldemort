@@ -246,13 +246,13 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
       <table class="data">
         <tbody>
         <?php foreach ($offenGeplant as $b): $ein = $b['art'] === 'einnahme'; ?>
-          <tr>
+          <tr<?= buchung_zeile_klasse((string)$b['status']) ?>>
             <td class="nowrap small"><?= e(de_date($b['datum'])) ?></td>
             <td>
               <?php if (can('manage_budget')): ?>
                 <a href="<?= e(url('expense_edit', ['id' => $b['id']])) ?>"><?= e($b['bezeichnung']) ?></a>
               <?php else: ?><?= e($b['bezeichnung']) ?><?php endif; ?>
-              <?= buchung_status_badge((string)$b['status']) ?>
+              <?= buchung_status_badge((string)$b['status'], $ein ? 'einnahme' : 'ausgabe') ?>
               <?php if (!empty($b['veranstaltung_titel'])): ?><span class="small muted">· <?= e((string)$b['veranstaltung_titel']) ?></span><?php endif; ?>
             </td>
             <td class="small"><?= e($b['kategorie_label'] ?: '–') ?></td>

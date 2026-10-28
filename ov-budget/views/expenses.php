@@ -172,7 +172,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
   <div class="card only-mobile">
     <div class="itemlist">
       <?php foreach ($rows as $r): ?>
-        <a class="item" style="border-left-color:<?= e($r['kategorie_color'] ?: ($istEinnahme ? '#15803d' : '#94a3b8')) ?>"
+        <a class="item<?= buchung_status((string)($r['status'] ?? 'bezahlt')) === 'geplant' ? ' item--geplant' : '' ?>" style="border-left-color:<?= e($r['kategorie_color'] ?: ($istEinnahme ? '#15803d' : '#94a3b8')) ?>"
            href="<?= can('manage_budget') ? e(url('expense_edit', ['id' => $r['id']])) : '#' ?>">
           <div class="item__top">
             <div style="min-width:0">
@@ -185,7 +185,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
               <?= $istEinnahme ? '+' : '−' ?><?= e(money((float)$r['betrag_brutto'])) ?></div>
           </div>
           <div class="item__meta">
-            <?= buchung_status_badge((string)($r['status'] ?? 'bezahlt')) ?>
+            <?= buchung_status_badge((string)($r['status'] ?? 'bezahlt'), $istEinnahme ? 'einnahme' : 'ausgabe') ?>
             <?= badge($r['kategorie_label'] ? ['label' => $r['kategorie_label'], 'color' => $r['kategorie_color']] : null, 'ohne Kategorie') ?>
             <?php if ($r['fachgruppe_label']): ?><span class="badge badge--outline"><?= e($r['fachgruppe_label']) ?></span><?php endif; ?>
             <?php if ($r['budget_name']): ?><span class="badge badge--outline"><?= e($r['budget_name']) ?></span><?php endif; ?>
@@ -206,10 +206,10 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
         </thead>
         <tbody>
         <?php foreach ($rows as $r): ?>
-          <tr>
+          <tr<?= buchung_zeile_klasse((string)($r['status'] ?? 'bezahlt')) ?>>
             <td class="nowrap small"><?= e(de_date($r['datum'])) ?></td>
             <td>
-              <strong><?= e($r['bezeichnung']) ?></strong> <?= buchung_status_badge((string)($r['status'] ?? 'bezahlt')) ?><?= $istEinnahme ? ' ' . einnahme_alter_badge(einnahme_alter($r)) : '' ?><?= ($wb = wiederkehrend_badge($r)) !== '' ? ' ' . $wb : '' ?>
+              <strong><?= e($r['bezeichnung']) ?></strong> <?= buchung_status_badge((string)($r['status'] ?? 'bezahlt'), $istEinnahme ? 'einnahme' : 'ausgabe') ?><?= $istEinnahme ? ' ' . einnahme_alter_badge(einnahme_alter($r)) : '' ?><?= ($wb = wiederkehrend_badge($r)) !== '' ? ' ' . $wb : '' ?>
               <?php if ($r['lieferant']): ?><div class="small muted"><?= e($r['lieferant']) ?></div><?php endif; ?>
               <?php if (($ab = auslage_badge($r)) !== ''): ?><div class="small" style="margin-top:.2rem"><?= $ab ?></div><?php endif; ?>
               <?php if ($istEinnahme && ($weg = einnahme_weg($r)) !== ''): ?><div class="small muted"><?= e($weg) ?></div><?php endif; ?>

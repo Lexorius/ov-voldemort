@@ -45,7 +45,7 @@ $mailto = 'mailto:' . rawurlencode($an) . '?subject=' . rawurlencode($betreff) .
           <td style="width:2.5rem"><input type="checkbox" name="sel[]" value="<?= (int)$e['id'] ?>" id="s<?= (int)$e['id'] ?>"<?= in_array((int)$e['id'], $gewaehlt, true) ? ' checked' : '' ?>></td>
           <td><label for="s<?= (int)$e['id'] ?>"><strong><?= e((string)$e['bezeichnung']) ?></strong></label>
             <div class="small muted"><?= e(trim(implode(' · ', array_filter([$e['referenz'] !== '' ? 'Einsatz/Auftrag ' . $e['referenz'] : '', $e['beleg_nr'] !== '' ? 'Az. ' . $e['beleg_nr'] : '', (string)$e['lieferant']])))) ?></div></td>
-          <td><?= buchung_status_badge((string)$e['status']) ?></td>
+          <td><?= buchung_status_badge((string)$e['status'], 'einnahme') ?></td>
           <td class="nowrap small"><span style="color:<?= EINNAHME_WARN_FARBEN[$a['stufe']] ?? 'inherit' ?>;font-weight:700"><?= (int)$a['tage'] ?> Tagen</span> <span class="muted">(<?= e(de_date($a['seit'])) ?>)</span></td>
           <td class="num"><?= e(money((float)$e['betrag_brutto'], false)) ?></td>
         </tr>

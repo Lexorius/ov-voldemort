@@ -567,10 +567,10 @@ $arten = [
       <table class="data">
         <tbody>
         <?php foreach ($buchungen as $r): ?>
-          <tr>
+          <tr<?= buchung_zeile_klasse((string)($r['status'] ?? 'bezahlt')) ?>>
             <td class="nowrap small"><?= e(de_date((string)$r['datum'])) ?></td>
             <td><?php if (can('manage_budget')): ?><a href="<?= e(url('expense_edit', ['id' => $r['id']])) ?>"><?= e((string)$r['bezeichnung']) ?></a><?php else: ?><?= e((string)$r['bezeichnung']) ?><?php endif; ?>
-              <?= buchung_status_badge((string)($r['status'] ?? 'bezahlt')) ?>
+              <?= buchung_status_badge((string)($r['status'] ?? 'bezahlt'), (string)$r['art']) ?>
               <?php if ($r['kategorie_label']): ?><span class="small muted">· <?= e((string)$r['kategorie_label']) ?></span><?php endif; ?></td>
             <td class="num nowrap"><?= (string)$r['art'] === 'einnahme' ? '+' : '−' ?><?= e(money((float)$r['betrag_brutto'], false)) ?></td>
           </tr>
