@@ -279,6 +279,9 @@ sie enthalten.
   oder 00 beginnen, bleiben bei ihrem Land. Steht im Feld ein Hinweis statt
   einer Nummer („über das Büro"), bleibt der Text unverändert stehen.
   Bestehende Kontakte werden beim nächsten Start einmalig umgeschrieben.
+* **Newsletter** – hochgeladene PDF-Newsletter an Kontakte, Verteiler und
+  freie Adressen, mit Abmeldelink über den Connector, Sperrliste aus
+  Prüfsummen, Zeitplanung und KI-Zusammenfassung – siehe den eigenen Abschnitt.
 * **Protokoll per E-Mail** – das Besprechungsprotokoll als PDF an Kontakte
   oder ganze Verteiler aus dem Kontaktmodul, siehe den eigenen Abschnitt.
 * **Getränke** – Lieferanten, Getränkearten, Lager je Stell- und
@@ -431,6 +434,45 @@ eingetragene Namen aufnehmen und Status (teilgenommen, entschuldigt,
 nicht erschienen) setzen lassen. Wer einen Kontakt im Formular abwählt,
 nimmt ihn von der Liste; Mitglieder und freie Namen bleiben. Das Feld
 sehen nur Personen, die das Kontaktmodul sehen dürfen.
+
+## Newsletter
+
+Das Modul schreibt keine Newsletter – es verschickt fertige. Je Newsletter
+wird ein PDF hochgeladen, dazu Betreff und Begleittext, die Empfänger und
+ein Zeitpunkt.
+
+**Empfänger** kommen aus dem Kontaktmodul – einzelne Kontakte mit
+E-Mail-Adresse oder ganze Verteiler – und aus einem Feld mit freien
+Adressen (eine je Zeile, auch „Name <adresse>"). Jede Adresse ist einmal
+dabei, Gesperrte nie.
+
+**Abmeldelink und Sperrliste.** Jede Mail endet mit einer Fußzeile und
+einem Abmeldelink beim Connector (Verwendung *Newsletter*). Der Link trägt
+eine Kennung, die OV-Multitool je Adresse als HMAC mit einem Geheimnis
+dieser Installation errechnet – der Connector sieht nie eine Adresse. Ein
+Klick auf *Abmelden* legt die Kennung beim Connector ab; der automatische
+Abruf holt sie und setzt sie auf die **Sperrliste**. Die Sperrliste
+speichert keine Adressen, nur Kennungen: Beim Versand wird die Kennung
+jeder anzuschreibenden Adresse nachgeschlagen. Sperren von Hand geht über
+die Adresse, gespeichert wird auch dann nur ihre Kennung. Die Sperre gilt
+für alle Newsletter, egal aus welcher Liste die Adresse kommt.
+
+**Mail und Zeitpunkt.** Betreff und Text sind bis zum Versand änderbar;
+*Probe an mich* schickt die Mail samt PDF an die eigene Adresse. *Zum
+Zeitpunkt verschicken* hält die Empfängerliste fest, wendet die Sperrliste
+an und plant den Versand; *Sofort verschicken* ebenso, ab der nächsten
+Minute. Der automatische Abruf verschickt dann in Portionen (*Mails je
+Abruf*, Vorgabe 50 je Minute). Auf der Seite des Newsletters stehen
+Fortschritt und Fehler je Empfänger; Planung und Versand lassen sich
+abbrechen.
+
+**KI-Zusammenfassung.** Ist die KI-Auswertung eingeschaltet, fasst sie das
+hochgeladene PDF für die Verwaltung zusammen und vergibt Schlagwörter –
+wie bei den anderen Ablagen, mit Schalter *Newsletter zusammenfassen*.
+
+**Rechte.** Sehen dürfen Leitung und Admin, per Schalter alle
+Angemeldeten; anlegen, planen und verschicken nur die Leitung. Die Liste
+blättert mit 50 je Seite.
 
 ## Protokoll per E-Mail als PDF
 

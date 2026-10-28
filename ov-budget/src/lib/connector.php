@@ -41,6 +41,7 @@ const CONNECTOR_ZWECKE = [
     'verbrauch'       => 'Zähler: Zählerstand ablesen per QR-Code',
     'umfragen'        => 'Abstimmungen: Umfragen mit verschlüsselten Antworten',
     'getraenke'       => 'Getränke: „ist leer" per QR-Code am Lagerplatz',
+    'newsletter'      => 'Newsletter: Abmeldelink und Sperrliste',
 ];
 
 /* ==================================================================== */
@@ -74,6 +75,7 @@ function connector_taugt(array $c, string $zweck): bool
         'verbrauch'       => 'fuer_verbrauch',
         'umfragen'        => 'fuer_umfragen',
         'getraenke'       => 'fuer_getraenke',
+        'newsletter'      => 'fuer_newsletter',
         default           => 'fuer_fahrzeuge',
     };
     return (int)($c['is_active'] ?? 0) === 1
@@ -161,6 +163,7 @@ function connector_save_from_post(?array $c): array
         'fuer_verbrauch'       => post_bool('fuer_verbrauch') ? 1 : 0,
         'fuer_umfragen'        => post_bool('fuer_umfragen') ? 1 : 0,
         'fuer_getraenke'       => post_bool('fuer_getraenke') ? 1 : 0,
+        'fuer_newsletter'      => post_bool('fuer_newsletter') ? 1 : 0,
         'is_active'            => post_bool('is_active') ? 1 : 0,
         'notiz'                => post_str('notiz'),
     ];
@@ -1408,6 +1411,51 @@ function connector_getraenke_due(?int $jetzt = null): bool
     }
     $intervall = max(1, setting_int('getraenke_intervall_minuten', 5)) * 60;
     return $jetzt - (int)state_get('connector_getraenke_letzter_abruf', '0') >= $intervall;
+}
+
+/* ==================================================================== */
+/* Newsletter: Abmeldungen vom Abmeldelink holen                         */
+/* ==================================================================== */
+
+/** Abmeldungen abholen und in die Sperrliste übernehmen. Rückgabe: ['geholt', 'gesperrt'] */
+function connector_fetch_abmeldungen(array $c): array
+{
+    $res = ['geholt' => 0, 'gesperrt' => 0];
+    if (!connector_taugt($c, 'newsletter')) {
+        return $res;
+    }
+    $antwort = connector_call($c, 'abmeldungen_abholen', ['max' => 500]);
+    $liste = (array)($antwort['abmeldungen'] ?? []);
+    $res['geholt'] = count($liste);
+    if ($liste) {
+        $res['gesperrt'] = newsletter_abmeldungen_uebernehmen($liste);
+    }
+    return $res;
+}
+
+/** Bei allen Connectoren für den Newsletter abholen */
+function connector_newsletter_sync(): array
+{
+    $res = ['connectoren' => 0, 'geholt' => 0, 'gesperrt' => 0];
+    foreach (connector_liste('newsletter') as $c) {
+        $res['connectoren']++;
+        foreach (connector_fetch_abmeldungen($c) as $k => $v) {
+            $res[$k] += $v;
+        }
+    }
+    state_save('connector_newsletter_letzter_abruf', (string)time());
+    return $res;
+}
+
+/** Ist ein Abholen der Abmeldungen fällig? */
+function connector_newsletter_due(?int $jetzt = null): bool
+{
+    $jetzt ??= time();
+    if (!connector_for('newsletter')) {
+        return false;
+    }
+    $intervall = max(1, setting_int('newsletter_intervall_minuten', 10)) * 60;
+    return $jetzt - (int)state_get('connector_newsletter_letzter_abruf', '0') >= $intervall;
 }
 
 /* ==================================================================== */

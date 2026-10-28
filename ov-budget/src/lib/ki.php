@@ -35,6 +35,7 @@ const KI_TYPEN = [
     'termin'        => ['schalter' => 'ki_termine',         'label' => 'Termin',                'tabelle' => 'calendar_files',  'route' => 'kalender_file'],
     'standort'      => ['schalter' => 'ki_standorte',       'label' => 'Stell- und Lagerplatz', 'tabelle' => 'standort_bilder', 'route' => 'standort_bild'],
     'stan'          => ['schalter' => 'ki_stan',            'label' => 'STAN',                  'tabelle' => 'stan_dateien',    'route' => 'stan_file', 'bildfilter' => "f.mime NOT LIKE 'image/%'"],
+    'newsletter'    => ['schalter' => 'ki_newsletter',      'label' => 'Newsletter',            'tabelle' => 'newsletter',      'route' => 'newsletter_datei', 'bildfilter' => "f.stored_name <> ''"],
 ];
 const KI_VERSUCHE_MAX = 3;
 const KI_RUHE_SEK = 600;   // so lange ruht die Warteschlange, wenn Ollama nicht erreichbar war
@@ -396,6 +397,17 @@ function ki_datei_laden(string $typ, int $id): ?array
             $d['orig_name'] = (string)$d['name'];
             $d['titel'] = '';
             break;
+        case 'newsletter':
+            $d = newsletter_find($id);
+            if (!$d) {
+                return null;
+            }
+            $kontext = 'Newsletter des Ortsverbands „' . (string)$d['titel'] . '" – bitte für die Verwaltung zusammenfassen: Themen, Termine, Aufrufe';
+            $eltern = ['text' => 'Newsletter ' . (string)$d['titel'], 'url' => url('newsletter_detail', ['id' => (int)$d['id']]) . '#ki'];
+            $pfad = newsletter_pfad($d);
+            $d['titel'] = (string)$d['titel'];
+            $d['orig_name'] = (string)($d['orig_name'] ?: 'newsletter.pdf');
+            break;
         default:
             return null;
     }
@@ -416,6 +428,8 @@ function ki_darf_sehen(string $typ, array $datei, array $user): bool
         case 'standort':
         case 'stan':
             return true;
+        case 'newsletter':
+            return can('view_newsletter');
     }
     return false;
 }
@@ -434,6 +448,8 @@ function ki_darf_bearbeiten(string $typ, array $datei, array $user): bool
             return can('admin');
         case 'stan':
             return in_array((string)($user['role'] ?? ''), ['admin', 'leitung'], true);
+        case 'newsletter':
+            return can('manage_newsletter');
     }
     return false;
 }

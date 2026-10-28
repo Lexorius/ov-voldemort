@@ -1,7 +1,7 @@
 {
     "programm": "OV-Multitool-Connector",
-    "version": "1.7.0",
-    "erzeugt": "2026-10-26T17:56:21+00:00",
+    "version": "1.8.0",
+    "erzeugt": "2026-10-28T00:12:43+00:00",
     "dateien": {
         "public/.htaccess": {
             "sha256": "75726923baf2ef95ad108fafbe83b626f19802a2e500bd93799b18cc04d7efea",
@@ -32,16 +32,20 @@
             "bytes": 5440
         },
         "public/index.php": {
-            "sha256": "01f1c17d8a5626e885e14fd324262a77031fd73ac3f9980ff5bdc0edd6bf4cbb",
-            "bytes": 20999
+            "sha256": "2efa88a697513c344bfcee1f687ae139009a41a52c5a996e662b7f9a70cab589",
+            "bytes": 22119
         },
         "src/connector.php": {
-            "sha256": "5cabe71b539f27e6ca06371ece11ddde724a93d3a434aad53d458b4f4266d896",
-            "bytes": 54243
+            "sha256": "de92c91de15965e667c5f95344093125fccd9c60d2886b284a755e27d9e13da0",
+            "bytes": 56503
         },
         "src/fuss.php": {
             "sha256": "e4e80039b3ad186c38d45ea76f0c837c81c712e252a71f9ceb034f6f706ded06",
             "bytes": 907
+        },
+        "src/seite_abmelden.php": {
+            "sha256": "18bf9255a15e70b6f312770da12222dc642a485ab5804ac5f92bc11f2845f631",
+            "bytes": 3117
         },
         "src/seite_bestand.php": {
             "sha256": "d10c0d6711808641d1325cb70f12d3dfd3a32cd96367c96c02ef383a0ea45772",

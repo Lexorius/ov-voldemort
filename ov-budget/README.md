@@ -45,6 +45,14 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
   eine eigene Nachricht, auf Wunsch mit KI-Zusammenfassung; dafür ein eigener
   **E-Mail-Versand** über SMTP in der Verwaltung, mit Testnachricht
 
+### Newsletter
+- **PDF hochladen und verschicken** an Kontakte, Verteiler und freie
+  Adressen, sofort oder zu einem Zeitpunkt, in Portionen
+- **Abmeldelink** über den Connector; die **Sperrliste** speichert nur
+  Prüfsummen, keine Adressen
+- Betreff und Text vor dem Versand änderbar, Probe an sich selbst,
+  KI-Zusammenfassung des PDFs für die Verwaltung
+
 ### Besprechungen: Protokoll per E-Mail
 - **Protokoll als PDF**, im Add-on selbst erzeugt – Eckdaten, Anwesenheit,
   Tagesordnungspunkte mit Ergebnis und Anmerkungen, Aufgaben, Notizen

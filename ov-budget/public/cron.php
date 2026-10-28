@@ -132,6 +132,21 @@ $abrufe = [
             'QR: %d Meldung(en) geholt, %d übernommen%s', $res['geholt'], $res['uebernommen'],
             $res['fehler'] ? ', ' . $res['fehler'] . ' unbrauchbar' : '')]];
     },
+    'Newsletter' => static function (): array {
+        $aus = [];
+        $r = newsletter_versand_abarbeiten(max(1, setting_int('newsletter_je_abruf', 50)));
+        if ($r['gestartet'] > 0 || $r['gesendet'] > 0 || $r['fehler'] > 0 || $r['fertig'] > 0) {
+            $aus[] = ['status' => $r['fehler'] ? 'fehler' : 'ok', 'message' => sprintf('%d Mail(s) verschickt%s%s%s', $r['gesendet'],
+                $r['fehler'] ? ', ' . $r['fehler'] . ' Fehler' : '', $r['gestartet'] ? ', ' . $r['gestartet'] . ' gestartet' : '', $r['fertig'] ? ', ' . $r['fertig'] . ' fertig' : '')];
+        }
+        if (connector_newsletter_due()) {
+            $a = connector_newsletter_sync();
+            if ($a['geholt'] > 0) {
+                $aus[] = ['status' => 'ok', 'message' => sprintf('%d Abmeldung(en) geholt, %d neu gesperrt', $a['geholt'], $a['gesperrt'])];
+            }
+        }
+        return $aus;
+    },
     'Abstimmungsberichte' => static function (): array {
         $r = umfrage_berichte_senden();
         if ($r['gesendet'] === 0 && !$r['fehler']) {

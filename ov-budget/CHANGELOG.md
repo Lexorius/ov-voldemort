@@ -1,5 +1,16 @@
 # Änderungsverlauf
 
+## 2.1.62.0
+
+- **Neues Modul Newsletter:** hochgeladene PDF-Newsletter an Kontakte,
+  Verteiler und freie Adressen verschicken – sofort oder zu einem
+  Zeitpunkt, in Portionen je Abruf, mit Fortschritt und Fehlern je
+  Empfänger. Betreff und Text bis zum Versand änderbar, Probe an die eigene
+  Adresse. Jede Mail trägt einen Abmeldelink über den Connector (Verwendung
+  „Newsletter", Connector 1.8.0); wer sich abmeldet, landet auf der
+  Sperrliste, die nur Prüfsummen der Adressen speichert. Die KI fasst das
+  PDF für die Verwaltung zusammen. Liste mit 50 je Seite.
+
 ## 2.1.61.2
 
 - **Protokoll als PDF:** Trennlinien zwischen den Themen sowie vor den

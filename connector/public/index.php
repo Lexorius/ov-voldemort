@@ -30,6 +30,8 @@ declare(strict_types=1);
  *   ?p=getraenkemeldung     Meldung dazu (POST, verschlüsselt)
  *   ?p=getraenkeliste       Zugänge und Getränke setzen (POST, signiert)
  *   ?p=getraenke_abholen    Getränkemeldungen abholen (POST, signiert)
+ *   ?p=abmelden&a=<Kennung> Abmeldeseite des Newsletters (GET zeigt, POST meldet ab)
+ *   ?p=abmeldungen_abholen  Abmeldungen abholen (POST, signiert)
  *   ?p=zustand              Zahlen für OV-Multitool (POST, signiert)
  *   ?p=pruefung             Selbstprüfung: Dateien und Befunde (POST, signiert)
  *   ?p=einstellungen        Betreiber, Impressum, Datenschutz setzen (POST, signiert)
@@ -343,6 +345,28 @@ try {
             seiten_kopf(true);
             require dirname(__DIR__) . '/src/seite_getraenke.php';
             exit;
+
+        /* ---------------- Newsletter: abmelden ---------------- */
+        case 'abmelden':
+            $kennung = strtolower(nur_text($_POST['a'] ?? $_GET['a'] ?? ''));
+            $erledigt = false;
+            $fehlerText = '';
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                try {
+                    con_abmeldung_ablegen($kennung);
+                    $erledigt = true;
+                    con_notiz('abmeldung', '');
+                } catch (ConException $ex) {
+                    $fehlerText = $ex->getMessage();
+                }
+            }
+            seiten_kopf(true);
+            require dirname(__DIR__) . '/src/seite_abmelden.php';
+            exit;
+
+        case 'abmeldungen_abholen':
+            $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'abmeldungen_abholen');
+            antwort(['ok' => true, 'abmeldungen' => con_abmeldungen_abholen((int)($daten['max'] ?? 500))]);
 
         /* ---------------- Abstimmung: die Umfrageseite ---------------- */
         case 'umfrage':

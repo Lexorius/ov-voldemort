@@ -2298,6 +2298,79 @@ SQL);
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
     }
     $merken('089_protokoll_empfaenger');
+
+    /* ---------- 090: Newsletter ---------- */
+    if (ovb_table_exists($pdo, 'connectors') && !ovb_column_exists($pdo, 'connectors', 'fuer_newsletter')) {
+        $pdo->exec('ALTER TABLE connectors ADD COLUMN fuer_newsletter TINYINT(1) NOT NULL DEFAULT 0 AFTER fuer_getraenke');
+    }
+    if (!ovb_table_exists($pdo, 'newsletter')) {
+        $pdo->exec("CREATE TABLE newsletter (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  titel         VARCHAR(200)  NOT NULL,
+  betreff       VARCHAR(200)  NOT NULL DEFAULT '',
+  text          TEXT          NULL,
+  orig_name     VARCHAR(255)  NOT NULL DEFAULT '',
+  stored_name   VARCHAR(120)  NOT NULL DEFAULT '',
+  mime          VARCHAR(100)  NOT NULL DEFAULT '',
+  size_bytes    INT UNSIGNED  NOT NULL DEFAULT 0,
+  status        ENUM('entwurf','geplant','laeuft','gesendet') NOT NULL DEFAULT 'entwurf',
+  senden_am     DATETIME      NULL,
+  gestartet_am  DATETIME      NULL,
+  gesendet_am   DATETIME      NULL,
+  connector_id  INT UNSIGNED  NULL,
+  -- frei eingetragene Adressen, eine je Zeile
+  adressen      TEXT          NULL,
+  created_by    INT UNSIGNED  NULL,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_newsletter_status (status, senden_am)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    if (!ovb_table_exists($pdo, 'newsletter_kontakte')) {
+        $pdo->exec("CREATE TABLE newsletter_kontakte (
+  newsletter_id INT UNSIGNED  NOT NULL,
+  contact_id    INT UNSIGNED  NOT NULL,
+  PRIMARY KEY (newsletter_id, contact_id),
+  CONSTRAINT fk_nlk_newsletter FOREIGN KEY (newsletter_id) REFERENCES newsletter(id) ON DELETE CASCADE,
+  CONSTRAINT fk_nlk_kontakt FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    if (!ovb_table_exists($pdo, 'newsletter_verteiler')) {
+        $pdo->exec("CREATE TABLE newsletter_verteiler (
+  newsletter_id INT UNSIGNED  NOT NULL,
+  group_id      INT UNSIGNED  NOT NULL,
+  PRIMARY KEY (newsletter_id, group_id),
+  CONSTRAINT fk_nlv_newsletter FOREIGN KEY (newsletter_id) REFERENCES newsletter(id) ON DELETE CASCADE,
+  CONSTRAINT fk_nlv_gruppe FOREIGN KEY (group_id) REFERENCES contact_groups(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    if (!ovb_table_exists($pdo, 'newsletter_versand')) {
+        $pdo->exec("CREATE TABLE newsletter_versand (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  newsletter_id INT UNSIGNED  NOT NULL,
+  email         VARCHAR(150)  NOT NULL,
+  name          VARCHAR(150)  NOT NULL DEFAULT '',
+  -- Kennung der Adresse (HMAC) fuer den Abmeldelink
+  token         CHAR(64)      NOT NULL,
+  gesendet_am   DATETIME      NULL,
+  fehler        VARCHAR(300)  NOT NULL DEFAULT '',
+  PRIMARY KEY (id),
+  KEY idx_nlversand_offen (newsletter_id, gesendet_am),
+  CONSTRAINT fk_nlversand_newsletter FOREIGN KEY (newsletter_id) REFERENCES newsletter(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    if (!ovb_table_exists($pdo, 'newsletter_sperre')) {
+        $pdo->exec("CREATE TABLE newsletter_sperre (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  token         CHAR(64)      NOT NULL,
+  grund         VARCHAR(200)  NOT NULL DEFAULT '',
+  gesperrt_am   DATETIME      NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_nlsperre_token (token)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    $merken('090_newsletter');
 }
 
 /**

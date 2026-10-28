@@ -78,6 +78,10 @@ unter „Sicherheitslücke PHP2Shell".
   markiert und beim Speichern gemeldet. Terminseite als Zusammenfassung mit
   Druckansicht und **„Navigation starten"** fürs Handy. Startseite mit
   Zwei-Wochen-Übersicht und den in der Woche verplanten Fahrzeugen.
+* **Newsletter** – fertige PDF-Newsletter an Kontakte, Verteiler und freie
+  Adressen, zu einem Zeitpunkt oder sofort, in Portionen; Betreff und Text
+  vor dem Versand änderbar, **Abmeldelink über den Connector**, eine
+  **Sperrliste aus Prüfsummen** statt Adressen, KI-Zusammenfassung des PDFs.
 * **Protokoll per E-Mail** – das Besprechungsprotokoll als **PDF**, im
   Multitool selbst erzeugt, an Kontakte oder ganze Verteiler aus dem
   Kontaktmodul; Betreff und Text vor dem Versand änderbar.
@@ -474,7 +478,8 @@ Unter *Verwaltung → Connectoren* lassen sich beliebig viele anlegen. Jeder
 bekommt eine eigene Kopplung und trägt, wofür er zuständig ist: **Fahrzeuge**
 (Standort per QR-Code), **Veranstaltungen** (Einladungen), **Bestand** („Gerät
 ist da"), **Zähler** (Stand per QR-Code), **Abstimmungen** (Umfragen),
-**Getränke** („ist leer") – auch mehreres zugleich.
+**Getränke** („ist leer"), **Newsletter** (Abmeldelink) – auch mehreres
+zugleich.
 
 ### Standortmeldung per QR-Code
 

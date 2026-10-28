@@ -18,6 +18,9 @@ Aufgaben:
 * **Getränke** – „ist leer" oder „wird knapp". Am Lagerplatz oder Kühlschrank
   hängt ein QR-Code; die Seite listet die Getränke, ein Tipp meldet den
   Stand, wahlweise mit der Zahl der Kästen, die noch da sind.
+* **Newsletter** – der Abmeldelink. Jede Newsletter-Mail trägt einen Link
+  hierher; ein Klick und eine Bestätigung, und OV-Multitool setzt die Adresse
+  auf seine Sperrliste.
 * **Abstimmungen** – Umfragen mit einer oder mehreren Seiten, in OV-Multitool
   gestaltet. Hinter einer kurzen Adresse oder einem QR-Code steht die
   Umfrageseite; sie nimmt nur im Zeitfenster an. Die Antworten kommen
@@ -54,6 +57,9 @@ Er weiß auch **nicht, um wen es geht**:
   Gebinde – die Seite muss „Wasser · Kasten" schreiben können. Welcher
   Lagerplatz es ist, steht im Anker der Adresse; die Meldungen sind
   verschlüsselt.
+* **Newsletter:** Vom Abmeldelink kennt der Connector nur eine Kennung, die
+  OV-Multitool je Adresse errechnet hat – nie die Adresse selbst. Er merkt
+  sich die Kennung, bis sie abgeholt ist.
 * **Abstimmungen:** Titel, Beschreibung, Zeitfenster und die Fragen liegen im
   Klartext hier – die Umfrageseite muss sie zeigen. Vom Code nur die
   Prüfsumme. **Die Antworten nicht:** Sie werden im Browser verschlüsselt,

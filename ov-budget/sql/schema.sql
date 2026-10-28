@@ -895,6 +895,7 @@ CREATE TABLE IF NOT EXISTS connectors (
   fuer_verbrauch       TINYINT(1)   NOT NULL DEFAULT 0,
   fuer_umfragen        TINYINT(1)   NOT NULL DEFAULT 0,
   fuer_getraenke       TINYINT(1)   NOT NULL DEFAULT 0,
+  fuer_newsletter      TINYINT(1)   NOT NULL DEFAULT 0,
   is_active            TINYINT(1)   NOT NULL DEFAULT 1,
   -- unser Schluesselpaar fuer diesen Connector und sein oeffentlicher Schluessel
   pem                  TEXT         NULL,
@@ -1827,6 +1828,73 @@ CREATE TABLE IF NOT EXISTS meeting_protokoll_verteiler (
   PRIMARY KEY (meeting_id, group_id),
   CONSTRAINT fk_mprotv_meeting FOREIGN KEY (meeting_id) REFERENCES meetings(id) ON DELETE CASCADE,
   CONSTRAINT fk_mprotv_gruppe FOREIGN KEY (group_id) REFERENCES contact_groups(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- Newsletter: hochgeladene PDFs an Adresslisten, Versandliste, Sperrliste (nur Pruefsummen)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS newsletter (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  titel         VARCHAR(200)  NOT NULL,
+  betreff       VARCHAR(200)  NOT NULL DEFAULT '',
+  text          TEXT          NULL,
+  orig_name     VARCHAR(255)  NOT NULL DEFAULT '',
+  stored_name   VARCHAR(120)  NOT NULL DEFAULT '',
+  mime          VARCHAR(100)  NOT NULL DEFAULT '',
+  size_bytes    INT UNSIGNED  NOT NULL DEFAULT 0,
+  status        ENUM('entwurf','geplant','laeuft','gesendet') NOT NULL DEFAULT 'entwurf',
+  senden_am     DATETIME      NULL,
+  gestartet_am  DATETIME      NULL,
+  gesendet_am   DATETIME      NULL,
+  connector_id  INT UNSIGNED  NULL,
+  -- frei eingetragene Adressen, eine je Zeile
+  adressen      TEXT          NULL,
+  created_by    INT UNSIGNED  NULL,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_newsletter_status (status, senden_am)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS newsletter_kontakte (
+  newsletter_id INT UNSIGNED  NOT NULL,
+  contact_id    INT UNSIGNED  NOT NULL,
+  PRIMARY KEY (newsletter_id, contact_id),
+  CONSTRAINT fk_nlk_newsletter FOREIGN KEY (newsletter_id) REFERENCES newsletter(id) ON DELETE CASCADE,
+  CONSTRAINT fk_nlk_kontakt FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS newsletter_verteiler (
+  newsletter_id INT UNSIGNED  NOT NULL,
+  group_id      INT UNSIGNED  NOT NULL,
+  PRIMARY KEY (newsletter_id, group_id),
+  CONSTRAINT fk_nlv_newsletter FOREIGN KEY (newsletter_id) REFERENCES newsletter(id) ON DELETE CASCADE,
+  CONSTRAINT fk_nlv_gruppe FOREIGN KEY (group_id) REFERENCES contact_groups(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Versandliste: beim Einplanen festgehalten, je Zeile eine Mail
+CREATE TABLE IF NOT EXISTS newsletter_versand (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  newsletter_id INT UNSIGNED  NOT NULL,
+  email         VARCHAR(150)  NOT NULL,
+  name          VARCHAR(150)  NOT NULL DEFAULT '',
+  -- Kennung der Adresse (HMAC) fuer den Abmeldelink
+  token         CHAR(64)      NOT NULL,
+  gesendet_am   DATETIME      NULL,
+  fehler        VARCHAR(300)  NOT NULL DEFAULT '',
+  PRIMARY KEY (id),
+  KEY idx_nlversand_offen (newsletter_id, gesendet_am),
+  CONSTRAINT fk_nlversand_newsletter FOREIGN KEY (newsletter_id) REFERENCES newsletter(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Sperrliste: nur die Kennung (HMAC) der Adresse, nie die Adresse selbst
+CREATE TABLE IF NOT EXISTS newsletter_sperre (
+  id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  token         CHAR(64)      NOT NULL,
+  grund         VARCHAR(200)  NOT NULL DEFAULT '',
+  gesperrt_am   DATETIME      NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_nlsperre_token (token)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS=1;

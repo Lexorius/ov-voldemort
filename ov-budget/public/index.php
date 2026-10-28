@@ -184,6 +184,14 @@ $routes = [
     'getraenke_bestellung_edit' => 'getraenke_bestellung_edit',
     'getraenke_lager'    => 'getraenke_lager',
     'getraenke_action'   => 'getraenke_action',
+
+    // Newsletter
+    'newsletter'         => 'newsletter',
+    'newsletter_detail'  => 'newsletter_detail',
+    'newsletter_edit'    => 'newsletter_edit',
+    'newsletter_action'  => 'newsletter_action',
+    'newsletter_datei'   => 'newsletter_datei',
+    'newsletter_sperre'  => 'newsletter_sperre',
 ];
 
 $route = (string)($_GET['p'] ?? 'dashboard');

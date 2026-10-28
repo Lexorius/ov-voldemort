@@ -13,6 +13,7 @@ declare(strict_types=1);
  *   Zähler          – Zählerstände für Strom, Gas und Wasser
  *   Abstimmungen    – Umfragen mit einer oder mehreren Seiten, Antworten verschlüsselt
  *   Getränke        – „ist leer" oder „wird knapp" vom QR-Code am Lagerplatz
+ *   Newsletter      – der Abmeldelink: wer nichts mehr bekommen will, landet auf einer Sperrliste
  *
  * Beides nimmt er entgegen und gibt es an OV-Multitool weiter – mehr nicht.
  *
@@ -37,7 +38,7 @@ declare(strict_types=1);
  * Gespeichert wird in Dateien unterhalb von daten/ – keine Datenbank nötig.
  */
 
-const CON_VERSION = '1.7.0';
+const CON_VERSION = '1.8.0';
 
 /** Höchstalter einer signierten Anfrage in Sekunden (gegen Wiedereinspielen) */
 const CON_ZEITFENSTER = 300;
@@ -69,6 +70,8 @@ const CON_UMFRAGE_TYPEN = ['einfach', 'mehrfach', 'skala', 'janein', 'text', 'hi
 const CON_LIMIT_GETRAENKE = 60;
 /** Was eine Getränkemeldung sagen kann */
 const CON_GETRAENKE_STAND = ['leer', 'knapp', 'ok'];
+/** Abmeldungen vom Newsletter je Anschluss und Stunde */
+const CON_LIMIT_ABMELDUNG = 20;
 
 class ConException extends RuntimeException
 {
@@ -1170,6 +1173,57 @@ function con_getraenkemeldungen_abholen(int $max = 200): array
 }
 
 /* ==================================================================== */
+/* Newsletter: Abmeldungen                                               */
+/* ==================================================================== */
+
+/**
+ * Der Abmeldelink trägt eine Kennung, die OV-Multitool je Adresse
+ * errechnet hat (HMAC). Der Connector weiß nicht, welche Adresse dahinter
+ * steht – er merkt sich nur die Kennung, bis OV-Multitool sie abholt und
+ * die Adresse auf seine Sperrliste setzt. Reine Funktion.
+ */
+function con_abmeldung_gueltig(string $kennung): bool
+{
+    return (bool)preg_match('/^[a-f0-9]{64}$/', $kennung);
+}
+
+/** Abmeldung ablegen – je Kennung nur einmal, sonst würde Wiederholen die Ablage füllen */
+function con_abmeldung_ablegen(string $kennung): void
+{
+    $kennung = strtolower(trim($kennung));
+    if (!con_abmeldung_gueltig($kennung)) {
+        throw new ConException('Dieser Abmeldelink ist nicht vollständig.');
+    }
+    if (!con_limit_frei('ab:' . substr(sha1((string)($_SERVER['REMOTE_ADDR'] ?? '')), 0, 16), CON_LIMIT_ABMELDUNG)) {
+        throw new ConException('Zu viele Abmeldungen von diesem Anschluss. Bitte später erneut.');
+    }
+    $pfad = con_dir('abmeldungen') . '/' . $kennung . '.json';
+    if (!is_file($pfad)) {
+        file_put_contents($pfad, json_encode(['ts' => time()], JSON_UNESCAPED_SLASHES));
+    }
+}
+
+/** Abmeldungen abholen und dabei löschen */
+function con_abmeldungen_abholen(int $max = 500): array
+{
+    $out = [];
+    $dateien = glob(con_dir('abmeldungen') . '/*.json') ?: [];
+    sort($dateien);
+    foreach ($dateien as $datei) {
+        if (count($out) >= $max) {
+            break;
+        }
+        $kennung = basename($datei, '.json');
+        $roh = json_decode((string)@file_get_contents($datei), true);
+        @unlink($datei);
+        if (con_abmeldung_gueltig($kennung)) {
+            $out[] = ['kennung' => $kennung, 'ts' => (int)($roh['ts'] ?? 0)];
+        }
+    }
+    return $out;
+}
+
+/* ==================================================================== */
 /* Einstellungen von OV-Multitool: Betreiber, Impressum, Datenschutz     */
 /* ==================================================================== */
 
@@ -1246,7 +1300,7 @@ function con_manifest_erzeugen(string $wurzel): array
 function con_daten_erwartet(string $name, bool $istOrdner): bool
 {
     if ($istOrdner) {
-        return in_array($name, ['meldungen', 'rueckmeldungen', 'bestandsmeldungen', 'zaehlerstaende', 'umfrageantworten', 'getraenkemeldungen'], true);
+        return in_array($name, ['meldungen', 'rueckmeldungen', 'bestandsmeldungen', 'zaehlerstaende', 'umfrageantworten', 'getraenkemeldungen', 'abmeldungen'], true);
     }
     if (in_array($name, ['.htaccess', 'index.html', 'kopplung.json', 'kopplungscode.txt', 'fahrzeuge.json', 'einstellungen.json',
                          'veranstaltungen.json', 'einladungen.json', 'bestand.json', 'zaehler.json', 'umfragen.json', 'getraenke.json',
@@ -1396,6 +1450,7 @@ function con_status(): array
         'zaehlerstaende'  => $zaehlen('zaehlerstaende'),
         'umfragen'        => count(con_lesen('umfragen.json')),
         'umfrageantworten' => $zaehlen('umfrageantworten'),
+        'abmeldungen'     => count(glob(con_dir('abmeldungen') . '/*.json') ?: []),
         'getraenke'       => count(con_lesen('getraenke.json')),
         'getraenkemeldungen' => $zaehlen('getraenkemeldungen'),
         'schreibbar'      => is_writable(con_dir()),
