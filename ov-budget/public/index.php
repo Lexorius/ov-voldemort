@@ -139,6 +139,9 @@ $routes = [
     'vehicle_order'      => 'vehicle_order',
     'vehicle_order_edit' => 'vehicle_order_edit',
     'vehicle_file'       => 'vehicle_file',
+    'vehicle_tanken'     => 'vehicle_tanken',
+    'vehicle_tank_edit'  => 'vehicle_tank_edit',
+    'vehicle_tanken_export' => 'vehicle_tanken_export',
 
     'download'           => 'download',
     'neu'                => 'changelog',

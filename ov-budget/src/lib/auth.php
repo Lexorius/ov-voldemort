@@ -116,6 +116,7 @@ function can(string $what, mixed $ctx = null): bool
         'manage_vehicles' => $leitung,
         'view_vehicles'  => $leitung || setting_bool('fahrzeug_user_darf_sehen', true),
         'report_vehicle' => $leitung || setting_bool('fahrzeug_user_darf_melden', true),
+        'tank_vehicle'   => $leitung || setting_bool('fahrzeug_user_darf_tanken', true),
         'manage_events'  => $leitung,
         'manage_umfragen' => $leitung,
         'manage_newsletter' => $leitung,

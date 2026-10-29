@@ -17,7 +17,9 @@ $arten = [
     'divera' => 'Divera',
     'stammdaten' => 'Stammdaten',
     'datei' => 'Dateien',
+    'tankung' => 'Tankungen',
 ];
+$tanken ??= ['anzahl' => 0, 'eintraege' => [], 'verbrauch' => null, 'strecke' => 0, 'liter' => 0.0, 'betrag' => 0.0, 'betrag_fehlt' => 0, 'punkte' => [], 'letzte' => null];
 ?>
 <div class="pagehead">
   <div>
@@ -377,6 +379,37 @@ $arten = [
   <?php endif; ?>
 </section>
 
+<section class="card" id="tanken">
+  <div class="card__head">
+    <h2>Tanken und Verbrauch</h2>
+    <div class="btnrow">
+      <?php if ($tanken['verbrauch'] !== null): ?><span class="muted small">im Mittel <strong><?= e(tank_verbrauch_text($tanken['verbrauch'])) ?></strong></span><?php endif; ?>
+      <?php if (can('tank_vehicle')): ?><a class="btn btn--sm" href="<?= e(url('vehicle_tank_edit', ['vehicle_id' => $vehicle['id']])) ?>">+ Tankung</a><?php endif; ?>
+      <a class="btn btn--sm btn--sec" href="<?= e(url('vehicle_tanken', ['id' => $vehicle['id']])) ?>">Verbrauch</a>
+    </div>
+  </div>
+  <?php if (!$tanken['eintraege']): ?>
+    <div class="empty">Noch keine Tankung. Quittung mit Kilometerstand und Litern eintragen – ab der zweiten Volltankung steht hier der Verbrauch je 100 km.</div>
+  <?php else: ?>
+    <div class="tablewrap">
+      <table class="data">
+        <tbody>
+        <?php foreach (array_slice($tanken['eintraege'], 0, 5) as $t): ?>
+          <tr>
+            <td class="nowrap small"><?= e(de_date((string)$t['datum'])) ?></td>
+            <td class="num nowrap"><?= $t['km_stand'] !== null ? e(tank_km_text((int)$t['km_stand'])) : '<span class="muted">–</span>' ?></td>
+            <td class="num nowrap"><?= e(tank_liter_text((float)$t['liter'])) ?><?= (string)$t['art'] === 'adblue' ? ' <span class="badge badge--outline">AdBlue</span>' : ((int)$t['voll'] !== 1 ? ' <span class="badge badge--outline">Teil</span>' : '') ?></td>
+            <td class="num nowrap"><?= $t['verbrauch'] !== null ? e(tank_verbrauch_text($t['verbrauch'])) : '<span class="muted">–</span>' ?><?= !empty($t['auffaellig']) ? ' <span class="badge badge--warn">auffällig</span>' : '' ?></td>
+            <td class="num nowrap small"><?= $t['betrag'] !== null ? e(money((float)$t['betrag'])) : '<span class="muted">–</span>' ?></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+    <?php if (count($tanken['eintraege']) > 5): ?><p class="small muted" style="margin:.4rem 0 0">Die letzten 5 von <?= (int)$tanken['anzahl'] ?> – <a href="<?= e(url('vehicle_tanken', ['id' => $vehicle['id']])) ?>">alle Tankungen und der Verlauf</a>.</p><?php endif; ?>
+  <?php endif; ?>
+</section>
+
 <section class="card" id="auftraege">
   <div class="card__head">
     <h2>Instandsetzungsaufträge</h2>
@@ -654,6 +687,8 @@ $arten = [
             <?php endif; ?>
             <?php if ($j['ref_typ'] === 'auftrag' && $j['ref_id']): ?>
               <a class="small" href="<?= e(url('vehicle_order', ['id' => $j['ref_id']])) ?>">zum Auftrag</a>
+            <?php elseif ($j['ref_typ'] === 'tankung' && $j['ref_id']): ?>
+              <a class="small" href="<?= e(url('vehicle_tanken', ['id' => $vehicle['id']])) ?>#t<?= (int)$j['ref_id'] ?>">zu den Tankungen</a>
             <?php endif; ?>
           </div>
         </div>

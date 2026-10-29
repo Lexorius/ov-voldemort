@@ -234,6 +234,9 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
   Auftragsschritt, jede Meldung; eine Prüfsummen-Kette zeigt Manipulationen an
 - **Instandsetzungsaufträge** mit eigener Nummer, der Nummer der
   THW-Verwaltung, Werkstatt, Kosten und Bearbeitungsstand
+- **Tanken und Verbrauch**: Tankquittungen je Fahrzeug mit Belegfoto,
+  Verbrauch je 100 km von Volltankung zu Volltankung – auch ohne Beträge
+  (Tankkarte); Verlauf, Jahreswerte, Auffälligkeiten, CSV
 - **Sortierbare Liste und Kachelansicht** mit Stempeln „Nicht einsatzbereit",
   „In Wartung", „Bedingt einsatzbereit" und „Im Einsatz" (auch aus dem
   Divera-Funkstatus), Favoriten je Person

@@ -683,6 +683,10 @@ pre.raw {
 }
 .months__bar--ein { background: var(--ok); }
 .months__bar--aus { background: var(--accent); }
+/* Verbrauch je Volltankung in der Fahrzeugakte */
+.months--tank { height: 110px; }
+.months--tank .months__bar { background: #64748b; }
+.months--tank .months__bar--hoch { background: #b45309; }
 @media (prefers-color-scheme: dark) {
   .months__bar--ein { background: #4ade80; }
   .months__bar--aus { background: #6f9dff; }

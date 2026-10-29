@@ -1401,10 +1401,34 @@ CREATE TABLE IF NOT EXISTS calendar_auftraege (
   CONSTRAINT fk_ca_order FOREIGN KEY (order_id) REFERENCES vehicle_orders(id)   ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Tankungen: Quittung je Fahrzeug, daraus der Verbrauch je 100 km.
+-- betrag darf fehlen (Tankkarte), voll = Volltankung, art kraftstoff oder adblue
+CREATE TABLE IF NOT EXISTS vehicle_tankungen (
+  id           INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  vehicle_id   INT UNSIGNED  NOT NULL,
+  datum        DATE          NOT NULL,
+  km_stand     INT UNSIGNED  NULL,
+  liter        DECIMAL(8,2)  NOT NULL,
+  betrag       DECIMAL(10,2) NULL,
+  voll         TINYINT(1)    NOT NULL DEFAULT 1,
+  art          VARCHAR(20)   NOT NULL DEFAULT 'kraftstoff',
+  tankstelle   VARCHAR(150)  NOT NULL DEFAULT '',
+  beleg_nr     VARCHAR(80)   NOT NULL DEFAULT '',
+  notiz        TEXT          NULL,
+  user_id      INT UNSIGNED  NULL,
+  created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_tank_fz (vehicle_id, datum),
+  CONSTRAINT fk_tank_fz   FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE,
+  CONSTRAINT fk_tank_user FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS vehicle_files (
   id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
   vehicle_id   INT UNSIGNED NOT NULL,
   order_id     INT UNSIGNED NULL,
+  -- Beleg einer Tankung: haengt dort, nicht in der Galerie
+  tank_id      INT UNSIGNED NULL,
   art          ENUM('bild','dokument') NOT NULL DEFAULT 'dokument',
   titel        VARCHAR(200) NOT NULL DEFAULT '',
   orig_name    VARCHAR(255) NOT NULL DEFAULT '',
@@ -1418,8 +1442,10 @@ CREATE TABLE IF NOT EXISTS vehicle_files (
   PRIMARY KEY (id),
   KEY idx_vf_fz (vehicle_id, art),
   KEY idx_vf_auftrag (order_id),
+  KEY idx_vf_tank (tank_id),
   CONSTRAINT fk_vf_fz      FOREIGN KEY (vehicle_id)  REFERENCES vehicles(id)       ON DELETE CASCADE,
   CONSTRAINT fk_vf_auftrag FOREIGN KEY (order_id)    REFERENCES vehicle_orders(id) ON DELETE CASCADE,
+  CONSTRAINT fk_vf_tank    FOREIGN KEY (tank_id)     REFERENCES vehicle_tankungen(id) ON DELETE CASCADE,
   CONSTRAINT fk_vf_user    FOREIGN KEY (uploaded_by) REFERENCES users(id)          ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

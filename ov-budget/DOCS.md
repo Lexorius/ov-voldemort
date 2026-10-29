@@ -1459,6 +1459,37 @@ so sieht man schnell, ob zwei MTW für 16 Personen reichen. Fahrzeuge ohne
 Angabe zählen nicht mit und werden benannt. Im Terminformular nennt das
 Fahrzeug-Dropdown die Werte gleich mit.
 
+## Tanken und Verbrauch
+
+Jede Fahrzeugakte hat die Unterseite **Tanken und Verbrauch**. Dort werden
+Tankquittungen erfasst: Datum, Kilometerstand, Liter, ob vollgetankt wurde,
+auf Wunsch Betrag, Tankstelle, Belegnummer, Bemerkung und ein Foto des Belegs
+(am Handy direkt aus der Kamera). Der **Betrag darf fehlen** – mit einer
+Tankkarte wie DKV steht er oft nicht auf dem Beleg, die Rechnung kommt
+gesammelt. Was die Anwendung daraus macht:
+
+* **Verbrauch je 100 km**, gerechnet von Volltankung zu Volltankung. Wer
+  nur nachfüllt, lässt den Haken „Vollgetankt" weg; die Liter zählen dann zur
+  Strecke bis zur nächsten vollen Tankung. AdBlue wird getrennt geführt und
+  zählt nie zum Verbrauch.
+* **Kennzahlen und Verlauf**: Verbrauch im Mittel, zuletzt, Liter und
+  Kosten (soweit bekannt), ein Balken je Volltankung und eine Tabelle je
+  Jahr. Tankungen, die mehr als 25 % vom Mittel abweichen, sind als
+  *auffällig* markiert – meist eine vergessene Teiltankung oder ein
+  vertippter Stand.
+* **Plausibilität**: Ein Kilometerstand darf nicht unter dem einer
+  früheren und nicht über dem einer späteren Tankung liegen. Liegt er über
+  dem Stand in den Stammdaten, zieht die Anwendung den Stand nach, mit
+  Journaleintrag.
+* **Journal**: Jede Tankung, Änderung und Löschung steht in der
+  Fahrzeugakte; Belege hängen an der Tankung, nicht in der Bildergalerie.
+* **CSV** der Tankungen zum Weiterrechnen.
+
+Alle Mitglieder dürfen Tankungen erfassen und eigene ändern, solange die
+Einstellung „Alle Mitglieder dürfen Tankungen erfassen" an ist; fremde
+Einträge ändert nur die Leitung. Die letzten fünf Tankungen und der mittlere
+Verbrauch stehen auch in der Fahrzeugakte selbst.
+
 ## Fahrzeugdaten aus Divera
 
 Unter *Einstellungen → Divera 24/7* lässt sich *Fahrzeugdaten aus Divera

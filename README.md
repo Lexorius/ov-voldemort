@@ -131,7 +131,10 @@ unter „Sicherheitslücke PHP2Shell".
   Trägerfahrzeug, Kennzeichen und Stellplatz werden vererbt, der Anhänger
   wird bei Terminen automatisch mitgebucht. Bilder mit Titelbild, Dokumente,
   Karte mit letzter Position, QR-Code zur Standortmeldung ohne Anmeldung,
-  Wünsche je Fahrzeug, Stempel „Nicht einsatzbereit".
+  Wünsche je Fahrzeug, Stempel „Nicht einsatzbereit". **Tanken und
+  Verbrauch**: Tankquittungen je Fahrzeug mit Belegfoto, Verbrauch je 100 km
+  von Volltankung zu Volltankung, auch ohne Beträge (Tankkarte), Verlauf und
+  Auffälligkeiten.
 * **Funkgeräte** – HRT, MRT, Feststationen, Meldeempfänger mit Seriennummer,
   Inventarnummer, Funkrufname und Prüffrist; Karten hineinbuchen, Geräte
   Fahrzeugen und Plätzen zuordnen, Gruppen für Koffer und Sätze, „Gerät ist

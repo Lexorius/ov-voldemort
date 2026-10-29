@@ -2371,6 +2371,38 @@ SQL);
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
     }
     $merken('090_newsletter');
+
+    /* ---------- 091: Tanken und Verbrauch ---------- */
+    if (!ovb_table_exists($pdo, 'vehicle_tankungen')) {
+        $pdo->exec("CREATE TABLE vehicle_tankungen (
+  id           INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  vehicle_id   INT UNSIGNED  NOT NULL,
+  datum        DATE          NOT NULL,
+  km_stand     INT UNSIGNED  NULL,
+  liter        DECIMAL(8,2)  NOT NULL,
+  betrag       DECIMAL(10,2) NULL,
+  voll         TINYINT(1)    NOT NULL DEFAULT 1,
+  art          VARCHAR(20)   NOT NULL DEFAULT 'kraftstoff',
+  tankstelle   VARCHAR(150)  NOT NULL DEFAULT '',
+  beleg_nr     VARCHAR(80)   NOT NULL DEFAULT '',
+  notiz        TEXT          NULL,
+  user_id      INT UNSIGNED  NULL,
+  created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_tank_fz (vehicle_id, datum),
+  CONSTRAINT fk_tank_fz   FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE,
+  CONSTRAINT fk_tank_user FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle vehicle_tankungen angelegt.');
+    }
+    if (ovb_table_exists($pdo, 'vehicle_files') && !ovb_column_exists($pdo, 'vehicle_files', 'tank_id')) {
+        $pdo->exec('ALTER TABLE vehicle_files
+            ADD COLUMN tank_id INT UNSIGNED NULL AFTER order_id,
+            ADD KEY idx_vf_tank (tank_id),
+            ADD CONSTRAINT fk_vf_tank FOREIGN KEY (tank_id) REFERENCES vehicle_tankungen(id) ON DELETE CASCADE');
+        $say('Belege lassen sich an Tankungen hängen.');
+    }
+    $merken('091_tanken');
 }
 
 /**

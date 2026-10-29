@@ -1,5 +1,18 @@
 # Änderungsverlauf
 
+## 2.1.64.0
+
+- **Fahrzeuge – Tanken und Verbrauch:** Unterseite je Fahrzeug für
+  Tankquittungen (Datum, Kilometerstand, Liter, Volltankung, Betrag
+  freiwillig – mit Tankkarte fehlt er oft –, Tankstelle, Belegnummer,
+  Belegfoto). Daraus der **Verbrauch je 100 km** von Volltankung zu
+  Volltankung, Teiltankungen zählen zur Strecke, AdBlue getrennt. Kennzahlen,
+  Verlauf je Volltankung, Werte je Jahr, Auffälligkeiten über 25 % neben dem
+  Mittel, CSV. Kilometerstände werden auf Plausibilität geprüft und ziehen den
+  Stand in den Stammdaten nach; alles steht im Journal. Neue Einstellung
+  „Alle Mitglieder dürfen Tankungen erfassen" (an), fremde Einträge ändert nur
+  die Leitung. Die Fahrzeugakte zeigt die letzten fünf Tankungen.
+
 ## 2.1.63.0
 
 - **Budget:** Geplante Ausgaben und erwartete Einnahmen fallen jetzt auf –

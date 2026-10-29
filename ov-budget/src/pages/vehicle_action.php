@@ -157,11 +157,24 @@ switch (post_str('action')) {
             flash('error', 'Dafür fehlen dir die Rechte.');
             break;
         }
-        $zurueck = $datei['order_id']
-            ? url('vehicle_order', ['id' => $datei['order_id']]) . '#dateien'
-            : url('vehicle', ['id' => $datei['vehicle_id']]) . ($datei['art'] === 'bild' ? '#bilder' : '#dokumente');
+        $zurueck = !empty($datei['tank_id'])
+            ? url('vehicle_tank_edit', ['id' => $datei['tank_id']]) . '#belege'
+            : ($datei['order_id']
+                ? url('vehicle_order', ['id' => $datei['order_id']]) . '#dateien'
+                : url('vehicle', ['id' => $datei['vehicle_id']]) . ($datei['art'] === 'bild' ? '#bilder' : '#dokumente'));
         vfile_delete($datei, $user);
         flash('success', 'Datei entfernt. Im Journal steht, dass es sie gab.');
+        break;
+
+    case 'tank_delete':
+        $tank = tank_find(post_int('tank_id', 0) ?? 0);
+        if (!$tank || !tank_darf_aendern($tank, $user)) {
+            flash('error', 'Dafür fehlen dir die Rechte.');
+            break;
+        }
+        $zurueck = url('vehicle_tanken', ['id' => $tank['vehicle_id']]);
+        tank_delete($tank, $user);
+        flash('success', 'Tankung gelöscht. Im Journal steht, dass es sie gab.');
         break;
 
     case 'file_cover':

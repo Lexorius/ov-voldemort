@@ -201,7 +201,7 @@ function vfile_process_image(string $quelle, string $ziel, string $mime, int $ma
  *       'dokument' – alles Erlaubte, unverändert (ein Scan behält seine Auflösung)
  *       'auto'     – Bild oder Dokument, je nach Inhalt (für Aufträge)
  */
-function vfile_store_uploads(int $vehicleId, ?int $orderId, string $feld, string $art, string $titel, array $user): array
+function vfile_store_uploads(int $vehicleId, ?int $orderId, string $feld, string $art, string $titel, array $user, ?int $tankId = null): array
 {
     $fehler = [];
     $anzahl = 0;
@@ -283,6 +283,7 @@ function vfile_store_uploads(int $vehicleId, ?int $orderId, string $feld, string
         $id = db_insert('vehicle_files', [
             'vehicle_id'   => $vehicleId,
             'order_id'     => $orderId,
+            'tank_id'      => $tankId,
             'art'          => $zielArt,
             'titel'        => mb_substr(trim($titel) !== '' ? trim($titel) : pathinfo($name, PATHINFO_FILENAME), 0, 200),
             'orig_name'    => mb_substr($name, 0, 255),
@@ -297,16 +298,16 @@ function vfile_store_uploads(int $vehicleId, ?int $orderId, string $feld, string
             ki_einreihen('fahrzeug', $id, $zielArt);
         }
 
-        // Das erste Bild eines Fahrzeugs wird Titelbild
-        if ($zielArt === 'bild' && $orderId === null && !vfile_cover($vehicleId)) {
+        // Das erste Bild eines Fahrzeugs wird Titelbild – Belege von Tankungen nie
+        if ($zielArt === 'bild' && $orderId === null && $tankId === null && !vfile_cover($vehicleId)) {
             vfile_set_cover($vehicleId, $id);
         }
 
         journal_add($vehicleId, [
-            'art'     => $orderId ? 'auftrag' : 'datei',
-            'titel'   => ($zielArt === 'bild' ? 'Bild' : 'Dokument') . ' hinzugefügt: ' . $name,
-            'ref_typ' => $orderId ? 'auftrag' : 'datei',
-            'ref_id'  => $orderId ?? $id,
+            'art'     => $tankId ? 'tankung' : ($orderId ? 'auftrag' : 'datei'),
+            'titel'   => ($tankId ? 'Beleg' : ($zielArt === 'bild' ? 'Bild' : 'Dokument')) . ' hinzugefügt: ' . $name,
+            'ref_typ' => $tankId ? 'tankung' : ($orderId ? 'auftrag' : 'datei'),
+            'ref_id'  => $tankId ?? $orderId ?? $id,
         ], $user);
         $anzahl++;
     }
@@ -346,6 +347,19 @@ function vfile_list(int $vehicleId, ?int $orderId = null, ?string $art = null): 
          WHERE ' . implode(' AND ', $w) . '
          ORDER BY f.is_cover DESC, f.created_at DESC, f.id DESC',
         $p
+    );
+}
+
+/** Belege einer Tankung */
+function vfile_list_tank(int $tankId): array
+{
+    return db_all(
+        'SELECT f.*, u.display_name AS hochgeladen_von
+         FROM vehicle_files f
+         LEFT JOIN users u ON u.id = f.uploaded_by
+         WHERE f.tank_id = ?
+         ORDER BY f.created_at, f.id',
+        [$tankId]
     );
 }
 
@@ -394,7 +408,7 @@ function vfile_delete(array $datei, array $user): void
     // War es das Titelbild, rückt das nächste Bild nach
     if ((int)$datei['is_cover'] === 1) {
         $naechstes = db_val(
-            "SELECT id FROM vehicle_files WHERE vehicle_id = ? AND art = 'bild' AND order_id IS NULL ORDER BY id LIMIT 1",
+            "SELECT id FROM vehicle_files WHERE vehicle_id = ? AND art = 'bild' AND order_id IS NULL AND tank_id IS NULL ORDER BY id LIMIT 1",
             [(int)$datei['vehicle_id']]
         );
         if ($naechstes) {
@@ -402,12 +416,13 @@ function vfile_delete(array $datei, array $user): void
         }
     }
 
+    $tankId = (int)($datei['tank_id'] ?? 0);
     journal_add((int)$datei['vehicle_id'], [
-        'art'      => $datei['order_id'] ? 'auftrag' : 'datei',
-        'titel'    => ($datei['art'] === 'bild' ? 'Bild' : 'Dokument') . ' entfernt: ' . $datei['orig_name'],
+        'art'      => $tankId ? 'tankung' : ($datei['order_id'] ? 'auftrag' : 'datei'),
+        'titel'    => ($tankId ? 'Beleg' : ($datei['art'] === 'bild' ? 'Bild' : 'Dokument')) . ' entfernt: ' . $datei['orig_name'],
         'alt_wert' => (string)$datei['titel'],
-        'ref_typ'  => $datei['order_id'] ? 'auftrag' : '',
-        'ref_id'   => $datei['order_id'] ? (int)$datei['order_id'] : null,
+        'ref_typ'  => $tankId ? 'tankung' : ($datei['order_id'] ? 'auftrag' : ''),
+        'ref_id'   => $tankId ?: ($datei['order_id'] ? (int)$datei['order_id'] : null),
     ], $user);
 }
 

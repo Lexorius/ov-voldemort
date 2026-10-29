@@ -368,6 +368,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('fahrzeug_intro','Fahrzeuge des Ortsverbands mit Fahrzeugakte, Journal und Instandsetzungsauftraegen.','Einleitungstext im Fahrzeugmodul','','textarea','Fahrzeuge',20),
 ('fahrzeug_user_darf_sehen','1','Alle Mitglieder duerfen Fahrzeuge sehen','Sonst nur Leitung und Administration','bool','Fahrzeuge',30),
 ('fahrzeug_user_darf_melden','1','Alle Mitglieder duerfen Schaeden melden','Legt einen Auftrag an und schreibt ins Journal','bool','Fahrzeuge',40),
+('fahrzeug_user_darf_tanken','1','Alle Mitglieder duerfen Tankungen erfassen','Tankquittung mit Kilometerstand und Litern in der Fahrzeugakte; daraus rechnet die Anwendung den Verbrauch je 100 km. Eigene Eintraege darf man aendern, fremde nur die Leitung.','bool','Fahrzeuge',42),
 ('connector_aktiv','0','Standortmeldung per QR-Code','Fahrzeuge bekommen einen QR-Code, ueber den jede Person ohne Zugang den Standort melden kann. Braucht den OV-Multitool-Connector auf einem oeffentlich erreichbaren Webserver.','bool','Fahrzeuge',80),
 ('connector_pruefung_taeglich','1','Connectoren täglich prüfen','Dateien mit den Prüfsummen von OV-Multitool vergleichen, Skripte über das Netz holen, Ablage und Signaturen testen. Bei Alarm Nachricht an die Leitung.','bool','Fahrzeuge',83),
 ('connector_betreiber','','Betreiber in der Fußzeile','Erscheint auf den Seiten des Connectors, z. B. der Name des Ortsverbands. Leer = keine Angabe.','text','Connector',10),
