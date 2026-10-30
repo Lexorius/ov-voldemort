@@ -307,6 +307,10 @@ switch (post_str('action')) {
         $assetId = trim(post_str('asset_id'));
         $vehicleId = post_int('vehicle_id', 0) ?? 0;
 
+        if ($vehicleId === 0 && post_str('umhaengen') === '1') {
+            flash('error', 'Bitte das Fahrzeug wählen, auf das die Verknüpfung umgehängt werden soll.');
+            break;
+        }
         if ($vehicleId === 0) {
             // Neues Fahrzeug aus dem Stein-Eintrag anlegen
             $name = trim(post_str('name')) ?: ('Fahrzeug ' . $assetId);
@@ -323,9 +327,9 @@ switch (post_str('action')) {
                 'text'  => 'Aus der Stein.APP übernommen.',
             ], $user);
         }
-        $fehler = stein_assign($vehicleId, $assetId, $user);
+        $fehler = stein_assign($vehicleId, $assetId, $user, post_str('umhaengen') === '1');
         flash($fehler === null ? 'success' : 'error',
-            $fehler ?? 'Fahrzeug verknüpft. Der nächste Abgleich holt den Stand.');
+            $fehler ?? (post_str('umhaengen') === '1' ? 'Verknüpfung umgehängt. Der nächste Abgleich holt den Stand.' : 'Fahrzeug verknüpft. Der nächste Abgleich holt den Stand.'));
         break;
 
     case 'stein_unassign':
@@ -334,14 +338,9 @@ switch (post_str('action')) {
             flash('error', 'Dafür fehlen dir die Rechte.');
             break;
         }
-        $zurueck = url('vehicle', ['id' => $vehicle['id']]);
-        db_update('vehicles', ['stein_asset_id' => null], 'id = ?', [(int)$vehicle['id']]);
-        journal_add((int)$vehicle['id'], [
-            'art'      => 'stein',
-            'titel'    => 'Verknüpfung mit der Stein.APP gelöst',
-            'alt_wert' => (string)$vehicle['stein_asset_id'],
-        ], $user);
-        flash('success', 'Verknüpfung gelöst.');
+        $zurueck = post_str('zurueck') === 'stein' ? url('admin_stein') : url('vehicle', ['id' => $vehicle['id']]);
+        stein_unassign($vehicle, $user);
+        flash('success', 'Verknüpfung gelöst. Der Eintrag steht unter Verwaltung → Stein.APP zum Zuordnen bereit und wird nicht von selbst neu angelegt.');
         break;
 
     default:

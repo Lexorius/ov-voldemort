@@ -1598,6 +1598,21 @@ Divera-Fahrzeuge* zum Zuordnen.
 3. Unter *Verwaltung → Stein.APP* die Fahrzeuge zuordnen: entweder einer
    bestehenden Fahrzeugakte oder als neue Akte.
 
+**Vorhandenes wird erkannt:** Bevor der Abgleich eine neue Akte anlegt,
+sucht er ein Fahrzeug ohne Stein-Verknüpfung mit demselben **Kennzeichen**,
+sonst mit derselben **Bezeichnung** oder demselben **Funkrufnamen** –
+Groß- und Kleinschreibung, Leerzeichen und Bindestriche spielen dabei keine
+Rolle („MLW - OV" trifft „MLW-OV"). Ein eindeutiger Treffer wird verknüpft,
+mit Journaleintrag; nur was dann noch übrig ist, wird angelegt oder zum
+Zuordnen angeboten.
+
+**Umhängen:** Hängt ein Eintrag am falschen Fahrzeug, etwa an einer doppelt
+angelegten Akte, steht unter *Verwaltung → Stein.APP → Verknüpfte Fahrzeuge*
+je Zeile „Umhängen auf". Die alte Akte verliert die Verknüpfung, beide
+bekommen einen Journaleintrag, der nächste Abgleich holt den Stand frisch.
+Eine **gelöste** Verknüpfung legt der Abgleich nicht von selbst neu an – der
+Eintrag bleibt in der Liste zum Zuordnen, bis ihn jemand zuordnet.
+
 **Automatisch anlegen** (Einstellung *Unbekannte Fahrzeuge selbst anlegen*)
 gilt nur für Einträge mit erkennbarem **Kennzeichen** – entweder in einem
 eigenen Feld der Stein.APP oder im Text (z. B. „GKW 1 (THW-84321)" oder

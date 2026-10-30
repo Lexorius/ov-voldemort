@@ -30,6 +30,30 @@ $check = function (string $name, bool $cond) use (&$ok, &$fail) {
     if ($cond) { $ok++; } else { $fail++; echo "FAIL: $name\n"; }
 };
 
+/* ---- Vorhandene Akten erkennen, statt sie doppelt anzulegen ---- */
+$check('Vergleichsform', stein_vergleichsform('MLW - OV') === 'MLWOV' && stein_vergleichsform('mlw-ov') === 'MLWOV'
+    && stein_vergleichsform('THW 99020') === 'THW99020' && stein_vergleichsform('THW-99020') === 'THW99020' && stein_vergleichsform('') === '');
+$akten = [
+    ['id' => 1, 'bezeichnung' => 'GKW 1', 'funkrufname' => 'Heros 24/51', 'kennzeichen' => 'THW 99020', 'is_active' => 1, 'stein_asset_id' => '206'],
+    ['id' => 2, 'bezeichnung' => 'MLW - OV', 'funkrufname' => '', 'kennzeichen' => 'THW 99021', 'is_active' => 1, 'stein_asset_id' => ''],
+    ['id' => 3, 'bezeichnung' => 'MTW', 'funkrufname' => 'Heros 24/11', 'kennzeichen' => '', 'is_active' => 1, 'stein_asset_id' => null],
+    ['id' => 4, 'bezeichnung' => 'Anhänger', 'funkrufname' => '', 'kennzeichen' => 'THW 99099', 'is_active' => 0, 'stein_asset_id' => null],
+];
+$m = stein_match_vehicle(['id' => 300, 'label' => 'MLW-OV', 'name' => 'Zugtrupp'], $akten);
+$check('Bezeichnung trifft trotz Bindestrich und Leerzeichen', $m !== null && $m['vehicle']['id'] === 2 && $m['grund'] === 'Bezeichnung');
+$m = stein_match_vehicle(['id' => 301, 'label' => 'Irgendwas', 'comment' => 'Kennzeichen THW-99021'], $akten);
+$check('Kennzeichen geht vor', $m !== null && $m['vehicle']['id'] === 2 && $m['grund'] === 'Kennzeichen');
+$m = stein_match_vehicle(['id' => 302, 'label' => 'GKW 1'], $akten);
+$check('schon verknüpfte Akten zählen nicht', $m === null);
+$m = stein_match_vehicle(['id' => 303, 'radioName' => 'Heros 24/11', 'label' => 'Heros 24/11'], $akten);
+$check('Funkrufname als Bezeichnung', $m !== null && $m['vehicle']['id'] === 3);
+$m = stein_match_vehicle(['id' => 304, 'label' => 'Anhänger'], $akten);
+$check('ausgemusterte nur, wenn nichts Geführtes passt', $m !== null && $m['vehicle']['id'] === 4);
+$doppelt = $akten;
+$doppelt[] = ['id' => 5, 'bezeichnung' => 'MTW', 'funkrufname' => '', 'kennzeichen' => '', 'is_active' => 1, 'stein_asset_id' => null];
+$check('zwei gleiche Bezeichnungen: kein Treffer', stein_match_vehicle(['id' => 305, 'label' => 'MTW'], $doppelt) === null);
+$check('nichts Passendes', stein_match_vehicle(['id' => 306, 'label' => 'Boot'], $akten) === null && stein_match_vehicle(['id' => 307, 'label' => 'MTW'], []) === null);
+
 /* ---- Asset nach Spezifikation ---- */
 $asset = [
     'buId' => 21, 'groupId' => 3, 'id' => 206, 'label' => 'GKW 1', 'name' => 'Bergungsgruppe',

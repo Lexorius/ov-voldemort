@@ -502,6 +502,9 @@ function stein_sync_locked(float $start): array
     $zuordnungen = 0;
     $aenderungen = 0;
     $offen = [];
+    $nichtAnlegen = stein_nicht_anlegen();
+    // Fahrzeuge ohne Verknüpfung – um Vorhandenes zu finden, statt es doppelt anzulegen
+    $unverknuepft = db_all("SELECT id, bezeichnung, funkrufname, kennzeichen, is_active, stein_asset_id FROM vehicles WHERE stein_asset_id IS NULL OR stein_asset_id = ''");
 
     foreach ($assets as $asset) {
         $assetId = trim((string)($asset['id'] ?? ''));
@@ -510,12 +513,36 @@ function stein_sync_locked(float $start): array
         }
         $vehicle = vehicle_by_stein($assetId);
 
+        if (!$vehicle && empty($asset['deleted'])) {
+            // Gibt es die Akte schon – gleiches Kennzeichen oder gleiche Bezeichnung? Dann verknüpfen statt anlegen
+            $treffer = stein_match_vehicle($asset, $unverknuepft);
+            if ($treffer !== null) {
+                $vid = (int)$treffer['vehicle']['id'];
+                db_update('vehicles', ['stein_asset_id' => $assetId], 'id = ?', [$vid]);
+                journal_add($vid, [
+                    'art'      => 'stein',
+                    'titel'    => 'Mit der Stein.APP verknüpft – erkannt über ' . $treffer['grund'],
+                    'text'     => stein_vehicle_label($asset),
+                    'neu_wert' => $assetId,
+                    'quelle'   => 'stein',
+                    'autor'    => 'Stein.APP',
+                ], null);
+                $unverknuepft = array_values(array_filter($unverknuepft, static fn($v) => (int)$v['id'] !== $vid));
+                $vehicle = vehicle_by_stein($assetId);
+                $zuordnungen++;
+                if (!$vehicle) {
+                    continue;
+                }
+            }
+        }
+
         if (!$vehicle) {
             // Automatisch anlegen nur mit erkennbarem Kennzeichen – sonst
             // entstehen Akten für Anhänger, Aggregate und Geräte
             $kennzeichen = stein_plate($asset);
             $geloescht = !empty($asset['deleted']);
-            if (!setting_bool('stein_auto_anlegen', false) || $kennzeichen === null || $geloescht) {
+            $gesperrt = in_array($assetId, $nichtAnlegen, true);
+            if (!setting_bool('stein_auto_anlegen', false) || $kennzeichen === null || $geloescht || $gesperrt) {
                 // Für die Zuordnung in der Verwaltung merken – ohne neuen Aufruf
                 $offen[] = [
                     'id'          => $assetId,
@@ -525,8 +552,9 @@ function stein_sync_locked(float $start): array
                     'kennzeichen' => (string)($kennzeichen ?? ''),
                     'grund'       => $geloescht
                         ? 'in der Stein.APP gelöscht'
-                        : ($kennzeichen === null && setting_bool('stein_auto_anlegen', false)
-                            ? 'kein Kennzeichen erkannt' : ''),
+                        : ($gesperrt ? 'Verknüpfung gelöst – wird nicht mehr von selbst angelegt'
+                            : ($kennzeichen === null && setting_bool('stein_auto_anlegen', false)
+                                ? 'kein Kennzeichen erkannt' : '')),
                     'geloescht'   => $geloescht,
                 ];
                 continue;
@@ -860,22 +888,143 @@ function stein_pending_assets(): array
     return $out;
 }
 
-/** Ein offenes Asset einem Fahrzeug zuordnen */
-function stein_assign(int $vehicleId, string $assetId, ?array $user = null): ?string
+/**
+ * Vergleichsform für Kennzeichen und Bezeichnungen: Großbuchstaben, ohne
+ * Leerzeichen, Binde- und Schrägstriche. „MLW - OV", „MLW-OV" und „mlw ov"
+ * sind dasselbe. Reine Funktion.
+ */
+function stein_vergleichsform(string $text): string
+{
+    $text = mb_strtoupper(trim($text));
+    return (string)preg_replace('/[\s\-\/._]+/u', '', $text);
+}
+
+/**
+ * Passendes Fahrzeug ohne Stein-Verknüpfung suchen, bevor eine neue Akte
+ * entsteht: zuerst über das Kennzeichen, dann über Bezeichnung oder
+ * Funkrufname. Nur ein eindeutiger Treffer zählt; geführte Fahrzeuge gehen
+ * ausgemusterten vor. Reine Funktion über die übergebene Liste.
+ * Rückgabe: ['vehicle' => …, 'grund' => 'Kennzeichen'|'Bezeichnung'] oder null.
+ */
+function stein_match_vehicle(array $asset, array $fahrzeuge): ?array
+{
+    $kandidaten = array_values(array_filter($fahrzeuge, static fn($v) => trim((string)($v['stein_asset_id'] ?? '')) === ''));
+    if (!$kandidaten) {
+        return null;
+    }
+    $eindeutig = static function (array $treffer): ?array {
+        $aktive = array_values(array_filter($treffer, static fn($v) => (int)($v['is_active'] ?? 1) === 1));
+        $liste = $aktive ?: $treffer;
+        return count($liste) === 1 ? $liste[0] : null;
+    };
+
+    $plate = stein_plate($asset);
+    if ($plate !== null) {
+        $soll = stein_vergleichsform($plate);
+        $treffer = array_values(array_filter($kandidaten, static fn($v) => $soll !== '' && stein_vergleichsform((string)($v['kennzeichen'] ?? '')) === $soll));
+        if (($v = $eindeutig($treffer)) !== null) {
+            return ['vehicle' => $v, 'grund' => 'Kennzeichen'];
+        }
+    }
+
+    $namen = array_filter(array_unique([stein_vergleichsform(stein_vehicle_label($asset)), stein_vergleichsform((string)($asset['name'] ?? ''))]));
+    if ($namen) {
+        $treffer = array_values(array_filter($kandidaten, static function ($v) use ($namen) {
+            foreach ([(string)($v['bezeichnung'] ?? ''), (string)($v['funkrufname'] ?? '')] as $text) {
+                if ($text !== '' && in_array(stein_vergleichsform($text), $namen, true)) {
+                    return true;
+                }
+            }
+            return false;
+        }));
+        if (($v = $eindeutig($treffer)) !== null) {
+            return ['vehicle' => $v, 'grund' => 'Bezeichnung'];
+        }
+    }
+    return null;
+}
+
+/** Assets, die nach einer gelösten Verknüpfung nie wieder selbst angelegt werden */
+function stein_nicht_anlegen(): array
+{
+    $liste = json_decode(state_get('stein_nicht_anlegen', '[]'), true);
+    return is_array($liste) ? array_values(array_filter(array_map('strval', $liste), static fn($s) => $s !== '')) : [];
+}
+
+function stein_nicht_anlegen_merken(string $assetId, bool $merken): void
+{
+    $liste = stein_nicht_anlegen();
+    $liste = $merken ? array_values(array_unique(array_merge($liste, [$assetId]))) : array_values(array_diff($liste, [$assetId]));
+    state_save('stein_nicht_anlegen', json_encode($liste));
+}
+
+/** Ein Asset in die Liste „ohne Zuordnung" eintragen, ohne auf den nächsten Abruf zu warten */
+function stein_offen_merken(array $eintrag): void
+{
+    $liste = json_decode(state_get('stein_offene_assets', '[]'), true);
+    $liste = is_array($liste) ? array_values(array_filter($liste, static fn($a) => is_array($a) && ($a['id'] ?? '') !== ($eintrag['id'] ?? ''))) : [];
+    $liste[] = $eintrag + ['name' => '', 'status' => '', 'funk' => '', 'kennzeichen' => '', 'grund' => '', 'geloescht' => false];
+    state_save('stein_offene_assets', json_encode($liste));
+}
+
+/**
+ * Ein Asset einem Fahrzeug zuordnen. Hängt es schon an einem anderen
+ * Fahrzeug, geht das nur mit $umhaengen – dann wird es dort gelöst.
+ */
+function stein_assign(int $vehicleId, string $assetId, ?array $user = null, bool $umhaengen = false): ?string
 {
     $vehicle = vehicle_find($vehicleId);
     if (!$vehicle) {
         return 'Fahrzeug nicht gefunden.';
     }
-    if (vehicle_by_stein($assetId)) {
-        return 'Dieses Fahrzeug aus der Stein.APP ist bereits zugeordnet.';
+    $bisher = vehicle_by_stein($assetId);
+    if ($bisher && (int)$bisher['id'] === $vehicleId) {
+        return 'Dieses Fahrzeug ist schon mit diesem Eintrag der Stein.APP verknüpft.';
     }
-    db_update('vehicles', ['stein_asset_id' => $assetId], 'id = ?', [$vehicleId]);
+    if ($bisher && !$umhaengen) {
+        return 'Dieser Eintrag der Stein.APP hängt schon an „' . (string)$bisher['bezeichnung'] . '". Unter Verwaltung → Stein.APP lässt er sich umhängen.';
+    }
+    if ($bisher) {
+        db_update('vehicles', ['stein_asset_id' => null, 'stein_status' => '', 'stein_daten' => null, 'stein_sync_at' => null], 'id = ?', [(int)$bisher['id']]);
+        journal_add((int)$bisher['id'], [
+            'art'      => 'stein',
+            'titel'    => 'Verknüpfung mit der Stein.APP umgehängt auf ' . (string)$vehicle['bezeichnung'],
+            'alt_wert' => $assetId,
+        ], $user);
+    }
+    // Der Stand des Vorgängers gehört nicht in die neue Akte – der nächste Abgleich holt ihn frisch
+    db_update('vehicles', ['stein_asset_id' => $assetId, 'stein_status' => '', 'stein_daten' => null, 'stein_sync_at' => null], 'id = ?', [$vehicleId]);
     journal_add($vehicleId, [
         'art'      => 'stein',
-        'titel'    => 'Mit der Stein.APP verknüpft',
+        'titel'    => $bisher ? 'Mit der Stein.APP verknüpft (umgehängt von ' . (string)$bisher['bezeichnung'] . ')' : 'Mit der Stein.APP verknüpft',
         'neu_wert' => $assetId,
     ], $user);
+    stein_nicht_anlegen_merken($assetId, false);
     audit('fahrzeug.stein_verknuepft', 'vehicle', $vehicleId, $assetId);
     return null;
+}
+
+/** Verknüpfung lösen – der Abgleich legt das Asset danach nicht von selbst neu an */
+function stein_unassign(array $vehicle, ?array $user = null): void
+{
+    $assetId = trim((string)($vehicle['stein_asset_id'] ?? ''));
+    $daten = json_decode((string)($vehicle['stein_daten'] ?? ''), true);
+    $daten = is_array($daten) ? $daten : [];
+    db_update('vehicles', ['stein_asset_id' => null], 'id = ?', [(int)$vehicle['id']]);
+    journal_add((int)$vehicle['id'], [
+        'art'      => 'stein',
+        'titel'    => 'Verknüpfung mit der Stein.APP gelöst',
+        'alt_wert' => $assetId,
+    ], $user);
+    if ($assetId !== '') {
+        stein_nicht_anlegen_merken($assetId, true);
+        stein_offen_merken([
+            'id'          => $assetId,
+            'name'        => $daten ? stein_vehicle_label($daten) : (string)$vehicle['bezeichnung'],
+            'status'      => stein_value_text('status', $daten['status'] ?? ''),
+            'funk'        => trim((string)($daten['radioName'] ?? '')),
+            'kennzeichen' => $daten ? (string)(stein_plate($daten) ?? '') : '',
+            'grund'       => 'Verknüpfung gelöst – wird nicht mehr von selbst angelegt',
+        ]);
+    }
 }

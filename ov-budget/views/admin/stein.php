@@ -102,7 +102,9 @@
     <h2>Fahrzeuge aus der Stein.APP ohne Zuordnung</h2>
     <p class="small muted">Einem vorhandenen Fahrzeug zuordnen oder als neue Akte anlegen.
        Beides braucht keinen weiteren Abruf. Ein Kennzeichen führt die Stein.APP nicht als
-       eigenes Feld – es wird aus Bezeichnung, Name und Bemerkung gelesen.</p>
+       eigenes Feld – es wird aus Bezeichnung, Name und Bemerkung gelesen. Der Abgleich
+       verknüpft von selbst, wenn ein Fahrzeug ohne Verknüpfung dasselbe Kennzeichen oder
+       dieselbe Bezeichnung trägt; nur was dann noch übrig ist, steht hier.</p>
     <div class="tablewrap">
       <table class="data">
         <thead><tr><th>Aus der Stein.APP</th><th>Status</th><th>Zuordnen zu</th><th></th></tr></thead>
@@ -148,18 +150,48 @@
 <?php endif; ?>
 
 <?php if ($verknuepft): ?>
-  <section class="card">
+  <section class="card" id="verknuepft">
     <h2>Verknüpfte Fahrzeuge</h2>
+    <p class="small muted">Hängt ein Eintrag am falschen Fahrzeug – etwa an einer doppelt angelegten Akte –, lässt er sich hier
+      auf ein anderes Fahrzeug <strong>umhängen</strong>. Die alte Akte verliert die Verknüpfung, beide bekommen einen Journaleintrag.</p>
     <div class="tablewrap">
       <table class="data">
-        <thead><tr><th>Fahrzeug</th><th>Asset-ID</th><th>Status laut Stein.APP</th><th>Letzter Abgleich</th></tr></thead>
+        <thead><tr><th>Fahrzeug</th><th>Asset-ID</th><th>Status laut Stein.APP</th><th>Letzter Abgleich</th><th>Umhängen auf</th><th></th></tr></thead>
         <tbody>
         <?php foreach ($verknuepft as $v): ?>
-          <tr>
-            <td><a href="<?= e(url('vehicle', ['id' => $v['id']])) ?>"><?= e($v['bezeichnung']) ?></a></td>
+          <tr<?= (int)($v['is_active'] ?? 1) !== 1 ? ' class="is-muted"' : '' ?>>
+            <td><a href="<?= e(url('vehicle', ['id' => $v['id']])) ?>"><?= e($v['bezeichnung']) ?></a>
+              <?php if ((int)($v['is_active'] ?? 1) !== 1): ?> <span class="badge badge--muted">ausgemustert</span><?php endif; ?></td>
             <td class="mono small"><?= e((string)$v['stein_asset_id']) ?></td>
             <td class="small"><?= e(stein_value_text('status', $v['stein_status'])) ?></td>
             <td class="small nowrap"><?= $v['stein_sync_at'] ? e(de_datetime($v['stein_sync_at'])) : '–' ?></td>
+            <td>
+              <form method="post" action="<?= e(url('vehicle_action')) ?>" class="inline-form" id="umh<?= (int)$v['id'] ?>">
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="stein_assign">
+                <input type="hidden" name="umhaengen" value="1">
+                <input type="hidden" name="asset_id" value="<?= e((string)$v['stein_asset_id']) ?>">
+                <select name="vehicle_id" aria-label="Umhängen auf" required>
+                  <option value="">– Fahrzeug wählen –</option>
+                  <?php foreach ($fahrzeuge as $f): ?>
+                    <?php if ((int)$f['id'] !== (int)$v['id'] && !$f['stein_asset_id']): ?>
+                      <option value="<?= (int)$f['id'] ?>"><?= e($f['bezeichnung']) ?><?= $f['kennzeichen'] ? ' · ' . e($f['kennzeichen']) : '' ?></option>
+                    <?php endif; ?>
+                  <?php endforeach; ?>
+                </select>
+              </form>
+            </td>
+            <td class="nowrap">
+              <button class="btn btn--sm btn--sec" type="submit" form="umh<?= (int)$v['id'] ?>"
+                      data-confirm="Verknüpfung auf das gewählte Fahrzeug umhängen? „<?= e($v['bezeichnung']) ?>" verliert sie.">Umhängen</button>
+              <form method="post" action="<?= e(url('vehicle_action')) ?>" class="inline-form">
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="stein_unassign">
+                <input type="hidden" name="vehicle_id" value="<?= (int)$v['id'] ?>">
+                <input type="hidden" name="zurueck" value="stein">
+                <button class="btn btn--sm btn--sec" type="submit" data-confirm="Verknüpfung lösen? Der Eintrag wird dann nicht mehr von selbst angelegt und steht hier zum Zuordnen.">Lösen</button>
+              </form>
+            </td>
           </tr>
         <?php endforeach; ?>
         </tbody>

@@ -15,8 +15,8 @@ render('admin/stein', [
     'offen'      => stein_pending_assets(),
     'fahrzeuge'  => vehicle_query(['nur_aktive' => 1]),
     'verknuepft' => db_all(
-        "SELECT id, bezeichnung, stein_asset_id, stein_status, stein_sync_at
-         FROM vehicles WHERE stein_asset_id IS NOT NULL AND stein_asset_id <> '' ORDER BY bezeichnung"
+        "SELECT id, bezeichnung, stein_asset_id, stein_status, stein_sync_at, is_active
+         FROM vehicles WHERE stein_asset_id IS NOT NULL AND stein_asset_id <> '' ORDER BY is_active DESC, bezeichnung"
     ),
     'protokoll'  => db_all('SELECT * FROM stein_log ORDER BY id DESC LIMIT 20'),
     'webhook'    => trim((string)setting('stein_webhook_secret', '')) !== '',

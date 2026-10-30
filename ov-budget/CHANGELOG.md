@@ -1,5 +1,16 @@
 # Änderungsverlauf
 
+## 2.1.65.1
+
+- **Stein.APP:** Der Abgleich legt keine doppelten Akten mehr an – vor dem
+  Anlegen sucht er ein Fahrzeug ohne Verknüpfung mit demselben Kennzeichen,
+  sonst mit derselben Bezeichnung oder demselben Funkrufnamen (Schreibweise,
+  Leerzeichen und Bindestriche egal) und verknüpft es. Unter Verwaltung →
+  Stein.APP lässt sich eine Verknüpfung auf ein anderes Fahrzeug
+  **umhängen** oder lösen; Gelöstes wird nicht mehr von selbst neu
+  angelegt, sondern bleibt zum Zuordnen stehen. Ausgemusterte Fahrzeuge
+  stehen in der Liste der Verknüpften mit Hinweis.
+
 ## 2.1.65.0
 
 - **Tankkarten:** Neues Modul, aufgebaut wie die SIM-Karten – Anbieter aus
