@@ -145,8 +145,9 @@ unter „Sicherheitslücke PHP2Shell".
 * **Tankkarten und Ladekarten** – mehrere Anbieter (DKV, UTA, Shell, Aral,
   Ladenetze …), Freischaltung für Kraftstoff, Laden oder beides, Zuordnung
   zu einem oder mehreren Fahrzeugen, PIN verdeckt, Warnung vor Ablauf,
-  Verbleib gesperrt / zurückgegeben / abgelaufen mit Datum und Grund; die
-  Karte wird je Tankung mit erfasst, Strom in kWh je 100 km.
+  Verbleib gesperrt / zurückgegeben / abgelaufen mit Datum und Grund,
+  CSV-Import mit Vorschau; die Karte wird je Tankung mit erfasst, Strom in
+  kWh je 100 km.
 * **Verbrauch** – Strom-, Gas- und Wasserzähler mit Ständen aus Home
   Assistant, von Hand oder per QR-Code; Tarife, Kosten je Monat und Jahr,
   **Kosten je Bereich** entlang der Stell- und Lagerplätze, Unterzähler mit

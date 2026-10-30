@@ -962,6 +962,19 @@ E-Fahrzeuge gibt, auch die **Ladekarten**. Das Modul führt beide:
 * **Sichtbarkeit:** Vorgabe nur Leitung; die Einstellung „Alle Mitglieder
   dürfen Tankkarten sehen" öffnet die Liste ohne PIN. **CSV** mit allen
   Angaben einschließlich PIN – nur für die Leitung.
+* **Import aus CSV** („Importieren" in der Liste): aus der Kartenübersicht
+  des Anbieters oder der bisherigen Excel-Liste, in drei Schritten wie beim
+  Kontakt-Import – hochladen, Spalten zuordnen (die Namen werden erkannt,
+  deutsch wie englisch), Vorschau, importieren. Pflicht ist nur die
+  Kartennummer; der Anbieter kommt aus der Datei oder als Vorgabe, unbekannte
+  Anbieter lassen sich auf Wunsch in der Auswahlliste anlegen. **Fahrzeuge**
+  stehen als Kennzeichen oder Bezeichnung in einer Zelle, mehrere mit Komma,
+  und werden wie beim Stein.APP-Abgleich erkannt (Schreibweise egal); „Liegt
+  bei" über den Namen des Mitglieds, Daten in deutscher oder ISO-Schreibweise
+  oder als „06/2027" wie auf der Karte. Vorhanden ist eine Karte bei gleichem
+  Anbieter und gleicher Nummer – überspringen oder überschreiben; doppelte
+  Zeilen in der Datei werden übersprungen. Eine Vorlage zum Ausfüllen gibt es
+  auf der Importseite.
 
 ## Impressum und Datenschutz auf dem Connector
 

@@ -147,6 +147,7 @@ $routes = [
     'tankkarten'         => 'tankkarten',
     'tankkarte_edit'     => 'tankkarte_edit',
     'tankkarten_export'  => 'tankkarten_export',
+    'tankkarten_import'  => 'tankkarten_import',
 
     'download'           => 'download',
     'neu'                => 'changelog',

@@ -14,6 +14,7 @@ foreach (array_slice($stats['anbieter'], 0, 3, true) as $name => $n) {
   <div class="btnrow">
     <?php if ($darf): ?>
       <a class="btn" href="<?= e(url('tankkarte_edit')) ?>">+ Tankkarte</a>
+      <a class="btn btn--sec" href="<?= e(url('tankkarten_import')) ?>">Importieren</a>
       <a class="btn btn--sec" href="<?= e(url('tankkarten_export', $filter)) ?>">CSV</a>
     <?php endif; ?>
   </div>

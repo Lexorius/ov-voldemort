@@ -176,6 +176,8 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 - PIN verdeckt und nur für die Leitung, Warnung vor Ablauf, CSV-Bestandsliste
 - **Verbleib** gesperrt, zurückgegeben oder abgelaufen mit Datum – bei Sperrung
   mit Pflicht-Begründung
+- **CSV-Import** mit Spaltenerkennung, Vorschau, Fahrzeugen über Kennzeichen
+  oder Bezeichnung und Anbietern aus der Datei
 - In der Fahrzeugakte und beim Erfassen einer Tankung; Strom in kWh je 100 km
 
 ### Kontakte

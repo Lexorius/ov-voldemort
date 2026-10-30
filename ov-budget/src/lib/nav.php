@@ -31,7 +31,7 @@ function nav_module(): array
         'sims'      => ['label' => (string)setting('sim_modul_name', 'SIM-Karten'), 'icon' => '▯',
                         'route' => 'sims', 'aktiv' => ['sims', 'sim_edit'], 'darf' => can('view_sims')],
         'tankkarten' => ['label' => (string)setting('tankkarte_modul_name', 'Tankkarten'), 'icon' => '⛽',
-                        'route' => 'tankkarten', 'aktiv' => ['tankkarten', 'tankkarte_edit'], 'darf' => can('view_tankkarten')],
+                        'route' => 'tankkarten', 'aktiv' => ['tankkarten', 'tankkarte_edit', 'tankkarten_import'], 'darf' => can('view_tankkarten')],
         'verbrauch' => ['label' => (string)setting('verbrauch_modul_name', 'Verbrauch'), 'icon' => '⚡',
                         'route' => 'verbrauch', 'aktiv' => ['verbrauch', 'meter', 'meter_edit', 'tarife', 'tarif_edit', 'verbrauch_bereiche'],
                         'darf' => can('view_verbrauch')],

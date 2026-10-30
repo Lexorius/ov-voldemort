@@ -1,5 +1,16 @@
 # Änderungsverlauf
 
+## 2.1.67.0
+
+- **Tankkarten – Import:** CSV-Import in drei Schritten (hochladen,
+  Spalten zuordnen, Vorschau, importieren) wie beim Kontakt-Import.
+  Spaltennamen werden deutsch und englisch erkannt, Anbieter und Status
+  über die Auswahllisten, unbekannte Anbieter auf Wunsch neu angelegt,
+  Fahrzeuge über Kennzeichen oder Bezeichnung (mehrere je Zelle), „Liegt
+  bei" über den Namen, Daten auch als „06/2027". Vorhandene Karten
+  (gleicher Anbieter, gleiche Nummer) überspringen oder überschreiben,
+  Vorlage zum Ausfüllen.
+
 ## 2.1.66.1
 
 - **Doku:** READMEs und Add-on-Beschreibung auf den Stand gebracht –
