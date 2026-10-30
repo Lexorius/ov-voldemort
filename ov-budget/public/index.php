@@ -143,6 +143,11 @@ $routes = [
     'vehicle_tank_edit'  => 'vehicle_tank_edit',
     'vehicle_tanken_export' => 'vehicle_tanken_export',
 
+    // Tankkarten
+    'tankkarten'         => 'tankkarten',
+    'tankkarte_edit'     => 'tankkarte_edit',
+    'tankkarten_export'  => 'tankkarten_export',
+
     'download'           => 'download',
     'neu'                => 'changelog',
 

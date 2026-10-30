@@ -31,7 +31,7 @@ function current_user(): ?array { return ['id' => 4, 'role' => 'leitung', 'displ
 function can(string $what, mixed $ctx = null): bool { return $GLOBALS['can'][$what] ?? true; }
 
 $app = dirname(__DIR__);
-foreach (['util', 'settings', 'lists', 'view', 'vehicles', 'vehicle_files', 'tanken'] as $lib) {
+foreach (['util', 'settings', 'lists', 'view', 'vehicles', 'vehicle_files', 'tanken', 'tankkarten'] as $lib) {
     require $app . '/src/lib/' . $lib . '.php';
 }
 
@@ -94,7 +94,29 @@ $check('nur Teiltankungen: kein Verbrauch', tank_auswerten([$tankung(1, '2026-01
 /* ---------- CSV ---------- */
 $csv = tank_csv_zeilen($a);
 $check('CSV: Kopf und älteste zuerst', $csv[0][0] === 'Datum' && $csv[1][0] === '2026-03-01' && $csv[4][0] === '2026-04-15' && count($csv) === 5);
-$check('CSV: Werte deutsch, Verbrauch nur wo gerechnet', $csv[2][6] === '8,00' && $csv[1][6] === '' && $csv[3][4] === 'nein' && $csv[1][7] === '96,00' && $csv[2][7] === '');
+$check('CSV: Werte deutsch, Verbrauch nur wo gerechnet', $csv[2][7] === '8,00' && $csv[1][7] === '' && $csv[3][5] === 'nein' && $csv[1][8] === '96,00' && $csv[2][8] === ''
+    && $csv[1][3] === 'l' && $csv[0][10] === 'Tankkarte');
+
+/* ---------- Strom: E-Fahrzeug und Hybrid ---------- */
+$s = tank_auswerten([
+    $tankung(1, '2026-03-01', 20000, 40.0, ['art' => 'strom']),
+    $tankung(2, '2026-03-10', 20300, 54.0, ['art' => 'strom', 'betrag' => 27.0]),   // 300 km, 54 kWh → 18,0
+    $tankung(3, '2026-03-15', 20400, 10.0, ['art' => 'strom', 'voll' => 0]),       // nachgeladen
+    $tankung(4, '2026-03-22', 20600, 44.0, ['art' => 'strom']),                    // 300 km, 54 kWh → 18,0
+    $tankung(5, '2026-03-05', 20100, 30.0),                                        // Hybrid: Kraftstoff daneben
+    $tankung(6, '2026-03-25', 20700, 12.0),                                        // 600 km, 12 l → 2,0
+]);
+$check('Strom getrennt gerechnet', abs($s['strom']['verbrauch'] - 18.0) < 0.001 && $s['strom']['strecke'] === 600 && $s['strom']['anzahl'] === 4
+    && abs($s['strom']['menge'] - 148.0) < 0.001 && $s['strom']['einheit'] === 'kWh' && count($s['strom']['punkte']) === 2);
+$check('Kraftstoff daneben unberührt', abs($s['verbrauch'] - 2.0) < 0.001 && $s['strecke'] === 600 && abs($s['liter'] - 42.0) < 0.001 && count($s['punkte']) === 1);
+$check('Strom-Einträge mit Einheit', $s['eintraege'][0]['einheit'] === 'l' && $s['eintraege'][1]['einheit'] === 'kWh' && abs($s['eintraege'][1]['verbrauch'] - 18.0) < 0.001);
+$check('Beträge über alle Arten, fehlende gezählt', abs($s['betrag'] - 27.0) < 0.001 && $s['betrag_fehlt'] === 5 && $s['strom']['betrag_fehlt'] === 3);
+$check('Jahreswerte Strom', $s['strom']['jahre']['2026']['strecke'] === 600 && abs($s['strom']['jahre']['2026']['menge'] - 148.0) < 0.001);
+$check('Mengentext mit Einheit', tank_menge_text(['liter' => 41.2, 'art' => 'strom']) === '41,20 kWh' && tank_menge_text(['liter' => 62.4, 'art' => 'kraftstoff']) === '62,40 l'
+    && tank_verbrauch_text(18.04, 'kWh') === '18,0 kWh/100 km');
+$check('Kurztext Strom', str_starts_with(tank_kurztext(['liter' => 54, 'art' => 'strom', 'km_stand' => 20300, 'voll' => 1]), '54,00 kWh Strom (Laden) bei 20.300 km')
+    && str_ends_with(tank_kurztext(['liter' => 10, 'art' => 'strom', 'km_stand' => null, 'voll' => 0]), '(nicht voll geladen)'));
+$check('Kartentext', tank_karte_text(['karte_nummer' => '7083001234567890', 'karte_anbieter' => 'DKV']) === 'DKV …7890' && tank_karte_text(['karte_nummer' => '']) === '');
 
 /* ---------- Texte ---------- */
 $check('Texte', tank_liter_text(62.4) === '62,40 l' && tank_km_text(123456) === '123.456 km' && tank_verbrauch_text(8.04) === '8,0 l/100 km'
@@ -117,14 +139,14 @@ $_POST = ['datum' => '', 'liter' => '0'];
 [$id, $fehler] = tank_save_from_post(null, $fahrzeug, $user);
 $check('Pflichtfelder', $id === null && count($fehler) === 2 && str_contains($fehler[0], 'Datum') && str_contains($fehler[1], 'Liter'));
 
-$_POST = ['datum' => '2026-04-15', 'liter' => '62,40', 'km_stand' => '101500', 'voll' => '1', 'art' => 'kraftstoff', 'betrag' => '', 'tankstelle' => 'Aral Süd', 'beleg_nr' => 'A-17'];
+$_POST = ['datum' => '2026-04-15', 'liter' => '62,40', 'km_stand' => '101500', 'voll' => '1', 'art' => 'kraftstoff', 'betrag' => '', 'tankstelle' => 'Aral Süd', 'beleg_nr' => 'A-17', 'tankkarte_id' => '3'];
 $GLOBALS['rows'] = [['datum' => '2026-03-20', 'km_stand' => 100700], null];
 $GLOBALS['inserts'] = []; $GLOBALS['updates'] = [];
 [$id, $fehler] = tank_save_from_post(null, $fahrzeug, $user);
 $ins = $GLOBALS['inserts'][0] ?? null;
 $check('gespeichert', $id !== null && $fehler === [] && $ins !== null && $ins[0] === 'vehicle_tankungen'
     && $ins[1]['liter'] === 62.4 && $ins[1]['km_stand'] === 101500 && $ins[1]['betrag'] === null && $ins[1]['voll'] === 1
-    && $ins[1]['tankstelle'] === 'Aral Süd' && $ins[1]['user_id'] === 4 && $ins[1]['datum'] === '2026-04-15');
+    && $ins[1]['tankstelle'] === 'Aral Süd' && $ins[1]['user_id'] === 4 && $ins[1]['datum'] === '2026-04-15' && $ins[1]['tankkarte_id'] === 3);
 $journal = array_values(array_filter($GLOBALS['inserts'], static fn($i) => $i[0] === 'vehicle_journal'));
 $check('Journal: Tankung und Kilometerstand', count($journal) === 2 && $journal[0][1]['art'] === 'tankung' && str_starts_with($journal[0][1]['titel'], 'Getankt: 62,40 l Kraftstoff bei 101.500 km')
     && str_contains($journal[0][1]['text'], 'Beleg A-17') && $journal[0][1]['ref_typ'] === 'tankung'
@@ -186,13 +208,27 @@ $html = render_partial('vehicle_tanken', $daten);
 $check('Seite: Kennzahlen, Verlauf, Tabelle', str_contains($html, 'Verbrauch im Mittel') && str_contains($html, 'months--tank')
     && str_contains($html, 'months__bar--hoch') && str_contains($html, 'auffällig') && str_contains($html, 'AdBlue')
     && str_contains($html, '10,0 l/100 km') && str_contains($html, 'id="t9"'));
+$check('Seite: Tankkarte an der Tankung', str_contains(render_partial('vehicle_tanken', ['vehicle' => $fahrzeug,
+    'a' => tank_auswerten([$tankung(1, '2026-03-01', 100000, 60.0, ['karte_nummer' => '7083001234567890', 'karte_anbieter' => 'DKV'])]),
+    'rows' => tank_auswerten([$tankung(1, '2026-03-01', 100000, 60.0, ['karte_nummer' => '7083001234567890', 'karte_anbieter' => 'DKV'])])['eintraege'],
+    'blatt' => seiten_blaettern(1, 1, 50), 'erfassen' => true, 'verwalten' => true, 'user' => current_user()]), 'DKV …7890'));
+$html = render_partial('vehicle_tanken', ['a' => $s, 'rows' => $s['eintraege']] + $daten);
+$check('Seite: Strom-Kennzahlen und Verlauf', str_contains($html, 'Strom im Mittel') && str_contains($html, '18,0 kWh/100 km') && str_contains($html, 'months--strom')
+    && str_contains($html, 'Verbrauch im Mittel'));
+$nurStrom = tank_auswerten([$tankung(1, '2026-03-01', 20000, 40.0, ['art' => 'strom']), $tankung(2, '2026-03-10', 20300, 54.0, ['art' => 'strom'])]);
+$html = render_partial('vehicle_tanken', ['a' => $nurStrom, 'rows' => $nurStrom['eintraege']] + $daten);
+$check('Seite: reines E-Fahrzeug ohne Kraftstoff-Kacheln', !str_contains($html, 'Verbrauch im Mittel') && str_contains($html, 'Strom im Mittel') && str_contains($html, 'Ladekarte'));
+$html = render_partial('vehicle_tanken', $daten);
 $check('Seite: Knöpfe', str_contains($html, 'vehicle_tank_edit') && str_contains($html, 'vehicle_tanken_export') && str_contains($html, '+ Tankung'));
 $check('Seite: Betrag fehlt wird benannt', str_contains($html, 'ohne Betrag'));
 $leer = render_partial('vehicle_tanken', ['vehicle' => $fahrzeug, 'a' => tank_auswerten([]), 'rows' => [], 'blatt' => seiten_blaettern(0, 1, 50), 'erfassen' => false, 'verwalten' => false, 'user' => null] );
 $check('Seite leer', str_contains($leer, 'Noch keine Tankung') && !str_contains($leer, '+ Tankung') && !str_contains($leer, 'months--tank'));
 
 $html = render_partial('vehicle_tank_edit', ['tank' => ['id' => null, 'datum' => '2026-04-20', 'km_stand' => null, 'liter' => '', 'betrag' => null, 'voll' => 1, 'art' => 'kraftstoff', 'tankstelle' => 'Aral Süd', 'beleg_nr' => '', 'notiz' => ''],
-    'vehicle' => $fahrzeug, 'letzte' => ['datum' => '2026-04-15', 'km_stand' => 101500, 'tankstelle' => 'Aral Süd'], 'belege' => [], 'errors' => [], 'loeschen' => false, 'verwalten' => true]);
+    'vehicle' => $fahrzeug, 'letzte' => ['datum' => '2026-04-15', 'km_stand' => 101500, 'tankstelle' => 'Aral Süd'], 'belege' => [], 'errors' => [], 'loeschen' => false, 'verwalten' => true,
+    'karten' => ['Diesem Fahrzeug zugeordnet' => [['id' => 3, 'nummer' => '7083001234567890', 'anbieter_label' => 'DKV', 'art' => 'kraftstoff']], 'Weitere Karten' => [['id' => 4, 'nummer' => '9999', 'anbieter_label' => 'EnBW', 'art' => 'laden']]]]);
+$check('Formular: Tankkarten in Gruppen, Ladekarte mit Blitz', str_contains($html, 'name="tankkarte_id"') && str_contains($html, 'label="Diesem Fahrzeug zugeordnet"')
+    && str_contains($html, 'DKV 7083001234567890') && str_contains($html, 'EnBW 9999 ⚡'));
 $check('Formular neu', str_contains($html, 'name="liter"') && str_contains($html, 'name="km_stand"') && str_contains($html, 'zuletzt 101.500')
     && str_contains($html, 'name="voll" value="1" checked') && str_contains($html, 'name="belege[]"') && str_contains($html, 'Tankkarte')
     && str_contains($html, 'value="Aral Süd"') && !str_contains($html, 'tank_delete'));

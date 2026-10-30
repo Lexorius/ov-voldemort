@@ -6,6 +6,14 @@ foreach ($punkte as $p) {
     $max = max($max, (float)$p['verbrauch']);
 }
 $letzteVoll = $a['punkte'] ? end($a['punkte']) : null;
+$strom = $a['strom'] ?? ['anzahl' => 0, 'menge' => 0.0, 'betrag' => 0.0, 'betrag_fehlt' => 0, 'strecke' => 0, 'verbrauch' => null, 'punkte' => [], 'jahre' => [], 'einheit' => 'kWh'];
+$stromPunkte = array_slice($strom['punkte'], -24);
+$stromMax = 0.0;
+foreach ($stromPunkte as $p) {
+    $stromMax = max($stromMax, (float)$p['verbrauch']);
+}
+$stromLetzte = $strom['punkte'] ? end($strom['punkte']) : null;
+$nurStrom = $strom['anzahl'] > 0 && $a['liter'] <= 0;
 ?>
 <div class="pagehead">
   <div>
@@ -19,6 +27,7 @@ $letzteVoll = $a['punkte'] ? end($a['punkte']) : null;
   </div>
 </div>
 
+<?php if (!$nurStrom): ?>
 <div class="stats">
   <div class="stat">
     <div class="stat__label">Verbrauch im Mittel</div>
@@ -33,7 +42,7 @@ $letzteVoll = $a['punkte'] ? end($a['punkte']) : null;
   <div class="stat">
     <div class="stat__label">Getankt</div>
     <div class="stat__value"><?= e(tank_liter_text($a['liter'], 0)) ?></div>
-    <div class="stat__hint"><?= (int)$a['anzahl'] ?> Tankungen<?= $a['adblue_liter'] > 0 ? ', dazu ' . e(tank_liter_text($a['adblue_liter'], 0)) . ' AdBlue' : '' ?></div>
+    <div class="stat__hint"><?= (int)$a['anzahl'] ?> Tankungen<?= $a['adblue_liter'] > 0 ? ', dazu ' . e(tank_liter_text($a['adblue_liter'], 0)) . ' AdBlue' : '' ?><?= $strom['anzahl'] > 0 ? ', ' . e(tank_liter_text($strom['menge'], 0, 'kWh')) . ' geladen' : '' ?></div>
   </div>
   <div class="stat">
     <div class="stat__label">Kosten, soweit bekannt</div>
@@ -41,6 +50,34 @@ $letzteVoll = $a['punkte'] ? end($a['punkte']) : null;
     <div class="stat__hint"><?= $a['betrag_fehlt'] > 0 ? (int)$a['betrag_fehlt'] . ' Tankungen ohne Betrag (Tankkarte)' : ($a['anzahl'] > 0 ? 'alle Tankungen mit Betrag' : '') ?></div>
   </div>
 </div>
+<?php endif; ?>
+
+<?php if ($strom['anzahl'] > 0): ?>
+<div class="stats">
+  <div class="stat">
+    <div class="stat__label">Strom im Mittel</div>
+    <div class="stat__value"><?= $strom['verbrauch'] !== null ? e(tank_verbrauch_text($strom['verbrauch'], 'kWh')) : '–' ?></div>
+    <div class="stat__hint"><?= $strom['strecke'] > 0 ? 'über ' . e(tank_km_text($strom['strecke'])) . ' von Vollladung zu Vollladung' : 'braucht zwei Vollladungen mit Kilometerstand' ?></div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Zuletzt geladen</div>
+    <div class="stat__value"><?= $stromLetzte ? e(tank_verbrauch_text((float)$stromLetzte['verbrauch'], 'kWh')) : '–' ?></div>
+    <div class="stat__hint"><?= $stromLetzte ? 'Vollladung am ' . e(de_date($stromLetzte['datum'])) . ', ' . e(tank_km_text((int)$stromLetzte['strecke'])) : 'noch keine zweite Vollladung' ?></div>
+  </div>
+  <div class="stat">
+    <div class="stat__label">Geladen</div>
+    <div class="stat__value"><?= e(tank_liter_text($strom['menge'], 0, 'kWh')) ?></div>
+    <div class="stat__hint"><?= (int)$strom['anzahl'] ?> Ladungen</div>
+  </div>
+  <?php if ($nurStrom): ?>
+  <div class="stat">
+    <div class="stat__label">Kosten, soweit bekannt</div>
+    <div class="stat__value"><?= $a['betrag'] > 0 ? e(money($a['betrag'])) : '–' ?></div>
+    <div class="stat__hint"><?= $a['betrag_fehlt'] > 0 ? (int)$a['betrag_fehlt'] . ' Ladungen ohne Betrag (Ladekarte)' : 'alle Ladungen mit Betrag' ?></div>
+  </div>
+  <?php endif; ?>
+</div>
+<?php endif; ?>
 
 <?php if ($punkte): ?>
 <section class="card" id="verlauf">
@@ -63,12 +100,32 @@ $letzteVoll = $a['punkte'] ? end($a['punkte']) : null;
 </section>
 <?php endif; ?>
 
-<?php if (count($a['jahre']) > 1): ?>
+<?php if ($stromPunkte): ?>
+<section class="card" id="verlauf-strom">
+  <div class="card__head">
+    <h2>Verlauf Strom</h2>
+    <span class="small muted">je Vollladung, <?= count($stromPunkte) < count($strom['punkte']) ? 'die letzten ' . count($stromPunkte) : 'alle' ?> · Mittel <?= e(tank_verbrauch_text($strom['verbrauch'], 'kWh')) ?></span>
+  </div>
+  <div class="months months--tank months--strom">
+    <?php foreach ($stromPunkte as $p): ?>
+      <div class="months__col">
+        <div class="months__pair">
+          <div class="months__bar<?= $p['auffaellig'] ? ' months__bar--hoch' : '' ?>" style="height:<?= $stromMax > 0 ? number_format((float)$p['verbrauch'] / $stromMax * 100, 1, '.', '') : 0 ?>%"
+               title="<?= e(de_date($p['datum']) . ': ' . tank_verbrauch_text((float)$p['verbrauch'], 'kWh') . ' auf ' . tank_km_text((int)$p['strecke'])) ?>"></div>
+        </div>
+      </div>
+    <?php endforeach; ?>
+  </div>
+  <p class="small muted" style="margin:.4rem 0 0">Von <?= e(de_date($stromPunkte[0]['datum'])) ?> bis <?= e(de_date(end($stromPunkte)['datum'])) ?>.</p>
+</section>
+<?php endif; ?>
+
+<?php if (count($a['jahre']) > 1 || count($strom['jahre']) > 1): ?>
 <section class="card" id="jahre">
   <div class="card__head"><h2>Je Jahr</h2></div>
   <div class="tablewrap">
     <table class="data">
-      <thead><tr><th>Jahr</th><th class="num">Tankungen</th><th class="num">Liter</th><th class="num">Strecke</th><th class="num">Verbrauch</th><th class="num">Kosten</th></tr></thead>
+      <thead><tr><th>Jahr</th><th class="num">Tankungen</th><th class="num">Menge</th><th class="num">Strecke</th><th class="num">Verbrauch</th><th class="num">Kosten</th></tr></thead>
       <tbody>
       <?php foreach ($a['jahre'] as $jahr => $j): ?>
         <tr>
@@ -77,6 +134,16 @@ $letzteVoll = $a['punkte'] ? end($a['punkte']) : null;
           <td class="num"><?= e(tank_liter_text($j['liter'], 0)) ?></td>
           <td class="num"><?= $j['strecke'] > 0 ? e(tank_km_text((int)$j['strecke'])) : '–' ?></td>
           <td class="num"><?= $j['verbrauch'] !== null ? e(tank_verbrauch_text($j['verbrauch'])) : '–' ?></td>
+          <td class="num"><?= $j['betrag'] > 0 ? e(money($j['betrag'])) : '–' ?><?= $j['betrag_fehlt'] > 0 ? '<div class="small muted">' . (int)$j['betrag_fehlt'] . ' ohne Betrag</div>' : '' ?></td>
+        </tr>
+      <?php endforeach; ?>
+      <?php foreach ($strom['jahre'] as $jahr => $j): ?>
+        <tr>
+          <td><strong><?= e((string)$jahr) ?></strong> <span class="badge" style="background:#0369a1">⚡ Strom</span></td>
+          <td class="num"><?= (int)$j['anzahl'] ?></td>
+          <td class="num"><?= e(tank_liter_text($j['menge'], 0, 'kWh')) ?></td>
+          <td class="num"><?= $j['strecke'] > 0 ? e(tank_km_text((int)$j['strecke'])) : '–' ?></td>
+          <td class="num"><?= $j['verbrauch'] !== null ? e(tank_verbrauch_text($j['verbrauch'], 'kWh')) : '–' ?></td>
           <td class="num"><?= $j['betrag'] > 0 ? e(money($j['betrag'])) : '–' ?><?= $j['betrag_fehlt'] > 0 ? '<div class="small muted">' . (int)$j['betrag_fehlt'] . ' ohne Betrag</div>' : '' ?></td>
         </tr>
       <?php endforeach; ?>
@@ -97,20 +164,24 @@ $letzteVoll = $a['punkte'] ? end($a['punkte']) : null;
   <?php else: ?>
     <div class="tablewrap">
       <table class="data">
-        <thead><tr><th>Datum</th><th class="num">Stand</th><th class="num">Liter</th><th class="num">Verbrauch</th><th class="num">Betrag</th><th>Tankstelle / Beleg</th><th></th></tr></thead>
+        <thead><tr><th>Datum</th><th class="num">Stand</th><th class="num">Menge</th><th class="num">Verbrauch</th><th class="num">Betrag</th><th>Karte · Tankstelle · Beleg</th><th></th></tr></thead>
         <tbody>
         <?php foreach ($rows as $t): ?>
           <tr id="t<?= (int)$t['id'] ?>">
             <td class="nowrap small"><?= e(de_date((string)$t['datum'])) ?></td>
             <td class="num nowrap"><?= $t['km_stand'] !== null ? e(tank_km_text((int)$t['km_stand'])) : '<span class="muted">–</span>' ?></td>
-            <td class="num nowrap"><?= e(tank_liter_text((float)$t['liter'])) ?>
-              <?php if ((string)$t['art'] === 'adblue'): ?><span class="badge badge--outline">AdBlue</span><?php elseif ((int)$t['voll'] !== 1): ?><span class="badge badge--outline" title="Nicht vollgetankt – zählt zur Strecke bis zur nächsten Volltankung">Teil</span><?php endif; ?></td>
-            <td class="num nowrap"><?= $t['verbrauch'] !== null ? e(tank_verbrauch_text($t['verbrauch'])) : '<span class="muted">–</span>' ?>
+            <td class="num nowrap"><?= e(tank_menge_text($t)) ?>
+              <?php if ((string)$t['art'] === 'adblue'): ?><span class="badge badge--outline">AdBlue</span><?php elseif ((string)$t['art'] === 'strom'): ?><span class="badge" style="background:#0369a1" title="Laden">⚡</span><?php endif; ?>
+              <?php if ((int)$t['voll'] !== 1 && (string)$t['art'] !== 'adblue'): ?><span class="badge badge--outline" title="Nicht voll – zählt zur Strecke bis zur nächsten Volltankung">Teil</span><?php endif; ?></td>
+            <td class="num nowrap"><?= $t['verbrauch'] !== null ? e(tank_verbrauch_text($t['verbrauch'], (string)$t['einheit'])) : '<span class="muted">–</span>' ?>
               <?php if ($t['auffaellig']): ?> <span class="badge badge--warn" title="weicht mehr als <?= TANK_AUFFAELLIG_PROZENT ?> % vom Mittel ab">auffällig</span><?php endif; ?>
               <?php if ($t['strecke'] !== null): ?><div class="small muted"><?= e(tank_km_text((int)$t['strecke'])) ?></div><?php endif; ?></td>
             <td class="num nowrap"><?= $t['betrag'] !== null ? e(money((float)$t['betrag'])) : '<span class="muted" title="ohne Betrag, etwa Tankkarte">–</span>' ?>
-              <?php if ($t['preis_je_liter'] !== null): ?><div class="small muted"><?= e(number_format($t['preis_je_liter'], 3, ',', '.')) ?> €/l</div><?php endif; ?></td>
-            <td class="small"><?= e((string)$t['tankstelle']) ?><?= (string)$t['beleg_nr'] !== '' ? ($t['tankstelle'] !== '' ? ' · ' : '') . '<span class="mono">' . e((string)$t['beleg_nr']) . '</span>' : '' ?>
+              <?php if ($t['preis_je_liter'] !== null): ?><div class="small muted"><?= e(number_format($t['preis_je_liter'], 3, ',', '.')) ?> €/<?= e((string)$t['einheit']) ?></div><?php endif; ?></td>
+            <td class="small">
+              <?php $karte = tank_karte_text($t); ?>
+              <?php if ($karte !== ''): ?><span class="badge badge--outline" title="Tankkarte"><?= e($karte) ?></span><?php endif; ?>
+              <?= e((string)$t['tankstelle']) ?><?= (string)$t['beleg_nr'] !== '' ? ($t['tankstelle'] !== '' ? ' · ' : '') . '<span class="mono">' . e((string)$t['beleg_nr']) . '</span>' : '' ?>
               <?php if ((int)($t['belege'] ?? 0) > 0): ?><span class="muted" title="Belege">📎 <?= (int)$t['belege'] ?></span><?php endif; ?>
               <?php if ((string)$t['notiz'] !== ''): ?><div class="muted"><?= e((string)$t['notiz']) ?></div><?php endif; ?>
               <div class="muted"><?= e((string)($t['erfasst_von'] ?? '')) ?></div></td>

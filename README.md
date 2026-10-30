@@ -142,6 +142,10 @@ unter „Sicherheitslücke PHP2Shell".
 * **SIM- und TETRA-Karten** – Mobilfunk (Rufnummer, ICCID, Vertrag) oder
   TETRA-Sicherheitskarte (ISSI, OPTA), Zuordnung zu Fahrzeug, Fachgruppe,
   Person oder OV, PIN/PUK verdeckt, Warnung vor Vertragsende.
+* **Tankkarten und Ladekarten** – mehrere Anbieter (DKV, UTA, Shell, Aral,
+  Ladenetze …), Freischaltung für Kraftstoff, Laden oder beides, Zuordnung
+  zu einem oder mehreren Fahrzeugen, PIN verdeckt, Warnung vor Ablauf; die
+  Karte wird je Tankung mit erfasst, Strom in kWh je 100 km.
 * **Verbrauch** – Strom-, Gas- und Wasserzähler mit Ständen aus Home
   Assistant, von Hand oder per QR-Code; Tarife, Kosten je Monat und Jahr,
   **Kosten je Bereich** entlang der Stell- und Lagerplätze, Unterzähler mit

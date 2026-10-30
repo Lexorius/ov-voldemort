@@ -1,5 +1,22 @@
 # Änderungsverlauf
 
+## 2.1.65.0
+
+- **Tankkarten:** Neues Modul, aufgebaut wie die SIM-Karten – Anbieter aus
+  einer pflegbaren Auswahlliste (DKV, UTA, Shell, Aral, TotalEnergies, EnBW
+  mobility+, Ladenetz, Sonstige), Kartennummer, Kundennummer, Status, Gültig
+  bis, PIN verdeckt nur für die Leitung, „liegt bei" und Aufbewahrung.
+  **Schaltet frei:** Kraftstoff, Laden (E-Fahrzeug) oder beides – Ladekarten
+  werden genauso geführt. **Zuordnung zu Fahrzeugen** in beide Richtungen
+  (eine Karte für mehrere Fahrzeuge, mehrere Karten für eines) mit Dropdown
+  und „+ Hinzufügen". Warnung vor Ablauf, Filter, CSV. Eigener Abschnitt in
+  der Fahrzeugakte, Modul in der Navigation, neue Einstellungen (Name,
+  Einleitung, Sichtbarkeit, Vorwarnung).
+- **Tanken:** Je Tankung lässt sich die benutzte Tankkarte wählen (Karten
+  des Fahrzeugs zuerst, die letzte vorbelegt). Neue Art **Strom** in kWh für
+  E-Fahrzeuge, getrennt gerechnet als kWh je 100 km von Vollladung zu
+  Vollladung, mit eigenen Kennzahlen und Verlauf; Hybride haben beides.
+
 ## 2.1.64.0
 
 - **Fahrzeuge – Tanken und Verbrauch:** Unterseite je Fahrzeug für

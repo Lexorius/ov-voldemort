@@ -1,5 +1,5 @@
 <?php
-/** @var array $tank @var array $vehicle @var ?array $letzte @var array $belege @var array $errors @var bool $loeschen @var bool $verwalten */
+/** @var array $tank @var array $vehicle @var ?array $letzte @var array $belege @var array $errors @var bool $loeschen @var bool $verwalten @var array $karten */
 $isNew = empty($tank['id']);
 $liter = (string)($tank['liter'] ?? '');
 if ($liter !== '' && is_numeric($liter)) {
@@ -9,6 +9,8 @@ $betrag = $tank['betrag'] ?? null;
 if ($betrag !== null && $betrag !== '' && is_numeric((string)$betrag)) {
     $betrag = number_format((float)$betrag, 2, ',', '');
 }
+$karten ??= [];
+$karteId = (int)($tank['tankkarte_id'] ?? 0);
 ?>
 <div class="pagehead">
   <div>
@@ -40,7 +42,7 @@ if ($betrag !== null && $betrag !== '' && is_numeric((string)$betrag)) {
         <small class="muted">Ohne Stand lässt sich kein Verbrauch rechnen.</small>
       </div>
       <div class="field">
-        <label for="liter">Liter</label>
+        <label for="liter">Menge <span class="muted">(Liter, bei Strom kWh)</span></label>
         <input type="text" id="liter" name="liter" required inputmode="decimal" value="<?= e($liter) ?>" placeholder="z. B. 62,40">
       </div>
     </div>
@@ -55,23 +57,37 @@ if ($betrag !== null && $betrag !== '' && is_numeric((string)$betrag)) {
       </div>
       <div class="field field--check" style="align-self:end">
         <input type="checkbox" id="voll" name="voll" value="1" <?= !empty($tank['voll']) ? 'checked' : '' ?>>
-        <label for="voll">Vollgetankt</label>
+        <label for="voll">Vollgetankt / voll geladen</label>
       </div>
       <div class="field">
         <label for="betrag">Betrag <span class="muted small">(optional)</span></label>
         <input type="text" id="betrag" name="betrag" inputmode="decimal" value="<?= e((string)($betrag ?? '')) ?>" placeholder="leer bei Tankkarte">
-        <small class="muted">Mit DKV-Karte steht oft kein Betrag auf dem Beleg – dann leer lassen.</small>
+        <small class="muted">Mit Tankkarte (DKV) steht oft kein Betrag auf dem Beleg – dann leer lassen.</small>
       </div>
     </div>
     <p class="small muted">Der Verbrauch wird von Volltankung zu Volltankung gerechnet. Nur nachgefüllt? Dann den Haken weglassen,
-      die Liter zählen zur Strecke bis zur nächsten vollen Tankung.</p>
+      die Menge zählt zur Strecke bis zur nächsten vollen Tankung. Strom wird getrennt in kWh je 100 km gerechnet.</p>
   </section>
 
   <section class="card">
     <h2>Woher</h2>
     <div class="grid2">
       <div class="field">
-        <label for="tankstelle">Tankstelle</label>
+        <label for="tankkarte_id">Tankkarte</label>
+        <select id="tankkarte_id" name="tankkarte_id">
+          <option value="">– keine / bar –</option>
+          <?php foreach ($karten as $gruppe => $liste): ?>
+            <optgroup label="<?= e((string)$gruppe) ?>">
+              <?php foreach ($liste as $k): ?>
+                <option value="<?= (int)$k['id'] ?>"<?= (int)$k['id'] === $karteId ? ' selected' : '' ?>><?= e(trim((string)($k['anbieter_label'] ?? '') . ' ' . (string)$k['nummer'])) ?><?= tankkarte_laedt($k) ? ' ⚡' : '' ?></option>
+              <?php endforeach; ?>
+            </optgroup>
+          <?php endforeach; ?>
+        </select>
+        <?php if (!$karten): ?><small class="muted">Noch keine Tankkarte angelegt – das geht im Modul Tankkarten.</small><?php endif; ?>
+      </div>
+      <div class="field">
+        <label for="tankstelle">Tankstelle / Ladesäule</label>
         <input type="text" id="tankstelle" name="tankstelle" maxlength="150" value="<?= e((string)($tank['tankstelle'] ?? '')) ?>" placeholder="z. B. Aral Heilbronn Süd">
       </div>
       <div class="field">

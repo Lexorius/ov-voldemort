@@ -928,6 +928,36 @@ Eine Rufnummer und eine ISSI können jeweils nur einmal vergeben werden; wer ein
 nimmt sie aus dem Bestand, statt sie zu löschen – dann bleibt sie zum
 Nachschlagen erhalten.
 
+## Tankkarten
+
+Tankkarten gehören zum Fuhrpark wie SIM-Karten zu den Routern – und seit es
+E-Fahrzeuge gibt, auch die **Ladekarten**. Das Modul führt beide:
+
+* **Angaben je Karte:** Anbieter (DKV, UTA, Shell, Aral, TotalEnergies, EnBW
+  mobility+, ein Ladenetz … – die Liste steht unter *Verwaltung →
+  Auswahllisten* und lässt sich erweitern), Kartennummer, Kundennummer,
+  Status, Gültig bis, Ausgabedatum, Notiz.
+* **Schaltet frei:** *Kraftstoff*, *Laden (E-Fahrzeug)* oder *beides*. Der
+  Filter „Laden" findet auch Karten, die beides können.
+* **Zuordnung zu Fahrzeugen** in beide Richtungen: eine Karte für mehrere
+  Fahrzeuge (die DKV-Karte für den ganzen Zug) oder mehrere Karten für
+  eines (Tank- und Ladekarte am Hybrid). Die Auswahl geht mit Dropdown und
+  „+ Hinzufügen" wie bei Terminen. Dazu *Liegt bei* (Mitglied) und
+  *Aufbewahrung* als Freitext – Handschuhfach, Schlüsselkasten.
+* **PIN** nur, wenn der Haken gesetzt ist; sie sieht allein die Leitung, in
+  der Liste verdeckt, ein Klick blendet sie ein. Ohne Haken wird das Feld
+  beim Speichern geleert.
+* **Ablauf:** Karten, die in den nächsten 60 Tagen (Vorgabe, einstellbar)
+  ablaufen oder schon abgelaufen sind, stehen oben in der Zählung und farbig
+  in der Liste.
+* **Fahrzeugakte:** Die Karten des Fahrzeugs stehen in einem eigenen
+  Abschnitt; von dort lässt sich eine neue Karte mit bereits gesetztem
+  Fahrzeug anlegen. Beim Erfassen einer Tankung wird die Karte mit
+  gespeichert.
+* **Sichtbarkeit:** Vorgabe nur Leitung; die Einstellung „Alle Mitglieder
+  dürfen Tankkarten sehen" öffnet die Liste ohne PIN. **CSV** mit allen
+  Angaben einschließlich PIN – nur für die Leitung.
+
 ## Impressum und Datenschutz auf dem Connector
 
 Die offenen Seiten des Connectors (Standort melden, Einladung, Lagerort,
@@ -1471,7 +1501,12 @@ gesammelt. Was die Anwendung daraus macht:
 * **Verbrauch je 100 km**, gerechnet von Volltankung zu Volltankung. Wer
   nur nachfüllt, lässt den Haken „Vollgetankt" weg; die Liter zählen dann zur
   Strecke bis zur nächsten vollen Tankung. AdBlue wird getrennt geführt und
-  zählt nie zum Verbrauch.
+  zählt nie zum Verbrauch. **Strom** für E-Fahrzeuge wird in kWh erfasst
+  und getrennt gerechnet – kWh je 100 km von Vollladung zu Vollladung; ein
+  Hybrid hat beides nebeneinander.
+* **Tankkarte**: Je Tankung lässt sich die benutzte Karte aus dem Modul
+  Tankkarten wählen; die Karten des Fahrzeugs stehen oben in der Auswahl,
+  die letzte benutzte ist vorbelegt.
 * **Kennzahlen und Verlauf**: Verbrauch im Mittel, zuletzt, Liter und
   Kosten (soweit bekannt), ein Balken je Volltankung und eine Tabelle je
   Jahr. Tankungen, die mehr als 25 % vom Mittel abweichen, sind als

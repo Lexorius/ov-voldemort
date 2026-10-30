@@ -552,6 +552,43 @@ $tanken ??= ['anzahl' => 0, 'eintraege' => [], 'verbrauch' => null, 'strecke' =>
 </section>
 <?php endif; ?>
 
+<?php if (can('view_tankkarten')): ?>
+<section class="card" id="tankkarten">
+  <div class="card__head">
+    <h2>Tankkarten</h2>
+    <div class="btnrow">
+      <span class="muted small"><?= count($tankkarten ?? []) ?></span>
+      <?php if (can('manage_tankkarten')): ?>
+        <a class="btn btn--sec btn--sm" href="<?= e(url('tankkarte_edit', ['vehicle_id' => $vehicle['id']])) ?>">+ Tankkarte</a>
+      <?php endif; ?>
+    </div>
+  </div>
+  <?php if (!($tankkarten ?? [])): ?>
+    <div class="empty">Für dieses Fahrzeug ist keine Tankkarte hinterlegt<?= can('manage_tankkarten') ? ' – eine bestehende Karte lässt sich im Modul Tankkarten diesem Fahrzeug zuordnen' : '' ?>.</div>
+  <?php else: ?>
+    <div class="tablewrap">
+      <table class="data">
+        <thead><tr><th>Karte</th><th>Schaltet frei</th><th>Liegt bei</th><th>Gültig bis</th></tr></thead>
+        <tbody>
+        <?php foreach ($tankkarten as $k): ?>
+          <tr>
+            <td><?= badge($k['anbieter_label'] ? ['label' => $k['anbieter_label'], 'color' => $k['anbieter_color']] : null, 'ohne Anbieter') ?>
+              <strong class="mono"><?= e((string)$k['nummer']) ?></strong>
+              <?= $k['status_label'] ? ' ' . badge(['label' => $k['status_label'], 'color' => $k['status_color']]) : '' ?>
+              <?php if (count($k['fahrzeuge'] ?? []) > 1): ?><div class="small muted">auch für <?= e(implode(', ', array_map(static fn($v) => $v['bezeichnung'], array_filter($k['fahrzeuge'], static fn($v) => (int)$v['id'] !== (int)$vehicle['id'])))) ?></div><?php endif; ?></td>
+            <td class="small"><?= tankkarte_laedt($k) ? '<span class="badge" style="background:#0369a1">⚡ Laden</span> ' : '' ?><?= tankkarte_tankt($k) ? '<span class="badge badge--outline">Kraftstoff</span>' : '' ?></td>
+            <td class="small"><?= trim((string)($k['person_label'] ?? '')) !== '' ? e((string)$k['person_label']) : '' ?><?= trim((string)$k['aufbewahrung']) !== '' ? '<div class="muted">' . e((string)$k['aufbewahrung']) . '</div>' : '' ?><?= trim((string)($k['person_label'] ?? '')) === '' && trim((string)$k['aufbewahrung']) === '' ? '<span class="muted">–</span>' : '' ?></td>
+            <td class="small"><?= $k['gueltig_bis'] ? e(de_date((string)$k['gueltig_bis'])) : '<span class="muted">unbefristet</span>' ?>
+              <?php if (can('manage_tankkarten')): ?><div><a href="<?= e(url('tankkarte_edit', ['id' => $k['id']])) ?>">bearbeiten</a></div><?php endif; ?></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  <?php endif; ?>
+</section>
+<?php endif; ?>
+
 <section class="card" id="wuensche">
   <div class="card__head">
     <h2><?= e((string)setting('wunsch_modul_name', 'Wünsch dir was')) ?> für dieses Fahrzeug</h2>

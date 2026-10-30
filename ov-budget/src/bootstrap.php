@@ -47,6 +47,7 @@ require __DIR__ . '/lib/uploads.php';
 require __DIR__ . '/lib/vehicles.php';
 require __DIR__ . '/lib/vehicle_files.php';
 require __DIR__ . '/lib/tanken.php';
+require __DIR__ . '/lib/tankkarten.php';
 require __DIR__ . '/lib/speicher.php';
 require __DIR__ . '/lib/stein.php';
 require __DIR__ . '/lib/divera.php';

@@ -166,6 +166,15 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 - PIN und PUK verdeckt und nur für die Leitung, CSV-Bestandsliste
 - Warnung, wenn ein Vertrag ausläuft
 
+### Tankkarten und Ladekarten
+- **Mehrere Anbieter** (DKV, UTA, Shell, Aral, TotalEnergies, EnBW, Ladenetze …)
+  aus einer pflegbaren Auswahlliste
+- **Schaltet frei**: Kraftstoff, Laden (E-Fahrzeug) oder beides
+- **Zuordnung zu Fahrzeugen** in beide Richtungen: eine Karte für mehrere
+  Fahrzeuge, mehrere Karten für eines; dazu „liegt bei" und Aufbewahrung
+- PIN verdeckt und nur für die Leitung, Warnung vor Ablauf, CSV-Bestandsliste
+- In der Fahrzeugakte und beim Erfassen einer Tankung; Strom in kWh je 100 km
+
 ### Kontakte
 - Ansprechpartner mit eigenen Zusatzfeldern
 - **Anrufen und mailen mit einem Tipp**; Rufnummern werden international
@@ -236,7 +245,8 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
   THW-Verwaltung, Werkstatt, Kosten und Bearbeitungsstand
 - **Tanken und Verbrauch**: Tankquittungen je Fahrzeug mit Belegfoto,
   Verbrauch je 100 km von Volltankung zu Volltankung – auch ohne Beträge
-  (Tankkarte); Verlauf, Jahreswerte, Auffälligkeiten, CSV
+  (Tankkarte); Strom in kWh je 100 km; Verlauf, Jahreswerte,
+  Auffälligkeiten, CSV
 - **Sortierbare Liste und Kachelansicht** mit Stempeln „Nicht einsatzbereit",
   „In Wartung", „Bedingt einsatzbereit" und „Im Einsatz" (auch aus dem
   Divera-Funkstatus), Favoriten je Person

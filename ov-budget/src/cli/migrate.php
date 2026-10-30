@@ -2403,6 +2403,55 @@ SQL);
         $say('Belege lassen sich an Tankungen hängen.');
     }
     $merken('091_tanken');
+
+    /* ---------- 092: Tankkarten ---------- */
+    if (!ovb_table_exists($pdo, 'tankkarten')) {
+        $pdo->exec("CREATE TABLE tankkarten (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nummer        VARCHAR(60)  NOT NULL,
+  anbieter_id   INT UNSIGNED NULL,
+  art           VARCHAR(20)  NOT NULL DEFAULT 'kraftstoff',
+  status_id     INT UNSIGNED NULL,
+  kundennummer  VARCHAR(60)  NOT NULL DEFAULT '',
+  gueltig_bis   DATE         NULL,
+  hat_pin       TINYINT(1)   NOT NULL DEFAULT 0,
+  pin           VARCHAR(20)  NOT NULL DEFAULT '',
+  person_id     INT UNSIGNED NULL,
+  aufbewahrung  VARCHAR(150) NOT NULL DEFAULT '',
+  ausgegeben_am DATE         NULL,
+  notiz         TEXT         NULL,
+  is_active     TINYINT(1)   NOT NULL DEFAULT 1,
+  created_by    INT UNSIGNED NULL,
+  updated_by    INT UNSIGNED NULL,
+  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_tk_anbieter (anbieter_id),
+  KEY idx_tk_status (status_id),
+  CONSTRAINT fk_tk_anbieter FOREIGN KEY (anbieter_id) REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_tk_status   FOREIGN KEY (status_id)   REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_tk_person   FOREIGN KEY (person_id)   REFERENCES users(id)      ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle tankkarten angelegt.');
+    }
+    if (!ovb_table_exists($pdo, 'tankkarte_fahrzeuge')) {
+        $pdo->exec("CREATE TABLE tankkarte_fahrzeuge (
+  tankkarte_id  INT UNSIGNED NOT NULL,
+  vehicle_id    INT UNSIGNED NOT NULL,
+  PRIMARY KEY (tankkarte_id, vehicle_id),
+  KEY idx_tkf_fz (vehicle_id),
+  CONSTRAINT fk_tkf_karte FOREIGN KEY (tankkarte_id) REFERENCES tankkarten(id) ON DELETE CASCADE,
+  CONSTRAINT fk_tkf_fz    FOREIGN KEY (vehicle_id)   REFERENCES vehicles(id)   ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    if (ovb_table_exists($pdo, 'vehicle_tankungen') && !ovb_column_exists($pdo, 'vehicle_tankungen', 'tankkarte_id')) {
+        $pdo->exec('ALTER TABLE vehicle_tankungen
+            ADD COLUMN tankkarte_id INT UNSIGNED NULL AFTER art,
+            ADD KEY idx_tank_karte (tankkarte_id),
+            ADD CONSTRAINT fk_tank_karte FOREIGN KEY (tankkarte_id) REFERENCES tankkarten(id) ON DELETE SET NULL');
+        $say('Tankungen kennen ihre Tankkarte.');
+    }
+    $merken('092_tankkarten');
 }
 
 /**

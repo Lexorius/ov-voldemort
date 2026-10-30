@@ -1401,8 +1401,48 @@ CREATE TABLE IF NOT EXISTS calendar_auftraege (
   CONSTRAINT fk_ca_order FOREIGN KEY (order_id) REFERENCES vehicle_orders(id)   ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Tankkarten und Ladekarten: Anbieter und Status aus den Auswahllisten,
+-- art kraftstoff / laden / beides; die PIN nur fuer die Leitung
+CREATE TABLE IF NOT EXISTS tankkarten (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nummer        VARCHAR(60)  NOT NULL,
+  anbieter_id   INT UNSIGNED NULL,
+  art           VARCHAR(20)  NOT NULL DEFAULT 'kraftstoff',
+  status_id     INT UNSIGNED NULL,
+  kundennummer  VARCHAR(60)  NOT NULL DEFAULT '',
+  gueltig_bis   DATE         NULL,
+  hat_pin       TINYINT(1)   NOT NULL DEFAULT 0,
+  pin           VARCHAR(20)  NOT NULL DEFAULT '',
+  -- bei wem die Karte liegt (Mitglied) und wo (Freitext)
+  person_id     INT UNSIGNED NULL,
+  aufbewahrung  VARCHAR(150) NOT NULL DEFAULT '',
+  ausgegeben_am DATE         NULL,
+  notiz         TEXT         NULL,
+  is_active     TINYINT(1)   NOT NULL DEFAULT 1,
+  created_by    INT UNSIGNED NULL,
+  updated_by    INT UNSIGNED NULL,
+  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_tk_anbieter (anbieter_id),
+  KEY idx_tk_status (status_id),
+  CONSTRAINT fk_tk_anbieter FOREIGN KEY (anbieter_id) REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_tk_status   FOREIGN KEY (status_id)   REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_tk_person   FOREIGN KEY (person_id)   REFERENCES users(id)      ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Zuordnung Karte <-> Fahrzeug: eine Karte fuer mehrere Fahrzeuge, mehrere Karten fuer eines
+CREATE TABLE IF NOT EXISTS tankkarte_fahrzeuge (
+  tankkarte_id  INT UNSIGNED NOT NULL,
+  vehicle_id    INT UNSIGNED NOT NULL,
+  PRIMARY KEY (tankkarte_id, vehicle_id),
+  KEY idx_tkf_fz (vehicle_id),
+  CONSTRAINT fk_tkf_karte FOREIGN KEY (tankkarte_id) REFERENCES tankkarten(id) ON DELETE CASCADE,
+  CONSTRAINT fk_tkf_fz    FOREIGN KEY (vehicle_id)   REFERENCES vehicles(id)   ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Tankungen: Quittung je Fahrzeug, daraus der Verbrauch je 100 km.
--- betrag darf fehlen (Tankkarte), voll = Volltankung, art kraftstoff oder adblue
+-- betrag darf fehlen (Tankkarte), voll = Volltankung, art kraftstoff, strom (kWh) oder adblue
 CREATE TABLE IF NOT EXISTS vehicle_tankungen (
   id           INT UNSIGNED  NOT NULL AUTO_INCREMENT,
   vehicle_id   INT UNSIGNED  NOT NULL,
@@ -1412,6 +1452,8 @@ CREATE TABLE IF NOT EXISTS vehicle_tankungen (
   betrag       DECIMAL(10,2) NULL,
   voll         TINYINT(1)    NOT NULL DEFAULT 1,
   art          VARCHAR(20)   NOT NULL DEFAULT 'kraftstoff',
+  -- mit welcher Karte bezahlt wurde
+  tankkarte_id INT UNSIGNED  NULL,
   tankstelle   VARCHAR(150)  NOT NULL DEFAULT '',
   beleg_nr     VARCHAR(80)   NOT NULL DEFAULT '',
   notiz        TEXT          NULL,
@@ -1419,8 +1461,10 @@ CREATE TABLE IF NOT EXISTS vehicle_tankungen (
   created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_tank_fz (vehicle_id, datum),
-  CONSTRAINT fk_tank_fz   FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE,
-  CONSTRAINT fk_tank_user FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE SET NULL
+  KEY idx_tank_karte (tankkarte_id),
+  CONSTRAINT fk_tank_fz    FOREIGN KEY (vehicle_id)   REFERENCES vehicles(id)   ON DELETE CASCADE,
+  CONSTRAINT fk_tank_user  FOREIGN KEY (user_id)      REFERENCES users(id)      ON DELETE SET NULL,
+  CONSTRAINT fk_tank_karte FOREIGN KEY (tankkarte_id) REFERENCES tankkarten(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS vehicle_files (

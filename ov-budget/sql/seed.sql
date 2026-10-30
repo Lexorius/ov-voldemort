@@ -250,6 +250,23 @@ INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_defa
 ('sim_status','Gesperrt',    'gesperrt',   '#b45309',30,0,0),
 ('sim_status','Gekuendigt',  'gekuendigt', '#b91c1c',40,0,1);
 
+-- ---------- Tankkarten: Anbieter und Status ----------
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default) VALUES
+('tankkarte_anbieter','DKV',            'dkv',      '#1d4ed8',10,1),
+('tankkarte_anbieter','UTA',            'uta',      '#0f766e',20,0),
+('tankkarte_anbieter','Shell',          'shell',    '#ca8a04',30,0),
+('tankkarte_anbieter','Aral',           'aral',     '#0369a1',40,0),
+('tankkarte_anbieter','TotalEnergies',  'total',    '#b91c1c',50,0),
+('tankkarte_anbieter','EnBW mobility+', 'enbw',     '#ea580c',60,0),
+('tankkarte_anbieter','Ladenetz (sonstige)', 'ladenetz', '#7c3aed',70,0),
+('tankkarte_anbieter','Sonstige',       'sonstige', '#64748b',80,0);
+
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default, is_final) VALUES
+('tankkarte_status','Im Einsatz',  'aktiv',      '#15803d',10,1,0),
+('tankkarte_status','Reserve',     'reserve',    '#0369a1',20,0,0),
+('tankkarte_status','Gesperrt',    'gesperrt',   '#b45309',30,0,0),
+('tankkarte_status','Abgelaufen',  'abgelaufen', '#b91c1c',40,0,1);
+
 -- ---------- Arten von Veranstaltungen ----------
 INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default) VALUES
 ('veranstaltung_typ','Ausbildung',            'ausbildung',      '#0369a1',10,0),
@@ -420,6 +437,10 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('sim_modul_name','SIM-Karten','Bezeichnung des SIM-Moduls','','text','SIM-Karten',10),
 ('sim_intro','Karten des Ortsverbands mit Rufnummer, Vertrag und Zuordnung zu Fahrzeug, Fachgruppe oder Person.','Einleitungstext im SIM-Modul','','textarea','SIM-Karten',20),
 ('sim_user_darf_sehen','0','Alle Mitglieder duerfen SIM-Karten sehen','PIN und PUK bleiben in jedem Fall der Leitung vorbehalten','bool','SIM-Karten',30),
+('tankkarte_modul_name','Tankkarten','Bezeichnung des Tankkartenmoduls','','text','Tankkarten',10),
+('tankkarte_intro','Tank- und Ladekarten des Ortsverbands mit Anbieter, Zuordnung zu Fahrzeugen und Gueltigkeit.','Einleitungstext im Tankkartenmodul','','textarea','Tankkarten',20),
+('tankkarte_user_darf_sehen','0','Alle Mitglieder duerfen Tankkarten sehen','Die PIN bleibt in jedem Fall der Leitung vorbehalten','bool','Tankkarten',30),
+('tankkarte_gueltig_warnung_tage','60','Vorwarnung fuer das Ablaufdatum (Tage)','Ab wann eine Karte als bald ablaufend gilt','number','Tankkarten',40),
 ('kalender_modul_name','Kalender','Bezeichnung des Kalendermoduls','','text','Kalender',10),
 ('kalender_intro','Termine des Ortsverbands, der Fachgruppen und Funktionen – dazu Besprechungen, Veranstaltungen, Fristen und Feiertage.','Einleitungstext im Kalender','','textarea','Kalender',20),
 ('kalender_user_darf_anlegen','1','Alle Mitglieder dürfen Termine anlegen','Für sich, die eigene Fachgruppe und die eigenen Funktionen. Sonst nur die Leitung.','bool','Kalender',30),
