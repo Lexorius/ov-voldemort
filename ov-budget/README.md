@@ -173,6 +173,8 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 - **Zuordnung zu Fahrzeugen** in beide Richtungen: eine Karte für mehrere
   Fahrzeuge, mehrere Karten für eines; dazu „liegt bei" und Aufbewahrung
 - PIN verdeckt und nur für die Leitung, Warnung vor Ablauf, CSV-Bestandsliste
+- **Verbleib** gesperrt, zurückgegeben oder abgelaufen mit Datum – bei Sperrung
+  mit Pflicht-Begründung
 - In der Fahrzeugakte und beim Erfassen einer Tankung; Strom in kWh je 100 km
 
 ### Kontakte

@@ -64,6 +64,7 @@ $karte = static fn(array $extra = []): array => $extra + [
     'art' => 'kraftstoff', 'status_id' => 302, 'status_label' => 'Im Einsatz', 'status_color' => '#15803d',
     'kundennummer' => 'K-77', 'gueltig_bis' => null, 'hat_pin' => 0, 'pin' => '', 'person_id' => null, 'person_label' => null,
     'aufbewahrung' => 'Handschuhfach', 'ausgegeben_am' => null, 'notiz' => '', 'is_active' => 1,
+    'verbleib' => '', 'verbleib_am' => null, 'sperrgrund' => '',
     'fahrzeuge' => [['id' => 7, 'bezeichnung' => 'GKW 1', 'kennzeichen' => 'THW 99020', 'is_active' => 1]],
 ];
 
@@ -74,6 +75,9 @@ $check('Arten', tankkarte_art('laden') === 'laden' && tankkarte_art('unsinn') ==
 $check('Bezeichnung kürzt die Nummer', tankkarte_bezeichnung($karte()) === 'DKV …7890' && tankkarte_bezeichnung(['nummer' => '1234', 'anbieter_label' => '']) === '1234'
     && tankkarte_bezeichnung([]) === 'Tankkarte');
 $check('Fahrzeuge als Text', tankkarte_fahrzeuge_text($karte()) === 'GKW 1 · THW 99020' && tankkarte_fahrzeuge_text(['fahrzeuge' => []]) === '');
+$check('Verbleib', tankkarte_verbleib('gesperrt') === 'gesperrt' && tankkarte_verbleib('unsinn') === '' && tankkarte_gesperrt(['verbleib' => 'gesperrt']) && !tankkarte_gesperrt(['verbleib' => 'abgelaufen'])
+    && tankkarte_verbleib_text(['verbleib' => 'gesperrt', 'verbleib_am' => '2026-03-12', 'sperrgrund' => 'verloren']) === 'Gesperrt seit 12.03.2026 – verloren'
+    && tankkarte_verbleib_text(['verbleib' => 'zurueckgegeben']) === 'Zurückgegeben' && tankkarte_verbleib_text(['verbleib' => '']) === '');
 $check('PIN verdeckt', tankkarte_verdeckt('1234') === '••••' && tankkarte_verdeckt('12') === '••••' && tankkarte_verdeckt('') === '');
 $check('Gültigkeit', tankkarte_gueltig(['gueltig_bis' => null])['stufe'] === 'offen'
     && tankkarte_gueltig(['gueltig_bis' => '2026-12-31'], 60, '2026-11-15')['stufe'] === 'bald'
@@ -85,7 +89,8 @@ $stats = tankkarte_stats([
     $karte(['id' => 7, 'art' => 'beides', 'gueltig_bis' => '2026-01-01']),
 ], 60, '2026-11-15');
 $check('Zahlen für den Kopf', $stats['anzahl'] === 3 && $stats['laden'] === 2 && $stats['ohne_fahrzeug'] === 1 && $stats['gueltig_bald'] === 2
-    && $stats['anbieter'] === ['DKV' => 2, 'EnBW mobility+' => 1]);
+    && $stats['anbieter'] === ['DKV' => 2, 'EnBW mobility+' => 1] && $stats['gesperrt'] === 0
+    && tankkarte_stats([$karte(['verbleib' => 'gesperrt'])])['gesperrt'] === 1);
 $optionen = tankkarte_optionen([$karte()], [$karte(), $karte(['id' => 6, 'nummer' => '9999'])]);
 $check('Auswahl fürs Tankformular: eigene zuerst, keine doppelt', array_keys($optionen) === ['Diesem Fahrzeug zugeordnet', 'Weitere Karten']
     && count($optionen['Diesem Fahrzeug zugeordnet']) === 1 && count($optionen['Weitere Karten']) === 1 && $optionen['Weitere Karten'][0]['id'] === 6);
@@ -134,8 +139,27 @@ $GLOBALS['doppelt'] = 3;
 $check('doppelte Nummer beim selben Anbieter', $id === null && count($fehler) === 1 && str_contains($fehler[0], 'schon auf einer anderen Karte'));
 $GLOBALS['doppelt'] = null;
 
-// Ändern ohne Fahrzeugfeld: Zuordnung bleibt; PIN ohne Haken geleert; Art unsinnig → Kraftstoff
-$_POST = ['nummer' => '7083 0012', 'anbieter_id' => '300', 'art' => 'unsinn', 'pin' => '4711', 'is_active' => '0'];
+// Gesperrt braucht einen Grund
+$_POST = ['nummer' => '7083 0012', 'anbieter_id' => '300', 'verbleib' => 'gesperrt', 'sperrgrund' => '  '];
+[$id, $fehler] = tankkarte_save_from_post(null, $user);
+$check('gesperrt ohne Grund abgelehnt', $id === null && count($fehler) === 1 && str_contains($fehler[0], 'begründen'));
+$_POST = ['nummer' => '7083 0012', 'anbieter_id' => '300', 'verbleib' => 'gesperrt', 'sperrgrund' => 'verloren am Einsatz'];
+$GLOBALS['inserts'] = [];
+[$id, $fehler] = tankkarte_save_from_post(null, $user);
+$check('gesperrt mit Grund: aus dem Bestand, Datum heute', $id !== null && $GLOBALS['inserts'][0][1]['verbleib'] === 'gesperrt' && $GLOBALS['inserts'][0][1]['sperrgrund'] === 'verloren am Einsatz'
+    && $GLOBALS['inserts'][0][1]['is_active'] === 0 && $GLOBALS['inserts'][0][1]['verbleib_am'] === date('Y-m-d'));
+$_POST = ['nummer' => '7083 0012', 'anbieter_id' => '300', 'verbleib' => 'zurueckgegeben', 'verbleib_am' => '2026-02-01', 'sperrgrund' => 'wird verworfen'];
+$GLOBALS['inserts'] = [];
+[$id, $fehler] = tankkarte_save_from_post(null, $user);
+$check('zurückgegeben mit Datum, Grund nur bei Sperrung', $GLOBALS['inserts'][0][1]['verbleib'] === 'zurueckgegeben' && $GLOBALS['inserts'][0][1]['verbleib_am'] === '2026-02-01'
+    && $GLOBALS['inserts'][0][1]['sperrgrund'] === '' && $GLOBALS['inserts'][0][1]['is_active'] === 0);
+$_POST = ['nummer' => '7083 0012', 'anbieter_id' => '300', 'verbleib' => 'gesperrt', 'sperrgrund' => 'verloren'];
+$GLOBALS['updates'] = [];
+[$id, $fehler] = tankkarte_save_from_post($karte(['id' => 41, 'verbleib' => 'gesperrt', 'verbleib_am' => '2026-03-12']), $user);
+$check('bestehendes Datum bleibt beim Ändern', $GLOBALS['updates'][0][1]['verbleib_am'] === '2026-03-12');
+
+// Ändern ohne Fahrzeugfeld: Zuordnung bleibt; PIN ohne Haken geleert; Art unsinnig → Kraftstoff; Verbleib zurückgegeben
+$_POST = ['nummer' => '7083 0012', 'anbieter_id' => '300', 'art' => 'unsinn', 'pin' => '4711', 'verbleib' => 'zurueckgegeben'];
 $GLOBALS['inserts'] = []; $GLOBALS['updates'] = []; $GLOBALS['execs'] = [];
 [$id, $fehler] = tankkarte_save_from_post($karte(['id' => 41]), $user);
 $check('geändert', $id === 41 && $GLOBALS['updates'][0][0] === 'tankkarten' && $GLOBALS['updates'][0][2] === [41] && $GLOBALS['updates'][0][1]['pin'] === ''
@@ -158,13 +182,13 @@ $check('löschen', str_contains($GLOBALS['execs'][0][0], 'DELETE FROM tankkarten
 /* ---------- Ansichten ---------- */
 $_SERVER['REQUEST_URI'] = '/?p=tankkarten';
 $_GET = ['p' => 'tankkarten'];
-$karten = [$karte(['hat_pin' => 1, 'pin' => '4711']), $karte(['id' => 6, 'nummer' => 'ENBW-0001', 'art' => 'laden', 'anbieter_label' => 'EnBW mobility+', 'fahrzeuge' => [], 'gueltig_bis' => '2020-01-01', 'is_active' => 0, 'person_label' => 'Anna Admin'])];
+$karten = [$karte(['hat_pin' => 1, 'pin' => '4711']), $karte(['id' => 6, 'nummer' => 'ENBW-0001', 'art' => 'laden', 'anbieter_label' => 'EnBW mobility+', 'fahrzeuge' => [], 'gueltig_bis' => '2020-01-01', 'is_active' => 0, 'person_label' => 'Anna Admin', 'verbleib' => 'gesperrt', 'verbleib_am' => '2026-03-12', 'sperrgrund' => 'verloren'])];
 $daten = ['karten' => $karten, 'stats' => tankkarte_stats($karten, 60), 'warn' => 60,
           'filter' => ['q' => '', 'anbieter_id' => null, 'status_id' => null, 'art' => '', 'aktiv' => 'aktiv', 'sort' => '']];
 $html = render_partial('tankkarten', $daten);
 $check('Liste: Karten, Laden-Plakette, Fahrzeug-Link, PIN verdeckt', str_contains($html, '7083001234567890') && str_contains($html, '⚡ Laden')
-    && str_contains($html, 'p=vehicle&amp;id=7') && str_contains($html, 'data-geheim="4711"') && str_contains($html, '••••') && str_contains($html, 'ausgemustert')
-    && str_contains($html, 'Anna Admin') && str_contains($html, 'color:var(--bad)'));
+    && str_contains($html, 'p=vehicle&amp;id=7') && str_contains($html, 'data-geheim="4711"') && str_contains($html, '••••') && str_contains($html, '>gesperrt<')
+    && str_contains($html, 'Gesperrt seit 12.03.2026 – verloren') && str_contains($html, 'Anna Admin') && str_contains($html, 'color:var(--bad)'));
 $check('Liste: Filter und Knöpfe', str_contains($html, 'name="art"') && str_contains($html, 'name="anbieter_id"') && str_contains($html, '+ Tankkarte') && str_contains($html, 'tankkarten_export'));
 $GLOBALS['can'] = ['manage_tankkarten' => false];
 $html = render_partial('tankkarten', $daten);
@@ -179,7 +203,11 @@ $html = render_partial('tankkarte_edit', ['karte' => $karte(['id' => null]), 'er
 $check('Formular: Anbieter, Art, Fahrzeugwahl mit Hinzufügen, Person, PIN-Schalter', str_contains($html, 'name="anbieter_id"') && str_contains($html, 'value="laden"')
     && str_contains($html, 'data-wahl="fahrzeuge"') && str_contains($html, 'name="fahrzeuge[]" value="7"') && str_contains($html, 'name="fahrzeuge_feld"')
     && str_contains($html, 'name="person_id"') && str_contains($html, 'data-schalter="pin"') && !str_contains($html, 'value="loeschen"')
-    && str_contains($html, 'p=vehicle&amp;id=7'));
+    && str_contains($html, 'p=vehicle&amp;id=7') && str_contains($html, 'name="verbleib"') && str_contains($html, 'value="zurueckgegeben"')
+    && str_contains($html, 'data-verbleib-grund hidden') && str_contains($html, 'name="sperrgrund"'));
+$html = render_partial('tankkarte_edit', ['karte' => $karte(['verbleib' => 'gesperrt', 'sperrgrund' => 'verloren']), 'errors' => [], 'fahrzeugOptionen' => $optionenFz, 'fahrzeugeGewaehlt' => [7],
+    'personen' => [], 'vehicleId' => null]);
+$check('Formular gesperrt: Grund sichtbar und gefüllt', str_contains($html, 'data-verbleib-grund>') && str_contains($html, 'value="verloren"') && str_contains($html, 'value="gesperrt" selected'));
 $html = render_partial('tankkarte_edit', ['karte' => $karte(['hat_pin' => 1, 'pin' => '4711']), 'errors' => ['Bitte die Kartennummer angeben – sie steht auf der Karte.'], 'fahrzeugOptionen' => $optionenFz,
     'fahrzeugeGewaehlt' => [7, 8], 'personen' => [], 'vehicleId' => null]);
 $check('Formular bestehend: Fehler, PIN sichtbar, Löschen', str_contains($html, 'alert--error') && str_contains($html, 'value="4711"') && str_contains($html, 'value="loeschen"')
@@ -194,7 +222,9 @@ $check('Fahrzeugakte', str_contains((string)file_get_contents($app . '/views/veh
 $schema = (string)file_get_contents($app . '/sql/schema.sql');
 $check('Schema', str_contains($schema, 'CREATE TABLE IF NOT EXISTS tankkarten') && str_contains($schema, 'CREATE TABLE IF NOT EXISTS tankkarte_fahrzeuge') && str_contains($schema, 'fk_tank_karte')
     && strpos($schema, 'CREATE TABLE IF NOT EXISTS tankkarten') < strpos($schema, 'CREATE TABLE IF NOT EXISTS vehicle_tankungen'));
-$check('Migration', str_contains((string)file_get_contents($app . '/src/cli/migrate.php'), "\$merken('092_tankkarten')"));
+$check('Migration', str_contains((string)file_get_contents($app . '/src/cli/migrate.php'), "\$merken('092_tankkarten')") && str_contains((string)file_get_contents($app . '/src/cli/migrate.php'), "\$merken('093_tankkarte_verbleib')"));
+$check('Schema Verbleib', str_contains($schema, 'sperrgrund    VARCHAR(255)') && str_contains($schema, 'verbleib_am   DATE'));
+$check('Export mit Verbleib', str_contains((string)file_get_contents($app . '/src/pages/tankkarten_export.php'), "'Grund der Sperrung'"));
 $check('Einstellungen', str_contains((string)file_get_contents($app . '/sql/seed.sql'), "'tankkarte_gueltig_warnung_tage'"));
 
 echo "$ok bestanden, $fail fehlgeschlagen\n";

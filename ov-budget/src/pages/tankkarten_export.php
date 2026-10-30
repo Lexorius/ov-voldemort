@@ -27,7 +27,7 @@ fwrite($out, "\xEF\xBB\xBF");   // BOM, damit Excel die Umlaute richtig anzeigt
 
 fputcsv($out, csv_sicher([
     'Anbieter', 'Kartennummer', 'Art', 'Status', 'Fahrzeuge', 'Bei Person', 'Aufbewahrung',
-    'Kundennummer', 'Gueltig bis', 'Ausgegeben am', 'PIN', 'Im Bestand', 'Notiz',
+    'Kundennummer', 'Gueltig bis', 'Ausgegeben am', 'PIN', 'Im Bestand', 'Verbleib', 'Seit', 'Grund der Sperrung', 'Notiz',
 ]), ';');
 
 foreach ($karten as $k) {
@@ -44,6 +44,9 @@ foreach ($karten as $k) {
         $k['ausgegeben_am'] ? de_date((string)$k['ausgegeben_am']) : '',
         (string)$k['pin'],
         (int)$k['is_active'] === 1 ? 'ja' : 'nein',
+        TANKKARTE_VERBLEIB[(string)($k['verbleib'] ?? '')] ?? '',
+        !empty($k['verbleib_am']) ? de_date((string)$k['verbleib_am']) : '',
+        (string)($k['sperrgrund'] ?? ''),
         preg_replace('/\s+/', ' ', (string)($k['notiz'] ?? '')),
     ]), ';');
 }

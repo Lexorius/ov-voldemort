@@ -263,9 +263,7 @@ INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_defa
 
 INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default, is_final) VALUES
 ('tankkarte_status','Im Einsatz',  'aktiv',      '#15803d',10,1,0),
-('tankkarte_status','Reserve',     'reserve',    '#0369a1',20,0,0),
-('tankkarte_status','Gesperrt',    'gesperrt',   '#b45309',30,0,0),
-('tankkarte_status','Abgelaufen',  'abgelaufen', '#b91c1c',40,0,1);
+('tankkarte_status','Reserve',     'reserve',    '#0369a1',20,0,0);
 
 -- ---------- Arten von Veranstaltungen ----------
 INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default) VALUES

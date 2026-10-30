@@ -30,6 +30,42 @@ function tankkarte_art(string $art): string
     return array_key_exists($art, TANKKARTE_ARTEN) ? $art : 'kraftstoff';
 }
 
+/** Was aus der Karte geworden ist – leer heißt: im Bestand */
+const TANKKARTE_VERBLEIB = [
+    ''               => 'im Bestand',
+    'gesperrt'       => 'Gesperrt',
+    'zurueckgegeben' => 'Zurückgegeben',
+    'abgelaufen'     => 'Abgelaufen',
+];
+
+function tankkarte_verbleib(string $verbleib): string
+{
+    return array_key_exists($verbleib, TANKKARTE_VERBLEIB) ? $verbleib : '';
+}
+
+/** Ist die Karte gesperrt? Reine Funktion. */
+function tankkarte_gesperrt(array $k): bool
+{
+    return (string)($k['verbleib'] ?? '') === 'gesperrt';
+}
+
+/** Verbleib als Text, mit Datum und Grund: „Gesperrt seit 12.03.2026 – verloren". Reine Funktion. */
+function tankkarte_verbleib_text(array $k): string
+{
+    $verbleib = tankkarte_verbleib((string)($k['verbleib'] ?? ''));
+    if ($verbleib === '') {
+        return '';
+    }
+    $s = TANKKARTE_VERBLEIB[$verbleib];
+    if (!empty($k['verbleib_am'])) {
+        $s .= ' seit ' . de_date((string)$k['verbleib_am']);
+    }
+    if (trim((string)($k['sperrgrund'] ?? '')) !== '') {
+        $s .= ' – ' . trim((string)$k['sperrgrund']);
+    }
+    return $s;
+}
+
 /** Schaltet die Karte Laden frei? Reine Funktion. */
 function tankkarte_laedt(array $k): bool
 {
@@ -160,10 +196,10 @@ function tankkarte_query(array $f = []): array
     return tankkarten_mit_fahrzeugen(db_all($sql . ($w ? ' WHERE ' . implode(' AND ', $w) : '') . ' ORDER BY ' . $order, $p));
 }
 
-/** Karten eines Fahrzeugs – für die Fahrzeugakte und das Tankformular */
-function tankkarten_for_vehicle(int $vehicleId): array
+/** Karten eines Fahrzeugs – für die Fahrzeugakte (auch gesperrte, damit nichts übersehen wird) und das Tankformular */
+function tankkarten_for_vehicle(int $vehicleId, bool $alle = false): array
 {
-    return tankkarte_query(['vehicle_id' => $vehicleId]);
+    return tankkarte_query(['vehicle_id' => $vehicleId] + ($alle ? ['aktiv' => 'alle'] : []));
 }
 
 /* ==================================================================== */
@@ -208,10 +244,13 @@ function tankkarte_gueltig(array $k, int $warnTage = 60, ?string $heute = null):
 /** Zahlen für den Kopf der Liste. Reine Funktion. */
 function tankkarte_stats(array $karten, int $warnTage = 60, ?string $heute = null): array
 {
-    $s = ['anzahl' => count($karten), 'laden' => 0, 'ohne_fahrzeug' => 0, 'gueltig_bald' => 0, 'anbieter' => []];
+    $s = ['anzahl' => count($karten), 'laden' => 0, 'ohne_fahrzeug' => 0, 'gueltig_bald' => 0, 'gesperrt' => 0, 'anbieter' => []];
     foreach ($karten as $k) {
         if (tankkarte_laedt($k)) {
             $s['laden']++;
+        }
+        if (tankkarte_gesperrt($k)) {
+            $s['gesperrt']++;
         }
         if (!($k['fahrzeuge'] ?? [])) {
             $s['ohne_fahrzeug']++;
@@ -238,6 +277,8 @@ function tankkarte_save_from_post(?array $karte, array $user): array
     $anbieterId = post_int('anbieter_id');
     $art = tankkarte_art(post_str('art', 'kraftstoff'));
     $hatPin = post_bool('hat_pin');
+    $verbleib = tankkarte_verbleib(post_str('verbleib'));
+    $sperrgrund = $verbleib === 'gesperrt' ? mb_substr(post_str('sperrgrund'), 0, 255) : '';
 
     if ($nummer === '') {
         $fehler[] = 'Bitte die Kartennummer angeben – sie steht auf der Karte.';
@@ -246,6 +287,9 @@ function tankkarte_save_from_post(?array $karte, array $user): array
         $fehler[] = 'Bitte den Anbieter wählen. Fehlt er, lässt er sich unter Verwaltung → Auswahllisten anlegen.';
     }
     // Dieselbe Nummer beim selben Anbieter ist fast immer ein Versehen
+    if ($verbleib === 'gesperrt' && $sperrgrund === '') {
+        $fehler[] = 'Bitte begründen, warum die Karte gesperrt ist – etwa verloren, gestohlen oder Missbrauch.';
+    }
     if ($nummer !== '' && $anbieterId) {
         $doppelt = db_val('SELECT id FROM tankkarten WHERE nummer = ? AND anbieter_id = ? AND id <> ?',
             [$nummer, $anbieterId, (int)($karte['id'] ?? 0)]);
@@ -274,7 +318,11 @@ function tankkarte_save_from_post(?array $karte, array $user): array
         'aufbewahrung'  => mb_substr(post_str('aufbewahrung'), 0, 150),
         'ausgegeben_am' => post_date('ausgegeben_am'),
         'notiz'         => post_str('notiz'),
-        'is_active'     => post_bool('is_active'),
+        // Verbleib: leer = im Bestand; sonst ist die Karte aus dem Bestand, mit Datum und bei Sperrung Grund
+        'verbleib'      => $verbleib,
+        'verbleib_am'   => $verbleib === '' ? null : (post_date('verbleib_am') ?? ((string)($karte['verbleib'] ?? '') === $verbleib && !empty($karte['verbleib_am']) ? (string)$karte['verbleib_am'] : date('Y-m-d'))),
+        'sperrgrund'    => $sperrgrund,
+        'is_active'     => $verbleib === '' ? 1 : 0,
         'updated_by'    => (int)$user['id'],
     ];
 

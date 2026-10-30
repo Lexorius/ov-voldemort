@@ -2,6 +2,7 @@
 /** @var array $karte @var array $errors @var array $fahrzeugOptionen @var array $fahrzeugeGewaehlt @var array $personen @var ?int $vehicleId */
 $isNew = empty($karte['id']);
 $art = tankkarte_art((string)($karte['art'] ?? 'kraftstoff'));
+$verbleib = tankkarte_verbleib((string)($karte['verbleib'] ?? ''));
 $zurueck = $vehicleId ? url('vehicle', ['id' => $vehicleId]) . '#tankkarten' : url('tankkarten');
 ?>
 <div class="pagehead">
@@ -104,11 +105,27 @@ $zurueck = $vehicleId ? url('vehicle', ['id' => $vehicleId]) . '#tankkarten' : u
       <label for="notiz">Notiz</label>
       <textarea id="notiz" name="notiz" rows="2"><?= e((string)($karte['notiz'] ?? '')) ?></textarea>
     </div>
-    <div class="field field--check">
-      <input type="checkbox" id="is_active" name="is_active" value="1" <?= (int)($karte['is_active'] ?? 1) === 1 ? 'checked' : '' ?>>
-      <label for="is_active">Im Bestand</label>
+    <div class="grid3">
+      <div class="field">
+        <label for="verbleib">Verbleib</label>
+        <select id="verbleib" name="verbleib" data-verbleib>
+          <?php foreach (TANKKARTE_VERBLEIB as $key => $label): ?>
+            <option value="<?= e($key) ?>" <?= $key === $verbleib ? 'selected' : '' ?>><?= e($label) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <small class="muted">Gesperrt, zurückgegeben oder abgelaufen nimmt die Karte aus dem Bestand – sie bleibt zum Nachschlagen erhalten.</small>
+      </div>
+      <div class="field">
+        <label for="verbleib_am">Seit</label>
+        <input type="date" id="verbleib_am" name="verbleib_am" value="<?= e((string)($karte['verbleib_am'] ?? '')) ?>">
+        <small class="muted">Leer heißt heute.</small>
+      </div>
+      <div class="field" data-verbleib-grund<?= $verbleib === 'gesperrt' ? '' : ' hidden' ?>>
+        <label for="sperrgrund">Grund der Sperrung</label>
+        <input type="text" id="sperrgrund" name="sperrgrund" maxlength="255" value="<?= e((string)($karte['sperrgrund'] ?? '')) ?>" placeholder="z. B. verloren, gestohlen, Missbrauch">
+        <small class="muted">Pflicht, wenn die Karte gesperrt ist.</small>
+      </div>
     </div>
-    <small class="muted" style="margin-top:-.6rem">Aus heißt: gesperrt, zurückgegeben oder abgelaufen – die Karte bleibt zum Nachschlagen erhalten.</small>
     <div class="btnrow">
       <button class="btn" type="submit">Speichern</button>
       <a class="btn btn--sec" href="<?= e($zurueck) ?>">Abbrechen</a>

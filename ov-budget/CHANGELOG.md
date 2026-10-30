@@ -1,5 +1,15 @@
 # Änderungsverlauf
 
+## 2.1.66.0
+
+- **Tankkarten:** Verbleib statt Haken „Im Bestand" – *im Bestand*,
+  *Gesperrt*, *Zurückgegeben* oder *Abgelaufen*, mit Datum („seit", leer =
+  heute). Bei *Gesperrt* ist ein Grund Pflicht (verloren, gestohlen,
+  Missbrauch …). Liste, Fahrzeugakte und CSV zeigen Verbleib und Grund;
+  gesperrte Karten stehen rot in der Fahrzeugakte. Die Status „Gesperrt" und
+  „Abgelaufen" aus der Auswahlliste wandern in den Verbleib; die Migration
+  übernimmt bestehende Karten.
+
 ## 2.1.65.1
 
 - **Stein.APP:** Der Abgleich legt keine doppelten Akten mehr an – vor dem

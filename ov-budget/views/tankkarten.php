@@ -33,7 +33,7 @@ foreach (array_slice($stats['anbieter'], 0, 3, true) as $name => $n) {
   <div class="stat">
     <div class="stat__label">Laden</div>
     <div class="stat__value"><?= (int)$stats['laden'] ?></div>
-    <div class="stat__hint">schalten Ladesäulen frei</div>
+    <div class="stat__hint">schalten Ladesäulen frei<?= (int)$stats['gesperrt'] > 0 ? ' · <span style="color:var(--bad)">' . (int)$stats['gesperrt'] . ' gesperrt</span>' : '' ?></div>
   </div>
   <div class="stat">
     <div class="stat__label">Läuft ab</div>
@@ -78,7 +78,7 @@ foreach (array_slice($stats['anbieter'], 0, 3, true) as $name => $n) {
       <label for="aktiv">Bestand</label>
       <select id="aktiv" name="aktiv">
         <option value="">nur geführte</option>
-        <option value="alle" <?= $filter['aktiv'] === 'alle' ? 'selected' : '' ?>>auch ausgemusterte</option>
+        <option value="alle" <?= $filter['aktiv'] === 'alle' ? 'selected' : '' ?>>auch gesperrte, zurückgegebene, abgelaufene</option>
       </select>
     </div>
   </div>
@@ -107,7 +107,10 @@ foreach (array_slice($stats['anbieter'], 0, 3, true) as $name => $n) {
             <td>
               <?= badge($k['anbieter_label'] ? ['label' => $k['anbieter_label'], 'color' => $k['anbieter_color']] : null, 'ohne Anbieter') ?>
               <strong class="mono"><?= e((string)$k['nummer']) ?></strong>
-              <?php if ((int)$k['is_active'] !== 1): ?><span class="badge badge--muted">ausgemustert</span><?php endif; ?>
+              <?php if (tankkarte_gesperrt($k)): ?><span class="badge" style="background:var(--bad)" title="<?= e(tankkarte_verbleib_text($k)) ?>">gesperrt</span>
+              <?php elseif ((string)($k['verbleib'] ?? '') !== ''): ?><span class="badge badge--muted"><?= e(TANKKARTE_VERBLEIB[(string)$k['verbleib']]) ?></span>
+              <?php elseif ((int)$k['is_active'] !== 1): ?><span class="badge badge--muted">ausgemustert</span><?php endif; ?>
+              <?php if ((string)($k['verbleib'] ?? '') !== ''): ?><div class="small" style="color:var(--bad)"><?= e(tankkarte_verbleib_text($k)) ?></div><?php endif; ?>
               <?php if (trim((string)$k['kundennummer']) !== ''): ?><div class="small muted mono">Kunde <?= e((string)$k['kundennummer']) ?></div><?php endif; ?>
               <?php if ($k['status_label']): ?><div style="margin-top:.25rem"><?= badge(['label' => $k['status_label'], 'color' => $k['status_color']]) ?></div><?php endif; ?>
             </td>

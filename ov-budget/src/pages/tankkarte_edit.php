@@ -43,6 +43,7 @@ if (!$karte) {
         'art' => 'kraftstoff', 'status_id' => list_default_id('tankkarte_status'),
         'kundennummer' => '', 'gueltig_bis' => null, 'hat_pin' => 0, 'pin' => '',
         'person_id' => null, 'aufbewahrung' => '', 'ausgegeben_am' => null, 'notiz' => '', 'is_active' => 1,
+        'verbleib' => '', 'verbleib_am' => null, 'sperrgrund' => '',
     ];
     // Aus der Fahrzeugakte heraus ist das Fahrzeug schon gesetzt
     if (get_int('vehicle_id')) {

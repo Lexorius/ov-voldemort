@@ -43,6 +43,6 @@ render('vehicle', [
     'tanken'   => tank_uebersicht($id),
     'titelbild' => vfile_cover($id),
     'sims'     => can('view_sims') ? sim_for_vehicle($id) : [],
-    'tankkarten' => can('view_tankkarten') && function_exists('tankkarten_for_vehicle') ? tankkarten_for_vehicle($id) : [],
+    'tankkarten' => can('view_tankkarten') && function_exists('tankkarten_for_vehicle') ? tankkarten_for_vehicle($id, true) : [],
     'funkgeraete' => can('view_radios') ? radio_for_vehicle($id) : [],
 ]);

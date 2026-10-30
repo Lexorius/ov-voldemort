@@ -131,6 +131,15 @@
   }
 
   /* Abschnitte, die an einem Haken hängen (Vertrag, PIN und PUK) */
+  /* Tankkarten: der Grund der Sperrung erscheint nur, wenn „Gesperrt" gewählt ist */
+  document.querySelectorAll('[data-verbleib]').forEach(function (wahl) {
+    var grund = document.querySelector('[data-verbleib-grund]');
+    if (!grund) { return; }
+    var zeigen = function () { grund.hidden = wahl.value !== 'gesperrt'; };
+    wahl.addEventListener('change', zeigen);
+    zeigen();
+  });
+
   document.querySelectorAll('[data-schalter]').forEach(function (haken) {
     var name = haken.getAttribute('data-schalter');
     var bloecke = document.querySelectorAll('[data-schalter-block="' + name + '"]');

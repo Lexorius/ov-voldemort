@@ -575,6 +575,7 @@ $tanken ??= ['anzahl' => 0, 'eintraege' => [], 'verbrauch' => null, 'strecke' =>
             <td><?= badge($k['anbieter_label'] ? ['label' => $k['anbieter_label'], 'color' => $k['anbieter_color']] : null, 'ohne Anbieter') ?>
               <strong class="mono"><?= e((string)$k['nummer']) ?></strong>
               <?= $k['status_label'] ? ' ' . badge(['label' => $k['status_label'], 'color' => $k['status_color']]) : '' ?>
+              <?php if ((string)($k['verbleib'] ?? '') !== ''): ?><div class="small" style="color:var(--bad)"><?= e(tankkarte_verbleib_text($k)) ?></div><?php endif; ?>
               <?php if (count($k['fahrzeuge'] ?? []) > 1): ?><div class="small muted">auch für <?= e(implode(', ', array_map(static fn($v) => $v['bezeichnung'], array_filter($k['fahrzeuge'], static fn($v) => (int)$v['id'] !== (int)$vehicle['id'])))) ?></div><?php endif; ?></td>
             <td class="small"><?= tankkarte_laedt($k) ? '<span class="badge" style="background:#0369a1">⚡ Laden</span> ' : '' ?><?= tankkarte_tankt($k) ? '<span class="badge badge--outline">Kraftstoff</span>' : '' ?></td>
             <td class="small"><?= trim((string)($k['person_label'] ?? '')) !== '' ? e((string)$k['person_label']) : '' ?><?= trim((string)$k['aufbewahrung']) !== '' ? '<div class="muted">' . e((string)$k['aufbewahrung']) . '</div>' : '' ?><?= trim((string)($k['person_label'] ?? '')) === '' && trim((string)$k['aufbewahrung']) === '' ? '<span class="muted">–</span>' : '' ?></td>

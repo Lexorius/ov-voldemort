@@ -2452,6 +2452,25 @@ SQL);
         $say('Tankungen kennen ihre Tankkarte.');
     }
     $merken('092_tankkarten');
+
+    /* ---------- 093: Verbleib der Tankkarten (gesperrt, zurückgegeben, abgelaufen) ---------- */
+    if (ovb_table_exists($pdo, 'tankkarten') && !ovb_column_exists($pdo, 'tankkarten', 'verbleib')) {
+        $pdo->exec("ALTER TABLE tankkarten
+            ADD COLUMN verbleib VARCHAR(20) NOT NULL DEFAULT '' AFTER notiz,
+            ADD COLUMN verbleib_am DATE NULL AFTER verbleib,
+            ADD COLUMN sperrgrund VARCHAR(255) NOT NULL DEFAULT '' AFTER verbleib_am");
+        // Status „Gesperrt" und „Abgelaufen" aus der Auswahlliste sind jetzt der Verbleib
+        $pdo->exec("UPDATE tankkarten k JOIN list_items s ON s.id = k.status_id AND s.list_key = 'tankkarte_status'
+                    SET k.verbleib = s.slug, k.verbleib_am = CURDATE(), k.is_active = 0
+                    WHERE s.slug IN ('gesperrt', 'abgelaufen')");
+        $pdo->exec("UPDATE tankkarten k JOIN list_items s ON s.id = k.status_id AND s.list_key = 'tankkarte_status'
+                    SET k.status_id = (SELECT id FROM (SELECT id FROM list_items WHERE list_key = 'tankkarte_status' AND slug = 'aktiv' LIMIT 1) x)
+                    WHERE s.slug IN ('gesperrt', 'abgelaufen')");
+        $pdo->exec("DELETE FROM list_items WHERE list_key = 'tankkarte_status' AND slug IN ('gesperrt', 'abgelaufen')
+                    AND NOT EXISTS (SELECT 1 FROM tankkarten k WHERE k.status_id = list_items.id)");
+        $say('Tankkarten haben einen Verbleib (gesperrt, zurückgegeben, abgelaufen) mit Grund.');
+    }
+    $merken('093_tankkarte_verbleib');
 }
 
 /**

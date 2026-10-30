@@ -947,6 +947,11 @@ E-Fahrzeuge gibt, auch die **Ladekarten**. Das Modul führt beide:
 * **PIN** nur, wenn der Haken gesetzt ist; sie sieht allein die Leitung, in
   der Liste verdeckt, ein Klick blendet sie ein. Ohne Haken wird das Feld
   beim Speichern geleert.
+* **Verbleib:** *im Bestand*, *Gesperrt*, *Zurückgegeben* oder *Abgelaufen*,
+  mit Datum („seit"; leer heißt heute). Bei *Gesperrt* ist ein **Grund**
+  Pflicht – verloren, gestohlen, Missbrauch. Alles außer „im Bestand" nimmt
+  die Karte aus den Listen; die Fahrzeugakte zeigt gesperrte Karten trotzdem
+  mit rotem Hinweis, damit niemand damit losfährt.
 * **Ablauf:** Karten, die in den nächsten 60 Tagen (Vorgabe, einstellbar)
   ablaufen oder schon abgelaufen sind, stehen oben in der Zählung und farbig
   in der Liste.

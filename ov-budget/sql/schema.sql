@@ -1418,6 +1418,10 @@ CREATE TABLE IF NOT EXISTS tankkarten (
   aufbewahrung  VARCHAR(150) NOT NULL DEFAULT '',
   ausgegeben_am DATE         NULL,
   notiz         TEXT         NULL,
+  -- Verbleib: leer = im Bestand, sonst gesperrt / zurueckgegeben / abgelaufen, mit Datum und Grund
+  verbleib      VARCHAR(20)  NOT NULL DEFAULT '',
+  verbleib_am   DATE         NULL,
+  sperrgrund    VARCHAR(255) NOT NULL DEFAULT '',
   is_active     TINYINT(1)   NOT NULL DEFAULT 1,
   created_by    INT UNSIGNED NULL,
   updated_by    INT UNSIGNED NULL,
