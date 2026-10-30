@@ -1,9 +1,10 @@
 # OV-Multitool
 
 Verwaltung für einen THW-Ortsverband: Wünsche und Budget, Aufgaben, Kontakte,
-Besprechungen, Veranstaltungen, Fahrzeuge, Funkgeräte, SIM-Karten und
-Verbrauch – mit Anbindung an **Stein.APP**, **Divera 24/7** und
-**Home Assistant**. Läuft auf dem Handy wie am PC.
+Besprechungen, Veranstaltungen, Abstimmungen, Getränke, Newsletter, Fahrzeuge
+mit Tanken und Verbrauch, Funkgeräte, SIM-Karten, Tankkarten und Verbrauch –
+mit Anbindung an **Stein.APP**, **Divera 24/7** und **Home Assistant**. Läuft
+auf dem Handy wie am PC.
 
 Das Add-on bringt **alles mit**: Datenbank (MariaDB), Webserver und Anwendung
 stecken im Container. Weitere Add-ons sind nicht nötig. Erreichbar über die
@@ -299,7 +300,11 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
   Änderung steht in der Fahrzeugakte
 - Schonend gegenüber dem Rate Limit: ein Aufruf je Abgleich, Vorgabe alle
   10 Minuten, Pause bei HTTP 429; optional per **Webhook** sofort
-- Unbekannte Fahrzeuge mit Kennzeichen auf Wunsch automatisch als Akte anlegen
+- Unbekannte Fahrzeuge mit Kennzeichen auf Wunsch automatisch als Akte anlegen –
+  vorhandene Akten werden vorher über Kennzeichen, Bezeichnung oder
+  Funkrufname erkannt und verknüpft statt doppelt angelegt
+- Verknüpfungen **umhängen** oder lösen; Gelöstes wird nicht von selbst neu
+  angelegt, sondern bleibt zum Zuordnen stehen
 - Mitschnitt der Antworten zur Fehlersuche – ohne den API-Schlüssel
 
 ### Divera 24/7 – Fahrzeuge

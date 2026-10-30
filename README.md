@@ -144,7 +144,8 @@ unter „Sicherheitslücke PHP2Shell".
   Person oder OV, PIN/PUK verdeckt, Warnung vor Vertragsende.
 * **Tankkarten und Ladekarten** – mehrere Anbieter (DKV, UTA, Shell, Aral,
   Ladenetze …), Freischaltung für Kraftstoff, Laden oder beides, Zuordnung
-  zu einem oder mehreren Fahrzeugen, PIN verdeckt, Warnung vor Ablauf; die
+  zu einem oder mehreren Fahrzeugen, PIN verdeckt, Warnung vor Ablauf,
+  Verbleib gesperrt / zurückgegeben / abgelaufen mit Datum und Grund; die
   Karte wird je Tankung mit erfasst, Strom in kWh je 100 km.
 * **Verbrauch** – Strom-, Gas- und Wasserzähler mit Ständen aus Home
   Assistant, von Hand oder per QR-Code; Tarife, Kosten je Monat und Jahr,
@@ -167,6 +168,8 @@ unter „Sicherheitslücke PHP2Shell".
   Companion-App und als **Web Push** im Browser.
 * **Stein.APP** – Abgleich von Status, HU, SP, Kennzeichen, ISSI und
   Funkrufname, schonend gegenüber dem Rate Limit, optional per Webhook.
+  Vorhandene Akten werden über Kennzeichen oder Bezeichnung erkannt statt
+  doppelt angelegt; Verknüpfungen lassen sich umhängen.
 * **Divera 24/7** – Formulare als Wünsche oder Besprechungsthemen übernehmen;
   Fahrzeuge mit Funkstatus (FMS) als Fahrtenbuch, Position und Besatzung.
 * **Connector** – kleines PHP-Skript auf einem öffentlichen Webserver für
@@ -396,8 +399,8 @@ angemeldete Benutzer, nach Rechteprüfung und mit `nosniff`-Header.
 
 | Rolle | Darf |
 |---|---|
-| `user` (Mitglied) | Wünsche anlegen und die eigenen bearbeiten, abstimmen, kommentieren, Aufgaben im eigenen Zuständigkeitsbereich bearbeiten, Termine für sich und die eigene Fachgruppe anlegen, Fahrzeugmeldungen abgeben |
-| `leitung` | zusätzlich: alle Wünsche bearbeiten, Status und Priorität setzen, Budget und Budgettöpfe pflegen, alle Aufgaben und Termine verwalten, Fahrzeuge, Funkgeräte, SIM-Karten und Zähler pflegen, Veranstaltungen anlegen und die Gästeliste führen |
+| `user` (Mitglied) | Wünsche anlegen und die eigenen bearbeiten, abstimmen, kommentieren, Aufgaben im eigenen Zuständigkeitsbereich bearbeiten, Termine für sich und die eigene Fachgruppe anlegen, Fahrzeugmeldungen abgeben, Tankungen erfassen |
+| `leitung` | zusätzlich: alle Wünsche bearbeiten, Status und Priorität setzen, Budget und Budgettöpfe pflegen, alle Aufgaben und Termine verwalten, Fahrzeuge, Funkgeräte, SIM-Karten, Tankkarten und Zähler pflegen, Veranstaltungen anlegen und die Gästeliste führen |
 | `admin` | zusätzlich: Benutzerverwaltung, Auswahllisten, Einstellungen, Stell- und Lagerplätze, Anbindungen (Divera, Stein.APP, Home Assistant, Connectoren, KI), Sicherung, Protokoll |
 
 Viele Rechte lassen sich in den Einstellungen feiner stellen, etwa ob Mitglieder
@@ -407,7 +410,8 @@ Aufgaben anlegen oder Fahrzeugmeldungen abgeben dürfen, und wer bestellen darf.
 
 **Verwaltung → Auswahllisten** – Fachgruppen, Funktionen, Kategorien, Dringlichkeiten,
 Status (Wünsche und Aufgaben), Mengeneinheiten, Anlagen-Typen, Fahrzeugarten,
-Veranstaltungsarten, Arten und Status der SIM-Karten und vieles mehr. Je Eintrag:
+Veranstaltungsarten, Arten und Status der SIM-Karten, Anbieter und Status der
+Tankkarten und vieles mehr. Je Eintrag:
 Bezeichnung, Farbe, Reihenfolge, Gewicht (steuert die Sortierung), Vorgabewert und –
 bei Status – ob er als „abgeschlossen" gilt. Einträge, die noch verwendet werden,
 lassen sich auf *inaktiv* setzen, statt sie zu löschen.
@@ -419,7 +423,8 @@ Upload-Grenzen und erlaubte Dateitypen, Abstimmung, Session-Laufzeit, Sperre nac
 Fehlversuchen, zweiter Faktor, Fristen der Fahrzeuge, Takt der Abrufe, Sicherung,
 KI-Auswertung, E-Mail-Versand, Abstimmungen (Sichtbarkeit, Abruf-Takt,
 Codelänge, Uhrzeit der Berichte), Getränke, Newsletter (Sichtbarkeit,
-Portion und Takt des Versands, Fußtext mit dem Abmeldelink).
+Portion und Takt des Versands, Fußtext mit dem Abmeldelink), Tankungen (wer
+sie erfassen darf), Tankkarten (Sichtbarkeit, Vorwarnung vor Ablauf).
 
 **Unscharfe Budgetübersicht** – `budget_rundung` stellt die Übersichtsseite auf
 gerundete Beträge um (10, 100 oder 1.000). Praktisch für Aushänge und Vorträge,

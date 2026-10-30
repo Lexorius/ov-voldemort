@@ -1,5 +1,11 @@
 # Änderungsverlauf
 
+## 2.1.66.1
+
+- **Doku:** READMEs und Add-on-Beschreibung auf den Stand gebracht –
+  Tanken und Verbrauch, Tankkarten mit Verbleib, Stein.APP-Zuordnung und
+  Umhängen, Rollen, Auswahllisten und Einstellungen.
+
 ## 2.1.66.0
 
 - **Tankkarten:** Verbleib statt Haken „Im Bestand" – *im Bestand*,
