@@ -23,9 +23,12 @@ function upload_allowed_extensions(): array
     return $out ?: ['pdf'];
 }
 
+/** Höchstens so viel lässt die Einstellung zu – PHP im Add-on erlaubt 40 MB je Datei, darunter bleibt Luft */
+const UPLOAD_MAX_MB = 32;
+
 function upload_max_bytes(): int
 {
-    return max(1, setting_int('upload_max_mb', 10)) * 1024 * 1024;
+    return max(1, min(UPLOAD_MAX_MB, setting_int('upload_max_mb', UPLOAD_MAX_MB))) * 1024 * 1024;
 }
 
 /**

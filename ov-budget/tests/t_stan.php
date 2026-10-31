@@ -87,6 +87,14 @@ $check('kein ZIP als Paket: abgelehnt', $id2 === null && str_contains($fehler[0]
 $_FILES = ['paket' => ['name' => 'gross.zip', 'tmp_name' => $tmp . '/upload.zip', 'error' => UPLOAD_ERR_OK, 'size' => 1024 * 1024 + 1]];
 [$id2, $fehler] = stan_version_aus_zip('paket', '', $u);
 $check('über der STAN-Grenze (eigene Einstellung, nicht die der Anlagen): abgelehnt', $id2 === null && str_contains($fehler[0], 'zu groß') && stan_max_bytes() === 1024 * 1024 && upload_max_bytes() === 10 * 1024 * 1024);
+$GLOBALS['settings']['upload_max_mb'] = '99';
+settings_reset_cache();
+$check('Upload-Grenze gedeckelt bei 32 MB', upload_max_bytes() === 32 * 1024 * 1024);
+unset($GLOBALS['settings']['upload_max_mb']);
+settings_reset_cache();
+$check('Upload-Grenze Vorgabe 32 MB', upload_max_bytes() === 32 * 1024 * 1024);
+$GLOBALS['settings']['upload_max_mb'] = '10';
+settings_reset_cache();
 $_FILES = [];
 [$id2, $fehler] = stan_version_aus_zip('paket', '', $u);
 $check('nichts angekommen: Hinweis', $id2 === null && str_contains($fehler[0], 'keine Datei an'));

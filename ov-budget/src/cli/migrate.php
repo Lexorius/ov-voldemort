@@ -2471,6 +2471,16 @@ SQL);
         $say('Tankkarten haben einen Verbleib (gesperrt, zurückgegeben, abgelaufen) mit Grund.');
     }
     $merken('093_tankkarte_verbleib');
+
+    /* ---------- 094: Upload-Grenze von 10 auf 32 MB, wo noch die alte Vorgabe steht ---------- */
+    if (ovb_table_exists($pdo, 'settings')) {
+        $n = $pdo->prepare("UPDATE settings SET svalue = '32' WHERE skey = 'upload_max_mb' AND svalue = '10'");
+        $n->execute();
+        if ($n->rowCount() > 0) {
+            $say('Upload-Grenze auf 32 MB angehoben.');
+        }
+    }
+    $merken('094_upload_32');
 }
 
 /**

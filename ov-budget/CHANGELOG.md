@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## 2.1.67.1
+
+- **Uploads:** Grenze je Datei von 10 auf 32 MB angehoben – Vorgabe für
+  neue Installationen, bestehende mit noch 10 MB werden beim Start
+  umgestellt. Mehr als 32 MB lässt die Einstellung nicht zu; PHP im Add-on
+  erlaubt 40 MB, der Rest ist Luft für den Rahmen der Anfrage.
+
 ## 2.1.67.0
 
 - **Tankkarten – Import:** CSV-Import in drei Schritten (hochladen,

@@ -318,7 +318,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('wunsch_voting_aktiv','1','Abstimmung (Daumen hoch) aktiv','Alle angemeldeten Benutzer dürfen Wünsche unterstützen','bool','Wünsche',50),
 ('wunsch_voting_punkte','5','Maximale Stimmen pro Person','0 = unbegrenzt','number','Wünsche',60),
 ('wunsch_user_darf_status','0','Normale Benutzer dürfen Status ändern','Sonst nur Leitung/Admin','bool','Wünsche',70),
-('upload_max_mb','10','Maximale Dateigröße Upload (MB)','','number','Wünsche',80),
+('upload_max_mb','32','Maximale Dateigröße Upload (MB)','Gilt für Anlagen, Fahrzeugdateien, Belege, Newsletter-PDFs und Importe. Höchstens 32 – mehr lässt die Anwendung nicht zu.','number','Wünsche',80),
 ('upload_erlaubte_typen','pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,odt,ods','Erlaubte Dateiendungen','Komma-getrennt','text','Wünsche',90),
 ('wunsch_extra_felder','','Zusätzliche Freifelder','Ein Feld pro Zeile, Format: schluessel|Beschriftung|typ (text,textarea,number,bool,date)','textarea','Wünsche',100),
 
