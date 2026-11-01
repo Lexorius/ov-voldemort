@@ -38,6 +38,7 @@ require __DIR__ . '/lib/objektkonten.php';
 require __DIR__ . '/lib/bestellungen.php';
 require __DIR__ . '/lib/import.php';
 require __DIR__ . '/lib/contacts.php';
+require __DIR__ . '/lib/kontakt_dubletten.php';
 require __DIR__ . '/lib/meetings.php';
 require __DIR__ . '/lib/series.php';
 require __DIR__ . '/lib/attendance.php';

@@ -62,6 +62,7 @@ $routes = [
     'contact_group'      => 'contact_group',
     'contacts_export'    => 'contacts_export',
     'contacts_import'    => 'contacts_import',
+    'contacts_dubletten' => 'contacts_dubletten',
 
     'kalender'           => 'kalender',
     'kalender_termin'    => 'kalender_termin',

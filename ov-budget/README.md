@@ -187,6 +187,8 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 - Verteiler für Einladungen mit Rückmeldung, CSV für den Serienbrief
 - Import aus Excel/CSV, Outlook, Google Kontakte und vCard mit
   Dublettenerkennung
+- **Dubletten finden** über E-Mail, Rufnummer und Namen; zusammenführen
+  mit Auswahl je Feld, Verweise wandern mit
 
 ### Besprechungen
 - Talking Points im Themenspeicher, Tagesordnung mit Zeitplan

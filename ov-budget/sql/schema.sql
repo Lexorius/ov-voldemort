@@ -705,6 +705,19 @@ CREATE TABLE IF NOT EXISTS contact_group_members (
   CONSTRAINT fk_vtm_status  FOREIGN KEY (status_id)  REFERENCES list_items(id)     ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Paare, die die Dublettensuche nicht mehr melden soll ("keine Dublette"); contact_a < contact_b
+CREATE TABLE IF NOT EXISTS contact_dubletten_ignoriert (
+  contact_a     INT UNSIGNED NOT NULL,
+  contact_b     INT UNSIGNED NOT NULL,
+  created_by    INT UNSIGNED NULL,
+  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (contact_a, contact_b),
+  KEY idx_cdi_b (contact_b),
+  CONSTRAINT fk_cdi_a  FOREIGN KEY (contact_a)  REFERENCES contacts(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cdi_b  FOREIGN KEY (contact_b)  REFERENCES contacts(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cdi_cb FOREIGN KEY (created_by) REFERENCES users(id)    ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ------------------------------------------------------------
 -- Besprechungen und Talking Points
 -- ------------------------------------------------------------

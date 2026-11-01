@@ -274,6 +274,24 @@ sie enthalten.
   mit Vorschau und Dublettenerkennung. **Rufnummern und E-Mail-Adressen sind
   anklickbar** – am Handy wählt ein Tipp direkt.
 
+  **Dubletten** (Schaltfläche in der Kontaktliste, nur Leitung) sucht
+  doppelt angelegte Kontakte: gleiche E-Mail-Adresse, gleiche Rufnummer
+  (Telefon und Mobil kreuzweise, international verglichen), gleicher Name;
+  dazu gleicher Nachname mit fehlendem Vornamen oder Initiale bei gleicher
+  Organisation, Tippfehler im Nachnamen („Schmid"/„Schmidt") und doppelte
+  Organisationen ohne Ansprechpartner. Schreibweise, Umlaute und
+  Satzzeichen spielen keine Rolle, inaktive Kontakte werden mitgeprüft.
+  Jede Gruppe hat eine Stufe – *sicher*, *wahrscheinlich* oder *möglich*
+  (gleiches Postfach oder gleiche Zentrale, aber ein anderer Name). Mit
+  **Zusammenführen** stehen die Kontakte nebeneinander: ein Kontakt bleibt
+  (vorgeschlagen wird der mit den meisten Angaben und Verweisen), je Feld
+  lässt sich der Wert wählen, Notizen auch untereinander; alle Verweise –
+  Verteiler, Termine, THW-Dienststellen, Anwesenheiten, Protokollempfänger,
+  Gästelisten, Abstimmungsberichte, Newsletter – wandern auf den
+  verbliebenen Kontakt, die anderen werden gelöscht. **„Keine Dublette"**
+  merkt sich ein Paar; es taucht nicht mehr auf und lässt sich unten auf
+  der Seite wieder freigeben.
+
   Rufnummern werden beim Speichern und beim Import international geschrieben:
   aus „0151 123456" wird „+49 151 123456", aus „0201/1234567" wird
   „+49 2011234567". Die Landesvorwahl steht unter *Einstellungen → Allgemein*

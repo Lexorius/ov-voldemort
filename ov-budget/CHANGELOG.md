@@ -1,5 +1,24 @@
 # Änderungsverlauf
 
+## 2.1.68.0
+
+- **Kontakte – Dubletten:** Neue Seite „Dubletten" in den Kontakten (für
+  die Leitung). Gefunden werden Kontakte mit gleicher E-Mail-Adresse,
+  gleicher Rufnummer (Telefon und Mobil kreuzweise, international
+  verglichen) oder gleichem Namen; dazu gleicher Nachname mit fehlendem
+  Vornamen oder Initiale bei gleicher Organisation, Tippfehler im Nachnamen
+  und doppelte Organisationen ohne Ansprechpartner. Groß-/Kleinschreibung,
+  Umlaute und Satzzeichen spielen keine Rolle, inaktive Kontakte werden
+  mitgeprüft. Jede Gruppe hat eine Stufe: *sicher*, *wahrscheinlich* oder
+  *möglich* (gleiches Postfach oder gleiche Zentrale, aber anderer Name).
+  **Zusammenführen** zeigt die Kontakte nebeneinander: ein Kontakt bleibt
+  (vorgeschlagen wird der vollste), je Feld lässt sich der Wert wählen,
+  Notizen auch untereinander; Verteiler, Termine, THW-Dienststellen,
+  Anwesenheiten, Protokollempfänger, Gästelisten, Abstimmungsberichte und
+  Newsletter wandern auf den verbliebenen Kontakt, die anderen werden
+  gelöscht. **„Keine Dublette"** merkt sich ein Paar, es taucht nicht mehr
+  auf und lässt sich unten auf der Seite wieder freigeben.
+
 ## 2.1.67.1
 
 - **Uploads:** Grenze je Datei von 10 auf 32 MB angehoben – Vorgabe für
