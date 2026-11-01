@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.70.1
+
+- **Start:** Die Wanderung brach mit „Data too long for column 'hint'" ab –
+  der Hinweistext zum neuen Schalter „Kontakte: Kategorie vorschlagen" war
+  länger als die Spalte erlaubt. Gekürzt; eine Prüfung wacht jetzt über die
+  Textlängen in seed.sql. Wer 2.1.70.0 gestartet hat: Die Aufräum-Wanderung
+  095 (Schlagwortliste aus 2.1.69.0) läuft beim nächsten Start nach.
+
 ## 2.1.70.0
 
 - **Kontakte – Kategorie-Vorschlag der KI:** Ist die KI-Auswertung

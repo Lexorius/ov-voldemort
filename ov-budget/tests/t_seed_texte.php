@@ -45,6 +45,11 @@ $check('Stein-Einstellung dabei', in_array('stein_intervall_minuten', $keys, tru
 $check('Webhook-Einstellung dabei', in_array('stein_webhook_secret', $keys, true));
 $check('Mitschnitt-Einstellung dabei', in_array('stein_debug', $keys, true));
 foreach ($echt as $r) {
+    // Spaltenbreiten aus schema.sql: label VARCHAR(150), hint VARCHAR(255) – zu lang scheitert der Textabgleich beim Start (Fehler 1406)
+    if (mb_strlen($r['label']) > 150 || mb_strlen($r['hint']) > 255) {
+        $fail++;
+        echo "FAIL: Text zu lang fuer die Spalte bei {$r['skey']} (" . mb_strlen($r['label']) . '/' . mb_strlen($r['hint']) . ")\n";
+    }
     if ($r['label'] === '' || !in_array($r['stype'], ['text', 'textarea', 'bool', 'number', 'password', 'color', 'select'], true)) {
         $fail++;
         echo "FAIL: unbrauchbare Zeile {$r['skey']}\n";

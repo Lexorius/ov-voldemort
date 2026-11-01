@@ -485,7 +485,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('ki_standorte','1','Bilder der Stell- und Lagerplätze auswerten','Nur mit Vision-Modell sinnvoll.','bool','KI-Auswertung',100),
 ('ki_stan','1','STAN-Dokumente auswerten','Zusammenfassung und Schlagwörter je Dokument im STAN-Paket – macht die STAN durchsuchbar.','bool','KI-Auswertung',110),
 ('ki_newsletter','1','Newsletter zusammenfassen','Zusammenfassung des hochgeladenen Newsletter-PDFs für die Verwaltung.','bool','KI-Auswertung',120),
-('ki_kontakte','1','Kontakte: Kategorie vorschlagen','Je Kontakt schlägt das Textmodell eine Kategorie vor – nur aus der Auswahlliste „Kontaktkategorien", nie eine neue. Übernommen wird nur von Hand. An das Modell gehen Name, Organisation, Funktion, Ort, E-Mail-Domain, Notiz und Zusatzfelder; keine Rufnummern, keine Anschrift.','bool','KI-Auswertung',125),
+('ki_kontakte','1','Kontakte: Kategorie vorschlagen','Je Kontakt schlägt das Textmodell eine Kategorie aus der Auswahlliste vor, nie eine neue; übernommen wird von Hand. Es gehen Name, Organisation, Funktion, Ort, E-Mail-Domain und Notiz mit – keine Rufnummern, keine Anschrift.','bool','KI-Auswertung',125),
 ('newsletter_modul_name','Newsletter','Bezeichnung des Moduls Newsletter','Hochgeladene PDF-Newsletter an Adresslisten verschicken, mit Abmeldelink und Sperrliste.','text','Newsletter',10),
 ('newsletter_user_darf_sehen','0','Alle Angemeldeten sehen die Newsletter','Aus = nur die Leitung. Anlegen, planen und verschicken kann in jedem Fall nur die Leitung.','bool','Newsletter',20),
 ('newsletter_je_abruf','50','Mails je Abruf','So viele Newsletter-Mails verschickt der automatische Abruf je Minute – schonend für den Mailserver.','number','Newsletter',30),
