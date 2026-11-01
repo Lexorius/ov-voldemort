@@ -153,7 +153,7 @@ $check('Ziel-Vorschlag: bei Gleichstand der älteste', dublette_ziel_vorschlag([
 /* ---------- Zusammenführen gegen die Attrappe ---------- */
 $GLOBALS['kontakte'] = $menge;
 $erg = kontakt_dubletten_zusammenfuehren(21, [22, 23, 21, 0], ['notiz' => 'alle'], ['id' => 7]);
-$check('Ergebnis: Ziel, gelöscht, umgehängt', $erg['ziel'] === 21 && $erg['geloescht'] === 2 && $erg['umgehaengt'] === 16 && $erg['name'] === 'Anna Berg', $erg);
+$check('Ergebnis: Ziel, gelöscht, umgehängt', $erg['ziel'] === 21 && $erg['geloescht'] === 2 && $erg['umgehaengt'] === 2 * count(DUBLETTE_VERWEISE) && $erg['name'] === 'Anna Berg', $erg);
 $check('Transaktion begonnen und abgeschlossen', $GLOBALS['tx'] === ['begin', 'commit']);
 $check('Ziel aktualisiert mit Bearbeiter', count($GLOBALS['updates']) === 1 && $GLOBALS['updates'][0][0] === 'contacts'
     && $GLOBALS['updates'][0][1]['updated_by'] === 7 && $GLOBALS['updates'][0][2] === [21]);

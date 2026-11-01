@@ -116,7 +116,9 @@ unter „Sicherheitslücke PHP2Shell".
 * **Kontakte** – Ansprechpartner mit Zusatzfeldern, anrufen und mailen mit einem
   Tipp, Verteiler für Einladungen, Import aus Excel/CSV, Outlook, Google und
   vCard mit Dublettenerkennung. **Dubletten finden** über E-Mail, Rufnummer
-  und Namen, mit Zusammenführen je Feld.
+  und Namen, mit Zusammenführen je Feld. **Schlagwörter** aus einer festen
+  Liste, auf Wunsch von der KI im eigenen Netz vorgeschlagen, übernommen nur
+  von Hand.
 * **THW-Kontakte** – Dienststellen als Baum (Landesverband › Regionalstelle ›
   Ortsverbände) mit Anschrift und Erreichbarkeit, Funktionspostfächer mit Zweck
   und den Haken „offizielles Netz" / „Behördennetz"; Kontakte aus dem

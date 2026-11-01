@@ -37,7 +37,7 @@ function nav_module(): array
                         'darf' => can('view_verbrauch')],
         'contacts'  => ['label' => (string)setting('kontakte_modul_name', 'Kontakte'), 'icon' => '✉',
                         'route' => 'contacts',
-                        'aktiv' => ['contacts', 'contact_edit', 'contact_groups', 'contact_group', 'contacts_import', 'contacts_dubletten'],
+                        'aktiv' => ['contacts', 'contact_edit', 'contact_groups', 'contact_group', 'contacts_import', 'contacts_dubletten', 'contacts_tags'],
                         'darf' => can('view_contacts')],
         'events'    => ['label' => (string)setting('veranstaltung_modul_name', 'Veranstaltungen'), 'icon' => '◍',
                         'route' => 'events', 'aktiv' => ['events', 'event', 'event_edit', 'verpflegung_saetze', 'verpflegung_satz_edit'], 'darf' => can('view_events')],

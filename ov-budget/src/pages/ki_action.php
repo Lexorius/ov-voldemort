@@ -9,6 +9,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $typ = post_str('typ');
 $id = post_int('datei_id');
+if ($typ === 'kontakt') {
+    // Vorschläge für Kontakte werden im Kontakt selbst übernommen oder verworfen
+    redirect_route('contact_edit', ['id' => (int)$id]);
+}
 $l = isset(KI_TYPEN[$typ]) ? ki_datei_laden($typ, $id) : null;
 if (!$l) {
     flash('error', 'Diese Datei gibt es nicht (mehr).');

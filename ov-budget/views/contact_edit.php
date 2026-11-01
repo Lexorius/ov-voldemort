@@ -145,6 +145,36 @@ $extraFelder = contact_extra_fields();
     </section>
   <?php endif; ?>
 
+  <?php $tagOptionen ??= []; $tagsGewaehlt ??= []; $vorschlaege ??= []; $tagAuftrag ??= null; $kiKontakte ??= false; ?>
+  <?php if ($tagOptionen || $vorschlaege): ?>
+    <section class="card" id="schlagwoerter">
+      <h2>Schlagwörter</h2>
+      <?php if ($vorschlaege): ?>
+        <input type="hidden" name="vorschlaege_feld" value="1">
+        <div class="alert alert--info">
+          <strong>✨ Vorschläge der KI</strong> – angehakte werden beim Speichern übernommen, die anderen verworfen.
+          <div class="chips mt">
+            <?php foreach ($vorschlaege as $v): ?>
+              <label class="chip" style="border-color:<?= e((string)$v['color']) ?>">
+                <input type="checkbox" name="vorschlag[]" value="<?= (int)$v['id'] ?>" checked> <?= e((string)$v['label']) ?>
+              </label>
+            <?php endforeach; ?>
+          </div>
+          <small class="muted"><?= e((string)($vorschlaege[0]['modell'] ?? '')) ?> · <?= e(de_datetime((string)$vorschlaege[0]['erstellt_am'])) ?> · nur aus der festen Liste, nichts Erfundenes</small>
+        </div>
+      <?php endif; ?>
+      <?php if ($tagOptionen): ?>
+        <?= render_partial('partials/wahl_liste', ['name' => 'tags', 'feld' => 'tags_feld', 'label' => 'Schlagwörter', 'optionen' => $tagOptionen, 'gewaehlt' => $tagsGewaehlt, 'leer' => '– Schlagwort wählen –',
+            'hinweis' => 'Wofür der Kontakt gebraucht wird: Ehrengast, Presseverteiler, Spender … Die Liste pflegt die Verwaltung unter Auswahllisten → Schlagwörter (Kontakte).']) ?>
+      <?php endif; ?>
+      <?php if ($tagAuftrag && in_array((string)$tagAuftrag['status'], ['offen', 'laeuft'], true)): ?>
+        <p class="small muted mb0">⏳ Die KI prüft diesen Kontakt gerade – Vorschläge kommen in den nächsten Minuten.</p>
+      <?php elseif ($tagAuftrag && (string)$tagAuftrag['status'] === 'fehler'): ?>
+        <p class="small muted mb0">KI-Vorschlag fehlgeschlagen: <?= e((string)$tagAuftrag['fehler']) ?></p>
+      <?php endif; ?>
+    </section>
+  <?php endif; ?>
+
   <section class="card">
     <h2>Sonstiges</h2>
     <div class="field">
@@ -191,6 +221,17 @@ $extraFelder = contact_extra_fields();
     <a class="btn btn--sec" href="<?= e(url('contacts')) ?>">Abbrechen</a>
   </div>
 </form>
+
+<?php if (!$isNew && $kiKontakte && $tagOptionen): ?>
+  <form method="post" class="card" action="<?= e(url('contact_edit', ['id' => $contact['id']])) ?>">
+    <?= csrf_field() ?>
+    <input type="hidden" name="action" value="vorschlagen">
+    <p class="small muted">Die KI im eigenen Netz ordnet den Kontakt den Schlagwörtern der festen Liste zu. Sie schlägt nur vor –
+       übernommen wird oben per Haken. Es gehen Name, Organisation, Funktion, Kategorie, Ort, E-Mail-Domain und Notiz an das Modell,
+       keine Rufnummern und keine Anschrift.</p>
+    <button class="btn btn--sec" type="submit">✨ Schlagwörter vorschlagen lassen</button>
+  </form>
+<?php endif; ?>
 
 <?php if (!$isNew): ?>
   <form method="post" class="card" action="<?= e(url('contact_edit', ['id' => $contact['id']])) ?>">

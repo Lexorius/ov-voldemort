@@ -366,6 +366,8 @@ const DUBLETTE_VERWEISE = [
     'event_guests'                 => 'Gästelisten',
     'umfrage_empfaenger'           => 'Abstimmungsberichte',
     'newsletter_kontakte'          => 'Newsletter',
+    'contact_tags'                 => 'Schlagwörter',
+    'contact_tag_vorschlaege'      => 'Schlagwort-Vorschläge',
 ];
 
 /** Wert eines Feldes als Vergleichstext; Zusatzfelder über "extra:schluessel" */

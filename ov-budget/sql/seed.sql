@@ -147,6 +147,19 @@ INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order) VALUES
 ('kontakt_kategorie','Privatperson',           'privat',     '#64748b',140),
 ('kontakt_kategorie','Sonstiges',              'sonstiges',  '#94a3b8',150);
 
+-- ---------- Schlagwoerter (Kontakte): feste Liste, aus der auch die KI nur waehlen darf ----------
+INSERT IGNORE INTO list_items (list_key, label, slug, description, color, sort_order) VALUES
+('kontakt_tag','Einsatz-Ansprechpartner','einsatz',      'Wird im Einsatzfall angerufen oder informiert',          '#b91c1c',10),
+('kontakt_tag','Ehrengast',              'ehrengast',    'Wird zu Jubilaeen, Feiern und Festakten eingeladen',    '#7c3aed',20),
+('kontakt_tag','Presseverteiler',        'presse',       'Bekommt Pressemitteilungen und Einladungen zu Terminen', '#c2410c',30),
+('kontakt_tag','Spender / Foerderer',    'foerderer',    'Unterstuetzt den Ortsverband mit Geld oder Sachspenden', '#15803d',40),
+('kontakt_tag','Lieferant / Werkstatt',  'lieferant',    'Liefert, repariert oder wartet fuer den Ortsverband',     '#0369a1',50),
+('kontakt_tag','Politik',                'politik',      'Mandatstraeger in Gemeinde, Kreis, Land oder Bund',      '#1e40af',60),
+('kontakt_tag','Nachbar-Organisation',   'nachbarn',     'Feuerwehr, Rettungsdienst, andere OVs und Hilfsorganisationen in der Naehe', '#0f766e',70),
+('kontakt_tag','Ausbildung / Referent',  'ausbildung',   'Haelt Vortraege, Schulungen oder stellt Uebungsgelaende',  '#a16207',80),
+('kontakt_tag','Liegenschaft',           'liegenschaft', 'Vermieter, Hausverwaltung, Handwerker fuer die Unterkunft', '#64748b',90),
+('kontakt_tag','Weihnachtsgruss',        'weihnachten',  'Bekommt den Gruss zum Jahresende',                      '#0d9488',100);
+
 -- ---------- Einladungsstatus ----------
 INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default, is_final) VALUES
 ('einladung_status','Offen',          'offen',      '#64748b',10,1,0),
@@ -485,6 +498,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('ki_standorte','1','Bilder der Stell- und Lagerplätze auswerten','Nur mit Vision-Modell sinnvoll.','bool','KI-Auswertung',100),
 ('ki_stan','1','STAN-Dokumente auswerten','Zusammenfassung und Schlagwörter je Dokument im STAN-Paket – macht die STAN durchsuchbar.','bool','KI-Auswertung',110),
 ('ki_newsletter','1','Newsletter zusammenfassen','Zusammenfassung des hochgeladenen Newsletter-PDFs für die Verwaltung.','bool','KI-Auswertung',120),
+('ki_kontakte','1','Kontakte: Schlagwörter vorschlagen','Je Kontakt schlägt das Textmodell Schlagwörter vor – nur aus der Auswahlliste „Schlagwörter (Kontakte)", nie neue. Übernommen wird nur von Hand. An das Modell gehen Name, Organisation, Funktion, Kategorie, Ort, E-Mail-Domain, Notiz und Zusatzfelder; keine Rufnummern, keine Anschrift.','bool','KI-Auswertung',125),
 ('newsletter_modul_name','Newsletter','Bezeichnung des Moduls Newsletter','Hochgeladene PDF-Newsletter an Adresslisten verschicken, mit Abmeldelink und Sperrliste.','text','Newsletter',10),
 ('newsletter_user_darf_sehen','0','Alle Angemeldeten sehen die Newsletter','Aus = nur die Leitung. Anlegen, planen und verschicken kann in jedem Fall nur die Leitung.','bool','Newsletter',20),
 ('newsletter_je_abruf','50','Mails je Abruf','So viele Newsletter-Mails verschickt der automatische Abruf je Minute – schonend für den Mailserver.','number','Newsletter',30),

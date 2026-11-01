@@ -718,6 +718,30 @@ CREATE TABLE IF NOT EXISTS contact_dubletten_ignoriert (
   CONSTRAINT fk_cdi_cb FOREIGN KEY (created_by) REFERENCES users(id)    ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Schlagwoerter am Kontakt (Auswahlliste kontakt_tag); quelle: von Hand oder aus einem KI-Vorschlag uebernommen
+CREATE TABLE IF NOT EXISTS contact_tags (
+  contact_id    INT UNSIGNED NOT NULL,
+  tag_id        INT UNSIGNED NOT NULL,
+  quelle        ENUM('hand','ki') NOT NULL DEFAULT 'hand',
+  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (contact_id, tag_id),
+  KEY idx_ct_tag (tag_id),
+  CONSTRAINT fk_ct_contact FOREIGN KEY (contact_id) REFERENCES contacts(id)   ON DELETE CASCADE,
+  CONSTRAINT fk_ct_tag     FOREIGN KEY (tag_id)     REFERENCES list_items(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Vorschlaege der KI je Kontakt, bis jemand sie uebernimmt oder verwirft
+CREATE TABLE IF NOT EXISTS contact_tag_vorschlaege (
+  contact_id    INT UNSIGNED NOT NULL,
+  tag_id        INT UNSIGNED NOT NULL,
+  modell        VARCHAR(100) NOT NULL DEFAULT '',
+  erstellt_am   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (contact_id, tag_id),
+  KEY idx_ctv_tag (tag_id),
+  CONSTRAINT fk_ctv_contact FOREIGN KEY (contact_id) REFERENCES contacts(id)   ON DELETE CASCADE,
+  CONSTRAINT fk_ctv_tag     FOREIGN KEY (tag_id)     REFERENCES list_items(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ------------------------------------------------------------
 -- Besprechungen und Talking Points
 -- ------------------------------------------------------------

@@ -1,5 +1,25 @@
 # Änderungsverlauf
 
+## 2.1.69.0
+
+- **Kontakte – Schlagwörter mit KI-Vorschlägen:** Kontakte bekommen
+  Schlagwörter aus einer festen Auswahlliste „Schlagwörter (Kontakte)"
+  (Ehrengast, Presseverteiler, Spender / Förderer, Einsatz-Ansprechpartner,
+  Politik, Lieferant / Werkstatt …; pflegbar unter Auswahllisten). Die
+  Liste zeigt sie, filtert danach, der CSV-Export hat eine Spalte. Ist die
+  **KI-Auswertung** eingeschaltet (neuer Schalter „Kontakte: Schlagwörter
+  vorschlagen"), schlägt das Textmodell je Kontakt bis zu vier Schlagwörter
+  vor – **ausschließlich aus der Liste**, die es mitbekommt; alles andere
+  fällt beim Lesen der Antwort weg, neue Schlagwörter legt die KI nie an.
+  Übernommen wird nur von Hand: Vorschläge stehen als Haken im Kontakt und
+  auf der neuen Seite „Schlagwörter" mit allen offenen Vorschlägen, dort
+  auch „Alle ohne Schlagwörter einreihen". Neue Kontakte werden von selbst
+  eingereiht, bestehende per „Schlagwörter vorschlagen lassen". An das
+  Modell gehen Name, Organisation, Funktion, Kategorie, Ort, E-Mail-Domain,
+  Notiz und Zusatzfelder – keine Rufnummern, keine Anschrift; wie bei allen
+  KI-Funktionen nur an ein Ollama im eigenen Netz. Beim Zusammenführen von
+  Dubletten wandern Schlagwörter und Vorschläge mit.
+
 ## 2.1.68.0
 
 - **Kontakte – Dubletten:** Neue Seite „Dubletten" in den Kontakten (für

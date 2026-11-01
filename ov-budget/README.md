@@ -189,6 +189,8 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
   Dublettenerkennung
 - **Dubletten finden** über E-Mail, Rufnummer und Namen; zusammenführen
   mit Auswahl je Feld, Verweise wandern mit
+- **Schlagwörter** aus einer festen Liste; die KI (Ollama im eigenen Netz)
+  schlägt je Kontakt passende vor, übernommen wird nur von Hand
 
 ### Besprechungen
 - Talking Points im Themenspeicher, Tagesordnung mit Zeitplan

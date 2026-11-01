@@ -16,6 +16,8 @@ $filters = [
     'aktiv'        => get_str('aktiv') === 'alle' ? 'alle' : 'aktiv',
     'sort'         => get_str('sort', 'name'),
     'nur_mit_email' => get_str('mit_email') === '1' ? 1 : 0,
+    'tag_id'       => get_int('tag_id'),
+    'nur_mit_vorschlaegen' => get_str('vorschlaege') === '1' ? 1 : 0,
 ];
 
 // Alle Treffer für Zahlen und Adressliste, angezeigt wird seitenweise
@@ -29,4 +31,6 @@ render('contacts', [
     'blatt'     => $blatt,
     'filters'   => $filters,
     'verteiler' => contact_groups_all(true),
+    'tags'      => kontakt_tags_liste(),
+    'vorschlaegeOffen' => can('manage_contacts') ? (int)db_val('SELECT COUNT(DISTINCT contact_id) FROM contact_tag_vorschlaege', [], 0) : 0,
 ]);

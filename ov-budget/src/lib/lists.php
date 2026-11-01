@@ -14,6 +14,7 @@ const LIST_KEYS = [
     'ausgabe_kategorie' => 'Ausgabenkategorien',
     'einnahme_kategorie' => 'Einnahmekategorien',
     'kontakt_kategorie' => 'Kontaktkategorien',
+    'kontakt_tag'     => 'Schlagwörter (Kontakte)',
     'einladung_status' => 'Status (Einladungen)',
     'besprechung_typ' => 'Besprechungsarten',
     'veranstaltung_typ' => 'Veranstaltungsarten',

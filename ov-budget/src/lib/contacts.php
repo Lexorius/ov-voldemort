@@ -81,8 +81,13 @@ function contact_address_lines(array $c): array
     return $zeilen;
 }
 
+/** Unterabfragen für Schlagwörter und offene KI-Vorschläge eines Kontakts (Alias c) */
+const KONTAKT_TAG_SPALTEN = "(SELECT GROUP_CONCAT(l.label ORDER BY l.sort_order, l.label SEPARATOR ', ')
+                      FROM contact_tags t JOIN list_items l ON l.id = t.tag_id WHERE t.contact_id = c.id) AS tags_namen,
+                   (SELECT COUNT(*) FROM contact_tag_vorschlaege v WHERE v.contact_id = c.id) AS vorschlaege";
+
 /**
- * $f: q, kategorie_id, group_id, nur_mit_email, nur_mit_anschrift, aktiv, sort
+ * $f: q, kategorie_id, group_id, nur_mit_email, nur_mit_anschrift, aktiv, sort, tag_id, nur_mit_vorschlaegen
  */
 function contact_query(array $f = []): array
 {
@@ -116,6 +121,13 @@ function contact_query(array $f = []): array
         $w[] = 'NOT EXISTS (SELECT 1 FROM contact_group_members m WHERE m.contact_id = c.id AND m.group_id = ?)';
         $p[] = (int)$f['nicht_in_group'];
     }
+    if (!empty($f['tag_id'])) {
+        $w[] = 'EXISTS (SELECT 1 FROM contact_tags t WHERE t.contact_id = c.id AND t.tag_id = ?)';
+        $p[] = (int)$f['tag_id'];
+    }
+    if (!empty($f['nur_mit_vorschlaegen'])) {
+        $w[] = 'EXISTS (SELECT 1 FROM contact_tag_vorschlaege v WHERE v.contact_id = c.id)';
+    }
 
     $order = match ($f['sort'] ?? 'name') {
         'org'  => 'c.organisation ASC, c.nachname ASC',
@@ -127,7 +139,8 @@ function contact_query(array $f = []): array
     $sql = 'SELECT c.*, ka.label AS kategorie_label, ka.color AS kategorie_color,
                    (SELECT COUNT(*) FROM contact_group_members m WHERE m.contact_id = c.id) AS verteiler,
                    (SELECT GROUP_CONCAT(COALESCE(NULLIF(d.kurz, \'\'), d.name) ORDER BY d.sort_order, d.name SEPARATOR \', \')
-                      FROM thw_dienststelle_kontakte l JOIN thw_dienststellen d ON d.id = l.dienststelle_id WHERE l.contact_id = c.id) AS dienststellen_namen
+                      FROM thw_dienststelle_kontakte l JOIN thw_dienststellen d ON d.id = l.dienststelle_id WHERE l.contact_id = c.id) AS dienststellen_namen,
+                   ' . KONTAKT_TAG_SPALTEN . '
             FROM contacts c
             LEFT JOIN list_items ka ON ka.id = c.kategorie_id'
         . ($w ? ' WHERE ' . implode(' AND ', $w) : '')
@@ -193,6 +206,17 @@ function contact_save_from_post(?array $existing, array $user): array
     if (post_str('dienststellen_feld') === '1' && function_exists('kontakt_dienststellen_setzen')) {
         kontakt_dienststellen_setzen($id, wahl_ids('dienststellen'));
     }
+    // Schlagwörter: gewählte setzen, angehakte KI-Vorschläge übernehmen, die übrigen verwerfen
+    if (post_str('tags_feld') === '1' && function_exists('kontakt_tags_setzen')) {
+        kontakt_tags_setzen($id, wahl_ids('tags'));
+    }
+    if (post_str('vorschlaege_feld') === '1' && function_exists('kontakt_tag_vorschlaege_entscheiden')) {
+        kontakt_tag_vorschlaege_entscheiden($id, wahl_ids('vorschlag'));
+    }
+    // Neuer Kontakt ohne Schlagwörter: die KI darf welche vorschlagen (nur Vorschläge, übernommen wird von Hand)
+    if (!$existing && function_exists('kontakt_tags_vorschlagen_lassen') && !wahl_ids('tags')) {
+        kontakt_tags_vorschlagen_lassen($id);
+    }
 
     return [$id, []];
 }
@@ -225,7 +249,8 @@ function contact_group_members(int $groupId): array
     return db_all(
         'SELECT c.*, m.status_id, m.personen, m.notiz AS teilnahme_notiz, m.updated_at AS status_am,
                 st.label AS status_label, st.color AS status_color, st.slug AS status_slug,
-                ka.label AS kategorie_label, ka.color AS kategorie_color
+                ka.label AS kategorie_label, ka.color AS kategorie_color,
+                ' . KONTAKT_TAG_SPALTEN . '
          FROM contact_group_members m
          JOIN contacts c ON c.id = m.contact_id
          LEFT JOIN list_items st ON st.id = m.status_id
