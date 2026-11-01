@@ -22,13 +22,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect_route('contacts');
     }
     if (post_str('action') === 'vorschlagen' && $contact) {
-        if (kontakt_tags_vorschlagen_lassen((int)$contact['id'])) {
-            audit('kontakt.tags_anfordern', 'contact', (int)$contact['id'], contact_name($contact));
-            flash('success', 'Die KI schlägt in den nächsten Minuten Schlagwörter vor – aus der festen Liste, übernommen wird nichts von selbst.');
+        if (kontakt_kategorie_vorschlagen_lassen((int)$contact['id'])) {
+            audit('kontakt.kategorie_anfordern', 'contact', (int)$contact['id'], contact_name($contact));
+            flash('success', 'Die KI schlägt in den nächsten Minuten eine Kategorie vor – aus der Auswahlliste, übernommen wird nichts von selbst.');
         } else {
             flash('warn', 'Die KI-Auswertung für Kontakte ist ausgeschaltet.');
         }
-        redirect(url('contact_edit', ['id' => (int)$contact['id']]) . '#schlagwoerter');
+        redirect(url('contact_edit', ['id' => (int)$contact['id']]) . '#kategorie');
     }
 
     [$newId, $errors] = contact_save_from_post($contact, $user);
@@ -65,28 +65,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $dienststellenGewaehlt = array_map('intval', array_column(kontakt_dienststellen((int)$contact['id']), 'id'));
 }
 
-// Schlagwörter und offene KI-Vorschläge
-$tagsGewaehlt = [];
-$vorschlaege = [];
-$tagAuftrag = null;
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $tagsGewaehlt = wahl_ids('tags');
-} elseif (!empty($contact['id'])) {
-    $tagsGewaehlt = array_map('intval', array_column(kontakt_tags((int)$contact['id']), 'id'));
-}
+// KI-Vorschlag für die Kategorie und Stand des Auftrags
+$vorschlag = null;
+$kiAuftrag = null;
 if (!empty($contact['id'])) {
-    $vorschlaege = kontakt_tag_vorschlaege((int)$contact['id']);
-    $tagAuftrag = ki_modul_aktiv('kontakt')
+    $vorschlag = kontakt_kategorie_vorschlag((int)$contact['id']);
+    $kiAuftrag = ki_modul_aktiv('kontakt')
         ? db_row("SELECT status, fehler FROM ki_auftraege WHERE typ = 'kontakt' AND datei_id = ?", [(int)$contact['id']])
         : null;
 }
 
 render('contact_edit', [
-    'tagOptionen'   => kontakt_tag_optionen(),
-    'tagsGewaehlt'  => $tagsGewaehlt,
-    'vorschlaege'   => $vorschlaege,
-    'tagAuftrag'    => $tagAuftrag,
-    'kiKontakte'    => ki_modul_aktiv('kontakt'),
+    'vorschlag'  => $vorschlag,
+    'kiAuftrag'  => $kiAuftrag,
+    'kiKontakte' => ki_modul_aktiv('kontakt'),
     'dienststellenGewaehlt' => $dienststellenGewaehlt,
     'dienststellenOptionen' => function_exists('thw_optionen') ? thw_optionen(thw_all(), $dienststellenGewaehlt) : [],
     'title'     => $contact['id'] ? 'Kontakt bearbeiten' : 'Kontakt anlegen',

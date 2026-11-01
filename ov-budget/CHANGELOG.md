@@ -1,24 +1,28 @@
 # Änderungsverlauf
 
-## 2.1.69.0
+## 2.1.70.0
 
-- **Kontakte – Schlagwörter mit KI-Vorschlägen:** Kontakte bekommen
-  Schlagwörter aus einer festen Auswahlliste „Schlagwörter (Kontakte)"
-  (Ehrengast, Presseverteiler, Spender / Förderer, Einsatz-Ansprechpartner,
-  Politik, Lieferant / Werkstatt …; pflegbar unter Auswahllisten). Die
-  Liste zeigt sie, filtert danach, der CSV-Export hat eine Spalte. Ist die
-  **KI-Auswertung** eingeschaltet (neuer Schalter „Kontakte: Schlagwörter
-  vorschlagen"), schlägt das Textmodell je Kontakt bis zu vier Schlagwörter
-  vor – **ausschließlich aus der Liste**, die es mitbekommt; alles andere
-  fällt beim Lesen der Antwort weg, neue Schlagwörter legt die KI nie an.
-  Übernommen wird nur von Hand: Vorschläge stehen als Haken im Kontakt und
-  auf der neuen Seite „Schlagwörter" mit allen offenen Vorschlägen, dort
-  auch „Alle ohne Schlagwörter einreihen". Neue Kontakte werden von selbst
-  eingereiht, bestehende per „Schlagwörter vorschlagen lassen". An das
-  Modell gehen Name, Organisation, Funktion, Kategorie, Ort, E-Mail-Domain,
-  Notiz und Zusatzfelder – keine Rufnummern, keine Anschrift; wie bei allen
-  KI-Funktionen nur an ein Ollama im eigenen Netz. Beim Zusammenführen von
-  Dubletten wandern Schlagwörter und Vorschläge mit.
+- **Kontakte – Kategorie-Vorschlag der KI:** Ist die KI-Auswertung
+  eingeschaltet (neuer Schalter „Kontakte: Kategorie vorschlagen"),
+  schlägt das Textmodell je Kontakt eine Kategorie vor – **ausschließlich
+  aus der vorhandenen Auswahlliste „Kontaktkategorien"**, die es samt
+  Beschreibungen mitbekommt; alles andere in der Antwort fällt weg, neue
+  Kategorien legt die KI nie an, und sie setzt auch keine. Der Vorschlag
+  steht im Kontakt als Haken am Feld „Kategorie" (bei Kontakten ohne
+  Kategorie vorangehakt, sonst nicht) und gesammelt auf der neuen Seite
+  „KI-Vorschläge" in den Kontakten mit Übernehmen/Verwerfen je Kontakt,
+  „… ohne Kategorie übernehmen" und „Alle ohne Kategorie einreihen". Die
+  Kontaktliste zeigt den Vorschlag neben der Kategorie und filtert „mit
+  KI-Vorschlag". Neue Kontakte ohne Kategorie werden beim Anlegen
+  eingereiht, bestehende per „Kategorie vorschlagen lassen"; verarbeitet
+  wird über die KI-Warteschlange. An das Modell gehen Name, Organisation,
+  Funktion, Ort, E-Mail-Domain, Notiz und Zusatzfelder – keine
+  Rufnummern, keine Anschrift; wie bei allen KI-Funktionen nur an ein
+  Ollama im eigenen Netz. Dubletten-Zusammenführung nimmt den Vorschlag mit.
+- **Aufgeräumt:** Fassung 2.1.69.0 hatte dafür kurz eine eigene Liste
+  „Schlagwörter (Kontakte)" angelegt. Sie ist wieder weg – samt Tabellen
+  und Listeneinträgen, der Start räumt sie auf; die KI nutzt die
+  vorhandenen Kategorien.
 
 ## 2.1.68.0
 

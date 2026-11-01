@@ -1,7 +1,6 @@
 <?php
-/** @var array $rows @var array $filters @var array $verteiler @var array $alle @var array $blatt @var array $tags @var int $vorschlaegeOffen */
+/** @var array $rows @var array $filters @var array $verteiler @var array $alle @var array $blatt @var int $vorschlaegeOffen */
 $alle ??= $rows;
-$tags ??= [];
 $vorschlaegeOffen ??= 0;
 $blatt ??= seiten_blaettern(count($rows), 1, max(1, count($rows)));
 $mitEmail = 0;
@@ -25,7 +24,7 @@ foreach ($alle as $r) {
       <a class="btn" href="<?= e(url('contact_edit')) ?>">+ Kontakt</a>
       <a class="btn btn--sec" href="<?= e(url('contacts_import')) ?>">Importieren</a>
       <a class="btn btn--sec" href="<?= e(url('contacts_dubletten')) ?>">Dubletten</a>
-      <a class="btn btn--sec" href="<?= e(url('contacts_tags')) ?>">Schlagwörter<?= $vorschlaegeOffen > 0 ? ' <span class="badge" style="background:#7c3aed">✨ ' . (int)$vorschlaegeOffen . '</span>' : '' ?></a>
+      <a class="btn btn--sec" href="<?= e(url('contacts_ki')) ?>">KI-Vorschläge<?= $vorschlaegeOffen > 0 ? ' <span class="badge" style="background:#7c3aed">' . (int)$vorschlaegeOffen . '</span>' : '' ?></a>
     <?php endif; ?>
     <a class="btn btn--sec" href="<?= e(url('contact_groups')) ?>">Verteiler</a>
     <a class="btn btn--sec" href="<?= e(url('contacts_export', array_diff_key($_GET, ['p' => 1]))) ?>">CSV</a>
@@ -51,17 +50,6 @@ foreach ($alle as $r) {
       <label for="kategorie_id">Kategorie</label>
       <select id="kategorie_id" name="kategorie_id"><?= list_options('kontakt_kategorie', $filters['kategorie_id'], 'alle') ?></select>
     </div>
-    <?php if ($tags): ?>
-      <div class="field">
-        <label for="tag_id">Schlagwort</label>
-        <select id="tag_id" name="tag_id">
-          <option value="">alle</option>
-          <?php foreach ($tags as $t): ?>
-            <option value="<?= (int)$t['id'] ?>"<?= (int)($filters['tag_id'] ?? 0) === (int)$t['id'] ? ' selected' : '' ?>><?= e((string)$t['label']) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-    <?php endif; ?>
     <div class="field">
       <label for="sort">Sortierung</label>
       <select id="sort" name="sort">
@@ -80,11 +68,11 @@ foreach ($alle as $r) {
        href="<?= e(url('contacts', array_merge(array_diff_key($_GET, ['p' => 1]), ['mit_email' => $filters['nur_mit_email'] ? '' : '1']))) ?>">nur mit E-Mail</a>
     <a class="chip<?= $filters['aktiv'] === 'alle' ? ' is-active' : '' ?>"
        href="<?= e(url('contacts', array_merge(array_diff_key($_GET, ['p' => 1]), ['aktiv' => $filters['aktiv'] === 'alle' ? '' : 'alle']))) ?>">inkl. inaktive</a>
-    <?php if ($vorschlaegeOffen > 0 || !empty($filters['nur_mit_vorschlaegen'])): ?>
-      <a class="chip<?= !empty($filters['nur_mit_vorschlaegen']) ? ' is-active' : '' ?>"
-         href="<?= e(url('contacts', array_merge(array_diff_key($_GET, ['p' => 1]), ['vorschlaege' => !empty($filters['nur_mit_vorschlaegen']) ? '' : '1']))) ?>">✨ mit KI-Vorschlägen</a>
+    <?php if ($vorschlaegeOffen > 0 || !empty($filters['nur_mit_vorschlag'])): ?>
+      <a class="chip<?= !empty($filters['nur_mit_vorschlag']) ? ' is-active' : '' ?>"
+         href="<?= e(url('contacts', array_merge(array_diff_key($_GET, ['p' => 1]), ['vorschlag' => !empty($filters['nur_mit_vorschlag']) ? '' : '1']))) ?>">✨ mit KI-Vorschlag</a>
     <?php endif; ?>
-    <?php if ($filters['q'] || $filters['kategorie_id'] || !empty($filters['tag_id']) || !empty($filters['nur_mit_vorschlaegen'])): ?>
+    <?php if ($filters['q'] || $filters['kategorie_id'] || !empty($filters['nur_mit_vorschlag'])): ?>
       <a class="chip" href="<?= e(url('contacts')) ?>">Filter zurücksetzen</a>
     <?php endif; ?>
   </div>
@@ -149,18 +137,15 @@ foreach ($alle as $r) {
           <?php endif; ?>
           <div class="item__meta">
             <?= badge($c['kategorie_label'] ? ['label' => $c['kategorie_label'], 'color' => $c['kategorie_color']] : null, 'ohne Kategorie') ?>
+            <?php if (!empty($c['vorschlag_id'])): ?>
+              <span class="badge badge--outline" style="border-color:<?= e((string)$c['vorschlag_color']) ?>" title="KI-Vorschlag für die Kategorie">✨ <?= e((string)$c['vorschlag_label']) ?></span>
+            <?php endif; ?>
             <?php if (!(int)$c['is_active']): ?><span class="badge badge--muted">inaktiv</span><?php endif; ?>
             <?php if ((int)$c['verteiler'] > 0): ?>
               <span class="badge badge--outline"><?= (int)$c['verteiler'] ?>× Verteiler</span>
             <?php endif; ?>
             <?php if (!empty($c['dienststellen_namen'])): ?>
               <span class="badge badge--outline" title="THW-Dienststellen">⛑ <?= e((string)$c['dienststellen_namen']) ?></span>
-            <?php endif; ?>
-            <?php if (!empty($c['tags_namen'])): ?>
-              <span class="badge badge--outline" title="Schlagwörter"># <?= e((string)$c['tags_namen']) ?></span>
-            <?php endif; ?>
-            <?php if ((int)($c['vorschlaege'] ?? 0) > 0): ?>
-              <span class="badge" style="background:#7c3aed" title="Offene KI-Vorschläge für Schlagwörter">✨ <?= (int)$c['vorschlaege'] ?></span>
             <?php endif; ?>
           </div>
         </div>
@@ -185,8 +170,7 @@ foreach ($alle as $r) {
             </td>
             <td class="small"><?= e($c['organisation'] ?: '–') ?></td>
             <td><?= badge($c['kategorie_label'] ? ['label' => $c['kategorie_label'], 'color' => $c['kategorie_color']] : null, '–') ?>
-              <?php if (!empty($c['tags_namen'])): ?><div class="small muted" title="Schlagwörter"># <?= e((string)$c['tags_namen']) ?></div><?php endif; ?>
-              <?php if ((int)($c['vorschlaege'] ?? 0) > 0): ?><div class="small"><span class="badge" style="background:#7c3aed" title="Offene KI-Vorschläge">✨ <?= (int)$c['vorschlaege'] ?> Vorschläge</span></div><?php endif; ?>
+              <?php if (!empty($c['vorschlag_id'])): ?><div class="small"><span class="badge badge--outline" style="border-color:<?= e((string)$c['vorschlag_color']) ?>" title="KI-Vorschlag für die Kategorie">✨ <?= e((string)$c['vorschlag_label']) ?></span></div><?php endif; ?>
             </td>
             <td class="small"><?= e(trim($c['plz'] . ' ' . $c['ort']) ?: '–') ?></td>
             <td class="small"><?= email_html($c['email']) ?></td>
@@ -209,6 +193,6 @@ foreach ($alle as $r) {
     <?= !function_exists('render_partial') ? '' : render_partial('partials/seiten', ['blatt' => $blatt, 'route' => 'contacts', 'zurueck' => '‹ Zurück', 'weiter' => 'Weiter ›',
         'params' => array_filter(['q' => $filters['q'] ?? '', 'kategorie_id' => $filters['kategorie_id'] ?? 0, 'aktiv' => ($filters['aktiv'] ?? '') === 'alle' ? 'alle' : '',
                                   'sort' => ($filters['sort'] ?? 'name') !== 'name' ? $filters['sort'] : '', 'mit_email' => !empty($filters['nur_mit_email']) ? '1' : '',
-                                  'tag_id' => $filters['tag_id'] ?? 0, 'vorschlaege' => !empty($filters['nur_mit_vorschlaegen']) ? '1' : ''])]) ?>
+                                  'vorschlag' => !empty($filters['nur_mit_vorschlag']) ? '1' : ''])]) ?>
   </div>
 <?php endif; ?>

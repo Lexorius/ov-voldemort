@@ -292,30 +292,25 @@ sie enthalten.
   merkt sich ein Paar; es taucht nicht mehr auf und lässt sich unten auf
   der Seite wieder freigeben.
 
-  **Schlagwörter** sagen, wofür ein Kontakt gebraucht wird – Ehrengast,
-  Presseverteiler, Spender / Förderer, Einsatz-Ansprechpartner, Lieferant /
-  Werkstatt, Politik, Nachbar-Organisation, Ausbildung / Referent,
-  Liegenschaft, Weihnachtsgruß. Die Liste ist fest und wird unter
-  *Verwaltung → Auswahllisten → Schlagwörter (Kontakte)* gepflegt; die
-  Beschreibung je Eintrag hilft auch der KI. Im Kontakt werden sie wie die
-  Dienststellen gewählt, die Liste filtert danach, der CSV-Export hat die
-  Spalte „Schlagwoerter".
-
-  **KI-Vorschläge.** Ist die KI-Auswertung eingeschaltet und der Schalter
-  „Kontakte: Schlagwörter vorschlagen" an, bekommt das Textmodell je
-  Kontakt die feste Liste samt Beschreibungen und darf daraus bis zu vier
-  Schlagwörter nennen. Alles, was nicht in der Liste steht, wird beim Lesen
-  der Antwort verworfen – die KI legt nie neue Schlagwörter an und setzt
-  auch keine: Vorschläge stehen als Haken im Kontakt (angehakt = beim
-  Speichern übernehmen, abgehakt = verwerfen) und gesammelt auf der Seite
-  *Kontakte → Schlagwörter*, wo sich auch alle Kontakte ohne Schlagwörter
-  auf einmal einreihen lassen. Neue Kontakte werden beim Anlegen von selbst
-  eingereiht, bestehende über „Schlagwörter vorschlagen lassen" im
-  Kontakt. Abgearbeitet wird über die gewohnte KI-Warteschlange (minütlicher
-  Abruf); Fehler stehen unter *Verwaltung → KI-Auswertung*. An das Modell
-  gehen Name, Organisation, Funktion, Kategorie, Ort, E-Mail-Domain, Notiz
-  und Zusatzfelder (keine Haken) – keine Rufnummern, keine Anschrift, und
-  wie immer nur an ein Ollama im eigenen Netz.
+  **KI-Vorschlag für die Kategorie.** Ist die KI-Auswertung eingeschaltet
+  und der Schalter „Kontakte: Kategorie vorschlagen" an, bekommt das
+  Textmodell je Kontakt die Auswahlliste „Kontaktkategorien" samt
+  Beschreibungen (Verwaltung → Auswahllisten) und darf genau eine davon
+  nennen. Alles, was nicht in der Liste steht, wird beim Lesen der Antwort
+  verworfen – die KI legt nie neue Kategorien an und setzt auch keine. Der
+  Vorschlag steht im Kontakt als Haken am Feld „Kategorie": bei Kontakten
+  ohne Kategorie vorangehakt (Speichern übernimmt ihn), bei Kontakten mit
+  Kategorie abgehakt; abgehakt gespeichert heißt verworfen. Gesammelt
+  stehen die Vorschläge unter *Kontakte → KI-Vorschläge* mit Übernehmen
+  oder Verwerfen je Kontakt, „… ohne Kategorie übernehmen" für alle, die
+  noch keine hatten, und „Alle ohne Kategorie einreihen". Neue Kontakte
+  ohne Kategorie werden beim Anlegen von selbst eingereiht, bestehende
+  über „Kategorie vorschlagen lassen" im Kontakt. Abgearbeitet wird über
+  die KI-Warteschlange (minütlicher Abruf); Fehler stehen unter
+  *Verwaltung → KI-Auswertung*. An das Modell gehen Name, Organisation,
+  Funktion, Ort, E-Mail-Domain, Notiz und Zusatzfelder (keine Haken) –
+  keine Rufnummern, keine Anschrift, und wie immer nur an ein Ollama im
+  eigenen Netz.
 
   Rufnummern werden beim Speichern und beim Import international geschrieben:
   aus „0151 123456" wird „+49 151 123456", aus „0201/1234567" wird

@@ -20,7 +20,6 @@ if ($gruppe) {
         'aktiv'        => get_str('aktiv') === 'alle' ? 'alle' : 'aktiv',
         'nur_mit_email' => get_str('mit_email') === '1' ? 1 : 0,
         'sort'         => get_str('sort', 'name'),
-        'tag_id'       => get_int('tag_id'),
     ]);
     $name = 'kontakte';
 }
@@ -35,7 +34,7 @@ fwrite($out, "\xEF\xBB\xBF");   // BOM, damit Excel die Umlaute richtig anzeigt
 $kopf = [
     'Anrede', 'Titel', 'Vorname', 'Nachname', 'Organisation', 'Position',
     'Strasse', 'PLZ', 'Ort', 'Land', 'Briefanrede',
-    'E-Mail', 'Telefon', 'Mobil', 'Kategorie', 'Schlagwoerter', 'Notiz',
+    'E-Mail', 'Telefon', 'Mobil', 'Kategorie', 'Notiz',
 ];
 if ($gruppe) {
     array_push($kopf, 'Status', 'Personen', 'Bemerkung');
@@ -56,7 +55,6 @@ foreach ($rows as $c) {
         contact_salutation($c),
         $c['email'], $c['telefon'], $c['mobil'],
         $c['kategorie_label'] ?? '',
-        (string)($c['tags_namen'] ?? ''),
         preg_replace('/\s+/', ' ', (string)$c['notiz']),
     ];
     if ($gruppe) {

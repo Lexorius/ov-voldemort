@@ -2481,6 +2481,21 @@ SQL);
         }
     }
     $merken('094_upload_32');
+
+    /* ---------- 095: Fassung 2.1.69.0 hatte kurz eine eigene Schlagwortliste für Kontakte – weg damit, die KI schlägt jetzt die Kategorie vor ---------- */
+    foreach (['contact_tag_vorschlaege', 'contact_tags'] as $t) {
+        if (ovb_table_exists($pdo, $t)) {
+            $pdo->exec("DROP TABLE `$t`");
+            $say("Tabelle $t entfernt.");
+        }
+    }
+    if (ovb_table_exists($pdo, 'list_items')) {
+        $n = $pdo->exec("DELETE FROM list_items WHERE list_key = 'kontakt_tag'");
+        if ($n > 0) {
+            $say('Auswahlliste „Schlagwörter (Kontakte)" entfernt (' . $n . ' Einträge).');
+        }
+    }
+    $merken('095_kontakt_tags_weg');
 }
 
 /**

@@ -36,8 +36,8 @@ const KI_TYPEN = [
     'standort'      => ['schalter' => 'ki_standorte',       'label' => 'Stell- und Lagerplatz', 'tabelle' => 'standort_bilder', 'route' => 'standort_bild'],
     'stan'          => ['schalter' => 'ki_stan',            'label' => 'STAN',                  'tabelle' => 'stan_dateien',    'route' => 'stan_file', 'bildfilter' => "f.mime NOT LIKE 'image/%'"],
     'newsletter'    => ['schalter' => 'ki_newsletter',      'label' => 'Newsletter',            'tabelle' => 'newsletter',      'route' => 'newsletter_datei', 'bildfilter' => "f.stored_name <> ''"],
-    // Kein Dokument, sondern der Kontakt selbst: das Modell schlägt Schlagwörter aus der festen Liste vor (kontakt_tags.php)
-    'kontakt'       => ['schalter' => 'ki_kontakte',        'label' => 'Kontakt (Schlagwörter)', 'tabelle' => 'contacts',       'route' => 'contact_edit',     'bildfilter' => 'f.is_active = 1'],
+    // Kein Dokument, sondern der Kontakt selbst: das Modell schlägt eine Kategorie aus der Auswahlliste vor (kontakt_ki.php)
+    'kontakt'       => ['schalter' => 'ki_kontakte',        'label' => 'Kontakt (Kategorie)',   'tabelle' => 'contacts',       'route' => 'contact_edit',     'bildfilter' => 'f.is_active = 1'],
 ];
 const KI_VERSUCHE_MAX = 3;
 const KI_RUHE_SEK = 600;   // so lange ruht die Warteschlange, wenn Ollama nicht erreichbar war
@@ -160,8 +160,8 @@ function ki_alle_einreihen(): int
             continue;   // Plätze haben nur Bilder
         }
         if ($typ === 'kontakt') {
-            // nur Kontakte ohne Schlagwörter und ohne Vorschläge
-            $n += function_exists('kontakt_tags_alle_einreihen') ? kontakt_tags_alle_einreihen() : 0;
+            // nur aktive Kontakte ohne Kategorie und ohne offenen Vorschlag
+            $n += function_exists('kontakt_kategorie_alle_einreihen') ? kontakt_kategorie_alle_einreihen() : 0;
             continue;
         }
         $n += db_exec(
@@ -414,7 +414,7 @@ function ki_datei_laden(string $typ, int $id): ?array
             $d['orig_name'] = '';
             $d['mime'] = '';
             return ['datei' => $d, 'pfad' => null, 'kontext' => 'Kontakt ' . $d['titel'],
-                    'eltern' => ['text' => $d['titel'], 'url' => url('contact_edit', ['id' => $id]) . '#schlagwoerter']];
+                    'eltern' => ['text' => $d['titel'], 'url' => url('contact_edit', ['id' => $id]) . '#kategorie']];
         case 'newsletter':
             $d = newsletter_find($id);
             if (!$d) {
@@ -909,9 +909,9 @@ function ki_text_antwort(string $prompt, int $maxZeichen = 6000): string
 function ki_datei_auswerten(string $typ, int $id): array
 {
     if ($typ === 'kontakt') {
-        // Kontakte haben keine Datei: Schlagwörter aus der festen Liste vorschlagen
+        // Kontakte haben keine Datei: eine Kategorie aus der Auswahlliste vorschlagen
         $e = kontakt_ki_auswerten($id);
-        return ['zusammenfassung' => '', 'tags' => $e['tags'], 'modell' => $e['modell'], 'quelle' => 'kontakt'];
+        return ['zusammenfassung' => '', 'tags' => [], 'modell' => $e['modell'], 'quelle' => 'kontakt'];
     }
     $l = ki_datei_laden($typ, $id);
     if ($l === null) {
