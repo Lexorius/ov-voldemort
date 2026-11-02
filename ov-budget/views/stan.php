@@ -77,40 +77,41 @@ $icon = static function (array $d): string {
   <?php if ($chatAktiv): ?>
   <section class="card" id="chat">
     <div class="card__head"><h2>Fragen an die STAN</h2><span class="muted small">KI über Ollama im eigenen Netz · Antworten ohne Gewähr</span></div>
-    <?php if ($chatVerlauf): ?>
-      <div class="chat">
-        <?php foreach ($chatVerlauf as $t): ?>
-          <div class="comment">
-            <div class="comment__meta"><?= e(de_datetime((string)($t['am'] ?? ''))) ?><?= !empty($t['modell']) ? ' · ' . e((string)$t['modell']) : '' ?></div>
-            <div class="comment__body"><strong><?= e((string)$t['frage']) ?></strong></div>
-            <div class="comment__body" style="margin-top:.4rem"><?= e((string)$t['antwort']) ?></div>
-            <?php if (!empty($t['quellen'])): ?>
-              <ol class="small" style="margin:.4rem 0 0;padding-left:1.4rem">
-                <?php foreach ($t['quellen'] as $qn): ?>
-                  <li><a href="<?= e(url('stan_file', ['id' => $qn['id']])) ?>" target="_blank" rel="noopener"><?= e((string)$qn['name']) ?></a>
-                    <span class="muted"><?= e('Version ' . (int)$qn['version_nummer'] . (dirname((string)$qn['pfad']) !== '.' ? ' · 📁 ' . dirname((string)$qn['pfad']) : '')) ?></span></li>
-                <?php endforeach; ?>
-              </ol>
-            <?php endif; ?>
-          </div>
-        <?php endforeach; ?>
-      </div>
-    <?php endif; ?>
-    <form method="post" action="<?= e(url('stan', ($gezeigt ? ['version' => $gezeigt['id']] : []) + ($alleVersionen ? ['alle' => '1'] : []))) ?>" class="form" style="margin-top:.6rem">
+    <div class="chat" data-chat-verlauf<?= $chatVerlauf ? '' : ' hidden' ?>>
+      <?php foreach ($chatVerlauf as $t): ?>
+        <div class="chat__frage"><?= e((string)$t['frage']) ?></div>
+        <div class="chat__antwort">
+          <div class="chat__meta"><?= e(de_datetime((string)($t['am'] ?? ''))) ?><?= !empty($t['modell']) ? ' · ' . e((string)$t['modell']) : '' ?></div>
+          <div class="chat__text"><?= e((string)$t['antwort']) ?></div>
+          <?php if (!empty($t['quellen'])): ?>
+            <ol class="chat__quellen">
+              <?php foreach ($t['quellen'] as $qn): ?>
+                <li><a href="<?= e(url('stan_file', ['id' => $qn['id']])) ?>" target="_blank" rel="noopener"><?= e((string)$qn['name']) ?></a>
+                  <span class="muted"><?= e('Version ' . (int)$qn['version_nummer'] . (dirname((string)$qn['pfad']) !== '.' ? ' · 📁 ' . dirname((string)$qn['pfad']) : '') . (!empty($qn['vollstaendig']) ? ' · vollständig' : ' · Auszüge')) ?></span></li>
+              <?php endforeach; ?>
+            </ol>
+          <?php endif; ?>
+        </div>
+      <?php endforeach; ?>
+    </div>
+    <form method="post" action="<?= e(url('stan', ($gezeigt ? ['version' => $gezeigt['id']] : []) + ($alleVersionen ? ['alle' => '1'] : []))) ?>" class="form" style="margin-top:.6rem"
+          data-stan-chat="<?= e(url('stan_chat')) ?>">
       <?= csrf_field() ?>
       <input type="hidden" name="action" value="chat">
+      <?php if ($gezeigt): ?><input type="hidden" name="version" value="<?= (int)$gezeigt['id'] ?>"><?php endif; ?>
+      <?php if ($alleVersionen): ?><input type="hidden" name="alle" value="1"><?php endif; ?>
       <div class="field">
         <label for="frage">Frage</label>
         <textarea id="frage" name="frage" rows="2" maxlength="<?= STAN_CHAT_FRAGE_MAX ?>" required placeholder="z. B. Wie viele Notstromaggregate hat die Fachgruppe N und welche Leistung haben sie?"></textarea>
       </div>
       <div class="btnrow">
-        <button class="btn" type="submit">Fragen</button>
-        <?php if ($chatVerlauf): ?><button class="btn btn--sec" type="submit" name="action" value="chat_leeren" formnovalidate>Verlauf leeren</button><?php endif; ?>
+        <button class="btn" type="submit" data-chat-senden>Fragen</button>
+        <button class="btn btn--sec" type="submit" name="action" value="chat_leeren" formnovalidate data-chat-leeren<?= $chatVerlauf ? '' : ' hidden' ?>>Verlauf leeren</button>
         <span class="small muted" style="align-self:center">Gesucht wird <?= $alleVersionen || !$gezeigt ? 'in allen Versionen' : 'in ' . e(stan_version_text($gezeigt)) ?>; die Antwort kann eine Minute dauern.</span>
       </div>
     </form>
-    <p class="small muted" style="margin:.5rem 0 0">Die Antwort entsteht nur aus Auszügen der STAN-Dateien, die zur Frage passen, und nennt sie als Quellen [1], [2] … Was dort nicht steht, soll das Modell
-      nicht erfinden – trotzdem im Zweifel in die genannte Datei schauen. Die Texte verlassen das Haus nicht; der Verlauf lebt nur in dieser Sitzung.</p>
+    <p class="small muted" style="margin:.5rem 0 0">Die Antwort entsteht nur aus den STAN-Dateien, die zur Frage passen – ganz, wenn sie ins Kontextfenster passen, sonst aus Auszügen um die Treffer –
+      und nennt sie als Quellen [1], [2] … Was dort nicht steht, soll das Modell nicht erfinden; im Zweifel in die genannte Datei schauen. Die Texte verlassen das Haus nicht, der Verlauf lebt nur in dieser Sitzung.</p>
   </section>
   <?php endif; ?>
 

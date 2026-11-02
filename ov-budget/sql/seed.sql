@@ -478,6 +478,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('ki_modell','qwen2.5:7b','Textmodell','Name des Modells in Ollama, das Texte zusammenfasst (ollama pull qwen2.5:7b). Bewährt: qwen2.5:7b, llama3.1:8b, mistral.','text','KI-Auswertung',30),
 ('ki_vision_modell','','Vision-Modell (optional)','Modell, das Bilder und gescannte PDFs beschreibt, z. B. llava:7b oder minicpm-v. Leer = Bilder und gescannte PDFs werden nicht ausgewertet.','text','KI-Auswertung',40),
 ('ki_timeout_sek','120','Zeitlimit je Datei (Sekunden)','Kleine Rechner brauchen für ein 7B-Modell gut eine Minute je Dokument. Zwischen 10 und 600.','number','KI-Auswertung',50),
+('ki_num_ctx','8192','Kontextfenster je Anfrage (Token)','Wie viel Text Ollama je Anfrage sieht. 8192 passt für 7B-Modelle mit 8 GB RAM; 16384 oder 32768 geben dem STAN-Chat ganze Dokumente, brauchen aber mehr Arbeitsspeicher und ein Modell, das so viel kann.','number','KI-Auswertung',55),
 ('ki_max_zeichen','12000','Höchstens … Zeichen Text je Datei','Längere Dokumente werden für das Modell gekürzt, der Anfang zählt. Mehr Zeichen = genauer, aber langsamer.','number','KI-Auswertung',60),
 ('ki_fahrzeuge','1','Fahrzeugakte und Aufträge auswerten','Dokumente und Fotos an Fahrzeugen und Instandsetzungsaufträgen.','bool','KI-Auswertung',70),
 ('ki_veranstaltungen','1','Dateien der Veranstaltungen auswerten','Rechnungen, Angebote, Pläne an Veranstaltungen.','bool','KI-Auswertung',80),

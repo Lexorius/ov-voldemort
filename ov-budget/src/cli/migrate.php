@@ -2496,6 +2496,16 @@ SQL);
         }
     }
     $merken('095_kontakt_tags_weg');
+
+    /* ---------- 096: STAN-Volltext ohne Deckel – bisher bei 300.000 Zeichen gekürzte Texte neu lesen ---------- */
+    if (ovb_table_exists($pdo, 'stan_dateien')) {
+        $n = $pdo->prepare('UPDATE stan_dateien SET text = NULL WHERE text IS NOT NULL AND CHAR_LENGTH(text) >= 299000');
+        $n->execute();
+        if ($n->rowCount() > 0) {
+            $say($n->rowCount() . ' STAN-Datei(en) waren gekürzt – der Abruf liest den Text neu ein.');
+        }
+    }
+    $merken('096_stan_volltext');
 }
 
 /**

@@ -1,5 +1,20 @@
 # Änderungsverlauf
 
+## 2.1.72.0
+
+- **STAN-Chat:** Die Frage erscheint sofort als Sprechblase, drei
+  pulsierende Punkte zeigen die Arbeit des Modells, die Antwort kommt ohne
+  Seitenwechsel. Ein zweiter Klick währenddessen geht ins Leere, dieselbe
+  Frage kurz hintereinander bekommt die vorhandene Antwort. Passende Dateien
+  gehen **ganz** an das Modell, wenn sie ins Kontextfenster passen, sonst als
+  Auszüge; die Quellen tragen den Vermerk „vollständig" oder „Auszüge".
+- **KI:** Neue Einstellung „Kontextfenster je Anfrage (Token)" (Vorgabe
+  8192) – ohne sie nimmt Ollama nur 2048 Token und schneidet den Rest still
+  ab. Größere Fenster geben dem STAN-Chat mehr Text, brauchen aber mehr
+  Arbeitsspeicher.
+- **STAN:** Der Volltext wird ohne Deckel gespeichert (bisher 300.000
+  Zeichen); schon gekürzte Texte liest der Abruf nach dem Update neu.
+
 ## 2.1.71.0
 
 - **STAN – Fragen an die STAN:** Chat mit dem Textmodell in Ollama unter der

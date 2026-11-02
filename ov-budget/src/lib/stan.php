@@ -221,7 +221,7 @@ function stan_datei_ablegen(int $versionId, string $innerPfad, string $quelle, i
 /* Durchsuchbar: Volltext je Datei, Suche über Name, Text und KI        */
 /* ==================================================================== */
 
-const STAN_TEXT_MAX = 300000;   // Zeichen Volltext je Datei
+const STAN_TEXT_MAX = 4000000;   // Zeichen Volltext je Datei – praktisch alles, was eine STAN-Datei hergibt
 
 /** Lesbaren Text aus einer abgelegten Datei holen (PDF über pdftotext, Office, Text). '' = nichts lesbar. */
 function stan_text_gewinnen(array $datei): string

@@ -50,7 +50,7 @@ $check('ohne Treffer der Anfang', stan_chat_auszuege('Kurzer Text ohne Treffer.'
 $quellen = [['id' => 11, 'name' => 'FGr N.pdf', 'pfad' => 'STAN/Fachgruppe N/FGr N.pdf', 'version_nummer' => 3, 'auszuege' => ['… NEA 50 kVA …']],
             ['id' => 12, 'name' => 'Anhang.pdf', 'pfad' => 'Anhang.pdf', 'version_nummer' => 3, 'auszuege' => ['8 kVA']]];
 $prompt = stan_chat_prompt('Wie viele Aggregate?', $quellen, [['frage' => 'Vorherige Frage', 'antwort' => 'Vorherige Antwort']]);
-$check('Prompt: nummerierte Quellen mit Ordner, Verlauf, Frage, Regeln', str_contains($prompt, '[1] FGr N.pdf (STAN/Fachgruppe N), Version 3') && str_contains($prompt, '[2] Anhang.pdf, Version 3')
+$check('Prompt: nummerierte Quellen mit Ordner, Verlauf, Frage, Regeln', str_contains($prompt, '[1] FGr N.pdf (STAN/Fachgruppe N), Version 3, Auszüge') && str_contains($prompt, '[2] Anhang.pdf, Version 3, Auszüge')
     && str_contains($prompt, 'NEA 50 kVA') && str_contains($prompt, 'Frage: Vorherige Frage') && str_contains($prompt, 'Antwort: Vorherige Antwort')
     && str_ends_with($prompt, "Frage: Wie viele Aggregate?\nAntwort:") && str_contains($prompt, 'rate nicht'));
 $lang = [['id' => 1, 'name' => 'a.pdf', 'pfad' => 'a.pdf', 'version_nummer' => 1, 'auszuege' => [str_repeat('x', 5000)]], ['id' => 2, 'name' => 'b.pdf', 'pfad' => 'b.pdf', 'version_nummer' => 1, 'auszuege' => [str_repeat('y', 5000)]]];
@@ -64,17 +64,34 @@ $GLOBALS['rows'] = [
     ['id' => 13, 'version_id' => 2, 'pfad' => 'alt.pdf', 'name' => 'Aggregat alt.pdf', 'text' => '', 'version_nummer' => 2, 'ki_zusammenfassung' => 'Altes Aggregat', 'ki_tags' => ''],
 ];
 $q = stan_chat_quellen('Welche Aggregate hat die Fachgruppe N?', 3);
-$check('Quellen: passende zuerst, Unpassendes raus, Zusammenfassung vorangestellt', count($q) === 2 && $q[0]['id'] === 11 && $q[1]['id'] === 13 && str_starts_with($q[0]['auszuege'][0], 'Zusammenfassung:')
-    && count($q[0]['auszuege']) >= 2 && $q[1]['auszuege'] === ['Altes Aggregat']);
+$check('Quellen: passende zuerst, Unpassendes raus, Text passt ganz ins Fenster', count($q) === 2 && $q[0]['id'] === 11 && $q[1]['id'] === 13 && $q[0]['vollstaendig'] === true
+    && count($q[0]['auszuege']) === 1 && str_contains($q[0]['auszuege'][0], 'NEA 50 kVA') && !isset($q[0]['text']) && $q[1]['auszuege'] === ['Altes Aggregat'] && $q[1]['vollstaendig'] === false);
+$q = stan_chat_quellen('Welche Aggregate hat die Fachgruppe N?', 3, null, 1500);
+$check('kleines Fenster: Auszüge statt ganzem Text, Zusammenfassung vorangestellt, auf den Anteil gestutzt', $q[0]['vollstaendig'] === false && str_starts_with($q[0]['auszuege'][0], 'Zusammenfassung:')
+    && array_sum(array_map('mb_strlen', $q[0]['auszuege'])) <= 800 && count($q) === 2);
+$check('Fenster und Zahl der Quellen', stan_chat_budget() === 8192 * 3 - 2500 && stan_chat_quellen_max(6000) === 4 && stan_chat_quellen_max(60000) === 10 && stan_chat_quellen_max(200000) === 12);
+$zu = stan_chat_zuschneiden([['id' => 1, 'text' => str_repeat('a', 900), 'ki' => ''], ['id' => 2, 'text' => str_repeat('b', 5000), 'ki' => 'Kurz']], ['x'], 2000);
+$check('Zuschneiden: erste ganz, zweite als Auszug mit Zusammenfassung', $zu[0]['vollstaendig'] && $zu[0]['auszuege'] === [str_repeat('a', 900)] && !$zu[1]['vollstaendig']
+    && str_starts_with($zu[1]['auszuege'][0], 'Zusammenfassung: Kurz') && array_sum(array_map('mb_strlen', $zu[1]['auszuege'])) <= 1100);
 $check('Abfrage je Stamm mit Version', str_contains($GLOBALS['sql'][0][0], 'd.version_id = ?') && end($GLOBALS['sql'][0][1]) === 3 && substr_count($GLOBALS['sql'][0][0], 'd.text LIKE ?') === 2
     && $GLOBALS['sql'][0][1][0] === '%aggregat%');
-$check('ohne Stichwörter keine Abfrage', stan_chat_quellen('und oder', null) === [] && count($GLOBALS['sql']) === 1);
+$vorher = count($GLOBALS['sql']);
+$check('ohne Stichwörter keine Abfrage', stan_chat_quellen('und oder', null) === [] && count($GLOBALS['sql']) === $vorher);
 
 /* ---------- Fragen ---------- */
 $antwort = stan_chat_fragen('  Welche   Aggregate hat die Fachgruppe N? ', null, [['frage' => 'Hallo', 'antwort' => 'Hallo zurück']]);
 $check('Antwort vom Modell samt Quellen', str_contains($antwort['antwort'], '50 kVA [1]') && $antwort['frage'] === 'Welche Aggregate hat die Fachgruppe N?' && array_column($antwort['quellen'], 'id') === [11, 13]
-    && $antwort['modell'] === 'qwen2.5:7b' && $antwort['am'] !== '');
+    && $antwort['modell'] === 'qwen2.5:7b' && $antwort['am'] !== '' && $antwort['wiederholt'] === false && $antwort['quellen'][0]['vollstaendig'] === true);
 $aufruf = $GLOBALS['ki_aufrufe'][0];
+$GLOBALS['ki_aufrufe'] = [];
+$nochmal = stan_chat_fragen('welche aggregate hat die fachgruppe n?', null, [$antwort]);
+$check('Doppelklick: dieselbe Frage kurz danach bekommt die alte Antwort ohne KI-Aufruf', $nochmal['wiederholt'] === true && $nochmal['antwort'] === $antwort['antwort'] && $GLOBALS['ki_aufrufe'] === []);
+$check('Doppelt rein', stan_chat_doppelt('Frage', [['frage' => 'Frage', 'antwort' => 'A', 'am' => '2026-11-02 10:00:00']], strtotime('2026-11-02 10:02:00')) !== null
+    && stan_chat_doppelt('Frage', [['frage' => 'Frage', 'antwort' => 'A', 'am' => '2026-11-02 10:00:00']], strtotime('2026-11-02 10:04:00')) === null
+    && stan_chat_doppelt('Andere', [['frage' => 'Frage', 'antwort' => 'A', 'am' => '2026-11-02 10:00:00']], strtotime('2026-11-02 10:00:30')) === null && stan_chat_doppelt('x', []) === null);
+stan_chat_verlauf_leeren();
+stan_chat_verlauf_merken($nochmal);
+$check('Wiederholtes landet nicht im Verlauf', stan_chat_verlauf() === []);
 $check('Ollama bekommt Prompt ohne JSON-Zwang mit Verlauf', $aufruf[1] === '/api/generate' && $aufruf[2]['model'] === 'qwen2.5:7b' && !isset($aufruf[2]['format'])
     && str_contains($aufruf[2]['prompt'], 'Frage: Hallo') && str_contains($aufruf[2]['prompt'], '[1] FGr N.pdf'));
 $GLOBALS['rows'] = [];
@@ -106,10 +123,13 @@ $_GET = ['p' => 'stan'];
 $versionen = [['id' => 3, 'nummer' => 3, 'bemerkung' => '', 'created_at' => '2026-10-01 10:00:00', 'hochgeladen_von' => 'Anna', 'orig_name' => 'stan.zip']];
 $basis = ['title' => 'STAN', 'versionen' => $versionen, 'aktuell' => $versionen[0], 'gezeigt' => $versionen[0], 'dateien' => [], 'darf' => false, 'maxMb' => 10];
 $html = render_partial('stan', $basis + ['chatAktiv' => true, 'chatVerlauf' => [['frage' => 'Wie viele Aggregate?', 'antwort' => 'Zwei [1].', 'quellen' => [['id' => 11, 'name' => 'FGr N.pdf', 'pfad' => 'STAN/Fachgruppe N/FGr N.pdf', 'version_nummer' => 3]], 'modell' => 'qwen2.5:7b', 'am' => '2026-11-02 10:00:00']]]);
-$check('Chat-Karte mit Verlauf, Quelle als Link, Formular mit Version, Verlauf leeren', str_contains($html, 'id="chat"') && str_contains($html, 'Wie viele Aggregate?') && str_contains($html, 'Zwei [1].')
-    && str_contains($html, 'p=stan_file&amp;id=11') && str_contains($html, 'name="frage"') && str_contains($html, 'value="chat_leeren"') && str_contains($html, 'version=3') && str_contains($html, 'in Version 3'));
+$check('Chat-Karte mit Verlauf als Sprechblasen, Quelle als Link, Formular mit Version und JS-Ziel, Verlauf leeren', str_contains($html, 'id="chat"') && str_contains($html, 'class="chat__frage">Wie viele Aggregate?')
+    && str_contains($html, 'Zwei [1].') && str_contains($html, 'p=stan_file&amp;id=11') && str_contains($html, 'name="frage"') && str_contains($html, 'value="chat_leeren" formnovalidate data-chat-leeren>')
+    && str_contains($html, 'name="version" value="3"') && str_contains($html, 'data-stan-chat="') && str_contains($html, 'p=stan_chat') && str_contains($html, 'in Version 3') && str_contains($html, 'data-chat-verlauf>'));
 $html = render_partial('stan', $basis + ['chatAktiv' => true, 'chatVerlauf' => [], 'alleVersionen' => true]);
-$check('Chat-Karte leer: kein Verlauf leeren, alle Versionen', !str_contains($html, 'value="chat_leeren"') && str_contains($html, 'alle=1') && str_contains($html, 'in allen Versionen'));
+$check('Chat-Karte leer: Verlauf leeren versteckt, alle Versionen', str_contains($html, 'data-chat-leeren hidden') && str_contains($html, 'name="alle" value="1"') && str_contains($html, 'data-chat-verlauf hidden') && str_contains($html, 'in allen Versionen'));
+$check('Route, Endpunkt, Skript und Stil', str_contains((string)file_get_contents($app . '/public/index.php'), "'stan_chat'") && is_file($app . '/src/pages/stan_chat.php')
+    && str_contains((string)file_get_contents($app . '/public/assets/js/app.js'), 'form[data-stan-chat]') && str_contains((string)file_get_contents($app . '/public/assets/css/app.css'), '@keyframes chat-tippt'));
 $html = render_partial('stan', $basis + ['chatAktiv' => false]);
 $check('ohne KI keine Chat-Karte', !str_contains($html, 'id="chat"'));
 $check('Einstellung und Seite', str_contains((string)file_get_contents($app . '/sql/seed.sql'), "'ki_stan_chat'") && str_contains((string)file_get_contents($app . '/src/pages/stan.php'), 'stan_chat_fragen'));

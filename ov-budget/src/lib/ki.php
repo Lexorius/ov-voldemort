@@ -113,6 +113,12 @@ function ki_timeout(): int
     return max(10, min(600, setting_int('ki_timeout_sek', 120)));
 }
 
+/** Kontextfenster je Anfrage (Token) – Ollama nimmt sonst nur 2048 und schneidet den Rest still ab */
+function ki_num_ctx(): int
+{
+    return max(2048, min(131072, setting_int('ki_num_ctx', 8192)));
+}
+
 /** Eingetragenes Vision-Modell oder leer – ohne eines werden Bilder gar nicht erst eingereiht */
 function ki_vision_modell(): string
 {
@@ -871,7 +877,7 @@ function ki_generieren(string $modell, string $prompt, ?string $bildBase64 = nul
         'prompt'  => $prompt,
         'stream'  => false,
         // num_predict: Schluss nach gut 400 Wörtern; repeat_penalty: gegen Schleifen („token repeat limit reached")
-        'options' => ['temperature' => 0.2, 'num_predict' => 600, 'repeat_penalty' => 1.15],
+        'options' => ['temperature' => 0.2, 'num_predict' => 600, 'repeat_penalty' => 1.15, 'num_ctx' => ki_num_ctx()],
     ];
     if ($json) {
         $daten['format'] = 'json';

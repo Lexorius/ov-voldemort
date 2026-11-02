@@ -161,7 +161,7 @@ $GLOBALS['execs'] = [];
 $e = ki_datei_auswerten('fahrzeug', 5);
 $anfrage = end($GLOBALS['anfragen']);
 $check('Auswertung: Prompt mit Fahrzeug, Kennzeichen, Titel und Inhalt, JSON-Format, kein Bild, Antwort begrenzt', $anfrage[1] === '/api/generate' && $anfrage[2]['model'] === 'qwen2.5:7b' && $anfrage[2]['format'] === 'json' && $anfrage[2]['stream'] === false && !isset($anfrage[2]['images'])
-    && $anfrage[2]['options']['num_predict'] === 600 && $anfrage[2]['options']['repeat_penalty'] === 1.15
+    && $anfrage[2]['options']['num_predict'] === 600 && $anfrage[2]['options']['repeat_penalty'] === 1.15 && $anfrage[2]['options']['num_ctx'] === 8192
     && str_contains($anfrage[2]['prompt'], 'MTW (THW-12345)') && str_contains($anfrage[2]['prompt'], 'Titel: UVV 2026') && str_contains($anfrage[2]['prompt'], 'Alles in Ordnung.'));
 $check('Auswertung: Ergebnis gespeichert', $e['zusammenfassung'] === 'Prüfbericht zur UVV ohne Mängel.' && $e['tags'] === ['Prüfbericht', 'UVV'] && $e['quelle'] === 'text'
     && str_contains($GLOBALS['execs'][0][0], 'INSERT INTO datei_ki') && $GLOBALS['execs'][0][1] === ['fahrzeug', 5, 'Prüfbericht zur UVV ohne Mängel.', 'Prüfbericht, UVV', 'qwen2.5:7b', 'text']);

@@ -4,12 +4,12 @@ declare(strict_types=1);
 /**
  * Fragen an die STAN: ein kleiner Chat mit dem Textmodell in Ollama.
  *
- * Das Modell bekommt nicht die ganze STAN, sondern Auszüge aus den Dateien,
- * die zur Frage passen: Stichwörter aus der Frage, Treffer im Volltext und
- * in den KI-Schlagwörtern, die besten Dateien, daraus die Stellen um die
- * Treffer. Die Antwort soll nur aus diesen Auszügen kommen und die Quellen
- * nennen – so bleibt nachvollziehbar, woher sie stammt. Alles läuft über
- * Ollama im eigenen Netz; die Texte verlassen das Haus nicht.
+ * Das Modell bekommt nicht die ganze STAN, sondern das, was ins
+ * Kontextfenster passt: Stichwörter aus der Frage, Treffer im Volltext und
+ * in den KI-Schlagwörtern, die besten Dateien – ganz, wenn sie ins Fenster
+ * passen, sonst die Stellen um die Treffer. Die Antwort soll nur daraus
+ * kommen und die Quellen nennen. Alles läuft über Ollama im eigenen Netz;
+ * die Texte verlassen das Haus nicht.
  *
  * Abschaltbar: Hauptschalter der KI, Schalter „STAN-Dokumente auswerten"
  * und der eigene Schalter „Fragen an die STAN".
@@ -17,11 +17,13 @@ declare(strict_types=1);
 
 const STAN_CHAT_VERLAUF_MAX = 8;        // so viele Fragen bleiben in der Sitzung
 const STAN_CHAT_VERLAUF_PROMPT = 3;     // so viele davon sieht das Modell
-const STAN_CHAT_QUELLEN_MAX = 6;        // Dateien je Frage
 const STAN_CHAT_AUSZUG = 700;           // Zeichen je Auszug
 const STAN_CHAT_AUSZUEGE_JE_DATEI = 3;
 const STAN_CHAT_FRAGE_MAX = 500;
 const STAN_CHAT_KANDIDATEN = 60;        // so viele Dateien holt die Suche, bevor bewertet wird
+const STAN_CHAT_ZEICHEN_JE_TOKEN = 3;   // deutscher Text in einem 7B-Modell, vorsichtig geschätzt
+const STAN_CHAT_RESERVE = 2500;         // Zeichen für Anweisung, Verlauf und Antwort
+const STAN_CHAT_DOPPELT_SEK = 180;      // so lange gilt dieselbe Frage als Doppelklick
 
 /** Wörter, die in fast jeder Frage stehen und nichts suchen helfen */
 const STAN_CHAT_STOPP = ['der', 'die', 'das', 'des', 'dem', 'den', 'ein', 'eine', 'einer', 'eines', 'einem', 'einen', 'und', 'oder', 'aber',
@@ -35,6 +37,19 @@ const STAN_CHAT_STOPP = ['der', 'die', 'das', 'des', 'dem', 'den', 'ein', 'eine'
 function stan_chat_aktiv(): bool
 {
     return function_exists('ki_modul_aktiv') && ki_modul_aktiv('stan') && setting_bool('ki_stan_chat', true);
+}
+
+/** So viele Zeichen Auszüge passen in eine Anfrage – aus dem Kontextfenster des Modells */
+function stan_chat_budget(): int
+{
+    $tokens = function_exists('ki_num_ctx') ? ki_num_ctx() : 8192;
+    return max(6000, $tokens * STAN_CHAT_ZEICHEN_JE_TOKEN - STAN_CHAT_RESERVE);
+}
+
+/** Wie viele Dateien je Frage: mehr Fenster, mehr Dateien – zwischen vier und zwölf. Reine Funktion. */
+function stan_chat_quellen_max(int $budget): int
+{
+    return max(4, min(12, intdiv($budget, 6000)));
 }
 
 /** Wortstamm für die Suche: „Aggregate" und „Aggregat" sollen dasselbe finden. Reine Funktion. */
@@ -133,13 +148,65 @@ function stan_chat_auszuege(string $text, array $staemme, int $breite = STAN_CHA
     return $out;
 }
 
-/** Dateien, die zur Frage passen, mit Auszügen – die besten zuerst */
-function stan_chat_quellen(string $frage, ?int $versionId = null, int $max = STAN_CHAT_QUELLEN_MAX): array
+/**
+ * Das Fenster auf die Quellen verteilen: Was ganz hineinpasst, geht ganz
+ * (vollstaendig = true), der Rest als Auszüge um die Treffer. Reine Funktion.
+ * Jede Quelle: text (bereinigt), ki (Zusammenfassung oder ''), staemme von außen.
+ */
+function stan_chat_zuschneiden(array $quellen, array $staemme, int $budget): array
+{
+    $rest = $budget;
+    $out = [];
+    $n = count($quellen);
+    foreach ($quellen as $i => $q) {
+        $anteil = intdiv(max(0, $rest), max(1, $n - $i));
+        $text = (string)($q['text'] ?? '');
+        $ki = trim((string)($q['ki'] ?? ''));
+        $laenge = mb_strlen($text);
+        $vollstaendig = $text !== '' && $laenge <= (int)($anteil * 1.4) && $laenge <= $rest;
+        if ($vollstaendig) {
+            $auszuege = [$text];
+            $verbraucht = $laenge;
+        } else {
+            $auszuege = $text !== '' ? stan_chat_auszuege($text, $staemme) : ($ki !== '' ? [$ki] : []);
+            if ($text !== '' && $ki !== '') {
+                array_unshift($auszuege, 'Zusammenfassung: ' . mb_substr($ki, 0, 400));
+            }
+            // Auszüge auf den Anteil stutzen
+            $gekuerzt = [];
+            $verbraucht = 0;
+            foreach ($auszuege as $a) {
+                if ($verbraucht + mb_strlen($a) > $anteil) {
+                    $platz = $anteil - $verbraucht;
+                    if ($platz > 120) {
+                        $gekuerzt[] = mb_substr($a, 0, $platz) . ' …';
+                        $verbraucht += $platz;
+                    }
+                    break;
+                }
+                $gekuerzt[] = $a;
+                $verbraucht += mb_strlen($a);
+            }
+            $auszuege = $gekuerzt;
+        }
+        $rest -= $verbraucht;
+        $q['auszuege'] = $auszuege;
+        $q['vollstaendig'] = $vollstaendig;
+        unset($q['text'], $q['ki']);
+        $out[] = $q;
+    }
+    return $out;
+}
+
+/** Dateien, die zur Frage passen, mit Text oder Auszügen – die besten zuerst, aufs Fenster zugeschnitten */
+function stan_chat_quellen(string $frage, ?int $versionId = null, ?int $max = null, ?int $budget = null): array
 {
     $woerter = stan_chat_stichworte($frage);
     if (!$woerter) {
         return [];
     }
+    $budget ??= stan_chat_budget();
+    $max ??= stan_chat_quellen_max($budget);
     $staemme = array_values(array_unique(array_map('stan_chat_stamm', $woerter)));
     $w = [];
     $p = [];
@@ -161,30 +228,26 @@ function stan_chat_quellen(string $frage, ?int $versionId = null, int $max = STA
 
     $quellen = [];
     foreach (db_all($sql, $p) as $r) {
-        $text = trim((string)($r['text'] ?? ''));
+        $text = trim((string)preg_replace('/\s+/u', ' ', (string)($r['text'] ?? '')));
         $ki = trim((string)($r['ki_zusammenfassung'] ?? ''));
-        $basis = $text !== '' ? $text : $ki;
-        $punkte = stan_chat_bewerten($basis . ' ' . (string)$r['name'] . ' ' . (string)($r['ki_tags'] ?? ''), $staemme);
+        $punkte = stan_chat_bewerten($text . ' ' . $ki . ' ' . (string)$r['name'] . ' ' . (string)($r['ki_tags'] ?? ''), $staemme);
         if ($punkte <= 0) {
             continue;
         }
-        $auszuege = $basis !== '' ? stan_chat_auszuege($basis, $staemme) : [];
-        if ($text !== '' && $ki !== '') {
-            array_unshift($auszuege, 'Zusammenfassung: ' . mb_substr($ki, 0, 400));
-        }
         $quellen[] = ['id' => (int)$r['id'], 'name' => (string)$r['name'], 'pfad' => (string)$r['pfad'], 'version_nummer' => (int)$r['version_nummer'],
-            'punkte' => $punkte, 'auszuege' => $auszuege];
+            'punkte' => $punkte, 'text' => $text, 'ki' => $ki];
     }
     usort($quellen, static fn($a, $b) => [$b['punkte'], $b['version_nummer']] <=> [$a['punkte'], $a['version_nummer']]);
-    return array_slice($quellen, 0, $max);
+    return stan_chat_zuschneiden(array_slice($quellen, 0, $max), $staemme, $budget);
 }
 
-/** Die Bitte an das Modell: Auszüge mit Nummern, der bisherige Verlauf, die Frage. Reine Funktion. */
+/** Die Bitte an das Modell: Quellen mit Nummern, der bisherige Verlauf, die Frage. Reine Funktion. */
 function stan_chat_prompt(string $frage, array $quellen, array $verlauf, int $maxZeichen = 9000): string
 {
     $kontext = '';
     foreach ($quellen as $i => $q) {
-        $block = '[' . ($i + 1) . '] ' . $q['name'] . ($q['pfad'] !== '' && dirname($q['pfad']) !== '.' ? ' (' . dirname($q['pfad']) . ')' : '') . ', Version ' . $q['version_nummer'] . "\n";
+        $block = '[' . ($i + 1) . '] ' . $q['name'] . ($q['pfad'] !== '' && dirname($q['pfad']) !== '.' ? ' (' . dirname($q['pfad']) . ')' : '')
+            . ', Version ' . $q['version_nummer'] . (!empty($q['vollstaendig']) ? ', vollständig' : ', Auszüge') . "\n";
         foreach ($q['auszuege'] as $a) {
             $block .= $a . "\n";
         }
@@ -204,40 +267,69 @@ function stan_chat_prompt(string $frage, array $quellen, array $verlauf, int $ma
     }
 
     return "Du hilfst einem Ortsverband des THW, seine Stärke- und Ausstattungsnachweisung (STAN) zu durchsuchen.\n"
-        . "Beantworte die Frage auf Deutsch, knapp und sachlich, nur anhand der nummerierten Auszüge. "
+        . "Beantworte die Frage auf Deutsch, knapp und sachlich, nur anhand der nummerierten Quellen. "
         . "Nenne hinter jeder Aussage die Nummer der Quelle in eckigen Klammern, etwa [2]. "
-        . "Steht die Antwort nicht in den Auszügen, sage das klar und rate nicht. Zahlen und Bezeichnungen wörtlich übernehmen.\n\n"
-        . "Auszüge aus der STAN:\n" . ($kontext !== '' ? $kontext : "(keine)\n")
+        . "Steht die Antwort nicht in den Quellen, sage das klar und rate nicht. Zahlen und Bezeichnungen wörtlich übernehmen.\n\n"
+        . "Quellen aus der STAN:\n" . ($kontext !== '' ? $kontext : "(keine)\n")
         . ($bisher !== '' ? "\nBisheriger Verlauf:\n" . $bisher : '')
         . "\nFrage: " . trim($frage) . "\nAntwort:";
 }
 
+/** Frage bereinigen: Leerraum zusammenziehen, Länge begrenzen. Reine Funktion. */
+function stan_chat_frage_normieren(string $frage): string
+{
+    return mb_substr(trim((string)preg_replace('/\s+/u', ' ', $frage)), 0, STAN_CHAT_FRAGE_MAX);
+}
+
+/**
+ * Dieselbe Frage kurz hintereinander – ein Doppelklick. Dann die vorhandene
+ * Antwort statt einer zweiten Anfrage. Reine Funktion.
+ */
+function stan_chat_doppelt(string $frage, array $verlauf, ?int $jetzt = null, int $sekunden = STAN_CHAT_DOPPELT_SEK): ?array
+{
+    $frage = mb_strtolower(stan_chat_frage_normieren($frage));
+    if ($frage === '' || !$verlauf) {
+        return null;
+    }
+    $jetzt ??= time();
+    $letzte = $verlauf[count($verlauf) - 1];
+    $am = strtotime((string)($letzte['am'] ?? '')) ?: 0;
+    if (mb_strtolower((string)($letzte['frage'] ?? '')) === $frage && $jetzt - $am <= $sekunden) {
+        return $letzte;
+    }
+    return null;
+}
+
 /**
  * Eine Frage beantworten. Rückgabe: frage, antwort, quellen (id, name, pfad,
- * version_nummer), modell, am. Wirft KiException, wenn die KI nicht kann.
+ * version_nummer, vollstaendig), modell, am, wiederholt. Wirft KiException,
+ * wenn die KI nicht kann.
  */
 function stan_chat_fragen(string $frage, ?int $versionId, array $verlauf): array
 {
-    $frage = mb_substr(trim((string)preg_replace('/\s+/u', ' ', $frage)), 0, STAN_CHAT_FRAGE_MAX);
+    $frage = stan_chat_frage_normieren($frage);
     if ($frage === '') {
         throw new KiException('Bitte eine Frage eingeben.');
     }
     if (!stan_chat_aktiv()) {
         throw new KiException('Fragen an die STAN sind ausgeschaltet (Einstellungen → KI-Auswertung).');
     }
-    $quellen = stan_chat_quellen($frage, $versionId);
-    $antwort = ['frage' => $frage, 'quellen' => [], 'modell' => '', 'am' => date('Y-m-d H:i:s')];
+    if (($doppelt = stan_chat_doppelt($frage, $verlauf)) !== null) {
+        return ['wiederholt' => true] + $doppelt;
+    }
+    $budget = stan_chat_budget();
+    $quellen = stan_chat_quellen($frage, $versionId, null, $budget);
+    $antwort = ['frage' => $frage, 'quellen' => [], 'modell' => '', 'am' => date('Y-m-d H:i:s'), 'wiederholt' => false];
     foreach ($quellen as $q) {
-        $antwort['quellen'][] = ['id' => $q['id'], 'name' => $q['name'], 'pfad' => $q['pfad'], 'version_nummer' => $q['version_nummer']];
+        $antwort['quellen'][] = ['id' => $q['id'], 'name' => $q['name'], 'pfad' => $q['pfad'], 'version_nummer' => $q['version_nummer'], 'vollstaendig' => !empty($q['vollstaendig'])];
     }
     if (!$quellen) {
         $antwort['antwort'] = 'Dazu habe ich in der STAN nichts gefunden. Vielleicht mit anderen Begriffen fragen'
             . ($versionId !== null ? ' oder „alle Versionen" wählen' : '') . '.';
         return $antwort;
     }
-    $max = max(3000, setting_int('ki_max_zeichen', 12000));
-    $prompt = stan_chat_prompt($frage, $quellen, $verlauf, $max);
-    $antwort['antwort'] = ki_text_antwort($prompt, $max + 2500);
+    $prompt = stan_chat_prompt($frage, $quellen, $verlauf, $budget);
+    $antwort['antwort'] = ki_text_antwort($prompt, $budget + STAN_CHAT_RESERVE);
     $antwort['modell'] = trim((string)setting('ki_modell', ''));
     if ($antwort['antwort'] === '') {
         $antwort['antwort'] = 'Das Modell hat keine Antwort geliefert.';
@@ -254,6 +346,10 @@ function stan_chat_verlauf(): array
 
 function stan_chat_verlauf_merken(array $eintrag): void
 {
+    if (!empty($eintrag['wiederholt'])) {
+        return;
+    }
+    unset($eintrag['wiederholt']);
     $v = stan_chat_verlauf();
     $v[] = $eintrag;
     $_SESSION['stan_chat'] = array_slice($v, -STAN_CHAT_VERLAUF_MAX);

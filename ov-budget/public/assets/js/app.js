@@ -576,6 +576,107 @@
     });
   });
 
+  /* Fragen an die STAN ohne Seitenwechsel: Frage sofort als Sprechblase, pulsierende Punkte,
+     bis die Antwort da ist. Ein zweiter Klick geht währenddessen ins Leere. */
+  document.querySelectorAll('form[data-stan-chat]').forEach(function (form) {
+    if (!window.fetch || !window.FormData) { return; }
+    var ziel = form.getAttribute('data-stan-chat');
+    var feld = form.querySelector('textarea[name=frage]');
+    var verlauf = form.parentNode.querySelector('[data-chat-verlauf]');
+    var senden = form.querySelector('[data-chat-senden]');
+    var leeren = form.querySelector('[data-chat-leeren]');
+    var laeuft = false;
+    function blase(klasse, text) {
+      var el = document.createElement('div');
+      el.className = klasse;
+      if (text !== undefined) { el.textContent = text; }
+      verlauf.appendChild(el);
+      verlauf.hidden = false;
+      el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      return el;
+    }
+    function antwortBlase(eintrag) {
+      var el = document.createElement('div');
+      el.className = 'chat__antwort';
+      var meta = document.createElement('div');
+      meta.className = 'chat__meta';
+      meta.textContent = (eintrag.am_text || '') + (eintrag.modell ? ' · ' + eintrag.modell : '') + (eintrag.wiederholt ? ' · schon beantwortet' : '');
+      el.appendChild(meta);
+      var text = document.createElement('div');
+      text.className = 'chat__text';
+      text.textContent = eintrag.antwort || '';
+      el.appendChild(text);
+      if (eintrag.quellen && eintrag.quellen.length) {
+        var ol = document.createElement('ol');
+        ol.className = 'chat__quellen';
+        eintrag.quellen.forEach(function (q) {
+          var li = document.createElement('li');
+          var a = document.createElement('a');
+          a.href = q.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = q.name;
+          li.appendChild(a);
+          var sp = document.createElement('span');
+          sp.className = 'muted';
+          sp.textContent = ' Version ' + q.version_nummer + (q.ordner ? ' · 📁 ' + q.ordner : '') + (q.vollstaendig ? ' · vollständig' : ' · Auszüge');
+          li.appendChild(sp);
+          ol.appendChild(li);
+        });
+        el.appendChild(ol);
+      }
+      return el;
+    }
+    form.addEventListener('submit', function (ev) {
+      var knopf = ev.submitter || document.activeElement;
+      if (knopf && knopf.hasAttribute('data-chat-leeren')) {
+        ev.preventDefault();
+        if (laeuft) { return; }
+        var fdL = new FormData(form);
+        fdL.set('action', 'chat_leeren');
+        fetch(ziel, { method: 'POST', body: fdL, credentials: 'same-origin' }).then(function () {
+          verlauf.innerHTML = '';
+          verlauf.hidden = true;
+          leeren.hidden = true;
+        });
+        return;
+      }
+      ev.preventDefault();
+      var frage = (feld.value || '').trim();
+      if (frage === '' || laeuft) { return; }
+      laeuft = true;
+      feld.disabled = true;
+      senden.disabled = true;
+      blase('chat__frage', frage);
+      var warten = blase('chat__antwort');
+      warten.innerHTML = '<div class="chat__tippt" aria-label="Die KI arbeitet"><span></span><span></span><span></span></div>';
+      var fd = new FormData(form);
+      fd.set('action', 'chat');
+      fd.set('frage', frage);
+      fetch(ziel, { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) {
+        return r.json().catch(function () { return { ok: false, fehler: 'Unerwartete Antwort (HTTP ' + r.status + ').' }; });
+      }).then(function (d) {
+        var neu;
+        if (d.ok && d.eintrag) {
+          neu = antwortBlase(d.eintrag);
+          feld.value = '';
+          if (leeren) { leeren.hidden = false; }
+        } else {
+          neu = document.createElement('div');
+          neu.className = 'chat__antwort chat__antwort--fehler';
+          neu.textContent = d.fehler || 'Die Anfrage ist fehlgeschlagen.';
+        }
+        verlauf.replaceChild(neu, warten);
+        neu.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }).catch(function () {
+        warten.className = 'chat__antwort chat__antwort--fehler';
+        warten.textContent = 'Keine Verbindung – bitte noch einmal versuchen.';
+      }).then(function () {
+        laeuft = false;
+        feld.disabled = false;
+        senden.disabled = false;
+        feld.focus();
+      });
+    });
+  });
+
   // Große Dateien in Stücken hochladen (STAN): Home Assistant lässt nur 16 MB je Anfrage durch
   document.querySelectorAll('form[data-stueckweise]').forEach(function (form) {
     if (!window.fetch || !window.FormData || !window.File || !File.prototype.slice) { return; }

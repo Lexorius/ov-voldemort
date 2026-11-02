@@ -783,5 +783,21 @@ pre.raw {
 .getraenke-bedarf__liste li { margin-bottom: .2rem; }
 .getraenke-buchen { display: flex; gap: .3rem; align-items: center; flex-wrap: wrap; }
 .getraenke-buchen select { max-width: 8rem; }
+/* Fragen an die STAN: Sprechblasen, rechts die Frage, links die Antwort */
+.chat { display: flex; flex-direction: column; gap: .6rem; }
+.chat__frage { align-self: flex-end; max-width: 85%; background: var(--accent); color: var(--accent-ink, #fff);
+               border-radius: 14px 14px 4px 14px; padding: .55rem .9rem; white-space: pre-wrap; }
+.chat__antwort { align-self: flex-start; max-width: 92%; background: var(--surface-2); border: 1px solid var(--border);
+                 border-radius: 14px 14px 14px 4px; padding: .55rem .9rem; }
+.chat__antwort--fehler { border-color: var(--bad); color: var(--bad); }
+.chat__meta { font-size: .75rem; color: var(--ink-mute); margin-bottom: .2rem; }
+.chat__text { white-space: pre-wrap; }
+.chat__quellen { margin: .4rem 0 0; padding-left: 1.3rem; font-size: .85rem; }
+.chat__tippt { display: inline-flex; gap: .3rem; padding: .3rem 0; }
+.chat__tippt span { width: .55rem; height: .55rem; border-radius: 50%; background: var(--ink-mute); animation: chat-tippt 1.2s infinite ease-in-out; }
+.chat__tippt span:nth-child(2) { animation-delay: .2s; }
+.chat__tippt span:nth-child(3) { animation-delay: .4s; }
+@keyframes chat-tippt { 0%, 80%, 100% { transform: scale(.6); opacity: .4; } 40% { transform: scale(1); opacity: 1; } }
+
 .getraenke-mail { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85rem;
                   background: var(--bg-soft, #f8fafc); border: 1px solid var(--border); border-radius: 8px; padding: .8rem; margin: 0; }
