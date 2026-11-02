@@ -106,6 +106,7 @@ render('stan', [
     'kiDaten'   => function_exists('ki_fuer_dateien') && $kiIds ? ki_fuer_dateien('stan', $kiIds) : ['ergebnisse' => [], 'auftraege' => []],
     'textOffen' => stan_text_offen(),
     'chatAktiv' => stan_chat_aktiv(),
+    'embedStand' => stan_chat_aktiv() && stan_embed_aktiv() ? stan_embed_stand() : null,
     'chatVerlauf' => stan_chat_verlauf(),
     'title'     => (string)setting('stan_modul_name', 'STAN'),
     'versionen' => $versionen,

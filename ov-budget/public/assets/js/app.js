@@ -616,7 +616,7 @@
           li.appendChild(a);
           var sp = document.createElement('span');
           sp.className = 'muted';
-          sp.textContent = ' Version ' + q.version_nummer + (q.ordner ? ' · 📁 ' + q.ordner : '') + (q.vollstaendig ? ' · vollständig' : ' · Auszüge');
+          sp.textContent = ' Version ' + q.version_nummer + (q.ordner ? ' · 📁 ' + q.ordner : '') + ' · ' + (q.art_text || (q.vollstaendig ? 'vollständig' : 'Auszüge'));
           li.appendChild(sp);
           ol.appendChild(li);
         });

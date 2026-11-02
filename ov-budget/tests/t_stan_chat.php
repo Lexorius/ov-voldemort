@@ -29,7 +29,7 @@ $GLOBALS['ki_http_attrappe'] = static function (string $methode, string $pfad, ?
 };
 
 $app = dirname(__DIR__);
-foreach (['util', 'settings', 'lists', 'view', 'uploads', 'ki', 'stan', 'stan_chat'] as $lib) { require $app . '/src/lib/' . $lib . '.php'; }
+foreach (['util', 'settings', 'lists', 'view', 'uploads', 'ki', 'stan', 'stan_chat', 'stan_embed'] as $lib) { require $app . '/src/lib/' . $lib . '.php'; }
 
 $ok = 0; $fail = 0;
 $check = function (string $n, bool $c) use (&$ok, &$fail) { if ($c) { $ok++; } else { $fail++; echo "FAIL: $n\n"; } };
@@ -40,6 +40,15 @@ $check('Zahlen und Bindestriche', stan_chat_stichworte('Gibt es 50 kVA im GKW-1?
 $check('höchstens acht', count(stan_chat_stichworte('alpha beta gamma delta epsilon zeta eta theta iota kappa')) === 8);
 $check('Stamm', stan_chat_stamm('Aggregate') === 'aggregat' && stan_chat_stamm('Notstromaggregate') === 'notstromaggregat' && stan_chat_stamm('Leistungen') === 'leist'
     && stan_chat_stamm('kVA') === 'kva' && stan_chat_stamm('12345') === '12345' && stan_chat_stamm('Fachgruppe') === 'fachgrupp');
+$check('Kürzel: Großbuchstaben bis drei Zeichen, klein zurück', stan_chat_kuerzel('Hat der ZTr TZ eine SIM-Karte? Und die FGr N?') === ['tz', 'n'] && stan_chat_kuerzel('aber der zgr tz') === []);
+$check('Phrasen: Wort vor dem Kürzel', stan_chat_phrasen('Was hat der ZTr TZ und die Fachgruppe N und FGr K (B)?') === ['ztr tz', 'fachgruppe n', 'fgr k']);
+$b = stan_chat_suchbegriffe('Hat der ZTr TZ eine SIM-Karte?');
+$check('Suchbegriffe zusammen', $b['staemme'] === ['ztr', 'sim-kart'] && $b['kuerzel'] === ['tz'] && $b['phrasen'] === ['ztr tz']);
+$check('Kürzel nur als ganzes Wort', stan_chat_wort_zaehlen('Der TZ fährt zum Einsatz, tz.', 'tz') === 2 && stan_chat_wort_zaehlen('Einsatz jetzt', 'tz') === 0);
+$check('Bewertung mit Kürzel und Phrase', stan_chat_bewerten('Der Zugtrupp (ZTr TZ) hat', [], ['tz'], ['ztr tz']) === 4 + 12 && stan_chat_bewerten('Einsatz', [], ['tz'], []) === 0);
+$check('Dateiname wiegt schwer', stan_chat_bewerten_name('02-01 StAN ZTr TZ-bf.pdf', ['ztr'], ['tz'], ['ztr tz']) === 10 + 12 + 25 && stan_chat_bewerten_name('10-03 StAN ZTr FK-bf.pdf', ['ztr'], ['tz'], ['ztr tz']) === 10
+    && stan_chat_bewerten_name('00-00 StAN-Vorbemerkung.pdf', ['ztr'], ['tz'], ['ztr tz']) === 0);
+$check('Beschriftung der Quelle', stan_chat_art_text('vollstaendig') === 'vollständig' && stan_chat_art_text('absaetze') === 'Absätze' && stan_chat_art_text('x') === 'Auszüge');
 $check('Bewertung: mehr verschiedene Stämme zählen mehr', stan_chat_bewerten('Aggregat Aggregat Aggregat', ['aggregat', 'leist']) === 6
     && stan_chat_bewerten('Aggregat mit Leistung', ['aggregat', 'leist']) === 8 && stan_chat_bewerten('nichts', ['aggregat']) === 0);
 $text = str_repeat('Füllwort ', 200) . 'Das Notstromaggregat NEA 50 kVA steht im Anhänger. ' . str_repeat('Blabla ', 200) . 'Ein zweites Aggregat mit 8 kVA. ' . str_repeat('Ende ', 50);
@@ -58,11 +67,12 @@ $p = stan_chat_prompt('f', $lang, [], 6000);
 $check('Prompt gedeckelt', mb_strlen($p) < 7500 && str_contains($p, '[1] a.pdf') && substr_count($p, 'y') < 1200);
 
 /* ---------- Quellen aus der Datenbank ---------- */
-$GLOBALS['rows'] = [
+$fachgruppeRows = [
     ['id' => 11, 'version_id' => 3, 'pfad' => 'STAN/Fachgruppe N/FGr N.pdf', 'name' => 'FGr N.pdf', 'text' => $text, 'version_nummer' => 3, 'ki_zusammenfassung' => 'Ausstattung der Fachgruppe N', 'ki_tags' => 'Aggregat, Fachgruppe N'],
     ['id' => 12, 'version_id' => 3, 'pfad' => 'Lies mich.txt', 'name' => 'Lies mich.txt', 'text' => 'Stand 10/2026', 'version_nummer' => 3, 'ki_zusammenfassung' => null, 'ki_tags' => null],
     ['id' => 13, 'version_id' => 2, 'pfad' => 'alt.pdf', 'name' => 'Aggregat alt.pdf', 'text' => '', 'version_nummer' => 2, 'ki_zusammenfassung' => 'Altes Aggregat', 'ki_tags' => ''],
 ];
+$GLOBALS['rows'] = $fachgruppeRows;
 $q = stan_chat_quellen('Welche Aggregate hat die Fachgruppe N?', 3);
 $check('Quellen: passende zuerst, Unpassendes raus, Text passt ganz ins Fenster', count($q) === 2 && $q[0]['id'] === 11 && $q[1]['id'] === 13 && $q[0]['vollstaendig'] === true
     && count($q[0]['auszuege']) === 1 && str_contains($q[0]['auszuege'][0], 'NEA 50 kVA') && !isset($q[0]['text']) && $q[1]['auszuege'] === ['Altes Aggregat'] && $q[1]['vollstaendig'] === false);
@@ -73,8 +83,16 @@ $check('Fenster und Zahl der Quellen', stan_chat_budget() === 8192 * 3 - 2500 &&
 $zu = stan_chat_zuschneiden([['id' => 1, 'text' => str_repeat('a', 900), 'ki' => ''], ['id' => 2, 'text' => str_repeat('b', 5000), 'ki' => 'Kurz']], ['x'], 2000);
 $check('Zuschneiden: erste ganz, zweite als Auszug mit Zusammenfassung', $zu[0]['vollstaendig'] && $zu[0]['auszuege'] === [str_repeat('a', 900)] && !$zu[1]['vollstaendig']
     && str_starts_with($zu[1]['auszuege'][0], 'Zusammenfassung: Kurz') && array_sum(array_map('mb_strlen', $zu[1]['auszuege'])) <= 1100);
-$check('Abfrage je Stamm mit Version', str_contains($GLOBALS['sql'][0][0], 'd.version_id = ?') && end($GLOBALS['sql'][0][1]) === 3 && substr_count($GLOBALS['sql'][0][0], 'd.text LIKE ?') === 2
-    && $GLOBALS['sql'][0][1][0] === '%aggregat%');
+$check('Abfrage je Stamm, Phrase „fachgruppe n" dazu, mit Version', str_contains($GLOBALS['sql'][0][0], 'd.version_id = ?') && end($GLOBALS['sql'][0][1]) === 3 && substr_count($GLOBALS['sql'][0][0], 'd.text LIKE ?') === 3
+    && $GLOBALS['sql'][0][1][0] === '%aggregat%' && in_array('%fachgruppe n%', $GLOBALS['sql'][0][1], true));
+$GLOBALS['rows'] = [
+    ['id' => 21, 'version_id' => 1, 'pfad' => '10-03 StAN ZTr FK-bf.pdf', 'name' => '10-03 StAN ZTr FK-bf.pdf', 'text' => 'Zugtrupp Fachzug Führung/Kommunikation (ZTr FK) ohne Mobilfunk-Karte', 'version_nummer' => 1, 'ki_zusammenfassung' => null, 'ki_tags' => null],
+    ['id' => 22, 'version_id' => 1, 'pfad' => '02-01 StAN ZTr TZ-bf.pdf', 'name' => '02-01 StAN ZTr TZ-bf.pdf', 'text' => 'Zugtrupp Technischer Zug (ZTr TZ): eine SIM-Karte im Fahrzeug', 'version_nummer' => 1, 'ki_zusammenfassung' => null, 'ki_tags' => null],
+    ['id' => 23, 'version_id' => 1, 'pfad' => '00-00 Vorbemerkung.pdf', 'name' => '00-00 Vorbemerkung.pdf', 'text' => 'Einsatz jetzt und jeder Zugtrupp braucht etwas', 'version_nummer' => 1, 'ki_zusammenfassung' => null, 'ki_tags' => null],
+];
+$q = stan_chat_quellen('Hat der ZTr TZ eine SIM-Karte?', null);
+$check('Zugtrupp TZ: die richtige Datei zuerst, „Einsatz" zählt nicht als TZ', $q[0]['id'] === 22 && $q[1]['id'] === 21 && str_contains($GLOBALS['sql'][count($GLOBALS['sql']) - 1][0], 'd.text REGEXP ?'));
+$GLOBALS['rows'] = $fachgruppeRows;
 $vorher = count($GLOBALS['sql']);
 $check('ohne Stichwörter keine Abfrage', stan_chat_quellen('und oder', null) === [] && count($GLOBALS['sql']) === $vorher);
 

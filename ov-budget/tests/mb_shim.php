@@ -109,6 +109,12 @@ function mb_strimwidth(string $s, int $start, int $breite, string $ende = '', ?s
 }
 
 /** Fundstelle in Zeichen statt Bytes – reicht für Suche und Ausschnitte */
+function mb_strrpos(string $haystack, string $needle, int $offset = 0, ?string $encoding = null): int|false
+{
+    $b = strrpos($haystack, $needle);
+    return $b === false ? false : mb_strlen(substr($haystack, 0, $b));
+}
+
 function mb_strpos(string $haystack, string $needle, int $offset = 0, ?string $encoding = null): int|false
 {
     $byteOffset = $offset > 0 ? strlen(mb_substr($haystack, 0, $offset)) : 0;

@@ -2506,6 +2506,25 @@ SQL);
         }
     }
     $merken('096_stan_volltext');
+
+    /* ---------- 097: Absätze der STAN mit Vektoren (Bedeutungssuche) ---------- */
+    if (ovb_table_exists($pdo, 'stan_dateien') && !ovb_table_exists($pdo, 'stan_absaetze')) {
+        $pdo->exec("CREATE TABLE stan_absaetze (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  datei_id    INT UNSIGNED NOT NULL,
+  nr          INT UNSIGNED NOT NULL,
+  text        TEXT         NOT NULL,
+  vektor      MEDIUMBLOB   NULL,
+  modell      VARCHAR(80)  NULL,
+  erstellt_am DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_stanabs_datei (datei_id, nr),
+  KEY idx_stanabs_offen (vektor(1)),
+  CONSTRAINT fk_stanabs_datei FOREIGN KEY (datei_id) REFERENCES stan_dateien(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle stan_absaetze angelegt – die Bedeutungssuche liest die STAN nach und nach ein.');
+    }
+    $merken('097_stan_absaetze');
 }
 
 /**

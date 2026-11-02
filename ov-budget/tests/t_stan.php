@@ -159,7 +159,7 @@ $check('Text aus DOCX', str_contains(stan_text_gewinnen(['name' => 'doc.docx', '
 $GLOBALS['text_offen'] = [['id' => 5, 'name' => 'Lies mich.txt', 'stored_name' => 'volltext.txt'], ['id' => 6, 'name' => 'leer.pdf', 'stored_name' => 'gibtsnicht.pdf']];
 $GLOBALS['execs'] = [];
 $r = stan_text_nachholen(10);
-$check('Volltext nachholen: zwei gelesen, einer mit Text, Updates geschrieben', $r['bearbeitet'] === 2 && $r['mit_text'] === 1 && count($GLOBALS['execs']) === 2 && str_contains($GLOBALS['execs'][0][0], 'SET text = ?') && $GLOBALS['execs'][0][1][0] !== '' && $GLOBALS['execs'][1][1][0] === '' && stan_text_offen() === 3);
+$check('Volltext nachholen: zwei gelesen, einer mit Text, Updates geschrieben', $r['bearbeitet'] === 2 && $r['mit_text'] === 1 && count($GLOBALS['execs']) === 4 && str_contains($GLOBALS['execs'][0][0], 'SET text = ?') && $GLOBALS['execs'][0][1][0] !== '' && str_contains($GLOBALS['execs'][1][0], 'DELETE FROM stan_absaetze') && $GLOBALS['execs'][2][1][0] === '' && stan_text_offen() === 3);
 $GLOBALS['treffer_rows'] = [['id' => 21, 'version_id' => 5, 'pfad' => 'STAN/FGr N.pdf', 'name' => 'FGr N.pdf', 'mime' => 'application/pdf', 'size_bytes' => 400, 'version_nummer' => 3, 'ki_zusammenfassung' => 'Ausstattung der Fachgruppe N.', 'ki_tags' => 'Fachgruppe N, Notstrom', 'ki_modell' => 'qwen2.5:7b', 'ki_quelle' => 'text', 'ki_geaendert_am' => '2026-10-17 10:00:00', 'wo' => 'Text', 'ausschnitt' => 'blabla Notstromaggregat 50 kVA steht bereit']];
 $t = stan_suche('Notstrom', 5);
 $check('Suche: Abfrage mit Version, Treffer mit Ausschnitt und KI', str_contains($GLOBALS['such_sql'][0], 'd.version_id = ?') && end($GLOBALS['such_sql'][1]) === 5 && $GLOBALS['such_sql'][1][5] === 'Notstrom' && $GLOBALS['such_sql'][1][0] === '%Notstrom%'

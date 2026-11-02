@@ -252,6 +252,8 @@ function stan_text_nachholen(int $max = 10): array
     foreach (db_all('SELECT * FROM stan_dateien WHERE text IS NULL ORDER BY id LIMIT ' . max(1, $max)) as $d) {
         $text = stan_text_gewinnen($d);
         db_exec('UPDATE stan_dateien SET text = ? WHERE id = ?', [$text, (int)$d['id']]);
+        // Absätze der Bedeutungssuche passen nicht mehr zum neuen Text – der Abruf legt sie neu an
+        db_exec('DELETE FROM stan_absaetze WHERE datei_id = ?', [(int)$d['id']]);
         $r['bearbeitet']++;
         if ($text !== '') {
             $r['mit_text']++;

@@ -41,6 +41,7 @@ try {
 foreach ($eintrag['quellen'] as &$q) {
     $q['url'] = url('stan_file', ['id' => $q['id']]);
     $q['ordner'] = dirname((string)$q['pfad']) !== '.' ? dirname((string)$q['pfad']) : '';
+    $q['art_text'] = stan_chat_art_text((string)($q['art'] ?? 'auszuege'));
 }
 unset($q);
 $eintrag['am_text'] = de_datetime((string)$eintrag['am']);

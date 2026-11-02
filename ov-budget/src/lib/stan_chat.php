@@ -5,11 +5,13 @@ declare(strict_types=1);
  * Fragen an die STAN: ein kleiner Chat mit dem Textmodell in Ollama.
  *
  * Das Modell bekommt nicht die ganze STAN, sondern das, was ins
- * Kontextfenster passt: Stichwörter aus der Frage, Treffer im Volltext und
- * in den KI-Schlagwörtern, die besten Dateien – ganz, wenn sie ins Fenster
- * passen, sonst die Stellen um die Treffer. Die Antwort soll nur daraus
- * kommen und die Quellen nennen. Alles läuft über Ollama im eigenen Netz;
- * die Texte verlassen das Haus nicht.
+ * Kontextfenster passt. Welche Dateien das sind, entscheidet die
+ * Bedeutungssuche (Absätze mit Vektoren, siehe stan_embed.php), ergänzt
+ * um die Stichwortsuche: Wortstämme, Kürzel wie „TZ" als ganze Wörter,
+ * Wortpaare wie „ZTr TZ" und Treffer im Dateinamen zählen besonders. Passt
+ * eine Datei ganz ins Fenster, geht sie ganz; sonst die passenden Absätze
+ * oder die Stellen um die Treffer. Die Antwort soll nur daraus kommen und
+ * die Quellen nennen. Alles läuft über Ollama im eigenen Netz.
  *
  * Abschaltbar: Hauptschalter der KI, Schalter „STAN-Dokumente auswerten"
  * und der eigene Schalter „Fragen an die STAN".
@@ -19,8 +21,9 @@ const STAN_CHAT_VERLAUF_MAX = 8;        // so viele Fragen bleiben in der Sitzun
 const STAN_CHAT_VERLAUF_PROMPT = 3;     // so viele davon sieht das Modell
 const STAN_CHAT_AUSZUG = 700;           // Zeichen je Auszug
 const STAN_CHAT_AUSZUEGE_JE_DATEI = 3;
+const STAN_CHAT_ABSAETZE_JE_DATEI = 4;  // beste Absätze je Datei aus der Bedeutungssuche
 const STAN_CHAT_FRAGE_MAX = 500;
-const STAN_CHAT_KANDIDATEN = 60;        // so viele Dateien holt die Suche, bevor bewertet wird
+const STAN_CHAT_KANDIDATEN = 60;        // so viele Dateien holt die Stichwortsuche, bevor bewertet wird
 const STAN_CHAT_ZEICHEN_JE_TOKEN = 3;   // deutscher Text in einem 7B-Modell, vorsichtig geschätzt
 const STAN_CHAT_RESERVE = 2500;         // Zeichen für Anweisung, Verlauf und Antwort
 const STAN_CHAT_DOPPELT_SEK = 180;      // so lange gilt dieselbe Frage als Doppelklick
@@ -32,14 +35,15 @@ const STAN_CHAT_STOPP = ['der', 'die', 'das', 'des', 'dem', 'den', 'ein', 'eine'
     'für', 'von', 'mit', 'bei', 'nach', 'vor', 'über', 'unter', 'zum', 'zur', 'zu', 'am', 'im', 'in', 'an', 'auf', 'aus', 'um', 'bis', 'als',
     'nicht', 'auch', 'noch', 'nur', 'man', 'ich', 'wir', 'uns', 'ihr', 'sie', 'es', 'ob', 'dass', 'laut', 'gemäß', 'bitte', 'mal', 'denn',
     'mir', 'mich', 'dich', 'dir', 'ihn', 'ihm', 'ihnen', 'dieser', 'diese', 'dieses', 'jeder', 'jede', 'jedes', 'alle', 'etwas', 'sehr',
-    'the', 'and', 'for', 'with', 'how', 'many', 'much', 'what', 'which', 'does', 'are', 'ovs', 'stan', 'steht', 'drin', 'drinnen', 'stehen'];
+    'the', 'and', 'for', 'with', 'how', 'many', 'much', 'what', 'which', 'does', 'are', 'ovs', 'stan', 'steht', 'drin', 'drinnen', 'stehen',
+    'doch', 'sollte', 'täusche', 'mich', 'da', 'definitiv', 'eigentlich'];
 
 function stan_chat_aktiv(): bool
 {
     return function_exists('ki_modul_aktiv') && ki_modul_aktiv('stan') && setting_bool('ki_stan_chat', true);
 }
 
-/** So viele Zeichen Auszüge passen in eine Anfrage – aus dem Kontextfenster des Modells */
+/** So viele Zeichen Quellen passen in eine Anfrage – aus dem Kontextfenster des Modells */
 function stan_chat_budget(): int
 {
     $tokens = function_exists('ki_num_ctx') ? ki_num_ctx() : 8192;
@@ -51,6 +55,10 @@ function stan_chat_quellen_max(int $budget): int
 {
     return max(4, min(12, intdiv($budget, 6000)));
 }
+
+/* ==================================================================== */
+/*  Stichwörter – reine Funktionen                                        */
+/* ==================================================================== */
 
 /** Wortstamm für die Suche: „Aggregate" und „Aggregat" sollen dasselbe finden. Reine Funktion. */
 function stan_chat_stamm(string $wort): string
@@ -67,14 +75,19 @@ function stan_chat_stamm(string $wort): string
     return $w;
 }
 
+/** Die Wörter der Frage in Reihenfolge, Bindestriche bleiben (gkw-1). Reine Funktion. */
+function stan_chat_woerter(string $frage): array
+{
+    $teile = preg_split('/[^\p{L}\p{N}\-]+/u', $frage) ?: [];
+    return array_values(array_filter(array_map(static fn($t) => trim($t, '-'), $teile), static fn($t) => $t !== ''));
+}
+
 /** Stichwörter aus der Frage – ohne Füllwörter, höchstens acht. Reine Funktion. */
 function stan_chat_stichworte(string $frage): array
 {
-    $teile = preg_split('/[^\p{L}\p{N}\-]+/u', mb_strtolower($frage)) ?: [];
     $out = [];
-    foreach ($teile as $t) {
-        $t = trim($t, '-');
-        if ($t === '' || in_array($t, STAN_CHAT_STOPP, true)) {
+    foreach (stan_chat_woerter(mb_strtolower($frage)) as $t) {
+        if (in_array($t, STAN_CHAT_STOPP, true)) {
             continue;
         }
         if (mb_strlen($t) < 3 && !(is_numeric($t) && mb_strlen($t) >= 2)) {
@@ -90,8 +103,59 @@ function stan_chat_stichworte(string $frage): array
     return $out;
 }
 
-/** Wie gut passt ein Text zur Frage: Treffer je Stamm, verschiedene Stämme zählen mehr. Reine Funktion. */
-function stan_chat_bewerten(string $text, array $staemme): int
+/**
+ * Kürzel: ein bis drei Großbuchstaben, wie in der Frage geschrieben – „TZ",
+ * „FK", „MT", „N". Sie zählen nur als ganzes Wort. Reine Funktion.
+ */
+function stan_chat_kuerzel(string $frage): array
+{
+    $out = [];
+    foreach (stan_chat_woerter($frage) as $t) {
+        if (preg_match('/^[A-ZÄÖÜ]{1,3}$/u', $t) && !in_array(mb_strtolower($t), $out, true)) {
+            $out[] = mb_strtolower($t);
+        }
+    }
+    return $out;
+}
+
+/**
+ * Wortpaare mit einem Kürzel: „ZTr TZ", „Fachgruppe N", „FGr K". Ein
+ * einzelner Buchstabe zählt nur im Paar. Reine Funktion.
+ */
+function stan_chat_phrasen(string $frage): array
+{
+    $w = stan_chat_woerter($frage);
+    $out = [];
+    foreach ($w as $i => $t) {
+        if ($i > 0 && preg_match('/^[A-ZÄÖÜ]{1,3}(\(?[A-Z]\)?)?$/u', $t) && mb_strlen($w[$i - 1]) >= 2) {
+            $p = mb_strtolower($w[$i - 1] . ' ' . $t);
+            if (!in_array($p, $out, true)) {
+                $out[] = $p;
+            }
+        }
+    }
+    return $out;
+}
+
+/** Alles, womit gesucht wird: staemme, kuerzel (nur zwei bis drei Buchstaben), phrasen. Reine Funktion. */
+function stan_chat_suchbegriffe(string $frage): array
+{
+    $staemme = array_values(array_unique(array_map('stan_chat_stamm', stan_chat_stichworte($frage))));
+    $kuerzel = array_values(array_filter(stan_chat_kuerzel($frage), static fn($k) => mb_strlen($k) >= 2 && !in_array($k, $staemme, true)));
+    return ['staemme' => $staemme, 'kuerzel' => $kuerzel, 'phrasen' => stan_chat_phrasen($frage)];
+}
+
+/** Treffer eines Kürzels als ganzes Wort. Reine Funktion. */
+function stan_chat_wort_zaehlen(string $text, string $wort): int
+{
+    return preg_match_all('/(?<![\p{L}\p{N}])' . preg_quote($wort, '/') . '(?![\p{L}\p{N}])/iu', $text) ?: 0;
+}
+
+/**
+ * Wie gut passt ein Text zur Frage: Treffer je Stamm, verschiedene Stämme
+ * zählen mehr, Kürzel als ganze Wörter, Wortpaare am stärksten. Reine Funktion.
+ */
+function stan_chat_bewerten(string $text, array $staemme, array $kuerzel = [], array $phrasen = []): int
 {
     $t = mb_strtolower($text);
     $punkte = 0;
@@ -104,11 +168,46 @@ function stan_chat_bewerten(string $text, array $staemme): int
             $punkte += min($n, 5) + 3;
         }
     }
+    foreach ($kuerzel as $k) {
+        $n = stan_chat_wort_zaehlen($t, $k);
+        if ($n > 0) {
+            $punkte += min($n, 5) + 3;
+        }
+    }
+    foreach ($phrasen as $p) {
+        $n = substr_count($t, $p);
+        if ($n > 0) {
+            $punkte += min($n, 3) * 4 + 8;
+        }
+    }
+    return $punkte;
+}
+
+/** Treffer im Dateinamen wiegen schwer: „02-01 StAN ZTr TZ" ist die Datei zum Zugtrupp. Reine Funktion. */
+function stan_chat_bewerten_name(string $name, array $staemme, array $kuerzel = [], array $phrasen = []): int
+{
+    $n = mb_strtolower(str_replace(['_', '-', '.'], ' ', $name));
+    $punkte = 0;
+    foreach ($staemme as $s) {
+        if ($s !== '' && str_contains($n, $s)) {
+            $punkte += 10;
+        }
+    }
+    foreach ($kuerzel as $k) {
+        if (stan_chat_wort_zaehlen($n, $k) > 0) {
+            $punkte += 12;
+        }
+    }
+    foreach ($phrasen as $p) {
+        if (str_contains($n, $p)) {
+            $punkte += 25;
+        }
+    }
     return $punkte;
 }
 
 /** Stellen um die Treffer herum, zusammengelegt, wenn sie sich überlappen. Reine Funktion. */
-function stan_chat_auszuege(string $text, array $staemme, int $breite = STAN_CHAT_AUSZUG, int $max = STAN_CHAT_AUSZUEGE_JE_DATEI): array
+function stan_chat_auszuege(string $text, array $begriffe, int $breite = STAN_CHAT_AUSZUG, int $max = STAN_CHAT_AUSZUEGE_JE_DATEI): array
 {
     $text = trim((string)preg_replace('/\s+/u', ' ', $text));
     if ($text === '') {
@@ -117,7 +216,7 @@ function stan_chat_auszuege(string $text, array $staemme, int $breite = STAN_CHA
     $klein = mb_strtolower($text);
     $laenge = mb_strlen($text);
     $treffer = [];
-    foreach ($staemme as $s) {
+    foreach ($begriffe as $s) {
         if ($s === '') {
             continue;
         }
@@ -150,10 +249,11 @@ function stan_chat_auszuege(string $text, array $staemme, int $breite = STAN_CHA
 
 /**
  * Das Fenster auf die Quellen verteilen: Was ganz hineinpasst, geht ganz
- * (vollstaendig = true), der Rest als Auszüge um die Treffer. Reine Funktion.
- * Jede Quelle: text (bereinigt), ki (Zusammenfassung oder ''), staemme von außen.
+ * (art = vollstaendig), sonst die Absätze aus der Bedeutungssuche (absaetze)
+ * oder die Stellen um die Treffer (auszuege). Reine Funktion.
+ * Jede Quelle: text (bereinigt), ki (Zusammenfassung oder ''), absaetze (Texte, optional).
  */
-function stan_chat_zuschneiden(array $quellen, array $staemme, int $budget): array
+function stan_chat_zuschneiden(array $quellen, array $begriffe, int $budget): array
 {
     $rest = $budget;
     $out = [];
@@ -163,16 +263,22 @@ function stan_chat_zuschneiden(array $quellen, array $staemme, int $budget): arr
         $text = (string)($q['text'] ?? '');
         $ki = trim((string)($q['ki'] ?? ''));
         $laenge = mb_strlen($text);
-        $vollstaendig = $text !== '' && $laenge <= (int)($anteil * 1.4) && $laenge <= $rest;
-        if ($vollstaendig) {
+        if ($text !== '' && $laenge <= (int)($anteil * 1.4) && $laenge <= $rest) {
+            $art = 'vollstaendig';
             $auszuege = [$text];
             $verbraucht = $laenge;
         } else {
-            $auszuege = $text !== '' ? stan_chat_auszuege($text, $staemme) : ($ki !== '' ? [$ki] : []);
+            if (!empty($q['absaetze'])) {
+                $art = 'absaetze';
+                $auszuege = array_values($q['absaetze']);
+            } else {
+                $art = 'auszuege';
+                $auszuege = $text !== '' ? stan_chat_auszuege($text, $begriffe) : ($ki !== '' ? [$ki] : []);
+            }
             if ($text !== '' && $ki !== '') {
                 array_unshift($auszuege, 'Zusammenfassung: ' . mb_substr($ki, 0, 400));
             }
-            // Auszüge auf den Anteil stutzen
+            // Auf den Anteil stutzen
             $gekuerzt = [];
             $verbraucht = 0;
             foreach ($auszuege as $a) {
@@ -191,29 +297,41 @@ function stan_chat_zuschneiden(array $quellen, array $staemme, int $budget): arr
         }
         $rest -= $verbraucht;
         $q['auszuege'] = $auszuege;
-        $q['vollstaendig'] = $vollstaendig;
-        unset($q['text'], $q['ki']);
+        $q['art'] = $art;
+        $q['vollstaendig'] = $art === 'vollstaendig';
+        unset($q['text'], $q['ki'], $q['absaetze']);
         $out[] = $q;
     }
     return $out;
 }
 
-/** Dateien, die zur Frage passen, mit Text oder Auszügen – die besten zuerst, aufs Fenster zugeschnitten */
-function stan_chat_quellen(string $frage, ?int $versionId = null, ?int $max = null, ?int $budget = null): array
+/* ==================================================================== */
+/*  Quellen aus der Datenbank                                             */
+/* ==================================================================== */
+
+/** Kandidaten der Stichwortsuche: Datei-Zeilen mit text, ki, punkte */
+function stan_chat_kandidaten_stichworte(array $begriffe, ?int $versionId): array
 {
-    $woerter = stan_chat_stichworte($frage);
-    if (!$woerter) {
-        return [];
-    }
-    $budget ??= stan_chat_budget();
-    $max ??= stan_chat_quellen_max($budget);
-    $staemme = array_values(array_unique(array_map('stan_chat_stamm', $woerter)));
     $w = [];
     $p = [];
-    foreach ($staemme as $s) {
+    foreach ($begriffe['staemme'] as $s) {
         $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $s) . '%';
         $w[] = '(d.text LIKE ? OR d.name LIKE ? OR k.tags LIKE ? OR k.zusammenfassung LIKE ?)';
         array_push($p, $like, $like, $like, $like);
+    }
+    foreach ($begriffe['phrasen'] as $ph) {
+        $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $ph) . '%';
+        $w[] = '(d.text LIKE ? OR d.name LIKE ?)';
+        array_push($p, $like, $like);
+    }
+    foreach ($begriffe['kuerzel'] as $k) {
+        // Kürzel nur als ganzes Wort – sonst findet „TZ" jeden „Einsatz"
+        $re = '(^|[^[:alnum:]])' . preg_quote($k) . '($|[^[:alnum:]])';
+        $w[] = '(d.text REGEXP ? OR d.name REGEXP ?)';
+        array_push($p, $re, $re);
+    }
+    if (!$w) {
+        return [];
     }
     $sql = "SELECT d.id, d.version_id, d.pfad, d.name, d.text, v.nummer AS version_nummer, k.zusammenfassung AS ki_zusammenfassung, k.tags AS ki_tags
             FROM stan_dateien d
@@ -224,21 +342,97 @@ function stan_chat_quellen(string $frage, ?int $versionId = null, ?int $max = nu
         $sql .= ' AND d.version_id = ?';
         $p[] = $versionId;
     }
-    $sql .= ' ORDER BY v.nummer DESC LIMIT ' . STAN_CHAT_KANDIDATEN;
+    return db_all($sql . ' ORDER BY v.nummer DESC LIMIT ' . STAN_CHAT_KANDIDATEN, $p);
+}
+
+/** Datei-Zeilen zu ids – für Treffer der Bedeutungssuche, die die Stichwortsuche nicht kannte */
+function stan_chat_dateien_laden(array $ids): array
+{
+    if (!$ids) {
+        return [];
+    }
+    return db_all(
+        "SELECT d.id, d.version_id, d.pfad, d.name, d.text, v.nummer AS version_nummer, k.zusammenfassung AS ki_zusammenfassung, k.tags AS ki_tags
+         FROM stan_dateien d
+         JOIN stan_versionen v ON v.id = d.version_id
+         LEFT JOIN datei_ki k ON k.typ = 'stan' AND k.datei_id = d.id
+         WHERE d.id IN (" . implode(',', array_fill(0, count($ids), '?')) . ')',
+        array_values($ids)
+    );
+}
+
+/**
+ * Dateien, die zur Frage passen, mit Text, Absätzen oder Auszügen – die
+ * besten zuerst, aufs Fenster zugeschnitten. Bedeutungssuche und
+ * Stichwortsuche zusammen; fällt die Bedeutungssuche aus, bleibt die andere.
+ */
+function stan_chat_quellen(string $frage, ?int $versionId = null, ?int $max = null, ?int $budget = null): array
+{
+    $begriffe = stan_chat_suchbegriffe($frage);
+    $budget ??= stan_chat_budget();
+    $max ??= stan_chat_quellen_max($budget);
+    $alleBegriffe = array_merge($begriffe['phrasen'], $begriffe['staemme'], $begriffe['kuerzel']);
+
+    // Bedeutungssuche: beste Absätze, je Datei gesammelt
+    $semantisch = [];
+    if (function_exists('stan_embed_aktiv') && stan_embed_aktiv()) {
+        try {
+            foreach (stan_embed_suche($frage, $versionId) as $t) {
+                $id = $t['datei_id'];
+                $semantisch[$id] ??= ['score' => 0.0, 'absaetze' => []];
+                $semantisch[$id]['score'] = max($semantisch[$id]['score'], (float)$t['score']);
+                if (count($semantisch[$id]['absaetze']) < STAN_CHAT_ABSAETZE_JE_DATEI) {
+                    $semantisch[$id]['absaetze'][(int)$t['nr']] = (string)$t['text'];
+                }
+            }
+        } catch (KiException $ex) {
+            error_log('STAN-Bedeutungssuche: ' . $ex->getMessage());
+        }
+    }
+
+    $zeilen = [];
+    if ($alleBegriffe) {
+        foreach (stan_chat_kandidaten_stichworte($begriffe, $versionId) as $r) {
+            $zeilen[(int)$r['id']] = $r;
+        }
+    }
+    foreach (stan_chat_dateien_laden(array_values(array_diff(array_keys($semantisch), array_keys($zeilen)))) as $r) {
+        $zeilen[(int)$r['id']] = $r;
+    }
+    if (!$zeilen) {
+        return [];
+    }
 
     $quellen = [];
-    foreach (db_all($sql, $p) as $r) {
+    foreach ($zeilen as $id => $r) {
         $text = trim((string)preg_replace('/\s+/u', ' ', (string)($r['text'] ?? '')));
         $ki = trim((string)($r['ki_zusammenfassung'] ?? ''));
-        $punkte = stan_chat_bewerten($text . ' ' . $ki . ' ' . (string)$r['name'] . ' ' . (string)($r['ki_tags'] ?? ''), $staemme);
+        $punkte = stan_chat_bewerten($text . ' ' . $ki . ' ' . (string)($r['ki_tags'] ?? ''), $begriffe['staemme'], $begriffe['kuerzel'], $begriffe['phrasen'])
+            + stan_chat_bewerten_name((string)$r['name'], $begriffe['staemme'], $begriffe['kuerzel'], $begriffe['phrasen']);
+        $sem = $semantisch[$id] ?? null;
+        if ($sem !== null) {
+            $punkte += (int)round($sem['score'] * 100);
+        }
         if ($punkte <= 0) {
             continue;
         }
-        $quellen[] = ['id' => (int)$r['id'], 'name' => (string)$r['name'], 'pfad' => (string)$r['pfad'], 'version_nummer' => (int)$r['version_nummer'],
-            'punkte' => $punkte, 'text' => $text, 'ki' => $ki];
+        $absaetze = $sem['absaetze'] ?? [];
+        ksort($absaetze);
+        $quellen[] = ['id' => $id, 'name' => (string)$r['name'], 'pfad' => (string)$r['pfad'], 'version_nummer' => (int)$r['version_nummer'],
+            'punkte' => $punkte, 'text' => $text, 'ki' => $ki, 'absaetze' => array_values($absaetze)];
     }
     usort($quellen, static fn($a, $b) => [$b['punkte'], $b['version_nummer']] <=> [$a['punkte'], $a['version_nummer']]);
-    return stan_chat_zuschneiden(array_slice($quellen, 0, $max), $staemme, $budget);
+    return stan_chat_zuschneiden(array_slice($quellen, 0, $max), $alleBegriffe, $budget);
+}
+
+/* ==================================================================== */
+/*  Prompt und Antwort                                                    */
+/* ==================================================================== */
+
+/** Beschriftung der Quelle für Modell und Anzeige. Reine Funktion. */
+function stan_chat_art_text(string $art): string
+{
+    return ['vollstaendig' => 'vollständig', 'absaetze' => 'Absätze', 'auszuege' => 'Auszüge'][$art] ?? 'Auszüge';
 }
 
 /** Die Bitte an das Modell: Quellen mit Nummern, der bisherige Verlauf, die Frage. Reine Funktion. */
@@ -247,7 +441,7 @@ function stan_chat_prompt(string $frage, array $quellen, array $verlauf, int $ma
     $kontext = '';
     foreach ($quellen as $i => $q) {
         $block = '[' . ($i + 1) . '] ' . $q['name'] . ($q['pfad'] !== '' && dirname($q['pfad']) !== '.' ? ' (' . dirname($q['pfad']) . ')' : '')
-            . ', Version ' . $q['version_nummer'] . (!empty($q['vollstaendig']) ? ', vollständig' : ', Auszüge') . "\n";
+            . ', Version ' . $q['version_nummer'] . ', ' . stan_chat_art_text((string)($q['art'] ?? (!empty($q['vollstaendig']) ? 'vollstaendig' : 'auszuege'))) . "\n";
         foreach ($q['auszuege'] as $a) {
             $block .= $a . "\n";
         }
@@ -302,8 +496,8 @@ function stan_chat_doppelt(string $frage, array $verlauf, ?int $jetzt = null, in
 
 /**
  * Eine Frage beantworten. Rückgabe: frage, antwort, quellen (id, name, pfad,
- * version_nummer, vollstaendig), modell, am, wiederholt. Wirft KiException,
- * wenn die KI nicht kann.
+ * version_nummer, art, vollstaendig), modell, am, wiederholt. Wirft
+ * KiException, wenn die KI nicht kann.
  */
 function stan_chat_fragen(string $frage, ?int $versionId, array $verlauf): array
 {
@@ -321,7 +515,8 @@ function stan_chat_fragen(string $frage, ?int $versionId, array $verlauf): array
     $quellen = stan_chat_quellen($frage, $versionId, null, $budget);
     $antwort = ['frage' => $frage, 'quellen' => [], 'modell' => '', 'am' => date('Y-m-d H:i:s'), 'wiederholt' => false];
     foreach ($quellen as $q) {
-        $antwort['quellen'][] = ['id' => $q['id'], 'name' => $q['name'], 'pfad' => $q['pfad'], 'version_nummer' => $q['version_nummer'], 'vollstaendig' => !empty($q['vollstaendig'])];
+        $antwort['quellen'][] = ['id' => $q['id'], 'name' => $q['name'], 'pfad' => $q['pfad'], 'version_nummer' => $q['version_nummer'],
+            'art' => $q['art'], 'vollstaendig' => $q['art'] === 'vollstaendig'];
     }
     if (!$quellen) {
         $antwort['antwort'] = 'Dazu habe ich in der STAN nichts gefunden. Vielleicht mit anderen Begriffen fragen'

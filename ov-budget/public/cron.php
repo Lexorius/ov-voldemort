@@ -194,6 +194,16 @@ $abrufe = [
         $r = stan_text_nachholen(10);
         return $r['bearbeitet'] === 0 ? [] : [['status' => 'ok', 'message' => sprintf('%d Datei(en) gelesen, %d mit Text', $r['bearbeitet'], $r['mit_text'])]];
     },
+    'STAN-Absätze'      => static function (): array {
+        if (!stan_embed_aktiv()) {
+            return [];
+        }
+        $r = stan_embed_nachholen();
+        if ($r['dateien'] === 0 && $r['absaetze'] === 0 && $r['fehler'] === '') {
+            return [];
+        }
+        return [['status' => $r['fehler'] !== '' ? 'fehler' : 'ok', 'message' => sprintf('%d Datei(en) in Absätze geteilt, %d Absätze eingelesen%s', $r['dateien'], $r['absaetze'], $r['fehler'] !== '' ? ' – ' . $r['fehler'] : '')]];
+    },
     'KI-Auswertung'     => static function (): array {
         if (!ki_aktiv()) {
             return [];

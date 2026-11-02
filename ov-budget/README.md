@@ -275,7 +275,9 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 - **Durchsuchbar** nach Name, Inhalt (Volltext aus PDF und Office) und, mit
   KI-Auswertung, nach Zusammenfassung und Schlagwörtern je Dokument
 - **Fragen an die STAN**: Chat mit dem Ollama-Textmodell, das nur aus
-  passenden Auszügen der Dateien antwortet und die Quellen nennt
+  passenden Dateien antwortet und die Quellen nennt – gefunden über eine
+  **Bedeutungssuche** mit Embedding-Modell (Absätze mit Vektoren) plus
+  Stichwörter, Kürzel und Dateinamen
 
 ### Connector
 - Kleines PHP-Skript auf einem öffentlichen Webserver für alles, was ohne

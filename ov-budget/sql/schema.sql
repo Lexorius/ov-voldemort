@@ -1708,6 +1708,22 @@ CREATE TABLE IF NOT EXISTS stan_dateien (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Hochrechnung: je Jahr und Kategorie, wie hochgerechnet wird (Durchschnitt, fester Betrag, gar nicht)
+-- Absaetze der STAN-Dateien mit Vektoren fuer die Bedeutungssuche (Embedding-Modell in Ollama)
+CREATE TABLE IF NOT EXISTS stan_absaetze (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  datei_id    INT UNSIGNED NOT NULL,
+  nr          INT UNSIGNED NOT NULL,
+  text        TEXT         NOT NULL,
+  -- Einheitsvektor als Folge von float32; NULL = noch nicht beim Modell gewesen
+  vektor      MEDIUMBLOB   NULL,
+  modell      VARCHAR(80)  NULL,
+  erstellt_am DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_stanabs_datei (datei_id, nr),
+  KEY idx_stanabs_offen (vektor(1)),
+  CONSTRAINT fk_stanabs_datei FOREIGN KEY (datei_id) REFERENCES stan_dateien(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS budget_prognosen (
   id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
   jahr          SMALLINT      NOT NULL,

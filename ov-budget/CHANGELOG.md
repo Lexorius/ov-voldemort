@@ -1,5 +1,19 @@
 # Änderungsverlauf
 
+## 2.1.73.0
+
+- **STAN-Chat – Bedeutungssuche:** Mit einem Embedding-Modell in Ollama
+  (neue Einstellung, Vorgabe nomic-embed-text) teilt der minütliche Abruf
+  die STAN-Dateien in Absätze und holt je Absatz einen Vektor; eine Frage
+  findet so die Absätze, die ihr der Bedeutung nach am nächsten liegen, auch
+  ohne gleiche Wörter. Die Chat-Karte zeigt den Stand des Einlesens; ohne
+  Modell bleibt die Stichwortsuche. Quellen heißen jetzt „vollständig",
+  „Absätze" oder „Auszüge".
+- **STAN-Chat – Stichwortsuche:** Kürzel wie „TZ" oder „FK" zählen als
+  ganzes Wort (bisher verworfen, „Einsatz" zählt nicht als TZ), Wortpaare
+  wie „ZTr TZ" oder „Fachgruppe N" und Treffer im Dateinamen wiegen
+  schwer – die Datei zum Zugtrupp steht damit zuerst.
+
 ## 2.1.72.0
 
 - **STAN-Chat:** Die Frage erscheint sofort als Sprechblase, drei

@@ -2,7 +2,7 @@
 /** @var array $versionen @var ?array $aktuell @var ?array $gezeigt @var array $dateien @var bool $darf @var int $maxMb
  *  @var string $q @var bool $alleVersionen @var array $treffer @var array $kiDaten @var int $textOffen */
 $q ??= ''; $alleVersionen ??= false; $treffer ??= []; $kiDaten ??= ['ergebnisse' => [], 'auftraege' => []]; $textOffen ??= 0;
-$chatAktiv ??= false; $chatVerlauf ??= [];
+$chatAktiv ??= false; $chatVerlauf ??= []; $embedStand ??= null;
 $kiZeile = static fn(array $d): string => function_exists('ki_hinweis_html') ? ki_hinweis_html('stan', $d, $kiDaten, $darf) : '';
 $baum = stan_baum($dateien);
 $istAktuell = $gezeigt && $aktuell && (int)$gezeigt['id'] === (int)$aktuell['id'];
@@ -87,7 +87,7 @@ $icon = static function (array $d): string {
             <ol class="chat__quellen">
               <?php foreach ($t['quellen'] as $qn): ?>
                 <li><a href="<?= e(url('stan_file', ['id' => $qn['id']])) ?>" target="_blank" rel="noopener"><?= e((string)$qn['name']) ?></a>
-                  <span class="muted"><?= e('Version ' . (int)$qn['version_nummer'] . (dirname((string)$qn['pfad']) !== '.' ? ' · 📁 ' . dirname((string)$qn['pfad']) : '') . (!empty($qn['vollstaendig']) ? ' · vollständig' : ' · Auszüge')) ?></span></li>
+                  <span class="muted"><?= e('Version ' . (int)$qn['version_nummer'] . (dirname((string)$qn['pfad']) !== '.' ? ' · 📁 ' . dirname((string)$qn['pfad']) : '') . ' · ' . stan_chat_art_text((string)($qn['art'] ?? (!empty($qn['vollstaendig']) ? 'vollstaendig' : 'auszuege')))) ?></span></li>
               <?php endforeach; ?>
             </ol>
           <?php endif; ?>
@@ -110,7 +110,14 @@ $icon = static function (array $d): string {
         <span class="small muted" style="align-self:center">Gesucht wird <?= $alleVersionen || !$gezeigt ? 'in allen Versionen' : 'in ' . e(stan_version_text($gezeigt)) ?>; die Antwort kann eine Minute dauern.</span>
       </div>
     </form>
-    <p class="small muted" style="margin:.5rem 0 0">Die Antwort entsteht nur aus den STAN-Dateien, die zur Frage passen – ganz, wenn sie ins Kontextfenster passen, sonst aus Auszügen um die Treffer –
+    <?php if ($embedStand !== null): ?>
+      <p class="small" style="margin:.5rem 0 0"><?php if ($embedStand['fehler'] !== ''): ?><span style="color:var(--warn)">Bedeutungssuche gestört: <?= e((string)$embedStand['fehler']) ?></span>
+        <?php elseif ($embedStand['absaetze'] === 0 && $embedStand['dateien_ohne'] === 0): ?><span class="muted">Bedeutungssuche: noch keine Texte zum Einlesen.</span>
+        <?php else: ?><span class="muted">Bedeutungssuche: <?= number_format($embedStand['absaetze'] - $embedStand['offen'], 0, ',', '.') ?> Absätze eingelesen<?= $embedStand['offen'] > 0 || $embedStand['dateien_ohne'] > 0 ? ', ' . number_format($embedStand['offen'], 0, ',', '.') . ' warten' . ($embedStand['dateien_ohne'] > 0 ? ' und ' . (int)$embedStand['dateien_ohne'] . ' Datei(en) sind noch nicht geteilt' : '') . ' – der minütliche Abruf trägt sie nach' : '' ?>.</span><?php endif; ?></p>
+    <?php else: ?>
+      <p class="small muted" style="margin:.5rem 0 0">Bedeutungssuche aus – ohne Embedding-Modell (Einstellungen → KI-Auswertung) sucht der Chat nur nach Stichwörtern.</p>
+    <?php endif; ?>
+    <p class="small muted" style="margin:.5rem 0 0">Die Antwort entsteht nur aus den STAN-Dateien, die zur Frage passen – ganz, wenn sie ins Kontextfenster passen, sonst aus den passenden Absätzen oder Auszügen um die Treffer –
       und nennt sie als Quellen [1], [2] … Was dort nicht steht, soll das Modell nicht erfinden; im Zweifel in die genannte Datei schauen. Die Texte verlassen das Haus nicht, der Verlauf lebt nur in dieser Sitzung.</p>
   </section>
   <?php endif; ?>
