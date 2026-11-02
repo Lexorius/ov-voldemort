@@ -1,5 +1,16 @@
 # Änderungsverlauf
 
+## 2.1.71.0
+
+- **STAN – Fragen an die STAN:** Chat mit dem Textmodell in Ollama unter der
+  Suche. Aus der Frage werden Stichwörter, daraus die passenden Dateien und
+  die Stellen um die Treffer; nur diese Auszüge bekommt das Modell, die
+  Antwort nennt die Quellen [1], [2] … mit Links auf die Dateien. Verlauf
+  in der Sitzung, „Verlauf leeren", Suche in der gezeigten oder in allen
+  Versionen. Eigener Schalter „Fragen an die STAN" unter KI-Auswertung,
+  dazu Hauptschalter und „STAN-Dokumente auswerten"; Ollama nur im eigenen
+  Netz wie bisher.
+
 ## 2.1.70.1
 
 - **Start:** Die Wanderung brach mit „Data too long for column 'hint'" ab –

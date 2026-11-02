@@ -5,6 +5,26 @@ declare(strict_types=1);
 $user = require_login();
 $darf = in_array((string)($user['role'] ?? ''), ['admin', 'leitung'], true);
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array(post_str('action'), ['chat', 'chat_leeren'], true)) {
+    // Fragen an die STAN darf, wer die STAN sehen darf
+    $zurueck = get_int('version') ? ['version' => get_int('version')] : [];
+    if (get_str('alle') === '1') {
+        $zurueck['alle'] = '1';
+    }
+    if (post_str('action') === 'chat_leeren') {
+        stan_chat_verlauf_leeren();
+        redirect(url('stan', $zurueck) . '#chat');
+    }
+    try {
+        $versionId = get_str('alle') === '1' || !get_int('version') ? null : get_int('version');
+        stan_chat_verlauf_merken(stan_chat_fragen(post_str('frage'), $versionId, stan_chat_verlauf()));
+        audit('stan.chat', 'stan', get_int('version'), mb_substr(post_str('frage'), 0, 200));
+    } catch (KiException $ex) {
+        flash('error', e($ex->getMessage()));
+    }
+    redirect(url('stan', $zurueck) . '#chat');
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$darf) {
         http_response_code(403);
@@ -85,6 +105,8 @@ render('stan', [
     'treffer'   => $treffer,
     'kiDaten'   => function_exists('ki_fuer_dateien') && $kiIds ? ki_fuer_dateien('stan', $kiIds) : ['ergebnisse' => [], 'auftraege' => []],
     'textOffen' => stan_text_offen(),
+    'chatAktiv' => stan_chat_aktiv(),
+    'chatVerlauf' => stan_chat_verlauf(),
     'title'     => (string)setting('stan_modul_name', 'STAN'),
     'versionen' => $versionen,
     'aktuell'   => $aktuell,

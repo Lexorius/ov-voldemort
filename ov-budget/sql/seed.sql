@@ -484,6 +484,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('ki_termine','1','Anhänge der Termine auswerten','Einladungen und Unterlagen am Termin.','bool','KI-Auswertung',90),
 ('ki_standorte','1','Bilder der Stell- und Lagerplätze auswerten','Nur mit Vision-Modell sinnvoll.','bool','KI-Auswertung',100),
 ('ki_stan','1','STAN-Dokumente auswerten','Zusammenfassung und Schlagwörter je Dokument im STAN-Paket – macht die STAN durchsuchbar.','bool','KI-Auswertung',110),
+('ki_stan_chat','1','Fragen an die STAN (Chat)','Auf der STAN-Seite Fragen in eigenen Worten stellen; das Textmodell antwortet aus passenden Auszuegen der Dateien und nennt die Quellen. Braucht den Hauptschalter und „STAN-Dokumente auswerten".','bool','KI-Auswertung',115),
 ('ki_newsletter','1','Newsletter zusammenfassen','Zusammenfassung des hochgeladenen Newsletter-PDFs für die Verwaltung.','bool','KI-Auswertung',120),
 ('ki_kontakte','1','Kontakte: Kategorie vorschlagen','Je Kontakt schlägt das Textmodell eine Kategorie aus der Auswahlliste vor, nie eine neue; übernommen wird von Hand. Es gehen Name, Organisation, Funktion, Ort, E-Mail-Domain und Notiz mit – keine Rufnummern, keine Anschrift.','bool','KI-Auswertung',125),
 ('newsletter_modul_name','Newsletter','Bezeichnung des Moduls Newsletter','Hochgeladene PDF-Newsletter an Adresslisten verschicken, mit Abmeldelink und Sperrliste.','text','Newsletter',10),

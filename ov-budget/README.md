@@ -274,6 +274,8 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
   einzeln abrufbar, ältere Versionen bleiben, einzelne PDFs nachreichbar
 - **Durchsuchbar** nach Name, Inhalt (Volltext aus PDF und Office) und, mit
   KI-Auswertung, nach Zusammenfassung und Schlagwörtern je Dokument
+- **Fragen an die STAN**: Chat mit dem Ollama-Textmodell, das nur aus
+  passenden Auszügen der Dateien antwortet und die Quellen nennt
 
 ### Connector
 - Kleines PHP-Skript auf einem öffentlichen Webserver für alles, was ohne

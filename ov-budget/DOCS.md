@@ -694,6 +694,19 @@ Verwaltung.
   JavaScript bleibt der normale Upload, der dann über die Oberfläche bei
   16 MB endet. Auch direkt über den Port des Add-ons läuft der Upload in
   Stücken; eine einzelne Anfrage ist bewusst auf 48 MB begrenzt.
+* **Fragen an die STAN (Chat).** Unter der Suche lässt sich die STAN in
+  eigenen Worten befragen: „Wie viele Notstromaggregate hat die Fachgruppe
+  N?" Die Anwendung sucht die Dateien, die zur Frage passen, schneidet die
+  Stellen um die Treffer aus und gibt nur diese Auszüge dem Textmodell in
+  Ollama. Die Antwort nennt die Quellen als [1], [2] …, darunter stehen die
+  Dateien als Links; was in den Auszügen nicht steht, soll das Modell nicht
+  erfinden. Der Verlauf bleibt in der Sitzung und fließt in die nächsten
+  Fragen ein, „Verlauf leeren" setzt ihn zurück. Gesucht wird in der
+  gezeigten Version oder mit dem Haken „alle Versionen" überall. Braucht
+  den KI-Hauptschalter, „STAN-Dokumente auswerten" und den Schalter „Fragen
+  an die STAN" (Einstellungen → KI-Auswertung); ohne Ollama im eigenen Netz
+  gibt es die Karte nicht. Wie alles in der KI-Auswertung: ohne Gewähr, im
+  Zweifel in die genannte Datei schauen.
 * **Durchsuchbar.** Das Suchfeld oben auf der STAN-Seite findet Dateien
   nach Name und Ordner, nach dem Inhalt (der minütliche Abruf liest PDFs
   über pdftotext, Office- und Textdateien ein und trägt den Volltext nach –
