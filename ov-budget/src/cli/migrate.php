@@ -2525,6 +2525,13 @@ SQL);
         $say('Tabelle stan_absaetze angelegt – die Bedeutungssuche liest die STAN nach und nach ein.');
     }
     $merken('097_stan_absaetze');
+
+    /* ---------- 098: Wünsche: Gegenstand steht in der STAN ---------- */
+    if (ovb_table_exists($pdo, 'wishes') && !ovb_column_exists($pdo, 'wishes', 'ist_stan')) {
+        $pdo->exec('ALTER TABLE wishes ADD COLUMN ist_stan TINYINT(1) NOT NULL DEFAULT 0 AFTER nice_to_have');
+        $say('Wünsche kennen den Haken „ist STAN".');
+    }
+    $merken('098_wunsch_stan');
 }
 
 /**

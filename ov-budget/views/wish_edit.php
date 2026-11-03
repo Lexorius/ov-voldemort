@@ -128,6 +128,10 @@ $pflichtAb = setting_float('wunsch_angebot_pflicht_ab', 0);
         <input type="checkbox" id="nice_to_have" name="nice_to_have" value="1" <?= !empty($wish['nice_to_have']) ? 'checked' : '' ?>>
         <label for="nice_to_have">Nice to have (verzichtbar)</label>
       </div>
+      <div class="field field--check">
+        <input type="checkbox" id="ist_stan" name="ist_stan" value="1" <?= !empty($wish['ist_stan']) ? 'checked' : '' ?>>
+        <label for="ist_stan">Ist STAN – der Gegenstand steht in der Stärke- und Ausstattungsnachweisung</label>
+      </div>
     </div>
   </section>
 

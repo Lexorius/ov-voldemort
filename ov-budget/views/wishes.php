@@ -20,6 +20,8 @@ $mine = get_str('mine') === '1';
   <div class="stat"><div class="stat__label">Summe</div><div class="stat__value"><?= e(money($stats['netto'], false)) ?></div></div>
   <div class="stat"><div class="stat__label">Noch offen</div><div class="stat__value"><?= e(money($stats['netto_offen'], false)) ?></div></div>
   <div class="stat"><div class="stat__label">Nice to have</div><div class="stat__value"><?= e(money($stats['nice'], false)) ?></div></div>
+  <div class="stat"><div class="stat__label">STAN</div><div class="stat__value"><?= e(money($stats['stan'] ?? 0, false)) ?></div>
+    <div class="stat__hint"><?= (int)($stats['stan_anzahl'] ?? 0) ?> Wünsche aus der Soll-Ausstattung</div></div>
 </div>
 
 <form class="card card--tight" method="get" data-autosubmit>
@@ -71,7 +73,10 @@ $mine = get_str('mine') === '1';
     <a class="chip<?= $alle ? '' : ' is-active' ?>" href="<?= e(url('wishes', array_diff_key($_GET, ['alle' => 1, 'p' => 1]))) ?>">nur offene</a>
     <a class="chip<?= $alle ? ' is-active' : '' ?>" href="<?= e(url('wishes', array_merge(array_diff_key($_GET, ['p' => 1]), ['alle' => '1']))) ?>">alle</a>
     <a class="chip<?= $mine ? ' is-active' : '' ?>" href="<?= e(url('wishes', array_merge(array_diff_key($_GET, ['p' => 1]), ['mine' => $mine ? '' : '1']))) ?>">meine</a>
-    <?php if ($filters['q'] || $filters['status_id'] || $filters['fachgruppe_id'] || $filters['dringlichkeit_id']): ?>
+    <?php $stan = (string)($filters['stan'] ?? ''); ?>
+    <a class="chip<?= $stan === '1' ? ' is-active' : '' ?>" href="<?= e(url('wishes', array_merge(array_diff_key($_GET, ['p' => 1]), ['stan' => $stan === '1' ? '' : '1']))) ?>">nur STAN</a>
+    <a class="chip<?= $stan === '0' ? ' is-active' : '' ?>" href="<?= e(url('wishes', array_merge(array_diff_key($_GET, ['p' => 1]), ['stan' => $stan === '0' ? '' : '0']))) ?>">ohne STAN</a>
+    <?php if ($filters['q'] || $filters['status_id'] || $filters['fachgruppe_id'] || $filters['dringlichkeit_id'] || $stan !== ''): ?>
       <a class="chip" href="<?= e(url('wishes')) ?>">Filter zurücksetzen</a>
     <?php endif; ?>
   </div>

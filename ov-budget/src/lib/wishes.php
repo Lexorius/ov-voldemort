@@ -9,7 +9,7 @@ function wish_find(int $id): ?array
 /**
  * Wunschliste mit Filtern.
  * $f: q, status_id, fachgruppe_id, kategorie_id, dringlichkeit_id, budget_id,
- *     nice, mine, offen, sort
+ *     nice, stan, mine, offen, sort
  */
 function wish_query(array $f = []): array
 {
@@ -34,6 +34,10 @@ function wish_query(array $f = []): array
     if (isset($f['nice']) && $f['nice'] !== '') {
         $w[] = 'w.nice_to_have = ?';
         $p[] = (int)$f['nice'];
+    }
+    if (isset($f['stan']) && $f['stan'] !== '') {
+        $w[] = 'w.ist_stan = ?';
+        $p[] = (int)$f['stan'];
     }
     if (!empty($f['mine'])) {
         $w[] = 'w.created_by = ?';
@@ -95,7 +99,7 @@ function wish_query(array $f = []): array
 
 function wish_stats(array $rows): array
 {
-    $s = ['anzahl' => count($rows), 'netto' => 0.0, 'netto_offen' => 0.0, 'nice' => 0.0];
+    $s = ['anzahl' => count($rows), 'netto' => 0.0, 'netto_offen' => 0.0, 'nice' => 0.0, 'stan' => 0.0, 'stan_anzahl' => 0];
     foreach ($rows as $r) {
         $s['netto'] += (float)$r['netto_gesamt'];
         if (!(int)$r['status_final']) {
@@ -103,6 +107,10 @@ function wish_stats(array $rows): array
         }
         if ((int)$r['nice_to_have']) {
             $s['nice'] += (float)$r['netto_gesamt'];
+        }
+        if ((int)($r['ist_stan'] ?? 0)) {
+            $s['stan'] += (float)$r['netto_gesamt'];
+            $s['stan_anzahl']++;
         }
     }
     return $s;
@@ -260,6 +268,7 @@ function wish_save_from_post(?array $existing, array $user): array
         'kategorie_id'     => post_int('kategorie_id'),
         'dringlichkeit_id' => post_int('dringlichkeit_id') ?: list_default_id('dringlichkeit'),
         'nice_to_have'     => post_bool('nice_to_have'),
+        'ist_stan'         => post_bool('ist_stan'),
         'benoetigt_bis'    => post_date('benoetigt_bis'),
         'lieferant'        => mb_substr(post_str('lieferant'), 0, 150),
         'artikelnummer'    => mb_substr(post_str('artikelnummer'), 0, 100),

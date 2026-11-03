@@ -50,8 +50,9 @@ unter „Sicherheitslücke PHP2Shell".
 ### Planen und Geld
 
 * **Wünsch dir was** – Fachgruppen und Zugführer tragen Bedarfe ein (Bezeichnung,
-  Anzahl, Betrag, Dringlichkeit, Fachgruppe, Kategorie, Frist, eigene
-  Zusatzfelder), alle priorisieren gemeinsam per Abstimmung und Kommentar.
+  Anzahl, Betrag, Dringlichkeit, Fachgruppe, Kategorie, Frist, „ist STAN" für
+  Soll-Ausstattung, eigene Zusatzfelder), alle priorisieren gemeinsam per
+  Abstimmung und Kommentar.
   Angebote als Anlage, CSV-Export, Übernahme aus Divera-Formularen.
   **„Freigegeben, bitte bestellen"** mit Bestellberechtigungen je Rolle und
   Funktion, Betragsgrenze und Vier-Augen-Prinzip; **Bestellungen** fassen

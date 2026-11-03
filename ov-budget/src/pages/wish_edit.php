@@ -50,7 +50,7 @@ if (!$wish) {
         'kategorie_id' => null,
         'dringlichkeit_id' => list_default_id('dringlichkeit'),
         'status_id' => list_default_id('wunsch_status'),
-        'budget_id' => null, 'nice_to_have' => 0, 'prioritaet' => 0,
+        'budget_id' => null, 'nice_to_have' => 0, 'ist_stan' => 0, 'prioritaet' => 0,
         'benoetigt_bis' => null, 'lieferant' => '', 'artikelnummer' => '', 'link' => '',
         'antragsteller' => $user['display_name'], 'extra' => null, 'source' => 'manuell',
     ];

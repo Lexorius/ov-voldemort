@@ -149,7 +149,9 @@ sie enthalten.
 ## Was kann die Anwendung?
 
 * **Wünsch dir was** – Bedarfe mit Bezeichnung, Anzahl, Betrag,
-  Dringlichkeit, Fachgruppe, Kategorie, Status, „nice to have", Frist,
+  Dringlichkeit, Fachgruppe, Kategorie, Status, „nice to have", „ist STAN"
+  (der Gegenstand steht in der Stärke- und Ausstattungsnachweisung, ist
+  also Soll-Ausstattung – mit Marke, Filter und eigener Summe), Frist,
   Angebots-Uploads, Abstimmung und Kommentaren. CSV-Export inklusive.
 * **Aufgaben** – für den Ortsverband, einzelne Fachgruppen, Funktionen oder
   Personen. Wer angemeldet ist, sieht unter „Für mich" alles aus dem eigenen

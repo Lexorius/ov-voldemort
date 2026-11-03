@@ -23,6 +23,7 @@ $dringColor = $w['dring_color'] ?: '#64748b';
     <?= badge($w['status_label'] ? ['label' => $w['status_label'], 'color' => $w['status_color']] : null, 'ohne Status') ?>
     <?= badge($w['dring_label'] ? ['label' => $w['dring_label'], 'color' => $w['dring_color']] : null, 'ohne Dringlichkeit') ?>
     <?php if ((int)$w['nice_to_have']): ?><span class="badge badge--nice">nice to have</span><?php endif; ?>
+    <?php if ((int)($w['ist_stan'] ?? 0)): ?><span class="badge badge--stan" title="Steht in der Stärke- und Ausstattungsnachweisung">STAN</span><?php endif; ?>
     <?php if ((int)$w['anlagen'] > 0): ?>
       <span class="badge badge--outline">📎 <?= (int)$w['anlagen'] ?></span>
     <?php endif; ?>

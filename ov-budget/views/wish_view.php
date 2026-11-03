@@ -26,6 +26,7 @@ $extraFields = wish_extra_fields();
     <?= badge($wish['status_label'] ? ['label' => $wish['status_label'], 'color' => $wish['status_color']] : null, 'ohne Status') ?>
     <?= badge($wish['dring_label'] ? ['label' => $wish['dring_label'], 'color' => $wish['dring_color']] : null, 'ohne Dringlichkeit') ?>
     <?php if ((int)$wish['nice_to_have']): ?><span class="badge badge--nice">nice to have</span><?php endif; ?>
+    <?php if ((int)($wish['ist_stan'] ?? 0)): ?><span class="badge badge--stan" title="Steht in der Stärke- und Ausstattungsnachweisung">STAN</span><?php endif; ?>
     <?php if ($wish['fachgruppe_label']): ?><span class="badge badge--outline"><?= e($wish['fachgruppe_label']) ?></span><?php endif; ?>
     <?php if ($wish['kategorie_label']): ?><span class="badge badge--outline"><?= e($wish['kategorie_label']) ?></span><?php endif; ?>
 

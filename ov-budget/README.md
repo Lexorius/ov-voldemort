@@ -24,7 +24,8 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 
 ### Wünsch dir was
 - Bedarfe mit Bezeichnung, Anzahl, Betrag, Dringlichkeit, Fachgruppe,
-  Kategorie, Status, „nice to have", Frist und eigenen Zusatzfeldern
+  Kategorie, Status, „nice to have", „ist STAN" (Soll-Ausstattung), Frist
+  und eigenen Zusatzfeldern
 - Angebote als Anlage, Abstimmung, Kommentare, CSV-Export
 - Übernahme aus **Divera-24/7-Formularen** mit frei zuordenbaren Feldern
 - **„Freigegeben, bitte bestellen"** mit **Bestellberechtigungen** je Rolle und

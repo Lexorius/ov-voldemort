@@ -1,5 +1,15 @@
 # Änderungsverlauf
 
+## 2.1.74.0
+
+- **Wünsch dir was – „Ist STAN":** Neuer Haken am Wunsch, wenn der
+  Gegenstand in der Stärke- und Ausstattungsnachweisung steht – also
+  Soll-Ausstattung ist und kein Zusatzwunsch. Blaue Marke „STAN" in Liste
+  und Wunschseite, Filterchips „nur STAN" / „ohne STAN", eigene Kachel mit
+  Summe und Zahl der STAN-Wünsche, Spalte „STAN" im CSV. Beim Divera-Import
+  lässt sich ein Ja/Nein-Feld „Ist STAN" (auch „Soll-Ausstattung")
+  zuordnen. Bestehende Wünsche bekommen den Haken beim Start als „nein".
+
 ## 2.1.73.0
 
 - **STAN-Chat – Bedeutungssuche:** Mit einem Embedding-Modell in Ollama

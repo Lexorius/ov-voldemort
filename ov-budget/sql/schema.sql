@@ -143,6 +143,8 @@ CREATE TABLE IF NOT EXISTS wishes (
   -- Wunsch gehört zu einem Fahrzeug (Ersatzteil, Ausstattung); Verweis folgt in Wanderung 020
   vehicle_id      INT UNSIGNED NULL,
   nice_to_have    TINYINT(1)   NOT NULL DEFAULT 0,
+  -- Gegenstand steht in der STAN (Staerke- und Ausstattungsnachweisung): Soll-Ausstattung, kein Zusatzwunsch
+  ist_stan        TINYINT(1)   NOT NULL DEFAULT 0,
   prioritaet      INT          NOT NULL DEFAULT 0,
   benoetigt_bis   DATE         NULL,
   lieferant       VARCHAR(150) NOT NULL DEFAULT '',

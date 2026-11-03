@@ -12,6 +12,7 @@ $filters = [
     'budget_id'        => get_int('budget_id'),
     'vehicle_id'       => get_int('vehicle_id'),
     'nice'             => get_str('nice'),
+    'stan'             => get_str('stan'),
     'sort'             => get_str('sort', 'prio'),
     'offen'            => get_str('alle') === '1' ? 0 : 1,
     'mine'             => get_str('mine') === '1' ? (int)$user['id'] : null,

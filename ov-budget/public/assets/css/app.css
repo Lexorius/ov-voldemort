@@ -407,6 +407,7 @@ legend { font-size: .85rem; font-weight: 700; color: var(--ink-soft); padding: 0
 .badge--muted { background: var(--border); color: var(--ink-soft); }
 .badge--outline { background: transparent; border: 1px solid var(--border); color: var(--ink-soft); }
 .badge--nice { background: #7c3aed; }
+.badge--stan { background: #003399; }
 /* Geplantes und Erwartetes: gestreift wie im Verlauf, damit es in Listen auffällt */
 .badge--geplant {
   background: repeating-linear-gradient(135deg, #cbd5e1 0 3px, #f8fafc 3px 6px);
