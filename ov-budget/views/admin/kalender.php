@@ -85,8 +85,11 @@ $fremde = array_diff($ausgewaehlt, array_keys($verfuegbar));
   <?php if ($icsAktiv): ?>
     <dl class="dl">
       <div class="dl__item"><div class="dl__label">Adresse</div>
-        <div class="dl__value mono small"><span data-geheim="<?= e($icsAdresse) ?>"><?= e(preg_replace('/token=[0-9a-f]+/', 'token=' . str_repeat('•', 16), $icsAdresse)) ?></span>
-          <button type="button" class="btn btn--ghost btn--sm" data-geheim-zeigen data-aus="verbergen">zeigen</button>
+        <div class="dl__value mono small"><span data-geheim="<?= e($icsAdresse) ?>" style="word-break:break-all"><?= e(preg_replace('/token=[0-9a-f]+/', 'token=' . str_repeat('•', 16), $icsAdresse)) ?></span>
+          <span class="btnrow" style="display:inline-flex;gap:.3rem;margin-left:.4rem;vertical-align:middle">
+            <button type="button" class="btn btn--sec btn--sm" data-geheim-zeigen data-aus="verbergen">Adresse zeigen</button>
+            <button type="button" class="btn btn--sec btn--sm" data-geheim-kopieren>Adresse kopieren</button>
+          </span>
           <?php if (!str_starts_with($icsAdresse, 'http')): ?><div class="muted">Ohne Basisadresse (Einstellungen → Home Assistant → „Adresse der Anwendung") steht hier nur der Pfad – davor gehört die Adresse des Add-ons über seinen Port, nicht die Ingress-Adresse.</div><?php endif; ?></div></div>
       <?php if ($fachgruppen): ?>
         <div class="dl__item"><div class="dl__label">Je Fachgruppe</div>

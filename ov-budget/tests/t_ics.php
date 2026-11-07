@@ -159,5 +159,8 @@ $check('Import überspringt Einträge aus dem eigenen Feed', count($zeilen) === 
 /* ---------- Einbau ---------- */
 $check('Endpunkt, Einstellungen, Verwaltung', is_file($app . '/public/ics.php') && str_contains((string)file_get_contents($app . '/sql/seed.sql'), "'kalender_ics_token'")
     && str_contains((string)file_get_contents($app . '/src/pages/admin/kalender.php'), 'ics_token_neu') && str_contains((string)file_get_contents($app . '/views/admin/kalender.php'), 'Kalender-Abo'));
+$ansicht = (string)file_get_contents($app . '/views/admin/kalender.php');
+$check('Zeigen und Kopieren stehen im Kasten hinter dem verdeckten Wert', (bool)preg_match('/data-geheim="[^"]*"[^>]*>.*?<\/span>\s*<span[^>]*>\s*<button[^>]*data-geheim-zeigen/su', $ansicht)
+    && str_contains($ansicht, 'data-geheim-kopieren'));
 
 echo "$ok bestanden, $fail fehlgeschlagen\n";

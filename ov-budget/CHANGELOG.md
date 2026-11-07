@@ -1,5 +1,11 @@
 # Änderungsverlauf
 
+## 2.1.77.1
+
+- **Kalender-Abo:** „Adresse zeigen" tat nichts, weil der Knopf nicht in dem
+  Kasten stand, den das Skript erwartet; dazu „Adresse kopieren" in die
+  Zwischenablage. Lange Adressen brechen um.
+
 ## 2.1.77.0
 
 - **Kalender-Abo (ICS):** Der Kalender des OV als Abonnement unter
