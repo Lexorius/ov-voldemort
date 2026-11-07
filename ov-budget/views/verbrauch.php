@@ -118,6 +118,7 @@ $darfAblesen = can('read_meter');
           <?php if (!empty($m['bereich_name'])): ?><span class="muted small">· für <?= e((string)$m['bereich_name']) ?></span><?php endif; ?>
           <?php if (!empty($m['stellplatz_name'])): ?><span class="muted small">· in <?= e((string)$m['stellplatz_name']) ?></span><?php endif; ?>
           <?php if ((string)$m['quelle'] === 'ha'): ?><span class="badge badge--outline">Home Assistant</span><?php endif; ?>
+          <?php if (meter_impuls_aktiv($m)): ?><span class="badge badge--outline" title="Zwischen den Ablesungen zählt ein Impulszähler aus Home Assistant mit">Impulszähler</span><?php endif; ?>
           <?php if (trim((string)$m['qr_token']) !== ''): ?><span class="badge badge--outline">QR</span><?php endif; ?>
         </span>
       </div>

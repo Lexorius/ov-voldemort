@@ -2532,6 +2532,35 @@ SQL);
         $say('Wünsche kennen den Haken „ist STAN".');
     }
     $merken('098_wunsch_stan');
+
+    /* ---------- 099: Impulszähler aus Home Assistant an Handzählern ---------- */
+    if (ovb_table_exists($pdo, 'meters')) {
+        $schritte = [];
+        if (!ovb_column_exists($pdo, 'meters', 'impuls_entity')) {
+            $pdo->exec("ALTER TABLE meters ADD COLUMN impuls_entity VARCHAR(200) NOT NULL DEFAULT '' AFTER ha_faktor");
+            $pdo->exec('ALTER TABLE meters ADD COLUMN impuls_faktor DECIMAL(12,6) NOT NULL DEFAULT 1.000000 AFTER impuls_entity');
+            $schritte[] = 'Entität und Faktor am Zähler';
+        }
+        if (ovb_table_exists($pdo, 'meter_readings')) {
+            if (!ovb_column_exists($pdo, 'meter_readings', 'impuls_wert')) {
+                $pdo->exec('ALTER TABLE meter_readings ADD COLUMN impuls_wert DECIMAL(14,3) NULL AFTER notiz');
+                $schritte[] = 'Sensorwert je Stand';
+            }
+            $typ = (string)$pdo->query(
+                "SELECT COLUMN_TYPE FROM information_schema.columns
+                 WHERE table_schema = DATABASE() AND table_name = 'meter_readings' AND column_name = 'quelle'"
+            )->fetchColumn();
+            if ($typ !== '' && !str_contains($typ, 'impuls')) {
+                $pdo->exec("ALTER TABLE meter_readings
+                            MODIFY quelle ENUM('manuell','ha','qr','impuls') NOT NULL DEFAULT 'manuell'");
+                $schritte[] = 'Quelle „Impulszähler"';
+            }
+        }
+        if ($schritte) {
+            $say('Zähler kennen Impulszähler aus Home Assistant: ' . implode(', ', $schritte) . '.');
+        }
+    }
+    $merken('099_impulszaehler');
 }
 
 /**

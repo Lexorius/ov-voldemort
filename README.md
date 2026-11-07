@@ -153,7 +153,8 @@ unter „Sicherheitslücke PHP2Shell".
   CSV-Import mit Vorschau; die Karte wird je Tankung mit erfasst, Strom in
   kWh je 100 km.
 * **Verbrauch** – Strom-, Gas- und Wasserzähler mit Ständen aus Home
-  Assistant, von Hand oder per QR-Code; Tarife, Kosten je Monat und Jahr,
+  Assistant, von Hand oder per QR-Code, mit Impulszähler als Zwischenstand;
+  Tarife, Kosten je Monat und Jahr,
   **Kosten je Bereich** entlang der Stell- und Lagerplätze, Unterzähler mit
   Zeiträumen, Solaranlage mit Eigenverbrauch und Autarkie, auffälliger
   Verbrauch als Warnung, Verbrauchsprofil je Wochentag und Stunde, Berichte

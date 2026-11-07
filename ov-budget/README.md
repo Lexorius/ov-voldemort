@@ -134,6 +134,8 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 ### Verbrauch
 - **Strom-, Gas- und Wasserzähler** mit Ständen aus **Home Assistant**
   (Abfrage im einstellbaren Takt), von Hand oder **per QR-Code am Zähler**
+- **Impulszähler** aus Home Assistant an Handzählern: ein Reed-Kontakt, der
+  je Liter zählt, liefert die Zwischenstände; jede Ablesung von Hand eicht
 - **Tarife** mit Zeitraum, Verbrauch und Kosten je Monat und Jahr; Warnung,
   wenn ein Zähler lange keinen Stand hat oder ein Monat ohne Tarif ist
 - **Kosten je Bereich**: Verbrauch und Kosten je Gebäude, Halle, Stockwerk

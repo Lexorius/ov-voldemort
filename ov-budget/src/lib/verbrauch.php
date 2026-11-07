@@ -10,6 +10,10 @@ declare(strict_types=1);
  * Connector. Die Stände sind eine Kette von Ablesungen; alles Weitere
  * (Verbrauch je Monat, je Jahr, Kosten) wird daraus gerechnet.
  *
+ * Ein von Hand abgelesener Zähler kann zusätzlich einen Impulszähler aus
+ * Home Assistant haben, der zwischen den Ablesungen mitzählt (Abschnitt
+ * „Impulszähler" unten).
+ *
  * Tarife gelten je Art mit einem Zeitraum von–bis. Kosten = Arbeitspreis ×
  * Menge (bei Gas nach Umrechnung in kWh) + Grundpreis anteilig je Tag.
  */
@@ -34,7 +38,7 @@ const TARIF_ARTEN = [
     'wasser'      => ['label' => 'Wasser', 'einheit' => 'm³', 'color' => '#0e7490'],
     'einspeisung' => ['label' => 'Einspeisevergütung', 'einheit' => 'kWh', 'color' => '#ca8a04'],
 ];
-const READING_QUELLEN = ['manuell' => 'von Hand', 'ha' => 'Home Assistant', 'qr' => 'QR-Code'];
+const READING_QUELLEN = ['manuell' => 'von Hand', 'ha' => 'Home Assistant', 'qr' => 'QR-Code', 'impuls' => 'Impulszähler'];
 /** Tage ohne Stand, ab denen ein Zähler als vernachlässigt gilt */
 const METER_WARN_TAGE = 35;
 
@@ -71,6 +75,18 @@ function meter_tarif_art(array $meter): ?string
 function meter_zaehlt(array $meter): bool
 {
     return (string)($meter['rolle'] ?? 'bezug') === 'bezug';
+}
+
+/** Zählt ein Impulszähler aus Home Assistant zwischen den Ablesungen mit? Reine Funktion. */
+function meter_impuls_aktiv(array $meter): bool
+{
+    return (string)($meter['quelle'] ?? 'manuell') === 'manuell' && trim((string)($meter['impuls_entity'] ?? '')) !== '';
+}
+
+/** Spricht der Zähler mit Home Assistant – als Quelle oder über einen Impulszähler? Reine Funktion. */
+function meter_mit_ha(array $meter): bool
+{
+    return (string)($meter['quelle'] ?? '') === 'ha' || meter_impuls_aktiv($meter);
 }
 
 /** Menge lesbar: 1.234,5 kWh. Reine Funktion. */
@@ -178,6 +194,15 @@ function meter_save_from_post(?array $existing, array $user): array
     if ($haFaktor <= 0) {
         $haFaktor = 1.0;
     }
+    // Impulszähler nur bei Handzählern – ein Zähler aus Home Assistant braucht ihn nicht
+    $impulsEntity = $quelle === 'manuell' ? trim(post_str('impuls_entity')) : '';
+    if ($impulsEntity !== '' && !preg_match('/^[a-z0-9_]+\.[a-z0-9_]+$/', $impulsEntity)) {
+        $errors[] = 'Die Entität des Impulszählers sieht nicht richtig aus – erwartet wird etwa sensor.wasser_impulse.';
+    }
+    $impulsFaktor = post_dec('impuls_faktor', 1.0);
+    if ($impulsFaktor <= 0) {
+        $impulsFaktor = 1.0;
+    }
     if ($errors) {
         return [null, $errors];
     }
@@ -196,6 +221,8 @@ function meter_save_from_post(?array $existing, array $user): array
         'quelle'        => $quelle,
         'ha_entity'     => $quelle === 'ha' ? mb_substr($entity, 0, 200) : '',
         'ha_faktor'     => round($haFaktor, 6),
+        'impuls_entity' => mb_substr($impulsEntity, 0, 200),
+        'impuls_faktor' => round($impulsFaktor, 6),
         'notiz'         => post_str('notiz'),
         'is_active'     => post_bool('is_active'),
     ];
@@ -363,10 +390,13 @@ function verbrauch_geaendert(): void
 /**
  * Einen Stand eintragen. Prüft, dass er zur Kette passt: nicht kleiner als
  * der letzte davor (außer ausdrücklich erlaubt, etwa nach Zählerwechsel).
- * Rückgabe: [id, fehler]
+ * Hat der Zähler einen Impulszähler, bekommt eine Ablesung von Hand oder
+ * per QR-Code den Sensorwert dieses Zeitpunkts dazu und wird so zum
+ * Eichpunkt. Rückgabe: [id, fehler]
  */
 function reading_add(array $meter, float $stand, string $gelesenAm, string $quelle = 'manuell',
-                     string $melder = '', string $notiz = '', ?array $user = null, bool $ruecklauf = false): array
+                     string $melder = '', string $notiz = '', ?array $user = null, bool $ruecklauf = false,
+                     ?float $impulsWert = null): array
 {
     if ($stand < 0) {
         return [null, 'Ein Zählerstand kann nicht negativ sein.'];
@@ -386,14 +416,18 @@ function reading_add(array $meter, float $stand, string $gelesenAm, string $quel
             menge($stand, (string)$meter['einheit'], 3), menge((float)$vorher['stand'], (string)$meter['einheit'], 3),
             de_datetime((string)$vorher['gelesen_am']))];
     }
+    if ($impulsWert === null && in_array($quelle, ['manuell', 'qr'], true) && meter_impuls_aktiv($meter)) {
+        $impulsWert = impuls_wert_am($meter, $t);
+    }
     $id = db_insert('meter_readings', [
-        'meter_id'   => (int)$meter['id'],
-        'stand'      => round($stand, 3),
-        'gelesen_am' => $gelesenAm,
-        'quelle'     => array_key_exists($quelle, READING_QUELLEN) ? $quelle : 'manuell',
-        'melder'     => mb_substr(trim($melder), 0, 60),
-        'notiz'      => mb_substr(trim($notiz), 0, 255),
-        'created_by' => $user ? (int)$user['id'] : null,
+        'meter_id'    => (int)$meter['id'],
+        'stand'       => round($stand, 3),
+        'gelesen_am'  => $gelesenAm,
+        'quelle'      => array_key_exists($quelle, READING_QUELLEN) ? $quelle : 'manuell',
+        'melder'      => mb_substr(trim($melder), 0, 60),
+        'notiz'       => mb_substr(trim($notiz), 0, 255),
+        'impuls_wert' => $impulsWert === null ? null : round($impulsWert, 3),
+        'created_by'  => $user ? (int)$user['id'] : null,
     ]);
     audit('zaehler.stand', 'meter', (int)$meter['id'],
         sprintf('%s: %s (%s)', $meter['name'], menge($stand, (string)$meter['einheit'], 3), READING_QUELLEN[$quelle] ?? $quelle));
@@ -1062,7 +1096,7 @@ function verbrauch_erinnerungen_taeglich(?int $jetzt = null, ?array $meters = nu
             continue;
         }
         $alter = meter_stand_alter($m, date('Y-m-d H:i:s', $jetzt));
-        $haFehler = (string)$m['quelle'] === 'ha' ? state_get('verbrauch_ha_fehler_' . (int)$m['id'], '') : '';
+        $haFehler = meter_mit_ha($m) ? state_get('verbrauch_ha_fehler_' . (int)$m['id'], '') : '';
         if ($alter['stufe'] === 'frisch' && $haFehler === '') {
             continue;
         }
@@ -1531,8 +1565,10 @@ function ha_zaehler_entitaeten(bool $frisch = false): array
         if (!str_starts_with($id, 'sensor.')) {
             continue;
         }
+        // Impulszähler zählen meist ohne Einheit oder in Impulsen – sie verrät ihre state_class
         if (!in_array($klasse, ['energy', 'gas', 'water'], true)
-            && !in_array($einheit, ['kWh', 'Wh', 'MWh', 'm³', 'm3', 'L', 'ft³'], true)) {
+            && !in_array($einheit, ['kWh', 'Wh', 'MWh', 'm³', 'm3', 'L', 'ft³'], true)
+            && (string)($attr['state_class'] ?? '') !== 'total_increasing') {
             continue;
         }
         $out[$id] = [
@@ -1550,10 +1586,14 @@ function ha_zaehler_entitaeten(bool $frisch = false): array
 
 /**
  * Einen Zähler aus Home Assistant lesen und den Stand eintragen, wenn er
- * neu ist. Rückgabe: ['ok' => bool, 'text' => …, 'stand' => ?float]
+ * neu ist – als Zählerstand (Quelle Home Assistant) oder über den
+ * Impulszähler. Rückgabe: ['ok' => bool, 'text' => …, 'stand' => ?float]
  */
 function meter_ha_lesen(array $meter, ?array $user = null): array
 {
+    if (meter_impuls_aktiv($meter)) {
+        return meter_impuls_lesen($meter, $user);
+    }
     if ((string)$meter['quelle'] !== 'ha' || trim((string)$meter['ha_entity']) === '') {
         return ['ok' => false, 'text' => 'Dieser Zähler wird nicht aus Home Assistant gelesen.', 'stand' => null];
     }
@@ -1585,7 +1625,7 @@ function meter_ha_lesen(array $meter, ?array $user = null): array
     return ['ok' => true, 'text' => 'Stand übernommen: ' . menge($stand, (string)$meter['einheit'], 3), 'stand' => $stand];
 }
 
-/** Für den Abruf: alle Zähler mit Quelle Home Assistant lesen, wenn fällig */
+/** Für den Abruf: alle Zähler mit Quelle Home Assistant oder Impulszähler lesen, wenn fällig */
 function verbrauch_ha_sync(): array
 {
     $res = ['gelesen' => 0, 'neu' => 0, 'fehler' => 0];
@@ -1594,7 +1634,8 @@ function verbrauch_ha_sync(): array
         return $res;
     }
     state_save('verbrauch_ha_letzter_abruf', (string)time());
-    foreach (db_all("SELECT * FROM meters WHERE quelle = 'ha' AND is_active = 1 AND ha_entity <> ''") as $m) {
+    foreach (db_all("SELECT * FROM meters WHERE is_active = 1
+                     AND ((quelle = 'ha' AND ha_entity <> '') OR (quelle = 'manuell' AND impuls_entity <> ''))") as $m) {
         $r = meter_ha_lesen($m);
         $res['gelesen']++;
         if (!$r['ok']) {
@@ -1604,6 +1645,150 @@ function verbrauch_ha_sync(): array
         }
     }
     return $res;
+}
+
+/* ==================================================================== */
+/* Impulszähler: Home Assistant zählt den Verbrauch, nicht den Stand      */
+/* ==================================================================== */
+
+/*
+ * Ein Impulszähler (etwa ein Reed-Kontakt am Wasserzähler, der je Liter
+ * einen Impuls gibt) kennt den Zählerstand nicht – er zählt nur, was seit
+ * seinem Einbau durchgelaufen ist, dafür auf den Liter genau. Deshalb
+ * bleibt die Quelle „von Hand": Jede Ablesung von Hand oder per QR-Code
+ * speichert den Sensorwert dieses Zeitpunkts und wird so zum Eichpunkt.
+ * Der Abruf rechnet danach
+ *   Stand = Eichstand + (Sensor jetzt − Sensor beim Eichen) × Faktor
+ * und trägt das als Zwischenstand (Quelle „Impulszähler") ein. Gerechnet
+ * wird vom Eichpunkt aus, nicht von Zwischenstand zu Zwischenstand –
+ * sonst würden sich Rundungen über Tausende Stände aufaddieren. Nur wenn
+ * der Sensor neu angefangen hat (Stromausfall, Neustart des ESP), geht es
+ * vom letzten Zwischenstand weiter, bis die nächste Ablesung neu eicht.
+ */
+
+/** Sensorwert als Zahl, sonst null (unknown, unavailable, leer). Reine Funktion. */
+function impuls_zahl(mixed $roh): ?float
+{
+    $s = trim((string)$roh);
+    return $s !== '' && is_numeric($s) ? (float)$s : null;
+}
+
+/**
+ * Neuer Stand aus Eichpunkt, letztem Stand mit Sensorwert und aktuellem
+ * Sensorwert. $eich und $letzter: ['stand' => …, 'impuls_wert' => …],
+ * $letzter darf der Eichpunkt selbst sein. Reine Funktion.
+ *
+ *  - Sensor unter dem letzten Wert: Er hat seit dem letzten Stand neu
+ *    angefangen – der Wert ist der Zuwachs seit dem letzten Stand.
+ *  - Letzter Wert unter dem Eichwert: Er hat irgendwann seit dem Eichen
+ *    neu angefangen – vom letzten Stand aus weiterzählen.
+ *  - Sonst der Normalfall vom Eichpunkt aus.
+ */
+function impuls_stand(array $eich, ?array $letzter, float $wert, float $faktor): float
+{
+    $letzter ??= $eich;
+    $lw = (float)$letzter['impuls_wert'];
+    if ($wert < $lw) {
+        return round((float)$letzter['stand'] + $wert * $faktor, 3);
+    }
+    if ($lw < (float)$eich['impuls_wert']) {
+        return round((float)$letzter['stand'] + ($wert - $lw) * $faktor, 3);
+    }
+    return round((float)$eich['stand'] + ($wert - (float)$eich['impuls_wert']) * $faktor, 3);
+}
+
+/** Aktueller Sensorwert aus Home Assistant – wirft bei Störung, null bei unknown/unavailable */
+function impuls_wert_jetzt(array $meter): ?float
+{
+    $s = ha_api('states/' . rawurlencode((string)$meter['impuls_entity']));
+    return impuls_zahl($s['state'] ?? '');
+}
+
+/**
+ * Sensorwert zu einem Zeitpunkt: für die letzte Stunde der aktuelle Wert,
+ * für ältere Zeitpunkte (nachgetragene Ablesung) aus der Geschichte von
+ * Home Assistant – der Recorder behält sie meist zehn Tage. Wirft nie:
+ * Ohne Wert gibt es keinen Eichpunkt, der nächste Abruf trägt ihn nach.
+ */
+function impuls_wert_am(array $meter, int $ts, ?int $jetzt = null): ?float
+{
+    $jetzt ??= time();
+    try {
+        if (abs($jetzt - $ts) <= 3600) {
+            return impuls_wert_jetzt($meter);
+        }
+        $antwort = ha_api('history/period/' . rawurlencode(date('c', $ts))
+            . '?filter_entity_id=' . rawurlencode((string)$meter['impuls_entity'])
+            . '&end_time=' . rawurlencode(date('c', $ts + 300)) . '&minimal_response&no_attributes');
+        foreach ((array)($antwort[0] ?? []) as $zustand) {
+            $wert = impuls_zahl(is_array($zustand) ? ($zustand['state'] ?? '') : '');
+            if ($wert !== null) {
+                return $wert;
+            }
+        }
+    } catch (Throwable $ex) {
+        state_save('verbrauch_ha_fehler_' . (int)$meter['id'], mb_substr($ex->getMessage(), 0, 200));
+    }
+    return null;
+}
+
+/** Jüngster Stand eines Zählers mit Sensorwert – wahlweise nur Eichpunkte (von Hand, QR-Code) */
+function impuls_letzter(int $meterId, bool $nurEich = false): ?array
+{
+    return db_row('SELECT id, stand, gelesen_am, quelle, impuls_wert FROM meter_readings
+                   WHERE meter_id = ? AND impuls_wert IS NOT NULL' . ($nurEich ? " AND quelle IN ('manuell','qr')" : '') . '
+                   ORDER BY gelesen_am DESC, id DESC LIMIT 1', [$meterId]);
+}
+
+/**
+ * Den Impulszähler lesen und den Zwischenstand eintragen, wenn er neu ist.
+ * Rückgabe wie meter_ha_lesen(): ['ok' => bool, 'text' => …, 'stand' => ?float]
+ */
+function meter_impuls_lesen(array $meter, ?array $user = null): array
+{
+    if (!meter_impuls_aktiv($meter)) {
+        return ['ok' => false, 'text' => 'Dieser Zähler hat keinen Impulszähler.', 'stand' => null];
+    }
+    $fehlerKey = 'verbrauch_ha_fehler_' . (int)$meter['id'];
+    try {
+        $wert = impuls_wert_jetzt($meter);
+    } catch (Throwable $ex) {
+        state_save($fehlerKey, mb_substr($ex->getMessage(), 0, 200));
+        return ['ok' => false, 'text' => $ex->getMessage(), 'stand' => null];
+    }
+    if ($wert === null) {
+        $text = 'Der Impulszähler liefert keinen Zahlenwert (unknown oder unavailable).';
+        state_save($fehlerKey, $text);
+        return ['ok' => false, 'text' => $text, 'stand' => null];
+    }
+    // Die jüngste Ablesung von Hand ohne Sensorwert nachträglich eichen – etwa
+    // weil Home Assistant beim Eintragen nicht erreichbar war
+    $letzter = db_row('SELECT id, stand, gelesen_am, quelle, impuls_wert FROM meter_readings WHERE meter_id = ?
+                       ORDER BY gelesen_am DESC, id DESC LIMIT 1', [(int)$meter['id']]);
+    if ($letzter && in_array((string)$letzter['quelle'], ['manuell', 'qr'], true) && $letzter['impuls_wert'] === null) {
+        $nachtrag = impuls_wert_am($meter, (int)strtotime((string)$letzter['gelesen_am']));
+        if ($nachtrag !== null) {
+            db_update('meter_readings', ['impuls_wert' => round($nachtrag, 3)], 'id = ?', [(int)$letzter['id']]);
+            $letzter['impuls_wert'] = $nachtrag;
+        }
+    }
+    $eich = impuls_letzter((int)$meter['id'], true);
+    if (!$eich) {
+        $text = 'Noch kein Eichpunkt: Bitte den Zählerstand einmal von Hand eintragen – ab dann zählt der Impulszähler weiter.';
+        state_save($fehlerKey, $text);
+        return ['ok' => false, 'text' => $text, 'stand' => null];
+    }
+    state_save($fehlerKey, '');
+    $stand = impuls_stand($eich, impuls_letzter((int)$meter['id']), $wert, (float)($meter['impuls_faktor'] ?? 1));
+    if ($letzter && abs((float)$letzter['stand'] - $stand) < 0.0005) {
+        return ['ok' => true, 'text' => 'Unverändert: ' . menge($stand, (string)$meter['einheit'], 3), 'stand' => $stand];
+    }
+    [$id, $fehler] = reading_add($meter, $stand, date('Y-m-d H:i:s'), 'impuls', 'Home Assistant', '', $user, false, $wert);
+    if ($fehler !== null) {
+        state_save($fehlerKey, mb_substr($fehler, 0, 200));
+        return ['ok' => false, 'text' => $fehler, 'stand' => $stand];
+    }
+    return ['ok' => true, 'text' => 'Zwischenstand übernommen: ' . menge($stand, (string)$meter['einheit'], 3), 'stand' => $stand];
 }
 
 /* ==================================================================== */

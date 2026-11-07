@@ -28,6 +28,7 @@ $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Se
       <?php endif; ?>
       · Quelle: <?= e(METER_QUELLEN[(string)$meter['quelle']] ?? '') ?>
       <?= (string)$meter['quelle'] === 'ha' ? '<span class="mono small">(' . e((string)$meter['ha_entity']) . ')</span>' : '' ?>
+      <?= meter_impuls_aktiv($meter) ? '· Impulszähler <span class="mono small">(' . e((string)$meter['impuls_entity']) . ')</span>' : '' ?>
     </p>
   </div>
   <div class="btnrow">
@@ -101,6 +102,18 @@ $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Se
           </form>
         <?php endif; ?>
         <details class="mt"><summary class="small">Trotzdem von Hand eintragen …</summary>
+      <?php elseif (meter_impuls_aktiv($meter)): ?>
+        <p class="small muted">Zwischen den Ablesungen zählt der Impulszähler aus Home Assistant mit – alle
+          <?= (int)max(5, setting_int('verbrauch_ha_intervall_minuten', 60)) ?> Minuten mit dem Abruf, ab der
+          letzten Ablesung von Hand oder per QR-Code. Jeder hier eingetragene Stand eicht die Rechnung neu.</p>
+        <?php if ($darf): ?>
+          <form method="post" action="<?= e(url('verbrauch_action')) ?>">
+            <?= csrf_field() ?>
+            <input type="hidden" name="action" value="ha_lesen">
+            <input type="hidden" name="meter_id" value="<?= $id ?>">
+            <button class="btn btn--sec" type="submit">Jetzt den Impulszähler lesen</button>
+          </form>
+        <?php endif; ?>
       <?php endif; ?>
       <form method="post" action="<?= e(url('verbrauch_action')) ?>" class="form mt">
         <?= csrf_field() ?>
@@ -259,9 +272,14 @@ $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Se
             <td class="nowrap small"><?= e(de_datetime((string)$r['gelesen_am'])) ?></td>
             <td class="num"><strong><?= e(menge($r['stand'], '', 3)) ?></strong> <span class="small muted"><?= e($einheit) ?></span></td>
             <td class="small"><?= badge(['label' => READING_QUELLEN[(string)$r['quelle']] ?? (string)$r['quelle'],
-                'color' => (string)$r['quelle'] === 'ha' ? '#0369a1' : ((string)$r['quelle'] === 'qr' ? '#7c3aed' : '#64748b')]) ?></td>
+                'color' => match ((string)$r['quelle']) { 'ha' => '#0369a1', 'qr' => '#7c3aed', 'impuls' => '#0e7490', default => '#64748b' }]) ?></td>
             <td class="small"><?= e((string)($r['melder'] ?: ($r['erfasser'] ?? '–'))) ?></td>
-            <td class="small"><?= e((string)$r['notiz']) ?></td>
+            <td class="small"><?= e((string)$r['notiz']) ?>
+              <?php if (($r['impuls_wert'] ?? null) !== null): ?>
+                <span class="muted" title="Wert des Impulszählers zu diesem Zeitpunkt<?= (string)$r['quelle'] !== 'impuls' ? ' – Eichpunkt' : '' ?>">
+                  <?= (string)$r['notiz'] !== '' ? '· ' : '' ?>Sensor <?= e(menge($r['impuls_wert'], '', 0)) ?><?= (string)$r['quelle'] !== 'impuls' ? ' (Eichpunkt)' : '' ?></span>
+              <?php endif; ?>
+            </td>
             <td class="nowrap">
               <?php if ($darf): ?>
                 <form method="post" action="<?= e(url('verbrauch_action')) ?>" class="inline-form">

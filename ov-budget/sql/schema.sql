@@ -1226,6 +1226,9 @@ CREATE TABLE IF NOT EXISTS meters (
   quelle          ENUM('manuell','ha') NOT NULL DEFAULT 'manuell',
   ha_entity       VARCHAR(200)  NOT NULL DEFAULT '',
   ha_faktor       DECIMAL(12,6) NOT NULL DEFAULT 1.000000,
+  -- Impulszaehler aus Home Assistant an einem Handzaehler: zaehlt den Verbrauch zwischen den Ablesungen mit
+  impuls_entity   VARCHAR(200)  NOT NULL DEFAULT '',
+  impuls_faktor   DECIMAL(12,6) NOT NULL DEFAULT 1.000000,
   qr_token        VARCHAR(80)   NOT NULL DEFAULT '',
   qr_connector_id INT UNSIGNED  NULL,
   notiz           TEXT          NULL,
@@ -1248,9 +1251,11 @@ CREATE TABLE IF NOT EXISTS meter_readings (
   meter_id    INT UNSIGNED  NOT NULL,
   stand       DECIMAL(14,3) NOT NULL,
   gelesen_am  DATETIME      NOT NULL,
-  quelle      ENUM('manuell','ha','qr') NOT NULL DEFAULT 'manuell',
+  quelle      ENUM('manuell','ha','qr','impuls') NOT NULL DEFAULT 'manuell',
   melder      VARCHAR(60)   NOT NULL DEFAULT '',
   notiz       VARCHAR(255)  NOT NULL DEFAULT '',
+  -- Wert des Impulszaehlers zu diesem Zeitpunkt; bei Ablesungen von Hand der Eichpunkt
+  impuls_wert DECIMAL(14,3) NULL,
   created_by  INT UNSIGNED  NULL,
   created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),

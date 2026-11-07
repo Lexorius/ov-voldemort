@@ -947,6 +947,26 @@ Das Modul führt Zähler und ihre Stände und rechnet daraus Verbrauch und Koste
   * **Von Hand** – am Bildschirm (Übersicht oder Zählerseite) oder per
     **QR-Code am Zähler**: Wer ihn scannt, tippt den Stand ein – ohne
     Anmeldung, verschlüsselt über den Connector (Verwendung *Zähler*).
+  * **Von Hand mit Impulszähler** – für Zähler mit Impulsgeber, etwa einem
+    Reed-Kontakt am Wasserzähler, der je Liter einen Impuls an Home
+    Assistant gibt. Der Sensor kennt den Zählerstand nicht (er zählt ab
+    seinem Einbau bei null), zählt aber auf den Liter genau. Deshalb bleibt
+    die Quelle „von Hand", der Sensor wird am Zähler als **Impulszähler**
+    mit **Faktor** eingetragen (Liter → m³: 0,001). Jede Ablesung von Hand
+    oder per QR-Code speichert den Sensorwert dieses Zeitpunkts und wird so
+    zum **Eichpunkt**; der Abruf rechnet danach im HA-Takt *Stand =
+    abgelesener Stand + Zuwachs des Sensors × Faktor* und trägt das als
+    Zwischenstand mit der Quelle *Impulszähler* ein. Gerechnet wird immer
+    vom letzten Eichpunkt aus, nicht von Zwischenstand zu Zwischenstand, so
+    addieren sich keine Rundungen. Fängt der Sensor neu bei null an
+    (Stromausfall, Neustart), geht es vom letzten Zwischenstand weiter, bis
+    die nächste Ablesung neu eicht. Eine nachgetragene Ablesung (älter als
+    eine Stunde) holt sich den Sensorwert aus der Geschichte von Home
+    Assistant; war Home Assistant beim Eintragen nicht erreichbar, trägt der
+    nächste Abruf den Eichpunkt nach. Die Ständetabelle zeigt den Sensorwert
+    je Stand, die Zählerseite hat den Knopf „Jetzt den Impulszähler lesen".
+    In der Entitätenliste stehen dafür auch Sensoren mit der state_class
+    `total_increasing`, auch ohne Einheit.
 * **Rechnung:** Zwischen zwei Ablesungen wird der Verbrauch gleichmäßig auf
   die Tage verteilt; so entstehen Monatswerte auch aus unregelmäßigen
   Ablesungen. Ein Rücklauf (Zählerwechsel) zählt nicht als Verbrauch.

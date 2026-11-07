@@ -35,7 +35,7 @@ if (!$meter) {
     $meter = [
         'id' => null, 'art' => $art, 'name' => '', 'zaehlernummer' => '', 'standort' => '', 'standort_id' => null, 'bereich_id' => null,
         'einheit' => METER_ARTEN[$art]['einheit'], 'umrechnung' => 1, 'quelle' => 'manuell', 'rolle' => 'bezug', 'parent_id' => null,
-        'ha_entity' => '', 'ha_faktor' => 1, 'notiz' => '', 'is_active' => 1,
+        'ha_entity' => '', 'ha_faktor' => 1, 'impuls_entity' => '', 'impuls_faktor' => 1, 'notiz' => '', 'is_active' => 1,
     ];
 }
 

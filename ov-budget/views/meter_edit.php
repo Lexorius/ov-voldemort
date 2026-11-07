@@ -7,7 +7,8 @@ $quelle = (string)($meter['quelle'] ?? 'manuell');
   <div>
     <h1><?= $isNew ? 'Zähler anlegen' : 'Zähler bearbeiten' ?></h1>
     <p>Ein Zähler wird entweder aus Home Assistant gelesen oder von Hand abgelesen –
-       am Bildschirm oder per QR-Code am Zähler.</p>
+       am Bildschirm oder per QR-Code am Zähler. Ein Handzähler kann dazu einen
+       Impulszähler aus Home Assistant haben, der zwischen den Ablesungen mitzählt.</p>
   </div>
   <div class="btnrow">
     <a class="btn btn--sec" href="<?= e($isNew ? url('verbrauch') : url('meter', ['id' => $meter['id']])) ?>">Abbrechen</a>
@@ -108,6 +109,35 @@ $quelle = (string)($meter['quelle'] ?? 'manuell');
              <?= $quelle === 'manuell' ? 'checked' : '' ?>> Von Hand ablesen – am Bildschirm oder per QR-Code am Zähler</label>
       <label class="wahl"><input type="radio" name="quelle" value="ha" data-schalter-radio="quelle"
              <?= $quelle === 'ha' ? 'checked' : '' ?>> Aus Home Assistant lesen</label>
+    </div>
+    <div data-quelle-block="manuell"<?= $quelle === 'manuell' ? '' : ' hidden' ?>>
+      <h3>Impulszähler aus Home Assistant (wahlweise)</h3>
+      <p class="small muted">Für Zähler mit einem Impulsgeber, etwa einem Reed-Kontakt am Wasserzähler, der je
+        Liter einen Impuls gibt. Der Sensor kennt den Zählerstand nicht, zählt aber genau mit. Jede Ablesung
+        von Hand oder per QR-Code wird zum Eichpunkt; danach rechnet der Abruf alle
+        <?= (int)max(5, setting_int('verbrauch_ha_intervall_minuten', 60)) ?> Minuten:
+        Stand = abgelesener Stand + Zuwachs des Sensors × Faktor.</p>
+      <div class="field">
+        <label for="impuls_entity">Entität des Impulszählers</label>
+        <?php if ($entitaeten): ?>
+          <select id="impuls_entity_wahl" data-ziel="impuls_entity">
+            <option value="">– aus Home Assistant wählen –</option>
+            <?php foreach ($entitaeten as $eid => $en): ?>
+              <option value="<?= e($eid) ?>"<?= (string)($meter['impuls_entity'] ?? '') === $eid ? ' selected' : '' ?>>
+                <?= e($en['name']) ?> (<?= e($eid) ?><?= $en['einheit'] !== '' ? ', ' . e($en['einheit']) : '' ?>)</option>
+            <?php endforeach; ?>
+          </select>
+        <?php endif; ?>
+        <input type="text" id="impuls_entity" name="impuls_entity" class="mono mt" maxlength="200"
+               value="<?= e((string)($meter['impuls_entity'] ?? '')) ?>" placeholder="sensor.wasser_impulse – leer lassen, wenn es keinen gibt">
+        <small>Leer = kein Impulszähler, der Zähler wird nur von Hand abgelesen.</small>
+      </div>
+      <div class="field">
+        <label for="impuls_faktor">Faktor</label>
+        <input type="text" inputmode="decimal" id="impuls_faktor" name="impuls_faktor" value="<?= e(num_input($meter['impuls_faktor'] ?? 1, true)) ?>">
+        <small>Zuwachs des Sensors × Faktor = Zuwachs in der Einheit des Zählers. Zählt der Sensor Liter
+          und der Zähler m³: 0,001. Zählt er schon in der Zählereinheit: 1.</small>
+      </div>
     </div>
     <div data-quelle-block="ha"<?= $quelle === 'ha' ? '' : ' hidden' ?>>
       <div class="field">

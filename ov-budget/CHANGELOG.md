@@ -1,5 +1,22 @@
 # Änderungsverlauf
 
+## 2.1.75.0
+
+- **Verbrauch – Impulszähler aus Home Assistant:** Ein von Hand oder per
+  QR-Code abgelesener Zähler kann einen Impulszähler aus Home Assistant
+  bekommen, etwa einen Reed-Kontakt am Wasserzähler, der je Liter zählt.
+  Der Sensor kennt den Zählerstand nicht, zählt aber genau: Jede Ablesung
+  von Hand speichert seinen Wert und wird zum Eichpunkt, der Abruf rechnet
+  danach im HA-Takt *abgelesener Stand + Zuwachs des Sensors × Faktor* und
+  trägt Zwischenstände mit der Quelle „Impulszähler" ein. Rechnung immer
+  vom Eichpunkt aus, Neustart des Sensors bei null abgefangen, nachgetragene
+  Ablesungen holen den Sensorwert aus der Geschichte von Home Assistant.
+  Neuer Block im Zählerformular unter „Von Hand", Knopf „Jetzt den
+  Impulszähler lesen", Sensorwert in der Ständetabelle, Marke in der
+  Übersicht. Die Entitätenliste nennt auch Sensoren mit state_class
+  `total_increasing`. Spalten impuls_entity, impuls_faktor und impuls_wert
+  samt Wanderung 099.
+
 ## 2.1.74.0
 
 - **Wünsch dir was – „Ist STAN":** Neuer Haken am Wunsch, wenn der

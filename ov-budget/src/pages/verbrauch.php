@@ -25,7 +25,7 @@ foreach ($meters as $m) {
         'kosten' => $kosten['gesamt'],
         'ohne_tarif' => $kosten['ohne_tarif'],
         'alter'  => meter_stand_alter($m),
-        'ha_fehler' => (string)$m['quelle'] === 'ha' ? state_get('verbrauch_ha_fehler_' . (int)$m['id'], '') : '',
+        'ha_fehler' => meter_mit_ha($m) ? state_get('verbrauch_ha_fehler_' . (int)$m['id'], '') : '',
     ];
 }
 // Anteil der Unterzähler an ihrem Hauptzähler
