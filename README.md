@@ -72,7 +72,8 @@ unter „Sicherheitslücke PHP2Shell".
 * **Kalender** – alle Termine an einem Ort: eigene Termine für sich, die
   Fachgruppe, eine Funktion oder den OV, dazu Besprechungen, Veranstaltungen,
   Fristen, fällige Aufgaben und Budget-Stichtage. Feiertage des Bundeslands,
-  Kalender aus Home Assistant. **Je Termin**: mehrere Fahrzeuge, mehrere Plätze
+  Kalender aus Home Assistant, und zurück als **Kalender-Abo (ICS)** mit Token
+  für Home Assistant, Outlook, Google und das Handy. **Je Termin**: mehrere Fahrzeuge, mehrere Plätze
   aus den Stell- und Lagerplätzen plus freier Ort, mehrere Fachgruppen,
   Instandsetzungsaufträge (Werkstatttermine), Kontakte, THW-Dienststellen und
   Dateien wie Einladungen. **Doppelbuchungen** von Fahrzeugen werden farbig

@@ -70,3 +70,61 @@ $fremde = array_diff($ausgewaehlt, array_keys($verfuegbar));
     <div class="dl__item"><div class="dl__label">Letzter Abruf</div><div class="dl__value"><?= $letzterAbruf > 0 ? e(de_datetime(date('Y-m-d H:i:s', $letzterAbruf))) : 'noch nie' ?></div></div>
   </dl>
 </section>
+
+<?php $icsAktiv ??= false; $icsAdresse ??= ''; $icsOptionen ??= []; $icsLetzter ??= 0; $icsIp ??= ''; $fachgruppen ??= []; ?>
+<section class="card" id="ics">
+  <div class="card__head">
+    <h2>Kalender-Abo (ICS) für Home Assistant und Geräte</h2>
+    <span class="badge<?= $icsAktiv ? '' : ' badge--muted' ?>"<?= $icsAktiv ? ' style="background:#15803d"' : '' ?>><?= $icsAktiv ? 'eingeschaltet' : 'aus' ?></span>
+  </div>
+  <p class="small">Der Kalender des OV als Abonnement im Standardformat: Home Assistant holt ihn mit der eingebauten Integration
+    <strong>„Remote Calendar"</strong> (Einstellungen → Integrationen → Hinzufügen → Remote Calendar, Adresse eintragen), ebenso Outlook,
+    Google Kalender, Thunderbird und das Handy. Die Adresse ist ohne Anmeldung erreichbar und durch ein Token geschützt – wer die Adresse kennt,
+    liest den Kalender. Darum: nur an Geräte und Konten geben, denen man das anvertraut, und bei Verdacht das Token erneuern.</p>
+
+  <?php if ($icsAktiv): ?>
+    <dl class="dl">
+      <div class="dl__item"><div class="dl__label">Adresse</div>
+        <div class="dl__value mono small"><span data-geheim="<?= e($icsAdresse) ?>"><?= e(preg_replace('/token=[0-9a-f]+/', 'token=' . str_repeat('•', 16), $icsAdresse)) ?></span>
+          <button type="button" class="btn btn--ghost btn--sm" data-geheim-zeigen data-aus="verbergen">zeigen</button>
+          <?php if (!str_starts_with($icsAdresse, 'http')): ?><div class="muted">Ohne Basisadresse (Einstellungen → Home Assistant → „Adresse der Anwendung") steht hier nur der Pfad – davor gehört die Adresse des Add-ons über seinen Port, nicht die Ingress-Adresse.</div><?php endif; ?></div></div>
+      <?php if ($fachgruppen): ?>
+        <div class="dl__item"><div class="dl__label">Je Fachgruppe</div>
+          <div class="dl__value small">An die Adresse <span class="mono">&amp;fachgruppe=ID</span> anhängen – dann kommen nur OV, Funktionen und diese Gruppe:
+            <?= e(implode(', ', array_map(static fn($fg) => $fg['label'] . ' = ' . (int)$fg['id'], $fachgruppen))) ?></div></div>
+      <?php endif; ?>
+      <div class="dl__item"><div class="dl__label">Zuletzt abgerufen</div>
+        <div class="dl__value"><?= $icsLetzter > 0 ? e(de_datetime(date('Y-m-d H:i:s', $icsLetzter))) . ($icsIp !== '' ? ' von ' . e($icsIp) : '') : 'noch nie' ?></div></div>
+    </dl>
+  <?php endif; ?>
+
+  <form method="post" class="form" style="margin-top:.6rem"><?= csrf_field() ?>
+    <input type="hidden" name="action" value="ics_optionen">
+    <fieldset>
+      <legend>Was hinausgeht</legend>
+      <p class="small muted" style="margin:0 0 .4rem">Persönliche Termine (Ziel Person) gehen nie hinaus, ebenso keine Gästelisten, Tagesordnungen oder Namen.</p>
+      <?php foreach (['termine' => 'Termine für OV, Fachgruppen und Funktionen', 'veranstaltungen' => 'Veranstaltungen', 'besprechungen' => 'Besprechungen',
+                      'fristen' => 'Fahrzeugfristen (HU, SP, UVV) als ganztägige Einträge', 'beschreibung' => 'Beschreibungen mitgeben (sonst nur Titel, Zeit und Ort)'] as $key => $label): ?>
+        <div class="field field--check">
+          <input type="checkbox" id="ics_<?= e($key) ?>" name="ics_<?= e($key) ?>" value="1" <?= !empty($icsOptionen[$key]) ? 'checked' : '' ?>>
+          <label for="ics_<?= e($key) ?>"><?= e($label) ?></label>
+        </div>
+      <?php endforeach; ?>
+    </fieldset>
+    <div class="btnrow"><button class="btn btn--sec btn--sm" type="submit">Inhalt speichern</button></div>
+  </form>
+
+  <div class="btnrow" style="margin-top:.6rem">
+    <form method="post" class="inline-form"><?= csrf_field() ?>
+      <input type="hidden" name="action" value="ics_neu">
+      <button class="btn btn--sm" type="submit"<?= $icsAktiv ? ' data-confirm="Neues Token erzeugen? Die bisherige Adresse hört sofort auf zu funktionieren."' : '' ?>><?= $icsAktiv ? 'Token erneuern' : 'Abo einschalten (Token erzeugen)' ?></button></form>
+    <?php if ($icsAktiv): ?>
+      <form method="post" class="inline-form"><?= csrf_field() ?>
+        <input type="hidden" name="action" value="ics_weg">
+        <button class="btn btn--sec btn--sm" type="submit" data-confirm="Kalender-Abo abschalten? Alle Geräte verlieren den Kalender.">Abo abschalten</button></form>
+    <?php endif; ?>
+  </div>
+  <p class="small muted" style="margin:.6rem 0 0">Zur Sicherheit: Das Token hat 64 Zeichen und wird in konstanter Zeit verglichen; nach zehn Fehlversuchen
+    von einer Adresse ist diese so lange gesperrt wie bei der Anmeldung. Der Abruf legt keine Sitzung an, wird nicht zwischengespeichert und bleibt
+    Suchmaschinen verborgen. Beim Import aus Home Assistant werden Einträge aus diesem Abo übersprungen, damit nichts im Kreis läuft.</p>
+</section>

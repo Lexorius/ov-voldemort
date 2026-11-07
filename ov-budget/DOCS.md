@@ -892,6 +892,46 @@ und ausblenden:
   gerechnet; im Protokoll steht er als Text.
 * Die Startseite zeigt die nächsten Termine der kommenden 14 Tage.
 
+### Kalender-Abo (ICS) für Home Assistant, Outlook und das Handy
+
+Der Kalender des OV lässt sich abonnieren, in die andere Richtung als der
+Import: Unter *Verwaltung → Kalender → Kalender-Abo* erzeugt „Abo
+einschalten" ein Token, daraus wird die Adresse `…/ics.php?token=…`. In
+Home Assistant kommt sie in die eingebaute Integration **Remote Calendar**
+(Einstellungen → Integrationen → Hinzufügen → Remote Calendar); daraus wird
+eine normale Kalender-Entität fürs Dashboard, für Automatisierungen und
+Benachrichtigungen, alle 15 Minuten neu geholt. Dieselbe Adresse nehmen
+Outlook, Google Kalender, Thunderbird und das Handy als Abonnement. Home
+Assistant muss das Add-on dafür über seinen Port erreichen, nicht über
+Ingress; die Basisadresse unter *Einstellungen → Home Assistant → „Adresse
+der Anwendung"* macht aus dem Pfad die fertige Adresse.
+
+**Was hinausgeht**, stellt die Verwaltung ein: Termine für OV, Fachgruppen
+und Funktionen, Veranstaltungen, Besprechungen, auf Wunsch Fahrzeugfristen
+(HU, SP, UVV) als ganztägige Einträge und Beschreibungen. Persönliche
+Termine (Ziel Person), Gästelisten, Tagesordnungen und Namen gehen nie
+hinaus; ohne den Haken „Beschreibungen" nur Titel, Zeit und Ort. Mit
+`&fachgruppe=ID` am Ende liefert die Adresse nur OV, Funktionen und diese
+Gruppe – für den Kalender einer einzelnen Fachgruppe. Das Fenster reicht 30
+Tage zurück und ein Jahr voraus, ganztägige Einträge stehen als Datum, alles
+andere in UTC, damit jedes Gerät die Uhrzeit richtig zeigt.
+
+**Sicherheit:** Die Adresse ist ohne Anmeldung erreichbar, darum gilt das
+Token als Schlüssel – nur an Geräte und Konten geben, denen man das
+anvertraut, und bei Verdacht unter *Verwaltung → Kalender* erneuern; das
+alte gilt dann sofort nicht mehr, „Abo abschalten" nimmt den Feed ganz
+weg. Das Token hat 64 Zeichen aus dem Zufallsgenerator, ein Vergleich läuft
+in konstanter Zeit, nach zehn Fehlversuchen von einer Adresse ist sie so
+lange gesperrt wie bei der Anmeldung (Vorgabe 15 Minuten), und falsche wie
+fehlende Token bekommen dieselbe Antwort. Der Abruf nimmt nur GET an, legt
+keine Sitzung und kein Cookie an, wird nicht zwischengespeichert und
+schließt Suchmaschinen aus. Die Verwaltung zeigt, wann und von welcher
+Adresse zuletzt abgerufen wurde. Jeder Eintrag trägt eine Kennung mit der
+Vorsilbe `ovb-`; der Import aus Home Assistant überspringt solche Einträge,
+damit der eigene Kalender nicht als Kopie zurückkommt. Nicht zu ändern ist,
+dass die Adresse mitsamt Token in den Zugriffsprotokollen des Webservers
+steht – wer die Protokolle lesen kann, kann auch den Kalender lesen.
+
 ## Verbrauch: Strom, Gas und Wasser
 
 Die Zählerstände auf der Zählerseite stehen seitenweise, 50 je Seite, neueste

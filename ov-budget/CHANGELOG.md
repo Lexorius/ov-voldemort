@@ -1,5 +1,19 @@
 # Änderungsverlauf
 
+## 2.1.77.0
+
+- **Kalender-Abo (ICS):** Der Kalender des OV als Abonnement unter
+  `/ics.php?token=…` für Home Assistant (Integration „Remote Calendar"),
+  Outlook, Google, Thunderbird und das Handy. Unter Verwaltung → Kalender:
+  Token erzeugen, erneuern oder abschalten, wählen, was hinausgeht (Termine
+  für OV, Fachgruppen und Funktionen, Veranstaltungen, Besprechungen,
+  Fahrzeugfristen, Beschreibungen), je Fachgruppe über `&fachgruppe=ID`.
+  Persönliche Termine, Gästelisten, Tagesordnungen und Namen gehen nie
+  hinaus. Sicherheit: 64-stelliges Zufallstoken, Vergleich in konstanter
+  Zeit, Sperre je IP nach zehn Fehlversuchen, nur GET, keine Sitzung, kein
+  Zwischenspeicher, keine Suchmaschinen; der Import aus Home Assistant
+  überspringt Einträge aus dem eigenen Abo.
+
 ## 2.1.76.0
 
 - **Verbrauch – Faktor verlor seine Nachkommastellen:** Das Zählerformular

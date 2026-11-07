@@ -117,6 +117,10 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
   Fristen, fällige Aufgaben und Budget-Stichtage aus den Modulen
 - **Feiertage** des Bundeslands gerechnet, **Kalender aus Home Assistant**
   eingebunden
+- **Kalender-Abo (ICS)** in die andere Richtung: Termine, Veranstaltungen,
+  Besprechungen und Fahrzeugfristen als Abonnement für Home Assistant
+  (Remote Calendar), Outlook, Google und das Handy – mit Token, Sperre nach
+  Fehlversuchen, ohne persönliche Termine und Namen
 - **In Besprechungen mitnehmen**: anstehende Termine mit einem Klick auf die
   Tagesordnung
 

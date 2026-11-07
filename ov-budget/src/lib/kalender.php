@@ -1361,6 +1361,10 @@ function kalender_ha_zeilen(string $entity, string $name, array $antwort): array
 {
     $out = [];
     foreach ($antwort as $ev) {
+        // Einträge aus dem eigenen Kalender-Abo nicht wieder einlesen – sonst stünde alles doppelt
+        if (str_starts_with((string)($ev['uid'] ?? ''), 'ovb-')) {
+            continue;
+        }
         $start = $ev['start'] ?? [];
         $ende = $ev['end'] ?? [];
         $ganztag = isset($start['date']);

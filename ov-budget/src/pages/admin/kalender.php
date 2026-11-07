@@ -27,6 +27,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirect_route('admin_kalender');
             // kein break: redirect beendet
 
+        case 'ics_neu':
+            $token = ics_token_neu();
+            state_save('kalender_ics_letzter_abruf', '0');
+            state_save('kalender_ics_letzte_ip', '');
+            audit('kalender.ics_token', 'settings', null, 'neu');
+            flash('success', 'Neues Token erzeugt. Ein altes Token gilt ab jetzt nicht mehr – die Adresse in Home Assistant und auf den Geräten erneuern.');
+            redirect_route('admin_kalender');
+            // kein break: redirect beendet
+
+        case 'ics_weg':
+            ics_token_weg();
+            audit('kalender.ics_token', 'settings', null, 'zurückgezogen');
+            flash('success', 'Kalender-Abo abgeschaltet. Die bisherige Adresse liefert nichts mehr.');
+            redirect_route('admin_kalender');
+            // kein break
+
+        case 'ics_optionen':
+            foreach (['termine', 'veranstaltungen', 'besprechungen', 'fristen', 'beschreibung'] as $schalter) {
+                setting_save('kalender_ics_' . $schalter, post_bool('ics_' . $schalter) ? '1' : '0');
+            }
+            settings_reset_cache();
+            audit('kalender.ics_optionen', 'settings', null, json_encode(ics_optionen()));
+            flash('success', 'Inhalt des Kalender-Abos gespeichert.');
+            redirect_route('admin_kalender');
+            // kein break
+
         case 'abrufen':
             $res = kalender_ha_sync();
             if ($res['fehler']) {
@@ -57,4 +83,10 @@ render('admin/kalender', [
     'anzahl'      => (int)db_val('SELECT COUNT(*) FROM calendar_ha', [], 0),
     'fehler'      => $fehler,
     'hinweis'     => $hinweis,
+    'icsAktiv'    => ics_aktiv(),
+    'icsAdresse'  => ics_aktiv() ? ics_adresse() : '',
+    'icsOptionen' => ics_optionen(),
+    'icsLetzter'  => (int)state_get('kalender_ics_letzter_abruf', '0'),
+    'icsIp'       => state_get('kalender_ics_letzte_ip', ''),
+    'fachgruppen' => function_exists('list_items') ? list_items('fachgruppe') : [],
 ]);

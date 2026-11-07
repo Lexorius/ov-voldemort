@@ -68,6 +68,7 @@ require __DIR__ . '/lib/backup.php';
 require __DIR__ . '/lib/verbrauch.php';
 require __DIR__ . '/lib/prognose.php';
 require __DIR__ . '/lib/kalender.php';
+require __DIR__ . '/lib/ics.php';
 require __DIR__ . '/lib/tp_links.php';
 require __DIR__ . '/lib/standorte.php';
 require __DIR__ . '/lib/thw.php';
