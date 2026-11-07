@@ -95,7 +95,7 @@ $quelle = (string)($meter['quelle'] ?? 'manuell');
       </div>
       <div class="field">
         <label for="umrechnung">Umrechnung für den Tarif</label>
-        <input type="text" inputmode="decimal" id="umrechnung" name="umrechnung" value="<?= e(num_input($meter['umrechnung'] ?? 1, true)) ?>">
+        <input type="text" inputmode="decimal" id="umrechnung" name="umrechnung" value="<?= e(num_input($meter['umrechnung'] ?? 1, true, 6)) ?>">
         <small>Nur wenn der Tarif in einer anderen Einheit rechnet als der Zähler: Bei Gas
           m³ → kWh ist das Brennwert × Zustandszahl, meist rund 10. Sonst 1.</small>
       </div>
@@ -123,7 +123,7 @@ $quelle = (string)($meter['quelle'] ?? 'manuell');
           <select id="impuls_entity_wahl" data-ziel="impuls_entity">
             <option value="">– aus Home Assistant wählen –</option>
             <?php foreach ($entitaeten as $eid => $en): ?>
-              <option value="<?= e($eid) ?>"<?= (string)($meter['impuls_entity'] ?? '') === $eid ? ' selected' : '' ?>>
+              <option value="<?= e($eid) ?>" data-einheit="<?= e($en['einheit']) ?>"<?= (string)($meter['impuls_entity'] ?? '') === $eid ? ' selected' : '' ?>>
                 <?= e($en['name']) ?> (<?= e($eid) ?><?= $en['einheit'] !== '' ? ', ' . e($en['einheit']) : '' ?>)</option>
             <?php endforeach; ?>
           </select>
@@ -134,9 +134,10 @@ $quelle = (string)($meter['quelle'] ?? 'manuell');
       </div>
       <div class="field">
         <label for="impuls_faktor">Faktor</label>
-        <input type="text" inputmode="decimal" id="impuls_faktor" name="impuls_faktor" value="<?= e(num_input($meter['impuls_faktor'] ?? 1, true)) ?>">
-        <small>Zuwachs des Sensors × Faktor = Zuwachs in der Einheit des Zählers. Zählt der Sensor Liter
-          und der Zähler m³: 0,001. Zählt er schon in der Zählereinheit: 1.</small>
+        <input type="text" inputmode="decimal" id="impuls_faktor" name="impuls_faktor" value="<?= e(num_input($meter['impuls_faktor'] ?? 1, true, 6)) ?>" data-impuls-faktor>
+        <small><strong>Zuwachs des Sensors × Faktor = Zuwachs in der Einheit des Zählers.</strong> Zählt der Sensor Liter
+          und der Zähler m³: <strong>0,001</strong>. Zählt er schon in der Zählereinheit: 1. Bei Faktor 1 macht
+          jeder Liter einen ganzen Kubikmeter – wer das übersieht, sieht den Stand davonlaufen.</small>
       </div>
     </div>
     <div data-quelle-block="ha"<?= $quelle === 'ha' ? '' : ' hidden' ?>>
@@ -163,7 +164,7 @@ $quelle = (string)($meter['quelle'] ?? 'manuell');
       </div>
       <div class="field">
         <label for="ha_faktor">Faktor</label>
-        <input type="text" inputmode="decimal" id="ha_faktor" name="ha_faktor" value="<?= e(num_input($meter['ha_faktor'] ?? 1, true)) ?>">
+        <input type="text" inputmode="decimal" id="ha_faktor" name="ha_faktor" value="<?= e(num_input($meter['ha_faktor'] ?? 1, true, 6)) ?>">
         <small>Wert der Entität × Faktor = Zählerstand. Liefert der Sensor Wh statt kWh: 0,001. Sonst 1.</small>
       </div>
       <p class="small muted">Gelesen wird alle <?= (int)max(5, setting_int('verbrauch_ha_intervall_minuten', 60)) ?> Minuten

@@ -503,6 +503,24 @@
     if (!ziel) { return; }
     wahl.addEventListener('change', function () { if (wahl.value) { ziel.value = wahl.value; } });
   });
+  // Impulszähler: zählt der Sensor Liter und der Zähler m³, Faktor 0,001 vorschlagen – solange noch 1 drinsteht
+  var impulsWahl = document.getElementById('impuls_entity_wahl');
+  var impulsFaktor = document.querySelector('[data-impuls-faktor]');
+  var zaehlerEinheit = document.getElementById('einheit');
+  if (impulsWahl && impulsFaktor && zaehlerEinheit) {
+    impulsWahl.addEventListener('change', function () {
+      var opt = impulsWahl.options[impulsWahl.selectedIndex];
+      var einheit = (opt && opt.getAttribute('data-einheit') || '').toLowerCase();
+      var ist = impulsFaktor.value.trim();
+      if (ist !== '' && ist !== '1') { return; }
+      var zaehler = zaehlerEinheit.value.trim().toLowerCase();
+      if ((einheit === 'l' || einheit === 'liter') && (zaehler === 'm³' || zaehler === 'm3')) {
+        impulsFaktor.value = '0,001';
+      } else if ((einheit === 'wh') && zaehler === 'kwh') {
+        impulsFaktor.value = '0,001';
+      }
+    });
+  }
 
   /* Auswahlliste: Dropdown + „Hinzufügen" füllt die Liste, der Mülleimer nimmt wieder heraus */
   document.querySelectorAll('[data-wahl]').forEach(function (wahl) {

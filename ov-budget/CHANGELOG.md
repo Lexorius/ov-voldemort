@@ -1,5 +1,16 @@
 # Änderungsverlauf
 
+## 2.1.76.0
+
+- **Verbrauch – Faktor verlor seine Nachkommastellen:** Das Zählerformular
+  zeigte Faktoren und Umrechnung mit zwei Nachkommastellen, aus 0,001 wurde
+  beim erneuten Öffnen eine 0, die das nächste Speichern zu 1 machte – ein
+  Impulszähler in Litern ließ den Stand dann um ganze Kubikmeter springen.
+  Faktoren und Umrechnung zeigen jetzt bis zu sechs Stellen, der Arbeitspreis
+  im Tarif vier. Wer in der Entitätenliste einen Liter-Sensor für einen
+  m³-Zähler wählt, bekommt 0,001 vorgeschlagen, solange noch 1 im Feld
+  steht; der Hinweis am Feld warnt deutlicher.
+
 ## 2.1.75.0
 
 - **Verbrauch – Impulszähler aus Home Assistant:** Ein von Hand oder per

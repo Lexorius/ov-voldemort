@@ -346,7 +346,12 @@ function rounding_note(): string
  * Zahl für ein Eingabefeld aufbereiten. Kommt der Wert aus einem Formular
  * (z.B. "1.234,56" nach einem Validierungsfehler), bleibt er unverändert.
  */
-function num_input(mixed $v, bool $trimZeros = false): string
+/**
+ * Zahl fürs Eingabefeld: deutsches Komma, $dezimal Nachkommastellen (für
+ * Beträge 2, für Faktoren und Preise je Einheit mehr – sonst wird aus 0,001
+ * beim erneuten Öffnen eine 0, die das nächste Speichern verwirft).
+ */
+function num_input(mixed $v, bool $trimZeros = false, int $dezimal = 2): string
 {
     if ($v === null || $v === '') {
         return '';
@@ -354,7 +359,7 @@ function num_input(mixed $v, bool $trimZeros = false): string
     if (is_string($v) && !is_numeric($v)) {
         return $v;
     }
-    $s = number_format((float)$v, 2, ',', '.');
+    $s = number_format((float)$v, $dezimal, ',', '.');
     return $trimZeros ? rtrim(rtrim($s, '0'), ',') : $s;
 }
 

@@ -82,7 +82,7 @@ $monatsnamen = ['', 'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Se
         : '–' ?></div>
     <div class="stat__hint"><?= $tarifHeute && (float)$tarifHeute['grundpreis_monat'] > 0
         ? '+ ' . e(money((float)$tarifHeute['grundpreis_monat'])) . ' je Monat' : '' ?>
-      <?= (float)$meter['umrechnung'] !== 1.0 ? '· Umrechnung × ' . e(num_input($meter['umrechnung'], true)) : '' ?></div>
+      <?= (float)$meter['umrechnung'] !== 1.0 ? '· Umrechnung × ' . e(num_input($meter['umrechnung'], true, 6)) : '' ?></div>
   </div>
 </div>
 

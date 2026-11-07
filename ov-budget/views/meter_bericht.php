@@ -97,7 +97,7 @@ echo render_partial('partials/bericht_kopf', [
     </tr></tfoot>
   </table>
   <?php if ($b['tarif']): ?>
-    <p class="klein">Tarif: <?= e((string)$b['tarif']['name']) ?>, <?= e(number_format((float)$b['tarif']['arbeitspreis'], 4, ',', '.')) ?> €/<?= e((string)$b['tarif']['einheit']) ?><?= (float)$b['tarif']['grundpreis_monat'] > 0 ? ' + ' . e(money((float)$b['tarif']['grundpreis_monat'])) . ' je Monat' : '' ?><?= (float)$meter['umrechnung'] !== 1.0 ? ', Umrechnung × ' . e(num_input($meter['umrechnung'], true)) : '' ?>.
+    <p class="klein">Tarif: <?= e((string)$b['tarif']['name']) ?>, <?= e(number_format((float)$b['tarif']['arbeitspreis'], 4, ',', '.')) ?> €/<?= e((string)$b['tarif']['einheit']) ?><?= (float)$b['tarif']['grundpreis_monat'] > 0 ? ' + ' . e(money((float)$b['tarif']['grundpreis_monat'])) . ' je Monat' : '' ?><?= (float)$meter['umrechnung'] !== 1.0 ? ', Umrechnung × ' . e(num_input($meter['umrechnung'], true, 6)) : '' ?>.
       Zwischen zwei Ablesungen wird der Verbrauch gleichmäßig auf die Tage verteilt.</p>
   <?php endif; ?>
 </div>

@@ -54,7 +54,7 @@ $isNew = empty($tarif['id']);
       <div class="field">
         <label for="arbeitspreis">Arbeitspreis (€ je Einheit)</label>
         <input type="text" inputmode="decimal" id="arbeitspreis" name="arbeitspreis" required
-               value="<?= e(num_input($tarif['arbeitspreis'] ?? '', true)) ?>" placeholder="0,3245">
+               value="<?= e(num_input($tarif['arbeitspreis'] ?? '', true, 4)) ?>" placeholder="0,3245">
         <small>Bis zu vier Nachkommastellen, z. B. 0,3245 €/kWh.</small>
       </div>
       <div class="field">

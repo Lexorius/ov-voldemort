@@ -235,5 +235,14 @@ $GLOBALS['ha'] = ['states' => [
 $e = ha_zaehler_entitaeten(true);
 $check('Entitätenliste nimmt total_increasing ohne Einheit, keine Momentanwerte', isset($e['sensor.wasser_impulse'], $e['sensor.strom']) && !isset($e['sensor.temperatur']));
 
+/* ---------- Faktor im Formular: kleine Zahlen überleben das erneute Öffnen ---------- */
+$check('Faktor 0,001 bleibt im Eingabefeld erhalten', num_input(0.001, true, 6) === '0,001' && num_input('0.001000', true, 6) === '0,001');
+$check('Faktor 1 ohne Nachkommastellen, Beträge weiter mit zwei', num_input(1.0, true, 6) === '1' && num_input(12.5) === '12,50');
+$check('Arbeitspreis mit vier Stellen', num_input(0.3245, true, 4) === '0,3245' && num_input(0.00045, true, 6) === '0,00045');
+$_POST = ['name' => 'Wasser', 'art' => 'wasser', 'quelle' => 'manuell', 'einheit' => 'm³', 'umrechnung' => '', 'ha_faktor' => '',
+          'impuls_entity' => 'sensor.wasser_impulse', 'impuls_faktor' => num_input(0.001, true, 6), 'is_active' => '1'];
+[$id, $fehler] = meter_save_from_post(null, ['id' => 1]);
+$check('Rundlauf: angezeigter Faktor gespeichert ergibt wieder 0,001', $fehler === [] && (float)end($GLOBALS['inserts'])[1]['impuls_faktor'] === 0.001);
+
 echo "$ok bestanden, $fail fehlgeschlagen\n";
 exit($fail === 0 ? 0 : 1);
