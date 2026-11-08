@@ -55,6 +55,7 @@ require __DIR__ . '/lib/speicher.php';
 require __DIR__ . '/lib/stein.php';
 require __DIR__ . '/lib/divera.php';
 require __DIR__ . '/lib/divera_vehicles.php';
+require __DIR__ . '/lib/divera_termine.php';
 require __DIR__ . '/lib/mqtt.php';
 require __DIR__ . '/lib/ha_export.php';
 require __DIR__ . '/lib/notify.php';

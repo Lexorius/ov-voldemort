@@ -47,6 +47,17 @@ $abrufe = [
     'Stein.APP'         => static fn() => stein_enabled() ? [stein_sync()] : [],
     'Divera-Stammdaten' => static fn() => divera_vehicles_enabled() ? [divera_vehicles_sync_master()] : [],
     'Divera-Funkstatus' => static fn() => divera_vehicles_enabled() ? [divera_vehicles_sync_status()] : [],
+    'Divera-Termine'    => static function (): array {
+        if (!divera_termine_aktiv()) {
+            return [];
+        }
+        $r = divera_termine_cron();
+        if ($r['gesendet'] === 0 && $r['fehler'] === 0 && $r['geprueft'] === 0) {
+            return [];
+        }
+        return [['status' => $r['fehler'] > 0 ? 'fehler' : 'ok', 'message' => sprintf('%d Termin(e) nach Divera, %d Stand geholt%s', $r['gesendet'], $r['geprueft'],
+            $r['meldungen'] ? ' – ' . implode(' · ', array_slice($r['meldungen'], 0, 3)) : '')]];
+    },
     'QR-Standortmeldungen' => static function (): array {
         if (!connector_due()) {
             return [];

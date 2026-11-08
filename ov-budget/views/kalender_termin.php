@@ -8,6 +8,7 @@ $weitere = implode(', ', array_map(static fn($f) => (string)$f['label'], $fachgr
   <div>
     <h1><?= e((string)$termin['titel']) ?></h1>
     <p><?= e($wann) ?><?= $ort !== '' ? ' · ' . e($ort) : '' ?></p>
+    <?php $diveraPlakette = render_partial('partials/divera_stand', ['typ' => 'termin', 'refId' => (int)$termin['id']]); if (trim($diveraPlakette) !== ''): ?><p><?= $diveraPlakette ?></p><?php endif; ?>
   </div>
   <div class="btnrow">
     <?php if ($darfBearbeiten): ?><a class="btn" href="<?= e(url('kalender_edit', ['id' => $termin['id']])) ?>">Bearbeiten</a><?php endif; ?>

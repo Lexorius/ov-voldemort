@@ -21,6 +21,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if (post_str('action') === 'delete' && $meeting) {
         // Punkte wandern per ON DELETE SET NULL zurück in den Themenspeicher
+        if (function_exists('divera_termin_entfernen')) {
+            divera_termin_entfernen('besprechung', (int)$meeting['id']);
+        }
         db_exec('DELETE FROM meetings WHERE id = ?', [$meeting['id']]);
         audit('besprechung.geloescht', 'meeting', (int)$meeting['id'], $meeting['titel']);
         flash('success', 'Besprechung gelöscht. Noch offene und vertagte Themen liegen wieder im Themenspeicher.');
@@ -37,6 +40,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     [$newId, $errors] = meeting_save_from_post($meeting, $user);
     if ($newId) {
         flash('success', $meeting ? 'Besprechung gespeichert.' : 'Besprechung angelegt. Jetzt Themen draufsetzen.');
+        if (function_exists('divera_termin_nach_speichern')) {
+            divera_termin_nach_speichern('besprechung', $newId);
+        }
         foreach ($traegerErgaenzt as $te) {
             flash('info', e(sprintf('%s mit eingeplant – trägt %s.', $te['bezeichnung'], $te['wegen'])));
         }

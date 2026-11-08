@@ -2019,4 +2019,29 @@ CREATE TABLE IF NOT EXISTS newsletter_sperre (
   UNIQUE KEY uq_nlsperre_token (token)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Termine, Veranstaltungen und Besprechungen, die als Termin in Divera 24/7 stehen
+CREATE TABLE IF NOT EXISTS divera_termine (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  typ         VARCHAR(20)  NOT NULL,
+  ref_id      INT UNSIGNED NOT NULL,
+  divera_id   INT UNSIGNED NULL,
+  foreign_id  VARCHAR(60)  NOT NULL,
+  -- Empfaenger, Gruppen, Push, Rueckmeldung, Text als JSON
+  optionen    TEXT         NULL,
+  beginn      DATETIME     NULL,
+  -- offen, gesendet, fehler, archiviert
+  status      VARCHAR(20)  NOT NULL DEFAULT 'offen',
+  versuche    TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  fehler      VARCHAR(300) NOT NULL DEFAULT '',
+  gesendet_am DATETIME     NULL,
+  geprueft_am DATETIME     NULL,
+  -- Zaehler aus Divera als JSON: empfaenger, gelesen, antworten
+  stand       TEXT         NULL,
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_divera_termin (typ, ref_id),
+  KEY idx_divera_termin_status (status, beginn)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS=1;

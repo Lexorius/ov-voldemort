@@ -1,5 +1,18 @@
 # Änderungsverlauf
 
+## 2.1.78.0
+
+- **Termine nach Divera 24/7:** Termine, Veranstaltungen und Besprechungen
+  lassen sich mit einem Haken im Formular als Termin in Divera anlegen –
+  Empfänger alle der Einheit oder ausgewählte Gruppen aus Divera, Push,
+  Rückmeldung (Ja, Unsicher, Nein), Beschreibung nur auf Wunsch. Änderungen
+  ziehen nach, Haken weg, Absage oder Löschen archiviert den Termin in
+  Divera, eine wieder angesetzte Besprechung geht neu hinaus. Der Abruf
+  holt Empfänger, gelesen und geantwortet als Plakette auf die Seite und
+  versucht Fehlgeschlagenes bis zu fünfmal weiter. Neue Einstellungen unter
+  Divera 24/7 (Schalter, Push-Vorgabe, Abruf-Takt); braucht den
+  persönlichen Accesskey.
+
 ## 2.1.77.1
 
 - **Kalender-Abo:** „Adresse zeigen" tat nichts, weil der Knopf nicht in dem

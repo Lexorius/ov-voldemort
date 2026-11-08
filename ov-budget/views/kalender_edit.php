@@ -212,6 +212,7 @@ $ganztag = (int)($termin['ganztag'] ?? 0) === 1;
   </section>
 
   <?php if (!$nurLesen): ?>
+  <?= render_partial('partials/divera_termin', ['typ' => 'termin', 'refId' => $isNew ? null : (int)$termin['id']]) ?>
   <div class="btnrow">
     <button class="btn" type="submit"><?= $isNew ? 'Eintragen' : 'Speichern' ?></button>
     <a class="btn btn--sec" href="<?= e($zurueck) ?>">Abbrechen</a>

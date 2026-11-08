@@ -2561,6 +2561,32 @@ SQL);
         }
     }
     $merken('099_impulszaehler');
+
+    /* ---------- 100: Termine nach Divera 24/7 ---------- */
+    if (!ovb_table_exists($pdo, 'divera_termine')) {
+        $pdo->exec("CREATE TABLE divera_termine (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  typ         VARCHAR(20)  NOT NULL,
+  ref_id      INT UNSIGNED NOT NULL,
+  divera_id   INT UNSIGNED NULL,
+  foreign_id  VARCHAR(60)  NOT NULL,
+  optionen    TEXT         NULL,
+  beginn      DATETIME     NULL,
+  status      VARCHAR(20)  NOT NULL DEFAULT 'offen',
+  versuche    TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  fehler      VARCHAR(300) NOT NULL DEFAULT '',
+  gesendet_am DATETIME     NULL,
+  geprueft_am DATETIME     NULL,
+  stand       TEXT         NULL,
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_divera_termin (typ, ref_id),
+  KEY idx_divera_termin_status (status, beginn)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle divera_termine angelegt.');
+    }
+    $merken('100_divera_termine');
 }
 
 /**

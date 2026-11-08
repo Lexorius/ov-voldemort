@@ -858,6 +858,9 @@ function standort_belegung(int $standortId, string $von, string $bis, array $u):
 
 function kalender_delete(array $t): void
 {
+    if (function_exists('divera_termin_entfernen')) {
+        divera_termin_entfernen('termin', (int)$t['id']);
+    }
     db_exec('DELETE FROM calendar_entries WHERE id = ?', [(int)$t['id']]);
     audit('termin.geloescht', 'calendar', (int)$t['id'], (string)$t['titel']);
 }

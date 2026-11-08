@@ -250,6 +250,8 @@ $endeZeit = substr((string)($event['ende'] ?? ''), 11, 5);
     </div>
   </section>
 
+  <?= render_partial('partials/divera_termin', ['typ' => 'veranstaltung', 'refId' => $isNew ? null : (int)$event['id']]) ?>
+
   <section class="card">
     <h2>Sonstiges</h2>
     <div class="field">

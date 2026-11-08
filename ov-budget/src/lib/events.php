@@ -290,6 +290,9 @@ function event_delete(array $e): void
     foreach (efile_list((int)$e['id']) as $datei) {
         efile_delete($datei);
     }
+    if (function_exists('divera_termin_entfernen')) {
+        divera_termin_entfernen('veranstaltung', (int)$e['id']);
+    }
     // Buchungen bleiben bestehen, verlieren aber den Bezug
     db_exec('UPDATE expenses SET event_id = NULL WHERE event_id = ?', [(int)$e['id']]);
     db_exec('DELETE FROM events WHERE id = ?', [(int)$e['id']]);

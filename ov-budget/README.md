@@ -324,6 +324,13 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
   angelegt, sondern bleibt zum Zuordnen stehen
 - Mitschnitt der Antworten zur Fehlersuche – ohne den API-Schlüssel
 
+### Divera 24/7 – Termine
+- **Termine, Veranstaltungen und Besprechungen als Termin in Divera** anlegen,
+  nachziehen und bei Absage archivieren – je Eintrag ein Haken im Formular
+- Empfänger alle der Einheit oder ausgewählte Divera-Gruppen, Push,
+  Rückmeldung (Ja, Unsicher, Nein), Beschreibung nur auf Wunsch
+- Rückmeldungen (Empfänger, gelesen, geantwortet) als Plakette auf der Seite
+
 ### Divera 24/7 – Fahrzeuge
 - **Funkstatus (FMS) als Fahrtenbuch** im Journal: „Status 3 – Einsatz
   übernommen um 14:32 Uhr"

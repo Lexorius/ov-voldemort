@@ -254,6 +254,9 @@ switch (post_str('action')) {
                 [$meetingId]
             );
             db_update('meetings', ['status' => 'abgesagt'], 'id = ?', [$meetingId]);
+            if (function_exists('divera_termin_bei_absage')) {
+                divera_termin_bei_absage('besprechung', $meetingId);
+            }
             audit('besprechung.abgesagt', 'meeting', $meetingId, $meeting['titel'] . ' ' . $meeting['datum']);
             flash('success', 'Termin abgesagt.'
                 . ($zurueck_gelegt > 0 ? sprintf(' %d offene(s) Thema/Themen liegen wieder im Themenspeicher.', $zurueck_gelegt) : ''));
@@ -263,6 +266,9 @@ switch (post_str('action')) {
     case 'reinstate':
         if ($meeting && $meeting['status'] === 'abgesagt') {
             db_update('meetings', ['status' => 'geplant'], 'id = ?', [$meetingId]);
+            if (function_exists('divera_termin_bei_wiederansetzung')) {
+                divera_termin_bei_wiederansetzung('besprechung', $meetingId);
+            }
             audit('besprechung.wieder_angesetzt', 'meeting', $meetingId, $meeting['titel']);
             flash('success', 'Termin findet wieder statt.');
         }

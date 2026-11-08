@@ -178,7 +178,9 @@ unter „Sicherheitslücke PHP2Shell".
   Vorhandene Akten werden über Kennzeichen oder Bezeichnung erkannt statt
   doppelt angelegt; Verknüpfungen lassen sich umhängen.
 * **Divera 24/7** – Formulare als Wünsche oder Besprechungsthemen übernehmen;
-  Fahrzeuge mit Funkstatus (FMS) als Fahrtenbuch, Position und Besatzung.
+  Fahrzeuge mit Funkstatus (FMS) als Fahrtenbuch, Position und Besatzung;
+  Termine, Veranstaltungen und Besprechungen als Termin nach Divera mit
+  Push und Rückmeldung.
 * **Connector** – kleines PHP-Skript auf einem öffentlichen Webserver für
   alles, was ohne Anmeldung erreichbar sein muss: Einladungen,
   Standortmeldung, „Gerät ist da", Zählerstand. Ende-zu-Ende verschlüsselt,

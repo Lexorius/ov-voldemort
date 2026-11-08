@@ -110,6 +110,7 @@ $uhr = static fn($v) => $v ? substr((string)$v, 0, 5) : '';
   <?php if ($isNew): ?>
     <p class="small muted mb0">Ort, Leitung und Uhrzeit werden von der letzten Besprechung dieser Art übernommen, sofern es eine gibt.</p>
   <?php endif; ?>
+  <?= render_partial('partials/divera_termin', ['typ' => 'besprechung', 'refId' => $isNew ? null : (int)$meeting['id']]) ?>
   <div class="btnrow">
     <button class="btn" type="submit"><?= $isNew ? 'Anlegen' : 'Speichern' ?></button>
   </div>

@@ -21,6 +21,7 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
       <?php endif; ?>
       <?= event_ort_text($event) !== '' ? ' · ' . e(event_ort_text($event)) : '' ?>
       · <?= e(event_status_label((string)$event['status'])) ?></p>
+    <?php $diveraPlakette = render_partial('partials/divera_stand', ['typ' => 'veranstaltung', 'refId' => (int)$event['id']]); if (trim($diveraPlakette) !== ''): ?><p><?= $diveraPlakette ?></p><?php endif; ?>
     <?php if (!empty($event['typ_label'])): ?>
       <p><?= badge(['label' => $event['typ_label'], 'color' => $event['typ_color']]) ?></p>
     <?php endif; ?>

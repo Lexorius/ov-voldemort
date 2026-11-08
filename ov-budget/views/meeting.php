@@ -48,6 +48,7 @@ if ($meeting['beginn'] && preg_match('/^(\d{1,2}):(\d{2})/', (string)$meeting['b
         <span class="badge badge--outline" title="Wiederkehrende Besprechung">↻ <?= e(series_describe(meeting_series_rule($meeting))) ?></span>
       <?php endif; ?>
       <?php if (meeting_treffen_text($meeting) !== ''): ?><span class="badge badge--outline"><?= e(meeting_treffen_text($meeting)) ?></span><?php endif; ?>
+      <?= render_partial('partials/divera_stand', ['typ' => 'besprechung', 'refId' => (int)$meeting['id']]) ?>
     </p>
     <?php if (!empty($meeting['serien_datum']) && $meeting['serien_datum'] !== $meeting['datum']): ?>
       <p class="small muted">Verschoben vom regulären Termin am <?= e(de_date($meeting['serien_datum'])) ?>.</p>

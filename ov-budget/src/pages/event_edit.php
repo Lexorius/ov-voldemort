@@ -27,6 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     [$neu, $errors] = event_save_from_post($event, $user);
     if ($neu) {
         flash('success', $event ? 'Veranstaltung gespeichert.' : 'Veranstaltung angelegt.');
+        if (function_exists('divera_termin_nach_speichern')) {
+            divera_termin_nach_speichern('veranstaltung', $neu);
+        }
         foreach ($traegerErgaenzt as $te) {
             flash('info', e(sprintf('%s mit eingeplant – trägt %s.', $te['bezeichnung'], $te['wegen'])));
         }

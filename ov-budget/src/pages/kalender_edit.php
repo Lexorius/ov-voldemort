@@ -53,6 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
     [$neu, $errors] = kalender_save_from_post($termin, $user);
     if ($neu) {
         flash('success', $termin ? 'Termin gespeichert.' : 'Termin eingetragen.');
+        if (function_exists('divera_termin_nach_speichern')) {
+            divera_termin_nach_speichern('termin', $neu);
+        }
         foreach ($traegerErgaenzt as $te) {
             flash('info', e(sprintf('%s mit eingeplant – trägt %s.', $te['bezeichnung'], $te['wegen'])));
         }

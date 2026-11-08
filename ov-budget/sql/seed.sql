@@ -377,6 +377,9 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('divera_status_journal','1','Funkstatus ins Journal schreiben','Jeder Statuswechsel steht dann als Fahrtenbuch in der Fahrzeugakte','bool','Divera 24/7',140),
 ('divera_position_speichern','1','Position der Fahrzeuge speichern','Letzte bekannte Position mit Link auf die Karte','bool','Divera 24/7',150),
 ('divera_besatzung_anzeigen','1','Besatzung laut Divera anzeigen','Namen der zugeordneten Personen in der Fahrzeugakte','bool','Divera 24/7',160),
+('divera_termine_aktiv','0','Termine nach Divera schicken','Termine, Veranstaltungen und Besprechungen auf Wunsch als Termin in Divera anlegen, nachziehen und bei Absage archivieren. Braucht den persönlichen Accesskey. In der kostenlosen Divera-Version nur ein Termin je fünf Minuten.','bool','Divera 24/7',85),
+('divera_termine_push','1','Divera-Termine: Push als Vorgabe','Vorbelegung des Hakens „Push-Nachricht" im Formular','bool','Divera 24/7',86),
+('divera_termine_intervall_minuten','30','Divera-Termine: Rückmeldungen holen alle … Minuten','Empfänger, gelesen und geantwortet je Termin; mindestens 5','number','Divera 24/7',87),
 ('divera_cron_token','','Token für den automatischen Abruf','Aufruf: /cron.php?token=... (leer = deaktiviert). Der fertige Aufruf steht verdeckt unter Verwaltung → Divera 24/7.','password','Divera 24/7',90),
 
 ('fahrzeug_modul_name','Fahrzeuge','Bezeichnung des Fahrzeugmoduls','','text','Fahrzeuge',10),

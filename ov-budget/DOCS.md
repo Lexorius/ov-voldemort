@@ -1687,6 +1687,37 @@ Einstellung „Alle Mitglieder dürfen Tankungen erfassen" an ist; fremde
 Einträge ändert nur die Leitung. Die letzten fünf Tankungen und der mittlere
 Verbrauch stehen auch in der Fahrzeugakte selbst.
 
+## Termine nach Divera 24/7
+
+Termine, Veranstaltungen und Besprechungen lassen sich als Termin in Divera
+anlegen – die Helferinnen und Helfer sehen sie dann in der Divera-App,
+bekommen auf Wunsch eine Push-Nachricht und melden zurück, ob sie kommen.
+
+* **Einschalten:** *Einstellungen → Divera 24/7 → „Termine nach Divera
+  schicken"*. Es braucht den **persönlichen Accesskey**, denselben wie für
+  Formulare und Fahrzeugstammdaten; der System-Accesskey reicht dafür nicht.
+* **Je Termin:** Im Formular von Termin, Veranstaltung und Besprechung steht
+  ein Abschnitt *Divera 24/7* mit dem Haken „Als Termin in Divera anlegen",
+  den Empfängern (alle der Einheit oder ausgewählte Gruppen – die Gruppen
+  kommen aus Divera), Push ja oder nein, Rückmeldung erbitten (Ja, Unsicher,
+  Nein) und ob die Beschreibung mitgeht. Ohne den Haken bei der
+  Beschreibung gehen nur Titel, Zeit und Ort hinaus; Gästelisten,
+  Tagesordnungen und Notizen nie.
+* **Beim Speichern** wird der Termin in Divera angelegt oder nachgezogen,
+  die Seite meldet es. Haken weg, Absage oder Löschen **archiviert** ihn in
+  Divera; wird eine abgesagte Besprechung wieder angesetzt, geht sie als
+  neuer Termin hinaus. Unsere Kennung steht als Fremdschlüssel in Divera
+  („ovb-termin-5"), damit nichts doppelt entsteht. Klappt es gerade nicht,
+  etwa weil Divera nicht erreichbar ist, versucht es der minütliche Abruf
+  bis zu fünfmal weiter.
+* **Rückmeldungen:** Der Abruf holt zu jedem kommenden Termin alle 30
+  Minuten (einstellbar) die Zähler aus Divera – Empfänger, gelesen,
+  geantwortet. Sie stehen als Plakette auf der Seite des Termins, der
+  Veranstaltung oder Besprechung und im Formular.
+* **Grenze:** In der kostenlosen Divera-Version darf nur ein Termin je fünf
+  Minuten angelegt werden, und Divera speichert dort nur den Titel. Mit der
+  ALARM- oder PRO-Version gilt das nicht.
+
 ## Fahrzeugdaten aus Divera
 
 Unter *Einstellungen → Divera 24/7* lässt sich *Fahrzeugdaten aus Divera
