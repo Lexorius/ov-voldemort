@@ -80,8 +80,11 @@ $check('aktiv mit Hauptschalter, Terminschalter und persönlichem Key', divera_t
 $GLOBALS['settings']['divera_termine_aktiv'] = '0'; settings_reset_cache();
 $check('Terminschalter aus', !divera_termine_aktiv());
 $GLOBALS['settings']['divera_termine_aktiv'] = '1'; $GLOBALS['settings']['divera_personal_key'] = ''; settings_reset_cache();
-$check('ohne persönlichen Key aus', !divera_termine_aktiv());
-$GLOBALS['settings']['divera_personal_key'] = 'persoenlich'; settings_reset_cache();
+$check('ohne persönlichen Key gilt der System-Accesskey', divera_termine_aktiv() && divera_termine_key() === 'system-key');
+$GLOBALS['settings']['divera_accesskey'] = ''; settings_reset_cache();
+$check('ganz ohne Schlüssel aus', !divera_termine_aktiv());
+$GLOBALS['settings']['divera_accesskey'] = 'system-key'; $GLOBALS['settings']['divera_personal_key'] = 'persoenlich'; settings_reset_cache();
+$check('persönlicher Key geht vor', divera_termine_key() === 'persoenlich');
 
 /* ---------- Optionen und Nutzlast (rein) ---------- */
 $o = divera_termin_optionen_normieren(['empfaenger' => 'gruppen', 'gruppen' => ['3', 'x', 3, '0', 5], 'push' => '1']);

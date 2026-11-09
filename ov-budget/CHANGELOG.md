@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## 2.1.78.1
+
+- **Divera-Termine:** Der Abschnitt im Formular fehlte, wenn kein
+  persönlicher Accesskey hinterlegt war. Jetzt gilt wie überall sonst: ohne
+  persönlichen Schlüssel der System-Accesskey; lehnt Divera ihn ab, steht
+  der Hinweis mit HTTP 403 im Abschnitt.
+
 ## 2.1.78.0
 
 - **Termine nach Divera 24/7:** Termine, Veranstaltungen und Besprechungen

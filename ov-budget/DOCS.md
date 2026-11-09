@@ -1694,8 +1694,10 @@ anlegen – die Helferinnen und Helfer sehen sie dann in der Divera-App,
 bekommen auf Wunsch eine Push-Nachricht und melden zurück, ob sie kommen.
 
 * **Einschalten:** *Einstellungen → Divera 24/7 → „Termine nach Divera
-  schicken"*. Es braucht den **persönlichen Accesskey**, denselben wie für
-  Formulare und Fahrzeugstammdaten; der System-Accesskey reicht dafür nicht.
+  schicken"*. Genommen wird der **persönliche Accesskey**, derselbe wie für
+  Formulare und Fahrzeugstammdaten; ist er leer, der System-Accesskey von
+  oben. Lehnt Divera den ab (HTTP 403), steht das im Formularabschnitt –
+  dann den persönlichen Accesskey eintragen.
 * **Je Termin:** Im Formular von Termin, Veranstaltung und Besprechung steht
   ein Abschnitt *Divera 24/7* mit dem Haken „Als Termin in Divera anlegen",
   den Empfängern (alle der Einheit oder ausgewählte Gruppen – die Gruppen

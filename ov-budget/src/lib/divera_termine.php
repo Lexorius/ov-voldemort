@@ -27,9 +27,16 @@ const DIVERA_TERMIN_VERSUCHE_MAX = 5;
 const DIVERA_TERMIN_JE_ABRUF = 10;
 const DIVERA_GRUPPEN_CACHE_SEK = 3600;
 
+/** Schlüssel für Termine: der persönliche, sonst wie überall der System-Accesskey */
+function divera_termine_key(): string
+{
+    $key = trim((string)setting('divera_personal_key', ''));
+    return $key !== '' ? $key : trim((string)setting('divera_accesskey', ''));
+}
+
 function divera_termine_aktiv(): bool
 {
-    return divera_enabled() && setting_bool('divera_termine_aktiv', false) && trim((string)setting('divera_personal_key', '')) !== '';
+    return divera_enabled() && setting_bool('divera_termine_aktiv', false) && divera_termine_key() !== '';
 }
 
 /* ==================================================================== */
@@ -48,9 +55,9 @@ function divera_termine_request(string $methode, string $pfad, ?array $json = nu
     $base = rtrim((string)setting('divera_base_url', 'https://app.divera247.com/api'), '/');
     // Die Basis-URL endet auf /api; die Pfade der Dokumentation beginnen mit /api
     $base = preg_replace('#/api$#', '', $base) ?? $base;
-    $key = trim((string)setting('divera_personal_key', ''));
+    $key = divera_termine_key();
     if ($base === '' || $key === '') {
-        throw new DiveraException('Divera ist für Termine nicht vollständig konfiguriert (Basis-URL / persönlicher Accesskey).');
+        throw new DiveraException('Divera ist für Termine nicht vollständig konfiguriert (Basis-URL / Accesskey).');
     }
     $url = $base . $pfad . (str_contains($pfad, '?') ? '&' : '?') . 'accesskey=' . rawurlencode($key);
     $koerper = $json !== null ? (string)json_encode($json, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null;
@@ -92,6 +99,9 @@ function divera_termine_request(string $methode, string $pfad, ?array $json = nu
         if ($body === false) {
             throw new DiveraException('Verbindung zur Divera-API fehlgeschlagen.');
         }
+    }
+    if ($code === 403) {
+        throw new DiveraException('Divera lehnt den Accesskey für Termine ab (HTTP 403) – unter Einstellungen → Divera 24/7 den persönlichen Accesskey eintragen.');
     }
     if ($code === 404) {
         throw new DiveraException('Divera kennt den Termin nicht (mehr) oder der Zugriff ist nicht gestattet.');
