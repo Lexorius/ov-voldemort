@@ -86,7 +86,7 @@ ist, was die Dateiablage belegt und wie viel auf der Platte darunter noch
 frei ist. Wird es knapp (unter 10 % oder unter 500 MB frei), steht das rot
 dabei – dann alte Sicherungen löschen oder Platz schaffen. „Einzelheiten"
 schlüsselt die Ablage nach Ordnern auf (Fahrzeuge, Veranstaltungen,
-Plätze, Dateiablage, Sicherungen) und nennt die größten Tabellen der
+Plätze, Dateiablage, Budget, Sicherungen) und nennt die größten Tabellen der
 Datenbank.
 
 ### Sicherung und Wiederherstellung
@@ -379,6 +379,38 @@ oben, wer auf wie viel wartet und wie viel davon schon bei der
 Regionalstelle liegt, jede Buchung trägt eine Plakette (orange: noch nicht
 weitergegeben, blau: bei der Regionalstelle), und der Filter „Auslagen"
 trennt die Stufen. Der CSV-Export führt alle drei Spalten mit.
+
+## Belege zu Ausgaben und Einnahmen
+
+Zu jeder Buchung im Budget gehört ein Stück Papier – die Rechnung, die
+Quittung, der Bescheid der Regionalstelle. Im Formular einer Ausgabe oder
+Einnahme steht dafür der Abschnitt **Beleg als Datei**: eine oder mehrere
+Dateien auswählen (PDF, Foto, Scan; dieselben Dateiarten wie an
+Fahrzeugen), auf Wunsch eine Bezeichnung dazu, und mit „Eintragen" oder
+„Speichern" hängt der Beleg an der Buchung. Das geht gleich beim Erfassen
+und jederzeit später.
+
+* **An der Buchung** stehen unter dem Formular die angehängten Belege mit
+  Größe, Datum und wer sie angehängt hat; jeder lässt sich einzeln
+  entfernen. Fotos werden ohne Aufnahmeort neu gespeichert, bleiben aber
+  groß genug zum Lesen.
+* **In der Liste** der Ausgaben und Einnahmen steht je Beleg eine 📎 neben
+  der Belegnummer – ein Klick öffnet die Datei. Sehen dürfen die Belege
+  alle, die die Buchungen sehen.
+* **KI-Auswertung:** Jeder Beleg bekommt Zusammenfassung und Schlagwörter
+  (Schalter *Belege der Ausgaben und Einnahmen auswerten*); das Modell
+  erfährt dabei Bezeichnung, Datum und Lieferant der Buchung.
+* **Dateiablage:** Alle Belege stehen dort unter *Budget › Jahr ›
+  Ausgaben* und *Budget › Jahr › Einnahmen* und sind über Dateinamen,
+  Schlagwörter sowie Bezeichnung, Lieferant und Belegnummer der Buchung
+  zu finden.
+
+Wird eine Buchung gelöscht, werden ihre Belege mit gelöscht – die
+Sicherheitsfrage nennt sie. Schlägt beim Speichern eine Eingabe fehl,
+sind die ausgewählten Dateien noch nicht gespeichert und müssen noch
+einmal ausgewählt werden; lehnt die Anwendung nur den Beleg ab (zu groß,
+falsche Dateiart), ist die Buchung gespeichert und der Beleg lässt sich
+dort nachreichen.
 
 ## Hochrechnung aufs Jahresende
 
@@ -1136,7 +1168,9 @@ Baum unter dem Inhalt.
   gestellte nur, solange Dateien daran hängen), *Veranstaltungen*,
   *Kalender* und *Wünsch dir was* nach Jahr und Eintrag, *Standorte* als
   Baum der Plätze mit Bildern, *STAN* je Version mit den Ordnern des
-  Pakets, *Newsletter* mit den PDFs. Die Namen kommen aus den
+  Pakets, *Newsletter* mit den PDFs, *Budget* je Haushaltsjahr mit
+  *Ausgaben* und *Einnahmen* – darin die Belege, jeder mit seiner Buchung
+  (siehe „Belege zu Ausgaben und Einnahmen"). Die Namen kommen aus den
   Einstellungen der Module. Gesperrt heißt: umbenennen, umhängen, ablegen
   und entfernen geht nur im Modul – „Im Modul öffnen" führt dorthin.
   Sichtbar ist eine solche Kategorie nur für die, die das Modul sehen
@@ -2108,8 +2142,8 @@ Kennzeichnung bleibt trotzdem.
 Ein Ollama im eigenen Netz fasst hochgeladene Dateien zusammen und vergibt
 Schlagwörter: Dokumente und Fotos der Fahrzeugakte und der
 Instandsetzungsaufträge, Dateien an Veranstaltungen, Anhänge an Terminen,
-Bilder der Stell- und Lagerplätze, Anlagen der Wünsche und die Dokumente
-der Dateiablage. Unter jeder Datei stehen dann zwei bis vier Sätze und
+Bilder der Stell- und Lagerplätze, Anlagen der Wünsche, Belege der
+Ausgaben und Einnahmen und die Dokumente der Dateiablage. Unter jeder Datei stehen dann zwei bis vier Sätze und
 Schlagwort-Chips; ein Klick auf ein Schlagwort öffnet die **Dateisuche**,
 die über alle Ablagen hinweg sucht – jeder sieht nur, was er auch sonst
 sehen darf. Alle Dateien in einem Baum zeigt die **Dateiablage** (eigener

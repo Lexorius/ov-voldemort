@@ -3,6 +3,9 @@
  *  @var array $vehicles @var array $bestellungen @var array $links */
 $vehicles ??= [];
 $bestellungen ??= [];
+$belege ??= [];
+$belegKi ??= ['ergebnisse' => [], 'auftraege' => []];
+$belegMaxMb ??= 32;
 $links ??= ['wish' => [], 'vehicle' => []];
 $isNew = empty($expense['id']);
 $istEinnahme = $art === 'einnahme';
@@ -34,7 +37,7 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
   </div>
 <?php endif; ?>
 
-<form method="post" class="form" action="<?= e(url('expense_edit', $isNew ? ['art' => $art] : ['id' => $expense['id']])) ?>">
+<form method="post" class="form" enctype="multipart/form-data" action="<?= e(url('expense_edit', $isNew ? ['art' => $art] : ['id' => $expense['id']])) ?>">
   <?= csrf_field() ?>
   <input type="hidden" name="art" value="<?= e($art) ?>">
 
@@ -264,6 +267,22 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
     </div>
   </section>
 
+  <section class="card">
+    <h2>Beleg als Datei</h2>
+    <div class="grid2">
+      <div class="field">
+        <label for="belege"><?= $istEinnahme ? 'Bescheid, Rechnung oder Zahlungsnachweis' : 'Rechnung oder Quittung' ?> <span class="muted">(freiwillig)</span></label>
+        <input type="file" id="belege" name="belege[]" multiple>
+        <small class="muted">Mehrere auf einmal möglich, je höchstens <?= (int)$belegMaxMb ?> MB – PDF, Foto oder Scan. Der Beleg hängt nach dem Speichern an der <?= e($wort) ?> und steht in der Dateiablage unter Budget.</small>
+      </div>
+      <div class="field">
+        <label for="beleg_titel">Bezeichnung des Belegs <span class="muted">(freiwillig)</span></label>
+        <input type="text" id="beleg_titel" name="beleg_titel" maxlength="200" placeholder="sonst der Dateiname">
+      </div>
+    </div>
+    <?php if ($belege): ?><p class="small muted" style="margin-bottom:0"><?= count($belege) === 1 ? 'Ein Beleg hängt' : count($belege) . ' Belege hängen' ?> schon an – <a href="#belege">siehe unten</a>.</p><?php endif; ?>
+  </section>
+
   <div class="btnrow">
     <button class="btn" type="submit"><?= $isNew ? e($wort) . ' eintragen' : 'Speichern' ?></button>
     <?php if ($isNew): ?>
@@ -273,11 +292,40 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
   </div>
 </form>
 
+<?php if (!$isNew && $belege): ?>
+  <section class="card" id="belege" style="margin-top:1rem">
+    <div class="card__head"><h2>Angehängte Belege</h2><span class="muted small"><?= count($belege) ?></span></div>
+    <div class="doclist">
+      <?php foreach ($belege as $f): $name = (string)($f['titel'] ?: $f['orig_name']); ?>
+        <div class="doc" style="align-items:flex-start">
+          <?php if (!empty($f['thumb_name'])): ?>
+            <a href="<?= e(url('expense_file', ['id' => $f['id']])) ?>" target="_blank" rel="noopener"><img class="doc__thumb" src="<?= e(url('expense_file', ['id' => $f['id'], 'vorschau' => 1])) ?>" alt="" loading="lazy"></a>
+          <?php else: ?>
+            <span class="doc__icon" aria-hidden="true"><?= e(strtoupper(pathinfo((string)$f['orig_name'], PATHINFO_EXTENSION) ?: '?')) ?></span>
+          <?php endif; ?>
+          <div class="doc__text">
+            <a href="<?= e(url('expense_file', ['id' => $f['id']])) ?>" target="_blank" rel="noopener"><?= e($name) ?></a>
+            <div class="small muted"><?= e(($name !== (string)$f['orig_name'] ? $f['orig_name'] . ' · ' : '') . bytes_human((int)$f['size_bytes']) . ' · ' . de_datetime((string)$f['created_at'])
+                . (!empty($f['hochgeladen_von']) ? ' · ' . $f['hochgeladen_von'] : '')) ?></div>
+            <?= function_exists('ki_hinweis_html') ? ki_hinweis_html('buchung', $f, $belegKi, true) : '' ?>
+          </div>
+          <form method="post" action="<?= e(url('expense_edit', ['id' => $expense['id']])) ?>" class="doc__aktion">
+            <?= csrf_field() ?>
+            <input type="hidden" name="action" value="beleg_weg">
+            <input type="hidden" name="beleg_id" value="<?= (int)$f['id'] ?>">
+            <button class="btn btn--sec btn--sm" type="submit" data-confirm="Beleg „<?= e($name) ?>“ entfernen?">Entfernen</button>
+          </form>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  </section>
+<?php endif; ?>
+
 <?php if (!$isNew): ?>
   <form method="post" class="card" action="<?= e(url('expense_edit', ['id' => $expense['id']])) ?>">
     <?= csrf_field() ?>
     <input type="hidden" name="action" value="delete">
     <button class="btn btn--danger" type="submit"
-            data-confirm="Diese Buchung endgültig löschen?"><?= e($wort) ?> löschen</button>
+            data-confirm="Diese Buchung <?= $belege ? 'samt ' . (count($belege) === 1 ? 'ihrem Beleg' : 'ihren ' . count($belege) . ' Belegen') . ' ' : '' ?>endgültig löschen?"><?= e($wort) ?> löschen</button>
   </form>
 <?php endif; ?>

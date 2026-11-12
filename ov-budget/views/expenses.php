@@ -4,6 +4,7 @@
  *  @var float $jahresSumme @var float $gegenSumme @var array $budgets @var ?array $einnahmenStand @var ?array $wartend */
 $istEinnahme = $art === 'einnahme';
 $titel = BUCHUNGSARTEN[$art];
+$belege ??= [];   // [Buchung => Belege[]]
 
 // Beschriftungen unterscheiden sich je Richtung
 $intro = $istEinnahme
@@ -190,6 +191,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
             <?php if ($r['fachgruppe_label']): ?><span class="badge badge--outline"><?= e($r['fachgruppe_label']) ?></span><?php endif; ?>
             <?php if ($r['budget_name']): ?><span class="badge badge--outline"><?= e($r['budget_name']) ?></span><?php endif; ?>
             <?= auslage_badge($r) ?>
+            <?php if (!empty($belege[(int)$r['id']])): ?><span class="badge badge--outline" title="Belege">📎 <?= count($belege[(int)$r['id']]) ?></span><?php endif; ?>
           </div>
         </a>
       <?php endforeach; ?>
@@ -227,7 +229,10 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
             <td><?= badge($r['kategorie_label'] ? ['label' => $r['kategorie_label'], 'color' => $r['kategorie_color']] : null, '–') ?></td>
             <td class="small"><?= e($r['fachgruppe_label'] ?: '–') ?></td>
             <td class="small"><?= e(($istEinnahme ? $r['referenz'] : $r['budget_name']) ?: '–') ?></td>
-            <td class="small mono"><?= e($r['beleg_nr'] ?: '–') ?></td>
+            <td class="small"><span class="mono"><?= e($r['beleg_nr'] ?: (empty($belege[(int)$r['id']]) ? '–' : '')) ?></span>
+              <?php foreach ($belege[(int)$r['id']] ?? [] as $bf): ?>
+                <a class="nowrap" href="<?= e(url('expense_file', ['id' => $bf['id']])) ?>" target="_blank" rel="noopener" title="<?= e((string)($bf['titel'] ?: $bf['orig_name'])) ?>">📎<span class="sr-only"> Beleg <?= e((string)($bf['titel'] ?: $bf['orig_name'])) ?></span></a>
+              <?php endforeach; ?></td>
             <td class="num" style="<?= $istEinnahme ? 'color:var(--ok)' : '' ?>">
               <strong><?= e(money((float)$r['betrag_brutto'], false)) ?></strong></td>
             <td><?php if (can('manage_budget')): ?>

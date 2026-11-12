@@ -41,6 +41,7 @@ const KI_TYPEN = [
     'newsletter'    => ['schalter' => 'ki_newsletter',      'label' => 'Newsletter',            'tabelle' => 'newsletter',      'route' => 'newsletter_datei', 'bildfilter' => "f.stored_name <> ''"],
     'wunsch'        => ['schalter' => 'ki_wuensche',        'label' => 'Wunsch (Anlage)',       'tabelle' => 'wish_attachments', 'route' => 'download',        'bildfilter' => "f.mime NOT LIKE 'image/%'"],
     'ablage'        => ['schalter' => 'ki_ablage',          'label' => 'Dateiablage',           'tabelle' => 'ablage_dateien',  'route' => 'ablage_datei'],
+    'buchung'       => ['schalter' => 'ki_buchungen',       'label' => 'Buchung (Beleg)',       'tabelle' => 'expense_files',   'route' => 'expense_file'],
     // Kein Dokument, sondern der Kontakt selbst: das Modell schlägt eine Kategorie aus der Auswahlliste vor (kontakt_ki.php)
     'kontakt'       => ['schalter' => 'ki_kontakte',        'label' => 'Kontakt (Kategorie)',   'tabelle' => 'contacts',       'route' => 'contact_edit',     'bildfilter' => 'f.is_active = 1'],
 ];
@@ -468,6 +469,20 @@ function ki_datei_laden(string $typ, int $id): ?array
             $eltern = ['text' => 'Dateiablage' . ($weg !== '' ? ' · ' . $weg : ''), 'url' => url('ablage', ['k' => 'k' . (int)$d['kategorie_id']]) . '#d' . $id];
             $pfad = afile_path($d);
             break;
+        case 'buchung':
+            $d = xfile_find($id);
+            if (!$d) {
+                return null;
+            }
+            $wort = xfile_buchung_wort((string)$d['buchung_art']);
+            $kontext = 'Beleg (Rechnung, Quittung oder Bescheid) zur ' . $wort . ' „' . (string)$d['buchung_bezeichnung'] . '" vom ' . de_date((string)$d['buchung_datum'])
+                . (trim((string)$d['buchung_lieferant']) !== '' ? ', ' . ($wort === 'Einnahme' ? 'Zahler' : 'Lieferant') . ' ' . trim((string)$d['buchung_lieferant']) : '');
+            // Wer pflegt, landet in der Buchung; alle anderen in der Liste des Jahres
+            $eltern = ['text' => $wort . ' · ' . (string)$d['buchung_bezeichnung'], 'url' => can('manage_budget')
+                ? url('expense_edit', ['id' => (int)$d['expense_id']]) . '#belege'
+                : url('expenses', ['jahr' => (int)$d['buchung_jahr'], 'art' => (string)$d['buchung_art']])];
+            $pfad = xfile_path($d);
+            break;
         default:
             return null;
     }
@@ -492,6 +507,8 @@ function ki_darf_sehen(string $typ, array $datei, array $user): bool
             return can('view_newsletter');
         case 'wunsch':
             return true;
+        case 'buchung':
+            return can('view_expenses');
         case 'ablage':
             // sichtbar ist, was im Baum der Person hängt – „Nur Leitung" gilt auch für alles darunter
             return can('view_ablage') && (can('manage_ablage')
@@ -520,6 +537,8 @@ function ki_darf_bearbeiten(string $typ, array $datei, array $user): bool
             return can('manage_newsletter');
         case 'wunsch':
             return can('manage_wishes') || (int)($datei['uploaded_by'] ?? 0) === (int)$user['id'];
+        case 'buchung':
+            return can('manage_budget');
         case 'ablage':
             return ki_darf_sehen('ablage', $datei, $user) && afile_darf_aendern($datei, $user);
         case 'kontakt':

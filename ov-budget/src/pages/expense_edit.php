@@ -19,7 +19,20 @@ if ($id && !$expense) {
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (post_str('action') === 'beleg_weg' && $expense) {
+        $beleg = xfile_find(post_int('beleg_id'));
+        // nur ein Beleg dieser Buchung
+        if ($beleg && (int)$beleg['expense_id'] === (int)$expense['id']) {
+            xfile_delete($beleg);
+            flash('success', 'Beleg „' . (string)($beleg['titel'] ?: $beleg['orig_name']) . '" entfernt.');
+        } else {
+            flash('error', 'Diesen Beleg gibt es nicht (mehr).');
+        }
+        redirect(url('expense_edit', ['id' => (int)$expense['id']]) . '#belege');
+    }
     if (post_str('action') === 'delete' && $expense) {
+        // erst die Dateien von der Platte – die Zeilen nähme die Datenbank mit, die Dateien nicht
+        xfile_delete_alle((int)$expense['id']);
         db_exec('DELETE FROM expenses WHERE id = ?', [$expense['id']]);
         audit($art . '.geloescht', 'expense', (int)$expense['id'], $expense['bezeichnung']);
         flash('success', 'Buchung gelöscht.');
@@ -30,12 +43,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($newId) {
         $wort = $art === 'einnahme' ? 'Einnahme' : 'Ausgabe';
         flash('success', $wort . ($expense ? ' gespeichert.' : ' erfasst.'));
+        // Belege, die im Formular mitkamen, hängen jetzt an der Buchung
+        if (upload_mitgeschickt('belege')) {
+            [$anzahl, $belegFehler] = xfile_store_uploads((int)$newId, 'belege', post_str('beleg_titel'), $user);
+            foreach ($belegFehler as $f) {
+                flash('error', $f);
+            }
+            if ($anzahl > 0) {
+                flash('success', ($anzahl === 1 ? 'Ein Beleg' : $anzahl . ' Belege') . ' angehängt.');
+            }
+            // Ging ein Beleg nicht durch, zurück in die Buchung – dort lässt er sich gleich noch einmal anhängen
+            if ($belegFehler) {
+                redirect(url('expense_edit', ['id' => (int)$newId]) . '#belege');
+            }
+        }
         $ziel = post_int('jahr') ?: (int)date('Y');
         if (post_str('weiter') === '1') {
             flash('info', 'Nächste ' . $wort . ' eintragen.');
             redirect_route('expense_edit', ['jahr' => $ziel, 'art' => $art]);
         }
         redirect_route('expenses', ['jahr' => $ziel, 'art' => $art]);
+    }
+    if (upload_mitgeschickt('belege')) {
+        $errors[] = 'Die ausgewählten Belege wurden noch nicht gespeichert – bitte nach dem Berichtigen noch einmal auswählen.';
     }
     $expense = array_merge($expense ?? [], $_POST, ['id' => $expense['id'] ?? null]);
 }
@@ -108,7 +138,12 @@ $wunschIn = $links['wish'] ? ' OR w.id IN (' . implode(',', array_map('intval', 
 $wort = $art === 'einnahme' ? 'Einnahme' : 'Ausgabe';
 $stichtag = $art === 'ausgabe' ? budget_stichtag_info(budget_year((int)$expense['jahr'])['stichtag'] ?? null) : ['stichtag' => null, 'tage' => null, 'gesperrt' => false];
 
+$belege = !empty($expense['id']) ? xfile_list((int)$expense['id']) : [];
+
 render('expense_edit', [
+    'belege'   => $belege,
+    'belegKi'  => function_exists('ki_fuer_dateien') ? ki_fuer_dateien('buchung', array_column($belege, 'id')) : ['ergebnisse' => [], 'auftraege' => []],
+    'belegMaxMb' => (int)round(upload_max_bytes() / 1048576),
     'stichtag' => $stichtag,
     'title'   => $wort . ($expense['id'] ? ' bearbeiten' : ' erfassen'),
     'art'     => $art,

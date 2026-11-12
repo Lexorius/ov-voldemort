@@ -153,8 +153,8 @@ unter „Sicherheitslücke PHP2Shell".
   auf einer Seite.
 * **Dateiablage** – alle Dokumente in einem Baum aus Kategorien: eigene,
   beliebig tief geschachtelt, und die Ablagen der Module (Fahrzeuge,
-  Veranstaltungen, Termine, Plätze, STAN, Newsletter, Wünsche) als
-  gesperrte Kategorien daneben. Jedes Dokument bekommt von der KI im
+  Veranstaltungen, Termine, Plätze, STAN, Newsletter, Wünsche, Belege
+  aus dem Budget) als gesperrte Kategorien daneben. Jedes Dokument bekommt von der KI im
   eigenen Netz Zusammenfassung und Schlagwörter; Suche über alles.
 * **Tankkarten und Ladekarten** – mehrere Anbieter (DKV, UTA, Shell, Aral,
   Ladenetze …), Freischaltung für Kraftstoff, Laden oder beides, Zuordnung

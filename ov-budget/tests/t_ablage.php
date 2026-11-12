@@ -77,6 +77,7 @@ function db_all(string $sql, array $p = []): array {
                 ['version_id' => 3, 'pfad' => 'Fachgruppen/N/Anlage.pdf'], ['version_id' => 3, 'pfad' => '2024/alt.pdf'], ['version_id' => 1, 'pfad' => 'a.pdf']];
     }
     if (str_contains($sql, 'FROM wishes w')) { return $GLOBALS['wuensche']; }
+    if (str_starts_with($sql, 'SELECT x.jahr, x.art, COUNT(*)')) { return [['jahr' => 2026, 'art' => 'ausgabe', 'n' => 4], ['jahr' => 2026, 'art' => 'einnahme', 'n' => 1], ['jahr' => 2025, 'art' => 'ausgabe', 'n' => 2]]; }
     if (str_contains($sql, 'FROM datei_ki')) { return $GLOBALS['ki_rows']; }
     return [];
 }
@@ -105,7 +106,7 @@ function standort_all(bool $nurAktive = false): array { return $GLOBALS['plaetze
 function wish_find(int $id): ?array { return ['id' => $id, 'bezeichnung' => 'Stromerzeuger']; }
 
 $app = dirname(__DIR__);
-foreach (['util', 'settings', 'lists', 'view', 'uploads', 'vehicle_files', 'ki', 'ablage'] as $lib) {
+foreach (['util', 'settings', 'lists', 'view', 'uploads', 'vehicle_files', 'ki', 'ablage', 'expense_files'] as $lib) {
     require $app . '/src/lib/' . $lib . '.php';
 }
 
@@ -118,7 +119,7 @@ $helfer = ['id' => 17, 'role' => 'user', 'display_name' => 'Anna'];
 $alsHelfer = static function () use ($helfer): void {
     $GLOBALS['ich'] = $helfer;
     $GLOBALS['rechte'] = ['manage_ablage' => false, 'upload_ablage' => true, 'view_newsletter' => false, 'manage_vehicles' => false,
-        'manage_events' => false, 'admin' => false, 'manage_newsletter' => false, 'manage_wishes' => false];
+        'manage_events' => false, 'admin' => false, 'manage_newsletter' => false, 'manage_wishes' => false, 'manage_budget' => false];
 };
 $alsLeitung = static function () use ($leitung): void { $GLOBALS['ich'] = $leitung; $GLOBALS['rechte'] = []; };
 $kategorien = $GLOBALS['kategorien'];
@@ -184,12 +185,20 @@ $check('STAN: Versionen und Ordner als Baum', array_column($stan, 'key') === ['s
 $check('STAN: Zahl je Ordner, Zwischenordner ohne Dateien, Name ist das letzte Stück', $stan[0]['anzahl'] === 1 && $stan[0]['hinweis'] === 'aktuell · Stand 2026'
     && $stan[2]['anzahl'] === 0 && $stan[3]['anzahl'] === 2 && $stan[3]['name'] === 'N' && $stan[3]['eltern'] === 'stan.3.Fachgruppen' && $stan[1]['eltern'] === 'stan.3'
     && $stan[4]['hinweis'] === '');
+$bu = ablage_knoten_buchungen([['jahr' => 2026, 'art' => 'ausgabe', 'n' => 4], ['jahr' => 2026, 'art' => 'einnahme', 'n' => 1], ['jahr' => 2025, 'art' => 'ausgabe', 'n' => 2]]);
+$check('Budget: je Jahr Ausgaben und Einnahmen', array_column($bu, 'key') === ['buchung.j2026', 'buchung.j2025', 'buchung.j2026.ausgabe', 'buchung.j2026.einnahme', 'buchung.j2025.ausgabe']);
+$check('Budget: Namen, Zahl, Verweis in die Liste des Jahres', $bu[2]['name'] === 'Ausgaben' && $bu[3]['name'] === 'Einnahmen' && $bu[2]['eltern'] === 'buchung.j2026' && $bu[2]['anzahl'] === 4
+    && $bu[0]['anzahl'] === 0 && $bu[0]['auto'] === true && str_contains($bu[3]['url'], 'p=expenses&jahr=2026&art=einnahme'));
+$check('Schlüssel eines Budgetknotens', ablage_schluessel('buchung.j2026.einnahme')['teil'] === 'j2026' && ablage_schluessel('buchung.j2026.einnahme')['rest'] === 'einnahme'
+    && ablage_schluessel('buchung.j2026.einnahme')['id'] === 0);
 
 /* ---------- Der ganze Baum: Leitung ---------- */
 $alsLeitung();
 $GLOBALS['val'] = ['FROM newsletter' => 6];
 $ganz = ablage_baum_fuer($leitung);
-$check('erst die eigenen, dann je Modul eine gesperrte Kategorie', $ganz['wurzeln'] === ['k5', 'k1', 'fahrzeug', 'veranstaltung', 'termin', 'standort', 'stan', 'newsletter', 'wunsch']);
+$check('erst die eigenen, dann je Modul eine gesperrte Kategorie', $ganz['wurzeln'] === ['k5', 'k1', 'fahrzeug', 'veranstaltung', 'termin', 'standort', 'stan', 'newsletter', 'wunsch', 'buchung']);
+$check('Budget › Jahr › Ausgaben mit Summe', $ganz['knoten']['buchung']['name'] === 'Budget' && $ganz['knoten']['buchung']['gesamt'] === 7
+    && ablage_pfad_text('buchung.j2026.einnahme', $ganz) === 'Budget › 2026 › Einnahmen' && $ganz['knoten']['buchung.j2026']['gesamt'] === 5);
 $check('Modulname aus den Einstellungen, sonst Vorgabe', $ganz['knoten']['fahrzeug']['name'] === 'Fuhrpark' && $ganz['knoten']['wunsch']['name'] === 'Wünsch dir was'
     && $ganz['knoten']['fahrzeug']['auto'] === true && str_contains($ganz['knoten']['fahrzeug']['url'], 'p=vehicles'));
 $check('Fahrzeuge darunter mit Summe', $ganz['knoten']['fahrzeug']['kinder'] === ['fahrzeug.7', 'fahrzeug.8', 'fahrzeug.9'] && $ganz['knoten']['fahrzeug']['gesamt'] === 7);
@@ -204,13 +213,16 @@ $alsHelfer();
 $GLOBALS['rechte']['view_vehicles'] = false;
 $klein = ablage_baum_fuer($helfer);
 $check('ohne Recht keine Kategorie des Moduls', !isset($klein['knoten']['fahrzeug']) && !isset($klein['knoten']['fahrzeug.7']) && !isset($klein['knoten']['newsletter']));
+$GLOBALS['rechte']['view_expenses'] = false;
+$check('wer die Buchungen nicht sieht, sieht auch keine Belege', !isset(ablage_baum_fuer($helfer)['knoten']['buchung']) && isset($klein['knoten']['buchung.j2026.ausgabe']));
+unset($GLOBALS['rechte']['view_expenses']);
 $check('„Nur Leitung" fehlt samt allem darunter', !isset($klein['knoten']['k3']) && !isset($klein['knoten']['k4']) && isset($klein['knoten']['k2'])
     && $klein['knoten']['k1']['gesamt'] === 5);
 $check('nur Termine, die man im Kalender sieht', isset($klein['knoten']['termin.88']) && !isset($klein['knoten']['termin.89']) && $klein['knoten']['termin']['gesamt'] === 1);
 $GLOBALS['rechte']['view_vehicles'] = true;
 
 /* ---------- Dokumente in einer Form ---------- */
-foreach (['ablage', 'fahrzeug', 'veranstaltung', 'termin', 'standort', 'stan', 'newsletter', 'wunsch'] as $typ) {
+foreach (['ablage', 'fahrzeug', 'veranstaltung', 'termin', 'standort', 'stan', 'newsletter', 'wunsch', 'buchung'] as $typ) {
     $sq = ablage_quelle_sql($typ);
     $alleSpalten = true;
     foreach (['orig_name', 'mime', 'size_bytes', 'created_at', 'titel', 'thumb_name', 'art', 'objekt_id', 'zusatz', 'uploaded_by', 'hochgeladen_von'] as $spalte) {
@@ -231,7 +243,9 @@ $check('Zeile: Titel und Vorschau', $mitBild['name'] === 'Plan' && str_contains(
 
 $check('Knoten einer Datei', ablage_datei_knoten(['typ' => 'ablage', 'objekt_id' => 2]) === 'k2' && ablage_datei_knoten(['typ' => 'fahrzeug', 'objekt_id' => 7]) === 'fahrzeug.7'
     && ablage_datei_knoten(['typ' => 'newsletter', 'objekt_id' => 0]) === 'newsletter' && ablage_datei_knoten(['typ' => 'stan', 'objekt_id' => 3, 'zusatz' => 'Fachgruppen/N/a.pdf']) === 'stan.3.Fachgruppen/N'
-    && ablage_datei_knoten(['typ' => 'stan', 'objekt_id' => 3, 'zusatz' => 'a.pdf']) === 'stan.3' && ablage_datei_knoten(['typ' => 'kontakt', 'objekt_id' => 1]) === '');
+    && ablage_datei_knoten(['typ' => 'stan', 'objekt_id' => 3, 'zusatz' => 'a.pdf']) === 'stan.3' && ablage_datei_knoten(['typ' => 'kontakt', 'objekt_id' => 1]) === ''
+    && ablage_datei_knoten(['typ' => 'buchung', 'objekt_id' => 9, 'gruppe_jahr' => '2026', 'gruppe_art' => 'einnahme']) === 'buchung.j2026.einnahme'
+    && ablage_datei_knoten(['typ' => 'buchung', 'objekt_id' => 9, 'gruppe_jahr' => 2025, 'gruppe_art' => 'ausgabe']) === 'buchung.j2025.ausgabe');
 $check('Endung für das Symbol', ablage_endung('Schein.pdf') === 'PDF' && ablage_endung('README') === '?' && ablage_endung('a.tabelle') === 'TABE');
 
 $roh = static fn(int $id, int $objekt, string $name, array $mehr = []): array => $mehr + ['id' => $id, 'titel' => '', 'orig_name' => $name, 'mime' => 'application/pdf',
@@ -242,6 +256,7 @@ $GLOBALS['zeilen'] = [
     'stan_dateien'     => [$roh(61, 3, 'Lies mich.pdf', ['zusatz' => 'Lies mich.pdf']), $roh(62, 3, 'FGr N.pdf', ['zusatz' => 'Fachgruppen/N/FGr N.pdf']), $roh(63, 3, 'alt.pdf', ['zusatz' => '2024/alt.pdf'])],
     'newsletter'       => [$roh(71, 0, 'ausgabe-3.pdf', ['titel' => 'Ausgabe 3'])],
     'calendar_files'   => [$roh(81, 89, 'stab.pdf')],
+    'expense_files'    => [$roh(91, 300, 'rechnung-zelt.pdf', ['zusatz' => 'Zelt für das Sommerfest', 'gruppe_jahr' => 2026, 'gruppe_art' => 'ausgabe'])],
 ];
 $GLOBALS['abfragen'] = [];
 $eigeneDocs = ablage_dateien_von($ganz['knoten']['k2']);
@@ -257,6 +272,14 @@ $check('Wurzel und Jahr haben keine eigenen Dokumente – und fragen auch nicht'
 $nl = ablage_dateien_von($ganz['knoten']['newsletter']);
 [$sql] = end($GLOBALS['abfragen']);
 $check('Newsletter: nur mit hochgeladenem PDF', count($nl) === 1 && str_contains($sql, "WHERE (f.stored_name <> '')"));
+$belegDocs = ablage_dateien_von($ganz['knoten']['buchung.j2026.ausgabe']);
+[$sql, $p] = end($GLOBALS['abfragen']);
+$check('Budget: Belege nach Jahr und Art, die Buchung als Zusatz', str_contains($sql, 'FROM expense_files f') && str_contains($sql, 'JOIN expenses x ON x.id = f.expense_id')
+    && str_contains($sql, 'WHERE (x.jahr = ? AND x.art = ?)') && $p === [2026, 'ausgabe'] && $belegDocs[0]['zusatz'] === 'Zelt für das Sommerfest'
+    && str_contains($belegDocs[0]['link'], 'p=expense_file&id=91') && ablage_im_baum($belegDocs, $ganz)[0]['knoten'] === 'buchung.j2026.ausgabe');
+$n = count($GLOBALS['abfragen']);
+$check('Budget: Wurzel und Jahr tragen keine Belege, Unsinn fragt nicht', ablage_dateien_von($ganz['knoten']['buchung']) === [] && ablage_dateien_von($ganz['knoten']['buchung.j2026']) === []
+    && ablage_dateien_von(['key' => 'buchung.j2026.quatsch']) === [] && ablage_dateien_von(['key' => 'buchung.jx.ausgabe']) === [] && count($GLOBALS['abfragen']) === $n);
 $wurzelStan = ablage_dateien_von($ganz['knoten']['stan.3']);
 $ordnerStan = ablage_dateien_von($ganz['knoten']['stan.3.Fachgruppen/N']);
 $check('STAN: je Ordner nur die Dateien direkt darin', array_column($wurzelStan, 'id') === [61] && array_column($ordnerStan, 'id') === [62]
@@ -283,7 +306,9 @@ $GLOBALS['abfragen'] = [];
 $treffer = ablage_suche(' 100%_miete ', $ganz);
 $erste = $GLOBALS['abfragen'][0];
 $check('Suche maskiert % und _', $erste[1] === ['%100\\%\\_miete%', '%100\\%\\_miete%'] && str_contains($erste[0], 'f.titel LIKE ? OR f.orig_name LIKE ?'));
-$check('Suche läuft durch alle Ablagen der Person', count(array_filter($GLOBALS['abfragen'], static fn($a) => str_starts_with($a[0], 'SELECT f.id'))) === 8);
+$check('Suche läuft durch alle Ablagen der Person', count(array_filter($GLOBALS['abfragen'], static fn($a) => str_starts_with($a[0], 'SELECT f.id'))) === 9);
+$belegSuche = array_values(array_filter($GLOBALS['abfragen'], static fn($a) => str_contains($a[0], 'FROM expense_files f')))[0];
+$check('Belege findet man auch über Buchung, Lieferant und Belegnummer', str_contains($belegSuche[0], 'x.bezeichnung LIKE ? OR x.lieferant LIKE ? OR x.beleg_nr LIKE ?') && count($belegSuche[1]) === 5);
 $check('leere Suche', ablage_suche('  ', $ganz) === []);
 $check('Treffer tragen ihren Knoten, jede Datei einmal', count($treffer) === count(array_unique(array_map(static fn($d) => $d['typ'] . ':' . $d['id'], $treffer)))
     && in_array('k2', array_column($treffer, 'knoten'), true) && in_array('stan.3.Fachgruppen/N', array_column($treffer, 'knoten'), true));

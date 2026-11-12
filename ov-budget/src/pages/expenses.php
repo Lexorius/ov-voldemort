@@ -28,10 +28,13 @@ $filters = [
 $alle = expense_query($filters);
 $blatt = seiten_blaettern(count($alle), get_int('seite') ?: 1, LISTE_JE_SEITE);
 
+$seite = array_slice($alle, $blatt['offset'], $blatt['pro_seite']);
+
 render('expenses', [
     'title'        => BUCHUNGSARTEN[$art],
     'art'          => $art,
-    'rows'         => array_slice($alle, $blatt['offset'], $blatt['pro_seite']),
+    'rows'         => $seite,
+    'belege'       => function_exists('xfile_fuer_buchungen') ? xfile_fuer_buchungen(array_column($seite, 'id')) : [],
     'blatt'        => $blatt,
     'blattParams'  => seiten_params(),
     'stats'        => expense_stats($alle),

@@ -83,6 +83,7 @@ require __DIR__ . '/lib/umfragen.php';
 require __DIR__ . '/lib/getraenke.php';
 require __DIR__ . '/lib/newsletter.php';
 require __DIR__ . '/lib/ablage.php';
+require __DIR__ . '/lib/expense_files.php';
 require __DIR__ . '/lib/nav.php';
 
 /** Ist die Anwendung eingerichtet? */

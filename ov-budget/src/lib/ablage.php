@@ -8,12 +8,14 @@ declare(strict_types=1);
  *   - eigene (Tabelle ablage_kategorien): die Leitung legt sie an, benennt sie
  *     um und hängt sie um; die Dokumente darin liegen in ablage_dateien
  *   - automatische: je Dateiablage eines Moduls eine gesperrte Kategorie mit
- *     Unterkategorien (Fahrzeuge › GKW, Veranstaltungen › 2026 › Sommerfest).
+ *     Unterkategorien (Fahrzeuge › GKW, Veranstaltungen › 2026 › Sommerfest,
+ *     Budget › 2026 › Ausgaben).
  *     Sie stehen in keiner Tabelle, sondern werden beim Anzeigen aus den
  *     Modulen gerechnet – so stimmen sie immer, und gepflegt wird im Modul.
  *
  * Jeder Knoten hat einen Schlüssel: eigene „k12", automatische „fahrzeug",
- * „fahrzeug.7", „veranstaltung.j2026", „stan.3.Ordner/Unterordner".
+ * „fahrzeug.7", „veranstaltung.j2026", „stan.3.Ordner/Unterordner",
+ * „buchung.j2026.ausgabe".
  *
  * Wer was sieht, entscheidet allein der Baum: ablage_baum_fuer() nimmt nur
  * auf, was die Person sehen darf – Dateien außerhalb davon gibt es für sie
@@ -29,6 +31,7 @@ const ABLAGE_QUELLEN = [
     'stan'          => ['label' => 'STAN',            'name' => 'stan_modul_name',          'recht' => null,              'route' => 'stan'],
     'newsletter'    => ['label' => 'Newsletter',      'name' => 'newsletter_modul_name',    'recht' => 'view_newsletter', 'route' => 'newsletter'],
     'wunsch'        => ['label' => 'Wünsch dir was',  'name' => 'wunsch_modul_name',        'recht' => null,              'route' => 'wishes'],
+    'buchung'       => ['label' => 'Budget',          'name' => 'budget_modul_name',        'recht' => 'view_expenses',   'route' => 'budget'],
 ];
 
 /* ==================================================================== */
@@ -426,6 +429,27 @@ function ablage_knoten_standorte(array $plaetze, array $zahl): array
     return $out;
 }
 
+/**
+ * Budget: je Haushaltsjahr „Ausgaben" und „Einnahmen" – die Belege liegen direkt darin, die
+ * Buchung steht am Beleg. $rows: jahr, art, n – neuestes Jahr zuerst. Reine Funktion.
+ */
+function ablage_knoten_buchungen(array $rows): array
+{
+    $jahre = [];
+    $arten = [];
+    foreach ($rows as $r) {
+        $jahr = (int)$r['jahr'];
+        $art = (string)$r['art'] === 'einnahme' ? 'einnahme' : 'ausgabe';
+        $jahrKey = 'buchung.j' . $jahr;
+        $jahre[$jahrKey] ??= ablage_knoten_neu($jahrKey, 'buchung', (string)$jahr, ['auto' => true, 'quelle' => 'buchung']);
+        $arten[] = ablage_knoten_neu($jahrKey . '.' . $art, $jahrKey, $art === 'einnahme' ? 'Einnahmen' : 'Ausgaben', [
+            'auto' => true, 'quelle' => 'buchung', 'anzahl' => (int)$r['n'],
+            'url' => url('expenses', ['jahr' => $jahr, 'art' => $art]),
+        ]);
+    }
+    return array_merge(array_values($jahre), $arten);
+}
+
 /** Der Ordner einer STAN-Datei aus ihrem Pfad im Paket – '' für die oberste Ebene. Reine Funktion. */
 function ablage_stan_ordner(string $pfad): string
 {
@@ -533,6 +557,11 @@ function ablage_auto_knoten(array $user): array
                      FROM wishes w WHERE EXISTS (SELECT 1 FROM wish_attachments a WHERE a.wish_id = w.id)
                      ORDER BY w.created_at DESC, w.id DESC'), 'wish', '#anlagen');
                 break;
+            case 'buchung':
+                $darunter = ablage_knoten_buchungen(db_all(
+                    'SELECT x.jahr, x.art, COUNT(*) AS n FROM expense_files f JOIN expenses x ON x.id = f.expense_id
+                     GROUP BY x.jahr, x.art ORDER BY x.jahr DESC, x.art'));
+                break;
         }
         $out[] = $wurzel;
         foreach ($darunter as $n) {
@@ -593,6 +622,11 @@ function ablage_quelle_sql(string $typ): ?array
         'wunsch' => ['route' => 'download', 'fest' => '', 'suche' => ['f.orig_name'],
             'spalten' => "$gemeinsam, '' AS titel, NULL AS thumb_name, 'dokument' AS art, f.wish_id AS objekt_id, f.kind AS zusatz, $wer",
             'von' => "wish_attachments f $u"],
+        // Belege: die Buchung steht als Zusatz am Beleg; Jahr und Art sagen, in welchem Knoten er liegt
+        'buchung' => ['route' => 'expense_file', 'fest' => '', 'suche' => ['f.titel', 'f.orig_name', 'x.bezeichnung', 'x.lieferant', 'x.beleg_nr'],
+            'spalten' => "$gemeinsam, f.titel, f.thumb_name, f.art, f.expense_id AS objekt_id, x.bezeichnung AS zusatz, $wer,
+                x.jahr AS gruppe_jahr, x.art AS gruppe_art",
+            'von' => "expense_files f $u JOIN expenses x ON x.id = f.expense_id"],
         default => null,
     };
 }
@@ -636,6 +670,8 @@ function ablage_datei_knoten(array $d): string
             return 'k' . $oid;
         case 'newsletter':
             return 'newsletter';
+        case 'buchung':
+            return 'buchung.j' . (int)($d['gruppe_jahr'] ?? 0) . '.' . ((string)($d['gruppe_art'] ?? '') === 'einnahme' ? 'einnahme' : 'ausgabe');
         case 'stan':
             $ordner = ablage_stan_ordner((string)($d['pfad'] ?? $d['zusatz'] ?? ''));
             return 'stan.' . $oid . ($ordner !== '' ? '.' . $ordner : '');
@@ -657,6 +693,12 @@ function ablage_dateien_von(array $knoten): array
     }
     if ($s['quelle'] === 'newsletter') {
         return $s['teil'] === '' ? ablage_zeilen('newsletter') : [];
+    }
+    if ($s['quelle'] === 'buchung') {
+        // nur „Ausgaben" und „Einnahmen" eines Jahres tragen Belege
+        return preg_match('/^j(\d{4})$/', $s['teil'], $m) && in_array($s['rest'], ['ausgabe', 'einnahme'], true)
+            ? ablage_zeilen('buchung', 'x.jahr = ? AND x.art = ?', [(int)$m[1], $s['rest']])
+            : [];
     }
     if ($s['id'] <= 0) {
         return [];   // Wurzel eines Moduls oder ein Jahr: nur Unterkategorien
@@ -760,6 +802,7 @@ function ablage_rechte_setzen(array $dateien, array $user): array
             'standort'      => can('admin'),
             'stan'          => $leitung,
             'newsletter'    => can('manage_newsletter'),
+            'buchung'       => can('manage_budget'),
             'wunsch'        => can('manage_wishes') || (int)($d['uploaded_by'] ?? 0) === (int)$user['id'],
             'termin'        => $termine[$d['objekt_id']] ??= (static function (int $id) use ($user): bool {
                 $t = kalender_find($id);
@@ -833,76 +876,25 @@ function afile_darf_aendern(array $datei, array $user): bool
  */
 function afile_store_uploads(int $kategorieId, string $feld, string $titel, array $user): array
 {
-    $fehler = [];
-    $anzahl = 0;
-    if (empty($_FILES[$feld]) || !is_array($_FILES[$feld]['name'])) {
-        return [0, ['Es kam keine Datei an. Bei sehr großen Dateien bricht der Browser den Upload ab, bevor die Anwendung ihn sieht.']];
-    }
-    $erlaubt = array_values(array_unique(array_merge(vfile_document_types(), VFILE_BILD_TYPEN)));
-    $max = upload_max_bytes();
-    $dir = afile_dir();
-    if (!is_dir($dir) || !is_writable($dir)) {
-        return [0, [sprintf('Der Ordner %s ist nicht beschreibbar.', $dir)]];
-    }
-    foreach ($_FILES[$feld]['name'] as $i => $name) {
-        $name = (string)$name;
-        $err = (int)$_FILES[$feld]['error'][$i];
-        if ($err === UPLOAD_ERR_NO_FILE || $name === '') {
-            continue;
-        }
-        if ($err !== UPLOAD_ERR_OK) {
-            $fehler[] = sprintf('„%s" konnte nicht hochgeladen werden (Fehlercode %d).', $name, $err);
-            continue;
-        }
-        $tmp = (string)$_FILES[$feld]['tmp_name'][$i];
-        $groesse = (int)$_FILES[$feld]['size'][$i];
-        // Nur Dateien, die PHP selbst entgegengenommen hat (die Tests schalten das ab)
-        if (!is_uploaded_file($tmp) && !defined('OVB_TEST_UPLOADS')) {
-            $fehler[] = sprintf('„%s" wurde nicht über das Formular hochgeladen.', $name);
-            continue;
-        }
-        $mime = class_exists('finfo') ? (string)(new finfo(FILEINFO_MIME_TYPE))->file($tmp) : '';
-        $grund = vfile_check($name, $groesse, $mime, 'dokument', $erlaubt, $max);
-        if ($grund !== null) {
-            $fehler[] = $grund;
-            continue;
-        }
-        $endung = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-        $basis = date('Ymd_His') . '_' . bin2hex(random_bytes(8));
-        $gespeichert = $basis . '.' . $endung;
-        $ziel = $dir . DIRECTORY_SEPARATOR . $gespeichert;
-        $vorschau = null;
-        $istBild = in_array($endung, VFILE_BILD_TYPEN, true) && str_starts_with($mime, 'image/');
-        $verarbeitet = $istBild && vfile_process_image($tmp, $ziel, $mime, VFILE_DOKUMENT_MAX, 92) !== null;
-        if ($verarbeitet) {
-            @unlink($tmp);
-            $groesse = (int)filesize($ziel);
-            $vorschau = $basis . '_vorschau.' . $endung;
-            if (vfile_process_image($ziel, $dir . DIRECTORY_SEPARATOR . $vorschau, $mime, VFILE_VORSCHAU_MAX) === null) {
-                $vorschau = null;
-            }
-        } elseif (!(defined('OVB_TEST_UPLOADS') ? rename($tmp, $ziel) : move_uploaded_file($tmp, $ziel))) {
-            $fehler[] = sprintf('„%s" konnte nicht gespeichert werden.', $name);
-            continue;
-        }
+    [$dateien, $fehler] = upload_dokumente_ablegen($feld, afile_dir());
+    foreach ($dateien as $d) {
         $id = db_insert('ablage_dateien', [
             'kategorie_id' => $kategorieId,
-            'art'          => $istBild ? 'bild' : 'dokument',
-            'titel'        => mb_substr(trim($titel) !== '' ? trim($titel) : pathinfo($name, PATHINFO_FILENAME), 0, 200),
-            'orig_name'    => mb_substr($name, 0, 255),
-            'stored_name'  => $gespeichert,
-            'thumb_name'   => $vorschau,
-            'mime'         => $mime,
-            'size_bytes'   => $groesse,
+            'art'          => $d['art'],
+            'titel'        => trim($titel) !== '' ? mb_substr(trim($titel), 0, 200) : $d['titel'],
+            'orig_name'    => $d['orig_name'],
+            'stored_name'  => $d['stored_name'],
+            'thumb_name'   => $d['thumb_name'],
+            'mime'         => $d['mime'],
+            'size_bytes'   => $d['size_bytes'],
             'uploaded_by'  => (int)$user['id'],
         ]);
         if (function_exists('ki_einreihen')) {
-            ki_einreihen('ablage', $id, $istBild ? 'bild' : 'dokument');
+            ki_einreihen('ablage', $id, $d['art']);
         }
-        audit('ablage.datei_abgelegt', 'ablage_datei', $id, $name);
-        $anzahl++;
+        audit('ablage.datei_abgelegt', 'ablage_datei', $id, $d['orig_name']);
     }
-    return [$anzahl, $fehler];
+    return [count($dateien), $fehler];
 }
 
 /** Titel und Kategorie eines Dokuments ändern; ein leerer Titel fällt auf den Dateinamen zurück */

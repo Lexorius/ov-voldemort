@@ -49,6 +49,7 @@ $routes = [
     'budget_year_edit'   => 'budget_year_edit',
     'expenses'           => 'expenses',
     'expense_edit'       => 'expense_edit',
+    'expense_file'       => 'expense_file',
     'expenses_export'    => 'expenses_export',
     'einnahmen_anfrage'  => 'einnahmen_anfrage',
     'budget_objektkonten' => 'budget_objektkonten',

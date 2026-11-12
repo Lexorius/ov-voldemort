@@ -93,13 +93,13 @@ $check('an, aber leer: Sperre geholt, Hängengebliebene freigegeben, nichts bear
 $GLOBALS['execs'] = [];
 $GLOBALS['settings']['ki_newsletter'] = '0';   // Newsletter-Ablage hier aus, damit die Zählung der übrigen bleibt
 settings_reset_cache();
-$check('alle einreihen: nur eingeschaltete Ablagen, ohne Vision-Modell keine Bilder und keine Plätze, STAN nach Mime gefiltert', ki_alle_einreihen() === 5 && count($GLOBALS['execs']) === 5 && !str_contains(implode(' ', array_column($GLOBALS['execs'], 0)), 'vehicle_files') && str_contains($GLOBALS['execs'][2][0], "f.mime NOT LIKE 'image/%'")
+$check('alle einreihen: nur eingeschaltete Ablagen, ohne Vision-Modell keine Bilder und keine Plätze, STAN nach Mime gefiltert', ki_alle_einreihen() === 6 && count($GLOBALS['execs']) === 6 && !str_contains(implode(' ', array_column($GLOBALS['execs'], 0)), 'vehicle_files') && str_contains($GLOBALS['execs'][2][0], "f.mime NOT LIKE 'image/%'")
     && !str_contains(implode(' ', array_column($GLOBALS['execs'], 0)), 'standort_bilder') && str_contains($GLOBALS['execs'][0][0], "AND f.art <> 'bild'"));
 $GLOBALS['execs'] = [];
 $check('Bild ohne Vision-Modell wird nicht eingereiht, Dokument schon', !ki_einreihen('veranstaltung', 5, 'bild') && $GLOBALS['execs'] === [] && ki_einreihen('veranstaltung', 5, 'dokument'));
 $einstellen(['ki_vision_modell' => 'llava:7b', 'ki_fahrzeuge' => '1']);
 $GLOBALS['execs'] = [];
-$check('mit Vision-Modell: Bilder und Plätze dabei', ki_einreihen('standort', 3, 'bild') && ki_alle_einreihen() === 7 && !str_contains(implode(' ', array_column($GLOBALS['execs'], 0)), "art <> 'bild'"));
+$check('mit Vision-Modell: Bilder und Plätze dabei', ki_einreihen('standort', 3, 'bild') && ki_alle_einreihen() === 8 && !str_contains(implode(' ', array_column($GLOBALS['execs'], 0)), "art <> 'bild'"));
 $einstellen(['ki_vision_modell' => '']);
 
 /* ---------- Schlagwörter und Antwort ---------- */

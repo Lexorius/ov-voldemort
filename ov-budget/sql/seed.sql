@@ -517,6 +517,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('ki_kontakte','1','Kontakte: Kategorie vorschlagen','Je Kontakt schlägt das Textmodell eine Kategorie aus der Auswahlliste vor, nie eine neue; übernommen wird von Hand. Es gehen Name, Organisation, Funktion, Ort, E-Mail-Domain und Notiz mit – keine Rufnummern, keine Anschrift.','bool','KI-Auswertung',125),
 ('ki_wuensche','1','Anlagen der Wünsche auswerten','Angebote, Rechnungen und Datenblätter an den Wünschen – mit Zusammenfassung und Schlagwörtern in der Dateiablage.','bool','KI-Auswertung',124),
 ('ki_ablage','1','Dokumente der Dateiablage auswerten','Jedes Dokument, das in einer eigenen Kategorie der Dateiablage landet, bekommt eine Zusammenfassung und Schlagwörter.','bool','KI-Auswertung',126),
+('ki_buchungen','1','Belege der Ausgaben und Einnahmen auswerten','Rechnungen, Quittungen und Bescheide an den Buchungen im Budget – mit Zusammenfassung und Schlagwörtern in der Dateiablage.','bool','KI-Auswertung',127),
 ('newsletter_modul_name','Newsletter','Bezeichnung des Moduls Newsletter','Hochgeladene PDF-Newsletter an Adresslisten verschicken, mit Abmeldelink und Sperrliste.','text','Newsletter',10),
 ('newsletter_user_darf_sehen','0','Alle Angemeldeten sehen die Newsletter','Aus = nur die Leitung. Anlegen, planen und verschicken kann in jedem Fall nur die Leitung.','bool','Newsletter',20),
 ('newsletter_je_abruf','50','Mails je Abruf','So viele Newsletter-Mails verschickt der automatische Abruf je Minute – schonend für den Mailserver.','number','Newsletter',30),

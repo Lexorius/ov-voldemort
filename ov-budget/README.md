@@ -85,6 +85,9 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 - **KI-Auswertung der Dateien** (abschaltbar, standardmäßig aus): ein Ollama im
   eigenen Netz fasst Dokumente und Fotos zusammen und vergibt Schlagwörter;
   Dateisuche über alle Ablagen
+- **Belege als Datei** an jeder Ausgabe und Einnahme – Rechnung, Quittung
+  oder Bescheid gleich beim Erfassen mitgeben; in der Dateiablage unter
+  Budget, mit Zusammenfassung und Schlagwörtern der KI
 - **Hochrechnung aufs Jahresende**: wiederkehrende Ausgaben je Kategorie aus
   dem Durchschnitt der letzten zwölf Monate (Tanken) oder als fester Betrag
   (Telefon), dazu Energie und Wasser aus den Zählern – voraussichtlich frei
@@ -187,7 +190,7 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
   geschachtelt, auf Wunsch nur für die Leitung sichtbar
 - Die **Dateiablagen der Module** als gesperrte Kategorien 🔒 daneben:
   Fahrzeuge je Fahrzeug, Veranstaltungen, Termine und Wünsche je Jahr,
-  Plätze, STAN, Newsletter
+  Plätze, STAN, Newsletter, Budget je Jahr mit Ausgaben und Einnahmen
 - Jedes Dokument geht durch die **KI im eigenen Netz** und bekommt
   Zusammenfassung und Schlagwörter; Suche über Namen und Schlagwörter
 

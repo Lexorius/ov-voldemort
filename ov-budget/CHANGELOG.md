@@ -1,5 +1,21 @@
 # Änderungsverlauf
 
+## 2.1.81.0
+
+- **Budget: Belege zu Ausgaben und Einnahmen.** Beim Erfassen und beim
+  Bearbeiten einer Buchung lässt sich die Rechnung, die Quittung oder der
+  Bescheid gleich als Datei mitgeben – mehrere auf einmal, PDF, Foto oder
+  Scan, mit freiwilliger Bezeichnung. Die Belege stehen an der Buchung
+  (ansehen, einzeln entfernen) und in der Liste als 📎 neben der
+  Belegnummer; sehen darf sie, wer die Buchungen sieht. Wird eine Buchung
+  gelöscht, gehen ihre Belege mit. Jeder Beleg geht durch die
+  **KI-Auswertung** (neuer Schalter *Belege der Ausgaben und Einnahmen
+  auswerten*) und bekommt Zusammenfassung und Schlagwörter.
+- **Dateiablage:** Neue gesperrte Kategorie **Budget** mit
+  *Jahr › Ausgaben* und *Jahr › Einnahmen*; an jedem Beleg steht seine
+  Buchung. Die Suche findet Belege auch über Bezeichnung, Lieferant und
+  Belegnummer der Buchung.
+
 ## 2.1.80.0
 
 - **Dateiablage:** Neues Modul, das alle Dokumente des Ortsverbands in

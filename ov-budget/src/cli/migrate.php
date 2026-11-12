@@ -2682,6 +2682,29 @@ SQL);
         $say('Tabelle ablage_dateien angelegt.');
     }
     $merken('102_dateiablage');
+
+    /* ---------- 103: Belege zu Ausgaben und Einnahmen ---------- */
+    if (!ovb_table_exists($pdo, 'expense_files')) {
+        $pdo->exec("CREATE TABLE expense_files (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  expense_id   INT UNSIGNED NOT NULL,
+  art          VARCHAR(20)  NOT NULL DEFAULT 'dokument',
+  titel        VARCHAR(200) NOT NULL DEFAULT '',
+  orig_name    VARCHAR(255) NOT NULL DEFAULT '',
+  stored_name  VARCHAR(120) NOT NULL,
+  thumb_name   VARCHAR(120) NULL,
+  mime         VARCHAR(120) NOT NULL DEFAULT '',
+  size_bytes   INT UNSIGNED NOT NULL DEFAULT 0,
+  uploaded_by  INT UNSIGNED NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_xf_buchung (expense_id),
+  CONSTRAINT fk_xf_buchung FOREIGN KEY (expense_id)  REFERENCES expenses(id) ON DELETE CASCADE,
+  CONSTRAINT fk_xf_user    FOREIGN KEY (uploaded_by) REFERENCES users(id)    ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle expense_files angelegt.');
+    }
+    $merken('103_buchungsbelege');
 }
 
 /**

@@ -14,6 +14,7 @@ const SPEICHER_ORDNER = [
     'standorte'      => 'Stell- und Lagerplätze (Bilder, Pläne)',
     'stan'           => 'STAN (Pakete und Dokumente)',
     'ablage'         => 'Dateiablage (Dokumente der eigenen Kategorien)',
+    'budget'         => 'Budget (Belege zu Ausgaben und Einnahmen)',
     'newsletter'     => 'Newsletter',
     'sicherungen'    => 'Sicherungen',
     'stein-debug'    => 'Stein.APP-Mitschnitte',
