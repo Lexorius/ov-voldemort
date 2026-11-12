@@ -151,6 +151,9 @@ unter „Sicherheitslücke PHP2Shell".
   Frist und Verlauf; Defekte kommen auch aus einem Divera-Formular. Dazu
   Räume und Lagerflächen, Gebäudekosten aus den Objektkonten und die Zähler
   auf einer Seite.
+* **Karten** – Kartenausschnitte auf OpenStreetMap mit eigenen Symbolen
+  (SVG und Bilder) per Rechtsklick; einblendbar die Fahrzeuge an ihrer
+  zuletzt gemeldeten Position.
 * **Dateiablage** – alle Dokumente in einem Baum aus Kategorien: eigene,
   beliebig tief geschachtelt, und die Ablagen der Module (Fahrzeuge,
   Veranstaltungen, Termine, Plätze, STAN, Newsletter, Wünsche, Belege

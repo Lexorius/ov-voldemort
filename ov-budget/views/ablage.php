@@ -115,7 +115,7 @@ $zeile = static fn(array $d, bool $ort): string => render_partial('partials/abla
 
         <?php if ($knoten['auto']): ?>
           <p class="small muted" style="margin:.8rem 0 0">Diese Kategorie spiegelt die Ablage eines Moduls. Hochladen und Entfernen geht dort<?= $knoten['url'] !== '' ? ' – <a href="' . e((string)$knoten['url']) . '">im Modul öffnen</a>' : '' ?>;
-            Zusammenfassung und Schlagwörter lassen sich auch hier anpassen.</p>
+            <?= isset(KI_TYPEN[(string)$knoten['quelle']]) ? 'Zusammenfassung und Schlagwörter lassen sich auch hier anpassen.' : '' ?></p>
         <?php elseif ($hochladen): ?>
           <details class="mt"<?= $dateien ? '' : ' open' ?>>
             <summary>Dokument ablegen</summary>

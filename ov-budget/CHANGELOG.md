@@ -1,5 +1,26 @@
 # Änderungsverlauf
 
+## 2.1.83.0
+
+- **Karten:** Neues Modul mit Kartenausschnitten auf OpenStreetMap. Jede
+  **Karte** ist ein benannter Ausschnitt (Mittelpunkt, Zoom) mit eigenen
+  Symbolen; „Ausschnitt merken" hält fest, wie sie öffnet. Per
+  **Rechtsklick** – am Handy lange drücken oder „+ Symbol" – setzt man ein
+  Symbol aus der Bibliothek, zieht es an eine andere Stelle und stellt per
+  Klick Beschriftung, Größe und Drehung ein. Die **Symbolbibliothek** nimmt
+  SVG (in jeder Größe scharf) und Bilder (PNG, JPG, WebP, GIF), geordnet
+  nach Gruppen. Eine SVG wird beim Hochladen geprüft und abgelehnt, wenn sie
+  Skript, Ereignis-Attribute oder Verweise nach außen enthält. Mit dem
+  Schalter **Fahrzeuge** erscheinen die Fahrzeuge an ihrer zuletzt
+  gemeldeten Position (Divera, QR-Code, von Hand) mit Funkrufname und
+  Alter der Meldung, jede Minute frisch; alte Positionen blasser. Die Karte
+  kommt ohne fremde Bibliothek aus; die Kacheln lädt der Browser direkt vom
+  eingestellten Kachelserver. Neue Einstellungen (Name, Einleitung, wer
+  sehen und Symbole setzen darf, Kachelserver, Quellenangabe).
+- **Dateiablage:** Neue gesperrte Kategorie **Karten** mit den Gruppen der
+  Symbolbibliothek als Unterkategorien. Symbole sind Piktogramme und laufen
+  nicht durch die KI-Auswertung.
+
 ## 2.1.82.0
 
 - **Hinweis über jedem Upload-Feld:** Über jedem Feld, das Dokumente oder

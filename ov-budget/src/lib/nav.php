@@ -56,6 +56,8 @@ function nav_module(): array
                         'route' => 'unterkunft', 'aktiv' => ['unterkunft', 'unterkunft_punkt', 'unterkunft_punkt_edit'], 'darf' => can('view_unterkunft')],
         'ablage'    => ['label' => (string)setting('ablage_modul_name', 'Dateiablage'), 'icon' => '🗂',
                         'route' => 'ablage', 'aktiv' => ['ablage', 'ablage_kategorie_edit', 'ki_suche'], 'darf' => can('view_ablage')],
+        'karten'    => ['label' => (string)setting('karten_modul_name', 'Karten'), 'icon' => '🗺',
+                        'route' => 'karten', 'aktiv' => ['karten', 'karte', 'karte_edit', 'karten_symbole'], 'darf' => can('view_karten')],
         'thw'       => ['label' => (string)setting('thw_modul_name', 'THW-Kontakte'), 'icon' => '⛑',
                         'route' => 'thw', 'aktiv' => ['thw', 'thw_dienststelle_edit', 'thw_postfach_edit'], 'darf' => true],
         'stan'      => ['label' => (string)setting('stan_modul_name', 'STAN'), 'icon' => '📋',

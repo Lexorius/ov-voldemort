@@ -31,7 +31,7 @@ $meta = array_filter([
     <?php if ($zeigeOrt && $ortKey !== ''): ?>
       <div class="small"><?= !empty($baum['knoten'][$ortKey]['auto']) ? '🔒' : '📁' ?> <a href="<?= e(url('ablage', ['k' => $ortKey])) ?>#<?= e($anker) ?>"><?= e(ablage_pfad_text($ortKey, $baum)) ?></a></div>
     <?php endif; ?>
-    <?= function_exists('ki_hinweis_html')
+    <?= function_exists('ki_hinweis_html') && isset(KI_TYPEN[$typ])
         ? ki_hinweis_html($typ, $d, $kiDaten[$typ] ?? ['ergebnisse' => [], 'auftraege' => []], !empty($d['darf_ki']),
             ['zurueck' => $hier . '#' . $anker, 'suche' => 'ablage', 'immer' => true])
         : '' ?>

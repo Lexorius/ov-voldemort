@@ -15,7 +15,7 @@ declare(strict_types=1);
  *
  * Jeder Knoten hat einen Schlüssel: eigene „k12", automatische „fahrzeug",
  * „fahrzeug.7", „veranstaltung.j2026", „stan.3.Ordner/Unterordner",
- * „buchung.j2026.ausgabe".
+ * „buchung.j2026.ausgabe", „karte.g.Taktische Zeichen".
  *
  * Wer was sieht, entscheidet allein der Baum: ablage_baum_fuer() nimmt nur
  * auf, was die Person sehen darf – Dateien außerhalb davon gibt es für sie
@@ -32,6 +32,8 @@ const ABLAGE_QUELLEN = [
     'newsletter'    => ['label' => 'Newsletter',      'name' => 'newsletter_modul_name',    'recht' => 'view_newsletter', 'route' => 'newsletter'],
     'wunsch'        => ['label' => 'Wünsch dir was',  'name' => 'wunsch_modul_name',        'recht' => null,              'route' => 'wishes'],
     'buchung'       => ['label' => 'Budget',          'name' => 'budget_modul_name',        'recht' => 'view_expenses',   'route' => 'budget'],
+    // Symbole der Karten – Piktogramme, keine Dokumente: sie laufen nicht durch die KI-Auswertung
+    'karte'         => ['label' => 'Karten',          'name' => 'karten_modul_name',        'recht' => 'view_karten',     'route' => 'karten'],
 ];
 
 /* ==================================================================== */
@@ -450,6 +452,27 @@ function ablage_knoten_buchungen(array $rows): array
     return array_merge(array_values($jahre), $arten);
 }
 
+/**
+ * Karten: die Symbolbibliothek, je Gruppe eine Unterkategorie; Symbole ohne Gruppe
+ * stehen unter „Ohne Gruppe". $rows: gruppe, n – nach Gruppe sortiert. Reine Funktion.
+ */
+function ablage_knoten_karten(array $rows): array
+{
+    $out = [];
+    $ohne = null;
+    foreach ($rows as $r) {
+        $gruppe = (string)$r['gruppe'];
+        $knoten = ablage_knoten_neu($gruppe === '' ? 'karte.ohne' : 'karte.g.' . $gruppe, 'karte', $gruppe === '' ? 'Ohne Gruppe' : $gruppe,
+            ['auto' => true, 'quelle' => 'karte', 'anzahl' => (int)$r['n'], 'url' => url('karten_symbole')]);
+        if ($gruppe === '') {
+            $ohne = $knoten;   // ans Ende
+        } else {
+            $out[] = $knoten;
+        }
+    }
+    return $ohne ? array_merge($out, [$ohne]) : $out;
+}
+
 /** Der Ordner einer STAN-Datei aus ihrem Pfad im Paket – '' für die oberste Ebene. Reine Funktion. */
 function ablage_stan_ordner(string $pfad): string
 {
@@ -557,6 +580,9 @@ function ablage_auto_knoten(array $user): array
                      FROM wishes w WHERE EXISTS (SELECT 1 FROM wish_attachments a WHERE a.wish_id = w.id)
                      ORDER BY w.created_at DESC, w.id DESC'), 'wish', '#anlagen');
                 break;
+            case 'karte':
+                $darunter = ablage_knoten_karten(db_all('SELECT gruppe, COUNT(*) AS n FROM karten_symbole GROUP BY gruppe ORDER BY gruppe'));
+                break;
             case 'buchung':
                 $darunter = ablage_knoten_buchungen(db_all(
                     'SELECT x.jahr, x.art, COUNT(*) AS n FROM expense_files f JOIN expenses x ON x.id = f.expense_id
@@ -627,6 +653,10 @@ function ablage_quelle_sql(string $typ): ?array
             'spalten' => "$gemeinsam, f.titel, f.thumb_name, f.art, f.expense_id AS objekt_id, x.bezeichnung AS zusatz, $wer,
                 x.jahr AS gruppe_jahr, x.art AS gruppe_art",
             'von' => "expense_files f $u JOIN expenses x ON x.id = f.expense_id"],
+        // Symbole der Karten: das Symbol ist seine eigene Vorschau, die Gruppe sagt, in welchem Knoten es liegt
+        'karte' => ['route' => 'karten_symbol', 'fest' => '', 'suche' => ['f.name', 'f.orig_name', 'f.gruppe'],
+            'spalten' => "$gemeinsam, f.name AS titel, f.stored_name AS thumb_name, 'bild' AS art, 0 AS objekt_id, f.gruppe AS zusatz, $wer",
+            'von' => "karten_symbole f $u"],
         default => null,
     };
 }
@@ -670,6 +700,9 @@ function ablage_datei_knoten(array $d): string
             return 'k' . $oid;
         case 'newsletter':
             return 'newsletter';
+        case 'karte':
+            $gruppe = (string)($d['gruppe'] ?? $d['zusatz'] ?? '');
+            return $gruppe === '' ? 'karte.ohne' : 'karte.g.' . $gruppe;
         case 'buchung':
             return 'buchung.j' . (int)($d['gruppe_jahr'] ?? 0) . '.' . ((string)($d['gruppe_art'] ?? '') === 'einnahme' ? 'einnahme' : 'ausgabe');
         case 'stan':
@@ -693,6 +726,18 @@ function ablage_dateien_von(array $knoten): array
     }
     if ($s['quelle'] === 'newsletter') {
         return $s['teil'] === '' ? ablage_zeilen('newsletter') : [];
+    }
+    if ($s['quelle'] === 'karte') {
+        if (!($s['teil'] === 'ohne' || ($s['teil'] === 'g' && $s['rest'] !== ''))) {
+            return [];   // die Wurzel: nur Unterkategorien
+        }
+        $out = [];
+        foreach (ablage_zeilen('karte', 'f.gruppe = ?', [$s['teil'] === 'ohne' ? '' : $s['rest']], 2000, 'f.name, f.id') as $d) {
+            $d['gruppe'] = $d['zusatz'];
+            $d['zusatz'] = '';   // die Gruppe steht schon als Kategorie da
+            $out[] = $d;
+        }
+        return $out;
     }
     if ($s['quelle'] === 'buchung') {
         // nur „Ausgaben" und „Einnahmen" eines Jahres tragen Belege
@@ -803,6 +848,7 @@ function ablage_rechte_setzen(array $dateien, array $user): array
             'stan'          => $leitung,
             'newsletter'    => can('manage_newsletter'),
             'buchung'       => can('manage_budget'),
+            'karte'         => false,   // Symbole haben keine KI-Auswertung
             'wunsch'        => can('manage_wishes') || (int)($d['uploaded_by'] ?? 0) === (int)$user['id'],
             'termin'        => $termine[$d['objekt_id']] ??= (static function (int $id) use ($user): bool {
                 $t = kalender_find($id);

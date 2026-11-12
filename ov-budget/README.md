@@ -185,6 +185,14 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 - Räume und Lagerflächen, **Gebäudekosten** aus den Objektkonten und
   **Zähler** auf einer Seite; jede Platzseite zeigt ihre offenen Punkte
 
+### Karten
+- **Kartenausschnitte auf OpenStreetMap** mit eigenen Symbolen: per
+  Rechtsklick setzen, ziehen, beschriften, in Größe und Drehung anpassen
+- **Symbolbibliothek** für SVG und Bilder, nach Gruppen; SVG wird beim
+  Hochladen auf Skript und Verweise nach außen geprüft
+- **Fahrzeuge einblendbar** an ihrer zuletzt gemeldeten Position, jede
+  Minute frisch
+
 ### Dateiablage
 - **Alle Dokumente in einem Baum**: eigene Kategorien, beliebig tief
   geschachtelt, auf Wunsch nur für die Leitung sichtbar

@@ -2705,6 +2705,65 @@ SQL);
         $say('Tabelle expense_files angelegt.');
     }
     $merken('103_buchungsbelege');
+
+    /* ---------- 104: Karten – Ausschnitte, Symbole, gesetzte Symbole ---------- */
+    if (!ovb_table_exists($pdo, 'karten')) {
+        $pdo->exec("CREATE TABLE karten (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  name         VARCHAR(150) NOT NULL,
+  beschreibung VARCHAR(500) NOT NULL DEFAULT '',
+  lat          DECIMAL(9,6) NOT NULL,
+  lng          DECIMAL(9,6) NOT NULL,
+  zoom         TINYINT UNSIGNED NOT NULL DEFAULT 14,
+  fahrzeuge    TINYINT(1)   NOT NULL DEFAULT 0,
+  created_by   INT UNSIGNED NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_karte_cb FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle karten angelegt.');
+    }
+    if (!ovb_table_exists($pdo, 'karten_symbole')) {
+        $pdo->exec("CREATE TABLE karten_symbole (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  name         VARCHAR(150) NOT NULL,
+  gruppe       VARCHAR(100) NOT NULL DEFAULT '',
+  orig_name    VARCHAR(255) NOT NULL DEFAULT '',
+  stored_name  VARCHAR(120) NOT NULL,
+  mime         VARCHAR(120) NOT NULL DEFAULT '',
+  size_bytes   INT UNSIGNED NOT NULL DEFAULT 0,
+  uploaded_by  INT UNSIGNED NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_ksym_gruppe (gruppe, name),
+  CONSTRAINT fk_ksym_user FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle karten_symbole angelegt.');
+    }
+    if (!ovb_table_exists($pdo, 'karten_marker')) {
+        $pdo->exec("CREATE TABLE karten_marker (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  karte_id     INT UNSIGNED NOT NULL,
+  symbol_id    INT UNSIGNED NOT NULL,
+  lat          DECIMAL(9,6) NOT NULL,
+  lng          DECIMAL(9,6) NOT NULL,
+  groesse      SMALLINT UNSIGNED NOT NULL DEFAULT 40,
+  drehung      SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  beschriftung VARCHAR(150) NOT NULL DEFAULT '',
+  created_by   INT UNSIGNED NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_kmark_karte (karte_id),
+  KEY idx_kmark_symbol (symbol_id),
+  CONSTRAINT fk_kmark_karte  FOREIGN KEY (karte_id)   REFERENCES karten(id)         ON DELETE CASCADE,
+  CONSTRAINT fk_kmark_symbol FOREIGN KEY (symbol_id)  REFERENCES karten_symbole(id) ON DELETE RESTRICT,
+  CONSTRAINT fk_kmark_cb     FOREIGN KEY (created_by) REFERENCES users(id)          ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle karten_marker angelegt.');
+    }
+    $merken('104_karten');
 }
 
 /**

@@ -89,6 +89,14 @@ $routes = [
     'ablage_kategorie_edit' => 'ablage_kategorie_edit',
     'ablage_datei'       => 'ablage_datei',
 
+    // Karten
+    'karten'             => 'karten',
+    'karte'              => 'karte',
+    'karte_edit'         => 'karte_edit',
+    'karten_symbole'     => 'karten_symbole',
+    'karten_symbol'      => 'karten_symbol',
+    'karten_api'         => 'karten_api',
+
     // Unterkunft
     'unterkunft'         => 'unterkunft',
     'unterkunft_punkt'   => 'unterkunft_punkt',

@@ -137,6 +137,10 @@ function can(string $what, mixed $ctx = null): bool
         'manage_ablage'  => $leitung,
         'view_ablage'    => $leitung || setting_bool('ablage_user_darf_sehen', true),
         'upload_ablage'  => $leitung || (setting_bool('ablage_user_darf_sehen', true) && setting_bool('ablage_user_darf_hochladen', false)),
+        // Karten: Ausschnitte und Symbolbibliothek pflegt die Leitung; Symbole setzen darf, wem es die Einstellung erlaubt
+        'manage_karten'  => $leitung,
+        'view_karten'    => $leitung || setting_bool('karten_user_darf_sehen', true),
+        'mark_karten'    => $leitung || (setting_bool('karten_user_darf_sehen', true) && setting_bool('karten_user_darf_setzen', false)),
         'manage_verbrauch' => $leitung,
         'view_verbrauch' => $leitung || setting_bool('verbrauch_user_darf_sehen', false),
         'read_meter'     => $leitung || (setting_bool('verbrauch_user_darf_sehen', false)

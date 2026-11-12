@@ -98,7 +98,7 @@ ist, was die Dateiablage belegt und wie viel auf der Platte darunter noch
 frei ist. Wird es knapp (unter 10 % oder unter 500 MB frei), steht das rot
 dabei – dann alte Sicherungen löschen oder Platz schaffen. „Einzelheiten"
 schlüsselt die Ablage nach Ordnern auf (Fahrzeuge, Veranstaltungen,
-Plätze, Dateiablage, Budget, Sicherungen) und nennt die größten Tabellen der
+Plätze, Dateiablage, Budget, Karten, Sicherungen) und nennt die größten Tabellen der
 Datenbank.
 
 ### Sicherung und Wiederherstellung
@@ -1182,7 +1182,8 @@ Baum unter dem Inhalt.
   Baum der Plätze mit Bildern, *STAN* je Version mit den Ordnern des
   Pakets, *Newsletter* mit den PDFs, *Budget* je Haushaltsjahr mit
   *Ausgaben* und *Einnahmen* – darin die Belege, jeder mit seiner Buchung
-  (siehe „Belege zu Ausgaben und Einnahmen"). Die Namen kommen aus den
+  (siehe „Belege zu Ausgaben und Einnahmen"), *Karten* mit den Gruppen
+  der Symbolbibliothek. Die Namen kommen aus den
   Einstellungen der Module. Gesperrt heißt: umbenennen, umhängen, ablegen
   und entfernen geht nur im Modul – „Im Modul öffnen" führt dorthin.
   Sichtbar ist eine solche Kategorie nur für die, die das Modul sehen
@@ -1212,6 +1213,68 @@ und entfernen. Kategorien pflegt immer die Leitung.
 
 Die Dokumente der eigenen Kategorien liegen im Ordner `ablage` der
 Dateiablage auf der Platte und gehören zur Sicherung.
+
+## Karten
+
+Das Modul **Karten** zeigt Kartenausschnitte auf OpenStreetMap, auf die
+sich eigene Symbole setzen lassen – das Gelände der Unterkunft, ein
+Übungsgebiet, eine Einsatzstelle.
+
+* **Karte anlegen** – „+ Karte": Name, Beschreibung, Mittelpunkt und Zoom.
+  Vorbelegt ist die Unterkunft, wenn sie unter *Stell- und Lagerplätze*
+  Koordinaten hat, sonst die Mitte Deutschlands. Einfacher als Zahlen: die
+  Karte zurechtschieben und **Ausschnitt merken** drücken – so öffnet sie
+  ab dann.
+* **Bewegen** – ziehen verschiebt, Mausrad, Doppelklick oder + und −
+  zoomen, zwei Finger am Handy auch; ⌂ springt zum gemerkten Ausschnitt
+  zurück.
+* **Symbol setzen** – **Rechtsklick** auf die Stelle öffnet die Auswahl
+  aus der Bibliothek, nach Gruppen geordnet und ab neun Symbolen mit
+  Suchfeld. Am Handy lange auf die Stelle drücken; „+ Symbol" über der
+  Karte öffnet die Auswahl für die Kartenmitte. Ein gesetztes Symbol lässt
+  sich **ziehen**; ein **Klick** darauf öffnet Beschriftung, Größe (12 bis
+  400 Pixel) und Drehung, dort auch „Entfernen". Gespeichert wird sofort.
+* **Symbole** – die Bibliothek gilt für alle Karten. Hochladen lassen sich
+  **SVG** (bleibt in jeder Größe scharf) und Bilder (PNG, JPG, WebP, GIF;
+  sie werden auf 1024 Pixel begrenzt), mehrere auf einmal, mit Gruppe und
+  Name. Ein Symbol lässt sich nur löschen, wenn es auf keiner Karte mehr
+  sitzt.
+* **Fahrzeuge** – der Schalter über der Karte blendet alle Fahrzeuge im
+  Dienst ein, die eine Position gemeldet haben: als Punkt mit Funkrufname
+  (sonst Bezeichnung), beim Überfahren mit Alter und Quelle der Meldung
+  (Divera, QR-Code im Fahrzeug, von Hand). Positionen, die älter als ein
+  Tag sind, stehen blasser da. Solange der Schalter an ist, holt die Karte
+  die Positionen jede Minute neu; ein Klick auf das Fahrzeug öffnet seine
+  Seite. Der Browser merkt sich die Stellung je Karte, der Haken im
+  Formular der Karte ist nur die Vorgabe. Zu sehen sind die Fahrzeuge nur
+  für die, die auch das Fahrzeugmodul sehen.
+* **Dateiablage** – die Symbole stehen dort unter *Karten*, je Gruppe eine
+  Unterkategorie. Sie sind Piktogramme, keine Dokumente, und laufen nicht
+  durch die KI-Auswertung.
+
+**Wer darf was:** Sehen dürfen die Karten alle Mitglieder (abschaltbar).
+Karten anlegen, den Ausschnitt merken und die Symbolbibliothek pflegen
+kann die Leitung. Symbole setzen, versetzen und entfernen darf die Leitung;
+mit *Alle Mitglieder dürfen Symbole setzen* auch alle anderen.
+
+**SVG und Sicherheit:** Eine SVG kann Skript enthalten. Deshalb wird jede
+beim Hochladen geprüft und abgelehnt, sobald sie Skript, Ereignis-Attribute
+(onload, onclick), eingebettete Seiten, eigene Entitäten oder Verweise auf
+etwas außerhalb der Datei enthält – die Meldung nennt den Grund. Aus
+Inkscape hilft „Speichern unter → Normales SVG" bzw. „Optimiertes SVG".
+Ausgeliefert werden Symbole zusätzlich mit einer Regel, die dem Browser
+jedes Skript und jedes Nachladen verbietet, und eingebunden nur als Bild.
+
+**Kacheln und Datenschutz:** Die Kartenbilder lädt der Browser jedes
+Betrachters direkt vom Kachelserver – in der Vorgabe von den Servern von
+OpenStreetMap. Diese sehen dabei die Adresse des Betrachters, den
+angefragten Ausschnitt und die Herkunft der Seite (nur Rechnername, keinen
+Pfad); Symbole und Fahrzeugpositionen bleiben im Haus. Wer das nicht will
+oder die Karte stark nutzt, trägt unter *Einstellungen → Karten* einen
+eigenen Kachelserver ein (Platzhalter `{z}`, `{x}`, `{y}`, auf Wunsch
+`{s}`); die Quellenangabe unten rechts ist ebenfalls einstellbar und bei
+OpenStreetMap Pflicht. Die Server von OpenStreetMap sind für gelegentliche
+Nutzung gedacht, nicht für Dauerlast.
 
 ## Tankkarten
 
