@@ -72,6 +72,7 @@ require __DIR__ . '/lib/kalender.php';
 require __DIR__ . '/lib/ics.php';
 require __DIR__ . '/lib/tp_links.php';
 require __DIR__ . '/lib/standorte.php';
+require __DIR__ . '/lib/unterkunft.php';
 require __DIR__ . '/lib/thw.php';
 require __DIR__ . '/lib/ki.php';
 require __DIR__ . '/lib/geo.php';

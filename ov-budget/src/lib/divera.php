@@ -332,7 +332,13 @@ function divera_fetch_form_fields(string $formId): array
  */
 function divera_suggest_map(array $felder, string $ziel = 'wunsch'): array
 {
-    $muster = $ziel === 'thema' ? [
+    $muster = $ziel === 'defekt' ? [
+        'titel'        => ['was ist defekt', 'defekt', 'mangel', 'schaden', 'titel', 'betreff', 'kurzbeschreibung', 'was'],
+        'ort'          => ['ort', 'raum', 'wo', 'gebäude', 'gebaeude', 'bereich', 'standort', 'stelle'],
+        'beschreibung' => ['beschreibung', 'details', 'erläuterung', 'erlaeuterung', 'bemerkung', 'text'],
+        'prioritaet'   => ['dringlichkeit', 'priorität', 'prioritaet', 'dringend', 'wichtigkeit'],
+        'melder'       => ['gemeldet von', 'melder', 'name', 'von', 'ansprechpartner'],
+    ] : ($ziel === 'thema' ? [
         'titel'        => ['thema', 'titel', 'betreff', 'überschrift', 'ueberschrift', 'worum geht'],
         'beschreibung' => ['beschreibung', 'details', 'inhalt', 'erläuterung', 'erlaeuterung', 'hintergrund', 'text'],
         'fachgruppe'   => ['fachgruppe', 'einheit', 'gruppe'],
@@ -357,7 +363,7 @@ function divera_suggest_map(array $felder, string $ziel = 'wunsch'): array
         'artikelnummer' => ['artikelnummer', 'art.-nr', 'bestellnummer'],
         'link'          => ['link', 'url', 'internet'],
         'antragsteller' => ['antragsteller', 'name', 'von', 'melder'],
-    ];
+    ]);
     $vergeben = [];
     $out = [];
     foreach ($muster as $ziel => $woerter) {
@@ -533,7 +539,13 @@ function divera_status_sync_form(array $form): array
         return $res;
     }
     $thema = divera_ziel($form) === 'thema';
-    $zeilen = $thema
+    $defekt = divera_ziel($form) === 'defekt';
+    $zeilen = $defekt
+        ? db_all("SELECT p.id, p.titel AS name, p.divera_entry_id, p.divera_status,
+                         COALESCE(st.is_final, 0) AS status_final, st.slug AS status_slug
+                  FROM unterkunft_punkte p LEFT JOIN list_items st ON st.id = p.status_id
+                  WHERE p.divera_form_id = ? AND p.divera_entry_id <> ''", [(string)$form['form_id']])
+        : ($thema
         ? db_all("SELECT t.id, t.titel AS name, t.meeting_id, t.divera_entry_id, t.divera_status,
                          COALESCE(st.is_final, 0) AS status_final, st.slug AS status_slug
                   FROM talking_points t LEFT JOIN list_items st ON st.id = t.status_id
@@ -541,13 +553,13 @@ function divera_status_sync_form(array $form): array
         : db_all("SELECT w.id, w.bezeichnung AS name, w.divera_entry_id, w.divera_status,
                          COALESCE(st.is_final, 0) AS status_final, st.slug AS status_slug
                   FROM wishes w LEFT JOIN list_items st ON st.id = w.status_id
-                  WHERE w.divera_form_id = ? AND w.divera_entry_id <> ''", [(string)$form['form_id']]);
+                  WHERE w.divera_form_id = ? AND w.divera_entry_id <> ''", [(string)$form['form_id']]));
 
     $bearbeitung = divera_slugs((string)setting('divera_status_bearbeitung', 'freigegeben'));
     $abgeschlossen = divera_slugs((string)setting('divera_status_abgeschlossen', 'bestellt'));
 
     foreach ($zeilen as $z) {
-        $ziel = $thema ? divera_zielstatus_thema($z) : divera_zielstatus_wunsch($z, $bearbeitung, $abgeschlossen);
+        $ziel = $defekt ? unterkunft_divera_zielstatus($z) : ($thema ? divera_zielstatus_thema($z) : divera_zielstatus_wunsch($z, $bearbeitung, $abgeschlossen));
         $bisher = $z['divera_status'] !== null ? (int)$z['divera_status'] : null;
         if (!divera_status_weiter($bisher, $ziel)) {
             continue;
@@ -563,18 +575,21 @@ function divera_status_sync_form(array $form): array
             db_insert('divera_log', [
                 'form_id'  => (string)$form['form_id'],
                 'entry_id' => (string)$z['divera_entry_id'],
-                'wish_id'  => $thema ? null : (int)$z['id'],
+                'wish_id'  => $thema || $defekt ? null : (int)$z['id'],
                 'tp_id'    => $thema ? (int)$z['id'] : null,
                 'status'   => 'fehler',
                 'message'  => mb_substr('Status „' . DIVERA_REPORT_STATUS[$ziel] . '“ nicht gesetzt: ' . $ex->getMessage(), 0, 500),
             ]);
             break;
         }
-        db_exec(($thema ? 'UPDATE talking_points' : 'UPDATE wishes') . ' SET divera_status = ? WHERE id = ?', [$ziel, (int)$z['id']]);
+        db_exec(($defekt ? 'UPDATE unterkunft_punkte' : ($thema ? 'UPDATE talking_points' : 'UPDATE wishes')) . ' SET divera_status = ? WHERE id = ?', [$ziel, (int)$z['id']]);
+        if ($defekt) {
+            unterkunft_log_add((int)$z['id'], null, 'Stand an Divera gemeldet: ' . DIVERA_REPORT_STATUS[$ziel], null, null, 'system');
+        }
         db_insert('divera_log', [
             'form_id'  => (string)$form['form_id'],
             'entry_id' => (string)$z['divera_entry_id'],
-            'wish_id'  => $thema ? null : (int)$z['id'],
+            'wish_id'  => $thema || $defekt ? null : (int)$z['id'],
             'tp_id'    => $thema ? (int)$z['id'] : null,
             'status'   => 'ok',
             'message'  => mb_substr('Divera-Status „' . DIVERA_REPORT_STATUS[$ziel] . '“: ' . $z['name'], 0, 500),
@@ -588,16 +603,38 @@ function divera_status_sync_form(array $form): array
 const DIVERA_ZIELE = [
     'wunsch' => 'Wünsch dir was',
     'thema'  => 'Themen für Besprechungen',
+    'defekt' => 'Defekte an der Unterkunft',
 ];
+
+/** Gültiges Ziel aus einer Eingabe – Vorgabe Wunsch. Reine Funktion. */
+function divera_ziel_wert(string $wert): string
+{
+    return array_key_exists($wert, DIVERA_ZIELE) ? $wert : 'wunsch';
+}
+
+/** Wie die übernommenen Einträge heißen: Wünsche, Themen, Mängel. Reine Funktion. */
+function divera_ziel_mehrzahl(string $ziel): string
+{
+    return ['thema' => 'Themen', 'defekt' => 'Mängel'][$ziel] ?? 'Wünsche';
+}
 
 function divera_ziel(array $form): string
 {
-    return ($form['ziel'] ?? '') === 'thema' ? 'thema' : 'wunsch';
+    return divera_ziel_wert((string)($form['ziel'] ?? ''));
 }
 
 /** Diese Zuordnungen können je Formular gepflegt werden */
 function divera_map_targets(string $ziel = 'wunsch'): array
 {
+    if ($ziel === 'defekt') {
+        return [
+            'titel'        => 'Was ist defekt (Titel)',
+            'beschreibung' => 'Beschreibung',
+            'ort'          => 'Ort / Raum',
+            'prioritaet'   => 'Dringlichkeit',
+            'melder'       => 'Gemeldet von (Name)',
+        ];
+    }
     if ($ziel === 'thema') {
         return [
             'titel'        => 'Thema (Titel)',
@@ -850,8 +887,10 @@ function divera_import_form(array $form, ?int $userId = null, bool $dryRun = fal
     $map = json_decode((string)($form['field_map'] ?? '{}'), true) ?: [];
     $entries = divera_fetch_entries((string)$form['form_id']);
     $thema = divera_ziel($form) === 'thema';
-    $tabelle = $thema ? 'talking_points' : 'wishes';
-    $nutzer = $thema ? divera_user_index() : [];
+    $defekt = divera_ziel($form) === 'defekt';
+    $tabelle = $defekt ? 'unterkunft_punkte' : ($thema ? 'talking_points' : 'wishes');
+    $nutzer = $thema || $defekt ? divera_user_index() : [];
+    $plaetze = $defekt && function_exists('standort_all') ? standort_all() : [];
 
     $created = 0;
     $skipped = 0;
@@ -880,15 +919,22 @@ function divera_import_form(array $form, ?int $userId = null, bool $dryRun = fal
         }
 
         try {
-            $data = $thema
-                ? divera_entry_to_tp($entry, $map, $form, $nutzer)
-                : divera_entry_to_wish($entry, $map, $form);
+            $data = $defekt
+                ? unterkunft_aus_divera($entry, $map, $form, $plaetze, $nutzer)
+                : ($thema
+                    ? divera_entry_to_tp($entry, $map, $form, $nutzer)
+                    : divera_entry_to_wish($entry, $map, $form));
             if ($dryRun) {
                 $preview[] = $data;
                 $created++;
                 continue;
             }
-            if ($thema) {
+            if ($defekt) {
+                $data['created_by'] = $userId;
+                $neuId = db_insert('unterkunft_punkte', $data);
+                unterkunft_log_add($neuId, null, 'Aus dem Divera-Formular „' . (string)$form['name'] . '" übernommen', null, $data['status_id'], 'divera');
+                audit('unterkunft.divera', 'unterkunft', $neuId, $data['titel']);
+            } elseif ($thema) {
                 $neuId = db_insert('talking_points', $data);
                 audit('tp.divera', 'talking_point', $neuId, $data['titel']);
             } else {
@@ -898,10 +944,10 @@ function divera_import_form(array $form, ?int $userId = null, bool $dryRun = fal
             db_insert('divera_log', [
                 'form_id'  => (string)$form['form_id'],
                 'entry_id' => $entryId,
-                'wish_id'  => $thema ? null : $neuId,
+                'wish_id'  => $thema || $defekt ? null : $neuId,
                 'tp_id'    => $thema ? $neuId : null,
                 'status'   => 'ok',
-                'message'  => $thema ? 'Thema eingereicht: ' . $data['titel'] : 'Wunsch angelegt: ' . $data['bezeichnung'],
+                'message'  => $defekt ? 'Mangel gemeldet: ' . $data['titel'] : ($thema ? 'Thema eingereicht: ' . $data['titel'] : 'Wunsch angelegt: ' . $data['bezeichnung']),
                 'payload'  => json_encode($entry['fields'], JSON_UNESCAPED_UNICODE),
             ]);
             $created++;

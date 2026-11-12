@@ -265,6 +265,15 @@ INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_defa
 ('tankkarte_status','Im Einsatz',  'aktiv',      '#15803d',10,1,0),
 ('tankkarte_status','Reserve',     'reserve',    '#0369a1',20,0,0);
 
+-- ---------- Unterkunft: Status der Maengel und Aufgaben ----------
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default, is_final) VALUES
+('unterkunft_status','Gemeldet',            'gemeldet',   '#0284c7',10,1,0),
+('unterkunft_status','In Arbeit',           'in-arbeit',  '#b45309',20,0,0),
+('unterkunft_status','Firma beauftragt',    'beauftragt', '#7c3aed',30,0,0),
+('unterkunft_status','Wartet (Material, Termin)', 'wartet', '#64748b',40,0,0),
+('unterkunft_status','Erledigt',            'erledigt',   '#15803d',50,0,1),
+('unterkunft_status','Abgelehnt / kein Mangel', 'abgelehnt', '#b91c1c',60,0,1);
+
 -- ---------- Arten von Veranstaltungen ----------
 INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default) VALUES
 ('veranstaltung_typ','Ausbildung',            'ausbildung',      '#0369a1',10,0),
@@ -438,6 +447,10 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('sim_modul_name','SIM-Karten','Bezeichnung des SIM-Moduls','','text','SIM-Karten',10),
 ('sim_intro','Karten des Ortsverbands mit Rufnummer, Vertrag und Zuordnung zu Fahrzeug, Fachgruppe oder Person.','Einleitungstext im SIM-Modul','','textarea','SIM-Karten',20),
 ('sim_user_darf_sehen','0','Alle Mitglieder duerfen SIM-Karten sehen','PIN und PUK bleiben in jedem Fall der Leitung vorbehalten','bool','SIM-Karten',30),
+('unterkunft_modul_name','Unterkunft','Bezeichnung des Unterkunftsmoduls','','text','Unterkunft',10),
+('unterkunft_intro','Alles, was am und im Gebäude zu tun ist: Mängel, Aufgaben, Räume, Kosten und Zähler.','Einleitungstext im Unterkunftsmodul','','textarea','Unterkunft',20),
+('unterkunft_user_darf_sehen','1','Alle Mitglieder duerfen die Unterkunft sehen','Offene Punkte, Räume und Verlauf. Gebäudekosten und Zähler nur, wer sie auch in Budget und Verbrauch sehen darf.','bool','Unterkunft',30),
+('unterkunft_user_darf_melden','1','Alle Mitglieder duerfen Mängel melden','Eigene Meldungen darf man ändern, solange sie offen sind. Status, Zuständigkeit und Frist setzt die Leitung.','bool','Unterkunft',40),
 ('tankkarte_modul_name','Tankkarten','Bezeichnung des Tankkartenmoduls','','text','Tankkarten',10),
 ('tankkarte_intro','Tank- und Ladekarten des Ortsverbands mit Anbieter, Zuordnung zu Fahrzeugen und Gueltigkeit.','Einleitungstext im Tankkartenmodul','','textarea','Tankkarten',20),
 ('tankkarte_user_darf_sehen','0','Alle Mitglieder duerfen Tankkarten sehen','Die PIN bleibt in jedem Fall der Leitung vorbehalten','bool','Tankkarten',30),

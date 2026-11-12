@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = post_str('action');
 
     if ($action === 'save' || $action === 'preview') {
-        $ziel = post_str('ziel') === 'thema' ? 'thema' : 'wunsch';
+        $ziel = divera_ziel_wert(post_str('ziel'));
         $map = [];
         foreach (array_keys(divera_map_targets($ziel)) as $target) {
             $map[$target] = post_str('map_' . $target);
@@ -108,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $res = divera_import_form($form, (int)$me['id']);
             divera_status_sync_form($form);
             flash('success', sprintf('%d neue %s, %d bereits vorhanden, %d fehlerhaft.',
-                $res['created'], divera_ziel($form) === 'thema' ? 'Themen im Themenspeicher' : 'Wünsche angelegt',
+                $res['created'], ['thema' => 'Themen im Themenspeicher', 'defekt' => 'Mängel in der Unterkunft'][divera_ziel($form)] ?? 'Wünsche angelegt',
                 $res['skipped'], $res['failed']));
             redirect_route('admin_divera_form', ['id' => $form['id']]);
         }

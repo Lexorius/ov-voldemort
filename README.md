@@ -147,6 +147,10 @@ unter „Sicherheitslücke PHP2Shell".
 * **SIM- und TETRA-Karten** – Mobilfunk (Rufnummer, ICCID, Vertrag) oder
   TETRA-Sicherheitskarte (ISSI, OPTA), Zuordnung zu Fahrzeug, Fachgruppe,
   Person oder OV, PIN/PUK verdeckt, Warnung vor Vertragsende.
+* **Unterkunft** – Mängel und Aufgaben am Gebäude mit Ort, Zuständigkeit,
+  Frist und Verlauf; Defekte kommen auch aus einem Divera-Formular. Dazu
+  Räume und Lagerflächen, Gebäudekosten aus den Objektkonten und die Zähler
+  auf einer Seite.
 * **Tankkarten und Ladekarten** – mehrere Anbieter (DKV, UTA, Shell, Aral,
   Ladenetze …), Freischaltung für Kraftstoff, Laden oder beides, Zuordnung
   zu einem oder mehreren Fahrzeugen, PIN verdeckt, Warnung vor Ablauf,

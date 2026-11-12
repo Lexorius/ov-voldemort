@@ -1072,6 +1072,48 @@ Eine Rufnummer und eine ISSI können jeweils nur einmal vergeben werden; wer ein
 nimmt sie aus dem Bestand, statt sie zu löschen – dann bleibt sie zum
 Nachschlagen erhalten.
 
+## Unterkunft
+
+Das Modul **Unterkunft** sammelt alles, was am und im Gebäude zu tun ist,
+und hängt die Module zusammen, die es dazu schon gibt.
+
+* **Offene Punkte** – Mängel und Aufgaben in einer Liste: was, wo, wie
+  dringend, wer kümmert sich, bis wann, seit wann offen. Filter nach
+  Zustand, Art, Status, Dringlichkeit und Ort (ein Platz samt allem
+  darunter); oben stehen die Kennzahlen – offen, überfällig, ohne
+  Zuständigkeit, ältester Punkt.
+* **Melden** – „+ Mangel melden" oder „+ Aufgabe": Titel, Beschreibung,
+  Dringlichkeit und der Platz aus den Stell- und Lagerplätzen, dazu
+  Freitext für das Genaue. Alle Mitglieder dürfen melden und eigene offene
+  Meldungen ändern (einstellbar); Zuständigkeit, Frist, Firma und Status
+  setzt die Leitung.
+* **Verfolgen** – jeder Punkt hat eine eigene Seite mit **Verlauf**: jede
+  Meldung, jeder Statuswechsel und jede Notiz mit Zeit und Person. Status
+  kommen aus der Auswahlliste *Status (Unterkunft)* – mitgeliefert:
+  Gemeldet, In Arbeit, Firma beauftragt, Wartet, Erledigt, Abgelehnt – und
+  lassen sich unter *Verwaltung → Auswahllisten* anpassen. Ein
+  abschließender Status trägt das Erledigt-Datum ein.
+* **Defekte aus Divera** – unter *Verwaltung → Divera 24/7* ein Formular
+  „Als Defektformular" übernehmen und die Felder zuordnen (Was ist defekt,
+  Beschreibung, Ort, Dringlichkeit, Gemeldet von). Jeder Eintrag wird ein
+  Mangel; der Ort wird mit den Plätzen abgeglichen („Küche" findet den Raum
+  Küche, „Halle 1 Tor 3" den Pfad), was nicht passt, bleibt als Freitext
+  stehen und erscheint unter „ohne zugeordneten Platz". Mit automatischem
+  Abruf kommen neue Meldungen von selbst; mit der Status-Rückmeldung sieht
+  der Melder in Divera *Weitergeleitet*, *In Bearbeitung* (in Arbeit,
+  beauftragt, wartet) und *Abgeschlossen* – nur vorwärts, wie bei Wünschen
+  und Themen. Nicht zugeordnete Felder landen in der Beschreibung.
+* **Räume und Lagerflächen** – die Gebäude, Hallen und Höfe aus den Stell-
+  und Lagerplätzen mit dem, was darunter liegt, und der Zahl offener Punkte
+  je Gebäude; ein Klick führt zum Platz oder zu seinen Punkten. Umgekehrt
+  zeigt jede Platzseite „Offene Punkte" und „+ Mangel hier".
+* **Gebäudekosten** – die Auswertung der Objektkonten aus dem Budget für
+  das Haushaltsjahr: Ausgaben, Anteil, Einnahmen je Konto. Sichtbar für
+  alle, die die Buchungen sehen dürfen.
+* **Zähler** – Verbrauch und Kosten des Jahres je Art, dazu jeder Zähler
+  mit Ort, letztem Stand und Ablesedatum; Zähler ohne frischen Stand fallen
+  auf. Sichtbar für alle, die den Verbrauch sehen dürfen.
+
 ## Tankkarten
 
 Tankkarten gehören zum Fuhrpark wie SIM-Karten zu den Routern – und seit es

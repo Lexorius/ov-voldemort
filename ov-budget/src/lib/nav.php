@@ -52,6 +52,8 @@ function nav_module(): array
                         'darf' => can('view_getraenke')],
         'standorte' => ['label' => (string)setting('standort_modul_name', 'Standorte'), 'icon' => '🏢',
                         'route' => 'standorte', 'aktiv' => ['standorte'], 'darf' => true],
+        'unterkunft' => ['label' => (string)setting('unterkunft_modul_name', 'Unterkunft'), 'icon' => '🏠',
+                        'route' => 'unterkunft', 'aktiv' => ['unterkunft', 'unterkunft_punkt', 'unterkunft_punkt_edit'], 'darf' => can('view_unterkunft')],
         'thw'       => ['label' => (string)setting('thw_modul_name', 'THW-Kontakte'), 'icon' => '⛑',
                         'route' => 'thw', 'aktiv' => ['thw', 'thw_dienststelle_edit', 'thw_postfach_edit'], 'darf' => true],
         'stan'      => ['label' => (string)setting('stan_modul_name', 'STAN'), 'icon' => '📋',

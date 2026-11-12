@@ -3,6 +3,8 @@
  *  @var string $fehler @var string $hinweis @var array $vorschau */
 $ziel = divera_ziel($form);
 $thema = $ziel === 'thema';
+$defekt = $ziel === 'defekt';
+$mehrzahl = divera_ziel_mehrzahl($ziel);
 $targets = divera_map_targets($ziel);
 ?>
 <div class="pagehead">
@@ -48,6 +50,11 @@ $targets = divera_map_targets($ziel);
         <option value="<?= e($k) ?>"<?= $k === $ziel ? ' selected' : '' ?>><?= e($l) ?></option>
       <?php endforeach; ?>
     </select>
+    <?php if ($defekt): ?>
+      <p class="small muted">Jeder Eintrag wird ein Mangel in der <a href="<?= e(url('unterkunft')) ?>">Unterkunft</a>. Der Ort wird mit den
+        Stell- und Lagerplätzen abgeglichen – „Küche" findet den Raum Küche; was nicht passt, bleibt als Freitext stehen.
+        Stimmt der Name des Melders mit einem Benutzer überein, gilt der Mangel als von dieser Person gemeldet.</p>
+    <?php endif; ?>
     <?php if ($thema): ?>
       <p class="small muted">Jeder Eintrag wird ein Thema im Themenspeicher – von dort setzt die Leitung es auf
         eine Tagesordnung. Stimmt der Name des Einreichers mit einem Benutzer überein, gilt das Thema als von dieser
@@ -56,7 +63,7 @@ $targets = divera_map_targets($ziel);
     <p class="small muted">Beim Wechsel werden die Felder neu vorgeschlagen.</p>
   </div>
 
-  <h2>Zuordnung Divera-Feld → <?= $thema ? 'Themen-Feld' : 'Wunsch-Feld' ?></h2>
+  <h2>Zuordnung Divera-Feld → <?= $defekt ? 'Feld des Mangels' : ($thema ? 'Themen-Feld' : 'Wunsch-Feld') ?></h2>
   <p class="small muted">Links steht das Feld in der Anwendung, rechts der Name des Divera-Feldes. Groß- und
      Kleinschreibung ist egal; leere Zeilen werden ignoriert. Nicht zugeordnete Divera-Felder landen gesammelt
      in der Beschreibung – es geht also nichts verloren.</p>
@@ -76,7 +83,7 @@ $targets = divera_map_targets($ziel);
   </div>
 
   <fieldset>
-    <legend>Vorgaben für übernommene <?= $thema ? 'Themen' : 'Wünsche' ?></legend>
+    <legend>Vorgaben für übernommene <?= e($mehrzahl) ?></legend>
     <div class="grid3">
       <div class="field">
         <label for="name">Anzeigename des Formulars</label>
@@ -85,10 +92,10 @@ $targets = divera_map_targets($ziel);
       <div class="field">
         <label for="default_status_id">Status</label>
         <select id="default_status_id" name="default_status_id">
-          <?= list_options($thema ? 'tp_status' : 'wunsch_status', (int)($form['default_status_id'] ?? 0), $thema ? 'Standard' : 'Standard aus den Einstellungen') ?>
+          <?= list_options($defekt ? 'unterkunft_status' : ($thema ? 'tp_status' : 'wunsch_status'), (int)($form['default_status_id'] ?? 0), $thema || $defekt ? 'Standard' : 'Standard aus den Einstellungen') ?>
         </select>
       </div>
-      <div class="field">
+      <div class="field"<?= $defekt ? ' hidden' : '' ?>>
         <label for="default_fachgruppe_id">Fachgruppe, falls nicht erkannt</label>
         <select id="default_fachgruppe_id" name="default_fachgruppe_id">
           <?= list_options('fachgruppe', (int)($form['default_fachgruppe_id'] ?? 0), 'keine') ?>
@@ -109,7 +116,9 @@ $targets = divera_map_targets($ziel);
     </div>
     <p class="small muted">
       Übernommen → <strong>Weitergeleitet</strong> ·
-      <?php if ($thema): ?>
+      <?php if ($defekt): ?>
+        in Arbeit, Firma beauftragt oder wartend → <strong>In Bearbeitung</strong> · erledigt oder abgelehnt → <strong>Abgeschlossen</strong>.
+      <?php elseif ($thema): ?>
         auf einer Tagesordnung → <strong>In Bearbeitung</strong> · besprochen, beschlossen oder zurückgezogen → <strong>Abgeschlossen</strong>.
       <?php else: ?>
         Status <span class="mono"><?= e((string)setting('divera_status_bearbeitung', 'freigegeben')) ?></span> → <strong>In Bearbeitung</strong> ·
@@ -129,11 +138,30 @@ $targets = divera_map_targets($ziel);
     <button class="btn" type="submit">Zuordnung speichern</button>
     <button class="btn btn--sec" type="submit" name="action" value="preview">Speichern und Vorschau</button>
     <button class="btn btn--ok" type="submit" name="action" value="import"
-            data-confirm="Alle noch nicht übernommenen Einträge jetzt als <?= $thema ? 'Themen' : 'Wünsche' ?> anlegen?">Jetzt importieren</button>
+            data-confirm="Alle noch nicht übernommenen Einträge jetzt als <?= e($mehrzahl) ?> anlegen?">Jetzt importieren</button>
   </div>
 </form>
 
-<?php if ($vorschau && $thema): ?>
+<?php if ($vorschau && $defekt): ?>
+  <div class="card">
+    <h2>Vorschau – diese Mängel kämen in die Unterkunft</h2>
+    <div class="tablewrap">
+      <table class="data">
+        <thead><tr><th>Mangel</th><th>Ort</th><th>Dringlichkeit</th><th>Gemeldet von</th></tr></thead>
+        <tbody>
+        <?php $vorschauPlaetze = function_exists('standort_all') ? standort_all() : []; foreach ($vorschau as $v): ?>
+          <tr>
+            <td><?= e($v['titel']) ?></td>
+            <td><?= $v['standort_id'] ? e(standort_pfad((int)$v['standort_id'], $vorschauPlaetze)) : (e($v['ort_text'] ?: '–') . ($v['ort_text'] !== '' ? ' <span class="muted small">(Freitext – kein Platz erkannt)</span>' : '')) ?></td>
+            <td><?= e(list_label((int)($v['prioritaet_id'] ?? 0), '–')) ?></td>
+            <td><?= $v['melder_user_id'] ? 'Benutzer #' . (int)$v['melder_user_id'] : e($v['melder_name'] ?: '–') ?></td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<?php elseif ($vorschau && $thema): ?>
   <div class="card">
     <h2>Vorschau – diese Themen kämen in den Themenspeicher</h2>
     <div class="tablewrap">

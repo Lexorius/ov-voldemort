@@ -72,6 +72,7 @@ $cronBasis = 'curl -s "https://DEINE-DOMAIN' . rtrim((string)app_config('base_pa
                 <input type="hidden" name="name" value="<?= e($rf['name']) ?>">
                 <button class="btn btn--sm" type="submit" name="ziel" value="wunsch">Als Wunschformular</button>
                 <button class="btn btn--sec btn--sm" type="submit" name="ziel" value="thema">Als Themenformular</button>
+                <button class="btn btn--sec btn--sm" type="submit" name="ziel" value="defekt">Als Defektformular</button>
               </form>
             </td>
           </tr>

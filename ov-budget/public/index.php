@@ -82,6 +82,11 @@ $routes = [
     'stan_zip'           => 'stan_zip',
     'stan_upload'        => 'stan_upload',
     'stan_chat'          => 'stan_chat',
+
+    // Unterkunft
+    'unterkunft'         => 'unterkunft',
+    'unterkunft_punkt'   => 'unterkunft_punkt',
+    'unterkunft_punkt_edit' => 'unterkunft_punkt_edit',
     'thw_dienststelle_edit' => 'thw_dienststelle_edit',
     'thw_postfach_edit'  => 'thw_postfach_edit',
 

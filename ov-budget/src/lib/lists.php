@@ -21,6 +21,7 @@ const LIST_KEYS = [
     'sim_status'      => 'Status (SIM-Karten)',
     'tankkarte_anbieter' => 'Tankkarten-Anbieter',
     'tankkarte_status' => 'Status (Tankkarten)',
+    'unterkunft_status' => 'Status (Unterkunft: Mängel und Aufgaben)',
     'funk_typ'        => 'Funkgeraetearten',
     'funk_status'     => 'Status (Funkgeraete)',
     'tp_status'       => 'Status (Talking Points)',

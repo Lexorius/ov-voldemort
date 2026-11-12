@@ -1,5 +1,22 @@
 # Änderungsverlauf
 
+## 2.1.79.0
+
+- **Unterkunft:** Neues Modul für alles, was am und im Gebäude zu tun
+  ist. **Offene Punkte** – Mängel und Aufgaben mit Ort aus den Stell- und
+  Lagerplätzen, Dringlichkeit, Zuständigkeit, Frist, Firma und einem
+  **Verlauf** je Punkt (Meldung, Statuswechsel, Notizen); Kennzahlen zu
+  offenen, überfälligen und unversorgten Punkten, Filter, Blättern.
+  **Defekte aus Divera:** Formulare lassen sich „Als Defektformular"
+  einbinden – jeder Eintrag wird ein Mangel, der Ort wird mit den Plätzen
+  abgeglichen, der Bearbeitungsstand geht auf Wunsch an Divera zurück.
+  Dazu auf einer Seite: Räume und Lagerflächen mit offenen Punkten je
+  Gebäude, **Gebäudekosten** aus den Objektkonten des Budgets und die
+  **Zähler** mit Verbrauch, Kosten und letztem Stand. Platzseiten zeigen
+  ihre offenen Punkte und „+ Mangel hier". Neue Auswahlliste Status
+  (Unterkunft), neue Einstellungen (Name, Einleitung, wer sehen und melden
+  darf).
+
 ## 2.1.78.1
 
 - **Divera-Termine:** Der Abschnitt im Formular fehlte, wenn kein

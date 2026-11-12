@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     flash('info', 'Dieses Formular ist bereits eingebunden.');
                     redirect_route('admin_divera_form', ['id' => $exists]);
                 }
-                $ziel = post_str('ziel') === 'thema' ? 'thema' : 'wunsch';
+                $ziel = divera_ziel_wert(post_str('ziel'));
                 $newId = db_insert('divera_forms', [
                     'form_id'   => $formId,
                     'name'      => mb_substr($name, 0, 200),
@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         e($form['name']),
                         $res['total'],
                         $res['created'],
-                        divera_ziel($form) === 'thema' ? 'Themen' : 'Wünsche',
+                        divera_ziel_mehrzahl(divera_ziel($form)),
                         $res['skipped'],
                         $res['failed']
                     )

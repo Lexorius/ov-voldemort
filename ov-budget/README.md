@@ -174,6 +174,14 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 - PIN und PUK verdeckt und nur für die Leitung, CSV-Bestandsliste
 - Warnung, wenn ein Vertrag ausläuft
 
+### Unterkunft
+- **Offene Punkte am Gebäude**: Mängel und Aufgaben mit Ort, Dringlichkeit,
+  Zuständigkeit, Frist und Verlauf je Punkt
+- **Defekte aus einem Divera-Formular** abrufen, den Ort mit den Plätzen
+  abgleichen, Bearbeitungsstand an Divera zurückmelden
+- Räume und Lagerflächen, **Gebäudekosten** aus den Objektkonten und
+  **Zähler** auf einer Seite; jede Platzseite zeigt ihre offenen Punkte
+
 ### Tankkarten und Ladekarten
 - **Mehrere Anbieter** (DKV, UTA, Shell, Aral, TotalEnergies, EnBW, Ladenetze …)
   aus einer pflegbaren Auswahlliste

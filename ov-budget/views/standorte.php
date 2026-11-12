@@ -37,6 +37,14 @@ $darunterText = $s ? standort_inventar_text($darunter) : '';
     <?php elseif ($s): ?>
       <a class="btn btn--sec" href="<?= e(url('standorte')) ?>">↑ Alle Standorte</a>
     <?php endif; ?>
+    <?php if (function_exists('unterkunft_offen_anzahl') && can('view_unterkunft')): ?>
+      <?php if ($s): $offenHier = unterkunft_offen_anzahl(array_merge([(int)$s['id']], standort_nachkommen((int)$s['id'], $alle))); ?>
+        <a class="btn btn--sec" href="<?= e(url('unterkunft', ['standort' => $s['id']])) ?>#punkte">🏠 Offene Punkte<?= $offenHier > 0 ? ' (' . $offenHier . ')' : '' ?></a>
+        <?php if (can('report_unterkunft')): ?><a class="btn btn--sec" href="<?= e(url('unterkunft_punkt_edit', ['standort_id' => $s['id']])) ?>">+ Mangel hier</a><?php endif; ?>
+      <?php else: ?>
+        <a class="btn btn--sec" href="<?= e(url('unterkunft')) ?>">🏠 Unterkunft</a>
+      <?php endif; ?>
+    <?php endif; ?>
     <?php if (!empty($darfPflegen)): ?>
       <a class="btn btn--sec" href="<?= e($s ? url('admin_standort_edit', ['id' => $s['id']]) : url('admin_standorte')) ?>"><?= $s ? 'Platz bearbeiten' : 'Plätze pflegen' ?></a>
     <?php endif; ?>

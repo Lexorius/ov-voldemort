@@ -2587,6 +2587,61 @@ SQL);
         $say('Tabelle divera_termine angelegt.');
     }
     $merken('100_divera_termine');
+
+    /* ---------- 101: Unterkunft – Mängel und Aufgaben am Gebäude ---------- */
+    if (!ovb_table_exists($pdo, 'unterkunft_punkte')) {
+        $pdo->exec("CREATE TABLE unterkunft_punkte (
+  id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  titel           VARCHAR(200) NOT NULL,
+  beschreibung    TEXT         NULL,
+  art             VARCHAR(20)  NOT NULL DEFAULT 'mangel',
+  standort_id     INT UNSIGNED NULL,
+  ort_text        VARCHAR(200) NOT NULL DEFAULT '',
+  prioritaet_id   INT UNSIGNED NULL,
+  status_id       INT UNSIGNED NULL,
+  melder_user_id  INT UNSIGNED NULL,
+  melder_name     VARCHAR(150) NOT NULL DEFAULT '',
+  zustaendig_id   INT UNSIGNED NULL,
+  firma           VARCHAR(150) NOT NULL DEFAULT '',
+  faellig_am      DATE         NULL,
+  erledigt_am     DATETIME     NULL,
+  divera_form_id  VARCHAR(60)  NOT NULL DEFAULT '',
+  divera_entry_id VARCHAR(60)  NOT NULL DEFAULT '',
+  divera_status   TINYINT      NULL,
+  created_by      INT UNSIGNED NULL,
+  created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_up_status (status_id),
+  KEY idx_up_standort (standort_id),
+  KEY idx_up_divera (divera_form_id, divera_entry_id),
+  CONSTRAINT fk_up_status   FOREIGN KEY (status_id)      REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_up_prio     FOREIGN KEY (prioritaet_id)  REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_up_standort FOREIGN KEY (standort_id)    REFERENCES standorte(id)  ON DELETE SET NULL,
+  CONSTRAINT fk_up_melder   FOREIGN KEY (melder_user_id) REFERENCES users(id)      ON DELETE SET NULL,
+  CONSTRAINT fk_up_zust     FOREIGN KEY (zustaendig_id)  REFERENCES users(id)      ON DELETE SET NULL,
+  CONSTRAINT fk_up_cb       FOREIGN KEY (created_by)     REFERENCES users(id)      ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle unterkunft_punkte angelegt.');
+    }
+    if (!ovb_table_exists($pdo, 'unterkunft_log')) {
+        $pdo->exec("CREATE TABLE unterkunft_log (
+  id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  punkt_id   INT UNSIGNED NOT NULL,
+  user_id    INT UNSIGNED NULL,
+  autor      VARCHAR(150) NOT NULL DEFAULT '',
+  quelle     VARCHAR(20)  NOT NULL DEFAULT 'mensch',
+  text       TEXT         NULL,
+  status_alt INT UNSIGNED NULL,
+  status_neu INT UNSIGNED NULL,
+  created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_ul_punkt (punkt_id, created_at),
+  CONSTRAINT fk_ul_punkt FOREIGN KEY (punkt_id) REFERENCES unterkunft_punkte(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ul_user  FOREIGN KEY (user_id)  REFERENCES users(id)             ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+    $merken('101_unterkunft');
 }
 
 /**
