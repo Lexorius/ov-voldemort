@@ -13,6 +13,8 @@ const SPEICHER_ORDNER = [
     'termine'        => 'Termine (Einladungen, Anhänge)',
     'standorte'      => 'Stell- und Lagerplätze (Bilder, Pläne)',
     'stan'           => 'STAN (Pakete und Dokumente)',
+    'ablage'         => 'Dateiablage (Dokumente der eigenen Kategorien)',
+    'newsletter'     => 'Newsletter',
     'sicherungen'    => 'Sicherungen',
     'stein-debug'    => 'Stein.APP-Mitschnitte',
 ];

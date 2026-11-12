@@ -79,7 +79,7 @@ function wish_handle_uploads(int $wishId, int $userId, string $kind = 'angebot',
             continue;
         }
 
-        db_insert('wish_attachments', [
+        $anlageId = db_insert('wish_attachments', [
             'wish_id'      => $wishId,
             'stored_name'  => $stored,
             'orig_name'    => mb_substr($origName, 0, 255),
@@ -89,6 +89,9 @@ function wish_handle_uploads(int $wishId, int $userId, string $kind = 'angebot',
             'betrag_netto' => $betrag,
             'uploaded_by'  => $userId,
         ]);
+        if (function_exists('ki_einreihen')) {
+            ki_einreihen('wunsch', $anlageId, str_starts_with($mime, 'image/') ? 'bild' : 'dokument');
+        }
     }
 
     return $errors;
@@ -101,4 +104,7 @@ function attachment_delete(array $att): void
         @unlink($path);
     }
     db_exec('DELETE FROM wish_attachments WHERE id = ?', [$att['id']]);
+    if (function_exists('ki_vergessen')) {
+        ki_vergessen('wunsch', (int)$att['id']);
+    }
 }

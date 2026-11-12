@@ -182,6 +182,15 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 - Räume und Lagerflächen, **Gebäudekosten** aus den Objektkonten und
   **Zähler** auf einer Seite; jede Platzseite zeigt ihre offenen Punkte
 
+### Dateiablage
+- **Alle Dokumente in einem Baum**: eigene Kategorien, beliebig tief
+  geschachtelt, auf Wunsch nur für die Leitung sichtbar
+- Die **Dateiablagen der Module** als gesperrte Kategorien 🔒 daneben:
+  Fahrzeuge je Fahrzeug, Veranstaltungen, Termine und Wünsche je Jahr,
+  Plätze, STAN, Newsletter
+- Jedes Dokument geht durch die **KI im eigenen Netz** und bekommt
+  Zusammenfassung und Schlagwörter; Suche über Namen und Schlagwörter
+
 ### Tankkarten und Ladekarten
 - **Mehrere Anbieter** (DKV, UTA, Shell, Aral, TotalEnergies, EnBW, Ladenetze …)
   aus einer pflegbaren Auswahlliste

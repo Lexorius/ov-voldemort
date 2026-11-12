@@ -83,6 +83,11 @@ $routes = [
     'stan_upload'        => 'stan_upload',
     'stan_chat'          => 'stan_chat',
 
+    // Dateiablage
+    'ablage'             => 'ablage',
+    'ablage_kategorie_edit' => 'ablage_kategorie_edit',
+    'ablage_datei'       => 'ablage_datei',
+
     // Unterkunft
     'unterkunft'         => 'unterkunft',
     'unterkunft_punkt'   => 'unterkunft_punkt',

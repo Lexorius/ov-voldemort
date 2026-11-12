@@ -133,6 +133,10 @@ function can(string $what, mixed $ctx = null): bool
         'manage_unterkunft' => $leitung,
         'view_unterkunft'   => $leitung || setting_bool('unterkunft_user_darf_sehen', true),
         'report_unterkunft' => $leitung || setting_bool('unterkunft_user_darf_melden', true),
+        // Dateiablage: Kategorien pflegt die Leitung; hochladen darf, wem es die Einstellung erlaubt
+        'manage_ablage'  => $leitung,
+        'view_ablage'    => $leitung || setting_bool('ablage_user_darf_sehen', true),
+        'upload_ablage'  => $leitung || (setting_bool('ablage_user_darf_sehen', true) && setting_bool('ablage_user_darf_hochladen', false)),
         'manage_verbrauch' => $leitung,
         'view_verbrauch' => $leitung || setting_bool('verbrauch_user_darf_sehen', false),
         'read_meter'     => $leitung || (setting_bool('verbrauch_user_darf_sehen', false)

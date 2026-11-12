@@ -5,10 +5,14 @@
   <div>
     <h1>Dateisuche</h1>
     <p>Sucht in den Schlagwörtern und Zusammenfassungen, die die KI-Auswertung zu den Dateien
-       der Fahrzeugakten, Veranstaltungen, Termine und Plätze abgelegt hat.</p>
+       der Fahrzeugakten, Veranstaltungen, Termine, Plätze, Wünsche und der Dateiablage abgelegt hat.
+       Nach Namen sucht die Dateiablage; dort stehen auch alle Dateien im Baum der Kategorien.</p>
   </div>
-  <?php if (can('admin')): ?>
-    <div class="btnrow"><a class="btn btn--sec" href="<?= e(url('admin_ki')) ?>">KI-Auswertung</a></div>
+  <?php if (can('view_ablage') || can('admin')): ?>
+    <div class="btnrow">
+      <?php if (can('view_ablage')): ?><a class="btn btn--sec" href="<?= e(url('ablage', $q !== '' ? ['q' => $q] : [])) ?>">🗂 <?= e((string)setting('ablage_modul_name', 'Dateiablage')) ?></a><?php endif; ?>
+      <?php if (can('admin')): ?><a class="btn btn--sec" href="<?= e(url('admin_ki')) ?>">KI-Auswertung</a><?php endif; ?>
+    </div>
   <?php endif; ?>
 </div>
 

@@ -802,3 +802,33 @@ pre.raw {
 
 .getraenke-mail { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85rem;
                   background: var(--bg-soft, #f8fafc); border: 1px solid var(--border); border-radius: 8px; padding: .8rem; margin: 0; }
+
+/* Dateiablage: links der Baum der Kategorien, rechts die gewählte Kategorie */
+.ablage { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 900px) { .ablage { grid-template-columns: minmax(15rem, 21rem) minmax(0, 1fr); } }
+.ablage__inhalt { min-width: 0; }
+/* schmal: erst die Kategorie mit ihren Unterkategorien, der Baum darunter */
+.ablage__baum { order: 2; }
+@media (min-width: 900px) { .ablage__baum { order: 0; } }
+.ablage .doc { align-items: flex-start; }
+.ablage .doc:target { background: var(--surface-2); box-shadow: -.5rem 0 0 var(--surface-2), .5rem 0 0 var(--surface-2); }
+.abaum ul { list-style: none; margin: 0; padding: 0; }
+.abaum ul ul { margin-left: .55rem; padding-left: .55rem; border-left: 1px solid var(--border); }
+.abaum__zeile { display: flex; align-items: center; gap: .35rem; padding: .22rem .35rem; border-radius: 6px; font-weight: 400; }
+.abaum summary.abaum__zeile { list-style: none; cursor: pointer; }
+.abaum summary.abaum__zeile::-webkit-details-marker { display: none; }
+.abaum summary.abaum__zeile::before { content: '▸'; flex: none; width: .8rem; color: var(--ink-mute); font-size: .8rem; }
+.abaum details[open] > summary.abaum__zeile::before { content: '▾'; }
+.abaum__blatt { padding-left: 1.5rem; }
+.abaum__zeile:hover { background: var(--surface-2); }
+.abaum__zeile.is-aktiv { background: var(--surface-2); box-shadow: inset 3px 0 0 var(--accent); font-weight: 600; }
+.abaum__icon { flex: none; font-size: .8rem; }
+.abaum__link { flex: 1 1 auto; min-width: 0; color: inherit; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.abaum__link:hover { text-decoration: underline; }
+.abaum__zahl { flex: none; color: var(--ink-mute); font-size: .78rem; font-variant-numeric: tabular-nums; }
+.akat { display: grid; gap: .5rem; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); }
+.akat__eintrag { display: flex; align-items: center; gap: .5rem; padding: .55rem .7rem; border: 1px solid var(--border);
+                 border-radius: 8px; background: var(--surface-2); color: inherit; text-decoration: none; }
+.akat__eintrag:hover { border-color: var(--accent); }
+.akat__name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.akat__zahl { flex: none; color: var(--ink-mute); font-size: .85rem; font-variant-numeric: tabular-nums; }

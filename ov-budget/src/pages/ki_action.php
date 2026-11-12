@@ -45,5 +45,7 @@ switch (post_str('action')) {
         audit('ki.hand', $typ, $id, $name);
         flash('success', 'Zusammenfassung und Schlagwörter zu „' . $name . '" gespeichert.');
 }
-header('Location: ' . $l['eltern']['url']);
+// Zurück dorthin, wo bearbeitet wurde (Dateiablage) – aber nur auf eine eigene Seite
+$zurueck = post_str('zurueck');
+header('Location: ' . ($zurueck !== '' && url_ist_intern($zurueck) ? $zurueck : $l['eltern']['url']));
 exit;

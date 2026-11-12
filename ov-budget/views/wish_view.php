@@ -166,7 +166,7 @@ $verweigert = $freigebbar ? wish_release_denied($wish) : null;
   </div>
 <?php endif; ?>
 
-<div class="card">
+<div class="card" id="anlagen">
   <div class="card__head">
     <h2>Angebote und Anlagen</h2>
     <?php if (can('edit_wish', $wish)): ?>
@@ -176,6 +176,8 @@ $verweigert = $freigebbar ? wish_release_denied($wish) : null;
   <?php if (!$anlagen): ?>
     <div class="empty">Noch keine Anlagen hinterlegt.</div>
   <?php else: ?>
+    <?php $kiAnlagen = function_exists('ki_fuer_dateien') ? ki_fuer_dateien('wunsch', array_column($anlagen, 'id')) : ['ergebnisse' => [], 'auftraege' => []];
+          $ich = (int)(current_user()['id'] ?? 0); ?>
     <div class="filelist">
       <?php foreach ($anlagen as $a): ?>
         <div class="file">
@@ -186,6 +188,7 @@ $verweigert = $freigebbar ? wish_release_denied($wish) : null;
               <?php if ($a['betrag_netto'] !== null): ?> · <?= e(money((float)$a['betrag_netto'])) ?><?php endif; ?>
               <?php if ($a['uploader']): ?> · <?= e($a['uploader']) ?><?php endif; ?>
             </div>
+            <?= function_exists('ki_hinweis_html') ? ki_hinweis_html('wunsch', $a, $kiAnlagen, can('manage_wishes') || (int)($a['uploaded_by'] ?? 0) === $ich) : '' ?>
           </div>
           <?php if (can('edit_wish', $wish)): ?>
             <form method="post" action="<?= e(url('wish_action')) ?>" class="inline-form">

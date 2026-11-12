@@ -2642,6 +2642,46 @@ SQL);
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
     }
     $merken('101_unterkunft');
+
+    /* ---------- 102: Dateiablage – eigene Kategorien als Baum und Dokumente darin ---------- */
+    if (!ovb_table_exists($pdo, 'ablage_kategorien')) {
+        $pdo->exec("CREATE TABLE ablage_kategorien (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  parent_id    INT UNSIGNED NULL,
+  name         VARCHAR(150) NOT NULL,
+  beschreibung VARCHAR(500) NOT NULL DEFAULT '',
+  nur_leitung  TINYINT(1)   NOT NULL DEFAULT 0,
+  created_by   INT UNSIGNED NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_ak_parent (parent_id, name),
+  CONSTRAINT fk_ak_parent FOREIGN KEY (parent_id)  REFERENCES ablage_kategorien(id) ON DELETE RESTRICT,
+  CONSTRAINT fk_ak_cb     FOREIGN KEY (created_by) REFERENCES users(id)             ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle ablage_kategorien angelegt.');
+    }
+    if (!ovb_table_exists($pdo, 'ablage_dateien')) {
+        $pdo->exec("CREATE TABLE ablage_dateien (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  kategorie_id INT UNSIGNED NOT NULL,
+  art          VARCHAR(20)  NOT NULL DEFAULT 'dokument',
+  titel        VARCHAR(200) NOT NULL DEFAULT '',
+  orig_name    VARCHAR(255) NOT NULL DEFAULT '',
+  stored_name  VARCHAR(120) NOT NULL,
+  thumb_name   VARCHAR(120) NULL,
+  mime         VARCHAR(120) NOT NULL DEFAULT '',
+  size_bytes   INT UNSIGNED NOT NULL DEFAULT 0,
+  uploaded_by  INT UNSIGNED NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_ad_kategorie (kategorie_id, created_at),
+  CONSTRAINT fk_ad_kategorie FOREIGN KEY (kategorie_id) REFERENCES ablage_kategorien(id) ON DELETE RESTRICT,
+  CONSTRAINT fk_ad_user      FOREIGN KEY (uploaded_by)  REFERENCES users(id)             ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle ablage_dateien angelegt.');
+    }
+    $merken('102_dateiablage');
 }
 
 /**

@@ -1,5 +1,28 @@
 # Änderungsverlauf
 
+## 2.1.80.0
+
+- **Dateiablage:** Neues Modul, das alle Dokumente des Ortsverbands in
+  einem **Baum aus Kategorien** zeigt. **Eigene Kategorien** lassen sich
+  beliebig tief schachteln, anlegen, umbenennen, umhängen und – leer –
+  löschen; mit dem Haken „Nur Leitung" bleibt eine Kategorie samt allem
+  darunter verborgen. Die **Dateiablagen der Module** hängen als gesperrte
+  Kategorien mit 🔒 daneben und werden weiter im Modul gepflegt: Fahrzeuge
+  (je Fahrzeug eine Unterkategorie), Veranstaltungen, Termine und Wünsche
+  (je Jahr und Eintrag), Stell- und Lagerplätze (der Baum der Plätze), STAN
+  (je Version die Ordner des Pakets) und Newsletter. Jeder sieht nur, was
+  er auch im Modul sehen darf. Dokumente in eigenen Kategorien lassen sich
+  ablegen (mehrere auf einmal), umbenennen, verschieben und entfernen;
+  **jedes geht durch die KI-Auswertung** und bekommt Zusammenfassung und
+  **Schlagwörter**, die sich am Dokument nachbessern lassen – auch von
+  Hand, wenn die KI aus ist. Die **Suche** geht über Namen, Schlagwörter
+  und Zusammenfassungen aller Ablagen. Neue Einstellungen (Name,
+  Einleitung, wer sehen und ablegen darf).
+- **KI-Auswertung:** Auch die **Anlagen der Wünsche** (Angebote,
+  Rechnungen) werden jetzt ausgewertet, mit eigenem Schalter. Vorhandene
+  Anlagen holt „Vorhandene Dateien nachholen" unter Verwaltung →
+  KI-Auswertung nach.
+
 ## 2.1.79.0
 
 - **Unterkunft:** Neues Modul für alles, was am und im Gebäude zu tun

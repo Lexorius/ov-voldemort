@@ -6,12 +6,18 @@
  * @var ?array $ki       Ergebnis (tags als Liste) oder null
  * @var ?array $auftrag  offener/fehlgeschlagener Auftrag oder null
  * @var bool   $darf     bearbeiten und neu auswerten dürfen
+ * @var string $zurueck  nach dem Speichern dorthin (sonst zur Seite des Moduls)
+ * @var string $suche    Seite, auf die die Schlagwörter zeigen
+ * @var bool   $immer    Schlagwörter von Hand auch bei ausgeschalteter KI
  */
 $ki ??= null;
 $auftrag ??= null;
+$zurueck ??= '';
+$suche = ($suche ?? '') !== '' ? $suche : 'ki_suche';
+$immer ??= false;
 $aktiv = ki_modul_aktiv($typ);
 $status = (string)($auftrag['status'] ?? '');
-if (!$ki && !($aktiv && $darf) && !in_array($status, ['offen', 'laeuft', 'fehler'], true)) {
+if (!$ki && !(($aktiv || $immer) && $darf) && !in_array($status, ['offen', 'laeuft', 'fehler'], true)) {
     return;
 }
 ?>
@@ -23,7 +29,7 @@ if (!$ki && !($aktiv && $darf) && !in_array($status, ['offen', 'laeuft', 'fehler
     <?php if ($ki['tags']): ?>
       <div class="chips ki__tags">
         <?php foreach ($ki['tags'] as $t): ?>
-          <a class="chip chip--link" href="<?= e(url('ki_suche', ['q' => $t])) ?>" title="Dateien mit diesem Schlagwort">#<?= e($t) ?></a>
+          <a class="chip chip--link" href="<?= e(url($suche, ['q' => $t])) ?>" title="Dateien mit diesem Schlagwort">#<?= e($t) ?></a>
         <?php endforeach; ?>
       </div>
     <?php endif; ?>
@@ -33,13 +39,14 @@ if (!$ki && !($aktiv && $darf) && !in_array($status, ['offen', 'laeuft', 'fehler
   <?php elseif ($status === 'fehler'): ?>
     <div class="small muted">KI-Auswertung fehlgeschlagen: <?= e((string)($auftrag['fehler'] ?? '')) ?></div>
   <?php endif; ?>
-  <?php if ($darf && ($aktiv || $ki)): ?>
+  <?php if ($darf && ($aktiv || $ki || $immer)): ?>
     <details class="ki__edit">
-      <summary class="small muted"><?= $ki ? 'KI-Auswertung bearbeiten' : 'KI-Auswertung' ?></summary>
+      <summary class="small muted"><?= $ki ? 'KI-Auswertung bearbeiten' : ($aktiv ? 'KI-Auswertung' : 'Schlagwörter von Hand') ?></summary>
       <form method="post" action="<?= e(url('ki_action')) ?>" class="form">
         <?= csrf_field() ?>
         <input type="hidden" name="typ" value="<?= e($typ) ?>">
         <input type="hidden" name="datei_id" value="<?= (int)$datei['id'] ?>">
+        <?php if ($zurueck !== ''): ?><input type="hidden" name="zurueck" value="<?= e($zurueck) ?>"><?php endif; ?>
         <div class="field"><label>Zusammenfassung</label>
           <textarea name="zusammenfassung" rows="3" maxlength="2000"><?= e((string)($ki['zusammenfassung'] ?? '')) ?></textarea></div>
         <div class="field"><label>Schlagwörter (mit Komma getrennt)</label>

@@ -12,6 +12,9 @@ declare(strict_types=1);
  *
  * Ablauf: Upload → Auftrag in ki_auftraege → der minütliche Abruf
  * (cron.php) arbeitet ein paar Aufträge ab → Ergebnis in datei_ki.
+ *
+ * Die Dateiablage (ablage.php) zeigt alle Ablagen in einem Baum und sucht
+ * über dieselben Zusammenfassungen und Schlagwörter.
  */
 
 class KiException extends RuntimeException
@@ -36,6 +39,8 @@ const KI_TYPEN = [
     'standort'      => ['schalter' => 'ki_standorte',       'label' => 'Stell- und Lagerplatz', 'tabelle' => 'standort_bilder', 'route' => 'standort_bild'],
     'stan'          => ['schalter' => 'ki_stan',            'label' => 'STAN',                  'tabelle' => 'stan_dateien',    'route' => 'stan_file', 'bildfilter' => "f.mime NOT LIKE 'image/%'"],
     'newsletter'    => ['schalter' => 'ki_newsletter',      'label' => 'Newsletter',            'tabelle' => 'newsletter',      'route' => 'newsletter_datei', 'bildfilter' => "f.stored_name <> ''"],
+    'wunsch'        => ['schalter' => 'ki_wuensche',        'label' => 'Wunsch (Anlage)',       'tabelle' => 'wish_attachments', 'route' => 'download',        'bildfilter' => "f.mime NOT LIKE 'image/%'"],
+    'ablage'        => ['schalter' => 'ki_ablage',          'label' => 'Dateiablage',           'tabelle' => 'ablage_dateien',  'route' => 'ablage_datei'],
     // Kein Dokument, sondern der Kontakt selbst: das Modell schlägt eine Kategorie aus der Auswahlliste vor (kontakt_ki.php)
     'kontakt'       => ['schalter' => 'ki_kontakte',        'label' => 'Kontakt (Kategorie)',   'tabelle' => 'contacts',       'route' => 'contact_edit',     'bildfilter' => 'f.is_active = 1'],
 ];
@@ -329,8 +334,13 @@ function ki_hand_speichern(string $typ, int $dateiId, string $zusammenfassung, s
     ki_ergebnis_speichern($typ, $dateiId, ki_text_kuerzen($zusammenfassung, 2000), ki_tags_parsen($tags), (string)($alt['modell'] ?? ''), 'hand');
 }
 
-/** HTML-Baustein unter einer Datei: Zusammenfassung, Schlagwörter, Bearbeiten */
-function ki_hinweis_html(string $typ, array $datei, array $kiDaten, bool $darf): string
+/**
+ * HTML-Baustein unter einer Datei: Zusammenfassung, Schlagwörter, Bearbeiten.
+ * $mehr: 'zurueck' – dorthin nach dem Speichern statt zur Seite des Moduls;
+ * 'suche' – Seite, auf die die Schlagwörter zeigen (Vorgabe: Dateisuche);
+ * 'immer' – Schlagwörter von Hand auch dann, wenn die KI ausgeschaltet ist.
+ */
+function ki_hinweis_html(string $typ, array $datei, array $kiDaten, bool $darf, array $mehr = []): string
 {
     $id = (int)($datei['id'] ?? 0);
     return render_partial('partials/ki_hinweis', [
@@ -339,6 +349,9 @@ function ki_hinweis_html(string $typ, array $datei, array $kiDaten, bool $darf):
         'ki'      => $kiDaten['ergebnisse'][$id] ?? null,
         'auftrag' => $kiDaten['auftraege'][$id] ?? null,
         'darf'    => $darf,
+        'zurueck' => (string)($mehr['zurueck'] ?? ''),
+        'suche'   => (string)($mehr['suche'] ?? 'ki_suche'),
+        'immer'   => !empty($mehr['immer']),
     ]);
 }
 
@@ -432,6 +445,29 @@ function ki_datei_laden(string $typ, int $id): ?array
             $d['titel'] = (string)$d['titel'];
             $d['orig_name'] = (string)($d['orig_name'] ?: 'newsletter.pdf');
             break;
+        case 'wunsch':
+            $d = db_row('SELECT * FROM wish_attachments WHERE id = ?', [$id]);
+            if (!$d) {
+                return null;
+            }
+            $w = wish_find((int)$d['wish_id']);
+            $kontext = 'Anlage (' . (string)$d['kind'] . ') zum Beschaffungswunsch' . ($w ? ' „' . $w['bezeichnung'] . '"' : '');
+            $eltern = ['text' => $w ? (string)$w['bezeichnung'] : 'Wunsch', 'url' => url('wish', ['id' => (int)$d['wish_id']]) . '#anlagen'];
+            $p = upload_dir() . DIRECTORY_SEPARATOR . basename((string)$d['stored_name']);
+            $pfad = is_file($p) ? $p : null;
+            $d['titel'] = '';
+            break;
+        case 'ablage':
+            $d = afile_find($id);
+            if (!$d) {
+                return null;
+            }
+            // Der Weg durch die eigenen Kategorien sagt dem Modell, worum es geht („Verwaltung › Verträge")
+            $weg = ablage_pfad_text('k' . (int)$d['kategorie_id'], ablage_baum(ablage_eigene_knoten(ablage_kategorien(), true)));
+            $kontext = 'Dokument aus der Dateiablage des Ortsverbands' . ($weg !== '' ? ', Kategorie „' . $weg . '"' : '');
+            $eltern = ['text' => 'Dateiablage' . ($weg !== '' ? ' · ' . $weg : ''), 'url' => url('ablage', ['k' => 'k' . (int)$d['kategorie_id']]) . '#d' . $id];
+            $pfad = afile_path($d);
+            break;
         default:
             return null;
     }
@@ -454,6 +490,12 @@ function ki_darf_sehen(string $typ, array $datei, array $user): bool
             return true;
         case 'newsletter':
             return can('view_newsletter');
+        case 'wunsch':
+            return true;
+        case 'ablage':
+            // sichtbar ist, was im Baum der Person hängt – „Nur Leitung" gilt auch für alles darunter
+            return can('view_ablage') && (can('manage_ablage')
+                || !ablage_kategorie_nur_leitung((int)($datei['kategorie_id'] ?? 0), ablage_kategorien_index(ablage_kategorien())));
         case 'kontakt':
             return can('view_contacts');
     }
@@ -476,6 +518,10 @@ function ki_darf_bearbeiten(string $typ, array $datei, array $user): bool
             return in_array((string)($user['role'] ?? ''), ['admin', 'leitung'], true);
         case 'newsletter':
             return can('manage_newsletter');
+        case 'wunsch':
+            return can('manage_wishes') || (int)($datei['uploaded_by'] ?? 0) === (int)$user['id'];
+        case 'ablage':
+            return ki_darf_sehen('ablage', $datei, $user) && afile_darf_aendern($datei, $user);
         case 'kontakt':
             return can('manage_contacts');
     }

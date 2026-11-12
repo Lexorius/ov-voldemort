@@ -86,7 +86,8 @@ ist, was die Dateiablage belegt und wie viel auf der Platte darunter noch
 frei ist. Wird es knapp (unter 10 % oder unter 500 MB frei), steht das rot
 dabei – dann alte Sicherungen löschen oder Platz schaffen. „Einzelheiten"
 schlüsselt die Ablage nach Ordnern auf (Fahrzeuge, Veranstaltungen,
-Plätze, Sicherungen) und nennt die größten Tabellen der Datenbank.
+Plätze, Dateiablage, Sicherungen) und nennt die größten Tabellen der
+Datenbank.
 
 ### Sicherung und Wiederherstellung
 
@@ -1114,6 +1115,58 @@ und hängt die Module zusammen, die es dazu schon gibt.
   mit Ort, letztem Stand und Ablesedatum; Zähler ohne frischen Stand fallen
   auf. Sichtbar für alle, die den Verbrauch sehen dürfen.
 
+## Dateiablage
+
+Das Modul **Dateiablage** zeigt alle Dokumente des Ortsverbands in einem
+Baum aus Kategorien: links der Baum, rechts die gewählte Kategorie mit
+ihren Unterkategorien und Dokumenten. Auf schmalen Bildschirmen steht der
+Baum unter dem Inhalt.
+
+* **Eigene Kategorien** (📁) – die Leitung legt sie mit „+ Kategorie" an
+  und schachtelt sie mit „+ Unterkategorie" beliebig tief, etwa
+  *Verwaltung › Verträge › Miete*. „Bearbeiten" ändert Namen und
+  Beschreibung und hängt die Kategorie um – Unterkategorien und Dokumente
+  wandern mit. Löschen geht nur leer. Mit dem Haken **Nur Leitung** bleibt
+  eine Kategorie samt allem darunter für alle anderen verborgen (👁): im
+  Baum, in der Suche und beim Abruf der Datei.
+* **Kategorien der Module** (🔒) – jede Dateiablage, die es schon gibt,
+  hängt als gesperrte Kategorie im Baum und wird von selbst aktuell
+  gehalten:
+  *Fahrzeuge* mit je einer Unterkategorie für jedes Fahrzeug (außer Dienst
+  gestellte nur, solange Dateien daran hängen), *Veranstaltungen*,
+  *Kalender* und *Wünsch dir was* nach Jahr und Eintrag, *Standorte* als
+  Baum der Plätze mit Bildern, *STAN* je Version mit den Ordnern des
+  Pakets, *Newsletter* mit den PDFs. Die Namen kommen aus den
+  Einstellungen der Module. Gesperrt heißt: umbenennen, umhängen, ablegen
+  und entfernen geht nur im Modul – „Im Modul öffnen" führt dorthin.
+  Sichtbar ist eine solche Kategorie nur für die, die das Modul sehen
+  dürfen; Termine nur, wenn man sie auch im Kalender sieht.
+* **Ablegen** – in einer eigenen Kategorie „Dokument ablegen": mehrere
+  Dateien auf einmal, Bezeichnung freiwillig (sonst der Dateiname).
+  Erlaubt sind dieselben Dateiarten wie an Fahrzeugen und
+  Veranstaltungen; Fotos werden ohne Aufnahmeort neu gespeichert und
+  bekommen ein Vorschaubild. Unter jedem eigenen Dokument steht
+  „Umbenennen, verschieben, entfernen".
+* **KI und Schlagwörter** – jedes abgelegte Dokument geht in die
+  KI-Auswertung (Schalter *Dokumente der Dateiablage auswerten*) und
+  bekommt eine Zusammenfassung und Schlagwörter. Beides lässt sich am
+  Dokument nachbessern; ist die KI ausgeschaltet, trägt man die
+  Schlagwörter unter „Schlagwörter von Hand" ein. Das gilt auch für die
+  Dateien der Module, soweit man sie dort bearbeiten darf.
+* **Suchen** – das Suchfeld findet über alle Kategorien hinweg: im Namen
+  (Bezeichnung, Dateiname, bei der STAN auch der Ordner) und in den
+  Schlagwörtern und Zusammenfassungen. Ein Klick auf ein Schlagwort sucht
+  danach; auf der Übersicht stehen die häufigsten.
+
+**Wer darf was:** Sehen dürfen die Ablage alle Mitglieder
+(*Alle Mitglieder dürfen die Dateiablage sehen*, abschaltbar). Ablegen
+darf die Leitung; mit *Alle Mitglieder dürfen Dokumente ablegen* auch alle
+anderen – sie können dann die eigenen Dokumente umbenennen, verschieben
+und entfernen. Kategorien pflegt immer die Leitung.
+
+Die Dokumente der eigenen Kategorien liegen im Ordner `ablage` der
+Dateiablage auf der Platte und gehören zur Sicherung.
+
 ## Tankkarten
 
 Tankkarten gehören zum Fuhrpark wie SIM-Karten zu den Routern – und seit es
@@ -2054,11 +2107,13 @@ Kennzeichnung bleibt trotzdem.
 
 Ein Ollama im eigenen Netz fasst hochgeladene Dateien zusammen und vergibt
 Schlagwörter: Dokumente und Fotos der Fahrzeugakte und der
-Instandsetzungsaufträge, Dateien an Veranstaltungen, Anhänge an Terminen
-und Bilder der Stell- und Lagerplätze. Unter jeder Datei stehen dann zwei
-bis vier Sätze und Schlagwort-Chips; ein Klick auf ein Schlagwort öffnet
-die **Dateisuche**, die über alle Ablagen hinweg sucht – jeder sieht nur,
-was er auch sonst sehen darf.
+Instandsetzungsaufträge, Dateien an Veranstaltungen, Anhänge an Terminen,
+Bilder der Stell- und Lagerplätze, Anlagen der Wünsche und die Dokumente
+der Dateiablage. Unter jeder Datei stehen dann zwei bis vier Sätze und
+Schlagwort-Chips; ein Klick auf ein Schlagwort öffnet die **Dateisuche**,
+die über alle Ablagen hinweg sucht – jeder sieht nur, was er auch sonst
+sehen darf. Alle Dateien in einem Baum zeigt die **Dateiablage** (eigener
+Abschnitt oben).
 
 **Ausgeschaltet ist der Normalzustand.** Der Hauptschalter steht in
 Verwaltung → Einstellungen → KI-Auswertung. Solange er aus ist, wird
