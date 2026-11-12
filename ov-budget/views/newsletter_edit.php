@@ -30,7 +30,7 @@ $isNew = empty($n['id']);
       </div>
       <div class="field" style="grid-column:1/-1">
         <label for="pdf"><?= !empty($n['stored_name']) ? 'PDF ersetzen <span class="muted">(leer lassen = ' . e((string)$n['orig_name']) . ' behalten)</span>' : 'PDF <span class="muted">(bis ' . $maxMb . ' MB)</span>' ?></label>
-        <input type="file" id="pdf" name="pdf" accept="application/pdf,.pdf" <?= !empty($n['stored_name']) ? '' : 'required' ?>>
+        <?= upload_hinweis_html() ?><input type="file" id="pdf" name="pdf" accept="application/pdf,.pdf" <?= !empty($n['stored_name']) ? '' : 'required' ?>>
       </div>
       <div class="field">
         <label for="connector_id">Connector <span class="muted">(für den Abmeldelink)</span></label>

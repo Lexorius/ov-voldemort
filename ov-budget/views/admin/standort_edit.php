@@ -290,7 +290,7 @@ $ausser = $isNew ? [] : array_merge([(int)$s['id']], standort_nachkommen((int)$s
       <div class="grid2">
         <div class="field">
           <label for="bilder-upload">Bilder hochladen</label>
-          <input type="file" id="bilder-upload" name="bilder[]" multiple accept="image/*" capture="environment">
+          <?= upload_hinweis_html() ?><input type="file" id="bilder-upload" name="bilder[]" multiple accept="image/*" capture="environment">
           <small>JPG, PNG, WebP oder GIF, bis <?= (int)round(upload_max_bytes() / 1048576) ?> MB je Bild. Bilder werden verkleinert und verlieren den Aufnahmeort.</small>
         </div>
         <div class="field">

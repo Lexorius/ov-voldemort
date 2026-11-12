@@ -101,7 +101,7 @@ $karteId = (int)($tank['tankkarte_id'] ?? 0);
     </div>
     <div class="field">
       <label for="belege">Beleg fotografieren oder hochladen <span class="muted small">(optional, mehrere möglich)</span></label>
-      <input type="file" id="belege" name="belege[]" multiple accept="image/*,.pdf"
+      <?= upload_hinweis_html() ?><input type="file" id="belege" name="belege[]" multiple accept="image/*,.pdf"
              data-max-mb="<?= (int)setting_int('upload_max_mb', 10) ?>">
       <small class="muted">Am Handy geht auch die Kamera. Die Belege hängen an der Tankung und tauchen nicht in der Bildergalerie des Fahrzeugs auf.</small>
     </div>

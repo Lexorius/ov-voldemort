@@ -314,6 +314,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('theme_color','#003399','Akzentfarbe','THW-Blau ist #003399','color','Allgemein',40),
 ('footer_text','Interne Planungshilfe – keine offizielle Beschaffungsplattform.','Fußzeile','','textarea','Allgemein',50),
 ('login_hinweis','Zugang erhältst du von der OV-Leitung.','Hinweistext auf der Anmeldeseite','','textarea','Allgemein',60),
+('upload_hinweis','Keine Dokumente mit personenbezogenen Daten, keine als VS und höher eingestuften Dokumente.','Hinweis über jedem Upload-Feld','Steht in allen Modulen über jedem Feld zum Hochladen von Dokumenten und Bildern. Leer = kein Hinweis.','textarea','Allgemein',65),
 ('waehrung','EUR','Währung','ISO-Code, z.B. EUR','text','Allgemein',70),
 ('haushaltsjahr','0','Aktuelles Haushaltsjahr','0 = automatisch das Kalenderjahr. Nur setzen, wenn Budget und Wünsche bewusst in einem anderen Jahr laufen sollen.','number','Budget',10),
 ('budget_warn_prozent','90','Warnschwelle Budgetauslastung (%)','Ab diesem Wert wird der Topf rot dargestellt','number','Budget',30),

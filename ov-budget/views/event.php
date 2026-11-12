@@ -594,7 +594,7 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
       <div class="grid2">
         <div class="field">
           <label for="dateien">Datei hinzufügen</label>
-          <input type="file" id="dateien" name="dateien[]" multiple required>
+          <?= upload_hinweis_html() ?><input type="file" id="dateien" name="dateien[]" multiple required>
         </div>
         <div class="field">
           <label for="titel">Bezeichnung <span class="muted">(freiwillig)</span></label>

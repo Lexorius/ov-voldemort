@@ -48,6 +48,7 @@ $formular = static function (string $art, string $knopf, string $hinweis) use ($
         . ($order ? '<input type="hidden" name="order_id" value="' . (int)$order['id'] . '">' : '')
         . '<div class="grid2">'
         . '<div class="field"><label>Datei(en)</label>'
+        . upload_hinweis_html()
         . '<input type="file" name="dateien[]" multiple required data-max-mb="'
         . (int)setting_int('upload_max_mb', 10) . '"></div>'
         . '<div class="field"><label>Titel (optional)</label>'

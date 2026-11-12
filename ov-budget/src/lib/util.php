@@ -548,6 +548,17 @@ function icon(string $name): string
         . $pfade[$name] . '</svg>';
 }
 
+/**
+ * Hinweis über jedem Feld zum Hochladen von Dokumenten und Bildern – etwa, was
+ * nicht in die Ablage gehört. Der Text steht in den Einstellungen unter Allgemein
+ * („Hinweis über jedem Upload-Feld"); leer = kein Hinweis.
+ */
+function upload_hinweis_html(): string
+{
+    $text = trim((string)setting('upload_hinweis', ''));
+    return $text === '' ? '' : '<p class="upload-hinweis" role="note"><span aria-hidden="true">⚠</span> ' . nl2br(e($text)) . '</p>';
+}
+
 /** Farbiges Label (Status, Dringlichkeit ...) */
 function badge(?array $item, string $fallback = '–'): string
 {

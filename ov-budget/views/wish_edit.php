@@ -203,7 +203,7 @@ $pflichtAb = setting_float('wunsch_angebot_pflicht_ab', 0);
     <div class="grid3">
       <div class="field">
         <label for="anlagen">Dateien hinzufügen</label>
-        <input type="file" id="anlagen" name="anlagen[]" multiple data-max-mb="<?= setting_int('upload_max_mb', 10) ?>">
+        <?= upload_hinweis_html() ?><input type="file" id="anlagen" name="anlagen[]" multiple data-max-mb="<?= setting_int('upload_max_mb', 10) ?>">
         <small>Erlaubt: <?= e(implode(', ', upload_allowed_extensions())) ?> · max. <?= setting_int('upload_max_mb', 10) ?> MB je Datei</small>
       </div>
       <div class="field">

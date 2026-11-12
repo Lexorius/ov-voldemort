@@ -158,7 +158,7 @@ $icon = static function (array $d): string {
           <input type="hidden" name="action" value="nachreichen">
           <input type="hidden" name="version_id" value="<?= (int)$gezeigt['id'] ?>">
           <div class="grid2">
-            <div class="field"><label>Datei(en)</label><input type="file" name="dateien[]" multiple required data-max-mb="<?= (int)$maxMb ?>"></div>
+            <div class="field"><label>Datei(en)</label><?= upload_hinweis_html() ?><input type="file" name="dateien[]" multiple required data-max-mb="<?= (int)$maxMb ?>"></div>
             <div class="field"><label>Ordner (optional)</label><input type="text" name="ordner" maxlength="200" placeholder="z. B. Fachgruppe N"></div>
           </div>
           <small class="muted">Einzelne PDFs, die im Paket fehlen oder sich geändert haben. Für ein ganz neues Paket lieber unten ein ZIP als neue Version hochladen.</small>
@@ -184,7 +184,7 @@ $icon = static function (array $d): string {
     <input type="hidden" name="action" value="paket">
     <div class="grid2">
       <div class="field"><label for="paket">ZIP mit den Dokumenten</label>
-        <input type="file" id="paket" name="paket" accept=".zip,application/zip" required data-max-mb="<?= (int)$maxMb ?>"></div>
+        <?= upload_hinweis_html() ?><input type="file" id="paket" name="paket" accept=".zip,application/zip" required data-max-mb="<?= (int)$maxMb ?>"></div>
       <div class="field"><label for="bemerkung">Bemerkung (optional)</label>
         <input type="text" id="bemerkung" name="bemerkung" maxlength="200" placeholder="z. B. Stand 10/2026"></div>
     </div>

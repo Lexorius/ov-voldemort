@@ -125,7 +125,7 @@ $zeile = static fn(array $d, bool $ort): string => render_partial('partials/abla
               <div class="grid2">
                 <div class="field">
                   <label for="dateien">Dateien</label>
-                  <input type="file" id="dateien" name="dateien[]" multiple required>
+                  <?= upload_hinweis_html() ?><input type="file" id="dateien" name="dateien[]" multiple required>
                   <small class="muted">Mehrere auf einmal möglich, je höchstens <?= (int)$maxMb ?> MB. Erlaubt: <?= e(implode(', ', $typen)) ?>.</small>
                 </div>
                 <div class="field">

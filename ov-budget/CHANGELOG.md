@@ -1,5 +1,17 @@
 # Änderungsverlauf
 
+## 2.1.82.0
+
+- **Hinweis über jedem Upload-Feld:** Über jedem Feld, das Dokumente oder
+  Bilder annimmt, steht jetzt ein Hinweis, was nicht hochgeladen werden
+  soll – in der Dateiablage, an Buchungen, Wünschen, Fahrzeugen, Aufträgen,
+  Tankungen, Veranstaltungen, Terminen, Plätzen, in der STAN und beim
+  Newsletter. Der Text steht in den Einstellungen unter *Allgemein →
+  Hinweis über jedem Upload-Feld*; Vorgabe: „Keine Dokumente mit
+  personenbezogenen Daten, keine als VS und höher eingestuften Dokumente."
+  Leer = kein Hinweis. Die Datenimporte (Kontakte, Tankkarten) und das
+  Einspielen einer Sicherung tragen ihn nicht.
+
 ## 2.1.81.0
 
 - **Budget: Belege zu Ausgaben und Einnahmen.** Beim Erfassen und beim

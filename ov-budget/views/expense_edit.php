@@ -272,7 +272,7 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
     <div class="grid2">
       <div class="field">
         <label for="belege"><?= $istEinnahme ? 'Bescheid, Rechnung oder Zahlungsnachweis' : 'Rechnung oder Quittung' ?> <span class="muted">(freiwillig)</span></label>
-        <input type="file" id="belege" name="belege[]" multiple>
+        <?= upload_hinweis_html() ?><input type="file" id="belege" name="belege[]" multiple>
         <small class="muted">Mehrere auf einmal möglich, je höchstens <?= (int)$belegMaxMb ?> MB – PDF, Foto oder Scan. Der Beleg hängt nach dem Speichern an der <?= e($wort) ?> und steht in der Dateiablage unter Budget.</small>
       </div>
       <div class="field">

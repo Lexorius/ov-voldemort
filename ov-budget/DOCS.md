@@ -79,6 +79,18 @@ Das normale Home-Assistant-Backup erfasst diesen Ordner vollständig. Das Add-on
 ist als `backup: cold` eingetragen, wird also für die Dauer der Sicherung
 angehalten, damit die Datenbankdateien in sich stimmig sind.
 
+### Hinweis über jedem Upload-Feld
+
+Über jedem Feld, das Dokumente oder Bilder annimmt, steht ein Hinweis, was
+nicht in die Ablage gehört. Der Text steht unter *Verwaltung →
+Einstellungen → Allgemein → Hinweis über jedem Upload-Feld* und gilt für
+alle Module zugleich; mitgeliefert ist „Keine Dokumente mit
+personenbezogenen Daten, keine als VS und höher eingestuften Dokumente."
+Mehrere Zeilen sind möglich, ein leeres Feld blendet den Hinweis aus. Der
+Hinweis erinnert nur – geprüft wird der Inhalt einer Datei nicht. Bei den
+Datenimporten (Kontakte, Tankkarten) und beim Einspielen einer Sicherung
+steht er nicht, denn dort sind Personendaten der Zweck.
+
 ### Speicherplatz
 
 Die Verwaltungsseite zeigt unter „Speicherplatz", wie groß die Datenbank

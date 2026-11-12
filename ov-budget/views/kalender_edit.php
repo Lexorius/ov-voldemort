@@ -199,7 +199,7 @@ $ganztag = (int)($termin['ganztag'] ?? 0) === 1;
       <div class="grid2">
         <div class="field">
           <label for="dateien-upload">Dateien anhängen</label>
-          <input type="file" id="dateien-upload" name="dateien[]" multiple>
+          <?= upload_hinweis_html() ?><input type="file" id="dateien-upload" name="dateien[]" multiple>
           <small>Einladung, Programm, Anfahrtsskizze – PDF, Bilder und die erlaubten Dokumenttypen, bis <?= function_exists('upload_max_bytes') ? (int)round(upload_max_bytes() / 1048576) : 8 ?> MB je Datei.
             Sie werden beim <?= $isNew ? 'Eintragen' : 'Speichern' ?> mit abgelegt.</small>
         </div>
