@@ -7,6 +7,7 @@
     <p>Die Bibliothek für alle Karten: taktische Zeichen, Piktogramme, eigene Zeichnungen. SVG bleibt in jeder Größe scharf; Bilder gehen auch.</p>
   </div>
   <div class="btnrow">
+    <?php if ($verwalten): ?><a class="btn btn--sec" href="<?= e(url('karten_github')) ?>">Von GitHub holen</a><?php endif; ?>
     <a class="btn btn--sec" href="<?= e(url('karten')) ?>">Zu den Karten</a>
     <?php if (can('view_ablage')): ?><a class="btn btn--sec" href="<?= e(url('ablage', ['k' => 'karte'])) ?>">🗂 In der Dateiablage</a><?php endif; ?>
   </div>
@@ -45,16 +46,27 @@
   <div class="card"><div class="empty">Noch kein Symbol in der Bibliothek.<?= $verwalten ? ' Oben die ersten hochladen.' : ' Die Leitung lädt sie hoch.' ?></div></div>
 <?php endif; ?>
 
+<?php $zugeklappt = $anzahl > 150; // eine große Bibliothek soll nicht hunderte Bilder auf einmal laden ?>
 <?php foreach ($gruppiert as $gruppe => $liste): ?>
+  <?php $herkunft = array_values(array_unique(array_filter(array_map(static fn(array $s): string => trim((string)($s['quelle'] ?? '')), $liste)))); ?>
   <section class="card">
-    <div class="card__head"><h2><?= (string)$gruppe !== '' ? e((string)$gruppe) : 'Ohne Gruppe' ?></h2><span class="muted small"><?= count($liste) ?></span></div>
+    <details<?= $zugeklappt ? '' : ' open' ?>>
+    <summary class="card__head" style="cursor:pointer"><h2><?= (string)$gruppe !== '' ? e((string)$gruppe) : 'Ohne Gruppe' ?></h2><span class="muted small"><?= count($liste) ?> Symbole<?= count($herkunft) === 1 ? ' · Quelle ' . e((string)preg_replace('/^github:/', 'GitHub ', $herkunft[0])) : '' ?></span></summary>
+    <?php if ($verwalten): ?>
+      <form method="post" action="<?= e(url('karten_symbole')) ?>" style="margin:.2rem 0 .6rem">
+        <?= csrf_field() ?>
+        <input type="hidden" name="gruppe" value="<?= e((string)$gruppe) ?>">
+        <button class="btn btn--sec btn--sm" type="submit" name="action" value="gruppe_loeschen"
+                data-confirm="Alle <?= count($liste) ?> Symbole der Gruppe „<?= e((string)$gruppe !== '' ? (string)$gruppe : 'Ohne Gruppe') ?>“ löschen? Was auf Karten sitzt oder Fahrzeugen zugeordnet ist, bleibt.">Ganze Gruppe löschen</button>
+      </form>
+    <?php endif; ?>
     <div class="symbolraster">
       <?php foreach ($liste as $s): ?>
         <div class="symbolraster__eintrag">
           <a class="symbolraster__bild" href="<?= e(url('karten_symbol', ['id' => $s['id']])) ?>" target="_blank" rel="noopener">
             <img src="<?= e(url('karten_symbol', ['id' => $s['id']])) ?>" alt="<?= e((string)$s['name']) ?>" loading="lazy"></a>
           <div class="symbolraster__name"><?= e((string)$s['name']) ?></div>
-          <div class="small muted"><?= e(strtoupper(pathinfo((string)$s['orig_name'], PATHINFO_EXTENSION))) ?> · <?= e(bytes_human((int)$s['size_bytes'])) ?><?= (int)$s['verwendet'] > 0 ? ' · ' . (int)$s['verwendet'] . '× gesetzt' : '' ?></div>
+          <div class="small muted"><?= e(strtoupper(pathinfo((string)$s['orig_name'], PATHINFO_EXTENSION))) ?> · <?= e(bytes_human((int)$s['size_bytes'])) ?><?= (int)$s['verwendet'] > 0 ? ' · ' . (int)$s['verwendet'] . '× gesetzt' : '' ?><?= (int)($s['fahrzeuge'] ?? 0) > 0 ? ' · ' . (int)$s['fahrzeuge'] . ' Fahrzeug(e)' : '' ?><?= trim((string)($s['lizenz'] ?? '')) !== '' ? ' · ' . e((string)$s['lizenz']) : '' ?></div>
           <?php if ($verwalten): ?>
             <details class="ki__edit">
               <summary class="small muted">Ändern</summary>
@@ -73,5 +85,6 @@
         </div>
       <?php endforeach; ?>
     </div>
+    </details>
   </section>
 <?php endforeach; ?>

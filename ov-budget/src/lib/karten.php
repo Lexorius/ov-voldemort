@@ -112,7 +112,8 @@ function karten_svg_pruefen(string $svg): ?string
         // besitzergreifend (*+, ?+), damit das Anführungszeichen nicht wieder hergegeben wird
         '/(?<![a-z])href\s*+=\s*+["\']?+\s*+(?!#|data:image\/(png|jpe?g|gif|webp);)/i'
                                                           => 'sie verweist auf etwas außerhalb der Datei',
-        '/url\(\s*+["\']?+\s*+(?!#|data:image\/(png|jpe?g|gif|webp);)/i'
+        // eine eingebettete Schrift (data:) ist Teil der Datei und lädt nichts nach
+        '/url\(\s*+["\']?+\s*+(?!#|data:image\/(png|jpe?g|gif|webp);|data:(?:application\/(?:x-)?font-(?:woff2?|ttf|otf|truetype|opentype)|font\/(?:woff2?|ttf|otf|sfnt))[;,])/i'
                                                           => 'sie lädt etwas von außerhalb nach',
     ];
     foreach ($verboten as $muster => $grund) {
@@ -216,6 +217,8 @@ function karten_fahrzeug_punkte(array $rows, ?int $jetzt = null): array
             'stand' => trim(($alter !== null ? karten_alter_text($alter) : 'Zeitpunkt unbekannt') . ($quelle !== '' ? ' · ' . $quelle : '')),
             'alt'   => $alter === null || $alter > KARTEN_FAHRZEUG_ALT_STD * 3600,
             'url'   => url('vehicle', ['id' => (int)$r['id']]),
+            // das taktische Zeichen des Fahrzeugs – ohne bleibt es beim Punkt
+            'src'   => (int)($r['symbol_id'] ?? 0) > 0 ? url('karten_symbol', ['id' => (int)$r['symbol_id']]) : '',
         ];
     }
     return $out;
@@ -367,8 +370,33 @@ function karten_symbol_dir(): string
 function karten_symbole(): array
 {
     return db_all('SELECT s.*, u.display_name AS hochgeladen_von,
-                          (SELECT COUNT(*) FROM karten_marker m WHERE m.symbol_id = s.id) AS verwendet
+                          (SELECT COUNT(*) FROM karten_marker m WHERE m.symbol_id = s.id) AS verwendet,
+                          (SELECT COUNT(*) FROM vehicles v WHERE v.symbol_id = s.id) AS fahrzeuge
                    FROM karten_symbole s LEFT JOIN users u ON u.id = s.uploaded_by ORDER BY s.gruppe, s.name, s.id');
+}
+
+/** Nur Kennung, Name und Gruppe – für Auswahlfelder, etwa das taktische Zeichen eines Fahrzeugs */
+function karten_symbole_kurz(): array
+{
+    return db_all('SELECT id, name, gruppe FROM karten_symbole ORDER BY gruppe, name, id');
+}
+
+/**
+ * <option>-Liste der Symbole, nach Gruppen. Jede Option trägt die Adresse ihres Bildes
+ * (data-src), damit daneben das gewählte Zeichen erscheinen kann. Reine Funktion bis auf url().
+ */
+function karten_symbol_optionen(array $symbole, ?int $gewaehlt, string $leer = '– kein Zeichen –'): string
+{
+    $html = '<option value="">' . e($leer) . '</option>';
+    foreach (karten_symbole_gruppiert($symbole) as $gruppe => $liste) {
+        $html .= '<optgroup label="' . e((string)$gruppe !== '' ? (string)$gruppe : 'Ohne Gruppe') . '">';
+        foreach ($liste as $s) {
+            $html .= '<option value="' . (int)$s['id'] . '" data-src="' . e(url('karten_symbol', ['id' => (int)$s['id']])) . '"'
+                . ((int)$s['id'] === (int)$gewaehlt ? ' selected' : '') . '>' . e((string)$s['name']) . '</option>';
+        }
+        $html .= '</optgroup>';
+    }
+    return $html;
 }
 
 function karten_symbol_find(?int $id): ?array
@@ -479,6 +507,10 @@ function karten_symbol_delete(array $symbol): ?string
     if ($n > 0) {
         return sprintf('„%s" sitzt noch %d-mal auf Karten – erst dort entfernen.', (string)$symbol['name'], $n);
     }
+    $fz = (int)db_val('SELECT COUNT(*) FROM vehicles WHERE symbol_id = ?', [(int)$symbol['id']], 0);
+    if ($fz > 0) {
+        return sprintf('„%s" ist noch %d Fahrzeug(en) als taktisches Zeichen zugeordnet – erst dort ein anderes wählen.', (string)$symbol['name'], $fz);
+    }
     $pfad = karten_symbol_pfad($symbol);
     if ($pfad !== null) {
         @unlink($pfad);
@@ -486,6 +518,35 @@ function karten_symbol_delete(array $symbol): ?string
     db_exec('DELETE FROM karten_symbole WHERE id = ?', [(int)$symbol['id']]);
     audit('karten.symbol_geloescht', 'karten_symbol', (int)$symbol['id'], (string)$symbol['name']);
     return null;
+}
+
+/**
+ * Eine ganze Gruppe aus der Bibliothek nehmen – etwa, um einen Abruf rückgängig zu machen.
+ * Was noch auf einer Karte sitzt oder einem Fahrzeug zugeordnet ist, bleibt.
+ * Gibt [gelöscht, geblieben] zurück.
+ */
+function karten_gruppe_loeschen(string $gruppe): array
+{
+    $weg = 0;
+    $bleibt = 0;
+    foreach (db_all('SELECT * FROM karten_symbole WHERE gruppe = ? ORDER BY id', [$gruppe]) as $s) {
+        $benutzt = (int)db_val('SELECT COUNT(*) FROM karten_marker WHERE symbol_id = ?', [(int)$s['id']], 0)
+            + (int)db_val('SELECT COUNT(*) FROM vehicles WHERE symbol_id = ?', [(int)$s['id']], 0);
+        if ($benutzt > 0) {
+            $bleibt++;
+            continue;
+        }
+        $pfad = karten_symbol_pfad($s);
+        if ($pfad !== null) {
+            @unlink($pfad);
+        }
+        db_exec('DELETE FROM karten_symbole WHERE id = ?', [(int)$s['id']]);
+        $weg++;
+    }
+    if ($weg > 0) {
+        audit('karten.gruppe_geloescht', 'karten_symbol', null, sprintf('%s: %d Symbole', $gruppe !== '' ? $gruppe : 'ohne Gruppe', $weg));
+    }
+    return [$weg, $bleibt];
 }
 
 /* ==================================================================== */
@@ -564,6 +625,6 @@ function karten_marker_delete(array $marker): void
 function karten_fahrzeuge(?int $jetzt = null): array
 {
     return karten_fahrzeug_punkte(db_all(
-        'SELECT id, bezeichnung, funkrufname, geo_lat, geo_lng, geo_at, geo_quelle FROM vehicles
+        'SELECT id, bezeichnung, funkrufname, geo_lat, geo_lng, geo_at, geo_quelle, symbol_id FROM vehicles
          WHERE is_active = 1 AND geo_lat IS NOT NULL AND geo_lng IS NOT NULL ORDER BY bezeichnung, id'), $jetzt);
 }

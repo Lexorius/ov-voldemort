@@ -1238,9 +1238,29 @@ sich eigene Symbole setzen lassen – das Gelände der Unterkunft, ein
   **SVG** (bleibt in jeder Größe scharf) und Bilder (PNG, JPG, WebP, GIF;
   sie werden auf 1024 Pixel begrenzt), mehrere auf einmal, mit Gruppe und
   Name. Ein Symbol lässt sich nur löschen, wenn es auf keiner Karte mehr
-  sitzt.
+  sitzt und keinem Fahrzeug zugeordnet ist; „Ganze Gruppe löschen" räumt
+  eine Gruppe in einem Schritt ab.
+* **Symbole von GitHub holen** – die Anwendung bringt keine Zeichen mit
+  und lädt nichts von selbst. Über *Symbole → Von GitHub holen* nennt die
+  Leitung ein öffentliches Repository (etwa
+  `jonas-koeritz/Taktische-Zeichen`), sieht dessen Lizenz und die Pakete –
+  die ZIP-Anhänge des neuesten Release und den Quelltext des Hauptzweigs –,
+  bestätigt die Lizenz und holt ein Paket auf den Server. Danach zeigt die
+  Seite die Ordner des Pakets mit der Zahl ihrer SVG und Bilder; was
+  angekreuzt ist, wird übernommen: je Ordner eine Gruppe, der Dateiname
+  wird der Name. Quelle und Lizenz stehen danach an jedem Symbol. Ob ihr
+  die Zeichen verwenden dürft, regelt die Lizenz des Repositorys – das
+  prüft ihr, nicht die Anwendung. Gesprochen wird nur mit GitHub; das
+  Paket darf höchstens 300 MB groß sein, wird nie entpackt und nach dem
+  Übernehmen oder Verwerfen gelöscht. Ein zweiter Durchgang legt nichts
+  doppelt an.
+* **Taktisches Zeichen je Fahrzeug** – im Formular des Fahrzeugs lässt
+  sich ein Symbol der Bibliothek als taktisches Zeichen wählen. Es steht
+  dann in der Fahrzeugliste, an der Fahrzeugakte und auf den Karten an der
+  Position des Fahrzeugs.
 * **Fahrzeuge** – der Schalter über der Karte blendet alle Fahrzeuge im
-  Dienst ein, die eine Position gemeldet haben: als Punkt mit Funkrufname
+  Dienst ein, die eine Position gemeldet haben: mit ihrem taktischen
+  Zeichen – ohne Zeichen als Punkt – und dem Funkrufnamen
   (sonst Bezeichnung), beim Überfahren mit Alter und Quelle der Meldung
   (Divera, QR-Code im Fahrzeug, von Hand). Positionen, die älter als ein
   Tag sind, stehen blasser da. Solange der Schalter an ist, holt die Karte

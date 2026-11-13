@@ -181,6 +181,17 @@
     sel.addEventListener('change', function () { sel.form.submit(); });
   });
 
+  /* Symbolwahl (taktisches Zeichen): neben der Auswahl das gewählte Zeichen zeigen */
+  document.querySelectorAll('select[data-symbol-wahl]').forEach(function (sel) {
+    var bild = document.getElementById(sel.getAttribute('data-symbol-wahl'));
+    if (!bild) { return; }
+    sel.addEventListener('change', function () {
+      var o = sel.options[sel.selectedIndex];
+      var src = o ? o.getAttribute('data-src') : '';
+      if (src) { bild.src = src; bild.hidden = false; } else { bild.hidden = true; bild.removeAttribute('src'); }
+    });
+  });
+
   /* Verdeckte Werte (z. B. Cron-Aufruf mit Token): anzeigen und kopieren */
   document.querySelectorAll('[data-geheim]').forEach(function (el) {
     var verdeckt = el.textContent;

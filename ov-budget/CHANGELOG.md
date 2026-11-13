@@ -1,5 +1,25 @@
 # Änderungsverlauf
 
+## 2.1.84.0
+
+- **Karten – Symbole von GitHub holen:** Unter *Symbole → Von GitHub
+  holen* lässt sich ein öffentliches Repository mit Zeichen in die
+  Bibliothek übernehmen, zum Beispiel taktische Zeichen. Es geschieht nur
+  auf Knopfdruck und in drei Schritten: Repository nennen, Paket wählen und
+  **Lizenz bestätigen**, Ordner ankreuzen. Geholt wird ein ZIP-Anhang des
+  neuesten Release (dort liegen meist die fertigen Zeichen) oder der
+  Quelltext des Hauptzweigs. Mitgeliefert wird kein Zeichen, von selbst
+  geladen wird nichts; Quelle und Lizenz stehen an jedem Symbol. Gesprochen
+  wird nur mit GitHub, das Paket ist auf 300 MB begrenzt, wird nicht
+  entpackt und danach gelöscht; jede SVG läuft durch die Prüfung.
+- **Karten:** SVG mit eingebetteter Schrift werden angenommen (bisher als
+  „lädt etwas nach" abgelehnt). Gruppen der Bibliothek lassen sich im
+  Ganzen löschen; große Bibliotheken klappen ihre Gruppen zu.
+- **Fahrzeuge – taktisches Zeichen:** Jedem Fahrzeug lässt sich ein Symbol
+  der Bibliothek zuordnen. Es steht in der Liste, an der Fahrzeugakte und
+  auf den Karten an der Position des Fahrzeugs statt des Punkts. Ein
+  zugeordnetes Symbol lässt sich nicht löschen.
+
 ## 2.1.83.0
 
 - **Karten:** Neues Modul mit Kartenausschnitten auf OpenStreetMap. Jede

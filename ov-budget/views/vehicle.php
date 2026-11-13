@@ -23,7 +23,7 @@ $tanken ??= ['anzahl' => 0, 'eintraege' => [], 'verbrauch' => null, 'strecke' =>
 ?>
 <div class="pagehead">
   <div>
-    <h1><?= e($vehicle['bezeichnung']) ?></h1>
+    <h1><?php if ((int)($vehicle['symbol_id'] ?? 0) > 0): ?><img class="fzzeichen" src="<?= e(url('karten_symbol', ['id' => (int)$vehicle['symbol_id']])) ?>" alt="Taktisches Zeichen"> <?php endif; ?><?= e($vehicle['bezeichnung']) ?></h1>
     <p class="muted small">
       <?= e(implode(' · ', array_filter([
           $vehicle['funkrufname'], $vehicle['kennzeichen'], $vehicle['typ_label'], $vehicle['fachgruppe_label'],

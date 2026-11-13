@@ -8,11 +8,14 @@ declare(strict_types=1);
  * und hier zusätzlich mit einer Regel ausgeliefert, die dem Browser jedes Skript und
  * jedes Nachladen verbietet, falls doch einmal etwas durchrutscht.
  */
-if (!can('view_karten')) {
+$symbolId = (int)get_int('id', 0);
+// Wer die Karten sieht, sieht die Bibliothek. Das taktische Zeichen eines Fahrzeugs sieht auch, wer die Fahrzeuge sieht.
+if (!can('view_karten') && !(can('view_vehicles') && $symbolId > 0
+        && (int)db_val('SELECT COUNT(*) FROM vehicles WHERE symbol_id = ?', [$symbolId], 0) > 0)) {
     http_response_code(403);
     exit('Kein Zugriff.');
 }
-$symbol = karten_symbol_find(get_int('id', 0));
+$symbol = karten_symbol_find($symbolId);
 $pfad = $symbol ? karten_symbol_pfad($symbol) : null;
 if (!$symbol || $pfad === null) {
     http_response_code(404);
@@ -29,7 +32,7 @@ header('Content-Disposition: ' . ($mime === 'application/octet-stream' ? 'attach
     . '; filename="' . str_replace(['"', "\r", "\n"], '', (string)$symbol['orig_name']) . '"');
 header('X-Content-Type-Options: nosniff');
 // sandbox: selbst direkt geöffnet läuft in der Datei nichts; style-src für <style> in der SVG
-header('Content-Security-Policy: default-src \'none\'; style-src \'unsafe-inline\'; img-src data:; sandbox');
+header('Content-Security-Policy: default-src \'none\'; style-src \'unsafe-inline\'; img-src data:; font-src data:; sandbox');
 // Ein Symbol ändert sich unter seiner Kennung nie
 header('Cache-Control: private, max-age=86400');
 

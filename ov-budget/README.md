@@ -191,7 +191,11 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 - **Symbolbibliothek** für SVG und Bilder, nach Gruppen; SVG wird beim
   Hochladen auf Skript und Verweise nach außen geprüft
 - **Fahrzeuge einblendbar** an ihrer zuletzt gemeldeten Position, jede
-  Minute frisch
+  Minute frisch – mit ihrem **taktischen Zeichen**, das sich je Fahrzeug
+  aus der Bibliothek wählen lässt
+- **Symbole von GitHub holen**: ein Repository mit Zeichen auf Knopfdruck
+  übernehmen, mit Lizenzanzeige und Auswahl der Ordner. Mitgeliefert wird
+  kein Zeichen, von selbst geladen wird nichts
 
 ### Dateiablage
 - **Alle Dokumente in einem Baum**: eigene Kategorien, beliebig tief

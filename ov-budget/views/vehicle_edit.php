@@ -84,6 +84,20 @@ $isNew = empty($vehicle['id']);
           <small>Plätze legt die Leitung unter Verwaltung → Stell- und Lagerplätze an.</small>
         <?php endif; ?>
       </div>
+      <?php $symbolListe = function_exists('karten_symbole_kurz') ? karten_symbole_kurz() : []; $symbolJetzt = (int)($vehicle['symbol_id'] ?? 0); ?>
+      <div class="field">
+        <label for="symbol_id">Taktisches Zeichen</label>
+        <?php if ($symbolListe): ?>
+          <div class="symbolwahl">
+            <select id="symbol_id" name="symbol_id" data-symbol-wahl="symbol_vorschau"><?= karten_symbol_optionen($symbolListe, $symbolJetzt) ?></select>
+            <img id="symbol_vorschau" class="symbolwahl__bild" alt=""<?= $symbolJetzt > 0 ? ' src="' . e(url('karten_symbol', ['id' => $symbolJetzt])) . '"' : ' hidden' ?>>
+          </div>
+          <small>Aus der Symbolbibliothek der Karten. Das Zeichen steht an der Fahrzeugakte und auf den Karten an der Position des Fahrzeugs.</small>
+        <?php else: ?>
+          <select id="symbol_id" name="symbol_id" disabled><option>– noch keine Symbole in der Bibliothek –</option></select>
+          <small>Symbole legt die Leitung unter Karten → Symbole ab – hochgeladen oder aus einem GitHub-Repository geholt.</small>
+        <?php endif; ?>
+      </div>
       <div class="field">
         <label for="standort">Standort (frei)</label>
         <input type="text" id="standort" name="standort" value="<?= e((string)$vehicle['standort']) ?>"

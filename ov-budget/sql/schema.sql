@@ -1312,6 +1312,8 @@ CREATE TABLE IF NOT EXISTS vehicles (
   standort          VARCHAR(150) NOT NULL DEFAULT '',
   -- fester Stellplatz aus den Stell- und Lagerplaetzen; der Fremdschluessel kommt in der Wanderung
   standort_id       INT UNSIGNED NULL,
+  -- taktisches Zeichen aus der Symbolbibliothek der Karten; der Fremdschluessel kommt in der Wanderung
+  symbol_id         INT UNSIGNED NULL,
   notiz             TEXT         NULL,
   extra             TEXT         NULL,
   opta              VARCHAR(60)  NOT NULL DEFAULT '',
@@ -1349,6 +1351,7 @@ CREATE TABLE IF NOT EXISTS vehicles (
   UNIQUE KEY uq_divera_fz (divera_vehicle_id),
   KEY idx_fz_status (status_id),
   KEY idx_qr_token (qr_token),
+  KEY idx_fz_symbol (symbol_id),
   CONSTRAINT fk_fz_typ FOREIGN KEY (typ_id)         REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_fz_fg  FOREIGN KEY (fachgruppe_id)  REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_fz_sta FOREIGN KEY (status_id)      REFERENCES list_items(id) ON DELETE SET NULL,
@@ -2181,10 +2184,14 @@ CREATE TABLE IF NOT EXISTS karten_symbole (
   stored_name  VARCHAR(120) NOT NULL,
   mime         VARCHAR(120) NOT NULL DEFAULT '',
   size_bytes   INT UNSIGNED NOT NULL DEFAULT 0,
+  -- woher das Symbol stammt (etwa "github:eigner/name@stand") und unter welcher Lizenz; leer = selbst hochgeladen
+  quelle       VARCHAR(200) NOT NULL DEFAULT '',
+  lizenz       VARCHAR(80)  NOT NULL DEFAULT '',
   uploaded_by  INT UNSIGNED NULL,
   created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_ksym_gruppe (gruppe, name),
+  KEY idx_ksym_quelle (quelle),
   CONSTRAINT fk_ksym_user FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

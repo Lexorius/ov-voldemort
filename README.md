@@ -153,7 +153,9 @@ unter „Sicherheitslücke PHP2Shell".
   auf einer Seite.
 * **Karten** – Kartenausschnitte auf OpenStreetMap mit eigenen Symbolen
   (SVG und Bilder) per Rechtsklick; einblendbar die Fahrzeuge an ihrer
-  zuletzt gemeldeten Position.
+  zuletzt gemeldeten Position. Symbole lassen sich auf Knopfdruck aus einem
+  GitHub-Repository holen (mitgeliefert wird keines); jedes Fahrzeug
+  kann ein taktisches Zeichen tragen.
 * **Dateiablage** – alle Dokumente in einem Baum aus Kategorien: eigene,
   beliebig tief geschachtelt, und die Ablagen der Module (Fahrzeuge,
   Veranstaltungen, Termine, Plätze, STAN, Newsletter, Wünsche, Belege

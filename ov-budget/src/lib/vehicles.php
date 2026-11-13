@@ -650,6 +650,15 @@ function journal_verify(int $vehicleId): array
 
 /** Fahrzeug aus dem Formular speichern. Gibt [id, fehler[]] zurück. */
 /** Nur einen vorhandenen, aktiven Platz annehmen – sonst keinen */
+/** Das gewählte taktische Zeichen – nur, wenn es das Symbol in der Bibliothek gibt */
+function vehicle_symbol_pruefen(?int $id): ?int
+{
+    if (!$id || !function_exists('karten_symbol_find')) {
+        return null;
+    }
+    return karten_symbol_find($id) ? $id : null;
+}
+
 function vehicle_stellplatz_pruefen(?int $id): ?int
 {
     if (!$id || !function_exists('standort_find')) {
@@ -693,6 +702,7 @@ function vehicle_save_from_post(?array $existing, array $user): array
         'uvv_bis'           => post_date('uvv_bis'),
         'standort'          => mb_substr(post_str('standort'), 0, 150),
         'standort_id'       => vehicle_stellplatz_pruefen(post_int('standort_id')),
+        'symbol_id'         => vehicle_symbol_pruefen(post_int('symbol_id')),
         'notiz'             => post_str('notiz'),
         'extra'             => extra_from_post(vehicle_extra_fields()),
         'is_active'         => post_bool('is_active'),

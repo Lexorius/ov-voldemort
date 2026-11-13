@@ -2733,10 +2733,13 @@ SQL);
   stored_name  VARCHAR(120) NOT NULL,
   mime         VARCHAR(120) NOT NULL DEFAULT '',
   size_bytes   INT UNSIGNED NOT NULL DEFAULT 0,
+  quelle       VARCHAR(200) NOT NULL DEFAULT '',
+  lizenz       VARCHAR(80)  NOT NULL DEFAULT '',
   uploaded_by  INT UNSIGNED NULL,
   created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_ksym_gruppe (gruppe, name),
+  KEY idx_ksym_quelle (quelle),
   CONSTRAINT fk_ksym_user FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
         $say('Tabelle karten_symbole angelegt.');
@@ -2764,6 +2767,24 @@ SQL);
         $say('Tabelle karten_marker angelegt.');
     }
     $merken('104_karten');
+
+    /* ---------- 105: Herkunft der Symbole, taktisches Zeichen je Fahrzeug ---------- */
+    if (ovb_table_exists($pdo, 'karten_symbole') && !ovb_column_exists($pdo, 'karten_symbole', 'quelle')) {
+        $pdo->exec("ALTER TABLE karten_symbole
+            ADD COLUMN quelle VARCHAR(200) NOT NULL DEFAULT '' AFTER size_bytes,
+            ADD COLUMN lizenz VARCHAR(80)  NOT NULL DEFAULT '' AFTER quelle,
+            ADD KEY idx_ksym_quelle (quelle)");
+        $say('Symbole merken sich Quelle und Lizenz.');
+    }
+    if (ovb_table_exists($pdo, 'vehicles') && !ovb_column_exists($pdo, 'vehicles', 'symbol_id')) {
+        $pdo->exec('ALTER TABLE vehicles ADD COLUMN symbol_id INT UNSIGNED NULL AFTER standort_id, ADD KEY idx_fz_symbol (symbol_id)');
+        $say('Fahrzeuge bekommen ein taktisches Zeichen.');
+    }
+    if (ovb_table_exists($pdo, 'karten_symbole') && ovb_column_exists($pdo, 'vehicles', 'symbol_id')
+        && !ovb_constraint_exists($pdo, 'vehicles', 'fk_fz_symbol')) {
+        $pdo->exec('ALTER TABLE vehicles ADD CONSTRAINT fk_fz_symbol FOREIGN KEY (symbol_id) REFERENCES karten_symbole(id) ON DELETE SET NULL');
+    }
+    $merken('105_symbol_quelle_fahrzeugzeichen');
 }
 
 /**

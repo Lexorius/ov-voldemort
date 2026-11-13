@@ -95,6 +95,7 @@ $routes = [
     'karte_edit'         => 'karte_edit',
     'karten_symbole'     => 'karten_symbole',
     'karten_symbol'      => 'karten_symbol',
+    'karten_github'      => 'karten_github',
     'karten_api'         => 'karten_api',
 
     // Unterkunft

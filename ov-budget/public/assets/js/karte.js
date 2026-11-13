@@ -539,7 +539,20 @@
           el.rel = 'noopener';
           el.title = fz.name + ' · ' + fz.stand;
           el.addEventListener('pointerdown', function (ev) { ev.stopPropagation(); });
-          el.appendChild(neu('span', 'lagekarte__fahrzeug-punkt'));
+          if (fz.src) {
+            // das taktische Zeichen des Fahrzeugs; lädt es nicht, bleibt der Punkt
+            var zeichen = neu('img', 'lagekarte__fahrzeug-zeichen');
+            zeichen.alt = '';
+            zeichen.draggable = false;
+            zeichen.addEventListener('error', function () {
+              var punkt = neu('span', 'lagekarte__fahrzeug-punkt');
+              if (zeichen.parentNode) { zeichen.parentNode.replaceChild(punkt, zeichen); }
+            });
+            zeichen.src = fz.src;
+            el.appendChild(zeichen);
+          } else {
+            el.appendChild(neu('span', 'lagekarte__fahrzeug-punkt'));
+          }
           el.appendChild(neu('span', 'lagekarte__fahrzeug-name', fz.kurz));
           fahrzeuge.push({ d: fz, el: markerEbene.appendChild(el) });
         });

@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         case 'hochladen':
             [$anzahl, $fehler] = karten_symbole_speichern('symbole', post_str('name'), post_str('gruppe'), $user);
             foreach ($fehler as $f) {
-                flash('error', $f);
+                flash('error', e($f));
             }
             if ($anzahl > 0) {
                 flash('success', ($anzahl === 1 ? 'Ein Symbol' : $anzahl . ' Symbole') . ' in die Bibliothek gelegt.');
@@ -35,8 +35,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         case 'loeschen':
             if ($symbol) {
                 $grund = karten_symbol_delete($symbol);
-                flash($grund === null ? 'success' : 'error', $grund ?? 'Symbol „' . (string)$symbol['name'] . '" gelöscht.');
+                flash($grund === null ? 'success' : 'error', e($grund ?? 'Symbol „' . (string)$symbol['name'] . '" gelöscht.'));
             }
+            break;
+        case 'gruppe_loeschen':
+            [$weg, $bleibt] = karten_gruppe_loeschen(post_str('gruppe'));
+            flash($weg > 0 ? 'success' : 'info', sprintf('%d Symbol(e) der Gruppe gelöscht%s.', $weg,
+                $bleibt > 0 ? sprintf(' – %d bleiben, weil sie auf Karten sitzen oder Fahrzeugen zugeordnet sind', $bleibt) : ''));
             break;
     }
     redirect_route('karten_symbole');
