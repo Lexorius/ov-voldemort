@@ -190,8 +190,9 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
   Rechtsklick setzen, ziehen, beschriften, in Größe und Drehung anpassen
 - **Symbolbibliothek** für SVG und Bilder, nach Gruppen; SVG wird beim
   Hochladen auf Skript und Verweise nach außen geprüft
-- **Fahrzeuge einblendbar** an ihrer zuletzt gemeldeten Position, jede
-  Minute frisch – mit ihrem **taktischen Zeichen**, das sich je Fahrzeug
+- **Fahrzeuge einblendbar** an ihrer zuletzt gemeldeten Position; die
+  Karte erneuert sie von selbst (alle 30 Sekunden, einstellbar) und lässt
+  sie an die neue Stelle gleiten – mit ihrem **taktischen Zeichen**, das sich je Fahrzeug
   aus der Bibliothek wählen lässt
 - **Symbole von GitHub holen**: ein Repository mit Zeichen auf Knopfdruck
   übernehmen, mit Lizenzanzeige und Auswahl der Ordner. Mitgeliefert wird

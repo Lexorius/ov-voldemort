@@ -42,7 +42,7 @@ $mittelpunkt = (string)($karte['mittelpunkt'] ?? sprintf('%.6f, %.6f', (float)$k
       <input type="checkbox" id="fahrzeuge" name="fahrzeuge" value="1" <?= !empty($karte['fahrzeuge']) ? 'checked' : '' ?>>
       <label for="fahrzeuge">Fahrzeuge mit gemeldeter Position von Anfang an einblenden</label>
     </div>
-    <p class="small muted">Jeder kann die Fahrzeuge auf der Karte selbst ein- und ausschalten; der Haken ist nur die Vorgabe. Zu sehen sind sie für alle, die auch das Fahrzeugmodul sehen.</p>
+    <p class="small muted">Jeder kann die Fahrzeuge auf der Karte selbst ein- und ausschalten; der Haken ist nur die Vorgabe. Solange sie eingeblendet sind, erneuern sich die Positionen von selbst. Zu sehen sind sie für alle, die auch das Fahrzeugmodul sehen.</p>
     <div class="btnrow">
       <button class="btn" type="submit"><?= $isNew ? 'Anlegen' : 'Speichern' ?></button>
       <a class="btn btn--sec" href="<?= e($zurueck) ?>">Abbrechen</a>

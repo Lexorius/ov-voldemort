@@ -519,64 +519,123 @@
   /* ---------- Fahrzeuge einblenden ---------- */
   var schalter = wurzel.querySelector('[data-karte-fahrzeuge]');
   var fzStand = wurzel.querySelector('[data-karte-fahrzeuge-stand]');
-  var fzUhr = null;
   var merkName = 'ovb-karte-fahrzeuge-' + K.id;
+  var fzWecker = null;        // der nächste Abruf
+  var fzLaeuft = false;       // ein Abruf ist unterwegs
+  var fzSekunden = Math.max(10, parseInt(K.fahrzeugSekunden, 10) || 30);
   function fahrzeugeWeg() {
     fahrzeuge.forEach(function (f) { markerEbene.removeChild(f.el); });
     fahrzeuge = [];
   }
+  function fahrzeugeMelden(text, schlecht) {
+    if (!fzStand) { return; }
+    fzStand.textContent = text;
+    fzStand.classList.toggle('is-schlecht', !!schlecht);
+  }
+  // Das taktische Zeichen des Fahrzeugs; ohne – oder wenn es nicht lädt – der Punkt
+  function fahrzeugBild(el, fz) {
+    var alt = el.querySelector('.lagekarte__fahrzeug-zeichen, .lagekarte__fahrzeug-punkt');
+    var bild;
+    if (fz.src) {
+      bild = neu('img', 'lagekarte__fahrzeug-zeichen');
+      bild.alt = '';
+      bild.draggable = false;
+      bild.addEventListener('error', function () {
+        if (bild.parentNode) { bild.parentNode.replaceChild(neu('span', 'lagekarte__fahrzeug-punkt'), bild); }
+      });
+      bild.src = fz.src;
+    } else {
+      bild = neu('span', 'lagekarte__fahrzeug-punkt');
+    }
+    if (alt) { el.replaceChild(bild, alt); } else { el.insertBefore(bild, el.firstChild); }
+  }
+  function fahrzeugNeu(fz) {
+    var el = neu('a', 'lagekarte__fahrzeug');
+    el.target = '_blank';
+    el.rel = 'noopener';
+    el.addEventListener('pointerdown', function (ev) { ev.stopPropagation(); });
+    el.appendChild(neu('span', 'lagekarte__fahrzeug-name', fz.kurz));
+    fahrzeugBild(el, fz);
+    return { d: fz, el: markerEbene.appendChild(el) };
+  }
+  function fahrzeugBeschriften(f) {
+    f.el.href = f.d.url;
+    f.el.title = f.d.name + ' · ' + f.d.stand;
+    f.el.classList.toggle('is-alt', !!f.d.alt);
+    var name = f.el.querySelector('.lagekarte__fahrzeug-name');
+    if (name && name.textContent !== f.d.kurz) { name.textContent = f.d.kurz; }
+  }
+  // Die neue Liste über die alte legen: Bekannte Fahrzeuge bleiben stehen und werden nur
+  // angepasst – nichts flackert, kein Zeichen lädt neu. Wer sich bewegt hat, gleitet.
+  function fahrzeugeZeigen(liste) {
+    var nachId = {};
+    fahrzeuge.forEach(function (f) { nachId[f.d.id] = f; });
+    var jetzt = [];
+    var bewegt = [];
+    liste.forEach(function (fz) {
+      var f = nachId[fz.id];
+      if (f) {
+        delete nachId[fz.id];
+        if (f.d.lat !== fz.lat || f.d.lng !== fz.lng) { bewegt.push(f); }
+        if (f.d.src !== fz.src) { fahrzeugBild(f.el, fz); }
+        f.d = fz;
+      } else {
+        f = fahrzeugNeu(fz);
+      }
+      fahrzeugBeschriften(f);
+      jetzt.push(f);
+    });
+    // wer keine Position mehr meldet oder außer Dienst ist, verschwindet
+    Object.keys(nachId).forEach(function (id) { markerEbene.removeChild(nachId[id].el); });
+    fahrzeuge = jetzt;
+    bewegt.forEach(function (f) { f.el.classList.add('is-gleitend'); });
+    zeichnen();
+    if (bewegt.length) {
+      window.setTimeout(function () { bewegt.forEach(function (f) { f.el.classList.remove('is-gleitend'); }); }, 1300);
+    }
+  }
   function fahrzeugeHolen() {
-    window.fetch(K.api + (K.api.indexOf('?') === -1 ? '?' : '&') + 'action=fahrzeuge', { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+    window.clearTimeout(fzWecker);
+    // Im Hintergrund ruht der Abruf – beim Zurückkommen wird sofort geholt (siehe unten)
+    if (!schalter.checked || document.hidden || fzLaeuft) { return; }
+    fzLaeuft = true;
+    window.fetch(K.api + (K.api.indexOf('?') === -1 ? '?' : '&') + 'action=fahrzeuge', { credentials: 'same-origin', cache: 'no-store', headers: { 'Accept': 'application/json' } })
       .then(function (r) { return r.json(); })
       .then(function (d) {
         if (!schalter.checked) { return; }
-        if (!d || !d.ok) { if (fzStand) { fzStand.textContent = (d && d.fehler) || 'Fahrzeuge nicht abrufbar.'; } return; }
-        fahrzeugeWeg();
-        d.fahrzeuge.forEach(function (fz) {
-          var el = neu('a', 'lagekarte__fahrzeug' + (fz.alt ? ' is-alt' : ''));
-          el.href = fz.url;
-          el.target = '_blank';
-          el.rel = 'noopener';
-          el.title = fz.name + ' · ' + fz.stand;
-          el.addEventListener('pointerdown', function (ev) { ev.stopPropagation(); });
-          if (fz.src) {
-            // das taktische Zeichen des Fahrzeugs; lädt es nicht, bleibt der Punkt
-            var zeichen = neu('img', 'lagekarte__fahrzeug-zeichen');
-            zeichen.alt = '';
-            zeichen.draggable = false;
-            zeichen.addEventListener('error', function () {
-              var punkt = neu('span', 'lagekarte__fahrzeug-punkt');
-              if (zeichen.parentNode) { zeichen.parentNode.replaceChild(punkt, zeichen); }
-            });
-            zeichen.src = fz.src;
-            el.appendChild(zeichen);
-          } else {
-            el.appendChild(neu('span', 'lagekarte__fahrzeug-punkt'));
-          }
-          el.appendChild(neu('span', 'lagekarte__fahrzeug-name', fz.kurz));
-          fahrzeuge.push({ d: fz, el: markerEbene.appendChild(el) });
-        });
-        if (fzStand) {
-          fzStand.textContent = d.fahrzeuge.length
-            ? (d.fahrzeuge.length === 1 ? '1 Fahrzeug' : d.fahrzeuge.length + ' Fahrzeuge') + ' · Stand ' + d.stand
-            : 'Kein Fahrzeug hat eine Position gemeldet.';
-        }
-        zeichnen();
+        if (!d || !d.ok) { fahrzeugeMelden((d && d.fehler) || 'Fahrzeuge nicht abrufbar.', true); return; }
+        fahrzeugeZeigen(d.fahrzeuge);
+        fahrzeugeMelden((d.fahrzeuge.length
+          ? (d.fahrzeuge.length === 1 ? '1 Fahrzeug' : d.fahrzeuge.length + ' Fahrzeuge')
+          : 'Kein Fahrzeug hat eine Position gemeldet') + ' · Stand ' + d.stand + ' · erneuert sich alle ' + fzSekunden + ' s', false);
       })
-      .catch(function () { if (fzStand) { fzStand.textContent = 'Fahrzeuge nicht abrufbar.'; } });
+      .catch(function () {
+        // die Fahrzeuge bleiben stehen, wo sie zuletzt waren
+        fahrzeugeMelden('Fahrzeuge gerade nicht abrufbar – nächster Versuch in ' + fzSekunden + ' s. Bleibt das so, die Seite neu laden.', true);
+      })
+      .then(function () {
+        fzLaeuft = false;
+        window.clearTimeout(fzWecker);
+        if (schalter.checked) { fzWecker = window.setTimeout(fahrzeugeHolen, fzSekunden * 1000); }
+      });
   }
   function fahrzeugeSchalten() {
-    window.clearInterval(fzUhr);
+    window.clearTimeout(fzWecker);
     try { window.localStorage.setItem(merkName, schalter.checked ? '1' : '0'); } catch (e) { /* ohne Speicher eben nicht gemerkt */ }
     if (!schalter.checked) {
       fahrzeugeWeg();
-      if (fzStand) { fzStand.textContent = ''; }
+      fahrzeugeMelden('', false);
       return;
     }
     fahrzeugeHolen();
-    // jede Minute frisch – aber nur, solange die Seite auch zu sehen ist
-    fzUhr = window.setInterval(function () { if (!document.hidden) { fahrzeugeHolen(); } }, 60000);
   }
+  // Zurück auf der Seite oder wieder im Netz: nicht auf den Takt warten
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && schalter && K.fahrzeuge && schalter.checked) { fahrzeugeHolen(); }
+  });
+  window.addEventListener('online', function () {
+    if (schalter && K.fahrzeuge && schalter.checked) { fahrzeugeHolen(); }
+  });
   if (schalter && K.fahrzeuge) {
     var gemerkt = null;
     try { gemerkt = window.localStorage.getItem(merkName); } catch (e) { gemerkt = null; }

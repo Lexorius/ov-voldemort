@@ -1,5 +1,18 @@
 # Änderungsverlauf
 
+## 2.1.85.0
+
+- **Karten:** Eingeblendete Fahrzeuge erneuern sich von selbst und ohne
+  Flackern. Die Karte holt die Positionen alle 30 Sekunden (bisher jede
+  Minute; einstellbar von 10 bis 600 unter *Einstellungen → Karten*) und
+  passt die Fahrzeuge an Ort und Stelle an: Wer sich bewegt hat, gleitet
+  an die neue Stelle, neue kommen hinzu, außer Dienst gestellte
+  verschwinden, ein geändertes taktisches Zeichen wird getauscht. Im
+  Hintergrund ruht der Abruf; beim Zurückkommen auf die Seite und nach
+  einer Netzunterbrechung wird sofort geholt. Über der Karte steht der
+  Stand mit Uhrzeit – schlägt ein Abruf fehl, bleiben die Fahrzeuge stehen
+  und die Karte versucht es weiter.
+
 ## 2.1.84.1
 
 - **Sicherheit – Meldungen:** Die farbigen Meldungen oben auf der Seite

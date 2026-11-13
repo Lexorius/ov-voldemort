@@ -1263,9 +1263,16 @@ sich eigene Symbole setzen lassen – das Gelände der Unterkunft, ein
   Zeichen – ohne Zeichen als Punkt – und dem Funkrufnamen
   (sonst Bezeichnung), beim Überfahren mit Alter und Quelle der Meldung
   (Divera, QR-Code im Fahrzeug, von Hand). Positionen, die älter als ein
-  Tag sind, stehen blasser da. Solange der Schalter an ist, holt die Karte
-  die Positionen jede Minute neu; ein Klick auf das Fahrzeug öffnet seine
-  Seite. Der Browser merkt sich die Stellung je Karte, der Haken im
+  Tag sind, stehen blasser da. Solange der Schalter an ist, **erneuert die
+  Karte die Positionen von selbst** – alle 30 Sekunden, einstellbar von 10
+  bis 600 unter *Einstellungen → Karten*. Die Fahrzeuge bleiben dabei
+  stehen und gleiten an ihre neue Stelle; neue kommen hinzu, außer Dienst
+  gestellte verschwinden. Ruht die Seite im Hintergrund, ruht auch der
+  Abruf – beim Zurückkommen wird sofort geholt. Über der Karte steht der
+  Stand mit Uhrzeit. Frischer als die Quelle wird die Karte nicht: Aus
+  Divera kommen Positionen im Takt des Funkstatus-Abrufs (Vorgabe alle
+  2 Minuten, *Einstellungen → Divera 24/7*). Ein Klick auf das Fahrzeug
+  öffnet seine Seite. Der Browser merkt sich die Stellung je Karte, der Haken im
   Formular der Karte ist nur die Vorgabe. Zu sehen sind die Fahrzeuge nur
   für die, die auch das Fahrzeugmodul sehen.
 * **Dateiablage** – die Symbole stehen dort unter *Karten*, je Gruppe eine

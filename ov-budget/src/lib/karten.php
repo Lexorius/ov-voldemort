@@ -36,6 +36,10 @@ const KARTEN_KACHEL_VORGABE = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const KARTEN_START = ['lat' => 51.1634, 'lng' => 10.4477, 'zoom' => 6];
 /** Ab so vielen Stunden gilt eine Fahrzeugposition als alt (blasser gezeichnet) */
 const KARTEN_FAHRZEUG_ALT_STD = 24;
+/** Takt, in dem eine offene Karte die Fahrzeugpositionen neu holt (Sekunden): Vorgabe und Grenzen */
+const KARTEN_FAHRZEUG_SEKUNDEN = 30;
+const KARTEN_FAHRZEUG_SEKUNDEN_MIN = 10;
+const KARTEN_FAHRZEUG_SEKUNDEN_MAX = 600;
 
 /* ==================================================================== */
 /* Reine Helfer                                                          */
@@ -73,6 +77,17 @@ function karten_kachel_url_pruefen(string $url): string
     $ok = (bool)preg_match('#^https?://[^\s"\'<>]+$#i', $url)
         && str_contains($url, '{z}') && str_contains($url, '{x}') && str_contains($url, '{y}');
     return $ok ? $url : KARTEN_KACHEL_VORGABE;
+}
+
+/**
+ * Wie oft eine offene Karte die Fahrzeugpositionen neu holt, in Sekunden – zwischen 10 und 600.
+ * Frischer als der Abruf bei Divera werden die Positionen dadurch nicht. Reine Funktion über den Wert.
+ */
+function karten_fahrzeug_sekunden(mixed $wert = null): int
+{
+    $wert ??= setting('karten_fahrzeug_sekunden', (string)KARTEN_FAHRZEUG_SEKUNDEN);
+    $n = is_numeric($wert) ? (int)round((float)$wert) : KARTEN_FAHRZEUG_SEKUNDEN;
+    return max(KARTEN_FAHRZEUG_SEKUNDEN_MIN, min(KARTEN_FAHRZEUG_SEKUNDEN_MAX, $n));
 }
 
 function karten_kachel_url(): string
@@ -263,6 +278,7 @@ function karten_konfig(array $karte, array $marker, array $symbole, array $darf)
         // Fahrzeuge gibt es nur für die, die sie auch sonst sehen dürfen
         'fahrzeuge' => !empty($darf['fahrzeuge']),
         'fahrzeugeAn' => !empty($darf['fahrzeuge']) && (int)($karte['fahrzeuge'] ?? 0) === 1,
+        'fahrzeugSekunden' => karten_fahrzeug_sekunden(),
         'groesse'   => ['min' => KARTEN_GROESSE_MIN, 'max' => KARTEN_GROESSE_MAX, 'vorgabe' => KARTEN_GROESSE_VORGABE],
         'marker'    => array_map('karten_marker_daten', $marker),
         'symbole'   => array_map(static fn(array $s): array => [

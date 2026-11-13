@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         if (!can('view_vehicles')) {
             $antwort(['ok' => false, 'fehler' => 'Die Fahrzeuge sind für dich nicht sichtbar.'], 403);
         }
-        $antwort(['ok' => true, 'fahrzeuge' => karten_fahrzeuge(), 'stand' => date('H:i')]);
+        $antwort(['ok' => true, 'fahrzeuge' => karten_fahrzeuge(), 'stand' => date('H:i:s')]);
     }
     $antwort(['ok' => false, 'fehler' => 'Unbekannte Anfrage.'], 400);
 }

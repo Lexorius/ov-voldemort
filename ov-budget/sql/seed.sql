@@ -461,6 +461,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('karten_user_darf_sehen','1','Alle Mitglieder duerfen die Karten sehen','Fahrzeuge auf der Karte sieht nur, wer auch die Fahrzeuge sehen darf.','bool','Karten',30),
 ('karten_user_darf_setzen','0','Alle Mitglieder duerfen Symbole setzen','Symbole auf einer Karte setzen, verschieben, beschriften und entfernen. Kartenausschnitte und die Symbolbibliothek pflegt die Leitung.','bool','Karten',40),
 ('karten_kachel_url','https://tile.openstreetmap.org/{z}/{x}/{y}.png','Adresse der Kartenkacheln','Vorgabe sind die Server von OpenStreetMap – der Browser lädt die Kacheln direkt von dort. Wer einen eigenen Kachelserver betreibt, trägt ihn hier ein; die Platzhalter {z}, {x} und {y} müssen vorkommen.','text','Karten',50),
+('karten_fahrzeug_sekunden','30','Fahrzeuge auf der Karte erneuern alle (Sekunden)','Eine offene Karte holt die Positionen in diesem Takt neu (10 bis 600). Frischer als der Abruf des Funkstatus bei Divera werden sie dadurch nicht.','number','Karten',55),
 ('karten_kachel_quelle','© OpenStreetMap-Mitwirkende','Quellenangabe auf der Karte','Steht unten rechts auf jeder Karte. OpenStreetMap verlangt die Nennung.','text','Karten',60),
 ('tankkarte_modul_name','Tankkarten','Bezeichnung des Tankkartenmoduls','','text','Tankkarten',10),
 ('tankkarte_intro','Tank- und Ladekarten des Ortsverbands mit Anbieter, Zuordnung zu Fahrzeugen und Gueltigkeit.','Einleitungstext im Tankkartenmodul','','textarea','Tankkarten',20),
