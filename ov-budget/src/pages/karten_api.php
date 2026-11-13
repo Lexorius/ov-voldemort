@@ -22,11 +22,15 @@ if (!can('view_karten')) {
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     if (get_str('action') === 'fahrzeuge') {
-        if (!can('view_vehicles')) {
-            $antwort(['ok' => false, 'fehler' => 'Die Fahrzeuge sind für dich nicht sichtbar.'], 403);
+        // Die Fahrzeuge auf der Karte sieht jeder, der die Karten sieht – auch ohne Zugang zum Fahrzeugmodul.
+        // Ohne diesen Zugang führt nur kein Verweis zur Fahrzeugakte, und setzen lässt sich nichts.
+        $akte = can('view_vehicles');
+        $setzen = $akte && can('report_vehicle');
+        $fahrzeuge = karten_fahrzeuge(null, $setzen);
+        if (!$akte) {
+            $fahrzeuge = array_map(static fn(array $f): array => ['url' => ''] + $f, $fahrzeuge);
         }
-        $setzen = can('report_vehicle');
-        $antwort(['ok' => true, 'fahrzeuge' => karten_fahrzeuge(null, $setzen), 'stand' => date('H:i:s'),
+        $antwort(['ok' => true, 'fahrzeuge' => $fahrzeuge, 'stand' => date('H:i:s'),
                   // wer Standorte melden darf, bekommt auch die Fahrzeuge ohne Position – zum Setzen
                   'setzen' => $setzen, 'ohne' => $setzen ? karten_fahrzeuge_ohne() : [], 'handMinuten' => karten_fahrzeug_hand_minuten()]);
     }

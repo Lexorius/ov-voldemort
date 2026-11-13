@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## 2.1.86.1
+
+- **Karten:** Die Fahrzeuge kann jetzt **jeder ein- und ausblenden, der
+  die Karten sieht**. Bisher erschien der Schalter nur mit Zugang zum
+  Fahrzeugmodul – ist *Alle Mitglieder dürfen Fahrzeuge sehen*
+  abgeschaltet, sah ihn nur die Leitung. Ohne Zugang zum Fahrzeugmodul
+  führt vom Fahrzeug auf der Karte kein Verweis zur Fahrzeugakte, und eine
+  Position von Hand setzen bleibt an das Recht der Fahrzeugakte gebunden.
+
 ## 2.1.86.0
 
 - **Karten – Fahrzeuge von Hand setzen:** Ein Fahrzeug, das sich

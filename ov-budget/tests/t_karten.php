@@ -281,8 +281,15 @@ $abruf = $lies('src/pages/karten_symbol.php');
 $check('Symbol-Abruf: Recht, fester Inhaltstyp, kein Skript, kein Nachladen', str_contains($abruf, "can('view_karten')") && str_contains($abruf, "default-src \\'none\\'") && str_contains($abruf, 'sandbox')
     && str_contains($abruf, 'X-Content-Type-Options: nosniff') && str_contains($abruf, "'image/svg+xml', 'image/png'"));
 $api = $lies('src/pages/karten_api.php');
-$check('Schnittstelle: sehen, setzen und Ausschnitt je mit eigenem Recht; Fahrzeuge nur mit Fahrzeugrecht', str_contains($api, "can('view_karten')") && str_contains($api, "can('mark_karten')")
-    && str_contains($api, "can('manage_karten')") && str_contains($api, "can('view_vehicles')") && strpos($api, "can('view_karten')") < strpos($api, 'karten_fahrzeuge('));
+$check('Schnittstelle: sehen, setzen und Ausschnitt je mit eigenem Recht', str_contains($api, "can('view_karten')") && str_contains($api, "can('mark_karten')")
+    && str_contains($api, "can('manage_karten')") && strpos($api, "can('view_karten')") < strpos($api, 'karten_fahrzeuge('));
+// Der Abschnitt, der die Fahrzeuge liefert: von der Abfrage bis zur Antwort
+$fzAbschnitt = substr($api, (int)strpos($api, "get_str('action') === 'fahrzeuge'"), (int)strpos($api, "'Unbekannte Anfrage.'") - (int)strpos($api, "get_str('action') === 'fahrzeuge'"));
+$check('Schnittstelle: Fahrzeuge bekommt jeder, der die Karten sieht – ohne Fahrzeugmodul nur ohne Verweis zur Akte', !str_contains($fzAbschnitt, '403')
+    && str_contains($fzAbschnitt, "\$akte = can('view_vehicles')") && str_contains($fzAbschnitt, "['url' => ''] + \$f") && str_contains($fzAbschnitt, "\$setzen = \$akte && can('report_vehicle')"));
+$check('Seite: der Schalter Fahrzeuge steht jedem zu, der die Karte sieht', str_contains($lies('src/pages/karte.php'), "'fahrzeuge' => true")
+    && str_contains($lies('src/pages/karte.php'), "'fahrzeugSetzen' => can('view_vehicles') && can('report_vehicle')"));
+$check('Skript: ohne Adresse ist das Fahrzeug kein Verweis', str_contains($lies('public/assets/js/karte.js'), "f.el.removeAttribute('href')"));
 $check('Schnittstelle: Schreiben nur per POST (dort prüft die Anwendung die Schutzmarke)', strpos($api, "REQUEST_METHOD'] !== 'POST'") < strpos($api, 'karten_marker_neu(')
     && str_contains($lies('public/index.php'), 'csrf_check();'));
 $js = $lies('public/assets/js/karte.js');

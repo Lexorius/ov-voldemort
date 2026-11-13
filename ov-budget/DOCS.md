@@ -1271,10 +1271,12 @@ sich eigene Symbole setzen lassen – das Gelände der Unterkunft, ein
   Abruf – beim Zurückkommen wird sofort geholt. Über der Karte steht der
   Stand mit Uhrzeit. Frischer als die Quelle wird die Karte nicht: Aus
   Divera kommen Positionen im Takt des Funkstatus-Abrufs (Vorgabe alle
-  2 Minuten, *Einstellungen → Divera 24/7*). Ein Klick auf das Fahrzeug
-  öffnet seine Seite. Der Browser merkt sich die Stellung je Karte, der Haken im
-  Formular der Karte ist nur die Vorgabe. Zu sehen sind die Fahrzeuge nur
-  für die, die auch das Fahrzeugmodul sehen.
+  2 Minuten, *Einstellungen → Divera 24/7*). Der Browser merkt sich die
+  Stellung je Karte, der Haken im Formular der Karte ist nur die Vorgabe.
+  **Ein- und ausblenden kann die Fahrzeuge jeder, der die Karten sieht** –
+  auch wenn das Fahrzeugmodul für Mitglieder abgeschaltet ist. Mit Zugang
+  zum Fahrzeugmodul öffnet ein Klick auf das Fahrzeug seine Seite; ohne
+  ist es kein Verweis.
 * **Fahrzeug von Hand setzen** – meldet sich ein Fahrzeug **5 Minuten
   nicht per GPS** (als GPS gelten der Abruf bei Divera und der QR-Code im
   Fahrzeug; einstellbar, 0 = jederzeit), lässt es sich auf der Karte
@@ -1293,7 +1295,8 @@ sich eigene Symbole setzen lassen – das Gelände der Unterkunft, ein
   Unterkategorie. Sie sind Piktogramme, keine Dokumente, und laufen nicht
   durch die KI-Auswertung.
 
-**Wer darf was:** Sehen dürfen die Karten alle Mitglieder (abschaltbar).
+**Wer darf was:** Sehen dürfen die Karten alle Mitglieder (abschaltbar) –
+samt den Fahrzeugen, die sich dort jeder selbst ein- und ausblendet.
 Karten anlegen, den Ausschnitt merken und die Symbolbibliothek pflegen
 kann die Leitung. Symbole setzen, versetzen und entfernen darf die Leitung;
 mit *Alle Mitglieder dürfen Symbole setzen* auch alle anderen.

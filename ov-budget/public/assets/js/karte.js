@@ -618,7 +618,8 @@
   }
   function fahrzeugBeschriften(f) {
     var ziehbar = !!(K.fahrzeugSetzen && f.d.setzbar);
-    f.el.href = f.d.url;
+    // ohne Zugang zum Fahrzeugmodul kommt keine Adresse mit – dann ist das Fahrzeug kein Verweis
+    if (f.d.url) { f.el.href = f.d.url; } else { f.el.removeAttribute('href'); }
     f.el.title = f.d.name + ' · ' + f.d.stand + (ziehbar ? ' · ziehen setzt die Position von Hand' : '');
     f.el.classList.toggle('is-setzbar', ziehbar);
     f.el.classList.toggle('is-alt', !!f.d.alt);

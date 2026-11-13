@@ -19,7 +19,9 @@ if (!$karte) {
 }
 
 $symbole = karten_symbole();
-$darf = ['setzen' => can('mark_karten'), 'verwalten' => can('manage_karten'), 'fahrzeuge' => can('view_vehicles'),
+// Fahrzeuge ein- und ausblenden kann jeder, der die Karte sieht – auch ohne Zugang zum Fahrzeugmodul.
+// Eine Position von Hand setzen bleibt an das Recht der Fahrzeugakte gebunden.
+$darf = ['setzen' => can('mark_karten'), 'verwalten' => can('manage_karten'), 'fahrzeuge' => true,
          'fahrzeugSetzen' => can('view_vehicles') && can('report_vehicle')];
 $GLOBALS['ovb_karte_js'] = true;
 

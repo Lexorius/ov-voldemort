@@ -394,7 +394,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 
 ('fahrzeug_modul_name','Fahrzeuge','Bezeichnung des Fahrzeugmoduls','','text','Fahrzeuge',10),
 ('fahrzeug_intro','Fahrzeuge des Ortsverbands mit Fahrzeugakte, Journal und Instandsetzungsauftraegen.','Einleitungstext im Fahrzeugmodul','','textarea','Fahrzeuge',20),
-('fahrzeug_user_darf_sehen','1','Alle Mitglieder duerfen Fahrzeuge sehen','Sonst nur Leitung und Administration','bool','Fahrzeuge',30),
+('fahrzeug_user_darf_sehen','1','Alle Mitglieder duerfen Fahrzeuge sehen','Sonst nur Leitung und Administration. Gilt für das Fahrzeugmodul – auf den Karten erscheinen die Fahrzeuge für alle, die die Karten sehen.','bool','Fahrzeuge',30),
 ('fahrzeug_user_darf_melden','1','Alle Mitglieder duerfen Schaeden melden','Legt einen Auftrag an und schreibt ins Journal','bool','Fahrzeuge',40),
 ('fahrzeug_user_darf_tanken','1','Alle Mitglieder duerfen Tankungen erfassen','Tankquittung mit Kilometerstand und Litern in der Fahrzeugakte; daraus rechnet die Anwendung den Verbrauch je 100 km. Eigene Eintraege darf man aendern, fremde nur die Leitung.','bool','Fahrzeuge',42),
 ('connector_aktiv','0','Standortmeldung per QR-Code','Fahrzeuge bekommen einen QR-Code, ueber den jede Person ohne Zugang den Standort melden kann. Braucht den OV-Multitool-Connector auf einem oeffentlich erreichbaren Webserver.','bool','Fahrzeuge',80),
@@ -458,7 +458,7 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('ablage_user_darf_hochladen','0','Alle Mitglieder duerfen Dokumente ablegen','Eigene Dokumente darf man umbenennen, verschieben und entfernen. Kategorien legt die Leitung an.','bool','Dateiablage',40),
 ('karten_modul_name','Karten','Bezeichnung des Kartenmoduls','','text','Karten',10),
 ('karten_intro','Kartenausschnitte mit eigenen Symbolen und den Fahrzeugen, die ihre Position gemeldet haben.','Einleitungstext im Kartenmodul','','textarea','Karten',20),
-('karten_user_darf_sehen','1','Alle Mitglieder duerfen die Karten sehen','Fahrzeuge auf der Karte sieht nur, wer auch die Fahrzeuge sehen darf.','bool','Karten',30),
+('karten_user_darf_sehen','1','Alle Mitglieder duerfen die Karten sehen','Wer die Karten sieht, kann dort auch die Fahrzeuge mit ihrer Position ein- und ausblenden – unabhängig vom Fahrzeugmodul.','bool','Karten',30),
 ('karten_user_darf_setzen','0','Alle Mitglieder duerfen Symbole setzen','Symbole auf einer Karte setzen, verschieben, beschriften und entfernen. Kartenausschnitte und die Symbolbibliothek pflegt die Leitung.','bool','Karten',40),
 ('karten_kachel_url','https://tile.openstreetmap.org/{z}/{x}/{y}.png','Adresse der Kartenkacheln','Vorgabe sind die Server von OpenStreetMap – der Browser lädt die Kacheln direkt von dort. Wer einen eigenen Kachelserver betreibt, trägt ihn hier ein; die Platzhalter {z}, {x} und {y} müssen vorkommen.','text','Karten',50),
 ('karten_fahrzeug_sekunden','30','Fahrzeuge auf der Karte erneuern alle (Sekunden)','Eine offene Karte holt die Positionen in diesem Takt neu (10 bis 600). Frischer als der Abruf des Funkstatus bei Divera werden sie dadurch nicht.','number','Karten',55),
