@@ -521,6 +521,7 @@
   var fzStand = wurzel.querySelector('[data-karte-fahrzeuge-stand]');
   var merkName = 'ovb-karte-fahrzeuge-' + K.id;
   var fzWecker = null;        // der nächste Abruf
+  var fzOhne = [];            // Fahrzeuge im Dienst ohne Position – nur für die, die sie setzen dürfen
   var fzLaeuft = false;       // ein Abruf ist unterwegs
   var fzSekunden = Math.max(10, parseInt(K.fahrzeugSekunden, 10) || 30);
   function fahrzeugeWeg() {
@@ -553,14 +554,73 @@
     var el = neu('a', 'lagekarte__fahrzeug');
     el.target = '_blank';
     el.rel = 'noopener';
-    el.addEventListener('pointerdown', function (ev) { ev.stopPropagation(); });
+    el.draggable = false;
     el.appendChild(neu('span', 'lagekarte__fahrzeug-name', fz.kurz));
     fahrzeugBild(el, fz);
-    return { d: fz, el: markerEbene.appendChild(el) };
+    var f = { d: fz, el: markerEbene.appendChild(el), zieht: false, gezogen: false };
+    fahrzeugZiehbar(f);
+    return f;
+  }
+  // Ein Fahrzeug ohne frische GPS-Meldung lässt sich ziehen; die neue Stelle wird am Fahrzeug gespeichert.
+  // Ob es geht, sagt der Server je Fahrzeug (setzbar) – und prüft es beim Speichern noch einmal.
+  function fahrzeugZiehbar(f) {
+    var start = null;
+    f.el.addEventListener('dragstart', function (ev) { ev.preventDefault(); });
+    f.el.addEventListener('pointerdown', function (ev) {
+      ev.stopPropagation();   // die Karte bleibt liegen
+      f.gezogen = false;
+      if (!K.fahrzeugSetzen || !f.d.setzbar || ev.button !== 0) { return; }
+      menueZu();
+      start = { x: ev.clientX, y: ev.clientY, lat: f.d.lat, lng: f.d.lng, bewegt: false };
+      f.el.setPointerCapture(ev.pointerId);
+    });
+    f.el.addEventListener('pointermove', function (ev) {
+      if (!start) { return; }
+      if (!start.bewegt && Math.abs(ev.clientX - start.x) + Math.abs(ev.clientY - start.y) < 5) { return; }
+      start.bewegt = true;
+      f.zieht = true;
+      f.gezogen = true;
+      f.el.classList.remove('is-gleitend');
+      f.el.classList.add('is-gezogen');
+      var p = punktIn(ev);
+      var g = gradBei(begrenzen(p.x, 0, flaeche.clientWidth), begrenzen(p.y, 0, flaeche.clientHeight));
+      f.d.lat = g.lat;
+      f.d.lng = g.lng;
+      setzen(f.el, f.d, ecke());
+    });
+    function ende(ev) {
+      if (!start) { return; }
+      var s = start;
+      start = null;
+      f.el.classList.remove('is-gezogen');
+      try { f.el.releasePointerCapture(ev.pointerId); } catch (e) { /* schon frei */ }
+      if (!s.bewegt) { return; }   // nur angeklickt: der Verweis öffnet das Fahrzeug
+      senden({ action: 'fahrzeug_setzen', id: f.d.id, lat: f.d.lat, lng: f.d.lng }, function (d) {
+        f.zieht = false;
+        if (!d) {
+          // nicht gespeichert: zurück an die alte Stelle
+          f.d.lat = s.lat;
+          f.d.lng = s.lng;
+        } else {
+          f.d = d.fahrzeug;
+          fahrzeugBeschriften(f);
+          melden('„' + f.d.name + '“ gesetzt – die Position steht jetzt am Fahrzeug.');
+        }
+        zeichnen();
+      });
+    }
+    f.el.addEventListener('pointerup', ende);
+    f.el.addEventListener('pointercancel', ende);
+    // nach dem Ziehen soll der Verweis nicht aufgehen
+    f.el.addEventListener('click', function (ev) {
+      if (f.gezogen) { ev.preventDefault(); f.gezogen = false; }
+    });
   }
   function fahrzeugBeschriften(f) {
+    var ziehbar = !!(K.fahrzeugSetzen && f.d.setzbar);
     f.el.href = f.d.url;
-    f.el.title = f.d.name + ' · ' + f.d.stand;
+    f.el.title = f.d.name + ' · ' + f.d.stand + (ziehbar ? ' · ziehen setzt die Position von Hand' : '');
+    f.el.classList.toggle('is-setzbar', ziehbar);
     f.el.classList.toggle('is-alt', !!f.d.alt);
     var name = f.el.querySelector('.lagekarte__fahrzeug-name');
     if (name && name.textContent !== f.d.kurz) { name.textContent = f.d.kurz; }
@@ -576,6 +636,8 @@
       var f = nachId[fz.id];
       if (f) {
         delete nachId[fz.id];
+        // wird das Fahrzeug gerade gezogen, bleibt es unter dem Finger
+        if (f.zieht) { fz.lat = f.d.lat; fz.lng = f.d.lng; }
         if (f.d.lat !== fz.lat || f.d.lng !== fz.lng) { bewegt.push(f); }
         if (f.d.src !== fz.src) { fahrzeugBild(f.el, fz); }
         f.d = fz;
@@ -604,6 +666,7 @@
       .then(function (d) {
         if (!schalter.checked) { return; }
         if (!d || !d.ok) { fahrzeugeMelden((d && d.fehler) || 'Fahrzeuge nicht abrufbar.', true); return; }
+        fzOhne = d.ohne || [];
         fahrzeugeZeigen(d.fahrzeuge);
         fahrzeugeMelden((d.fahrzeuge.length
           ? (d.fahrzeuge.length === 1 ? '1 Fahrzeug' : d.fahrzeuge.length + ' Fahrzeuge')
@@ -629,6 +692,57 @@
     }
     fahrzeugeHolen();
   }
+  /* ---------- Ein Fahrzeug ohne Position in die Kartenmitte setzen ---------- */
+  function fahrzeugMenue(liste) {
+    menueZu();
+    tafelZu();
+    var mitte = gradBei(flaeche.clientWidth / 2, flaeche.clientHeight / 2);
+    menue = neu('div', 'lagekarte__menue');
+    menue.setAttribute('role', 'menu');
+    menue.addEventListener('pointerdown', function (ev) { ev.stopPropagation(); });
+    menue.addEventListener('wheel', function (ev) { ev.stopPropagation(); });
+    menue.addEventListener('contextmenu', function (ev) { ev.preventDefault(); ev.stopPropagation(); });
+    menue.appendChild(neu('div', 'lagekarte__menue-kopf', 'Fahrzeug in die Kartenmitte setzen'));
+    if (!liste.length) {
+      menue.appendChild(neu('p', 'small muted', 'Jedes Fahrzeug im Dienst hat schon eine Position. Steht eines falsch und meldet sich nicht per GPS, lässt es sich auf der Karte ziehen.'));
+    } else {
+      var kasten = menue.appendChild(neu('div', 'lagekarte__menue-liste'));
+      liste.forEach(function (fz) {
+        var knopf = kasten.appendChild(neu('button', 'lagekarte__menue-eintrag'));
+        knopf.type = 'button';
+        knopf.setAttribute('role', 'menuitem');
+        if (fz.src) {
+          var bild = knopf.appendChild(neu('img'));
+          bild.alt = '';
+          bild.src = fz.src;
+        }
+        knopf.appendChild(neu('span', '', fz.kurz !== fz.name ? fz.kurz + ' – ' + fz.name : fz.name));
+        knopf.addEventListener('click', function () {
+          menueZu();
+          senden({ action: 'fahrzeug_setzen', id: fz.id, lat: mitte.lat, lng: mitte.lng }, function (d) {
+            if (!d) { return; }
+            melden('„' + fz.name + '“ steht jetzt in der Kartenmitte – ziehen versetzt es.');
+            if (schalter && !schalter.checked) { schalter.checked = true; fahrzeugeSchalten(); } else { fahrzeugeHolen(); }
+          });
+        });
+      });
+    }
+    flaeche.appendChild(menue);
+    menue.style.left = Math.max(4, Math.round((flaeche.clientWidth - menue.offsetWidth) / 2)) + 'px';
+    menue.style.top = Math.max(4, Math.round((flaeche.clientHeight - menue.offsetHeight) / 2)) + 'px';
+  }
+  var fzSetzKnopf = wurzel.querySelector('[data-karte-fahrzeug-setzen]');
+  if (fzSetzKnopf && K.fahrzeugSetzen) {
+    fzSetzKnopf.addEventListener('click', function () {
+      flaeche.scrollIntoView({ block: 'nearest' });
+      // frisch fragen: die Liste soll stimmen, auch wenn die Fahrzeuge gerade ausgeblendet sind
+      window.fetch(K.api + (K.api.indexOf('?') === -1 ? '?' : '&') + 'action=fahrzeuge', { credentials: 'same-origin', cache: 'no-store', headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { fahrzeugMenue(d && d.ok ? (d.ohne || []) : fzOhne); })
+        .catch(function () { fahrzeugMenue(fzOhne); });
+    });
+  }
+
   // Zurück auf der Seite oder wieder im Netz: nicht auf den Takt warten
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden && schalter && K.fahrzeuge && schalter.checked) { fahrzeugeHolen(); }

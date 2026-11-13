@@ -21,6 +21,9 @@ $json = (string)json_encode($konfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLA
     <?php endif; ?>
     <?php if ($darf['fahrzeuge']): ?>
       <label class="chip"><input type="checkbox" data-karte-fahrzeuge> Fahrzeuge</label>
+      <?php if (!empty($darf['fahrzeugSetzen'])): ?>
+        <button class="btn btn--sec btn--sm" type="button" data-karte-fahrzeug-setzen title="Ein Fahrzeug ohne Position in die Kartenmitte setzen">+ Fahrzeug</button>
+      <?php endif; ?>
       <span class="small muted" data-karte-fahrzeuge-stand aria-live="polite"></span>
     <?php endif; ?>
     <?php if ($darf['verwalten']): ?>
@@ -38,6 +41,10 @@ $json = (string)json_encode($konfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLA
       <?php if (!$symbole): ?><br>Noch ist die <a href="<?= e(url('karten_symbole')) ?>">Symbolbibliothek</a> leer<?= $darf['verwalten'] ? ' – dort zuerst SVG oder Bilder hochladen' : '' ?>.<?php endif; ?>
     <?php else: ?>
       Ziehen verschiebt die Karte, Mausrad oder + und − zoomen.
+    <?php endif; ?>
+    <?php if (!empty($darf['fahrzeugSetzen'])): ?>
+      Ein Fahrzeug, das sich <?= (int)karten_fahrzeug_hand_minuten() ?> Minuten nicht per GPS (Divera, QR-Code) gemeldet hat, lässt sich <strong>ziehen</strong> –
+      die Position wird am Fahrzeug gespeichert. „+ Fahrzeug" setzt eines, das noch gar keine Position hat.
     <?php endif; ?>
     Die Kartenkacheln lädt der Browser direkt vom Kartendienst.
   </p>

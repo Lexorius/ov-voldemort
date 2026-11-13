@@ -194,6 +194,9 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
   Karte erneuert sie von selbst (alle 30 Sekunden, einstellbar) und lässt
   sie an die neue Stelle gleiten – mit ihrem **taktischen Zeichen**, das sich je Fahrzeug
   aus der Bibliothek wählen lässt
+- **Fahrzeuge von Hand setzen**: Wer sich 5 Minuten nicht per GPS (Divera,
+  QR-Code) gemeldet hat, lässt sich auf der Karte ziehen; die Position
+  steht dann am Fahrzeug
 - **Symbole von GitHub holen**: ein Repository mit Zeichen auf Knopfdruck
   übernehmen, mit Lizenzanzeige und Auswahl der Ordner. Mitgeliefert wird
   kein Zeichen, von selbst geladen wird nichts

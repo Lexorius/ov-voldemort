@@ -1275,6 +1275,20 @@ sich eigene Symbole setzen lassen – das Gelände der Unterkunft, ein
   öffnet seine Seite. Der Browser merkt sich die Stellung je Karte, der Haken im
   Formular der Karte ist nur die Vorgabe. Zu sehen sind die Fahrzeuge nur
   für die, die auch das Fahrzeugmodul sehen.
+* **Fahrzeug von Hand setzen** – meldet sich ein Fahrzeug **5 Minuten
+  nicht per GPS** (als GPS gelten der Abruf bei Divera und der QR-Code im
+  Fahrzeug; einstellbar, 0 = jederzeit), lässt es sich auf der Karte
+  **ziehen** – zu erkennen am gestrichelten Rand des Namens. Die neue
+  Stelle wird am Fahrzeug gespeichert (Quelle „von Hand", mit Eintrag im
+  Journal) und gilt damit überall: an der Fahrzeugakte, auf allen Karten,
+  in Home Assistant. „+ Fahrzeug" über der Karte setzt ein Fahrzeug, das
+  noch gar keine Position hat, in die Kartenmitte. Solange ein Fahrzeug
+  sich selbst meldet, bleibt es fest. Setzen darf, wer an der Fahrzeugakte
+  den Standort setzen darf. Eine von Hand gesetzte Position bleibt stehen,
+  bis das Fahrzeug sich wieder meldet: Ein QR-Code-Scan ersetzt sie
+  sofort; Divera ersetzt sie, sobald Divera eine **neue** Position nennt –
+  Diveras alter Stand überschreibt sie nicht (spätestens nach der
+  Schutzzeit unter *Einstellungen → Divera 24/7*).
 * **Dateiablage** – die Symbole stehen dort unter *Karten*, je Gruppe eine
   Unterkategorie. Sie sind Piktogramme, keine Dokumente, und laufen nicht
   durch die KI-Auswertung.

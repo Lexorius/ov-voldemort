@@ -2785,6 +2785,17 @@ SQL);
         $pdo->exec('ALTER TABLE vehicles ADD CONSTRAINT fk_fz_symbol FOREIGN KEY (symbol_id) REFERENCES karten_symbole(id) ON DELETE SET NULL');
     }
     $merken('105_symbol_quelle_fahrzeugzeichen');
+
+    /* ---------- 106: Diveras eigene Position je Fahrzeug – erkennt neue GPS-Meldungen ---------- */
+    if (ovb_table_exists($pdo, 'vehicles') && !ovb_column_exists($pdo, 'vehicles', 'divera_lat')) {
+        $pdo->exec('ALTER TABLE vehicles
+            ADD COLUMN divera_lat DECIMAL(9,6) NULL AFTER symbol_id,
+            ADD COLUMN divera_lng DECIMAL(9,6) NULL AFTER divera_lat');
+        // Wo die Position schon aus Divera stammt, ist sie zugleich Diveras letzter Stand
+        $pdo->exec("UPDATE vehicles SET divera_lat = geo_lat, divera_lng = geo_lng WHERE geo_quelle = 'divera' AND geo_lat IS NOT NULL AND geo_lng IS NOT NULL");
+        $say('Fahrzeuge merken sich Diveras eigene Position.');
+    }
+    $merken('106_divera_position');
 }
 
 /**

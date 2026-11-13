@@ -1,5 +1,22 @@
 # Änderungsverlauf
 
+## 2.1.86.0
+
+- **Karten – Fahrzeuge von Hand setzen:** Ein Fahrzeug, das sich
+  **5 Minuten nicht per GPS gemeldet** hat (Divera oder QR-Code;
+  einstellbar unter *Einstellungen → Karten*), lässt sich auf der Karte
+  ziehen. Die neue Stelle wird **am Fahrzeug gespeichert** – mit Eintrag
+  im Journal – und gilt damit an der Fahrzeugakte, auf allen Karten und in
+  Home Assistant. „+ Fahrzeug" setzt eines, das noch keine Position hat, in
+  die Kartenmitte. Fahrzeuge, die sich selbst melden, bleiben fest; setzen
+  darf, wer an der Fahrzeugakte den Standort setzen darf.
+- **Divera:** Der Schutz von Hand gesetzter und per QR-Code gemeldeter
+  Positionen gegen Diveras älteren Stand griff bisher nicht – der Abgleich
+  las die Quelle der Position nicht mit und überschrieb sie beim nächsten
+  Abruf. Jetzt bleibt sie stehen. Eine von Hand gesetzte Position weicht
+  außerdem sofort, wenn Divera eine **neue** Position nennt; dafür merkt
+  sich jedes Fahrzeug, was Divera zuletzt meldete.
+
 ## 2.1.85.0
 
 - **Karten:** Eingeblendete Fahrzeuge erneuern sich von selbst und ohne

@@ -19,7 +19,8 @@ if (!$karte) {
 }
 
 $symbole = karten_symbole();
-$darf = ['setzen' => can('mark_karten'), 'verwalten' => can('manage_karten'), 'fahrzeuge' => can('view_vehicles')];
+$darf = ['setzen' => can('mark_karten'), 'verwalten' => can('manage_karten'), 'fahrzeuge' => can('view_vehicles'),
+         'fahrzeugSetzen' => can('view_vehicles') && can('report_vehicle')];
 $GLOBALS['ovb_karte_js'] = true;
 
 render('karte', [

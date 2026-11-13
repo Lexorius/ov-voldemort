@@ -866,6 +866,10 @@ pre.raw {
                             background: var(--accent); color: #fff; font-size: .75rem; font-weight: 700; line-height: 1.35; }
 .lagekarte__fahrzeug-zeichen { width: 44px; height: 44px; object-fit: contain; filter: drop-shadow(0 1px 3px rgba(0,0,0,.5)); }
 .lagekarte__fahrzeug.is-alt { opacity: .55; }
+/* ohne frische GPS-Meldung: von Hand versetzbar */
+.lagekarte__fahrzeug.is-setzbar { cursor: grab; touch-action: none; }
+.lagekarte__fahrzeug.is-setzbar .lagekarte__fahrzeug-name { outline: 2px dashed #fff; outline-offset: -1px; }
+.lagekarte__fahrzeug.is-gezogen { cursor: grabbing; opacity: .85; z-index: 5; }
 /* nach einem Abruf gleitet ein Fahrzeug an die neue Stelle; beim Schieben der Karte bleibt es fest */
 .lagekarte__fahrzeug.is-gleitend { transition: left 1.1s ease, top 1.1s ease; }
 @media (prefers-reduced-motion: reduce) { .lagekarte__fahrzeug.is-gleitend { transition: none; } }

@@ -25,7 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         if (!can('view_vehicles')) {
             $antwort(['ok' => false, 'fehler' => 'Die Fahrzeuge sind für dich nicht sichtbar.'], 403);
         }
-        $antwort(['ok' => true, 'fahrzeuge' => karten_fahrzeuge(), 'stand' => date('H:i:s')]);
+        $setzen = can('report_vehicle');
+        $antwort(['ok' => true, 'fahrzeuge' => karten_fahrzeuge(null, $setzen), 'stand' => date('H:i:s'),
+                  // wer Standorte melden darf, bekommt auch die Fahrzeuge ohne Position – zum Setzen
+                  'setzen' => $setzen, 'ohne' => $setzen ? karten_fahrzeuge_ohne() : [], 'handMinuten' => karten_fahrzeug_hand_minuten()]);
     }
     $antwort(['ok' => false, 'fehler' => 'Unbekannte Anfrage.'], 400);
 }
@@ -42,6 +45,22 @@ if ($action === 'ausschnitt') {
     karte_ausschnitt_setzen($karte, (float)post('lat'), (float)post('lng'), (int)post_int('zoom', (int)$karte['zoom']));
     audit('karten.ausschnitt', 'karte', (int)$karte['id'], (string)$karte['name']);
     $antwort(['ok' => true]);
+}
+
+if ($action === 'fahrzeug_setzen') {
+    // dasselbe Recht wie „Standort setzen" an der Fahrzeugakte – unabhängig vom Recht, Symbole zu setzen
+    if (!can('view_vehicles') || !can('report_vehicle')) {
+        $antwort(['ok' => false, 'fehler' => 'Fahrzeugpositionen setzen darfst du nicht.'], 403);
+    }
+    $vehicle = vehicle_find((int)post_int('id', 0));
+    if (!$vehicle) {
+        $antwort(['ok' => false, 'fehler' => 'Dieses Fahrzeug gibt es nicht (mehr).'], 404);
+    }
+    $punkt = karten_fahrzeug_setzen($vehicle, post('lat'), post('lng'), $user);
+    if (is_string($punkt)) {
+        $antwort(['ok' => false, 'fehler' => $punkt], 409);
+    }
+    $antwort(['ok' => true, 'fahrzeug' => $punkt]);
 }
 
 if (!can('mark_karten')) {

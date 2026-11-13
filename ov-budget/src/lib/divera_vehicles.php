@@ -214,11 +214,23 @@ function dv_status_update(array $st, array $fahrzeug, bool $mitPosition, int $je
         $daten['fms_note'] = mb_substr($notiz, 0, 255);
     }
 
-    if ($mitPosition && dv_position_due($fahrzeug['geo_at'] ?? null, $posIntervall, $jetzt) && !dv_position_geschuetzt($fahrzeug, $jetzt, $schutzMinuten)) {
-        $lat = $st['lat'] ?? null;
-        $lng = $st['lng'] ?? null;
-        if (is_numeric($lat) && is_numeric($lng) && ((float)$lat !== 0.0 || (float)$lng !== 0.0)
-            && abs((float)$lat) <= 90 && abs((float)$lng) <= 180) {
+    $lat = $st['lat'] ?? null;
+    $lng = $st['lng'] ?? null;
+    $gueltig = is_numeric($lat) && is_numeric($lng) && ((float)$lat !== 0.0 || (float)$lng !== 0.0)
+        && abs((float)$lat) <= 90 && abs((float)$lng) <= 180;
+    if ($mitPosition && $gueltig) {
+        // Was Divera selbst zuletzt nannte, steht getrennt: daran ist zu sehen, ob Divera eine NEUE Position hat
+        $altLat = $fahrzeug['divera_lat'] ?? null;
+        $altLng = $fahrzeug['divera_lng'] ?? null;
+        $neueMeldung = is_numeric($altLat) && is_numeric($altLng)
+            && (abs((float)$altLat - (float)$lat) > 0.00001 || abs((float)$altLng - (float)$lng) > 0.00001);
+        $daten['divera_lat'] = round((float)$lat, 6);
+        $daten['divera_lng'] = round((float)$lng, 6);
+        // Eine von Hand gesetzte Position bleibt, bis Divera wirklich etwas Neues meldet –
+        // Diveras alter Stand überschreibt sie nicht, eine neue GPS-Meldung sofort
+        $geschuetzt = dv_position_geschuetzt($fahrzeug, $jetzt, $schutzMinuten)
+            && !((string)($fahrzeug['geo_quelle'] ?? '') === 'mensch' && $neueMeldung);
+        if (dv_position_due($fahrzeug['geo_at'] ?? null, $posIntervall, $jetzt) && !$geschuetzt) {
             $daten['geo_lat'] = round((float)$lat, 6);
             $daten['geo_lng'] = round((float)$lng, 6);
             $daten['geo_at'] = date('Y-m-d H:i:s', $jetzt);
@@ -275,7 +287,7 @@ function dv_vehicles_for_matching(): array
 {
     return db_all(
         'SELECT id, bezeichnung, funkrufname, kennzeichen, issi, opta, ric, divera_vehicle_id,
-                fms_status, fms_at, geo_lat, geo_lng, geo_at, stein_asset_id
+                fms_status, fms_at, geo_lat, geo_lng, geo_at, geo_quelle, divera_lat, divera_lng, stein_asset_id
          FROM vehicles WHERE is_active = 1'
     );
 }

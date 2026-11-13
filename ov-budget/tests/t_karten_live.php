@@ -66,4 +66,103 @@ $check('Stand mit Sekunden', str_contains($lies('src/pages/karten_api.php'), "'s
 $check('Einstellung mitgeliefert', str_contains($lies('sql/seed.sql'), "('karten_fahrzeug_sekunden','30',"));
 $check('Doku', str_contains($lies('DOCS.md'), 'erneuert die') && str_contains($lies('CHANGELOG.md'), 'erneuern sich von selbst'));
 
+/* ==================================================================== */
+/* Fahrzeuge von Hand setzen                                             */
+/* ==================================================================== */
+$GLOBALS['gesetzt'] = [];
+function vehicle_position_set(array $vehicle, float $lat, float $lng, ?float $genauigkeit, array $user, string $titel = 'Standort gesetzt'): ?string {
+    $GLOBALS['gesetzt'][] = [(int)$vehicle['id'], $lat, $lng, $genauigkeit, (int)$user['id'], $titel];
+    return $GLOBALS['setzFehler'] ?? null;
+}
+require $app . '/src/lib/divera_vehicles.php';
+unset($GLOBALS['settings']['karten_fahrzeug_sekunden']);
+settings_reset_cache();
+
+/* ---------- Wartezeit ---------- */
+$check('Vorgabe 5 Minuten', karten_fahrzeug_hand_minuten() === 5 && KARTEN_FAHRZEUG_HAND_MINUTEN === 5);
+$check('Wartezeit in den Grenzen', karten_fahrzeug_hand_minuten(0) === 0 && karten_fahrzeug_hand_minuten(-4) === 0 && karten_fahrzeug_hand_minuten('15') === 15
+    && karten_fahrzeug_hand_minuten(99999) === 1440 && karten_fahrzeug_hand_minuten('x') === 5);
+$check('GPS sind Divera und der QR-Code', KARTEN_GPS_QUELLEN === ['divera', 'qr']);
+
+/* ---------- Wann lässt sich ein Fahrzeug setzen ---------- */
+$jetzt = strtotime('2026-11-13 12:00:00');
+$fz = static fn(string $quelle, ?string $zeit, array $mehr = []): array => $mehr + ['id' => 7, 'bezeichnung' => 'GKW', 'funkrufname' => 'Heros 22/52', 'is_active' => 1,
+    'geo_lat' => '53.079300', 'geo_lng' => '8.801700', 'geo_at' => $zeit, 'geo_quelle' => $quelle, 'symbol_id' => null];
+$check('Divera vor 3 Minuten: meldet sich selbst', !karten_fahrzeug_setzbar($fz('divera', '2026-11-13 11:57:00'), $jetzt, 5));
+$check('Divera vor genau 5 Minuten: noch fest', !karten_fahrzeug_setzbar($fz('divera', '2026-11-13 11:55:00'), $jetzt, 5));
+$check('Divera vor 6 Minuten: setzbar', karten_fahrzeug_setzbar($fz('divera', '2026-11-13 11:54:00'), $jetzt, 5));
+$check('QR-Code zählt als GPS', !karten_fahrzeug_setzbar($fz('qr', '2026-11-13 11:58:00'), $jetzt, 5) && karten_fahrzeug_setzbar($fz('qr', '2026-11-13 11:40:00'), $jetzt, 5));
+$check('von Hand gesetzt: jederzeit wieder setzbar', karten_fahrzeug_setzbar($fz('mensch', '2026-11-13 11:59:30'), $jetzt, 5));
+$check('ohne Position oder ohne Zeitpunkt: setzbar', karten_fahrzeug_setzbar($fz('divera', '2026-11-13 11:59:00', ['geo_lat' => null, 'geo_lng' => null]), $jetzt, 5)
+    && karten_fahrzeug_setzbar($fz('divera', null), $jetzt, 5) && karten_fahrzeug_setzbar($fz('', '2026-11-13 11:59:00'), $jetzt, 5));
+$check('Wartezeit 0: jederzeit', karten_fahrzeug_setzbar($fz('divera', '2026-11-13 11:59:59'), $jetzt, 0));
+
+$p = karten_fahrzeug_punkte([$fz('divera', '2026-11-13 11:57:00'), $fz('qr', '2026-11-13 11:00:00', ['id' => 8])], $jetzt, 5);
+$check('Karte: frisches fest, altes setzbar', $p[0]['setzbar'] === false && $p[1]['setzbar'] === true);
+$p = karten_fahrzeug_punkte([$fz('qr', '2026-11-13 11:00:00')], $jetzt);
+$check('wer nicht setzen darf, sieht nichts Setzbares', $p[0]['setzbar'] === false);
+
+/* ---------- Setzen ---------- */
+$ich = ['id' => 4, 'display_name' => 'Tester'];
+$check('außer Dienst: nein', is_string(karten_fahrzeug_setzen($fz('mensch', null, ['is_active' => 0]), 53.1, 8.9, $ich, $jetzt)) && $GLOBALS['gesetzt'] === []);
+$check('Stelle außerhalb der Karte: nein', is_string(karten_fahrzeug_setzen($fz('mensch', null), 95, 8.9, $ich, $jetzt)) && is_string(karten_fahrzeug_setzen($fz('mensch', null), 'x', '', $ich, $jetzt)) && $GLOBALS['gesetzt'] === []);
+$grund = karten_fahrzeug_setzen($fz('divera', '2026-11-13 11:58:00'), 53.1, 8.9, $ich, $jetzt);
+$check('meldet sich selbst: nein, mit Grund', is_string($grund) && str_contains($grund, 'Divera') && str_contains($grund, '5 Minuten') && $GLOBALS['gesetzt'] === []);
+$grund = karten_fahrzeug_setzen($fz('qr', '2026-11-13 11:58:00'), 53.1, 8.9, $ich, $jetzt);
+$check('QR-Code gerade gescannt: nein', is_string($grund) && str_contains($grund, 'QR-Code'));
+$punkt = karten_fahrzeug_setzen($fz('divera', '2026-11-13 11:40:00'), '53.1234567', '8.9', $ich, $jetzt);
+$check('nach 20 Minuten ohne Meldung: gesetzt, am Fahrzeug gespeichert', is_array($punkt) && $GLOBALS['gesetzt'] === [[7, 53.1234567, 8.9, null, 4, 'Standort auf der Karte gesetzt']]);
+$check('Punkt für die Karte: neue Stelle, von Hand, weiter setzbar', $punkt['lat'] === 53.123457 && $punkt['lng'] === 8.9 && $punkt['stand'] === 'gerade eben · von Hand'
+    && $punkt['setzbar'] === true && $punkt['alt'] === false && $punkt['id'] === 7);
+$GLOBALS['gesetzt'] = [];
+$check('ohne Position: gesetzt', is_array(karten_fahrzeug_setzen($fz('', null, ['geo_lat' => null, 'geo_lng' => null]), 53.1, 8.9, $ich, $jetzt)) && count($GLOBALS['gesetzt']) === 1);
+$GLOBALS['setzFehler'] = 'Die übermittelte Position ist unbrauchbar.';
+$check('Fehler beim Speichern kommt an', karten_fahrzeug_setzen($fz('mensch', null), 53.1, 8.9, $ich, $jetzt) === 'Die übermittelte Position ist unbrauchbar.');
+unset($GLOBALS['setzFehler']);
+$k = karten_konfig($karte, [], [], ['fahrzeuge' => true, 'fahrzeugSetzen' => true]);
+$check('der Browser weiß, ob gesetzt werden darf', $k['fahrzeugSetzen'] === true && karten_konfig($karte, [], [], ['fahrzeuge' => true])['fahrzeugSetzen'] === false
+    && karten_konfig($karte, [], [], ['fahrzeuge' => false, 'fahrzeugSetzen' => true])['fahrzeugSetzen'] === false);
+
+/* ---------- Divera: Hand-Position bleibt, bis Divera etwas Neues meldet ---------- */
+$st = ['id' => 55, 'fmsstatus' => 2, 'fmsstatus_ts' => $jetzt - 3600, 'lat' => 53.0793, 'lng' => 8.8017, 'crew' => []];
+$unser = static fn(array $mehr): array => $mehr + ['id' => 7, 'fms_status' => 2, 'fms_at' => date('Y-m-d H:i:s', $jetzt - 3600), 'geo_lat' => '53.200000', 'geo_lng' => '8.700000',
+    'geo_at' => date('Y-m-d H:i:s', $jetzt - 600), 'geo_quelle' => 'mensch', 'divera_lat' => '53.079300', 'divera_lng' => '8.801700'];
+$d = dv_status_update($st, $unser([]), true, $jetzt)['daten'];
+$check('Divera nennt denselben alten Stand: Hand-Position bleibt', !isset($d['geo_lat']) && !isset($d['geo_quelle']) && $d['divera_lat'] === 53.0793 && $d['divera_lng'] === 8.8017);
+$d = dv_status_update(['lat' => 53.0801, 'lng' => 8.8025] + $st, $unser([]), true, $jetzt)['daten'];
+$check('Divera nennt eine neue Position: sie gilt sofort', ($d['geo_lat'] ?? null) === 53.0801 && $d['geo_quelle'] === 'divera' && $d['divera_lat'] === 53.0801);
+$d = dv_status_update(['lat' => 53.0801, 'lng' => 8.8025] + $st, $unser(['geo_quelle' => 'qr']), true, $jetzt)['daten'];
+$check('QR-Meldung bleibt für ihre Schutzzeit, auch wenn Divera Neues nennt', !isset($d['geo_lat']) && $d['divera_lat'] === 53.0801);
+$d = dv_status_update(['lat' => 53.0801, 'lng' => 8.8025] + $st, $unser(['divera_lat' => null, 'divera_lng' => null]), true, $jetzt)['daten'];
+$check('Diveras alter Stand unbekannt: Hand-Position bleibt, Stand wird gemerkt', !isset($d['geo_lat']) && $d['divera_lat'] === 53.0801);
+$d = dv_status_update($st, $unser(['geo_at' => date('Y-m-d H:i:s', $jetzt - 13 * 3600)]), true, $jetzt)['daten'];
+$check('nach der Schutzzeit gilt Divera wieder', ($d['geo_quelle'] ?? '') === 'divera');
+$d = dv_status_update($st, $unser(['geo_quelle' => 'divera']), true, $jetzt)['daten'];
+$check('Divera-Position wird wie bisher bei jedem Abruf erneuert', ($d['geo_quelle'] ?? '') === 'divera' && $d['geo_at'] === date('Y-m-d H:i:s', $jetzt));
+$d = dv_status_update($st, $unser([]), false, $jetzt)['daten'];
+$check('Position abgeschaltet: nichts wird gemerkt', !isset($d['geo_lat']) && !array_key_exists('divera_lat', $d));
+$d = dv_status_update(['lat' => 0, 'lng' => 0] + $st, $unser(['geo_quelle' => 'divera']), true, $jetzt)['daten'];
+$check('Divera ohne Position: nichts ändert sich', !isset($d['geo_lat']) && !array_key_exists('divera_lat', $d));
+
+/* ---------- Verdrahtung ---------- */
+$dv = $lies('src/lib/divera_vehicles.php');
+$check('der Abgleich liest die Quelle der Position mit – sonst greift kein Schutz', (bool)preg_match('/SELECT id, bezeichnung,[^;]*geo_quelle, divera_lat, divera_lng,[^;]*FROM vehicles WHERE is_active = 1/s', $dv));
+$api = $lies('src/pages/karten_api.php');
+$check('Schnittstelle: Setzen braucht Fahrzeug- und Melderecht, nicht das Symbolrecht', str_contains($api, "\$action === 'fahrzeug_setzen'") && str_contains($api, "!can('view_vehicles') || !can('report_vehicle')")
+    && strpos($api, "\$action === 'fahrzeug_setzen'") < strpos($api, "if (!can('mark_karten'))"));
+$check('Schnittstelle: Liste ohne Position nur für die, die setzen dürfen', str_contains($api, "'ohne' => \$setzen ? karten_fahrzeuge_ohne() : []") && str_contains($api, "karten_fahrzeuge(null, \$setzen)"));
+$check('Schnittstelle: Setzen nur per POST', strpos($api, "\$action === 'fahrzeug_setzen'") > strpos($api, "\$_SERVER['REQUEST_METHOD'] !== 'POST'"));
+$check('Seite und Ansicht', str_contains($lies('src/pages/karte.php'), "'fahrzeugSetzen' => can('view_vehicles') && can('report_vehicle')") && str_contains($lies('views/karte.php'), 'data-karte-fahrzeug-setzen'));
+$check('Karte: ziehen nur, was der Server freigibt; Klick öffnet weiter das Fahrzeug', str_contains($js, '!K.fahrzeugSetzen || !f.d.setzbar') && str_contains($js, "action: 'fahrzeug_setzen', id: f.d.id")
+    && str_contains($js, 'if (f.gezogen) { ev.preventDefault();') && str_contains($js, 'if (f.zieht) { fz.lat = f.d.lat;'));
+$check('Karte: nicht gespeichert heißt zurück an die alte Stelle', str_contains($js, 'f.d.lat = s.lat;') && str_contains($js, 'function fahrzeugMenue('));
+$check('Aussehen', str_contains($css, '.lagekarte__fahrzeug.is-setzbar') && str_contains($css, '.lagekarte__fahrzeug.is-gezogen'));
+$schema = $lies('sql/schema.sql');
+$wanderung = $lies('src/cli/migrate.php');
+$check('Schema und Migration', str_contains($schema, 'divera_lat        DECIMAL(9,6) NULL') && str_contains($schema, 'divera_lng        DECIMAL(9,6) NULL')
+    && str_contains($wanderung, "\$merken('106_divera_position');") && str_contains($wanderung, 'ADD COLUMN divera_lat DECIMAL(9,6) NULL'));
+$check('Einstellung und Doku', str_contains($lies('sql/seed.sql'), "('karten_fahrzeug_hand_minuten','5',") && str_contains($lies('DOCS.md'), '**Fahrzeug von Hand setzen**')
+    && str_contains($lies('CHANGELOG.md'), 'Fahrzeuge von Hand setzen'));
+$check('Fahrzeug: Titel im Journal wählbar', str_contains($lies('src/lib/vehicles.php'), "array \$user, string \$titel = 'Standort gesetzt'): ?string") && str_contains($lies('src/lib/vehicles.php'), "'titel'    => \$titel,"));
+
 echo "$ok bestanden, $fail fehlgeschlagen\n";

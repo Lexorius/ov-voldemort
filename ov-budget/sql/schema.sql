@@ -1314,6 +1314,9 @@ CREATE TABLE IF NOT EXISTS vehicles (
   standort_id       INT UNSIGNED NULL,
   -- taktisches Zeichen aus der Symbolbibliothek der Karten; der Fremdschluessel kommt in der Wanderung
   symbol_id         INT UNSIGNED NULL,
+  -- was Divera selbst zuletzt als Position nannte: daran ist eine NEUE Meldung zu erkennen
+  divera_lat        DECIMAL(9,6) NULL,
+  divera_lng        DECIMAL(9,6) NULL,
   notiz             TEXT         NULL,
   extra             TEXT         NULL,
   opta              VARCHAR(60)  NOT NULL DEFAULT '',

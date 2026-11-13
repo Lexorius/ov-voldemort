@@ -40,6 +40,10 @@ const KARTEN_FAHRZEUG_ALT_STD = 24;
 const KARTEN_FAHRZEUG_SEKUNDEN = 30;
 const KARTEN_FAHRZEUG_SEKUNDEN_MIN = 10;
 const KARTEN_FAHRZEUG_SEKUNDEN_MAX = 600;
+/** Quellen, die als Meldung per GPS gelten: der Abruf bei Divera und der QR-Code im Fahrzeug */
+const KARTEN_GPS_QUELLEN = ['divera', 'qr'];
+/** Nach so vielen Minuten ohne GPS-Meldung lässt sich ein Fahrzeug auf der Karte von Hand setzen */
+const KARTEN_FAHRZEUG_HAND_MINUTEN = 5;
 
 /* ==================================================================== */
 /* Reine Helfer                                                          */
@@ -88,6 +92,32 @@ function karten_fahrzeug_sekunden(mixed $wert = null): int
     $wert ??= setting('karten_fahrzeug_sekunden', (string)KARTEN_FAHRZEUG_SEKUNDEN);
     $n = is_numeric($wert) ? (int)round((float)$wert) : KARTEN_FAHRZEUG_SEKUNDEN;
     return max(KARTEN_FAHRZEUG_SEKUNDEN_MIN, min(KARTEN_FAHRZEUG_SEKUNDEN_MAX, $n));
+}
+
+/** Minuten ohne GPS-Meldung, nach denen ein Fahrzeug von Hand gesetzt werden darf – 0 bis 1440. Reine Funktion über den Wert. */
+function karten_fahrzeug_hand_minuten(mixed $wert = null): int
+{
+    $wert ??= setting('karten_fahrzeug_hand_minuten', (string)KARTEN_FAHRZEUG_HAND_MINUTEN);
+    $n = is_numeric($wert) ? (int)round((float)$wert) : KARTEN_FAHRZEUG_HAND_MINUTEN;
+    return max(0, min(1440, $n));
+}
+
+/**
+ * Darf die Position dieses Fahrzeugs von Hand gesetzt werden? Ja, wenn es keine brauchbare
+ * Position hat, wenn die letzte von Hand kam – oder wenn die letzte GPS-Meldung (Divera,
+ * QR-Code) länger als $minuten her ist. Solange das Fahrzeug sich selbst meldet, nicht.
+ * $r: Zeile aus vehicles. Reine Funktion.
+ */
+function karten_fahrzeug_setzbar(array $r, int $jetzt, int $minuten): bool
+{
+    if (!karten_koordinate_ok($r['geo_lat'] ?? null, $r['geo_lng'] ?? null)) {
+        return true;
+    }
+    if (!in_array((string)($r['geo_quelle'] ?? ''), KARTEN_GPS_QUELLEN, true)) {
+        return true;
+    }
+    $zeit = !empty($r['geo_at']) ? strtotime((string)$r['geo_at']) : false;
+    return $zeit === false || $jetzt - $zeit > $minuten * 60;
 }
 
 function karten_kachel_url(): string
@@ -211,8 +241,10 @@ function karten_alter_text(int $sekunden): string
  * Fahrzeuge für die Karte: nur mit brauchbarer Position. Je Fahrzeug id, name, kurz
  * (Funkrufname, sonst Bezeichnung), lat, lng, stand (Text), alt (Position älter als ein Tag
  * oder ohne Zeitpunkt), url. $rows: Zeilen aus vehicles. Reine Funktion.
+ * $handMinuten: nur für die, die Positionen setzen dürfen – dann sagt 'setzbar', ob sich das
+ * Fahrzeug auf der Karte von Hand versetzen lässt. null = niemand setzt.
  */
-function karten_fahrzeug_punkte(array $rows, ?int $jetzt = null): array
+function karten_fahrzeug_punkte(array $rows, ?int $jetzt = null, ?int $handMinuten = null): array
 {
     $jetzt ??= time();
     $out = [];
@@ -234,6 +266,7 @@ function karten_fahrzeug_punkte(array $rows, ?int $jetzt = null): array
             'url'   => url('vehicle', ['id' => (int)$r['id']]),
             // das taktische Zeichen des Fahrzeugs – ohne bleibt es beim Punkt
             'src'   => (int)($r['symbol_id'] ?? 0) > 0 ? url('karten_symbol', ['id' => (int)$r['symbol_id']]) : '',
+            'setzbar' => $handMinuten !== null && karten_fahrzeug_setzbar($r, $jetzt, $handMinuten),
         ];
     }
     return $out;
@@ -279,6 +312,8 @@ function karten_konfig(array $karte, array $marker, array $symbole, array $darf)
         'fahrzeuge' => !empty($darf['fahrzeuge']),
         'fahrzeugeAn' => !empty($darf['fahrzeuge']) && (int)($karte['fahrzeuge'] ?? 0) === 1,
         'fahrzeugSekunden' => karten_fahrzeug_sekunden(),
+        // Fahrzeuge ohne frische GPS-Meldung von Hand setzen: wer die Fahrzeuge sieht und Standorte melden darf
+        'fahrzeugSetzen' => !empty($darf['fahrzeuge']) && !empty($darf['fahrzeugSetzen']),
         'groesse'   => ['min' => KARTEN_GROESSE_MIN, 'max' => KARTEN_GROESSE_MAX, 'vorgabe' => KARTEN_GROESSE_VORGABE],
         'marker'    => array_map('karten_marker_daten', $marker),
         'symbole'   => array_map(static fn(array $s): array => [
@@ -637,10 +672,55 @@ function karten_marker_delete(array $marker): void
 /* Fahrzeuge                                                             */
 /* ==================================================================== */
 
-/** Fahrzeuge im Dienst, die eine Position gemeldet haben */
-function karten_fahrzeuge(?int $jetzt = null): array
+/** Fahrzeuge im Dienst, die eine Position gemeldet haben. $setzen: die Person darf Positionen von Hand setzen. */
+function karten_fahrzeuge(?int $jetzt = null, bool $setzen = false): array
 {
     return karten_fahrzeug_punkte(db_all(
         'SELECT id, bezeichnung, funkrufname, geo_lat, geo_lng, geo_at, geo_quelle, symbol_id FROM vehicles
-         WHERE is_active = 1 AND geo_lat IS NOT NULL AND geo_lng IS NOT NULL ORDER BY bezeichnung, id'), $jetzt);
+         WHERE is_active = 1 AND geo_lat IS NOT NULL AND geo_lng IS NOT NULL ORDER BY bezeichnung, id'), $jetzt,
+        $setzen ? karten_fahrzeug_hand_minuten() : null);
+}
+
+/** Fahrzeuge im Dienst ohne Position – sie stehen auf keiner Karte und lassen sich von Hand setzen */
+function karten_fahrzeuge_ohne(): array
+{
+    $out = [];
+    foreach (db_all('SELECT id, bezeichnung, funkrufname, symbol_id FROM vehicles
+                     WHERE is_active = 1 AND (geo_lat IS NULL OR geo_lng IS NULL) ORDER BY bezeichnung, id') as $r) {
+        $out[] = [
+            'id'   => (int)$r['id'],
+            'name' => (string)$r['bezeichnung'],
+            'kurz' => trim((string)($r['funkrufname'] ?? '')) !== '' ? trim((string)$r['funkrufname']) : (string)$r['bezeichnung'],
+            'src'  => (int)($r['symbol_id'] ?? 0) > 0 ? url('karten_symbol', ['id' => (int)$r['symbol_id']]) : '',
+        ];
+    }
+    return $out;
+}
+
+/**
+ * Ein Fahrzeug auf der Karte von Hand setzen. Die Position wird am Fahrzeug gespeichert
+ * (Quelle „von Hand", mit Eintrag im Journal) und gilt damit überall. Gibt den Punkt für
+ * die Karte zurück – oder den Grund, warum es nicht geht.
+ */
+function karten_fahrzeug_setzen(array $vehicle, mixed $lat, mixed $lng, array $user, ?int $jetzt = null): array|string
+{
+    $jetzt ??= time();
+    if ((int)($vehicle['is_active'] ?? 0) !== 1) {
+        return 'Dieses Fahrzeug ist außer Dienst.';
+    }
+    if (!karten_koordinate_ok($lat, $lng)) {
+        return 'Diese Stelle liegt nicht auf der Karte.';
+    }
+    $minuten = karten_fahrzeug_hand_minuten();
+    if (!karten_fahrzeug_setzbar($vehicle, $jetzt, $minuten)) {
+        $quelle = (string)$vehicle['geo_quelle'] === 'qr' ? 'den QR-Code' : 'Divera';
+        return sprintf('„%s" meldet seine Position gerade selbst über %s. Von Hand setzen lässt es sich, wenn %d Minuten keine Meldung kam.',
+            (string)$vehicle['bezeichnung'], $quelle, $minuten);
+    }
+    $fehler = vehicle_position_set($vehicle, (float)$lat, (float)$lng, null, $user, 'Standort auf der Karte gesetzt');
+    if ($fehler !== null) {
+        return $fehler;
+    }
+    $neu = ['geo_lat' => round((float)$lat, 6), 'geo_lng' => round((float)$lng, 6), 'geo_at' => date('Y-m-d H:i:s', $jetzt), 'geo_quelle' => 'mensch'] + $vehicle;
+    return karten_fahrzeug_punkte([$neu], $jetzt, $minuten)[0];
 }
