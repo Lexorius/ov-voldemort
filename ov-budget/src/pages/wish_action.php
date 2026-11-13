@@ -59,7 +59,7 @@ switch (post_str('action')) {
             $voll = wish_find_full($id) ?? $wish;
             $fehler = wish_release_denied($voll, $user) ?? wish_release($voll, $user);
             flash($fehler === null ? 'success' : 'error',
-                $fehler === null ? 'Zur Bestellung freigegeben.' : e($fehler));
+                $fehler === null ? 'Zur Bestellung freigegeben.' : $fehler);
             break;
         }
         if (can('manage_wishes') && isset($_POST['prioritaet'])) {
@@ -75,9 +75,9 @@ switch (post_str('action')) {
         $grund = wish_release_denied($voll, $user);
         $fehler = $grund ?? wish_release($voll, $user);
         if ($fehler !== null) {
-            flash('error', e($fehler));
+            flash('error', $fehler);
         } else {
-            flash('success', 'Freigegeben: „' . e($wish['bezeichnung']) . '“ kann bestellt werden.');
+            flash('success', 'Freigegeben: „' . $wish['bezeichnung'] . '“ kann bestellt werden.');
         }
         break;
 
@@ -88,9 +88,9 @@ switch (post_str('action')) {
         }
         $fehler = wish_mark_ordered(wish_find_full($id) ?? $wish, $user);
         if ($fehler !== null) {
-            flash('error', e($fehler));
+            flash('error', $fehler);
         } else {
-            flash('success', '„' . e($wish['bezeichnung']) . '“ als bestellt markiert.');
+            flash('success', '„' . $wish['bezeichnung'] . '“ als bestellt markiert.');
         }
         break;
 

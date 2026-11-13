@@ -38,7 +38,7 @@ $check('Dateien gefunden', count($dateien) > 50);
 $fehler = [];
 foreach ($dateien as $datei) {
     $quelle = (string)file_get_contents($datei);
-    foreach ([['audit(', [1 => 'Kennung', 3 => 'Text']], ['flash(', [0 => 'Art', 1 => 'Text']]] as [$name, $textArgs]) {
+    foreach ([['audit(', [1 => 'Kennung', 3 => 'Text']], ['flash(', [0 => 'Art', 1 => 'Text']], ['flash_html(', [0 => 'Art', 1 => 'Text']]] as [$name, $textArgs]) {
         $pos = 0;
         while (($pos = strpos($quelle, $name, $pos)) !== false) {
             $davor = $pos > 0 ? $quelle[$pos - 1] : ' ';

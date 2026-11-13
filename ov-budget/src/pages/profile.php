@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && post_str('action') === 'push_test')
             . 'Bitte noch einmal anmelden.');
     } else {
         flash('error', $res['fehler'] !== ''
-            ? 'Der Push-Dienst hat die Nachricht nicht angenommen: ' . e($res['fehler'])
+            ? 'Der Push-Dienst hat die Nachricht nicht angenommen: ' . $res['fehler']
             : 'Für dich ist noch kein Browser angemeldet.');
     }
     audit('push.test', 'push', (int)$user['id'], sprintf('%d gesendet', $res['gesendet']));
@@ -33,9 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && post_str('action') === 'notify_test
         }
         ha_notify_send($ziel, 'OV-Multitool', 'Testnachricht – die Benachrichtigungen funktionieren.',
             notify_url('?p=dashboard'));
-        flash('success', 'Testnachricht an ' . e($ziel) . ' geschickt.');
+        flash('success', 'Testnachricht an ' . $ziel . ' geschickt.');
     } catch (Throwable $ex) {
-        flash('error', 'Hat nicht geklappt: ' . e($ex->getMessage()));
+        flash('error', 'Hat nicht geklappt: ' . $ex->getMessage());
     }
     redirect_route('profile');
 }

@@ -95,7 +95,7 @@ switch (post_str('action')) {
         $tp = tp_find(post_int('tp_id', 0) ?? 0);
         if ($tp && (int)$tp['meeting_id'] === $meetingId && can('create_todo')) {
             $todoId = tp_create_todo($tp, $user);
-            flash('success', 'Aufgabe angelegt: <a href="' . e(url('todo', ['id' => $todoId])) . '">'
+            flash_html('success', 'Aufgabe angelegt: <a href="' . e(url('todo', ['id' => $todoId])) . '">'
                 . e((string)$tp['titel']) . '</a>');
             $zurueck .= '#tp' . (int)$tp['id'];
         }
@@ -173,7 +173,7 @@ switch (post_str('action')) {
                 : sprintf('%d neue(s) Thema/Themen aus Divera, %d bereits bekannt%s.', $res['created'], $res['skipped'],
                     $res['failed'] ? ', ' . $res['failed'] . ' fehlerhaft' : ''));
         } catch (Throwable $ex) {
-            flash('error', 'Abruf aus Divera fehlgeschlagen: ' . e($ex->getMessage()));
+            flash('error', 'Abruf aus Divera fehlgeschlagen: ' . $ex->getMessage());
         }
         $zurueck = url('talking_points');
         break;
@@ -208,7 +208,7 @@ switch (post_str('action')) {
                 flash('error', 'Der E-Mail-Versand ist nicht eingerichtet (Verwaltung → E-Mail).');
             } else {
                 $r = meeting_protokoll_senden($meeting, $user, post_str('betreff'), post_str('text'));
-                flash($r['ok'] ? 'success' : 'error', e($r['text']));
+                flash($r['ok'] ? 'success' : 'error', $r['text']);
             }
             $zurueck .= '#protokoll-versand';
         }

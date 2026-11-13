@@ -89,7 +89,7 @@ switch (post_str('action')) {
                 ? 'QR-Code erzeugt und beim Connector angemeldet.'
                 : 'QR-Code zurückgezogen.');
         } catch (Throwable $ex) {
-            flash('warn', 'Gespeichert, aber der Connector war nicht erreichbar: ' . e($ex->getMessage()));
+            flash('warn', 'Gespeichert, aber der Connector war nicht erreichbar: ' . $ex->getMessage());
         }
         $zurueck .= '#qr';
         break;
@@ -101,7 +101,7 @@ switch (post_str('action')) {
                 $res['geholt'], $res['uebernommen'],
                 $res['fehler'] ? ', ' . $res['fehler'] . ' unbrauchbar' : ''));
         } catch (Throwable $ex) {
-            flash('error', 'Der Connector war nicht erreichbar: ' . e($ex->getMessage()));
+            flash('error', 'Der Connector war nicht erreichbar: ' . $ex->getMessage());
         }
         break;
 

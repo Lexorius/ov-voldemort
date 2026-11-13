@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } catch (Throwable $ex) {
                 error_log('Kontakte zusammenführen fehlgeschlagen: ' . $ex->getMessage());
                 flash('error', 'Das Zusammenführen ist fehlgeschlagen, es wurde nichts geändert. '
-                    . e(app_config('debug', false) ? $ex->getMessage() : 'Details stehen im Protokoll.'));
+                    . (app_config('debug', false) ? $ex->getMessage() : 'Details stehen im Protokoll.'));
                 redirect_route('contacts_dubletten');
             }
             flash('success', sprintf(

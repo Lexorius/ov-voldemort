@@ -20,7 +20,7 @@ $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (post_str('action') === 'loeschen' && $getraenk) {
         $f = getraenk_delete($getraenk);
-        flash($f === null ? 'success' : 'error', $f === null ? 'Getränk gelöscht.' : e($f));
+        flash($f === null ? 'success' : 'error', $f === null ? 'Getränk gelöscht.' : $f);
         redirect_route('getraenke');
     }
     [$neu, $errors] = getraenk_save_from_post($getraenk);

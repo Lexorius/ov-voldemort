@@ -129,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $ergebnis = tankkarte_import_execute($plan, $sitzung['optionen'], $user);
             } catch (Throwable $ex) {
                 error_log('Tankkarten-Import fehlgeschlagen: ' . $ex->getMessage());
-                flash('error', 'Der Import ist fehlgeschlagen. ' . e(app_config('debug', false) ? $ex->getMessage() : 'Details stehen im Protokoll.'));
+                flash('error', 'Der Import ist fehlgeschlagen. ' . (app_config('debug', false) ? $ex->getMessage() : 'Details stehen im Protokoll.'));
                 redirect_route('tankkarten_import');
             }
             contact_import_discard($token);

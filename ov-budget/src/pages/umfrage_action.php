@@ -28,7 +28,7 @@ $anmelden = static function (?array $c, string $sonst): void {
         connector_push_umfragen($c, true);
         flash('success', $sonst);
     } catch (Throwable $ex) {
-        flash('warn', 'Gespeichert, aber der Connector war nicht erreichbar: ' . e($ex->getMessage())
+        flash('warn', 'Gespeichert, aber der Connector war nicht erreichbar: ' . $ex->getMessage()
             . ' Der nächste automatische Abruf holt das nach.');
     }
 };
@@ -53,7 +53,7 @@ switch (post_str('action')) {
             try {
                 connector_fetch_umfragen($connector);
             } catch (Throwable $ex) {
-                flash('warn', 'Der Connector war nicht erreichbar – dort liegende Antworten werden beim nächsten Abruf geholt: ' . e($ex->getMessage()));
+                flash('warn', 'Der Connector war nicht erreichbar – dort liegende Antworten werden beim nächsten Abruf geholt: ' . $ex->getMessage());
                 break;
             }
         }
@@ -80,7 +80,7 @@ switch (post_str('action')) {
                 $res['fehler'] ? ', ' . $res['fehler'] . ' unbrauchbar' : ''));
             state_save('umfrage_letzter_abruf', (string)time());
         } catch (Throwable $ex) {
-            flash('error', 'Der Connector war nicht erreichbar: ' . e($ex->getMessage()));
+            flash('error', 'Der Connector war nicht erreichbar: ' . $ex->getMessage());
         }
         break;
 
@@ -98,7 +98,7 @@ switch (post_str('action')) {
             break;
         }
         $r = umfrage_bericht_senden($umfrage, in_array(umfrage_zustand($umfrage), ['abgelaufen', 'geschlossen'], true) ? 'ende' : 'zwischenstand');
-        flash($r['ok'] ? 'success' : 'error', e($r['text']));
+        flash($r['ok'] ? 'success' : 'error', $r['text']);
         break;
 
     case 'antworten_loeschen':
@@ -117,7 +117,7 @@ switch (post_str('action')) {
                 flash('warn', 'Der Connector war nicht erreichbar; der nächste Abruf meldet die Abstimmung ab.');
             }
         }
-        flash('success', sprintf('Abstimmung „%s" samt Antworten gelöscht.', e($titel)));
+        flash('success', sprintf('Abstimmung „%s" samt Antworten gelöscht.', $titel));
         redirect_route('umfragen');
 
     default:

@@ -189,9 +189,24 @@ function wahl_ids(string $name): array
     return array_values(array_unique(array_filter($ids, static fn($i) => $i > 0)));
 }
 
+/**
+ * Meldung für die nächste Seite – reiner Text. Maskiert wird bei der Ausgabe
+ * (flash_ausgabe), deshalb hier NICHT mit e() vorarbeiten: Namen, Titel und
+ * Fehlertexte kommen so hinein, wie sie sind.
+ */
 function flash(string $type, string $message): void
 {
-    $_SESSION['_flash'][] = ['type' => $type, 'msg' => $message];
+    $_SESSION['_flash'][] = ['type' => $type, 'msg' => $message, 'html' => false];
+}
+
+/**
+ * Meldung mit gewolltem HTML (Link, Hervorhebung) – die Ausnahme. Alles, was
+ * nicht fest im Quelltext steht, gehört hier in e() oder hinter (int);
+ * tests/t_flash.php prüft das an jedem Aufruf.
+ */
+function flash_html(string $type, string $html): void
+{
+    $_SESSION['_flash'][] = ['type' => $type, 'msg' => $html, 'html' => true];
 }
 
 function flash_take(): array
@@ -199,6 +214,22 @@ function flash_take(): array
     $f = $_SESSION['_flash'] ?? [];
     unset($_SESSION['_flash']);
     return $f;
+}
+
+/**
+ * Die wartenden Meldungen als HTML. Nur was über flash_html() kam, geht
+ * unmaskiert hinaus; alles andere – auch ein Eintrag ohne Kennzeichen aus
+ * einer Sitzung von vor dem Update – wird maskiert.
+ */
+function flash_ausgabe(): string
+{
+    $html = '';
+    foreach (flash_take() as $f) {
+        $text = (string)($f['msg'] ?? '');
+        $html .= '<div class="alert alert--' . e((string)($f['type'] ?? 'info')) . '">'
+            . (($f['html'] ?? false) === true ? $text : e($text)) . "</div>\n";
+    }
+    return $html;
 }
 
 /* ---------------- CSRF ---------------- */

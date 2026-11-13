@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             post_dec('anlage_betrag') ?: null
         );
         foreach ($uploadErrors as $ue) {
-            flash('warn', e($ue));
+            flash('warn', $ue);
         }
         flash('success', $wish ? 'Wunsch gespeichert.' : 'Wunsch angelegt. Danke!');
         redirect_route('wish', ['id' => $wishId]);

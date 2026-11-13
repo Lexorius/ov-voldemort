@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         case 'anmerkung':
             $fehler = tp_comment_add($tp, $user, post_str('body'));
             if ($fehler !== null) {
-                flash('error', e($fehler));
+                flash('error', $fehler);
             } else {
                 flash('success', 'Anmerkung gespeichert.');
             }

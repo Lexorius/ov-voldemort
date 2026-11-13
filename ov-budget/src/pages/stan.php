@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array(post_str('action'), ['chat
         stan_chat_verlauf_merken(stan_chat_fragen(post_str('frage'), $versionId, stan_chat_verlauf()));
         audit('stan.chat', 'stan', get_int('version'), mb_substr(post_str('frage'), 0, 200));
     } catch (KiException $ex) {
-        flash('error', e($ex->getMessage()));
+        flash('error', $ex->getMessage());
     }
     redirect(url('stan', $zurueck) . '#chat');
 }
@@ -35,13 +35,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         case 'paket':
             [$id, $fehler, $hinweise] = stan_version_aus_zip('paket', post_str('bemerkung'), $user);
             foreach ($fehler as $f) {
-                flash('error', e($f));
+                flash('error', $f);
             }
             if ($id) {
                 $v = stan_version_find($id);
-                flash('success', e(sprintf('%s eingespielt – %d Datei(en).', stan_version_text($v ?? ['nummer' => 0]), count(stan_dateien($id)))));
+                flash('success', sprintf('%s eingespielt – %d Datei(en).', stan_version_text($v ?? ['nummer' => 0]), count(stan_dateien($id))));
                 foreach ($hinweise as $h) {
-                    flash('warn', e($h));
+                    flash('warn', $h);
                 }
             }
             break;
@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 flash('success', sprintf('%d Datei(en) zu %s nachgereicht.', $n, stan_version_text($v)));
             }
             foreach ($fehler as $f) {
-                flash('error', e($f));
+                flash('error', $f);
             }
             break;
 
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($d) {
                 stan_datei_loeschen($d);
                 audit('stan.datei_geloescht', 'stan', (int)$d['version_id'], (string)$d['pfad']);
-                flash('success', '„' . e((string)$d['name']) . '" entfernt.');
+                flash('success', '„' . (string)$d['name'] . '" entfernt.');
             }
             break;
 
@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $v = stan_version_find(post_int('version_id'));
             if ($v) {
                 stan_version_loeschen($v);
-                flash('success', e(stan_version_text($v)) . ' samt Dateien entfernt.');
+                flash('success', stan_version_text($v) . ' samt Dateien entfernt.');
             }
             break;
     }

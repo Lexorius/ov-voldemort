@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             divera_termin_nach_speichern('veranstaltung', $neu);
         }
         foreach ($traegerErgaenzt as $te) {
-            flash('info', e(sprintf('%s mit eingeplant – trägt %s.', $te['bezeichnung'], $te['wegen'])));
+            flash('info', sprintf('%s mit eingeplant – trägt %s.', $te['bezeichnung'], $te['wegen']));
         }
         // Doppelbuchung? Dann warnen, aber speichern
         $gespeichert = event_find($neu);
@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($gespeichert && $gewaehlteFahrzeuge) {
             $konflikte = kalender_fahrzeug_konflikte($gewaehlteFahrzeuge, (string)$gespeichert['beginn'], (string)($gespeichert['ende'] ?: $gespeichert['beginn']), 0, $neu);
             if ($konflikte) {
-                flash('warn', e(kalender_konflikt_text($konflikte, db_all('SELECT id, bezeichnung FROM vehicles WHERE is_active = 1'))));
+                flash('warn', kalender_konflikt_text($konflikte, db_all('SELECT id, bezeichnung FROM vehicles WHERE is_active = 1')));
             }
         }
         redirect_route('event', ['id' => $neu]);

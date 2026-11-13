@@ -150,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } catch (Throwable $ex) {
                 error_log('Kontakt-Import fehlgeschlagen: ' . $ex->getMessage());
                 flash('error', 'Der Import ist fehlgeschlagen, es wurde nichts gespeichert. '
-                    . e(app_config('debug', false) ? $ex->getMessage() : 'Details stehen im Protokoll.'));
+                    . (app_config('debug', false) ? $ex->getMessage() : 'Details stehen im Protokoll.'));
                 redirect_route('contacts_import');
             }
 

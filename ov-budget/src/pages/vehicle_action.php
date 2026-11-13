@@ -58,7 +58,7 @@ switch (post_str('action')) {
                 ? 'QR-Code erzeugt und beim Connector angemeldet.'
                 : 'QR-Code zurückgezogen.');
         } catch (Throwable $ex) {
-            flash('warn', 'Gespeichert, aber der Connector war nicht erreichbar: ' . e($ex->getMessage()));
+            flash('warn', 'Gespeichert, aber der Connector war nicht erreichbar: ' . $ex->getMessage());
         }
         audit('fahrzeug.qr', 'vehicle', (int)$vehicle['id'], $neuerToken !== '' ? 'erzeugt' : 'zurückgezogen');
         break;
@@ -80,7 +80,7 @@ switch (post_str('action')) {
         $genau = is_numeric(post_str('genauigkeit')) ? (float)post_str('genauigkeit') : null;
         $fehler = vehicle_position_set($vehicle, (float)$lat, (float)$lng, $genau, $user);
         if ($fehler !== null) {
-            flash('error', e($fehler));
+            flash('error', $fehler);
             break;
         }
         flash('success', 'Standort übernommen und im Journal vermerkt.');
@@ -92,8 +92,8 @@ switch (post_str('action')) {
         if ($vehicle) {
             $jetzt = vehicle_favorite_toggle((int)$user['id'], (int)$vehicle['id']);
             flash('success', $jetzt
-                ? e($vehicle['bezeichnung']) . ' steht jetzt oben in deiner Liste.'
-                : e($vehicle['bezeichnung']) . ' ist nicht mehr angeheftet.');
+                ? $vehicle['bezeichnung'] . ' steht jetzt oben in deiner Liste.'
+                : $vehicle['bezeichnung'] . ' ist nicht mehr angeheftet.');
         }
         $zurueck = post_str('zurueck') === 'fahrzeug' && $vehicle
             ? url('vehicle', ['id' => $vehicle['id']])
@@ -144,7 +144,7 @@ switch (post_str('action')) {
         $art = in_array(post_str('art'), ['bild', 'dokument', 'auto'], true) ? post_str('art') : 'auto';
         [$n, $fehler] = vfile_store_uploads((int)$vehicle['id'], $orderId, 'dateien', $art, post_str('titel'), $user);
         foreach ($fehler as $f) {
-            flash('warn', e($f));
+            flash('warn', $f);
         }
         if ($n > 0) {
             flash('success', sprintf('%d Datei(en) gespeichert.', $n));
@@ -214,7 +214,7 @@ switch (post_str('action')) {
             'ok' => 'success',
             'wartet', 'aus' => 'warn',
             default => 'error',
-        }, e($res['message']));
+        }, $res['message']);
         break;
 
     case 'stein_test':
@@ -229,12 +229,12 @@ switch (post_str('action')) {
             $mail = trim((string)($info['email'] ?? ''));
             flash('success', sprintf(
                 'Verbindung steht. Der Schlüssel gehört zu %s%s%s.',
-                e($wer),
-                $mail !== '' ? ' (' . e($mail) . ')' : '',
-                isset($info['scope']) ? ', Bereich ' . e((string)$info['scope']) : ''
+                $wer,
+                $mail !== '' ? ' (' . $mail . ')' : '',
+                isset($info['scope']) ? ', Bereich ' . (string)$info['scope'] : ''
             ));
         } catch (SteinException $ex) {
-            flash('error', e($ex->getMessage()));
+            flash('error', $ex->getMessage());
         }
         break;
 
@@ -256,7 +256,7 @@ switch (post_str('action')) {
         }
         $zurueck = url('admin_divera_fahrzeuge');
         foreach ([divera_vehicles_sync_master(true), divera_vehicles_sync_status(true)] as $res) {
-            flash($res['status'] === 'ok' ? 'success' : ($res['status'] === 'fehler' ? 'error' : 'warn'), e($res['message']));
+            flash($res['status'] === 'ok' ? 'success' : ($res['status'] === 'fehler' ? 'error' : 'warn'), $res['message']);
         }
         break;
 

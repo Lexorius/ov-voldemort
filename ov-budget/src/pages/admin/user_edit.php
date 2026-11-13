@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         totp_abschalten((int)$edit['id']);
         db_exec('DELETE FROM login_attempts WHERE username = ?', [$edit['username']]);
         audit('benutzer.totp_zurueckgesetzt', 'user', (int)$edit['id'], $edit['username']);
-        flash('success', 'Zweiter Faktor zurückgesetzt. ' . e((string)$edit['username'])
+        flash('success', 'Zweiter Faktor zurückgesetzt. ' . (string)$edit['username']
             . ' meldet sich nur mit dem Passwort an und richtet die App im Profil neu ein.');
         redirect_route('admin_user_edit', ['id' => $edit['id']]);
     }
@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             db_exec('DELETE FROM login_attempts WHERE username = ?', [$edit['username']]);
             audit('benutzer.passwort', 'user', (int)$edit['id'], $edit['username']);
             $neuesPasswort = $neu;
-            flash('success', 'Neues Passwort gesetzt: <strong class="mono">' . e($neu)
+            flash_html('success', 'Neues Passwort gesetzt: <strong class="mono">' . e($neu)
                 . '</strong> – bitte sicher weitergeben. Der Benutzer wird zur Änderung aufgefordert.');
         }
     }
@@ -127,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($neuesPasswort !== null) {
-                flash('success', 'Benutzer angelegt. Startpasswort: <strong class="mono">'
+                flash_html('success', 'Benutzer angelegt. Startpasswort: <strong class="mono">'
                     . e($neuesPasswort) . '</strong> – bitte sicher weitergeben.');
             } else {
                 flash('success', 'Benutzer gespeichert.');

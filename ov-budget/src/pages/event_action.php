@@ -105,7 +105,7 @@ switch (post_str('action')) {
             audit('veranstaltung.datei', 'event', (int)$event['id'], sprintf('%d Datei(en)', $anzahl));
         }
         foreach ($fehler as $f) {
-            flash('error', e($f));
+            flash('error', $f);
         }
         $zurueck .= '#dateien';
         break;
@@ -133,7 +133,7 @@ switch (post_str('action')) {
             flash('success', sprintf('%d Veranstaltung(en) und %d Einladung(en) angemeldet.',
                 $res['veranstaltungen'], $res['einladungen']));
         } catch (Throwable $ex) {
-            flash('error', 'Der Connector war nicht erreichbar: ' . e($ex->getMessage()));
+            flash('error', 'Der Connector war nicht erreichbar: ' . $ex->getMessage());
         }
         $zurueck .= '#einladungen';
         break;
@@ -150,7 +150,7 @@ switch (post_str('action')) {
                 $res['geholt'], $res['uebernommen'],
                 $res['fehler'] ? ', ' . $res['fehler'] . ' unbrauchbar' : ''));
         } catch (Throwable $ex) {
-            flash('error', 'Der Connector war nicht erreichbar: ' . e($ex->getMessage()));
+            flash('error', 'Der Connector war nicht erreichbar: ' . $ex->getMessage());
         }
         $zurueck .= '#gaeste';
         break;

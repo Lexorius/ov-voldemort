@@ -55,9 +55,7 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
 <?php endif; ?>
 
 <main class="page">
-  <?php foreach (flash_take() as $f): ?>
-    <div class="alert alert--<?= e($f['type']) ?>"><?= $f['msg'] ?></div>
-  <?php endforeach; ?>
+  <?= flash_ausgabe() ?>
   <?= $__content ?>
 </main>
 

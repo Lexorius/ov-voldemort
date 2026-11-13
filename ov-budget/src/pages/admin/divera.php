@@ -50,16 +50,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 divera_status_sync_form($form);
                 audit('divera.import', 'divera_form', (int)$form['id'],
                     sprintf('%d neu, %d übersprungen, %d Fehler', $res['created'], $res['skipped'], $res['failed']));
-                flash(
+                flash_html(
                     $res['failed'] > 0 ? 'warn' : 'success',
                     sprintf(
                         'Import "%s": %d Eintrag/Einträge geprüft – <strong>%d neue %s</strong>, %d bereits vorhanden, %d fehlerhaft.',
                         e($form['name']),
-                        $res['total'],
-                        $res['created'],
-                        divera_ziel_mehrzahl(divera_ziel($form)),
-                        $res['skipped'],
-                        $res['failed']
+                        (int)$res['total'],
+                        (int)$res['created'],
+                        e(divera_ziel_mehrzahl(divera_ziel($form))),
+                        (int)$res['skipped'],
+                        (int)$res['failed']
                     )
                 );
                 redirect_route('admin_divera');

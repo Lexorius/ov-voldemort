@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // redirect beendet
         case 'delete':
             bestellung_delete($b, $user);
-            flash('success', 'Bestellung ' . e((string)$b['nummer']) . ' gelöscht.');
+            flash('success', 'Bestellung ' . (string)$b['nummer'] . ' gelöscht.');
             redirect_route('bestellungen');
     }
 }

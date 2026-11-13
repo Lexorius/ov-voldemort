@@ -20,7 +20,7 @@ $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (post_str('action') === 'loeschen' && $absender) {
         $f = getraenke_absender_delete($absender);
-        flash($f === null ? 'success' : 'error', $f === null ? 'Absender gelöscht.' : e($f));
+        flash($f === null ? 'success' : 'error', $f === null ? 'Absender gelöscht.' : $f);
         redirect(url('getraenke') . '#absender');
     }
     [$neu, $errors] = getraenke_absender_save_from_post($absender);

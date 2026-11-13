@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($_FILES['belege']['name'][0])) {
             [$n, $fehler] = vfile_store_uploads((int)$vehicle['id'], null, 'belege', 'auto', 'Tankbeleg ' . de_date(post_date('datum')), $user, $neu);
             foreach ($fehler as $f) {
-                flash('warn', e($f));
+                flash('warn', $f);
             }
             if ($n > 0) {
                 flash('success', sprintf('%d Beleg(e) an die Tankung gehängt.', $n));

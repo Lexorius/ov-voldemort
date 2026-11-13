@@ -91,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     foreach ($r['abgelehnt'] as $grund => $anzahl) {
                         $gruende[] = $anzahl . '× ' . $grund;
                     }
-                    flash('warn', e('Nicht übernommen: ' . implode('; ', $gruende) . '. Zum Beispiel ' . implode(' · ', $r['beispiele'])));
+                    flash('warn', 'Nicht übernommen: ' . implode('; ', $gruende) . '. Zum Beispiel ' . implode(' · ', $r['beispiele']));
                 }
                 if ($r['rest'] > 0) {
                     flash('warn', sprintf('%d weitere passen nicht in einen Durchgang (höchstens %d) – das Paket noch einmal holen und weniger Ordner wählen.',
@@ -108,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
         }
     } catch (KartenGithubException $ex) {
-        flash('error', e($ex->getMessage()));
+        flash('error', $ex->getMessage());
     }
     redirect_route('karten_github');
 }

@@ -64,7 +64,7 @@ switch ($aktion) {
                 $antwort(['ok' => false, 'fehler' => $grund], 400);
             }
             audit('stan.nachgereicht', 'stan', (int)$v['id'], $datei['name']);
-            flash('success', '„' . e($datei['name']) . '" zu ' . e(stan_version_text($v)) . ' nachgereicht.');
+            flash('success', '„' . $datei['name'] . '" zu ' . stan_version_text($v) . ' nachgereicht.');
             $antwort(['ok' => true, 'redirect' => url('stan', ['version' => (int)$v['id']]) . '#dateien']);
         }
         [$neu, $fehler, $hinweise] = stan_version_aus_datei($datei['pfad'], $datei['name'], $datei['size'], post_str('bemerkung'), $user);
@@ -73,9 +73,9 @@ switch ($aktion) {
             $antwort(['ok' => false, 'fehler' => implode(' ', $fehler)], 400);
         }
         $v = stan_version_find($neu);
-        flash('success', e(sprintf('%s eingespielt – %d Datei(en).', stan_version_text($v ?? ['nummer' => 0]), count(stan_dateien($neu)))));
+        flash('success', sprintf('%s eingespielt – %d Datei(en).', stan_version_text($v ?? ['nummer' => 0]), count(stan_dateien($neu))));
         foreach ($hinweise as $h) {
-            flash('warn', e($h));
+            flash('warn', $h);
         }
         $antwort(['ok' => true, 'redirect' => url('stan', ['version' => $neu])]);
 

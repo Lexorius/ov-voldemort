@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($_FILES['fotos']['name'][0])) {
             [$n, $fehler] = vfile_store_uploads((int)$vehicle['id'], $neu, 'fotos', 'bild', '', $user);
             foreach ($fehler as $f) {
-                flash('warn', e($f));
+                flash('warn', $f);
             }
             if ($n > 0) {
                 flash('success', sprintf('%d Foto(s) an den Auftrag gehängt.', $n));

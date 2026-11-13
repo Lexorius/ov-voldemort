@@ -34,9 +34,9 @@ switch (post_str('action')) {
         [$id, $fehler] = reading_add($meter, post_dec('stand'), $datum . ' ' . $zeit . ':00', 'manuell',
             (string)($user['display_name'] ?: $user['username']), post_str('notiz'), $user, post_bool('ruecklauf') === 1);
         if ($fehler !== null) {
-            flash('error', e($fehler));
+            flash('error', $fehler);
         } else {
-            flash('success', 'Stand eingetragen: ' . e(menge(post_dec('stand'), (string)$meter['einheit'], 3)) . '.');
+            flash('success', 'Stand eingetragen: ' . menge(post_dec('stand'), (string)$meter['einheit'], 3) . '.');
         }
         if (post_str('zurueck') === 'uebersicht') {
             $zurueck = url('verbrauch');
@@ -59,7 +59,7 @@ switch (post_str('action')) {
             break;
         }
         $r = meter_ha_lesen($meter, $user);
-        flash($r['ok'] ? 'success' : 'error', e($r['text']));
+        flash($r['ok'] ? 'success' : 'error', $r['text']);
         break;
 
     /* ---------- QR-Code über den Connector ---------- */
@@ -93,7 +93,7 @@ switch (post_str('action')) {
             }
             flash('success', $erzeugen ? 'QR-Code erzeugt und beim Connector angemeldet.' : 'QR-Code zurückgezogen.');
         } catch (Throwable $ex) {
-            flash('warn', 'Gespeichert, aber der Connector war nicht erreichbar: ' . e($ex->getMessage()));
+            flash('warn', 'Gespeichert, aber der Connector war nicht erreichbar: ' . $ex->getMessage());
         }
         $zurueck .= '#qr';
         break;
@@ -108,7 +108,7 @@ switch (post_str('action')) {
             flash('success', sprintf('%d Meldung(en) geholt, %d übernommen%s.',
                 $res['geholt'], $res['uebernommen'], $res['fehler'] ? ', ' . $res['fehler'] . ' unbrauchbar' : ''));
         } catch (Throwable $ex) {
-            flash('error', 'Der Connector war nicht erreichbar: ' . e($ex->getMessage()));
+            flash('error', 'Der Connector war nicht erreichbar: ' . $ex->getMessage());
         }
         break;
 

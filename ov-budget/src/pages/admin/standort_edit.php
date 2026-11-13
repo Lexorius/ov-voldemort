@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (post_str('action') === 'bild_upload' && $s) {
         [$n, $fehler] = standort_bilder_speichern((int)$s['id'], 'bilder', post_str('titel'), $user);
         foreach ($fehler as $f) {
-            flash('warn', e($f));
+            flash('warn', $f);
         }
         if ($n > 0) {
             flash('success', sprintf('%d Bild(er) gespeichert.', $n));

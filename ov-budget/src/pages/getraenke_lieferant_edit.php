@@ -20,7 +20,7 @@ $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (post_str('action') === 'loeschen' && $lieferant) {
         $f = getraenke_lieferant_delete($lieferant);
-        flash($f === null ? 'success' : 'error', $f === null ? 'Lieferant gelöscht.' : e($f));
+        flash($f === null ? 'success' : 'error', $f === null ? 'Lieferant gelöscht.' : $f);
         redirect(url('getraenke') . '#lieferanten');
     }
     [$neu, $errors] = getraenke_lieferant_save_from_post($lieferant);

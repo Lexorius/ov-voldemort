@@ -64,7 +64,7 @@ switch (post_str('action')) {
             }
             flash('success', $erzeugen ? 'QR-Code erzeugt und beim Connector angemeldet.' : 'QR-Code zurückgezogen.');
         } catch (Throwable $ex) {
-            flash('warn', 'Gespeichert, aber der Connector war nicht erreichbar: ' . e($ex->getMessage()));
+            flash('warn', 'Gespeichert, aber der Connector war nicht erreichbar: ' . $ex->getMessage());
         }
         $zurueck = url('getraenke_lager', ['standort_id' => (int)$standort['id']]) . '#qr';
         break;
@@ -75,7 +75,7 @@ switch (post_str('action')) {
             flash('success', sprintf('%d Meldung(en) geholt, %d übernommen%s.', $res['geholt'], $res['uebernommen'],
                 $res['fehler'] ? ', ' . $res['fehler'] . ' unbrauchbar' : ''));
         } catch (Throwable $ex) {
-            flash('error', 'Der Connector war nicht erreichbar: ' . e($ex->getMessage()));
+            flash('error', 'Der Connector war nicht erreichbar: ' . $ex->getMessage());
         }
         break;
 
@@ -99,7 +99,7 @@ switch (post_str('action')) {
                 break;
             }
             $r = getraenke_bestellung_senden($b, $user, post_str('mail_betreff'), post_str('mail_text'));
-            flash($r['ok'] ? 'success' : 'error', e($r['text']));
+            flash($r['ok'] ? 'success' : 'error', $r['text']);
             if (!$r['ok'] && trim(post_str('mail_text')) !== '') {
                 // Den bearbeiteten Text nicht verlieren
                 getraenke_bestellung_mail_speichern($b, post_str('mail_betreff'), post_str('mail_text'));
@@ -119,7 +119,7 @@ switch (post_str('action')) {
                 $geliefert[(int)$gid] = (int)$n;
             }
             $r = getraenke_bestellung_liefern($b, $geliefert, post_int('standort_id'), $user);
-            flash($r['ok'] ? 'success' : 'error', e($r['text']));
+            flash($r['ok'] ? 'success' : 'error', $r['text']);
         } elseif ($aktion === 'abrechnen') {
             if (!can('manage_budget')) {
                 flash('error', 'Ausgaben im Budget legt nur die Leitung an.');
@@ -127,10 +127,10 @@ switch (post_str('action')) {
             }
             $r = getraenke_bestellung_abrechnen($b, post_dec('betrag'), post_str('datum'), post_int('kategorie_id'),
                 post_str('beleg_nr'), post_date('bezahlt_am'), $user);
-            flash($r['ok'] ? 'success' : 'error', e($r['text']));
+            flash($r['ok'] ? 'success' : 'error', $r['text']);
         } else {
             $f = getraenke_bestellung_delete($b);
-            flash($f === null ? 'success' : 'error', $f === null ? 'Bestellung gelöscht.' : e($f));
+            flash($f === null ? 'success' : 'error', $f === null ? 'Bestellung gelöscht.' : $f);
             if ($f === null) {
                 $zurueck = url('getraenke') . '#bestellungen';
             }

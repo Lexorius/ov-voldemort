@@ -427,7 +427,7 @@ function divera_termin_nach_speichern(string $typ, int $refId): void
     }
     unset($opt['an']);
     $r = divera_termin_speichern($typ, $refId, $opt);
-    flash($r['ok'] ? 'success' : 'warn', $r['ok'] ? 'Divera: ' . e($r['meldung']) . '.' : 'Divera hat den Termin nicht angenommen: ' . e($r['meldung']) . ' Der Abruf versucht es weiter.');
+    flash($r['ok'] ? 'success' : 'warn', $r['ok'] ? 'Divera: ' . $r['meldung'] . '.' : 'Divera hat den Termin nicht angenommen: ' . $r['meldung'] . ' Der Abruf versucht es weiter.');
 }
 
 /* ==================================================================== */

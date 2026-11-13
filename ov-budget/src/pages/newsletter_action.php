@@ -32,7 +32,7 @@ if ($aktion === 'abmeldungen') {
         $r = connector_newsletter_sync();
         flash('success', sprintf('%d Abmeldung(en) geholt, %d neu gesperrt.', $r['geholt'], $r['gesperrt']));
     } catch (Throwable $ex) {
-        flash('error', 'Der Connector war nicht erreichbar: ' . e($ex->getMessage()));
+        flash('error', 'Der Connector war nicht erreichbar: ' . $ex->getMessage());
     }
     redirect_route('newsletter_sperre');
 }
@@ -63,7 +63,7 @@ switch ($aktion) {
             break;
         }
         $r = newsletter_planen($n, $aktion === 'sofort' ? null : post_str('senden_am'), $user);
-        flash($r['ok'] ? 'success' : 'error', e($r['text']));
+        flash($r['ok'] ? 'success' : 'error', $r['text']);
         break;
 
     case 'abbrechen':
@@ -73,12 +73,12 @@ switch ($aktion) {
 
     case 'probe':
         $r = newsletter_probe($n, (string)($user['email'] ?? ''), $user);
-        flash($r['ok'] ? 'success' : 'error', e($r['text']));
+        flash($r['ok'] ? 'success' : 'error', $r['text']);
         break;
 
     case 'loeschen':
         $f = newsletter_delete($n);
-        flash($f === null ? 'success' : 'error', $f === null ? 'Newsletter gelöscht.' : e($f));
+        flash($f === null ? 'success' : 'error', $f === null ? 'Newsletter gelöscht.' : $f);
         if ($f === null) {
             $zurueck = url('newsletter');
         }

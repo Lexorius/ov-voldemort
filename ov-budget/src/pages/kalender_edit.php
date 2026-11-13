@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
             divera_termin_nach_speichern('termin', $neu);
         }
         foreach ($traegerErgaenzt as $te) {
-            flash('info', e(sprintf('%s mit eingeplant – trägt %s.', $te['bezeichnung'], $te['wegen'])));
+            flash('info', sprintf('%s mit eingeplant – trägt %s.', $te['bezeichnung'], $te['wegen']));
         }
         // Mitgeschickte Dateien gleich anhängen – auch beim Anlegen
         if (kalender_dateien_mitgeschickt('dateien')) {
@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
                 audit('termin.datei', 'calendar', $neu, sprintf('%d Datei(en)', $anzahl));
             }
             foreach ($dateiFehler as $f) {
-                flash('error', e($f));
+                flash('error', $f);
             }
         }
         // Doppelbuchung? Dann warnen, aber speichern
@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
         if ($gespeichert && $gewaehlteFahrzeuge) {
             $konflikte = kalender_fahrzeug_konflikte($gewaehlteFahrzeuge, (string)$gespeichert['beginn'], (string)($gespeichert['ende'] ?: $gespeichert['beginn']), $neu);
             if ($konflikte) {
-                flash('warn', e(kalender_konflikt_text($konflikte, db_all('SELECT id, bezeichnung FROM vehicles WHERE is_active = 1'))));
+                flash('warn', kalender_konflikt_text($konflikte, db_all('SELECT id, bezeichnung FROM vehicles WHERE is_active = 1')));
             }
         }
         redirect_route('kalender_termin', ['id' => $neu]);

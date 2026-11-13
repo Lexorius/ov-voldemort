@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('success', sprintf('An %d Connector(en) übertragen.', $res['gesendet']));
         }
         foreach ($res['fehler'] as $name => $grund) {
-            flash('warn', 'Connector „' . e((string)$name) . '" nicht erreichbar: ' . e($grund) . ' – wird beim nächsten Abruf nachgeholt.');
+            flash('warn', 'Connector „' . (string)$name . '" nicht erreichbar: ' . $grund . ' – wird beim nächsten Abruf nachgeholt.');
         }
     }
     redirect_route('admin_settings', ['group' => $group]);

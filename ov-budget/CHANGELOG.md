@@ -1,5 +1,24 @@
 # Änderungsverlauf
 
+## 2.1.84.1
+
+- **Sicherheit – Meldungen:** Die farbigen Meldungen oben auf der Seite
+  („… entfernt", „… gelöscht", „… verschoben") gaben Namen ungeprüft als
+  HTML aus. Wer ein Dokument, eine Kategorie, einen Beleg, eine Karte, einen
+  Platz, eine Dienststelle, ein Postfach, ein Getränk, einen Budgettopf oder
+  einen Kontakt etwa `<img src=x onerror=…>` nannte, konnte damit ein Skript
+  in der Sitzung dessen ausführen, der den Eintrag später löschte, verschob
+  oder umschaltete – in der Ablage oft die Leitung. Jetzt maskiert die
+  Ausgabe jede Meldung; Namen erscheinen als das, was eingegeben wurde.
+  Auch Fehlertexte von Uploads (mit Dateinamen) sind damit abgedeckt.
+- Für Entwickler: `flash()` nimmt reinen Text und wird bei der Ausgabe
+  maskiert – kein `e()` mehr davor. Für die wenigen Meldungen mit gewolltem
+  HTML (Link zur Aufgabe, hervorgehobenes Startpasswort, Divera-Import) gibt
+  es `flash_html()`; dort steht jede Variable in `e()` oder hinter `(int)`.
+- Neuer Test `t_flash.php`: prüft die Ausgabe und jeden Aufruf im Quelltext –
+  `e()` oder HTML in `flash()` fällt ebenso auf wie eine unmaskierte Variable
+  in `flash_html()`.
+
 ## 2.1.84.0
 
 - **Karten – Symbole von GitHub holen:** Unter *Symbole → Von GitHub
