@@ -912,6 +912,16 @@ pre.raw {
   .lagekarte__koerper { grid-template-columns: 1fr; }
   .lagekarte__seite { max-height: none; }
 }
+/* Vollbild: Karte und Leiste füllen den Bildschirm – echt (:fullscreen) oder als Ersatz per Klasse über der Seite */
+.lagekarte__koerper:fullscreen, .lagekarte__koerper.is-vollbild { background: var(--bg); padding: .5rem; height: 100vh; height: 100dvh; box-sizing: border-box; overflow: hidden; }
+.lagekarte__koerper.is-vollbild { position: fixed; inset: 0; z-index: 60; }
+.lagekarte__koerper:fullscreen .lagekarte__flaeche, .lagekarte__koerper.is-vollbild .lagekarte__flaeche { height: calc(100vh - 1rem); height: calc(100dvh - 1rem); }
+.lagekarte__koerper:fullscreen .lagekarte__seite, .lagekarte__koerper.is-vollbild .lagekarte__seite { max-height: calc(100vh - 1rem); max-height: calc(100dvh - 1rem); }
+@media (max-width: 900px) {
+  .lagekarte__koerper:fullscreen, .lagekarte__koerper.is-vollbild { overflow-y: auto; }
+  .lagekarte__koerper:fullscreen .lagekarte__flaeche, .lagekarte__koerper.is-vollbild .lagekarte__flaeche { height: 60vh; height: 60dvh; }
+}
+.lagekarte__knoepfe button[aria-pressed="true"] { background: var(--accent); color: #fff; }
 .lagekarte__gesamt { padding: .5rem .6rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); }
 .lagekarte__gesamt-kopf { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-mute); }
 .lagekarte__gesamt-zahl { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }

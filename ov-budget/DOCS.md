@@ -1254,6 +1254,12 @@ sich eigene Symbole setzen lassen – das Gelände der Unterkunft, ein
   springt zur Einheit auf der Karte. Am Handy steht die Leiste unter der
   Karte. Die Fahrzeuge zählen nicht zur Stärke – sie sind Fahrzeuge, keine
   Einheiten.
+* **Vollbild** – „⛶ Vollbild" über der Karte oder der Knopf ⛶ am Kartenrand
+  legt Karte und Stärke-Leiste auf den ganzen Bildschirm, etwa für den
+  Monitor im Führungsraum; eingeblendete Fahrzeuge erneuern sich dort
+  weiter. Esc oder derselbe Knopf beendet es. Hat der Browser keine
+  Vollbild-Schnittstelle (etwa am iPhone), legt sich die Ansicht über die
+  Seite.
 * **Symbole** – die Bibliothek gilt für alle Karten. Hochladen lassen sich
   **SVG** (bleibt in jeder Größe scharf) und Bilder (PNG, JPG, WebP, GIF;
   sie werden auf 1024 Pixel begrenzt), mehrere auf einmal, mit Gruppe und

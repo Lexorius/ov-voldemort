@@ -300,6 +300,7 @@ $check('Karte: neben der Karte die Gesamtstärke – schon ohne Skript', str_con
 $nurSehen = $seite(['setzen' => false, 'verwalten' => false, 'fahrzeuge' => false]);
 $check('Karte nur ansehen: nichts zum Setzen, Merken oder Fahrzeuge – die Stärke steht trotzdem', str_contains($nurSehen, 'data-karte-flaeche') && !str_contains($nurSehen, 'data-karte-fahrzeuge') && !str_contains($nurSehen, 'data-karte-merken')
     && !str_contains($nurSehen, 'data-karte-setzen') && !str_contains($nurSehen, 'p=karte_edit') && !str_contains($nurSehen, 'Rechtsklick') && str_contains($nurSehen, 'Gesamtstärke'));
+$check('Karte: Vollbild-Knopf für alle, die die Karte sehen', str_contains($alles, 'data-karte-vollbild') && str_contains($nurSehen, 'data-karte-vollbild'));
 $boeseKarte = ['name' => '"><script>alert(1)</script>', 'beschreibung' => '</script>'] + $karte;
 $boeseMarker = [['beschriftung' => '"><img src=x onerror=alert(1)>'] + $marker[0]];
 $html = render_partial('karte', ['title' => 'x', 'karte' => $boeseKarte, 'konfig' => karten_konfig($boeseKarte, $boeseMarker, $symbole, [], [['id' => 1, 'name' => '<script>alert(2)</script>']]), 'symbole' => $symbole,
@@ -354,6 +355,8 @@ $check('Schnittstelle: Schreiben nur per POST (dort prüft die Anwendung die Sch
 $js = $lies('public/assets/js/karte.js');
 $check('Skript: Rechtsklick, Schutzmarke, Herkunft für die Kacheln, keine fremde Bibliothek', str_contains($js, "addEventListener('contextmenu'") && str_contains($js, "fd.append('_csrf', K.csrf)")
     && str_contains($js, "referrerPolicy = 'strict-origin-when-cross-origin'") && !preg_match('/\b(L\.map|leaflet|ol\.Map)\b/i', $js));
+$check('Skript: Vollbild über die Schnittstelle des Browsers, sonst über der Seite; Esc beendet', str_contains($js, "requestFullscreen({ navigationUI: 'hide' })") && str_contains($js, "classList.add('is-vollbild')")
+    && str_contains($js, "addEventListener('fullscreenchange'") && str_contains($js, "classList.remove('is-vollbild'); vollbildAnzeigen(); }"));
 $check('Skript: Seitenleiste mit Gesamtstärke, Abschnitten und Einheiten; Einheit ohne Stelle bleibt unsichtbar', str_contains($js, 'function seiteZeichnen()') && str_contains($js, "'+ Abschnitt'") && str_contains($js, "'+ Einheit'")
     && str_contains($js, "action: 'abschnitt_neu'") && str_contains($js, "action: 'abschnitt_aendern'") && str_contains($js, "action: 'abschnitt_weg'") && str_contains($js, 'm.el.hidden = ohneOrt(m)')
     && str_contains($js, "if (!ohneOrt(m)) { setzen(m.el, m.d, e); }") && str_contains($js, "spaeterSpeichern(m, 'staerke', stEingabe.value)") && str_contains($js, 'window.confirm('));

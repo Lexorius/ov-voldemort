@@ -16,6 +16,11 @@
   Beschriftung, Größe und Drehung jetzt auch Stärke, Abschnitt und das
   Symbol selbst. Am Handy steht die Leiste unter der Karte. Wer Symbole
   setzen darf, pflegt auch Stärke und Abschnitte.
+- **Karten – Vollbild:** „⛶ Vollbild" über der Karte (und der Knopf ⛶ am
+  Kartenrand) legt Karte und Stärke-Leiste auf den ganzen Bildschirm – für
+  den Monitor im Führungsraum. Esc oder derselbe Knopf beendet es. Browser
+  ohne Vollbild-Schnittstelle (etwa am iPhone) bekommen die Ansicht über
+  der Seite.
 
 ## 2.1.86.1
 

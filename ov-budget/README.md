@@ -191,6 +191,8 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 - **Stärke je Einheit** (Führer/Unterführer/Helfer) und **Gesamtstärke
   neben der Karte**; **Abschnitte** mit Teilstärke, in denen sich Einheiten
   anlegen, ändern und löschen lassen – auch ohne Stelle auf der Karte
+- **Vollbild** für den Monitor im Führungsraum: Karte und Stärke auf dem
+  ganzen Bildschirm
 - **Symbolbibliothek** für SVG und Bilder, nach Gruppen; SVG wird beim
   Hochladen auf Skript und Verweise nach außen geprüft
 - **Fahrzeuge einblendbar** an ihrer zuletzt gemeldeten Position; die

@@ -26,8 +26,9 @@ $json = (string)json_encode($konfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLA
       <?php endif; ?>
       <span class="small muted" data-karte-fahrzeuge-stand aria-live="polite"></span>
     <?php endif; ?>
+    <button class="btn btn--sec btn--sm lagekarte__rechts" type="button" data-karte-vollbild title="Karte und Stärke auf den ganzen Bildschirm – etwa für den Monitor im Führungsraum; Esc beendet">⛶ Vollbild</button>
     <?php if ($darf['verwalten']): ?>
-      <button class="btn btn--sec btn--sm lagekarte__rechts" type="button" data-karte-merken title="Die Karte öffnet künftig mit dem Ausschnitt, der jetzt zu sehen ist">Ausschnitt merken</button>
+      <button class="btn btn--sec btn--sm" type="button" data-karte-merken title="Die Karte öffnet künftig mit dem Ausschnitt, der jetzt zu sehen ist">Ausschnitt merken</button>
     <?php endif; ?>
   </div>
   <div class="lagekarte__koerper">
@@ -58,6 +59,7 @@ $json = (string)json_encode($konfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLA
       Ein Fahrzeug, das sich <?= (int)karten_fahrzeug_hand_minuten() ?> Minuten nicht per GPS (Divera, QR-Code) gemeldet hat, lässt sich <strong>ziehen</strong> –
       die Position wird am Fahrzeug gespeichert. „+ Fahrzeug" setzt eines, das noch gar keine Position hat.
     <?php endif; ?>
+    „Vollbild" legt Karte und Stärke auf den ganzen Bildschirm, Esc oder der Knopf ⛶ beendet es.
     Die Kartenkacheln lädt der Browser direkt vom Kartendienst.
   </p>
 </div>

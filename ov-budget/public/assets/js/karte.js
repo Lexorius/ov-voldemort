@@ -8,6 +8,7 @@
  *
  *   ziehen            verschieben          Mausrad, +/−, Doppelklick   zoomen
  *   Rechtsklick       Symbol setzen        (am Handy: lange drücken)
+ *   ⛶ / „Vollbild"    Karte und Leiste auf den ganzen Bildschirm (Esc beendet)
  *   Symbol ziehen     versetzen            Symbol anklicken            beschriften, Stärke, Abschnitt, Größe, Drehung, löschen
  *
  * Jedes gesetzte Symbol ist eine Einheit mit Stärke (Führer/Unterführer/Helfer). Neben der
@@ -637,7 +638,11 @@
     menueAuf(p.x, p.y);
   });
   document.addEventListener('keydown', function (ev) {
-    if (ev.key === 'Escape') { menueZu(); tafelZu(); }
+    if (ev.key !== 'Escape') { return; }
+    menueZu();
+    tafelZu();
+    // das echte Vollbild beendet der Browser selbst; die Ersatzlösung hier
+    if (koerper.classList.contains('is-vollbild')) { koerper.classList.remove('is-vollbild'); vollbildAnzeigen(); }
   });
 
   /* ---------- Verschieben, Zoomen, lange drücken ---------- */
@@ -737,6 +742,53 @@
     menueZu();
     zeichnen();
   });
+
+  /* ---------- Vollbild: Karte samt Leiste auf den ganzen Bildschirm – für den Monitor im Führungsraum ---------- */
+  var koerper = flaeche.parentNode;   // .lagekarte__koerper: Fläche und Leiste nebeneinander
+  var vollbildKnoepfe = [];
+  // Ohne Vollbild-Schnittstelle (etwa iPhone) legt sich der Kasten per Klasse über die Seite
+  function imVollbild() { return document.fullscreenElement === koerper || koerper.classList.contains('is-vollbild'); }
+  var vollbildUhr = null;
+  function vollbildAnzeigen() {
+    window.clearTimeout(vollbildUhr);
+    // echtes Vollbild da: die Ersatzlösung braucht es nicht mehr
+    if (document.fullscreenElement === koerper) { koerper.classList.remove('is-vollbild'); }
+    var an = imVollbild();
+    vollbildKnoepfe.forEach(function (b) {
+      b.setAttribute('aria-pressed', an ? 'true' : 'false');
+      b.title = an ? 'Vollbild beenden (Esc)' : 'Karte und Stärke auf den ganzen Bildschirm – etwa für den Monitor im Führungsraum; Esc beendet';
+    });
+    zeichnen();   // die Fläche hat eine andere Größe
+  }
+  function vollbildUmschalten() {
+    menueZu();
+    tafelZu();
+    if (imVollbild()) {
+      if (document.fullscreenElement && document.exitFullscreen) { document.exitFullscreen(); }
+      koerper.classList.remove('is-vollbild');
+      vollbildAnzeigen();
+      return;
+    }
+    var ersatz = function () { if (!document.fullscreenElement) { koerper.classList.add('is-vollbild'); vollbildAnzeigen(); } };
+    var versprochen = null;
+    try { versprochen = koerper.requestFullscreen ? koerper.requestFullscreen({ navigationUI: 'hide' }) : null; } catch (e) { versprochen = null; }
+    if (versprochen && versprochen.catch) {
+      versprochen.catch(ersatz);
+      // manche Umgebungen antworten gar nicht – dann nach kurzer Zeit die Ersatzlösung
+      window.clearTimeout(vollbildUhr);
+      vollbildUhr = window.setTimeout(ersatz, 700);
+    } else {
+      ersatz();
+    }
+  }
+  document.addEventListener('fullscreenchange', vollbildAnzeigen);
+  vollbildKnoepfe.push(knopf('⛶', 'Vollbild', vollbildUmschalten));
+  var vollbildKnopf = wurzel.querySelector('[data-karte-vollbild]');
+  if (vollbildKnopf) {
+    vollbildKnoepfe.push(vollbildKnopf);
+    vollbildKnopf.addEventListener('click', vollbildUmschalten);
+  }
+  vollbildAnzeigen();
 
   var quelle = flaeche.appendChild(neu('div', 'lagekarte__quelle'));
   quelle.addEventListener('pointerdown', function (ev) { ev.stopPropagation(); });
