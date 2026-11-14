@@ -263,6 +263,15 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 - **Anwesenheit**: teilgenommen, entschuldigt, nicht erschienen
 - Tagesordnung und Protokoll zum Drucken
 
+### Einsätze
+- **Einsatz über einen oder mehrere Tage**: je Tag oder Schicht eine Zeile
+  mit Zeit, Stärke (Führer/Unterführer/Helfer) und Tätigkeit; daraus
+  **Einsatztage, Einsatzstunden und Helferstunden**
+- Einsatznummer mit Vorschlag, Art, Stand (läuft, beendet, abgerechnet,
+  abgeschlossen), Anforderer, Ort, eingesetzte Fahrzeuge
+- **Ausgaben und Einnahmen je Einsatz** aus dem Budget, mit Saldo und dem,
+  was noch aussteht; im Kalender an jedem Einsatztag
+
 ### Veranstaltungen
 - Termin, Ort, Status und Beschreibung; Budgettopf und geplante Kosten
 - **Arten**: Ausbildung, Übung, Helferversammlung, Empfang, Grillabend, Feier,

@@ -41,7 +41,7 @@ fputcsv($out, csv_sicher([
     'Ausgelegt von', 'Weitergegeben am', 'Erstattet am',
     'Stand',
     ...($istEinnahme ? ['Abgerechnet am', 'Abgerechnet Betrag', 'Bescheid am', 'Bescheid Betrag', 'Bescheid Nr.', 'Zugesagt am', 'Zugesagt Betrag'] : []),
-    'Wunsch', 'Erfasst von', 'Erfasst am', 'Notiz',
+    'Wunsch', 'Einsatz', 'Erfasst von', 'Erfasst am', 'Notiz',
 ]), ';');
 $geld = static fn($v) => $v === null || $v === '' ? '' : number_format((float)$v, 2, ',', '');
 
@@ -70,6 +70,7 @@ foreach ($rows as $r) {
         ...($istEinnahme ? [de_date($r['abgerechnet_am'] ?? null), $geld($r['abgerechnet_betrag'] ?? null), de_date($r['gestellt_am'] ?? null),
             $geld($r['gestellt_betrag'] ?? null), (string)($r['gestellt_nr'] ?? ''), de_date($r['zugesagt_am'] ?? null), $geld($r['zugesagt_betrag'] ?? null)] : []),
         $r['wunsch_bezeichnung'],
+        !empty($r['einsatz_titel']) ? einsatz_bezeichnung(['nummer' => $r['einsatz_nummer'] ?? '', 'titel' => $r['einsatz_titel']]) : '',
         $r['erfasser'],
         de_datetime($r['created_at']),
         preg_replace('/\s+/', ' ', (string)$r['notiz']),

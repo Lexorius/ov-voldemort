@@ -254,6 +254,7 @@ $kategorieBlock = static function (array $liste, float $summe, string $art) use 
               <?php else: ?><?= e($b['bezeichnung']) ?><?php endif; ?>
               <?= buchung_status_badge((string)$b['status'], $ein ? 'einnahme' : 'ausgabe') ?>
               <?php if (!empty($b['veranstaltung_titel'])): ?><span class="small muted">· <?= e((string)$b['veranstaltung_titel']) ?></span><?php endif; ?>
+              <?php if (!empty($b['einsatz_titel'])): ?><span class="small muted">· Einsatz <?= e(einsatz_bezeichnung(['nummer' => $b['einsatz_nummer'] ?? '', 'titel' => $b['einsatz_titel']])) ?></span><?php endif; ?>
             </td>
             <td class="small"><?= e($b['kategorie_label'] ?: '–') ?></td>
             <td class="num nowrap" style="<?= $ein ? 'color:var(--ok)' : '' ?>">

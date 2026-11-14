@@ -957,3 +957,13 @@ pre.raw {
                       background: #fff; }
 .symbolraster__bild img { max-width: 100%; max-height: 5rem; }
 .symbolraster__name { font-weight: 600; margin-top: .3rem; overflow-wrap: anywhere; }
+
+/* ---------- Einsätze: Tage und Schichten als Eingabetabelle ---------- */
+table.zeilen td { padding: .3rem .35rem; vertical-align: top; }
+table.zeilen input[type=time] { width: 100%; padding: .65rem .5rem; min-height: 44px; font: inherit; color: var(--ink);
+                                background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; }
+table.zeilen input[type=date] { min-width: 9.5rem; }
+table.zeilen input[type=time] { min-width: 6.5rem; }
+table.zeilen td:nth-child(4) input { min-width: 5.5rem; }
+table.zeilen td:nth-child(5) input { min-width: 14rem; }
+table.zeilen td:last-child { width: 1%; white-space: nowrap; }

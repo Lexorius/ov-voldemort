@@ -25,6 +25,7 @@ const KALENDER_QUELLEN = [
     'termin'        => ['label' => 'Termine', 'color' => '#0369a1'],
     'besprechung'   => ['label' => 'Besprechungen', 'color' => '#7c3aed'],
     'veranstaltung' => ['label' => 'Veranstaltungen', 'color' => '#c2410c'],
+    'einsatz'       => ['label' => 'Einsätze', 'color' => '#be123c'],
     'aufgabe'       => ['label' => 'Aufgaben fällig', 'color' => '#0e7490'],
     'frist'         => ['label' => 'Fristen (HU, SP, UVV, Prüfung, Vertrag)', 'color' => '#b91c1c'],
     'budget'        => ['label' => 'Budget-Stichtag', 'color' => '#15803d'],
@@ -899,6 +900,9 @@ function kalender_quellen_fuer(array $u): array
     if (can('view_events')) {
         $out[] = 'veranstaltung';
     }
+    if (can('view_einsaetze')) {
+        $out[] = 'einsatz';
+    }
     if (can('view_vehicles') || can('view_radios') || can('view_sims')) {
         $out[] = 'frist';
     }
@@ -962,6 +966,19 @@ function kalender_quelle(string $quelle, string $von, string $bis, array $u): ar
             $out[] = kalender_eintrag('veranstaltung', (string)$e['titel'], (string)$e['beginn'], $e['ende'], ['ort' => kalender_ort_text($e), 'id' => $e['id'], 'fahrzeuge' => (string)($e['fahrzeuge_namen'] ?? ''),
                 'url' => url('event', ['id' => $e['id']]), 'farbe' => $e['typ_color'] ?: KALENDER_QUELLEN['veranstaltung']['color'],
                 'untertitel' => (string)($e['typ_label'] ?? ''), 'ganztag' => substr((string)$e['beginn'], 11, 5) === '00:00']);
+        }
+    }
+    if (in_array('einsatz', $quellen, true)) {
+        // Ein Einsatz über mehrere Tage steht an jedem seiner Tage; ohne Uhrzeit am ersten Tag gilt er als ganztägig
+        foreach (db_all("SELECT e.id, e.nummer, e.titel, e.beginn, e.ende, e.ort, e.status, a.color AS art_color, a.label AS art_label,
+                                " . (function_exists('einsatz_fahrzeuge_sub') ? einsatz_fahrzeuge_sub('e') : "''") . " AS fahrzeuge_namen
+                         FROM einsaetze e LEFT JOIN list_items a ON a.id = e.art_id
+                         WHERE e.beginn <= ? AND COALESCE(e.ende, e.beginn) >= ?", [$bis . ' 23:59:59', $von . ' 00:00:00']) as $e) {
+            $out[] = kalender_eintrag('einsatz', (string)$e['titel'], (string)$e['beginn'], $e['ende'], ['ort' => (string)$e['ort'], 'id' => $e['id'],
+                'fahrzeuge' => (string)($e['fahrzeuge_namen'] ?? ''), 'url' => url('einsatz', ['id' => $e['id']]),
+                'farbe' => $e['art_color'] ?: KALENDER_QUELLEN['einsatz']['color'],
+                'untertitel' => implode(' · ', array_filter(['Einsatz', (string)($e['art_label'] ?? ''), (string)$e['nummer']], 'strlen')),
+                'ganztag' => substr((string)$e['beginn'], 11, 5) === '00:00']);
         }
     }
     if (in_array('aufgabe', $quellen, true)) {

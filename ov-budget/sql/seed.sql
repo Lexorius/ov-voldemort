@@ -287,6 +287,15 @@ INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_defa
 ('veranstaltung_typ','Jugendveranstaltung',   'jugend',          '#16a34a',80,0),
 ('veranstaltung_typ','Sonstiges',             'sonstiges',       '#64748b',90,1);
 
+-- ---------- Arten von Einsaetzen ----------
+INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default) VALUES
+('einsatz_art','Einsatz',                         'einsatz',       '#b91c1c',10,1),
+('einsatz_art','Technische Hilfeleistung',        'thl',           '#c2410c',20,0),
+('einsatz_art','Amtshilfe / Anforderung',         'amtshilfe',     '#047857',30,0),
+('einsatz_art','Absicherung / Bereitstellung',    'absicherung',   '#0d9488',40,0),
+('einsatz_art','Fachberatung',                    'fachberatung',  '#0369a1',50,0),
+('einsatz_art','Sonstiges',                       'sonstiges',     '#64748b',90,0);
+
 -- ---------- Status der Talking Points ----------
 INSERT IGNORE INTO list_items (list_key, label, slug, color, sort_order, is_default, is_final) VALUES
 ('tp_status','Offen',         'offen',         '#0284c7',10,1,0),
@@ -465,6 +474,10 @@ INSERT IGNORE INTO settings (skey, svalue, label, hint, stype, sgroup, sort_orde
 ('karten_lage_sekunden','15','Einheiten auf der Karte erneuern alle (Sekunden)','Eine offene Karte holt Einheiten und Abschnitte in diesem Takt neu (5 bis 600) – so erscheint, was jemand an einem anderen Gerät setzt, auch auf dem Monitor im Führungsraum.','number','Karten',56),
 ('karten_fahrzeug_hand_minuten','5','Fahrzeug von Hand setzbar nach (Minuten ohne GPS)','Meldet sich ein Fahrzeug so lange nicht per Divera oder QR-Code, lässt es sich auf der Karte ziehen; die Position steht dann am Fahrzeug. 0 = jederzeit.','number','Karten',57),
 ('karten_kachel_quelle','© OpenStreetMap-Mitwirkende','Quellenangabe auf der Karte','Steht unten rechts auf jeder Karte. OpenStreetMap verlangt die Nennung.','text','Karten',60),
+('einsatz_modul_name','Einsätze','Bezeichnung des Einsatzmoduls','','text','Einsätze',10),
+('einsatz_intro','Einsätze des Ortsverbands: Tage und Schichten mit Stärke, eingesetzte Fahrzeuge, Ausgaben und Einnahmen an einer Stelle.','Einleitungstext im Einsatzmodul','','textarea','Einsätze',20),
+('einsatz_user_darf_sehen','1','Alle Mitglieder duerfen Einsätze sehen','Ausgaben und Einnahmen eines Einsatzes sieht nur, wer auch die Buchungen im Budget sehen darf.','bool','Einsätze',30),
+('einsatz_user_darf_erfassen','0','Alle Mitglieder duerfen Einsätze erfassen','Einsätze anlegen und ändern, Tage und Stärke nachtragen. Löschen darf nur die Leitung.','bool','Einsätze',40),
 ('tankkarte_modul_name','Tankkarten','Bezeichnung des Tankkartenmoduls','','text','Tankkarten',10),
 ('tankkarte_intro','Tank- und Ladekarten des Ortsverbands mit Anbieter, Zuordnung zu Fahrzeugen und Gueltigkeit.','Einleitungstext im Tankkartenmodul','','textarea','Tankkarten',20),
 ('tankkarte_user_darf_sehen','0','Alle Mitglieder duerfen Tankkarten sehen','Die PIN bleibt in jedem Fall der Leitung vorbehalten','bool','Tankkarten',30),

@@ -512,6 +512,8 @@ CREATE TABLE IF NOT EXISTS expenses (
   -- Bezug zu einer Veranstaltung; der Fremdschluessel kommt in der Wanderung,
   -- weil events erst weiter unten angelegt wird
   event_id      INT UNSIGNED  NULL,
+  -- Bezug zu einem Einsatz; auch dieser Fremdschluessel kommt in der Wanderung
+  einsatz_id    INT UNSIGNED  NULL,
   betrag_brutto DECIMAL(12,2) NOT NULL DEFAULT 0,
   mwst_satz     DECIMAL(5,2)  NOT NULL DEFAULT 0.00,
   betrag_netto  DECIMAL(12,2) NOT NULL DEFAULT 0,
@@ -549,6 +551,7 @@ CREATE TABLE IF NOT EXISTS expenses (
   KEY idx_jahr (jahr, art, datum),
   KEY idx_exp_status (jahr, status),
   KEY idx_kat (kategorie_id),
+  KEY idx_exp_einsatz (einsatz_id),
   CONSTRAINT fk_exp_kat  FOREIGN KEY (kategorie_id)  REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_exp_fg   FOREIGN KEY (fachgruppe_id) REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_exp_bud  FOREIGN KEY (budget_id)     REFERENCES budgets(id)    ON DELETE SET NULL,
@@ -2238,6 +2241,65 @@ CREATE TABLE IF NOT EXISTS karten_marker (
   CONSTRAINT fk_kmark_symbol    FOREIGN KEY (symbol_id)    REFERENCES karten_symbole(id)    ON DELETE RESTRICT,
   CONSTRAINT fk_kmark_abschnitt FOREIGN KEY (abschnitt_id) REFERENCES karten_abschnitte(id) ON DELETE SET NULL,
   CONSTRAINT fk_kmark_cb        FOREIGN KEY (created_by)   REFERENCES users(id)             ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- Einsaetze: ein Einsatz geht ueber einen oder mehrere Tage. Jeder Tag (oder jede
+-- Schicht) hat Datum, Zeit, Staerke (Fuehrer / Unterfuehrer / Helfer) und Taetigkeit.
+-- beginn und ende am Einsatz sind daraus abgeleitet (fuer Liste und Kalender).
+-- Ausgaben und Einnahmen haengen ueber expenses.einsatz_id am Einsatz.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS einsaetze (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nummer        VARCHAR(40)  NOT NULL DEFAULT '',
+  titel         VARCHAR(200) NOT NULL,
+  art_id        INT UNSIGNED NULL,
+  status        ENUM('laufend','beendet','abgerechnet','abgeschlossen') NOT NULL DEFAULT 'laufend',
+  anforderer    VARCHAR(200) NOT NULL DEFAULT '',
+  ort           VARCHAR(200) NOT NULL DEFAULT '',
+  beginn        DATETIME     NOT NULL,
+  ende          DATETIME     NULL,
+  jahr          SMALLINT     NOT NULL,
+  fachgruppe_id INT UNSIGNED NULL,
+  beschreibung  TEXT         NULL,
+  notiz         TEXT         NULL,
+  created_by    INT UNSIGNED NULL,
+  updated_by    INT UNSIGNED NULL,
+  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_einsatz_beginn (beginn),
+  KEY idx_einsatz_jahr (jahr, status),
+  KEY idx_einsatz_nummer (nummer),
+  CONSTRAINT fk_einsatz_art FOREIGN KEY (art_id)        REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_einsatz_fg  FOREIGN KEY (fachgruppe_id) REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_einsatz_cb  FOREIGN KEY (created_by)    REFERENCES users(id)      ON DELETE SET NULL,
+  CONSTRAINT fk_einsatz_ub  FOREIGN KEY (updated_by)    REFERENCES users(id)      ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- bis kleiner oder gleich von heisst: die Schicht endet am Folgetag
+CREATE TABLE IF NOT EXISTS einsatz_tage (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  einsatz_id  INT UNSIGNED NOT NULL,
+  datum       DATE         NOT NULL,
+  von         TIME         NULL,
+  bis         TIME         NULL,
+  staerke_f   SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  staerke_u   SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  staerke_h   SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  taetigkeit  VARCHAR(500) NOT NULL DEFAULT '',
+  PRIMARY KEY (id),
+  KEY idx_etag_einsatz (einsatz_id, datum),
+  CONSTRAINT fk_etag_einsatz FOREIGN KEY (einsatz_id) REFERENCES einsaetze(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS einsatz_vehicles (
+  einsatz_id  INT UNSIGNED NOT NULL,
+  vehicle_id  INT UNSIGNED NOT NULL,
+  PRIMARY KEY (einsatz_id, vehicle_id),
+  KEY idx_efz_vehicle (vehicle_id),
+  CONSTRAINT fk_efz_einsatz FOREIGN KEY (einsatz_id) REFERENCES einsaetze(id) ON DELETE CASCADE,
+  CONSTRAINT fk_efz_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)  ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS=1;

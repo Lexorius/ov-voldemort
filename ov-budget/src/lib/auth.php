@@ -141,6 +141,10 @@ function can(string $what, mixed $ctx = null): bool
         'manage_karten'  => $leitung,
         'view_karten'    => $leitung || setting_bool('karten_user_darf_sehen', true),
         'mark_karten'    => $leitung || (setting_bool('karten_user_darf_sehen', true) && setting_bool('karten_user_darf_setzen', false)),
+        // Einsätze: erfassen darf die Leitung oder wem es die Einstellung erlaubt; löschen nur die Leitung
+        'view_einsaetze'   => $leitung || setting_bool('einsatz_user_darf_sehen', true),
+        'manage_einsaetze' => $leitung || (setting_bool('einsatz_user_darf_sehen', true) && setting_bool('einsatz_user_darf_erfassen', false)),
+        'delete_einsaetze' => $leitung,
         'manage_verbrauch' => $leitung,
         'view_verbrauch' => $leitung || setting_bool('verbrauch_user_darf_sehen', false),
         'read_meter'     => $leitung || (setting_bool('verbrauch_user_darf_sehen', false)

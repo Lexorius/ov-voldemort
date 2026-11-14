@@ -17,6 +17,7 @@ const LIST_KEYS = [
     'einladung_status' => 'Status (Einladungen)',
     'besprechung_typ' => 'Besprechungsarten',
     'veranstaltung_typ' => 'Veranstaltungsarten',
+    'einsatz_art'     => 'Einsatzarten',
     'sim_typ'         => 'SIM-Kartenarten',
     'sim_status'      => 'Status (SIM-Karten)',
     'tankkarte_anbieter' => 'Tankkarten-Anbieter',

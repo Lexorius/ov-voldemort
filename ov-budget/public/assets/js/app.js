@@ -533,6 +533,69 @@
     });
   }
 
+  /* Eingabetabelle mit Zeilen (Tage eines Einsatzes): „+ Leere Zeile" hängt eine leere an,
+     „+ Folgetag" die letzte ausgefüllte mit dem nächsten Datum, der Mülleimer nimmt eine heraus */
+  document.querySelectorAll('[data-zeilen]').forEach(function (block) {
+    var rumpf = block.querySelector('[data-zeilen-body]');
+    if (!rumpf) { return; }
+    function zeilen() { return Array.prototype.slice.call(rumpf.querySelectorAll('tr')); }
+    function leeren(zeile) {
+      zeile.querySelectorAll('input, textarea').forEach(function (feld) { feld.value = ''; });
+    }
+    function datumFeld(zeile) { return zeile.querySelector('input[type=date]'); }
+    function folgetag(datum) {
+      var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(datum || '');
+      if (!m) { return ''; }
+      // in UTC rechnen, damit die Zeitumstellung keinen Tag verschluckt
+      return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + 1)).toISOString().slice(0, 10);
+    }
+    function anhaengen(vorlage) {
+      var alle = zeilen();
+      // eine noch leere Zeile am Ende wird benutzt, statt eine weitere anzuhängen
+      var ziel = null;
+      for (var i = 0; i < alle.length; i++) {
+        var leer = Array.prototype.every.call(alle[i].querySelectorAll('input, textarea'), function (f) { return f.value === ''; });
+        if (leer) { ziel = alle[i]; break; }
+      }
+      if (!ziel) {
+        ziel = alle[alle.length - 1].cloneNode(true);
+        leeren(ziel);
+        rumpf.appendChild(ziel);
+      }
+      if (vorlage) {
+        var von = vorlage.querySelectorAll('input, textarea');
+        var nach = ziel.querySelectorAll('input, textarea');
+        for (var k = 0; k < nach.length && k < von.length; k++) { nach[k].value = von[k].value; }
+        datumFeld(ziel).value = folgetag(datumFeld(vorlage).value);
+      }
+      var erstes = ziel.querySelector(vorlage ? 'input[type=time]' : 'input');
+      if (erstes) { erstes.focus(); }
+    }
+    block.querySelectorAll('[data-zeile-neu]').forEach(function (knopf) {
+      knopf.addEventListener('click', function () {
+        var neu = zeilen()[zeilen().length - 1].cloneNode(true);
+        leeren(neu);
+        rumpf.appendChild(neu);
+        var erstes = neu.querySelector('input');
+        if (erstes) { erstes.focus(); }
+      });
+    });
+    block.querySelectorAll('[data-zeile-folgetag]').forEach(function (knopf) {
+      knopf.addEventListener('click', function () {
+        var letzte = null;
+        zeilen().forEach(function (z) { if (datumFeld(z) && datumFeld(z).value !== '') { letzte = z; } });
+        anhaengen(letzte);
+      });
+    });
+    rumpf.addEventListener('click', function (ev) {
+      var knopf = ev.target.closest('[data-zeile-weg]');
+      if (!knopf) { return; }
+      var zeile = knopf.closest('tr');
+      // die letzte Zeile bleibt als Vorlage stehen und wird nur geleert
+      if (zeilen().length > 1) { zeile.remove(); } else { leeren(zeile); }
+    });
+  });
+
   /* Auswahlliste: Dropdown + „Hinzufügen" füllt die Liste, der Mülleimer nimmt wieder heraus */
   document.querySelectorAll('[data-wahl]').forEach(function (wahl) {
     var name = wahl.getAttribute('data-wahl');

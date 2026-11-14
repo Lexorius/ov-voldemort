@@ -190,6 +190,7 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
             <?= badge($r['kategorie_label'] ? ['label' => $r['kategorie_label'], 'color' => $r['kategorie_color']] : null, 'ohne Kategorie') ?>
             <?php if ($r['fachgruppe_label']): ?><span class="badge badge--outline"><?= e($r['fachgruppe_label']) ?></span><?php endif; ?>
             <?php if ($r['budget_name']): ?><span class="badge badge--outline"><?= e($r['budget_name']) ?></span><?php endif; ?>
+            <?php if (!empty($r['einsatz_titel'])): ?><span class="badge badge--outline">Einsatz <?= e(mb_substr(einsatz_bezeichnung(['nummer' => $r['einsatz_nummer'] ?? '', 'titel' => $r['einsatz_titel']]), 0, 40)) ?></span><?php endif; ?>
             <?= auslage_badge($r) ?>
             <?php if (!empty($belege[(int)$r['id']])): ?><span class="badge badge--outline" title="Belege">📎 <?= count($belege[(int)$r['id']]) ?></span><?php endif; ?>
           </div>
@@ -224,6 +225,9 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
               <?php if (!empty($r['bestellung_nummer'])): ?><div class="small muted">Bestellung <span class="mono"><?= e((string)$r['bestellung_nummer']) ?></span></div><?php endif; ?>
               <?php if (!empty($r['veranstaltung_titel'])): ?>
                 <div class="small muted">zu Veranstaltung: <?= e((string)$r['veranstaltung_titel']) ?></div>
+              <?php endif; ?>
+              <?php if (!empty($r['einsatz_titel'])): ?>
+                <div class="small muted">zu Einsatz: <?php if (can('view_einsaetze')): ?><a href="<?= e(url('einsatz', ['id' => (int)$r['einsatz_id']])) ?>"><?= e(einsatz_bezeichnung(['nummer' => $r['einsatz_nummer'] ?? '', 'titel' => $r['einsatz_titel']])) ?></a><?php else: ?><?= e(einsatz_bezeichnung(['nummer' => $r['einsatz_nummer'] ?? '', 'titel' => $r['einsatz_titel']])) ?><?php endif; ?></div>
               <?php endif; ?>
             </td>
             <td><?= badge($r['kategorie_label'] ? ['label' => $r['kategorie_label'], 'color' => $r['kategorie_color']] : null, '–') ?></td>

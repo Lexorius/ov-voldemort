@@ -63,6 +63,7 @@ require __DIR__ . '/lib/webpush.php';
 require __DIR__ . '/lib/mail.php';
 require __DIR__ . '/lib/connector.php';
 require __DIR__ . '/lib/events.php';
+require __DIR__ . '/lib/einsaetze.php';
 require __DIR__ . '/lib/sims.php';
 require __DIR__ . '/lib/radios.php';
 require __DIR__ . '/lib/backup.php';

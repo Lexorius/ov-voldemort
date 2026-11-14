@@ -1,8 +1,10 @@
 <?php
 /** @var string $art @var array $expense @var array $errors @var array $budgets @var array $wishes @var array $stichtag
- *  @var array $vehicles @var array $bestellungen @var array $links */
+ *  @var array $vehicles @var array $bestellungen @var array $links @var array $einsaetze @var bool $zurueckEinsatz */
 $vehicles ??= [];
 $bestellungen ??= [];
+$einsaetze ??= [];
+$zurueckEinsatz ??= false;
 $belege ??= [];
 $belegKi ??= ['ergebnisse' => [], 'auftraege' => []];
 $belegMaxMb ??= 32;
@@ -12,7 +14,9 @@ $istEinnahme = $art === 'einnahme';
 $wort = $istEinnahme ? 'Einnahme' : 'Ausgabe';
 
 $betragWert = $expense['betrag_brutto'] ?? '';
-$zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art' => $art]);
+$zurueck = $zurueckEinsatz && !empty($expense['einsatz_id'])
+    ? url('einsatz', ['id' => (int)$expense['einsatz_id']]) . '#geld'
+    : url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art' => $art]);
 ?>
 <div class="pagehead">
   <div>
@@ -40,6 +44,7 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
 <form method="post" class="form" enctype="multipart/form-data" action="<?= e(url('expense_edit', $isNew ? ['art' => $art] : ['id' => $expense['id']])) ?>">
   <?= csrf_field() ?>
   <input type="hidden" name="art" value="<?= e($art) ?>">
+  <?php if ($zurueckEinsatz): ?><input type="hidden" name="zurueck" value="einsatz"><?php endif; ?>
 
   <section class="card">
     <div class="grid3">
@@ -103,6 +108,21 @@ $zurueck = url('expenses', ['jahr' => (int)($expense['jahr'] ?? date('Y')), 'art
           <?php endforeach; ?>
         </select>
       </div>
+      <?php if ($einsaetze): ?>
+      <div class="field">
+        <label for="einsatz_id">Gehört zu Einsatz</label>
+        <select id="einsatz_id" name="einsatz_id">
+          <option value="">– kein Bezug –</option>
+          <?php foreach ($einsaetze as $es): ?>
+            <option value="<?= (int)$es['id'] ?>"<?= (int)($expense['einsatz_id'] ?? 0) === (int)$es['id'] ? ' selected' : '' ?>>
+              <?= e(de_date(substr((string)$es['beginn'], 0, 10)) . ' · ' . mb_substr(einsatz_bezeichnung($es), 0, 60)) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <small class="muted"><?= $istEinnahme ? 'Die Erstattung erscheint beim Einsatz als Einnahme.' : 'Die Ausgabe erscheint beim Einsatz unter den Kosten.' ?></small>
+      </div>
+      <?php elseif (!empty($expense['einsatz_id'])): ?>
+        <input type="hidden" name="einsatz_id" value="<?= (int)$expense['einsatz_id'] ?>">
+      <?php endif; ?>
       <?php if (!$istEinnahme): ?>
       <div class="field">
         <label for="bestellung_id">Gehört zu Bestellung</label>

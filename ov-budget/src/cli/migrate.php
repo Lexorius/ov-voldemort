@@ -85,6 +85,8 @@ function ovb_list_item_refs(): array
         ['sims',           'status_id',           ''],
         ['sims',           'ziel_id',             "ziel_typ = 'fachgruppe'"],
         ['events',         'fachgruppe_id',       ''],
+        ['einsaetze',      'art_id',              ''],
+        ['einsaetze',      'fachgruppe_id',       ''],
     ];
 }
 
@@ -2849,6 +2851,75 @@ SQL);
         $pdo->exec('ALTER TABLE karten_marker ADD CONSTRAINT fk_kmark_abschnitt FOREIGN KEY (abschnitt_id) REFERENCES karten_abschnitte(id) ON DELETE SET NULL');
     }
     $merken('107_karten_staerke_abschnitte');
+
+    /* ---------- 108: Einsätze – mehrtägig, mit Fahrzeugen; Buchungen bekommen den Bezug zum Einsatz ---------- */
+    if (!ovb_table_exists($pdo, 'einsaetze')) {
+        $pdo->exec("CREATE TABLE einsaetze (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nummer        VARCHAR(40)  NOT NULL DEFAULT '',
+  titel         VARCHAR(200) NOT NULL,
+  art_id        INT UNSIGNED NULL,
+  status        ENUM('laufend','beendet','abgerechnet','abgeschlossen') NOT NULL DEFAULT 'laufend',
+  anforderer    VARCHAR(200) NOT NULL DEFAULT '',
+  ort           VARCHAR(200) NOT NULL DEFAULT '',
+  beginn        DATETIME     NOT NULL,
+  ende          DATETIME     NULL,
+  jahr          SMALLINT     NOT NULL,
+  fachgruppe_id INT UNSIGNED NULL,
+  beschreibung  TEXT         NULL,
+  notiz         TEXT         NULL,
+  created_by    INT UNSIGNED NULL,
+  updated_by    INT UNSIGNED NULL,
+  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_einsatz_beginn (beginn),
+  KEY idx_einsatz_jahr (jahr, status),
+  KEY idx_einsatz_nummer (nummer),
+  CONSTRAINT fk_einsatz_art FOREIGN KEY (art_id)        REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_einsatz_fg  FOREIGN KEY (fachgruppe_id) REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_einsatz_cb  FOREIGN KEY (created_by)    REFERENCES users(id)      ON DELETE SET NULL,
+  CONSTRAINT fk_einsatz_ub  FOREIGN KEY (updated_by)    REFERENCES users(id)      ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle einsaetze angelegt.');
+    }
+    if (ovb_table_exists($pdo, 'einsaetze') && !ovb_table_exists($pdo, 'einsatz_tage')) {
+        $pdo->exec("CREATE TABLE einsatz_tage (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  einsatz_id  INT UNSIGNED NOT NULL,
+  datum       DATE         NOT NULL,
+  von         TIME         NULL,
+  bis         TIME         NULL,
+  staerke_f   SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  staerke_u   SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  staerke_h   SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  taetigkeit  VARCHAR(500) NOT NULL DEFAULT '',
+  PRIMARY KEY (id),
+  KEY idx_etag_einsatz (einsatz_id, datum),
+  CONSTRAINT fk_etag_einsatz FOREIGN KEY (einsatz_id) REFERENCES einsaetze(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle einsatz_tage angelegt.');
+    }
+    if (ovb_table_exists($pdo, 'einsaetze') && ovb_table_exists($pdo, 'vehicles') && !ovb_table_exists($pdo, 'einsatz_vehicles')) {
+        $pdo->exec("CREATE TABLE einsatz_vehicles (
+  einsatz_id  INT UNSIGNED NOT NULL,
+  vehicle_id  INT UNSIGNED NOT NULL,
+  PRIMARY KEY (einsatz_id, vehicle_id),
+  KEY idx_efz_vehicle (vehicle_id),
+  CONSTRAINT fk_efz_einsatz FOREIGN KEY (einsatz_id) REFERENCES einsaetze(id) ON DELETE CASCADE,
+  CONSTRAINT fk_efz_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)  ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle einsatz_vehicles angelegt.');
+    }
+    if (ovb_table_exists($pdo, 'expenses') && !ovb_column_exists($pdo, 'expenses', 'einsatz_id')) {
+        $pdo->exec('ALTER TABLE expenses ADD COLUMN einsatz_id INT UNSIGNED NULL AFTER event_id, ADD KEY idx_exp_einsatz (einsatz_id)');
+        $say('Buchungen bekommen den Bezug zu einem Einsatz.');
+    }
+    if (ovb_table_exists($pdo, 'einsaetze') && ovb_column_exists($pdo, 'expenses', 'einsatz_id')
+        && !ovb_constraint_exists($pdo, 'expenses', 'fk_exp_einsatz')) {
+        $pdo->exec('ALTER TABLE expenses ADD CONSTRAINT fk_exp_einsatz FOREIGN KEY (einsatz_id) REFERENCES einsaetze(id) ON DELETE SET NULL');
+    }
+    $merken('108_einsaetze');
 }
 
 /**

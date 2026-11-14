@@ -347,6 +347,11 @@ sie enthalten.
   zusammengeklickt und über den Connector im Netz; QR-Code zum Scannen und
   Link zum Weitergeben, Zeitfenster, Antworten verschlüsselt – siehe den
   eigenen Abschnitt unten.
+* **Einsätze** – was der Ortsverband gefahren ist: Einsatznummer, Art, Stand,
+  Anforderer und Ort, **ein oder mehrere Tage** mit Zeit, Stärke und
+  Tätigkeit je Tag oder Schicht, daraus Einsatztage, Einsatzstunden und
+  Helferstunden; eingesetzte Fahrzeuge; **Ausgaben und Einnahmen** aus dem
+  Budget mit Saldo. Siehe *Einsätze* weiter unten.
 * **Veranstaltungen** – Termin, Ort, **Art** (Ausbildung, Übung,
   Helferversammlung, Empfang, Grillabend, Feier, Tag der offenen Tür,
   Jugendveranstaltung – in der Verwaltung erweiterbar) und Status, dazu ein Budgettopf mit
@@ -900,8 +905,9 @@ und ausblenden:
   (auch mehrtägig), Ort, Beschreibung und Farbe. Sichtbar ist er für die, für
   die er gilt – und für die Leitung. Ein Klick auf eine Tageszahl legt einen
   Termin an diesem Tag an.
-* **Aus den Modulen:** Besprechungen, Veranstaltungen (in der Farbe ihrer
-  Art), fällige Aufgaben aus dem eigenen Bereich, Fristen (HU, SP, UVV der
+* **Aus den Modulen:** Besprechungen, Veranstaltungen und Einsätze (in der
+  Farbe ihrer Art, ein mehrtägiger Einsatz an jedem seiner Tage), fällige
+  Aufgaben aus dem eigenen Bereich, Fristen (HU, SP, UVV der
   Fahrzeuge, Prüfungen der Funkgeräte, Vertragsenden der SIM-Karten) und der
   Stichtag des Jahresbudgets. Nichts davon wird kopiert – ein Klick führt
   zum Vorgang.
@@ -1455,6 +1461,77 @@ einmal täglich mit dem Abruf (abschaltbar unter *Einstellungen → Fahrzeuge*).
 Beste Vorsorge: Der Webserver darf `public/` und `src/` des Connectors nicht
 beschreiben, nur `daten/`. Dann kann eine Lücke keine Datei dort ablegen –
 und die Prüfung sagt, ob das so eingerichtet ist.
+
+## Einsätze
+
+Das Modul hält fest, was der Ortsverband gefahren ist – als Grundlage für
+die Einsatzabrechnung und für den Überblick, was ein Einsatz gekostet und
+eingebracht hat. Erfassen darf die **OV-Leitung**; unter *Einstellungen →
+Einsätze* lässt sich einstellen, ob alle Mitglieder Einsätze sehen und ob
+sie selbst erfassen dürfen. Löschen bleibt bei der Leitung.
+
+**Der Einsatz.** Titel oder Einsatzstichwort, **Einsatznummer**, Art, Stand,
+Anforderer / Kostenträger, Einsatzort, Fachgruppe, Lage und Auftrag. Als
+Nummer ist beim Anlegen die nächste freie des Jahres vorgeschlagen
+(`2026-014`); sie lässt sich überschreiben, etwa mit der Nummer der
+Leitstelle. Die **Arten** (Einsatz, Technische Hilfeleistung, Amtshilfe,
+Absicherung, Fachberatung …) stehen unter *Verwaltung → Auswahllisten →
+Einsatzarten*.
+
+| Stand | Bedeutung |
+|---|---|
+| Läuft | der Einsatz ist noch nicht beendet – steht in der Liste oben |
+| Beendet – Abrechnung offen | zurück in der Unterkunft, die Abrechnung fehlt noch |
+| Abgerechnet | die Einsatzabrechnung ist eingereicht |
+| Abgeschlossen | das Geld ist da, der Vorgang ist erledigt |
+
+**Mehrere Tage.** Ein Einsatz besteht aus Zeilen – je Tag oder je Schicht
+eine:
+
+* **Datum**, **von** und **bis**. Liegt das Ende nicht nach dem Beginn,
+  endet die Schicht am Folgetag (22:00 bis 06:00 sind acht Stunden). Ohne
+  Uhrzeit zählt der Tag als Einsatztag, aber ohne Stunden; ohne Ende läuft
+  die Schicht noch.
+* **Stärke**, geschrieben wie gemeldet: Führer/Unterführer/Helfer, etwa
+  `1/2/9` – eine einzelne Zahl zählt als Helfer, eine vierte Zahl (die
+  Summe) wird neu gerechnet.
+* **Tätigkeit** in einem Satz.
+
+Zwei Schichten am selben Tag sind zwei Zeilen. **„+ Folgetag"** kopiert die
+letzte ausgefüllte Zeile auf den nächsten Tag – bei einem Einsatz über eine
+Woche bleibt so nur, die Abweichungen zu ändern. Leere Zeilen werden beim
+Speichern übergangen.
+
+Aus den Zeilen rechnet die Seite:
+
+* **Einsatztage** – die verschiedenen Kalendertage,
+* **Einsatzstunden** – die Summe der Dauern,
+* **Helferstunden** – je Zeile Dauer mal Gesamtstärke, zusammengezählt.
+
+Beginn und Ende des Einsatzes ergeben sich aus dem ersten und dem letzten
+Tag; damit steht er auch im **Kalender** (Quelle *Einsätze*) an jedem seiner
+Tage.
+
+**Fahrzeuge.** Welche Fahrzeuge im Einsatz waren, über alle Tage.
+
+**Ausgaben und Einnahmen.** Gebucht wird im Budget – jede Buchung kann zu
+einem Einsatz gehören (Feld *Gehört zu Einsatz*). Am schnellsten geht es von
+der Seite des Einsatzes aus: **„+ Ausgabe"** und **„+ Einnahme"** öffnen das
+Buchungsformular mit dem Bezug und der Einsatznummer; bei einer Einnahme
+stehen außerdem der Anforderer als Auftraggeber, die Kategorie
+„Einsatzkostenerstattung" und der Stand „erwartet" schon da. Nach dem
+Speichern geht es zurück zum Einsatz.
+
+Der Einsatz listet seine Buchungen mit Stand und zeigt **Ausgaben, Einnahmen
+und Saldo**. Gezählt wird wie im Budget: bezahlt und gebucht. Darunter
+steht, was noch aussteht – geplante Ausgaben und Einnahmen, die erwartet,
+abgerechnet, gestellt oder zugesagt sind – und der Saldo, wenn alles
+eingeht. Das gilt auch über den Jahreswechsel: Die Erstattung, die erst im
+Folgejahr kommt, hängt am selben Einsatz. Wer die Buchungen im Budget nicht
+sehen darf, sieht auch am Einsatz kein Geld.
+
+Wird ein Einsatz gelöscht, gehen Tage und Fahrzeugzuordnung mit; seine
+Buchungen bleiben im Budget stehen und verlieren nur den Bezug.
 
 ## Veranstaltungen und Einladungen
 

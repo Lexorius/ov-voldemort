@@ -41,6 +41,8 @@ function nav_module(): array
                         'darf' => can('view_contacts')],
         'events'    => ['label' => (string)setting('veranstaltung_modul_name', 'Veranstaltungen'), 'icon' => '◍',
                         'route' => 'events', 'aktiv' => ['events', 'event', 'event_edit', 'verpflegung_saetze', 'verpflegung_satz_edit'], 'darf' => can('view_events')],
+        'einsaetze' => ['label' => (string)setting('einsatz_modul_name', 'Einsätze'), 'icon' => '🚨',
+                        'route' => 'einsaetze', 'aktiv' => ['einsaetze', 'einsatz', 'einsatz_edit'], 'darf' => can('view_einsaetze')],
         'umfragen'  => ['label' => (string)setting('umfrage_modul_name', 'Abstimmungen'), 'icon' => '🗳',
                         'route' => 'umfragen', 'aktiv' => ['umfragen', 'umfrage', 'umfrage_edit'], 'darf' => can('view_umfragen')],
         'newsletter' => ['label' => (string)setting('newsletter_modul_name', 'Newsletter'), 'icon' => '📰',

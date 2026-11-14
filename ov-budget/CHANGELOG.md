@@ -1,5 +1,39 @@
 # Änderungsverlauf
 
+## 2.1.88.0
+
+- **Einsätze:** Neues Modul für das, was der Ortsverband gefahren ist. Ein
+  Einsatz hat Titel, **Einsatznummer** (vorgeschlagen wird die nächste freie
+  des Jahres, etwa „2026-014“), Art, Stand, Anforderer, Ort und Fachgruppe –
+  und geht über **einen oder mehrere Tage**: je Tag oder je Schicht eine
+  Zeile mit Datum, von–bis, **Stärke** (Führer/Unterführer/Helfer, etwa
+  „1/2/9“) und Tätigkeit. Zwei Schichten am selben Tag sind zwei Zeilen;
+  liegt das Ende nicht nach dem Beginn, endet die Schicht am Folgetag
+  (22:00 bis 06:00). „+ Folgetag“ kopiert die letzte Zeile auf den nächsten
+  Tag. Daraus rechnet die Seite **Einsatztage, Einsatzstunden und
+  Helferstunden** (Dauer mal Stärke). Dazu die **eingesetzten Fahrzeuge**.
+  Stände: läuft, beendet – Abrechnung offen, abgerechnet, abgeschlossen. Die
+  Arten (Einsatz, Technische Hilfeleistung, Amtshilfe, Absicherung,
+  Fachberatung …) stehen als Auswahlliste in der Verwaltung.
+- **Budget – Ausgaben und Einnahmen je Einsatz:** Jede Buchung kann zu einem
+  Einsatz gehören (**„Gehört zu Einsatz“** im Buchungsformular). Auf der
+  Seite des Einsatzes legen **„+ Ausgabe“** und **„+ Einnahme“** die Buchung
+  im Budget an – der Bezug, die Einsatznummer und bei Einnahmen Kostenträger,
+  die Kategorie „Einsatzkostenerstattung“ und der Stand „erwartet“ stehen
+  schon da; nach dem Speichern geht es zurück zum Einsatz. Der Einsatz
+  zeigt seine Buchungen mit Stand, **Ausgaben, Einnahmen und Saldo** (wie im
+  Budget zählt, was bezahlt oder gebucht ist) und daneben, was noch aussteht:
+  geplante Ausgaben und Einnahmen, die abgerechnet, gestellt oder zugesagt
+  sind. Buchungsliste, Budgetübersicht und CSV-Export nennen den Einsatz.
+  Wird ein Einsatz gelöscht, bleiben seine Buchungen im Budget und verlieren
+  nur den Bezug.
+- **Kalender:** Neue Quelle **Einsätze** – ein Einsatz steht an jedem seiner
+  Tage, mit Fahrzeugen und Link auf seine Seite.
+- Neue Einstellungen unter *Einsätze* (Name, Einleitung, ob alle Mitglieder
+  Einsätze sehen und erfassen dürfen; Löschen bleibt bei der Leitung). Neue
+  Tabellen `einsaetze`, `einsatz_tage`, `einsatz_vehicles` und die Spalte
+  `expenses.einsatz_id` (Wanderung 108).
+
 ## 2.1.87.2
 
 - **Karten – Plopp und Gleiten:** Erscheint eine Einheit, die ein anderes

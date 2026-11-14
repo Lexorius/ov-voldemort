@@ -59,7 +59,8 @@ unter „Sicherheitslücke PHP2Shell".
   mehrere Wünsche zusammen.
 * **Budget** – Jahresbudget und Budgettöpfe, Ausgaben und Einnahmen (Einsätze,
   technische Hilfeleistung, Spenden …), Übersicht nach Kategorie und Monat mit
-  Grafik, Stand je Ausgabe (bezahlt, gebucht, geplant). **Objektkonten** als
+  Grafik, Stand je Ausgabe (bezahlt, gebucht, geplant). Jede Buchung kann zu
+  einem **Einsatz** gehören. **Objektkonten** als
   zweite Auswertung: mehrere Kategorien laufen auf ein Konto, die Statistik
   nach Kategorien bleibt daneben bestehen. **Auslagen**: welcher Helfer
   vorgestreckt hat, wann es zur Regionalstelle weiterging und wann erstattet
@@ -95,6 +96,11 @@ unter „Sicherheitslücke PHP2Shell".
   Funkgeräten, Budgetübersicht als Tagesordnungspunkt, wiederkehrende
   Termine, Anwesenheit, Protokoll zum Drucken. Themen über Divera einreichen,
   Status-Rückmeldung an Divera.
+* **Einsätze** – was der Ortsverband gefahren ist, über einen oder mehrere
+  Tage: je Tag oder Schicht Zeit, Stärke und Tätigkeit, daraus Einsatztage,
+  Einsatzstunden und Helferstunden; Einsatznummer, Art, Stand, Anforderer,
+  eingesetzte Fahrzeuge. **Ausgaben und Einnahmen** hängen im Budget am
+  Einsatz, die Seite zeigt Saldo und was noch aussteht.
 * **Veranstaltungen** – Termin, Ort, Art (Ausbildung, Übung, Helferversammlung,
   Feier …), Budgettopf und geplante gegen tatsächliche Kosten, mehrere Plätze,
   Dateien, Gästeliste aus den Kontakten oder nur eine Teilnehmerzahl,

@@ -6,6 +6,7 @@ declare(strict_types=1);
  *
  * Eine Buchung ist entweder eine Ausgabe oder eine Einnahme – etwa die
  * Kostenerstattung für einen Einsatz oder eine technische Hilfeleistung.
+ * Beide können den Bezug zu einem Einsatz tragen (einsatz_id), siehe einsaetze.php.
  * Beides steckt in derselben Tabelle und unterscheidet sich nur in der
  * Spalte "art"; so gelten Filter, Liste und Ausgabe für beide Richtungen.
  *
@@ -670,7 +671,7 @@ function expense_find(int $id): ?array
 }
 
 /**
- * $f: jahr, art, q, kategorie_id, fachgruppe_id, budget_id, von, bis, sort, limit
+ * $f: jahr, art, q, kategorie_id, fachgruppe_id, budget_id, event_id, einsatz_id, von, bis, sort, limit
  */
 function expense_query(array $f = []): array
 {
@@ -691,7 +692,7 @@ function expense_query(array $f = []): array
         $like = '%' . $f['q'] . '%';
         array_push($p, $like, $like, $like, $like, $like);
     }
-    foreach (['kategorie_id', 'fachgruppe_id', 'budget_id', 'event_id', 'bestellung_id'] as $col) {
+    foreach (['kategorie_id', 'fachgruppe_id', 'budget_id', 'event_id', 'einsatz_id', 'bestellung_id'] as $col) {
         if (!empty($f[$col])) {
             $w[] = 'e.' . $col . ' = ?';
             $p[] = (int)$f[$col];
@@ -742,6 +743,7 @@ function expense_query(array $f = []): array
                    b.name AS budget_name,
                    w.bezeichnung AS wunsch_bezeichnung,
                    ev.titel AS veranstaltung_titel,
+                   es.titel AS einsatz_titel, es.nummer AS einsatz_nummer,
                    u.display_name AS erfasser,
                    au.display_name AS ausgelegt_display,
                    bs.nummer AS bestellung_nummer,
@@ -756,6 +758,7 @@ function expense_query(array $f = []): array
             LEFT JOIN budgets    b  ON b.id  = e.budget_id
             LEFT JOIN wishes     w  ON w.id  = e.wish_id
             LEFT JOIN events     ev ON ev.id = e.event_id
+            LEFT JOIN einsaetze  es ON es.id = e.einsatz_id
             LEFT JOIN users      u  ON u.id  = e.created_by
             LEFT JOIN users      au ON au.id = e.ausgelegt_von'
         . ($w ? ' WHERE ' . implode(' AND ', $w) : '')
@@ -863,10 +866,12 @@ function expense_total_status(int $jahr, string $art, string $status): float
 function expense_offen_geplant(int $jahr): array
 {
     return db_all(
-        'SELECT e.*, ka.label AS kategorie_label, ka.color AS kategorie_color, ev.titel AS veranstaltung_titel
+        'SELECT e.*, ka.label AS kategorie_label, ka.color AS kategorie_color, ev.titel AS veranstaltung_titel,
+                es.titel AS einsatz_titel, es.nummer AS einsatz_nummer
          FROM expenses e
          LEFT JOIN list_items ka ON ka.id = e.kategorie_id
          LEFT JOIN events ev ON ev.id = e.event_id
+         LEFT JOIN einsaetze es ON es.id = e.einsatz_id
          WHERE e.jahr = ? AND e.status <> \'bezahlt\'
          ORDER BY e.status, e.datum, e.id',
         [$jahr]
@@ -1019,6 +1024,7 @@ function expense_save_from_post(?array $existing, array $user): array
         'budget_id'     => post_int('budget_id'),
         'wish_id'       => $wishIds[0] ?? post_int('wish_id'),
         'event_id'      => post_int('event_id'),
+        'einsatz_id'    => post_int('einsatz_id'),
         'bestellung_id' => post_int('bestellung_id'),
         'betrag_brutto' => $brutto,
         'mwst_satz'     => $mwst,

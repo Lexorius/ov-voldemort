@@ -128,6 +128,11 @@ $routes = [
     'verpflegung_saetze' => 'verpflegung_saetze',
     'verpflegung_satz_edit' => 'verpflegung_satz_edit',
 
+    // Einsätze
+    'einsaetze'          => 'einsaetze',
+    'einsatz'            => 'einsatz',
+    'einsatz_edit'       => 'einsatz_edit',
+
     // Funkgeräte
     'radios'             => 'radios',
     'radio'              => 'radio',

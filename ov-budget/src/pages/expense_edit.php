@@ -58,9 +58,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         $ziel = post_int('jahr') ?: (int)date('Y');
+        // Vom Einsatz aus gebucht: dorthin zurück, die nächste Buchung trägt den Bezug wieder mit
+        $zumEinsatz = post_str('zurueck') === 'einsatz' && post_int('einsatz_id') ? (int)post_int('einsatz_id') : 0;
         if (post_str('weiter') === '1') {
             flash('info', 'Nächste ' . $wort . ' eintragen.');
-            redirect_route('expense_edit', ['jahr' => $ziel, 'art' => $art]);
+            redirect_route('expense_edit', ['jahr' => $ziel, 'art' => $art] + ($zumEinsatz ? ['einsatz_id' => $zumEinsatz] : []));
+        }
+        if ($zumEinsatz) {
+            redirect(url('einsatz', ['id' => $zumEinsatz]) . '#geld');
         }
         redirect_route('expenses', ['jahr' => $ziel, 'art' => $art]);
     }
@@ -81,7 +86,7 @@ if (!$expense) {
         'bezeichnung' => '', 'beschreibung' => '',
         'kategorie_id' => null, 'fachgruppe_id' => null,
         'budget_id' => get_int('budget_id'), 'wish_id' => get_int('wish_id'),
-        'event_id' => get_int('event_id'), 'bestellung_id' => get_int('bestellung_id'),
+        'event_id' => get_int('event_id'), 'einsatz_id' => null, 'bestellung_id' => get_int('bestellung_id'),
         'betrag_brutto' => '', 'betrag_netto' => '',
         'lieferant' => '', 'beleg_nr' => '', 'referenz' => '',
         'bezahlt_am' => null, 'ausgelegt_von' => get_int('ausgelegt_von'), 'ausgelegt_name' => '', 'weitergegeben_am' => null, 'erstattet_am' => null, 'notiz' => '',
@@ -89,6 +94,11 @@ if (!$expense) {
         'abgerechnet_am' => null, 'abgerechnet_betrag' => null, 'gestellt_am' => null, 'gestellt_betrag' => null,
         'gestellt_nr' => '', 'zugesagt_am' => null, 'zugesagt_betrag' => null,
     ];
+    // Vom Einsatz aus angelegt: Bezug, Einsatznummer und – bei Einnahmen – Kostenträger und Kategorie stehen schon da
+    $vomEinsatz = can('view_einsaetze') ? einsatz_find(get_int('einsatz_id')) : null;
+    if ($vomEinsatz) {
+        $expense = array_merge($expense, einsatz_buchung_vorgabe($vomEinsatz, $art, list_id_by_slug('einnahme_kategorie', 'einsatz')));
+    }
     // Vorbelegung aus der Adresse, etwa „Verpflegung als geplante Ausgabe" von der Veranstaltung
     if (get_str('bezeichnung') !== '') {
         $expense['bezeichnung'] = mb_substr(get_str('bezeichnung'), 0, 200);
@@ -160,6 +170,9 @@ render('expense_edit', [
     'bestellungen' => db_all(bestellung_select() . " WHERE b.status IN ('bestellt','geliefert')" . (!empty($expense['bestellung_id']) ? ' OR b.id = ' . (int)$expense['bestellung_id'] : '') . ' ORDER BY b.bestellt_am DESC'),
     'links'   => $links,
     'events'  => db_all('SELECT id, titel, beginn FROM events ORDER BY beginn DESC LIMIT 200'),
+    'einsaetze' => can('view_einsaetze') ? einsatz_auswahl(!empty($expense['einsatz_id']) ? (int)$expense['einsatz_id'] : null) : [],
+    // Kam die Buchung vom Einsatz, geht es nach dem Speichern dorthin zurück
+    'zurueckEinsatz' => $_SERVER['REQUEST_METHOD'] === 'POST' ? post_str('zurueck') === 'einsatz' : (empty($expense['id']) && get_int('einsatz_id') > 0),
     // Helfer zur Auswahl – ein schon eingetragener bleibt wählbar, auch wenn sein Zugang ruht
     'helfer'  => $art === 'ausgabe' ? db_all('SELECT id, display_name FROM users WHERE is_active = 1 OR id = ? ORDER BY display_name', [(int)($expense['ausgelegt_von'] ?? 0)]) : [],
 ]);
