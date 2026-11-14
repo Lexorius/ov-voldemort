@@ -1,5 +1,16 @@
 # Änderungsverlauf
 
+## 2.1.91.1
+
+- **Anleitung und Beschreibungen nachgezogen:** README, Anleitung und die
+  Beschreibung des Add-ons nennen jetzt alles, was seit 2.1.88.0 dazukam –
+  Einsätze mit Einsatzauftrag, Fachgruppen, Fahrzeugen, Kilometern und
+  Betriebsstunden, das Protokoll der Karten, die Treibstoffart der
+  Fahrzeuge, das Menü als Baum und die Seite *Bibliotheken und Lizenzen* –
+  auch dort, wo es bisher fehlte: bei den Rollen, den Auswahllisten und
+  Einstellungen, dem Speicherplatz und der Ordnerübersicht. Am Programm
+  ändert sich nichts.
+
 ## 2.1.91.0
 
 - **Menü als Baum:** Die Leiste zeigt nicht mehr alle 24 Module nebeneinander,

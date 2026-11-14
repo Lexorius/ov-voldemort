@@ -98,8 +98,8 @@ ist, was die Dateiablage belegt und wie viel auf der Platte darunter noch
 frei ist. Wird es knapp (unter 10 % oder unter 500 MB frei), steht das rot
 dabei – dann alte Sicherungen löschen oder Platz schaffen. „Einzelheiten"
 schlüsselt die Ablage nach Ordnern auf (Fahrzeuge, Veranstaltungen,
-Plätze, Dateiablage, Budget, Karten, Sicherungen) und nennt die größten Tabellen der
-Datenbank.
+Einsätze, Plätze, Dateiablage, Budget, Karten, Sicherungen) und nennt die
+größten Tabellen der Datenbank.
 
 ### Sicherung und Wiederherstellung
 
@@ -235,8 +235,8 @@ sie enthalten.
   bestellen darf, wird unter *Verwaltung → Bestellberechtigungen* je Rolle und
   je Funktion festgelegt – etwa Ortsbeauftragte:r unbegrenzt, Zugführer:in bis
   500 €, Verwaltungsbeauftragte:r bestellt.
-* **Fahrzeuge** – Fahrzeugstamm mit Funkrufname, **ISSI**, Kennzeichen und
-  Fristen (HU, SP, UVV) und je Fahrzeug eine
+* **Fahrzeuge** – Fahrzeugstamm mit Funkrufname, **ISSI**, Kennzeichen,
+  **Treibstoffart** und Fristen (HU, SP, UVV) und je Fahrzeug eine
   **Fahrzeugakte**. Ihr **Journal** wird nur ergänzt: Einträge lassen sich weder
   ändern noch löschen, jeder trägt die Prüfsumme des vorherigen, und
   „Journal auf Veränderungen prüfen" rechnet die Kette nach. Schadensmeldungen
@@ -348,10 +348,17 @@ sie enthalten.
   Link zum Weitergeben, Zeitfenster, Antworten verschlüsselt – siehe den
   eigenen Abschnitt unten.
 * **Einsätze** – was der Ortsverband gefahren ist: Einsatznummer, Art, Stand,
-  Anforderer und Ort, **ein oder mehrere Tage** mit Zeit, Stärke und
-  Tätigkeit je Tag oder Schicht, daraus Einsatztage, Einsatzstunden und
-  Helferstunden; eingesetzte Fahrzeuge; **Ausgaben und Einnahmen** aus dem
-  Budget mit Saldo. Siehe *Einsätze* weiter unten.
+  Anforderer und Ort, **ein oder mehrere Tage** – je Tag und Einheit eine
+  Zeile mit Zeit, **Fachgruppe**, **Fahrzeugen** (gefahrene Kilometer,
+  Betriebsstunden), Stärke und Tätigkeit; daraus Einsatztage, Einsatzstunden
+  und Helferstunden, auch je Fachgruppe und je Fahrzeug. **Einsatzauftrag
+  (Fb Fü 3)** als PDF, Dokumente, zugeordnete Karten, **Ausgaben und
+  Einnahmen** aus dem Budget mit Saldo. Eine Veranstaltung lässt sich in
+  einen Einsatz umwandeln. Siehe *Einsätze* weiter unten.
+* **Karten** – Kartenausschnitte auf OpenStreetMap mit eigenen Symbolen,
+  Einheiten mit Stärke und Abschnitten, Fahrzeugen an ihrer Position; mit
+  **Protokoll**, wann was gesetzt und versetzt wurde, **Einsatzzeiten** je
+  Einheit und Fahrzeug und der Lage als PDF im Einsatz. Siehe *Karten*.
 * **Veranstaltungen** – Termin, Ort, **Art** (Ausbildung, Übung,
   Helferversammlung, Empfang, Grillabend, Feier, Tag der offenen Tür,
   Jugendveranstaltung – in der Verwaltung erweiterbar) und Status, dazu ein Budgettopf mit
@@ -666,7 +673,9 @@ Stimmt der Einreichername mit einem Benutzer überein, gilt das Thema als von
 dieser Person eingebracht (sie kann es dann auch bearbeiten); sonst steht der
 Name beim Thema. Nicht zugeordnete Felder landen in der Beschreibung.
 * **Verwaltung** – Benutzer und Rollen (Mitglied, Leitung, Administration) sowie
-  *alle* Auswahllisten, Texte und Regeln frei konfigurierbar.
+  *alle* Auswahllisten, Texte und Regeln frei konfigurierbar. Das **Menü** ist
+  ein Baum mit Gruppen und lässt sich umbauen (siehe *Menü*); die Seite
+  **Bibliotheken und Lizenzen** nennt, was von anderen mitgeliefert wird.
 
 ## Funkgeräte
 
@@ -2124,7 +2133,11 @@ Tankquittungen erfasst: Datum, Kilometerstand, Liter, ob vollgetankt wurde,
 auf Wunsch Betrag, Tankstelle, Belegnummer, Bemerkung und ein Foto des Belegs
 (am Handy direkt aus der Kamera). Der **Betrag darf fehlen** – mit einer
 Tankkarte wie DKV steht er oft nicht auf dem Beleg, die Rechnung kommt
-gesammelt. Was die Anwendung daraus macht:
+gesammelt. Womit ein Fahrzeug getankt wird, steht in seiner Akte: Beim
+Bearbeiten des Fahrzeugs lässt sich die **Treibstoffart** wählen (Diesel,
+Diesel HVO, Benzin, Super, Super mit Bleizusatz, Super E10); die Maske für
+eine Tankung nennt sie dann als Hinweis, und eine Änderung steht im Journal.
+Was die Anwendung aus den Tankungen macht:
 
 * **Verbrauch je 100 km**, gerechnet von Volltankung zu Volltankung. Wer
   nur nachfüllt, lässt den Haken „Vollgetankt" weg; die Liter zählen dann zur
@@ -2646,9 +2659,9 @@ Lizenztext als `LICENSE` in ihren Ordner.
 
 | Rolle | Darf |
 |---|---|
-| Mitglied | Wünsche anlegen und die eigenen bearbeiten, abstimmen, kommentieren, Aufgaben im eigenen Zuständigkeitsbereich bearbeiten; je nach Einstellung Schäden melden und offene Aufträge bearbeiten, Standort und Journal der Fahrzeuge ergänzen |
-| Leitung | zusätzlich: alle Wünsche bearbeiten, Status und Priorität setzen, Budgettöpfe pflegen, alle Aufgaben verwalten, Veranstaltungen anlegen und die Gästeliste führen |
-| Administration | zusätzlich: Benutzerverwaltung, Auswahllisten, Einstellungen, Divera-Anbindung, Protokoll |
+| Mitglied | Wünsche anlegen und die eigenen bearbeiten, abstimmen, kommentieren, Aufgaben im eigenen Zuständigkeitsbereich bearbeiten; je nach Einstellung Schäden melden und offene Aufträge bearbeiten, Standort und Journal der Fahrzeuge ergänzen, Einsätze und Karten ansehen, Einsätze erfassen, Symbole auf Karten setzen |
+| Leitung | zusätzlich: alle Wünsche bearbeiten, Status und Priorität setzen, Budgettöpfe pflegen, alle Aufgaben verwalten, Veranstaltungen anlegen und die Gästeliste führen, Einsätze erfassen und löschen, Einsatzaufträge schreiben, Veranstaltungen in Einsätze umwandeln, Karten und Symbolbibliothek pflegen |
+| Administration | zusätzlich: Benutzerverwaltung, Auswahllisten, Einstellungen, Menü, Divera-Anbindung, Protokoll |
 
 ## Prüfungen für Entwickler
 

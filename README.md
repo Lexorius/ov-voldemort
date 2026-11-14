@@ -150,7 +150,8 @@ unter „Sicherheitslücke PHP2Shell".
   Wünsche je Fahrzeug, Stempel „Nicht einsatzbereit". **Tanken und
   Verbrauch**: Tankquittungen je Fahrzeug mit Belegfoto, Verbrauch je 100 km
   von Volltankung zu Volltankung, auch ohne Beträge (Tankkarte), Verlauf und
-  Auffälligkeiten.
+  Auffälligkeiten; je Fahrzeug die **Treibstoffart** (Diesel, Diesel HVO,
+  Benzin, Super, Super mit Bleizusatz, Super E10).
 * **Funkgeräte** – HRT, MRT, Feststationen, Meldeempfänger mit Seriennummer,
   Inventarnummer, Funkrufname und Prüffrist; Karten hineinbuchen, Geräte
   Fahrzeugen und Plätzen zuordnen, Gruppen für Koffer und Sätze, „Gerät ist
@@ -268,8 +269,9 @@ Alles Dauerhafte liegt unter `/data`:
 
 ```
 /data/mysql      Datenbank
-/data/uploads    Dateiablage: Angebote, Fahrzeuge, Veranstaltungen, Termine,
-                 Stell- und Lagerplätze, Sicherungen
+/data/uploads    Dateiablage: Angebote, Fahrzeuge, Veranstaltungen, Einsätze
+                 (Einsatzaufträge, Lagekarten), Termine, Stell- und Lagerplätze,
+                 Belege, Kartensymbole, Sicherungen
 /data/sessions   Anmeldesitzungen
 /data/dbpass     erzeugtes Datenbankpasswort
 ```
@@ -406,7 +408,8 @@ Das Repository ist ein Home-Assistant-Add-on-Repository: oben liegt nur
 ```
 repository.yaml     macht das Repository im Add-on Store nutzbar
 docker-compose.yml  Betrieb ohne Home Assistant
-scripts/            kleine Helfer (z. B. QR-Bibliothek aktualisieren)
+scripts/            kleine Helfer: mitgelieferte Bibliotheken aktualisieren
+                    (qrcode-lib-aktualisieren.sh, einsatzauftrag-aktualisieren.sh)
 connector/          eigenständiger Briefkasten: Standort per QR-Code, Einladungen,
                     „Gerät ist da", Zählerstand – siehe connector/README.md
   public/           Dokumentenverzeichnis: index.php, melden.js, einladung.js
@@ -416,10 +419,13 @@ ov-budget/          das Add-on – zugleich die vollständige Anwendung
   config.yaml, build.yaml, Dockerfile, DOCS.md, CHANGELOG.md, translations/
   docker/rootfs/    nginx, php-fpm, MariaDB und Startskript des Containers
   public/           Webroot: index.php (Front-Controller), install.php, cron.php, assets/
+    assets/vendor/  mitgelieferte Bibliotheken anderer, unverändert, je mit LICENSE
+                    (einsatzauftrag, jsPDF, Lizenztext von qrcode-generator)
   src/bootstrap.php Laufzeitumgebung
   src/lib/          eine Bibliothek je Modul: Datenbank, Auth, Einstellungen, Wünsche,
-                    Budget, Fahrzeuge, Funkgeräte, SIM-Karten, Verbrauch, Kalender,
-                    Standorte, THW-Kontakte, Connector, MQTT, Stein, Divera, KI, Sicherung …
+                    Budget, Einsätze, Fahrzeuge, Funkgeräte, SIM-Karten, Verbrauch, Kalender,
+                    Karten, Standorte, THW-Kontakte, Connector, MQTT, Stein, Divera, KI,
+                    Sicherung, Menü (nav.php), Bibliotheken und Lizenzen (lizenzen.php) …
   src/pages/        eine Datei je Route (admin/ für den Verwaltungsbereich)
   src/cli/          setup.php (Einrichtung beim Containerstart), migrate.php (Wanderungen)
   views/            HTML-Templates, views/layout.php als Rahmen, views/partials/ Bausteine
@@ -437,19 +443,20 @@ angemeldete Benutzer, nach Rechteprüfung und mit `nosniff`-Header.
 
 | Rolle | Darf |
 |---|---|
-| `user` (Mitglied) | Wünsche anlegen und die eigenen bearbeiten, abstimmen, kommentieren, Aufgaben im eigenen Zuständigkeitsbereich bearbeiten, Termine für sich und die eigene Fachgruppe anlegen, Fahrzeugmeldungen abgeben, Tankungen erfassen |
-| `leitung` | zusätzlich: alle Wünsche bearbeiten, Status und Priorität setzen, Budget und Budgettöpfe pflegen, alle Aufgaben und Termine verwalten, Fahrzeuge, Funkgeräte, SIM-Karten, Tankkarten und Zähler pflegen, Veranstaltungen anlegen und die Gästeliste führen |
-| `admin` | zusätzlich: Benutzerverwaltung, Auswahllisten, Einstellungen, Stell- und Lagerplätze, Anbindungen (Divera, Stein.APP, Home Assistant, Connectoren, KI), Sicherung, Protokoll |
+| `user` (Mitglied) | Wünsche anlegen und die eigenen bearbeiten, abstimmen, kommentieren, Aufgaben im eigenen Zuständigkeitsbereich bearbeiten, Termine für sich und die eigene Fachgruppe anlegen, Fahrzeugmeldungen abgeben, Tankungen erfassen, Einsätze und Karten ansehen |
+| `leitung` | zusätzlich: alle Wünsche bearbeiten, Status und Priorität setzen, Budget und Budgettöpfe pflegen, alle Aufgaben und Termine verwalten, Fahrzeuge, Funkgeräte, SIM-Karten, Tankkarten und Zähler pflegen, Veranstaltungen anlegen und die Gästeliste führen, Einsätze erfassen und löschen, Einsatzaufträge schreiben, Veranstaltungen in Einsätze umwandeln, Karten und Symbole pflegen |
+| `admin` | zusätzlich: Benutzerverwaltung, Auswahllisten, Einstellungen, Menü, Stell- und Lagerplätze, Anbindungen (Divera, Stein.APP, Home Assistant, Connectoren, KI), Sicherung, Protokoll |
 
 Viele Rechte lassen sich in den Einstellungen feiner stellen, etwa ob Mitglieder
-Aufgaben anlegen oder Fahrzeugmeldungen abgeben dürfen, und wer bestellen darf.
+Aufgaben anlegen, Fahrzeugmeldungen abgeben, Einsätze erfassen oder Symbole auf
+Karten setzen dürfen, und wer bestellen darf.
 
 ## Was ist konfigurierbar?
 
 **Verwaltung → Auswahllisten** – Fachgruppen, Funktionen, Kategorien, Dringlichkeiten,
 Status (Wünsche und Aufgaben), Mengeneinheiten, Anlagen-Typen, Fahrzeugarten,
-Veranstaltungsarten, Arten und Status der SIM-Karten, Anbieter und Status der
-Tankkarten und vieles mehr. Je Eintrag:
+Veranstaltungsarten, Einsatzarten, Arten und Status der SIM-Karten, Anbieter und
+Status der Tankkarten und vieles mehr. Je Eintrag:
 Bezeichnung, Farbe, Reihenfolge, Gewicht (steuert die Sortierung), Vorgabewert und –
 bei Status – ob er als „abgeschlossen" gilt. Einträge, die noch verwendet werden,
 lassen sich auf *inaktiv* setzen, statt sie zu löschen.
@@ -463,6 +470,11 @@ KI-Auswertung, E-Mail-Versand, Abstimmungen (Sichtbarkeit, Abruf-Takt,
 Codelänge, Uhrzeit der Berichte), Getränke, Newsletter (Sichtbarkeit,
 Portion und Takt des Versands, Fußtext mit dem Abmeldelink), Tankungen (wer
 sie erfassen darf), Tankkarten (Sichtbarkeit, Vorwarnung vor Ablauf).
+
+**Verwaltung → Menü** – das Menü als Baum: Gruppen anlegen, umbenennen und
+auflösen, Module umhängen und verschieben. Ohne eigene Einstellung gilt der
+Grundvorschlag (Einsatz, Planung, Termine, Kontakte, Technik, Unterkunft); am Handy
+öffnet eine Gruppe ein Blatt mit großen Tippflächen.
 
 **Unscharfe Budgetübersicht** – `budget_rundung` stellt die Übersichtsseite auf
 gerundete Beträge um (10, 100 oder 1.000). Praktisch für Aushänge und Vorträge,

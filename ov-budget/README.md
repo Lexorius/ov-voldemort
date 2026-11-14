@@ -1,10 +1,11 @@
 # OV-Multitool
 
-Verwaltung für einen THW-Ortsverband: Wünsche und Budget, Aufgaben, Kontakte,
-Besprechungen, Veranstaltungen, Abstimmungen, Getränke, Newsletter, Fahrzeuge
-mit Tanken und Verbrauch, Funkgeräte, SIM-Karten, Tankkarten und Verbrauch –
-mit Anbindung an **Stein.APP**, **Divera 24/7** und **Home Assistant**. Läuft
-auf dem Handy wie am PC.
+Verwaltung für einen THW-Ortsverband: Einsätze mit Einsatzauftrag (Fb Fü 3)
+und Lagekarten, Wünsche und Budget, Aufgaben, Kontakte, Besprechungen,
+Veranstaltungen, Abstimmungen, Getränke, Newsletter, Fahrzeuge mit Tanken und
+Verbrauch, Funkgeräte, SIM-Karten, Tankkarten und Verbrauch – mit Anbindung an
+**Stein.APP**, **Divera 24/7** und **Home Assistant**. Läuft auf dem Handy wie
+am PC; das Menü ist ein Baum mit Gruppen, am Handy mit großen Tippflächen.
 
 Das Add-on bringt **alles mit**: Datenbank (MariaDB), Webserver und Anwendung
 stecken im Container. Weitere Add-ons sind nicht nötig. Erreichbar über die
@@ -316,7 +317,8 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 
 ### Fahrzeuge
 - **Fahrzeugakte** mit Funkrufname, Kennzeichen, ISSI, OPTA, RIC und den
-  Fristen HU, SP und UVV; Sitzplätze und maximale Zuladung
+  Fristen HU, SP und UVV; Sitzplätze, maximale Zuladung und **Treibstoffart**
+  (Diesel, Diesel HVO, Benzin, Super, Super mit Bleizusatz, Super E10)
 - **Kapazitätsliste** zum Planen von Fahrten: Personen und Zuladung je
   Fahrzeug, filterbar nach Art, Fachgruppe, Status und Mindestwerten, mit
   Summe der Auswahl
@@ -404,6 +406,9 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 
 ### Verwaltung
 - Benutzer mit Rollen (Mitglied, Leitung, Administration) und Funktionen
+- **Bibliotheken und Lizenzen**: eine Seite mit allen mitgelieferten
+  Bibliotheken (einsatzauftrag, jsPDF, qrcode-generator), ihren Urhebern,
+  Lizenzen, Quellen und Lizenztexten – Verweis im Fuß jeder Seite
 - **THW-Kontakte** als eigener Menüpunkt: Dienststellen als Baum
   (Landesverband › Regionalstelle › Ortsverbände) mit Anschrift und
   Erreichbarkeit, dazu Funktionspostfächer und zentrale Rufnummern mit Zweck
