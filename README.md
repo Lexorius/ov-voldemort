@@ -229,7 +229,8 @@ unter „Sicherheitslücke PHP2Shell".
   hochladen und wiederherstellen; automatisch alle *n* Tage.
 * **Verwaltung** – Benutzer mit Rollen und Funktionen, **zweiter Faktor**
   (Authenticator-App, Backup-Codes, als Pflicht je Rolle), alle Auswahllisten,
-  Texte und Regeln frei einstellbar, Menüleiste in eigener Reihenfolge,
+  Texte und Regeln frei einstellbar, Menü als Baum mit eigenen Gruppen
+  (am Handy als Blatt mit großen Tippflächen),
   Speicherplatz von Datenbank und Dateiablage, Änderungsprotokoll. Jede
   Veröffentlichung hat eine vierstellige Fassungsnummer; unten auf jeder Seite
   steht sie, ein Klick zeigt, was neu ist.

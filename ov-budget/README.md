@@ -419,8 +419,9 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
   und den OSRM-Demoserver, standardmäßig aus, eine Anfrage je Abruf
 - **Zweiter Faktor** mit Authenticator-App und Backup-Codes, als Pflicht je
   Rolle einstellbar
-- Alle Auswahllisten, Texte und Regeln frei einstellbar; **Menüleiste in
-  eigener Reihenfolge**
+- Alle Auswahllisten, Texte und Regeln frei einstellbar; **Menü als Baum**
+  mit Gruppen (Grundvorschlag, in der Verwaltung umbaubar) – am Handy als
+  Blatt mit großen Tippflächen
 - Protokoll aller Änderungen; unten auf jeder Seite steht die laufende
   Version, ein Klick zeigt, was neu ist
 - Jede Veröffentlichung hat eine eigene vierstellige Fassungsnummer

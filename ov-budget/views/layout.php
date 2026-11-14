@@ -45,12 +45,35 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
           data-nav-pfeil="-1" aria-label="Weiter nach links" tabindex="-1">‹</button>
   <button class="mainnav__pfeil mainnav__pfeil--rechts" type="button"
           data-nav-pfeil="1" aria-label="Weiter nach rechts" tabindex="-1">›</button>
+  <?php $navBaum = nav_baum_fuer(); ?>
   <div class="mainnav__inner">
-    <?php foreach (nav_leiste() as $m): ?>
-      <a class="mainnav__item<?= nav_active(...$m['aktiv']) ?>" href="<?= e(url($m['route'])) ?>">
-        <span class="mainnav__icon"><?= e($m['icon']) ?></span><span><?= e($m['label']) ?></span></a>
+    <?php foreach ($navBaum as $knoten): ?>
+      <?php if ($knoten['typ'] === 'gruppe'): ?>
+        <?php /* Ohne JavaScript führt die Gruppe zu ihrem ersten Modul; mit klappt sie ihre Module auf */ ?>
+        <a class="mainnav__item mainnav__item--gruppe<?= $knoten['aktiv'] ? ' is-active' : '' ?>" href="<?= e(url($knoten['route'])) ?>"
+           data-nav-gruppe="<?= e($knoten['id']) ?>" aria-controls="nav-<?= e($knoten['id']) ?>" aria-expanded="<?= $knoten['aktiv'] ? 'true' : 'false' ?>">
+          <span class="mainnav__icon"><?= e($knoten['icon']) ?></span><span><?= e($knoten['name']) ?> <span class="mainnav__winkel" aria-hidden="true">▾</span></span></a>
+      <?php else: $m = $knoten['m']; ?>
+        <a class="mainnav__item<?= $knoten['aktiv'] ? ' is-active' : '' ?>" href="<?= e(url($m['route'])) ?>">
+          <span class="mainnav__icon"><?= e($m['icon']) ?></span><span><?= e($m['label']) ?></span></a>
+      <?php endif; ?>
     <?php endforeach; ?>
   </div>
+  <?php foreach ($navBaum as $knoten): if ($knoten['typ'] !== 'gruppe') { continue; } ?>
+    <div class="mainnav__panel" id="nav-<?= e($knoten['id']) ?>" data-nav-panel="<?= e($knoten['id']) ?>"<?= $knoten['aktiv'] ? ' data-nav-aktiv' : ' hidden' ?>
+         role="group" aria-label="<?= e($knoten['name']) ?>">
+      <div class="mainnav__panel-kopf">
+        <strong><span class="mainnav__icon"><?= e($knoten['icon']) ?></span> <?= e($knoten['name']) ?></strong>
+        <button class="mainnav__zu" type="button" data-nav-zu aria-label="Menü schließen">✕</button>
+      </div>
+      <div class="mainnav__panel-inner">
+        <?php foreach ($knoten['module'] as $eintrag): $m = $eintrag['m']; ?>
+          <a class="mainnav__unter<?= $eintrag['aktiv'] ? ' is-active' : '' ?>" href="<?= e(url($m['route'])) ?>"<?= $eintrag['aktiv'] ? ' aria-current="page"' : '' ?>>
+            <span class="mainnav__icon"><?= e($m['icon']) ?></span><span><?= e($m['label']) ?></span></a>
+        <?php endforeach; ?>
+      </div>
+    </div>
+  <?php endforeach; ?>
 </nav>
 <?php endif; ?>
 

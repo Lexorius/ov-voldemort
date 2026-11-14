@@ -129,8 +129,8 @@ $speicher ??= null; $php ??= null; ?>
     <p>Zugang einrichten, Formulare abrufen, Felder zuordnen und Einträge als Wünsche übernehmen.</p></div></a>
   <a href="<?= e(url('budget')) ?>"><div class="card"><h3>Budget</h3>
     <p>Haushaltsjahre und Budgettöpfe pflegen.</p></div></a>
-  <a href="<?= e(url('admin_nav')) ?>"><div class="card"><h3>Menüleiste</h3>
-    <p>Die Reihenfolge der Module in der Leiste – für alle Benutzer.</p></div></a>
+  <a href="<?= e(url('admin_nav')) ?>"><div class="card"><h3>Menü</h3>
+    <p>Der Menübaum: Gruppen anlegen, Module umhängen und die Reihenfolge festlegen – für alle Benutzer.</p></div></a>
   <a href="<?= e(url('admin_geo')) ?>"><div class="card"><h3>Entfernungen <span class="badge badge--warn">!! TEST !!</span></h3>
     <p>Luftlinie und Fahrstrecke von der Unterkunft zu Terminen, Veranstaltungen und Dienststellen –
        über OpenStreetMap und den OSRM-Demoserver, eine Anfrage je Abruf.</p></div></a>

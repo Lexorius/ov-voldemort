@@ -2,9 +2,10 @@
 declare(strict_types=1);
 
 /**
- * Die Menüleiste: welche Module es gibt, wer sie sieht, in welcher
- * Reihenfolge sie stehen. Die Reihenfolge ist in der Verwaltung einstellbar
- * und liegt als Liste der Schlüssel in den internen Merkwerten.
+ * Das Menü: welche Module es gibt, wer sie sieht – und der Baum, in dem sie stehen.
+ * Der Baum hat zwei Ebenen: oben einzelne Module und Gruppen, in einer Gruppe ihre
+ * Module. Ohne eigene Einstellung gilt der Grundvorschlag; in der Verwaltung lässt er
+ * sich umbauen und liegt dann als JSON in den internen Merkwerten (nav_baum).
  */
 
 /** Alle Module in ihrer Vorgabereihenfolge. Reine Funktion bis auf setting()/can(). */
@@ -79,51 +80,308 @@ function nav_module(): array
     ];
 }
 
+/* ==================================================================== */
+/* Der Menübaum: Gruppen mit ihren Modulen                               */
+/* ==================================================================== */
+
 /**
- * Module in die gewünschte Reihenfolge bringen: erst die Schlüssel aus
- * $reihenfolge (Komma-Liste), dann alle übrigen in Vorgabereihenfolge.
- * Unbekannte Schlüssel werden übergangen. Reine Funktion.
+ * Der Grundvorschlag: Übersicht, Dateiablage und Verwaltung stehen für sich, alles andere
+ * in Gruppen. Ein Knoten ist entweder ein Modul (['modul' => Schlüssel]) oder eine Gruppe
+ * (['gruppe' => Name, 'icon' => Zeichen, 'module' => [Schlüssel, …]]).
+ * Die Namen sind bewusst kurz: am Handy steht die Leiste unten, mit wenig Platz je Eintrag.
  */
-function nav_sortieren(array $module, string $reihenfolge): array
+const NAV_GRUNDVORSCHLAG = [
+    ['modul' => 'dashboard'],
+    ['gruppe' => 'Einsatz',    'icon' => '🚨', 'module' => ['einsaetze', 'karten']],
+    ['gruppe' => 'Planung',    'icon' => '€',  'module' => ['wishes', 'budget', 'todos']],
+    ['gruppe' => 'Termine',    'icon' => '▤',  'module' => ['kalender', 'meetings', 'events', 'umfragen']],
+    ['gruppe' => 'Kontakte',   'icon' => '✉',  'module' => ['contacts', 'thw', 'newsletter']],
+    ['gruppe' => 'Technik',    'icon' => '⛟',  'module' => ['vehicles', 'radios', 'sims', 'tankkarten', 'stan']],
+    ['gruppe' => 'Unterkunft', 'icon' => '🏠', 'module' => ['unterkunft', 'standorte', 'verbrauch', 'getraenke']],
+    ['modul' => 'ablage'],
+    ['modul' => 'admin'],
+];
+const NAV_GRUPPE_NAME_MAX = 40;
+const NAV_GRUPPEN_MAX = 20;
+const NAV_GRUPPE_ICON = '▸';
+
+/** Name einer Gruppe: ohne Leerraum am Rand, höchstens 40 Zeichen. Reine Funktion. */
+function nav_gruppe_name(mixed $name): string
 {
+    return mb_substr(trim((string)preg_replace('/\s+/u', ' ', is_scalar($name) ? (string)$name : '')), 0, NAV_GRUPPE_NAME_MAX);
+}
+
+/** Zeichen einer Gruppe: ein kurzes Symbol, sonst die Vorgabe. Reine Funktion. */
+function nav_gruppe_icon(mixed $icon): string
+{
+    $icon = mb_substr(trim(is_scalar($icon) ? (string)$icon : ''), 0, 4);
+    return $icon !== '' ? $icon : NAV_GRUPPE_ICON;
+}
+
+/**
+ * Einen Baum in Form bringen: nur bekannte Module, jedes einmal (das erste Vorkommen zählt),
+ * Gruppen mit Namen und Zeichen. Module, die im Baum fehlen – etwa ein neues nach einem
+ * Update –, kommen auf die oberste Ebene, vor die Verwaltung, wenn die am Ende steht.
+ * Leere Gruppen bleiben stehen: sie lassen sich in der Verwaltung füllen. Reine Funktion.
+ */
+function nav_baum_bereinigen(mixed $baum, array $modulKeys): array
+{
+    $bekannt = array_fill_keys($modulKeys, true);
+    $gesehen = [];
     $out = [];
-    foreach (array_filter(array_map('trim', explode(',', $reihenfolge))) as $key) {
-        if (isset($module[$key]) && !isset($out[$key])) {
-            $out[$key] = $module[$key];
+    foreach (is_array($baum) ? $baum : [] as $knoten) {
+        if (!is_array($knoten)) {
+            continue;
+        }
+        if (array_key_exists('gruppe', $knoten)) {
+            $name = nav_gruppe_name($knoten['gruppe']);
+            if ($name === '' || count(array_filter($out, static fn($k) => isset($k['gruppe']))) >= NAV_GRUPPEN_MAX) {
+                $name = '';
+            }
+            $module = [];
+            foreach ((array)($knoten['module'] ?? []) as $key) {
+                $key = is_scalar($key) ? (string)$key : '';
+                if (isset($bekannt[$key]) && !isset($gesehen[$key])) {
+                    $gesehen[$key] = true;
+                    $module[] = $key;
+                }
+            }
+            if ($name === '') {
+                // eine Gruppe ohne Namen gibt es nicht: ihre Module stehen dann für sich
+                foreach ($module as $key) {
+                    $out[] = ['modul' => $key];
+                }
+                continue;
+            }
+            $out[] = ['gruppe' => $name, 'icon' => nav_gruppe_icon($knoten['icon'] ?? ''), 'module' => $module];
+        } elseif (isset($knoten['modul']) && is_scalar($knoten['modul'])) {
+            $key = (string)$knoten['modul'];
+            if (isset($bekannt[$key]) && !isset($gesehen[$key])) {
+                $gesehen[$key] = true;
+                $out[] = ['modul' => $key];
+            }
         }
     }
-    foreach ($module as $key => $m) {
-        if (!isset($out[$key])) {
-            $out[$key] = $m;
+    $fehlend = array_values(array_filter($modulKeys, static fn($k) => !isset($gesehen[$k])));
+    if ($fehlend) {
+        $letzter = $out ? $out[count($out) - 1] : null;
+        $ende = $letzter !== null && ($letzter['modul'] ?? '') === 'admin' ? [array_pop($out)] : [];
+        foreach ($fehlend as $key) {
+            $out[] = ['modul' => $key];
+        }
+        $out = array_merge($out, $ende);
+    }
+    return $out;
+}
+
+/** Ist in den internen Merkwerten ein eigener Baum abgelegt? */
+function nav_baum_eigen(): bool
+{
+    return trim(state_get('nav_baum', '')) !== '';
+}
+
+/** Der Baum, wie er gilt: der gespeicherte, sonst der Grundvorschlag – immer bereinigt */
+function nav_baum(): array
+{
+    $keys = array_keys(nav_module());
+    $roh = trim(state_get('nav_baum', ''));
+    $baum = $roh !== '' ? json_decode($roh, true) : null;
+    return nav_baum_bereinigen(is_array($baum) && $baum ? $baum : NAV_GRUNDVORSCHLAG, $keys);
+}
+
+function nav_baum_speichern(array $baum): void
+{
+    $baum = nav_baum_bereinigen($baum, array_keys(nav_module()));
+    state_save('nav_baum', (string)json_encode($baum, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+}
+
+/**
+ * Der Baum, wie die angemeldete Person ihn sieht. Module ohne Recht fallen weg, Gruppen
+ * ohne sichtbares Modul ebenso; eine Gruppe mit nur einem sichtbaren Modul zeigt das Modul
+ * selbst. Je Knoten: typ ('modul' | 'gruppe'), aktiv – beim Modul key und m (die
+ * Definition), bei der Gruppe id, name, icon, route (das erste Modul) und module.
+ * Reine Funktion über Baum und Module.
+ */
+function nav_baum_sichtbar(array $baum, array $module, string $seite): array
+{
+    $out = [];
+    $nr = 0;
+    $modul = static function (string $key) use ($module, $seite): ?array {
+        $m = $module[$key] ?? null;
+        return $m && !empty($m['darf']) ? ['typ' => 'modul', 'key' => $key, 'm' => $m, 'aktiv' => in_array($seite, (array)$m['aktiv'], true)] : null;
+    };
+    foreach ($baum as $knoten) {
+        if (isset($knoten['modul'])) {
+            if (($m = $modul((string)$knoten['modul'])) !== null) {
+                $out[] = $m;
+            }
+            continue;
+        }
+        $nr++;
+        $drin = array_values(array_filter(array_map($modul, (array)($knoten['module'] ?? []))));
+        if (count($drin) === 1) {
+            $out[] = $drin[0];
+        } elseif ($drin) {
+            $out[] = ['typ' => 'gruppe', 'id' => 'g' . $nr, 'name' => (string)$knoten['gruppe'], 'icon' => (string)($knoten['icon'] ?? NAV_GRUPPE_ICON),
+                      'route' => (string)$drin[0]['m']['route'], 'module' => $drin,
+                      'aktiv' => (bool)array_filter($drin, static fn($d) => $d['aktiv'])];
         }
     }
     return $out;
 }
 
-/** Einen Schlüssel in der Liste um eine Stelle verschieben (-1 hoch, +1 runter). Reine Funktion. */
-function nav_verschieben(array $keys, string $key, int $richtung): array
+/** Das Menü der angemeldeten Person */
+function nav_baum_fuer(): array
 {
-    $keys = array_values($keys);
-    $i = array_search($key, $keys, true);
-    if ($i === false) {
-        return $keys;
-    }
-    $j = $i + ($richtung < 0 ? -1 : 1);
-    if ($j < 0 || $j >= count($keys)) {
-        return $keys;
-    }
-    [$keys[$i], $keys[$j]] = [$keys[$j], $keys[$i]];
-    return $keys;
+    return nav_baum_sichtbar(nav_baum(), nav_module(), (string)($_GET['p'] ?? 'dashboard'));
 }
 
-/** Gespeicherte Reihenfolge als Komma-Liste ('' = Vorgabe) */
-function nav_reihenfolge(): string
-{
-    return state_get('nav_reihenfolge', '');
-}
-
-/** Die Menüleiste, wie sie die angemeldete Person sieht: sortiert und gefiltert */
+/** Alle Module, die die angemeldete Person sieht, in der Reihenfolge des Baums: [key => Definition] */
 function nav_leiste(): array
 {
-    return array_filter(nav_sortieren(nav_module(), nav_reihenfolge()), static fn($m) => $m['darf']);
+    $out = [];
+    foreach (nav_baum_fuer() as $knoten) {
+        foreach ($knoten['typ'] === 'gruppe' ? $knoten['module'] : [$knoten] as $m) {
+            $out[$m['key']] = $m['m'];
+        }
+    }
+    return $out;
+}
+
+/* ---------------- Den Baum umbauen – reine Funktionen für die Verwaltung ---------------- */
+
+/** Einen Eintrag einer Liste um eine Stelle verschieben (-1 hoch, +1 runter). Reine Funktion. */
+function nav_liste_verschieben(array $liste, int $i, int $richtung): array
+{
+    $liste = array_values($liste);
+    $j = $i + ($richtung < 0 ? -1 : 1);
+    if ($i < 0 || $i >= count($liste) || $j < 0 || $j >= count($liste)) {
+        return $liste;
+    }
+    [$liste[$i], $liste[$j]] = [$liste[$j], $liste[$i]];
+    return $liste;
+}
+
+/**
+ * Einen Knoten der obersten Ebene ($modul leer) oder ein Modul in seiner Gruppe um eine
+ * Stelle verschieben. $knoten ist die Stelle auf der obersten Ebene. Reine Funktion.
+ */
+function nav_baum_verschieben(array $baum, int $knoten, string $modul, int $richtung): array
+{
+    $baum = array_values($baum);
+    if ($modul === '') {
+        return nav_liste_verschieben($baum, $knoten, $richtung);
+    }
+    if (isset($baum[$knoten]['module'])) {
+        $i = array_search($modul, $baum[$knoten]['module'], true);
+        if ($i !== false) {
+            $baum[$knoten]['module'] = nav_liste_verschieben($baum[$knoten]['module'], (int)$i, $richtung);
+        }
+    }
+    return $baum;
+}
+
+/**
+ * Ein Modul umhängen: $ziel ist die Stelle einer Gruppe auf der obersten Ebene oder -1 für
+ * die oberste Ebene selbst. In der Gruppe kommt es ans Ende; auf der obersten Ebene an die
+ * Stelle seiner bisherigen Gruppe. Reine Funktion.
+ */
+function nav_baum_umhaengen(array $baum, string $modul, int $ziel): array
+{
+    $baum = array_values($baum);
+    if ($ziel >= 0 && !isset($baum[$ziel]['gruppe'])) {
+        return $baum;
+    }
+    $zielName = $ziel >= 0 ? $baum[$ziel]['gruppe'] : null;
+    $herkunft = null;   // Stelle auf der obersten Ebene, an der das Modul stand
+    foreach ($baum as $i => $k) {
+        if (($k['modul'] ?? null) === $modul) {
+            $herkunft = $i;
+            unset($baum[$i]);
+            break;
+        }
+        if (isset($k['module']) && in_array($modul, $k['module'], true)) {
+            if ($i === $ziel) {
+                return array_values($baum);   // steht schon dort
+            }
+            $baum[$i]['module'] = array_values(array_diff($k['module'], [$modul]));
+            $herkunft = $i;
+            break;
+        }
+    }
+    if ($herkunft === null) {
+        return array_values($baum);
+    }
+    if ($zielName === null) {
+        // hinter die Gruppe, aus der es kommt (oder an seine alte Stelle)
+        $neu = [];
+        foreach ($baum as $i => $k) {
+            $neu[] = $k;
+            if ($i === $herkunft) {
+                $neu[] = ['modul' => $modul];
+            }
+        }
+        return isset($baum[$herkunft]) ? $neu : array_merge(array_values($baum), [['modul' => $modul]]);
+    }
+    foreach ($baum as $i => $k) {
+        if ($i === $ziel) {
+            $baum[$i]['module'][] = $modul;
+        }
+    }
+    return array_values($baum);
+}
+
+/** Eine neue, leere Gruppe – vor der Verwaltung, wenn die am Ende steht. Reine Funktion. */
+function nav_baum_gruppe_neu(array $baum, string $name, string $icon = ''): array
+{
+    $baum = array_values($baum);
+    $name = nav_gruppe_name($name);
+    if ($name === '' || count(array_filter($baum, static fn($k) => isset($k['gruppe']))) >= NAV_GRUPPEN_MAX) {
+        return $baum;
+    }
+    $neu = ['gruppe' => $name, 'icon' => nav_gruppe_icon($icon), 'module' => []];
+    $letzter = $baum ? $baum[count($baum) - 1] : null;
+    if ($letzter !== null && ($letzter['modul'] ?? '') === 'admin') {
+        array_splice($baum, count($baum) - 1, 0, [$neu]);
+        return $baum;
+    }
+    $baum[] = $neu;
+    return $baum;
+}
+
+/** Name und Zeichen einer Gruppe ändern; ein leerer Name ändert nichts. Reine Funktion. */
+function nav_baum_gruppe_aendern(array $baum, int $knoten, string $name, string $icon): array
+{
+    $baum = array_values($baum);
+    if (isset($baum[$knoten]['gruppe']) && nav_gruppe_name($name) !== '') {
+        $baum[$knoten]['gruppe'] = nav_gruppe_name($name);
+        $baum[$knoten]['icon'] = nav_gruppe_icon($icon);
+    }
+    return $baum;
+}
+
+/** Eine Gruppe auflösen: ihre Module stehen danach an ihrer Stelle auf der obersten Ebene. Reine Funktion. */
+function nav_baum_gruppe_aufloesen(array $baum, int $knoten): array
+{
+    $baum = array_values($baum);
+    if (!isset($baum[$knoten]['gruppe'])) {
+        return $baum;
+    }
+    $einzeln = array_map(static fn($key) => ['modul' => $key], (array)$baum[$knoten]['module']);
+    array_splice($baum, $knoten, 1, $einzeln);
+    return $baum;
+}
+
+/** Alles auf eine Ebene: jede Gruppe aufgelöst, die Reihenfolge bleibt. Reine Funktion. */
+function nav_baum_flach(array $baum): array
+{
+    $out = [];
+    foreach ($baum as $k) {
+        foreach (isset($k['module']) ? (array)$k['module'] : [(string)($k['modul'] ?? '')] as $key) {
+            if ($key !== '') {
+                $out[] = ['modul' => $key];
+            }
+        }
+    }
+    return $out;
 }

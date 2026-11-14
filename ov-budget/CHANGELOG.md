@@ -1,5 +1,30 @@
 # Änderungsverlauf
 
+## 2.1.91.0
+
+- **Menü als Baum:** Die Leiste zeigt nicht mehr alle 24 Module nebeneinander,
+  sondern **Gruppen** mit ihren Modulen. Der **Grundvorschlag**: Übersicht,
+  Dateiablage und Verwaltung stehen für sich, dazu die Gruppen *Einsatz*
+  (Einsätze, Karten), *Planung* (Wünsche, Budget, Aufgaben), *Termine*
+  (Kalender, Besprechungen, Veranstaltungen, Abstimmungen), *Kontakte*
+  (Kontakte, THW-Kontakte, Newsletter), *Technik* (Fahrzeuge, Funkgeräte,
+  SIM-Karten, Tankkarten, STAN) und *Unterkunft* (Unterkunft, Standorte,
+  Verbrauch, Getränke). Am **Desktop** klappt eine Gruppe ihre Module als
+  zweite Zeile unter der Leiste auf; die Gruppe der aufgerufenen Seite steht
+  von vornherein offen. Am **Handy** öffnet ein Tipp auf die Gruppe ein
+  Blatt über der Leiste – große Tippflächen in zwei Spalten, Tippen daneben
+  oder auf ✕ schließt es; in Ruhe verdeckt nichts den Inhalt. Wer in einer
+  Gruppe nur ein Modul sehen darf, bekommt dieses Modul direkt; Gruppen ohne
+  sichtbares Modul erscheinen nicht. Ohne JavaScript führt eine Gruppe zu
+  ihrem ersten Modul und zeigt die übrigen als Zeile.
+- **Verwaltung → Menü:** Der Baum lässt sich umbauen – Gruppen anlegen,
+  umbenennen (mit eigenem Zeichen) und auflösen, Module in eine Gruppe oder
+  auf die oberste Ebene hängen, alles nach oben und unten schieben. Dazu
+  „Grundvorschlag wiederherstellen“ und „Alles auf eine Ebene“ (die Leiste
+  wie bisher). Module, die mit einem Update neu dazukommen, stehen von
+  selbst im Menü. **Eine früher eingestellte Reihenfolge der Leiste gilt
+  nicht mehr** – das Menü beginnt mit dem Grundvorschlag.
+
 ## 2.1.90.0
 
 - **Veranstaltungen – Einsatzauftrag (Fb Fü 3):** Auch zu einer Veranstaltung

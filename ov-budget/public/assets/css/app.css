@@ -162,6 +162,99 @@ h3 { font-size: 1rem; }
   .mainnav__item.is-active { border-bottom-color: var(--accent); background: transparent; }
 }
 
+/*
+ * Menübaum: eine Gruppe in der Leiste klappt ihre Module auf.
+ * Am Desktop als zweite Zeile unter der Leiste – die Gruppe der aufgerufenen Seite steht
+ * von vornherein offen. Am Handy als Blatt, das von unten über der Leiste aufgeht: große
+ * Tippflächen in zwei Spalten, Tippen daneben oder auf ✕ schließt es. Ohne JavaScript
+ * bleibt am Handy eine schmale, wischbare Zeile mit den Modulen der aufgerufenen Gruppe.
+ */
+.mainnav__winkel { font-size: .7em; opacity: .7; }
+.mainnav__item--gruppe[aria-expanded=true] .mainnav__winkel { display: inline-block; transform: rotate(180deg); }
+.mainnav__item--gruppe[aria-expanded=true]:not(.is-active) { background: var(--surface-2); color: var(--ink); }
+.mainnav__panel {
+  position: absolute; left: 0; right: 0; bottom: 100%; z-index: 1;
+  background: var(--surface-2); border-top: 1px solid var(--border);
+}
+.mainnav__panel[hidden] { display: none; }
+.mainnav__panel-kopf { display: none; }
+.mainnav__panel-inner {
+  display: flex; gap: .35rem; padding: .4rem .6rem; overflow-x: auto;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.mainnav__panel-inner::-webkit-scrollbar { display: none; }
+.mainnav__unter {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: .4rem; min-height: 40px;
+  padding: .4rem .75rem; border-radius: 999px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--ink-soft); text-decoration: none; font-size: .85rem; white-space: nowrap;
+}
+.mainnav__unter:hover { color: var(--ink); border-color: var(--ink-mute); }
+.mainnav__unter.is-active { color: #fff; background: var(--accent); border-color: var(--accent); }
+.mainnav__unter .mainnav__icon { font-size: 1rem; }
+/* Ohne JavaScript liegt die Zeile am Handy über dem Inhalt – der Rand unten wächst mit */
+body:has(.mainnav:not(.hat-js) .mainnav__panel:not([hidden])) { padding-bottom: calc(var(--nav-h) + 3.4rem + env(safe-area-inset-bottom)); }
+
+@media (max-width: 859px) {
+  /* Das Blatt: mit JavaScript, sobald eine Gruppe angetippt ist */
+  .mainnav.hat-js .mainnav__panel {
+    max-height: min(70vh, 30rem); overflow-y: auto; overscroll-behavior: contain;
+    background: var(--surface); border: 1px solid var(--border); border-bottom: 0;
+    border-radius: 16px 16px 0 0; box-shadow: 0 -10px 30px rgba(0, 0, 0, .22);
+  }
+  .mainnav.hat-js .mainnav__panel-kopf {
+    display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+    position: sticky; top: 0; z-index: 1; padding: .7rem .9rem .5rem; background: var(--surface); font-size: 1rem;
+  }
+  .mainnav__zu {
+    width: 44px; height: 44px; margin: -.4rem -.4rem -.4rem 0; border: 0; border-radius: 50%;
+    background: transparent; color: var(--ink-soft); font-size: 1.1rem; cursor: pointer;
+  }
+  .mainnav__zu:hover, .mainnav__zu:focus-visible { background: var(--surface-2); color: var(--ink); }
+  .mainnav.hat-js .mainnav__panel-inner {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem;
+    padding: .2rem .8rem calc(.9rem + 2px); overflow: visible;
+  }
+  .mainnav.hat-js .mainnav__unter {
+    min-height: 54px; padding: .55rem .8rem; border-radius: 12px; gap: .6rem;
+    font-size: .98rem; white-space: normal; line-height: 1.2; overflow-wrap: anywhere;
+  }
+  .mainnav.hat-js .mainnav__unter .mainnav__icon { font-size: 1.3rem; flex: none; width: 1.6rem; text-align: center; }
+  /* Der Schleier hinter dem Blatt: dunkelt die Seite ab, Tippen darauf schließt */
+  body.nav-offen::before {
+    content: ""; position: fixed; inset: 0; z-index: 44; background: rgba(15, 23, 42, .45);
+  }
+  body.nav-offen { overflow: hidden; }
+}
+@media (max-width: 330px) {
+  .mainnav.hat-js .mainnav__panel-inner { grid-template-columns: 1fr; }
+}
+/* Auf schmalen Handys rücken die Einträge der Leiste zusammen: sechs passen nebeneinander, der Rest kommt beim Wischen */
+@media (max-width: 480px) {
+  .mainnav__item { min-width: 3.85rem; }
+}
+@media (min-width: 860px) {
+  body:has(.mainnav__panel:not([hidden])) { padding-bottom: 0; }
+  .mainnav__panel { position: static; border-top: 1px solid var(--border); }
+  .mainnav__panel-inner { max-width: 1200px; margin: 0 auto; padding: .45rem 1rem; flex-wrap: wrap; overflow: visible; }
+}
+
+/* Verwaltung: der Menübaum zum Umbauen */
+.navbaum { list-style: none; margin: 0; padding: 0; }
+.navbaum__knoten { border: 1px solid var(--border); border-radius: 12px; padding: .55rem .7rem; margin-bottom: .5rem; background: var(--surface); }
+.navbaum__knoten--gruppe { background: var(--surface-2); }
+.navbaum__zeile { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.navbaum__name { flex: 1 1 10rem; min-width: 0; font-weight: 600; }
+.navbaum__kinder { list-style: none; margin: .5rem 0 0; padding: 0 0 0 1.2rem; border-left: 2px solid var(--border); }
+.navbaum__kinder .navbaum__knoten { margin-bottom: .35rem; }
+.navbaum select { width: auto; min-height: 40px; padding: .3rem .5rem; max-width: 14rem; }
+.navbaum input[type=text] { width: auto; min-height: 40px; padding: .3rem .5rem; }
+.navbaum .btn--sm { min-height: 40px; min-width: 40px; }
+@media (max-width: 600px) {
+  .navbaum__kinder { padding-left: .6rem; }
+  .navbaum__name { flex-basis: 100%; }
+  .navbaum select { max-width: 11rem; }
+}
+
 /* ---------- Seitenrahmen ---------- */
 .page { max-width: 1200px; margin: 0 auto; padding: 1rem .9rem 2rem; }
 @media (min-width: 860px) { .page { padding: 1.4rem 1rem 3rem; } }

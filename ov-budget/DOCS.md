@@ -2570,6 +2570,53 @@ Anwendung. Behoben ab PHP 8.5.12, 8.4.27, 8.3.36 und 8.2.35; PHP 8.1 und
 einspielen (jede Fassung baut das Image neu), dann in der Verwaltung prüfen,
 dass die Meldung grün ist. Die php.ini-Maßnahmen können danach bleiben.
 
+## Menü
+
+Das Menü ist ein Baum mit zwei Ebenen: oben stehen einzelne Module und
+**Gruppen**, in einer Gruppe ihre Module.
+
+* **Am Desktop** klappt ein Klick auf eine Gruppe ihre Module als zweite
+  Zeile unter der Leiste auf. Die Gruppe der Seite, auf der man gerade ist,
+  steht von vornherein offen; ein Klick daneben oder Esc bringt sie zurück.
+* **Am Handy** steht die Leiste unten. Ein Tipp auf eine Gruppe öffnet ein
+  Blatt über der Leiste mit großen Tippflächen in zwei Spalten; Tippen
+  daneben oder auf ✕ schließt es. In Ruhe ist alles zu, damit nichts den
+  Inhalt verdeckt. Die Leiste selbst lässt sich seitlich wischen.
+* Wer in einer Gruppe nur **ein** Modul sehen darf, bekommt dieses Modul
+  direkt in die Leiste; Gruppen ohne sichtbares Modul erscheinen nicht.
+
+Ohne eigene Einstellung gilt der **Grundvorschlag**:
+
+| Eintrag | Module |
+|---|---|
+| Übersicht | – |
+| Einsatz | Einsätze, Karten |
+| Planung | Wünsch dir was, Budget, Aufgaben |
+| Termine | Kalender, Besprechungen, Veranstaltungen, Abstimmungen |
+| Kontakte | Kontakte, THW-Kontakte, Newsletter |
+| Technik | Fahrzeuge, Funkgeräte, SIM-Karten, Tankkarten, STAN |
+| Unterkunft | Unterkunft, Standorte, Verbrauch, Getränke |
+| Dateiablage | – |
+| Verwaltung | – |
+
+Unter **Verwaltung → Menü** baut die Administration den Baum um – für alle:
+
+* **Gruppen** anlegen, umbenennen (Name und ein kurzes Zeichen) und
+  auflösen; beim Auflösen stehen die Module danach einzeln an derselben
+  Stelle.
+* **Module umhängen**: an jedem Modul die Auswahl „oberste Ebene" oder eine
+  Gruppe, dann *Umhängen*.
+* **Reihenfolge**: ▲ und ▼ an jedem Eintrag – auf der obersten Ebene und
+  innerhalb einer Gruppe.
+* **Grundvorschlag wiederherstellen** setzt alles zurück; **Alles auf eine
+  Ebene** löst alle Gruppen auf, die Leiste zeigt dann wieder jedes Modul
+  einzeln.
+
+Kurze Gruppennamen lohnen sich: Am Handy hat jeder Eintrag der Leiste nur
+wenig Platz. Kommt mit einem Update ein Modul dazu, steht es von selbst im
+Menü – im Grundvorschlag an seinem Platz, in einem eigenen Baum auf der
+obersten Ebene vor der Verwaltung.
+
 ## Bibliotheken und Lizenzen
 
 OV-Multitool bringt drei Bibliotheken anderer mit, jede als eigene,

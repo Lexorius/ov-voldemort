@@ -47,6 +47,57 @@
     }
   }
 
+  /* Menübaum: Eine Gruppe in der Leiste zeigt ihre Module, statt gleich zu ihrem ersten Modul zu
+     springen. Am Desktop als zweite Zeile – dort steht die Gruppe der aufgerufenen Seite in Ruhe
+     offen. Am Handy als Blatt über der Leiste: in Ruhe ist alles zu, damit nichts den Inhalt
+     verdeckt; Tippen neben das Blatt, auf ✕ oder Esc schließt es. Offen ist höchstens eine. */
+  var navGruppen = document.querySelectorAll('[data-nav-gruppe]');
+  if (navGruppen.length) {
+    var navWurzel = document.querySelector('.mainnav');
+    var navPanels = document.querySelectorAll('[data-nav-panel]');
+    var navAktiv = document.querySelector('[data-nav-panel][data-nav-aktiv]');
+    var navAktivId = navAktiv ? navAktiv.getAttribute('data-nav-panel') : null;
+    var navSchmal = window.matchMedia('(max-width: 859px)');
+    var navRuhe = function () { return navSchmal.matches ? null : navAktivId; };
+    var navOffen = null;
+    var navZeigen = function (id) {
+      navOffen = id;
+      Array.prototype.forEach.call(navPanels, function (p) { p.hidden = p.getAttribute('data-nav-panel') !== id; });
+      Array.prototype.forEach.call(navGruppen, function (g) {
+        g.setAttribute('aria-expanded', g.getAttribute('data-nav-gruppe') === id ? 'true' : 'false');
+      });
+      // Am Handy liegt das Blatt über der Seite: abdunkeln und die Seite dahinter festhalten
+      document.body.classList.toggle('nav-offen', navSchmal.matches && id !== null);
+    };
+    navWurzel.classList.add('hat-js');
+    navZeigen(navRuhe());
+    Array.prototype.forEach.call(navGruppen, function (g) {
+      g.addEventListener('click', function (ev) {
+        // mit gedrückter Taste (neuer Tab) bleibt es beim Verweis auf das erste Modul
+        if (ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.button > 0) { return; }
+        ev.preventDefault();
+        var id = g.getAttribute('data-nav-gruppe');
+        navZeigen(navOffen === id ? (navSchmal.matches ? null : (id === navAktivId ? null : navAktivId)) : id);
+        if (navOffen === id && navSchmal.matches) {
+          // im Blatt gleich das aufgerufene Modul oder das erste in die Hand geben
+          var panel = document.getElementById('nav-' + id);
+          var ziel = panel && (panel.querySelector('.mainnav__unter.is-active') || panel.querySelector('.mainnav__unter'));
+          if (ziel) { ziel.focus({ preventScroll: true }); }
+        }
+      });
+    });
+    document.addEventListener('click', function (ev) {
+      if (ev.target.closest('[data-nav-zu]')) { navZeigen(navRuhe()); return; }
+      if (navOffen !== navRuhe() && !ev.target.closest('.mainnav')) { navZeigen(navRuhe()); }
+    });
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape' && navOffen !== navRuhe()) { navZeigen(navRuhe()); }
+    });
+    // Beim Drehen des Handys oder Ändern der Fensterbreite in den Ruhezustand der neuen Ansicht
+    var navWechsel = function () { navZeigen(navRuhe()); };
+    if (navSchmal.addEventListener) { navSchmal.addEventListener('change', navWechsel); } else if (navSchmal.addListener) { navSchmal.addListener(navWechsel); }
+  }
+
   function num(el) {
     if (!el) return 0;
     var v = String(el.value || '').replace(/\s|€/g, '');
