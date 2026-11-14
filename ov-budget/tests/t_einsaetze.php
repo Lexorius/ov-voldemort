@@ -152,7 +152,9 @@ $_POST = [
     'anforderer' => 'Landkreis Oldenburg', 'ort' => 'Deich Süd', 'fachgruppe_id' => '', 'beschreibung' => 'Pegel steigt', 'notiz' => '',
     'tag_datum' => ['2026-11-14', '2026-11-15', '2026-11-16'], 'tag_von' => ['08:00', '08:00', '08:00'], 'tag_bis' => ['18:00', '18:00', '14:00'],
     'tag_staerke' => ['1/2/9', '1/2/9', '0/1/5'], 'tag_taetigkeit' => ['Verbau', 'Verbau', 'Rückbau'],
-    'fahrzeuge_feld' => '1', 'vehicles' => ['3', '8', '3'], 'vehicles_neu' => '12',
+    'tag_key' => ['0', '1', '7'], 'tag_fachgruppe' => ['21', '22', ''],
+    'tag_fz' => ['0' => ['3', '8', '3'], '7' => ['3']], 'tag_km' => ['0' => ['3' => '12,5', '8' => ''], '1' => ['12' => '40'], '7' => ['3' => '1.234,5']],
+    'tag_bh' => ['0' => ['8' => '2,5'], '1' => ['12' => '']],
 ];
 [$id, $err] = einsatz_save_from_post(null, current_user());
 $kopf = $nur('einsaetze')[0][1] ?? [];
@@ -163,7 +165,13 @@ $check('Felder übernommen, Ersteller gesetzt', $kopf['nummer'] === '2026-014' &
 $zeilen = $nur('einsatz_tage');
 $check('drei Tage gespeichert, mit Sekunden und Stärke', count($zeilen) === 3 && $zeilen[0][1]['von'] === '08:00:00' && $zeilen[2][1]['bis'] === '14:00:00'
     && $zeilen[2][1]['staerke_u'] === 1 && $zeilen[2][1]['staerke_h'] === 5 && $zeilen[0][1]['einsatz_id'] === $id);
-$check('Fahrzeuge: jedes einmal, das aus dem Dropdown zählt mit', array_map(static fn($i) => $i[1]['vehicle_id'], $nur('einsatz_vehicles')) === [3, 8, 12]);
+$check('Fachgruppe je Zeile', $zeilen[0][1]['fachgruppe_id'] === 21 && $zeilen[1][1]['fachgruppe_id'] === 22 && $zeilen[2][1]['fachgruppe_id'] === null);
+$jeZeile = array_map(static fn($i) => [$i[1]['tag_id'], $i[1]['vehicle_id'], $i[1]['km']], $nur('einsatz_tag_vehicles'));
+$check('Fahrzeuge je Zeile mit Kilometern; wer Kilometer hat, ist gewählt', $jeZeile === [
+    [$zeilen[0][1]['einsatz_id'] + 1, 3, 12.5], [$zeilen[0][1]['einsatz_id'] + 1, 8, null],
+    [$jeZeile[2][0], 12, 40.0], [$jeZeile[3][0], 3, 1234.5]] && $jeZeile[2][0] !== $jeZeile[3][0] && $jeZeile[2][0] !== $jeZeile[0][0]);
+$check('Betriebsstunden je Fahrzeug gespeichert, ohne Kilometer', array_map(static fn($i) => $i[1]['betriebsstunden'], $nur('einsatz_tag_vehicles')) === [null, 2.5, null, null]);
+$check('Fahrzeuge des Einsatzes sind die Summe aus den Zeilen, jedes einmal', array_map(static fn($i) => $i[1]['vehicle_id'], $nur('einsatz_vehicles')) === [3, 8, 12]);
 $check('vorher alte Tage und Fahrzeuge entfernt', count(array_filter($GLOBALS['execs'], static fn($x) => str_contains($x[0], 'DELETE FROM einsatz_tage'))) === 1
     && count(array_filter($GLOBALS['execs'], static fn($x) => str_contains($x[0], 'DELETE FROM einsatz_vehicles'))) === 1);
 
@@ -173,7 +181,7 @@ $_POST = ['titel' => 'Hochwasser Hunte', 'status' => 'abgerechnet', 'tag_datum' 
 $aend = end($GLOBALS['updates']);
 $check('Bearbeiten: Update statt Insert, ganztägiger Tag', $id2 === 5 && $err2 === [] && $aend[0] === 'einsaetze' && $aend[2] === [5]
     && $aend[1]['beginn'] === '2026-11-14 00:00:00' && $aend[1]['ende'] === '2026-11-14 23:59:59' && $aend[1]['status'] === 'abgerechnet' && !isset($aend[1]['created_by']));
-$check('ohne Fahrzeugfeld bleiben die Fahrzeuge unberührt', $nur('einsatz_vehicles') === []);
+$check('Zeile ohne Fahrzeuge: der Einsatz hat keine mehr', $nur('einsatz_vehicles') === [] && $nur('einsatz_tag_vehicles') === []);
 
 $GLOBALS['execs'] = [];
 einsatz_delete(['id' => 5, 'nummer' => '2026-014', 'titel' => 'Hochwasser Hunte']);
@@ -230,7 +238,7 @@ $tageDb = [
     ['datum' => '2026-11-14', 'von' => '08:00:00', 'bis' => '18:00:00', 'staerke_f' => 1, 'staerke_u' => 2, 'staerke_h' => 9, 'taetigkeit' => 'Verbau'],
     ['datum' => '2026-11-15', 'von' => '22:00:00', 'bis' => '06:00:00', 'staerke_f' => 0, 'staerke_u' => 1, 'staerke_h' => 5, 'taetigkeit' => 'Nachtwache'],
 ];
-$seite = render_partial('einsatz', ['einsatz' => $zeile, 'tage' => $tageDb, 'summen' => einsatz_summen($tageDb), 'fahrzeuge' => [['id' => 3, 'bezeichnung' => 'GKW 1']],
+$seite = render_partial('einsatz', ['einsatz' => $zeile, 'tage' => $tageDb, 'summen' => einsatz_summen($tageDb),
     'buchungen' => [['id' => 9, 'art' => 'einnahme', 'status' => 'abgerechnet', 'datum' => '2026-12-01', 'bezeichnung' => 'Kostenerstattung', 'lieferant' => 'Landkreis',
         'kategorie_label' => 'Einsatzkostenerstattung', 'kategorie_color' => '#15803d', 'betrag_brutto' => '2500.00', 'abgerechnet_am' => '2026-12-01']],
     'geld' => einsatz_geld_aus([['art' => 'einnahme', 'status' => 'abgerechnet', 'betrag_brutto' => '2500.00']]), 'mitGeld' => true]);
@@ -239,17 +247,22 @@ $check('Seite: Tage mit Wochentag, Dauer, Stärke und Helferstunden', str_contai
 $check('Seite: Summen über beide Tage', str_contains($seite, '2 Einsatztage') && str_contains($seite, '18 h') && str_contains($seite, '168 h'));
 $check('Seite: Buchungen mit Stand, Knöpfe für Ausgabe und Einnahme mit Bezug', str_contains($seite, 'Kostenerstattung') && str_contains($seite, 'abgerechnet')
     && str_contains($seite, 'art=ausgabe&amp;einsatz_id=5') && str_contains($seite, 'art=einnahme&amp;einsatz_id=5') && str_contains($seite, 'noch unterwegs'));
-$stumm = render_partial('einsatz', ['einsatz' => $zeile, 'tage' => $tageDb, 'summen' => einsatz_summen($tageDb), 'fahrzeuge' => [], 'buchungen' => [], 'geld' => einsatz_geld_aus([]), 'mitGeld' => false]);
-$check('Seite ohne Budgetrecht: kein Geld', !str_contains($stumm, 'id="geld"') && !str_contains($stumm, 'einsatz_id=5'));
+$stumm = render_partial('einsatz', ['einsatz' => $zeile, 'tage' => $tageDb, 'summen' => einsatz_summen($tageDb), 'buchungen' => [], 'geld' => einsatz_geld_aus([]), 'mitGeld' => false]);
+$check('Seite ohne Budgetrecht: kein Geld', !str_contains($stumm, 'id="geld"') && !str_contains($stumm, 'art=ausgabe') && !str_contains($stumm, 'art=einnahme'));
 
-$maske = render_partial('einsatz_edit', ['einsatz' => $zeile, 'tage' => $tageDb, 'errors' => [], 'buchungen' => 2,
-    'fahrzeuge' => [['id' => 3, 'bezeichnung' => 'GKW 1', 'funkrufname' => 'Heros 21/52', 'typ_slug' => 'gkw', 'typ_label' => 'GKW']], 'fahrzeugeGewaehlt' => [3]]);
-$check('Maske: je Tag eine Zeile plus zwei leere, Stärke als Text', substr_count($maske, 'name="tag_datum[]"') === 4 && str_contains($maske, 'value="2026-11-15"')
-    && str_contains($maske, 'value="22:00"') && str_contains($maske, 'value="1/2/9"') && str_contains($maske, 'data-zeile-folgetag'));
-$check('Maske: Fahrzeuge gewählt, Löschen nennt die Buchungen', str_contains($maske, 'name="vehicles[]" value="3"') && str_contains($maske, 'name="fahrzeuge_feld"')
+$tageMaske = $tageDb;
+$tageMaske[0] += ['fachgruppe_id' => 21, 'vehicles' => [3], 'km' => [3 => 12.5]];
+$maske = render_partial('einsatz_edit', ['einsatz' => $zeile, 'tage' => $tageMaske, 'errors' => [], 'buchungen' => 2,
+    'fahrzeuge' => [['id' => 3, 'bezeichnung' => 'GKW 1', 'funkrufname' => 'Heros 21/52'], ['id' => 8, 'bezeichnung' => 'MTW', 'funkrufname' => '']]]);
+$check('Maske: je Zeile ein Block plus ein leerer, Stärke als Text, jede mit eigener Kennung', substr_count($maske, 'name="tag_datum[]"') === 3 && str_contains($maske, 'value="2026-11-15"')
+    && str_contains($maske, 'value="22:00"') && str_contains($maske, 'value="1/2/9"') && str_contains($maske, 'data-zeile-folgetag') && str_contains($maske, 'data-zeile-kopie')
+    && str_contains($maske, 'name="tag_key[]" value="0"') && str_contains($maske, 'name="tag_key[]" value="2"') && substr_count($maske, 'name="tag_fachgruppe[]"') === 3);
+$check('Maske: Fahrzeuge je Zeile mit Kilometern, Löschen nennt die Buchungen', str_contains($maske, 'name="tag_fz[0][]" value="3" checked') && str_contains($maske, 'name="tag_km[0][3]" value="12,5"')
+    && str_contains($maske, 'name="tag_fz[1][]" value="8">') && str_contains($maske, 'name="tag_km[1][8]" value=""') && !str_contains($maske, 'fahrzeuge_feld')
+    && str_contains($maske, 'name="tag_bh[0][3]" value=""') && substr_count($maske, 'placeholder="Bh"') === 6
     && str_contains($maske, 'Die 2 Buchungen bleiben'));
 $falsch = render_partial('einsatz_edit', ['einsatz' => ['id' => null, 'titel' => 'x', 'status' => 'laufend'], 'tage' => [['datum' => '2026-11-14', 'von' => '25:99', 'bis' => '', 'staerke_text' => 'viele', 'taetigkeit' => '']],
-    'errors' => ['Zeile 1: …'], 'fahrzeuge' => [], 'fahrzeugeGewaehlt' => [], 'buchungen' => 0]);
+    'errors' => ['Zeile 1: …'], 'fahrzeuge' => [], 'buchungen' => 0]);
 $check('Maske nach Fehler: die Eingaben stehen noch da', str_contains($falsch, 'value="25:99"') && str_contains($falsch, 'value="viele"') && str_contains($falsch, 'alert--error')
     && !str_contains($falsch, 'Einsatz löschen'));
 

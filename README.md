@@ -97,10 +97,13 @@ unter „Sicherheitslücke PHP2Shell".
   Termine, Anwesenheit, Protokoll zum Drucken. Themen über Divera einreichen,
   Status-Rückmeldung an Divera.
 * **Einsätze** – was der Ortsverband gefahren ist, über einen oder mehrere
-  Tage: je Tag oder Schicht Zeit, Stärke und Tätigkeit, daraus Einsatztage,
-  Einsatzstunden und Helferstunden; Einsatznummer, Art, Stand, Anforderer,
-  eingesetzte Fahrzeuge. **Ausgaben und Einnahmen** hängen im Budget am
-  Einsatz, die Seite zeigt Saldo und was noch aussteht.
+  Tage: je Tag und Einheit Zeit, Fachgruppe, Fahrzeuge mit gefahrenen
+  Kilometern und Betriebsstunden, Stärke und Tätigkeit – mehrere Fachgruppen am selben Tag mit
+  eigenen Uhrzeiten –, daraus Einsatztage, Einsatzstunden und Helferstunden,
+  auch je Fachgruppe und Fahrzeug. **Einsatzauftrag (Fb Fü 3)** in einer
+  Maske mit Vorschau, als PDF am Einsatz und in der Dateiablage gespeichert.
+  **Ausgaben und Einnahmen** hängen im Budget am Einsatz, die Seite zeigt
+  Saldo und was noch aussteht.
 * **Veranstaltungen** – Termin, Ort, Art (Ausbildung, Übung, Helferversammlung,
   Feier …), Budgettopf und geplante gegen tatsächliche Kosten, mehrere Plätze,
   Dateien, Gästeliste aus den Kontakten oder nur eine Teilnehmerzahl,
@@ -161,7 +164,10 @@ unter „Sicherheitslücke PHP2Shell".
   (SVG und Bilder) per Rechtsklick; einblendbar die Fahrzeuge an ihrer
   zuletzt gemeldeten Position. Symbole lassen sich auf Knopfdruck aus einem
   GitHub-Repository holen (mitgeliefert wird keines); jedes Fahrzeug
-  kann ein taktisches Zeichen tragen.
+  kann ein taktisches Zeichen tragen. Jede Karte führt ein **Protokoll**,
+  wann was gesetzt und versetzt wurde, und rechnet daraus, wie lange jede
+  Einheit und jedes Fahrzeug im Einsatz ist; die Lage lässt sich als PDF in
+  einen **Einsatz** speichern.
 * **Dateiablage** – alle Dokumente in einem Baum aus Kategorien: eigene,
   beliebig tief geschachtelt, und die Ablagen der Module (Fahrzeuge,
   Veranstaltungen, Termine, Plätze, STAN, Newsletter, Wünsche, Belege
@@ -758,6 +764,17 @@ anpassen, neu anstoßen oder entfernen.
   [connector/README.md](connector/README.md)
 * Nach außen gehen nur Kennzahlen (MQTT) – keine Namen, Kennungen oder Rufnummern;
   die KI-Auswertung spricht nur mit Rechnern im eigenen Netz
+
+## Bibliotheken anderer
+
+Mitgeliefert werden drei Bibliotheken, jede unverändert und mit ihrem
+Lizenztext: [einsatzauftrag](https://github.com/wattnpapa/einsatzauftrag)
+von Johannes Rudolph (EUPL-1.2) für den Einsatzauftrag „Fb Fü 3" als PDF,
+[jsPDF](https://github.com/parallax/jsPDF) (MIT) und
+[qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) von
+Kazuhiko Arase (MIT). In der Anwendung steht alles dazu unter *Bibliotheken
+und Lizenzen* (Verweis im Fuß jeder Seite), in der Anleitung im gleichnamigen
+Abschnitt. Aktualisiert wird mit den Skripten unter `scripts/`.
 
 ## Datensicherung
 

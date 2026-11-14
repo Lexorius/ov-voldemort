@@ -1,5 +1,6 @@
 <?php
-/** @var array $karte @var array $errors @var int $marker */
+/** @var array $karte @var array $errors @var int $marker @var array $einsaetze */
+$einsaetze ??= [];
 $isNew = empty($karte['id']);
 $zurueck = $isNew ? url('karten') : url('karte', ['id' => $karte['id']]);
 $mittelpunkt = (string)($karte['mittelpunkt'] ?? sprintf('%.6f, %.6f', (float)$karte['lat'], (float)$karte['lng']));
@@ -38,6 +39,19 @@ $mittelpunkt = (string)($karte['mittelpunkt'] ?? sprintf('%.6f, %.6f', (float)$k
         <input type="number" id="zoom" name="zoom" min="<?= KARTEN_ZOOM_MIN ?>" max="<?= KARTEN_ZOOM_MAX ?>" value="<?= (int)($karte['zoom'] ?? 14) ?>">
       </div>
     </div>
+    <?php if ($einsaetze): ?>
+    <div class="field">
+      <label for="einsatz_id">Gehört zum Einsatz <span class="muted">(freiwillig)</span></label>
+      <input type="hidden" name="einsatz_feld" value="1">
+      <select id="einsatz_id" name="einsatz_id">
+        <option value="">– kein Einsatz –</option>
+        <?php foreach ($einsaetze as $es): ?>
+          <option value="<?= (int)$es['id'] ?>"<?= (int)($karte['einsatz_id'] ?? 0) === (int)$es['id'] ? ' selected' : '' ?>><?= e(de_date(substr((string)$es['beginn'], 0, 10)) . ' · ' . mb_substr(einsatz_bezeichnung($es), 0, 60)) ?></option>
+        <?php endforeach; ?>
+      </select>
+      <small class="muted">Die Karte steht dann auf der Seite des Einsatzes; von der Karte aus lässt sich die Lage als PDF dorthin speichern.</small>
+    </div>
+    <?php endif; ?>
     <div class="field field--check">
       <input type="checkbox" id="fahrzeuge" name="fahrzeuge" value="1" <?= !empty($karte['fahrzeuge']) ? 'checked' : '' ?>>
       <label for="fahrzeuge">Fahrzeuge mit gemeldeter Position von Anfang an einblenden</label>

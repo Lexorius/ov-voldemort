@@ -9,7 +9,7 @@ declare(strict_types=1);
  *     um und hängt sie um; die Dokumente darin liegen in ablage_dateien
  *   - automatische: je Dateiablage eines Moduls eine gesperrte Kategorie mit
  *     Unterkategorien (Fahrzeuge › GKW, Veranstaltungen › 2026 › Sommerfest,
- *     Budget › 2026 › Ausgaben).
+ *     Budget › 2026 › Ausgaben, Einsätze › 2026 › Hochwasser).
  *     Sie stehen in keiner Tabelle, sondern werden beim Anzeigen aus den
  *     Modulen gerechnet – so stimmen sie immer, und gepflegt wird im Modul.
  *
@@ -32,6 +32,7 @@ const ABLAGE_QUELLEN = [
     'newsletter'    => ['label' => 'Newsletter',      'name' => 'newsletter_modul_name',    'recht' => 'view_newsletter', 'route' => 'newsletter'],
     'wunsch'        => ['label' => 'Wünsch dir was',  'name' => 'wunsch_modul_name',        'recht' => null,              'route' => 'wishes'],
     'buchung'       => ['label' => 'Budget',          'name' => 'budget_modul_name',        'recht' => 'view_expenses',   'route' => 'budget'],
+    'einsatz'       => ['label' => 'Einsätze',        'name' => 'einsatz_modul_name',       'recht' => 'view_einsaetze',  'route' => 'einsaetze'],
     // Symbole der Karten – Piktogramme, keine Dokumente: sie laufen nicht durch die KI-Auswertung
     'karte'         => ['label' => 'Karten',          'name' => 'karten_modul_name',        'recht' => 'view_karten',     'route' => 'karten'],
 ];
@@ -583,6 +584,13 @@ function ablage_auto_knoten(array $user): array
             case 'karte':
                 $darunter = ablage_knoten_karten(db_all('SELECT gruppe, COUNT(*) AS n FROM karten_symbole GROUP BY gruppe ORDER BY gruppe'));
                 break;
+            case 'einsatz':
+                $darunter = ablage_knoten_jahre('einsatz', db_all(
+                    "SELECT e.id, TRIM(CONCAT(e.nummer, ' ', e.titel)) AS name, e.jahr, e.beginn AS datum,
+                            (SELECT COUNT(*) FROM einsatz_files f WHERE f.einsatz_id = e.id) AS n
+                     FROM einsaetze e WHERE EXISTS (SELECT 1 FROM einsatz_files f WHERE f.einsatz_id = e.id)
+                     ORDER BY e.beginn DESC, e.id DESC"), 'einsatz', '#dateien');
+                break;
             case 'buchung':
                 $darunter = ablage_knoten_buchungen(db_all(
                     'SELECT x.jahr, x.art, COUNT(*) AS n FROM expense_files f JOIN expenses x ON x.id = f.expense_id
@@ -648,6 +656,11 @@ function ablage_quelle_sql(string $typ): ?array
         'wunsch' => ['route' => 'download', 'fest' => '', 'suche' => ['f.orig_name'],
             'spalten' => "$gemeinsam, '' AS titel, NULL AS thumb_name, 'dokument' AS art, f.wish_id AS objekt_id, f.kind AS zusatz, $wer",
             'von' => "wish_attachments f $u"],
+        // Einsätze: Einsatzauftrag und Lagekarte tragen ihre Herkunft als Zusatz
+        'einsatz' => ['route' => 'einsatz_datei', 'fest' => '', 'suche' => ['f.titel', 'f.orig_name'],
+            'spalten' => "$gemeinsam, f.titel, f.thumb_name, f.art, f.einsatz_id AS objekt_id,
+                CASE f.herkunft WHEN 'auftrag' THEN 'Einsatzauftrag' WHEN 'karte' THEN 'Lagekarte' ELSE NULL END AS zusatz, $wer",
+            'von' => "einsatz_files f $u"],
         // Belege: die Buchung steht als Zusatz am Beleg; Jahr und Art sagen, in welchem Knoten er liegt
         'buchung' => ['route' => 'expense_file', 'fest' => '', 'suche' => ['f.titel', 'f.orig_name', 'x.bezeichnung', 'x.lieferant', 'x.beleg_nr'],
             'spalten' => "$gemeinsam, f.titel, f.thumb_name, f.art, f.expense_id AS objekt_id, x.bezeichnung AS zusatz, $wer,
@@ -708,7 +721,7 @@ function ablage_datei_knoten(array $d): string
         case 'stan':
             $ordner = ablage_stan_ordner((string)($d['pfad'] ?? $d['zusatz'] ?? ''));
             return 'stan.' . $oid . ($ordner !== '' ? '.' . $ordner : '');
-        case 'fahrzeug': case 'veranstaltung': case 'termin': case 'standort': case 'wunsch':
+        case 'fahrzeug': case 'veranstaltung': case 'termin': case 'standort': case 'wunsch': case 'einsatz':
             return $d['typ'] . '.' . $oid;
     }
     return '';
@@ -760,7 +773,7 @@ function ablage_dateien_von(array $knoten): array
         return $out;
     }
     $spalte = ['fahrzeug' => 'f.vehicle_id', 'veranstaltung' => 'f.event_id', 'termin' => 'f.entry_id',
-               'standort' => 'f.standort_id', 'wunsch' => 'f.wish_id'][$s['quelle']] ?? null;
+               'standort' => 'f.standort_id', 'wunsch' => 'f.wish_id', 'einsatz' => 'f.einsatz_id'][$s['quelle']] ?? null;
     return $spalte !== null ? ablage_zeilen($s['quelle'], $spalte . ' = ?', [$s['id']]) : [];
 }
 
@@ -849,6 +862,7 @@ function ablage_rechte_setzen(array $dateien, array $user): array
             'newsletter'    => can('manage_newsletter'),
             'buchung'       => can('manage_budget'),
             'karte'         => false,   // Symbole haben keine KI-Auswertung
+            'einsatz'       => false,   // Dokumente der Einsätze gehen nicht durch die KI-Auswertung
             'wunsch'        => can('manage_wishes') || (int)($d['uploaded_by'] ?? 0) === (int)$user['id'],
             'termin'        => $termine[$d['objekt_id']] ??= (static function (int $id) use ($user): bool {
                 $t = kalender_find($id);

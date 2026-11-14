@@ -31,13 +31,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $karte = array_merge($karte ?? [], [
         'id' => $karte['id'] ?? null, 'name' => post_str('name'), 'beschreibung' => post_str('beschreibung'),
         'mittelpunkt' => post_str('mittelpunkt'), 'zoom' => post_int('zoom'), 'fahrzeuge' => post_bool('fahrzeuge'),
+        'einsatz_id' => post_int('einsatz_id'),
     ]);
 }
 
 $start = karten_start();
 render('karte_edit', [
     'title'  => $karte && !empty($karte['id']) ? 'Karte bearbeiten' : 'Karte anlegen',
-    'karte'  => $karte ?? ['id' => null, 'name' => '', 'beschreibung' => '', 'lat' => $start['lat'], 'lng' => $start['lng'], 'zoom' => $start['zoom'], 'fahrzeuge' => 0],
+    'karte'  => $karte ?? ['id' => null, 'name' => '', 'beschreibung' => '', 'lat' => $start['lat'], 'lng' => $start['lng'], 'zoom' => $start['zoom'], 'fahrzeuge' => 0,
+                           // von der Seite eines Einsatzes aus angelegt: der Einsatz ist schon gewählt
+                           'einsatz_id' => get_int('einsatz_id')],
+    'einsaetze' => can('view_einsaetze') ? einsatz_auswahl(!empty($karte['einsatz_id']) ? (int)$karte['einsatz_id'] : get_int('einsatz_id')) : [],
     'errors' => $errors,
     'marker' => $karte && !empty($karte['id']) ? (int)db_val('SELECT COUNT(*) FROM karten_marker WHERE karte_id = ?', [(int)$karte['id']], 0) : 0,
 ]);

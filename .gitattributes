@@ -15,3 +15,6 @@
 *.md    text eol=lf
 Dockerfile   text eol=lf
 .htaccess    text eol=lf
+
+# Mitgelieferte Bibliotheken und ihre Lizenztexte bleiben Byte fuer Byte, wie sie kamen
+ov-budget/public/assets/vendor/** -text

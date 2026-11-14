@@ -1368,6 +1368,42 @@ eigenen Kachelserver ein (Platzhalter `{z}`, `{x}`, `{y}`, auf Wunsch
 OpenStreetMap Pflicht. Die Server von OpenStreetMap sind für gelegentliche
 Nutzung gedacht, nicht für Dauerlast.
 
+### Protokoll und Einsatzzeiten
+
+Jede Karte führt ein Protokoll (Knopf **Protokoll** über der Karte). Es hält
+fest,
+
+* wann eine **Einheit** gesetzt, versetzt oder gelöscht wurde,
+* wann ein **Fahrzeug** von Hand gezogen wurde,
+
+jeweils mit Uhrzeit, Person, der Stelle davor und danach und der Strecke
+dazwischen (Luftlinie). Größe, Drehung und Beschriftung ändern schreibt
+nichts hinein.
+
+Daraus rechnet die Seite die **Einsatzzeiten**: Die Zeit einer Einheit läuft
+vom Setzen bis zum Löschen – oder bis jetzt, solange sie steht; wer wieder
+gesetzt wird, sammelt weiter. „Bewegt" zählt, wie oft und wie weit versetzt
+wurde. Das ist nicht die gefahrene Strecke – die **Kilometer je Fahrzeug**
+stehen beim Einsatz.
+
+Ein Fahrzeug kommt ins Protokoll, sobald es auf dieser Karte gezogen wird.
+Fahrzeuge, die ihre Position selbst melden (Divera, QR-Code), zieht niemand:
+Für sie gibt es unter den Einsatzzeiten **„Fahrzeug in den Einsatz nehmen"**;
+**„Einsatz beendet"** beendet die Zeit eines Fahrzeugs. Das Protokoll lässt
+sich als **CSV** herunterladen. Es bleibt bestehen, auch wenn die Einheit
+längst von der Karte ist; mit der Karte wird es gelöscht.
+
+### In den Einsatz speichern
+
+Wer Einsätze erfassen darf, findet unter der Karte **„Lage in den Einsatz
+speichern"**: Einsatz wählen (vorbelegt ist der, zu dem die Karte gehört),
+**„Als PDF speichern"**. Das PDF zeigt den Ausschnitt, wie er gerade zu
+sehen ist – Kacheln, Einheiten mit Beschriftung und Stärke, eingeblendete
+Fahrzeuge –, darunter die Stärke nach Abschnitten, die Einsatzzeiten und das
+Protokoll. Es wird im Browser gesetzt und auf dem Server am Einsatz abgelegt
+(Dateiablage › Einsätze). Gibt ein eigener Kachelserver seine Bilder nicht
+zum Auslesen frei, entsteht das PDF ohne Kartenbild.
+
 ## Tankkarten
 
 Tankkarten gehören zum Fuhrpark wie SIM-Karten zu den Routern – und seit es
@@ -1485,8 +1521,8 @@ Einsatzarten*.
 | Abgerechnet | die Einsatzabrechnung ist eingereicht |
 | Abgeschlossen | das Geld ist da, der Vorgang ist erledigt |
 
-**Mehrere Tage.** Ein Einsatz besteht aus Zeilen – je Tag oder je Schicht
-eine:
+**Mehrere Tage, mehrere Fachgruppen.** Ein Einsatz besteht aus Zeilen. Eine
+Zeile ist die Einsatzzeit **einer Einheit an einem Tag**:
 
 * **Datum**, **von** und **bis**. Liegt das Ende nicht nach dem Beginn,
   endet die Schicht am Folgetag (22:00 bis 06:00 sind acht Stunden). Ohne
@@ -1495,24 +1531,60 @@ eine:
 * **Stärke**, geschrieben wie gemeldet: Führer/Unterführer/Helfer, etwa
   `1/2/9` – eine einzelne Zahl zählt als Helfer, eine vierte Zahl (die
   Summe) wird neu gerechnet.
+* **Fachgruppe** – wer im Einsatz war.
+* **Fahrzeuge** – beliebig viele je Zeile, an jedem die **gefahrenen
+  Kilometer** und die **Betriebsstunden** (beides freiwillig, eines genügt –
+  ein Aggregat, eine Pumpe oder ein Radlader hat nur Stunden). Wer eines
+  davon einträgt, hat das Fahrzeug gewählt.
 * **Tätigkeit** in einem Satz.
 
-Zwei Schichten am selben Tag sind zwei Zeilen. **„+ Folgetag"** kopiert die
-letzte ausgefüllte Zeile auf den nächsten Tag – bei einem Einsatz über eine
-Woche bleibt so nur, die Abweichungen zu ändern. Leere Zeilen werden beim
-Speichern übergangen.
+**Mehrere Fachgruppen am selben Tag sind mehrere Zeilen** – jede mit ihren
+eigenen Uhrzeiten, ihrer Stärke und ihren Fahrzeugen: die Bergungsgruppe von
+08:00 bis 18:00 mit dem GKW, die Fachgruppe N von 10:00 bis 16:00 mit dem
+MLW. **„+ Weitere Fachgruppe am selben Tag"** kopiert die letzte Zeile auf
+denselben Tag, **„+ Folgetag"** auf den nächsten – bei einem Einsatz über
+eine Woche bleibt so nur, die Abweichungen zu ändern; Kilometer und
+Betriebsstunden beginnen je Zeile neu. Leere Zeilen werden beim Speichern übergangen.
 
 Aus den Zeilen rechnet die Seite:
 
 * **Einsatztage** – die verschiedenen Kalendertage,
-* **Einsatzstunden** – die Summe der Dauern,
-* **Helferstunden** – je Zeile Dauer mal Gesamtstärke, zusammengezählt.
+* **Einsatzstunden** – die Summe der Dauern aller Zeilen,
+* **Helferstunden** – je Zeile Dauer mal Gesamtstärke, zusammengezählt,
+* **je Fachgruppe** Tage, Stunden und Helferstunden,
+* **je Fahrzeug** Tage, Einsatzzeit, gefahrene Kilometer und Betriebsstunden.
 
 Beginn und Ende des Einsatzes ergeben sich aus dem ersten und dem letzten
 Tag; damit steht er auch im **Kalender** (Quelle *Einsätze*) an jedem seiner
 Tage.
 
-**Fahrzeuge.** Welche Fahrzeuge im Einsatz waren, über alle Tage.
+**Einsatzauftrag (Fb Fü 3).** „+ Einsatzauftrag" öffnet eine Maske mit allen
+Feldern des Vordrucks – Lage (1a bis 1c), Auftrag, Durchführung (3a bis 3c),
+Logistik (4a bis 4g), Führung und Verbindung – und daneben die **Vorschau**
+als PDF. Absender (der Ortsverband), Einsatz, die nächste laufende Nummer,
+Ort und Datum und die Unterschrift sind vorbelegt; die Lage des Einsatzes
+steht in 1a. In den Textfeldern gilt `**fett**` und `*kursiv*`, Zeilen mit
+`|` am Anfang werden zur Tabelle; „Übung" setzt das Wasserzeichen ÜBUNG auf
+jede Seite. Die Schrift wählt der Satz selbst, damit der Auftrag möglichst
+auf eine Seite passt.
+
+**„Als PDF am Einsatz speichern"** legt den Auftrag auf dem Server ab – er
+steht dann unter *Einsatzaufträge und Dokumente* und in der **Dateiablage**
+unter *Einsätze › Jahr › Einsatz*. „Nur herunterladen" legt nichts ab. Ein
+gespeicherter Auftrag bleibt, wie er ist; „Als Vorlage" beginnt den nächsten
+mit denselben Texten, neuer Nummer und leerem Empfänger. Gesetzt wird der
+Vordruck im Browser von der Bibliothek *einsatzauftrag* (siehe
+*Bibliotheken und Lizenzen*); das THW-Zeichen ist nicht enthalten.
+
+**Dokumente.** Lagemeldungen, Anforderungen und Fotos lassen sich am Einsatz
+hochladen. Sie liegen in derselben Ablage wie die Einsatzaufträge und die
+Lagekarten aus dem Kartenmodul.
+
+**Karten.** Eine Karte gehört zu einem Einsatz, wenn er beim Bearbeiten der
+Karte gewählt ist (oder die Karte über „+ Karte zum Einsatz" angelegt wird).
+Sie steht dann auf der Seite des Einsatzes, mit Verweis auf ihr Protokoll
+und die Einsatzzeiten. Von der Karte aus legt **„Als PDF speichern"** die
+Lage als Lagekarte am Einsatz ab – siehe *Karten*.
 
 **Ausgaben und Einnahmen.** Gebucht wird im Budget – jede Buchung kann zu
 einem Einsatz gehören (Feld *Gehört zu Einsatz*). Am schnellsten geht es von
@@ -1530,8 +1602,9 @@ eingeht. Das gilt auch über den Jahreswechsel: Die Erstattung, die erst im
 Folgejahr kommt, hängt am selben Einsatz. Wer die Buchungen im Budget nicht
 sehen darf, sieht auch am Einsatz kein Geld.
 
-Wird ein Einsatz gelöscht, gehen Tage und Fahrzeugzuordnung mit; seine
-Buchungen bleiben im Budget stehen und verlieren nur den Bezug.
+Wird ein Einsatz gelöscht, gehen Zeilen, Fahrzeugzuordnung und Dokumente
+mit; seine Buchungen bleiben im Budget stehen, seine Karten bleiben
+bestehen – beide verlieren nur den Bezug.
 
 ## Veranstaltungen und Einladungen
 
@@ -2470,6 +2543,31 @@ Anwendung. Behoben ab PHP 8.5.12, 8.4.27, 8.3.36 und 8.2.35; PHP 8.1 und
 **Sobald Alpine die gepatchte Fassung liefert:** die nächste Add-on-Fassung
 einspielen (jede Fassung baut das Image neu), dann in der Verwaltung prüfen,
 dass die Meldung grün ist. Die php.ini-Maßnahmen können danach bleiben.
+
+## Bibliotheken und Lizenzen
+
+OV-Multitool bringt drei Bibliotheken anderer mit, jede als eigene,
+unveränderte Datei unter `public/assets/`, ihr Lizenztext daneben:
+
+| Bibliothek | Wofür | Urheber | Lizenz |
+|---|---|---|---|
+| [einsatzauftrag](https://github.com/wattnpapa/einsatzauftrag) | Einsatzauftrag „Fb Fü 3" als PDF | Johannes Rudolph | EUPL-1.2 |
+| [jsPDF](https://github.com/parallax/jsPDF) | PDF im Browser erzeugen | James Hall, yWorks GmbH u. a. | MIT |
+| [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) | QR-Codes zeichnen | Kazuhiko Arase | MIT |
+
+Die Seite **Bibliotheken und Lizenzen** (Verweis im Fuß jeder Seite) nennt
+zu jeder den Stand, die Quelle und den vollständigen Lizenztext, dazu die
+Dienste, die zur Laufzeit genutzt werden (OpenStreetMap, OSRM, Ollama), und
+woher geholte Kartensymbole stammen.
+
+*einsatzauftrag* steht unter der EUPL-1.2. Sie wird unverändert
+mitgeliefert – ihre TypeScript-Quellen sind nur in eine Browser-Datei
+übersetzt –, mit Urhebervermerk, Lizenztext und der Adresse des Quelltexts;
+OV-Multitool ruft sie ausschließlich über ihre öffentliche Schnittstelle
+auf. Aktualisiert wird mit `scripts/einsatzauftrag-aktualisieren.sh`
+(braucht Node.js); danach den Stand in `src/lib/lizenzen.php` nachziehen.
+Kommt eine weitere Bibliothek dazu, gehört sie in diese Liste und ihr
+Lizenztext als `LICENSE` in ihren Ordner.
 
 ## Rollen
 

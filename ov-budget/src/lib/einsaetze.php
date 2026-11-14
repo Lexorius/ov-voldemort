@@ -4,11 +4,14 @@ declare(strict_types=1);
 /**
  * Einsätze: was der Ortsverband gefahren ist – über einen oder mehrere Tage.
  *
- * Ein Einsatz besteht aus Tagen (oder Schichten): Datum, von–bis, Stärke
- * (Führer / Unterführer / Helfer) und Tätigkeit. Daraus rechnet das Modul
- * Einsatztage, Einsatzstunden und Helferstunden – die Zahlen, die die
- * Einsatzabrechnung braucht. Beginn und Ende am Einsatz selbst sind aus den
- * Tagen abgeleitet und stehen nur für Liste und Kalender in der Tabelle.
+ * Ein Einsatz besteht aus Zeilen: Datum, von–bis, Fachgruppe, Fahrzeuge,
+ * Stärke (Führer / Unterführer / Helfer) und Tätigkeit. Eine Zeile ist die
+ * Einsatzzeit einer Einheit an einem Tag – mehrere Zeilen je Tag sind
+ * mehrere Fachgruppen oder Schichten, jede mit eigenen Uhrzeiten und
+ * eigenen Fahrzeugen. Daraus rechnet das Modul Einsatztage, Einsatzstunden
+ * und Helferstunden, auch je Fachgruppe und je Fahrzeug – die Zahlen, die
+ * die Einsatzabrechnung braucht. Beginn und Ende am Einsatz selbst und
+ * seine Fahrzeuge (einsatz_vehicles) sind aus den Zeilen abgeleitet.
  *
  * Geld wird nicht hier gebucht, sondern im Budget: Ausgaben und Einnahmen
  * tragen den Bezug zum Einsatz (expenses.einsatz_id), der Einsatz zeigt,
@@ -60,8 +63,12 @@ function einsatz_zeit(mixed $roh): string|false|null
 }
 
 /**
- * Die Tage aus dem Formular lesen. Erwartet die Spalten als gleich lange
- * Listen: tag_datum[], tag_von[], tag_bis[], tag_staerke[], tag_taetigkeit[].
+ * Die Zeilen aus dem Formular lesen. Erwartet die Spalten als gleich lange
+ * Listen: tag_datum[], tag_von[], tag_bis[], tag_fachgruppe[], tag_staerke[],
+ * tag_taetigkeit[] – dazu tag_key[] mit einer Kennung je Zeile, unter der
+ * ihre Fahrzeuge stehen: tag_fz[kennung][], die gefahrenen Kilometer
+ * tag_km[kennung][fahrzeug] und die Betriebsstunden tag_bh[kennung][fahrzeug].
+ * Wer Kilometer oder Betriebsstunden einträgt, hat das Fahrzeug gewählt.
  * Ganz leere Zeilen fallen weg; sortiert wird nach Datum und Beginn.
  * Gibt [tage, fehler] zurück. Reine Funktion über das übergebene Feld.
  */
@@ -75,7 +82,12 @@ function einsatz_tage_aus_post(array $post): array
     $bis = $spalte('tag_bis');
     $staerke = $spalte('tag_staerke');
     $taetigkeit = $spalte('tag_taetigkeit');
-    $zeilen = max(count($datum), count($von), count($bis), count($staerke), count($taetigkeit));
+    $fachgruppe = $spalte('tag_fachgruppe');
+    $kennung = $spalte('tag_key');
+    $fzJeZeile = (array)($post['tag_fz'] ?? []);
+    $kmJeZeile = (array)($post['tag_km'] ?? []);
+    $bhJeZeile = (array)($post['tag_bh'] ?? []);
+    $zeilen = max(count($datum), count($von), count($bis), count($staerke), count($taetigkeit), count($fachgruppe));
 
     for ($i = 0; $i < $zeilen; $i++) {
         $d = trim((string)($datum[$i] ?? ''));
@@ -83,7 +95,24 @@ function einsatz_tage_aus_post(array $post): array
         $b = trim((string)($bis[$i] ?? ''));
         $s = trim((string)($staerke[$i] ?? ''));
         $t = trim((string)($taetigkeit[$i] ?? ''));
-        if ($d === '' && $v === '' && $b === '' && $s === '' && $t === '') {
+        $fg = (int)($fachgruppe[$i] ?? 0);
+        $schluessel = (string)($kennung[$i] ?? '');
+        $fz = array_values(array_unique(array_filter(array_map('intval', (array)($fzJeZeile[$schluessel] ?? [])), static fn($x) => $x > 0)));
+        $km = [];
+        $bh = [];
+        foreach ([[$kmJeZeile, &$km, 99999.9], [$bhJeZeile, &$bh, 9999.9]] as [$quelle, &$ziel, $grenze]) {
+            foreach ((array)($quelle[$schluessel] ?? []) as $vid => $wert) {
+                $zahl = einsatz_km($wert);
+                if ((int)$vid > 0 && $zahl !== null) {
+                    $ziel[(int)$vid] = min($grenze, $zahl);
+                    if (!in_array((int)$vid, $fz, true)) {
+                        $fz[] = (int)$vid;
+                    }
+                }
+            }
+            unset($ziel);
+        }
+        if ($d === '' && $v === '' && $b === '' && $s === '' && $t === '' && $fg <= 0 && !$fz) {
             continue;
         }
         $nr = 'Zeile ' . (count($tage) + count($fehler) + 1);
@@ -109,8 +138,12 @@ function einsatz_tage_aus_post(array $post): array
         }
         $tage[] = [
             'datum' => $d, 'von' => $zv, 'bis' => $zb,
+            'fachgruppe_id' => $fg > 0 ? $fg : null,
             'staerke_f' => (int)$st[0], 'staerke_u' => (int)$st[1], 'staerke_h' => (int)$st[2],
             'taetigkeit' => mb_substr($t, 0, 500),
+            'vehicles' => $fz,
+            'km' => $km,
+            'bh' => $bh,
         ];
     }
     if (count($tage) > EINSATZ_TAGE_MAX) {
@@ -118,6 +151,46 @@ function einsatz_tage_aus_post(array $post): array
     }
     usort($tage, static fn($x, $y) => [$x['datum'], (string)$x['von']] <=> [$y['datum'], (string)$y['von']]);
     return [$tage, $fehler];
+}
+
+/**
+ * Gefahrene Kilometer oder Betriebsstunden aus dem Formular: „12,5" oder „12.5", auch mit
+ * Einheit („40 km", „3,5 h", „3,5 Bh"); leer, null oder Unsinn ist null. Reine Funktion.
+ */
+function einsatz_km(mixed $roh): ?float
+{
+    $roh = (string)preg_replace('/\s+|km|bh|std\.?|h$/iu', '', trim((string)$roh));
+    // deutsche Schreibweise: Punkt als Tausendertrenner nur, wenn auch ein Komma da ist
+    $roh = str_contains($roh, ',') ? str_replace(',', '.', str_replace('.', '', $roh)) : $roh;
+    if ($roh === '' || !is_numeric($roh) || (float)$roh <= 0) {
+        return null;
+    }
+    return min(99999.9, round((float)$roh, 1));
+}
+
+/** Kilometer als Text: „12,5 km", „340 km". Reine Funktion. */
+function einsatz_km_text(float $km): string
+{
+    return rtrim(rtrim(number_format($km, 1, ',', '.'), '0'), ',') . ' km';
+}
+
+/** Betriebsstunden als Text: „3,5 Bh", „12 Bh". Reine Funktion. */
+function einsatz_bh_text(float $bh): string
+{
+    return rtrim(rtrim(number_format($bh, 1, ',', '.'), '0'), ',') . ' Bh';
+}
+
+/** „42 km · 3,5 Bh" – was an einem Fahrzeug eingetragen ist; leer, wenn nichts. Reine Funktion. */
+function einsatz_fahrzeug_leistung(array $v): string
+{
+    $teile = [];
+    if (($v['km'] ?? null) !== null && (float)$v['km'] > 0) {
+        $teile[] = einsatz_km_text((float)$v['km']);
+    }
+    if (($v['bh'] ?? null) !== null && (float)$v['bh'] > 0) {
+        $teile[] = einsatz_bh_text((float)$v['bh']);
+    }
+    return implode(' · ', $teile);
 }
 
 /**
@@ -193,6 +266,62 @@ function einsatz_summen(array $tage): array
         }
     }
     $out['tage'] = count($daten);
+    return $out;
+}
+
+/**
+ * Dieselben Zahlen je Fachgruppe: [fachgruppe_id => label, tage, zeilen, minuten, helferminuten],
+ * Zeilen ohne Fachgruppe unter 0. Größte Helferstunden zuerst. Reine Funktion über Zeilen
+ * mit fachgruppe_id und fachgruppe_label.
+ */
+function einsatz_summen_je_fachgruppe(array $tage): array
+{
+    $out = [];
+    $daten = [];
+    foreach ($tage as $t) {
+        $id = (int)($t['fachgruppe_id'] ?? 0);
+        $out[$id] ??= ['label' => $id > 0 ? (string)($t['fachgruppe_label'] ?? ('Fachgruppe #' . $id)) : 'ohne Fachgruppe',
+                       'tage' => 0, 'zeilen' => 0, 'minuten' => 0, 'helferminuten' => 0];
+        $out[$id]['zeilen']++;
+        $daten[$id][(string)$t['datum']] = true;
+        $min = einsatz_tag_minuten($t);
+        if ($min !== null) {
+            $out[$id]['minuten'] += $min;
+            $out[$id]['helferminuten'] += $min * einsatz_tag_staerke($t)['gesamt'];
+        }
+    }
+    foreach ($out as $id => $_) {
+        $out[$id]['tage'] = count($daten[$id]);
+    }
+    uasort($out, static fn($a, $b) => [$b['helferminuten'], $b['minuten'], $a['label']] <=> [$a['helferminuten'], $a['minuten'], $b['label']]);
+    return $out;
+}
+
+/**
+ * Einsatzzeit, gefahrene Kilometer und Betriebsstunden je Fahrzeug: [vehicle_id => bezeichnung,
+ * tage, zeilen, minuten, km, bh], längste zuerst. Reine Funktion über Zeilen mit
+ * fahrzeuge = [[id, bezeichnung, km, bh], …].
+ */
+function einsatz_summen_je_fahrzeug(array $tage): array
+{
+    $out = [];
+    $daten = [];
+    foreach ($tage as $t) {
+        $min = einsatz_tag_minuten($t);
+        foreach ((array)($t['fahrzeuge'] ?? []) as $v) {
+            $id = (int)$v['id'];
+            $out[$id] ??= ['bezeichnung' => (string)($v['bezeichnung'] ?? ('Fahrzeug #' . $id)), 'tage' => 0, 'zeilen' => 0, 'minuten' => 0, 'km' => 0.0, 'bh' => 0.0];
+            $out[$id]['zeilen']++;
+            $out[$id]['minuten'] += (int)$min;
+            $out[$id]['km'] = round($out[$id]['km'] + (float)($v['km'] ?? 0), 1);
+            $out[$id]['bh'] = round($out[$id]['bh'] + (float)($v['bh'] ?? 0), 1);
+            $daten[$id][(string)$t['datum']] = true;
+        }
+    }
+    foreach ($out as $id => $_) {
+        $out[$id]['tage'] = count($daten[$id]);
+    }
+    uasort($out, static fn($a, $b) => [$b['minuten'], $a['bezeichnung']] <=> [$a['minuten'], $b['bezeichnung']]);
     return $out;
 }
 
@@ -388,10 +517,33 @@ function einsatz_years(): array
     return $jahre;
 }
 
-/** Tage und Schichten eines Einsatzes in zeitlicher Reihenfolge */
+/**
+ * Die Zeilen eines Einsatzes in zeitlicher Reihenfolge – je Zeile mit Fachgruppe
+ * (fachgruppe_label, fachgruppe_color) und ihren Fahrzeugen: vehicles (ids), km
+ * ([id => Kilometer]), bh ([id => Betriebsstunden]) und fahrzeuge ([id, bezeichnung,
+ * funkrufname, km, bh]).
+ */
 function einsatz_tage(int $einsatzId): array
 {
-    return db_all('SELECT * FROM einsatz_tage WHERE einsatz_id = ? ORDER BY datum, von, id', [$einsatzId]);
+    $tage = db_all('SELECT t.*, fg.label AS fachgruppe_label, fg.color AS fachgruppe_color
+                    FROM einsatz_tage t LEFT JOIN list_items fg ON fg.id = t.fachgruppe_id
+                    WHERE t.einsatz_id = ? ORDER BY t.datum, t.von, t.id', [$einsatzId]);
+    $jeZeile = [];
+    foreach (db_all('SELECT tv.tag_id, tv.km, tv.betriebsstunden, v.id, v.bezeichnung, v.funkrufname FROM einsatz_tag_vehicles tv
+                     JOIN einsatz_tage t ON t.id = tv.tag_id JOIN vehicles v ON v.id = tv.vehicle_id
+                     WHERE t.einsatz_id = ? ORDER BY v.bezeichnung', [$einsatzId]) as $r) {
+        $jeZeile[(int)$r['tag_id']][] = ['id' => (int)$r['id'], 'bezeichnung' => (string)$r['bezeichnung'], 'funkrufname' => (string)($r['funkrufname'] ?? ''),
+            'km' => $r['km'] !== null && $r['km'] !== '' ? (float)$r['km'] : null,
+            'bh' => ($r['betriebsstunden'] ?? null) !== null && $r['betriebsstunden'] !== '' ? (float)$r['betriebsstunden'] : null];
+    }
+    foreach ($tage as &$t) {
+        $t['fahrzeuge'] = $jeZeile[(int)$t['id']] ?? [];
+        $t['vehicles'] = array_column($t['fahrzeuge'], 'id');
+        $t['km'] = array_filter(array_column($t['fahrzeuge'], 'km', 'id'), static fn($k) => $k !== null);
+        $t['bh'] = array_filter(array_column($t['fahrzeuge'], 'bh', 'id'), static fn($k) => $k !== null);
+    }
+    unset($t);
+    return $tage;
 }
 
 function einsatz_fahrzeuge(int $einsatzId): array
@@ -478,32 +630,38 @@ function einsatz_save_from_post(?array $e, array $user): array
         audit('einsatz.angelegt', 'einsatz', $id, $detail);
     }
     einsatz_tage_setzen($id, $tage);
-    // Fahrzeuge nur, wenn das Feld im Formular war
-    if (post_str('fahrzeuge_feld') === '1') {
-        einsatz_fahrzeuge_setzen($id, wahl_ids('vehicles'));
-    }
     return [$id, []];
 }
 
-/** Genau diese Tage gehören zum Einsatz */
+/**
+ * Genau diese Zeilen gehören zum Einsatz – samt ihren Fahrzeugen. Die Fahrzeuge des
+ * Einsatzes (für Liste und Kalender) sind die Summe aus allen Zeilen.
+ */
 function einsatz_tage_setzen(int $einsatzId, array $tage): void
 {
-    db_exec('DELETE FROM einsatz_tage WHERE einsatz_id = ?', [$einsatzId]);
+    db_exec('DELETE FROM einsatz_tage WHERE einsatz_id = ?', [$einsatzId]);   // die Fahrzeuge der Zeilen gehen mit
+    $alle = [];
     foreach ($tage as $t) {
-        db_insert('einsatz_tage', [
+        $tagId = db_insert('einsatz_tage', [
             'einsatz_id' => $einsatzId,
             'datum'      => (string)$t['datum'],
             'von'        => $t['von'] !== null ? $t['von'] . ':00' : null,
             'bis'        => $t['bis'] !== null ? $t['bis'] . ':00' : null,
+            'fachgruppe_id' => !empty($t['fachgruppe_id']) ? (int)$t['fachgruppe_id'] : null,
             'staerke_f'  => (int)$t['staerke_f'],
             'staerke_u'  => (int)$t['staerke_u'],
             'staerke_h'  => (int)$t['staerke_h'],
             'taetigkeit' => (string)$t['taetigkeit'],
         ]);
+        foreach (array_values(array_unique(array_filter(array_map('intval', (array)($t['vehicles'] ?? [])), static fn($i) => $i > 0))) as $vid) {
+            db_insert('einsatz_tag_vehicles', ['tag_id' => $tagId, 'vehicle_id' => $vid, 'km' => $t['km'][$vid] ?? null, 'betriebsstunden' => $t['bh'][$vid] ?? null]);
+            $alle[] = $vid;
+        }
     }
+    einsatz_fahrzeuge_setzen($einsatzId, $alle);
 }
 
-/** Genau diese Fahrzeuge waren im Einsatz */
+/** Genau diese Fahrzeuge waren im Einsatz – gerechnet aus den Zeilen, siehe einsatz_tage_setzen() */
 function einsatz_fahrzeuge_setzen(int $einsatzId, array $ids): void
 {
     db_exec('DELETE FROM einsatz_vehicles WHERE einsatz_id = ?', [$einsatzId]);
@@ -512,10 +670,237 @@ function einsatz_fahrzeuge_setzen(int $einsatzId, array $ids): void
     }
 }
 
-/** Einsatz löschen. Tage und Fahrzeuge gehen mit, Buchungen bleiben im Budget und verlieren nur den Bezug. */
+/**
+ * Einsatz löschen. Tage, Fahrzeuge und Dokumente gehen mit; Buchungen bleiben im Budget,
+ * Karten bleiben bestehen – beide verlieren nur den Bezug.
+ */
 function einsatz_delete(array $e): void
 {
+    // erst die Dateien von der Platte – die Zeilen nähme die Datenbank mit, die Dateien nicht
+    einsatz_dateien_delete_alle((int)$e['id']);
     db_exec('UPDATE expenses SET einsatz_id = NULL WHERE einsatz_id = ?', [(int)$e['id']]);
     db_exec('DELETE FROM einsaetze WHERE id = ?', [(int)$e['id']]);
     audit('einsatz.geloescht', 'einsatz', (int)$e['id'], einsatz_bezeichnung($e));
+}
+
+/* ==================================================================== */
+/* Dokumente am Einsatz                                                  */
+/* ==================================================================== */
+
+/**
+ * Woher ein Dokument stammt: hochgeladen, als Einsatzauftrag (Fb Fü 3) im Browser
+ * erzeugt oder als Lagekarte aus dem Kartenmodul gespeichert.
+ */
+const EINSATZ_DATEI_HERKUNFT = ['upload' => 'Dokument', 'auftrag' => 'Einsatzauftrag', 'karte' => 'Lagekarte'];
+/** Die Unterzeilen des Vordrucks Fb Fü 3 (Abschnitte 1, 3 und 4) */
+const EINSATZ_AUFTRAG_UNTERPUNKTE = [
+    '1a' => 'Gefahren- / Schadenlage', '1b' => 'eigene Lage', '1c' => 'Unterstellung und Abgabe von Kräften',
+    '3a' => 'Schwerpunkt, eigene Absicht', '3b' => 'Einzelaufträge',
+    '3c' => 'Zusammenarbeit mit anderen Kräften und Koordinierung, Zeitangaben, Schutzmaßnahmen',
+    '4a' => 'Verpflegung', '4b' => 'Verbrauchsgüter', '4c' => 'Betriebsstoff', '4d' => 'Instandsetzung',
+    '4e' => 'Medizinische Versorgung', '4f' => 'Unterbringung', '4g' => 'Haushalt, Handkasse, Abrechnung',
+];
+/** Die übrigen Textfelder des Vordrucks: Feld => höchste Länge */
+const EINSATZ_AUFTRAG_FELDER = [
+    'absender' => 200, 'einsatz' => 200, 'laufendeNummer' => 20, 'empfaenger' => 200, 'auftrag' => 20000, 'fuehrung' => 20000,
+    'ortDatum' => 120, 'unterschrift' => 120, 'dienststelle' => 120, 'abgesandtAm' => 40, 'abgesandtUm' => 40, 'abgesandtVon' => 120,
+];
+
+function einsatz_datei_dir(): string
+{
+    $dir = upload_dir() . DIRECTORY_SEPARATOR . 'einsaetze';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0770, true);
+    }
+    return $dir;
+}
+
+/** Dokumente eines Einsatzes, neueste zuerst */
+function einsatz_dateien(int $einsatzId): array
+{
+    return db_all('SELECT f.*, u.display_name AS hochgeladen_von, k.name AS karte_name
+                   FROM einsatz_files f LEFT JOIN users u ON u.id = f.uploaded_by LEFT JOIN karten k ON k.id = f.karte_id
+                   WHERE f.einsatz_id = ? ORDER BY f.created_at DESC, f.id DESC', [$einsatzId]);
+}
+
+function einsatz_datei_find(?int $id): ?array
+{
+    return $id ? db_row('SELECT f.*, e.titel AS einsatz_titel, e.nummer AS einsatz_nummer
+                         FROM einsatz_files f JOIN einsaetze e ON e.id = f.einsatz_id WHERE f.id = ?', [$id]) : null;
+}
+
+/** Pfad zur Datei oder zur Vorschau – oder null */
+function einsatz_datei_pfad(array $datei, bool $vorschau = false): ?string
+{
+    $name = $vorschau && ($datei['thumb_name'] ?? null) ? $datei['thumb_name'] : $datei['stored_name'];
+    $pfad = einsatz_datei_dir() . DIRECTORY_SEPARATOR . basename((string)$name);
+    return is_file($pfad) ? $pfad : null;
+}
+
+/** Ist die Datei ein PDF? Entscheidend ist der Anfang der Datei, nicht der gemeldete Typ. */
+function einsatz_ist_pdf(string $pfad, string $name): bool
+{
+    if (strtolower(pathinfo($name, PATHINFO_EXTENSION)) !== 'pdf' || !is_file($pfad)) {
+        return false;
+    }
+    $h = @fopen($pfad, 'rb');
+    $anfang = $h ? (string)fread($h, 5) : '';
+    if ($h) {
+        fclose($h);
+    }
+    return $anfang === '%PDF-';
+}
+
+/**
+ * Dokumente an einen Einsatz hängen. Die Herkunft „auftrag" und „karte" sind im Browser
+ * erzeugte PDFs – alles andere als ein PDF wird dort abgewiesen. $daten (Felder des
+ * Einsatzauftrags) wird als JSON mitgespeichert. Gibt [anzahl, fehler[], ids[]] zurück.
+ */
+function einsatz_dateien_ablegen(int $einsatzId, string $feld, string $titel, array $user, string $herkunft = 'upload', ?array $daten = null, ?int $karteId = null): array
+{
+    $herkunft = isset(EINSATZ_DATEI_HERKUNFT[$herkunft]) ? $herkunft : 'upload';
+    [$dateien, $fehler] = upload_dokumente_ablegen($feld, einsatz_datei_dir());
+    $ids = [];
+    foreach ($dateien as $d) {
+        if ($herkunft !== 'upload' && !einsatz_ist_pdf(einsatz_datei_dir() . DIRECTORY_SEPARATOR . basename((string)$d['stored_name']), (string)$d['orig_name'])) {
+            foreach ([$d['stored_name'], $d['thumb_name']] as $name) {
+                if ($name) {
+                    @unlink(einsatz_datei_dir() . DIRECTORY_SEPARATOR . basename((string)$name));
+                }
+            }
+            $fehler[] = sprintf('Erwartet wurde ein PDF – „%s" ist keines.', $d['orig_name']);
+            continue;
+        }
+        $id = db_insert('einsatz_files', [
+            'einsatz_id'  => $einsatzId,
+            'art'         => $d['art'],
+            'herkunft'    => $herkunft,
+            'titel'       => trim($titel) !== '' ? mb_substr(trim($titel), 0, 200) : $d['titel'],
+            'orig_name'   => $d['orig_name'],
+            'stored_name' => $d['stored_name'],
+            'thumb_name'  => $d['thumb_name'],
+            'mime'        => $herkunft !== 'upload' ? 'application/pdf' : $d['mime'],
+            'size_bytes'  => $d['size_bytes'],
+            'daten'       => $daten !== null ? (string)json_encode($daten, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
+            'karte_id'    => $karteId ?: null,
+            'uploaded_by' => (int)$user['id'],
+        ]);
+        $ids[] = $id;
+        audit('einsatz.datei_abgelegt', 'einsatz', $einsatzId, EINSATZ_DATEI_HERKUNFT[$herkunft] . ': ' . $d['orig_name']);
+    }
+    return [count($ids), $fehler, $ids];
+}
+
+function einsatz_datei_delete(array $datei): void
+{
+    foreach ([$datei['stored_name'] ?? '', $datei['thumb_name'] ?? ''] as $name) {
+        if ($name) {
+            $pfad = einsatz_datei_dir() . DIRECTORY_SEPARATOR . basename((string)$name);
+            if (is_file($pfad)) {
+                @unlink($pfad);
+            }
+        }
+    }
+    db_exec('DELETE FROM einsatz_files WHERE id = ?', [(int)$datei['id']]);
+    audit('einsatz.datei_entfernt', 'einsatz', (int)$datei['einsatz_id'], (string)($datei['titel'] ?: $datei['orig_name']));
+}
+
+/** Alle Dokumente eines Einsatzes von der Platte nehmen – bevor der Einsatz selbst gelöscht wird */
+function einsatz_dateien_delete_alle(int $einsatzId): int
+{
+    $dateien = einsatz_dateien($einsatzId);
+    foreach ($dateien as $f) {
+        einsatz_datei_delete($f);
+    }
+    return count($dateien);
+}
+
+/* ---------------- Einsatzauftrag (Fb Fü 3) ---------------- */
+
+/**
+ * Die Felder eines Einsatzauftrags aus dem, was der Browser schickt (JSON-Text oder Feld):
+ * nur bekannte Felder, als Text, in der Länge begrenzt. Reine Funktion.
+ */
+function einsatz_auftrag_daten(mixed $roh): array
+{
+    if (is_string($roh)) {
+        $roh = json_decode($roh, true);
+    }
+    if (!is_array($roh)) {
+        return [];
+    }
+    $text = static fn(mixed $v, int $max): string => mb_substr(str_replace(["\r\n", "\r"], "\n", is_scalar($v) ? (string)$v : ''), 0, $max);
+    $out = [];
+    foreach (EINSATZ_AUFTRAG_FELDER as $feld => $max) {
+        $wert = $roh[$feld] ?? '';
+        // Abschnitt 5 darf auch als Liste kommen: jede Zeile eine Formularzeile
+        if ($feld === 'fuehrung' && is_array($wert)) {
+            $wert = implode("\n\n", array_map(static fn($z) => is_scalar($z) ? (string)$z : '', $wert));
+        }
+        $wert = $text($wert, $max);
+        if (trim($wert) !== '') {
+            $out[$feld] = $wert;
+        }
+    }
+    foreach ((array)($roh['unterpunkte'] ?? []) as $kennung => $wert) {
+        if (isset(EINSATZ_AUFTRAG_UNTERPUNKTE[(string)$kennung]) && trim($text($wert, 20000)) !== '') {
+            $out['unterpunkte'][(string)$kennung] = $text($wert, 20000);
+        }
+    }
+    if (!empty($roh['uebung'])) {
+        $out['uebung'] = true;
+    }
+    return $out;
+}
+
+/** Die nächste laufende Nummer: eins mehr als die höchste der schon gespeicherten Aufträge. Reine Funktion. */
+function einsatz_auftrag_naechste_nr(array $dateien): string
+{
+    $max = 0;
+    foreach ($dateien as $d) {
+        if ((string)($d['herkunft'] ?? '') !== 'auftrag') {
+            continue;
+        }
+        $daten = is_array($d['daten'] ?? null) ? $d['daten'] : (json_decode((string)($d['daten'] ?? ''), true) ?: []);
+        if (preg_match('/^\s*(\d{1,6})\s*$/', (string)($daten['laufendeNummer'] ?? ''), $m)) {
+            $max = max($max, (int)$m[1]);
+        }
+    }
+    return (string)($max + 1);
+}
+
+/** „Einsatzauftrag Nr. 3 an B-Gruppe 1. TZ" – wie das Dokument in der Ablage heißt. Reine Funktion. */
+function einsatz_auftrag_titel(array $daten): string
+{
+    $nr = trim((string)($daten['laufendeNummer'] ?? ''));
+    $an = trim((string)preg_replace('/\s+/u', ' ', (string)($daten['empfaenger'] ?? '')));
+    return mb_substr('Einsatzauftrag' . ($nr !== '' ? ' Nr. ' . $nr : '') . ($an !== '' ? ' an ' . $an : '') . (!empty($daten['uebung']) ? ' (Übung)' : ''), 0, 200);
+}
+
+/**
+ * Womit ein neuer Einsatzauftrag beginnt: Absender (der Ortsverband), Einsatz, die nächste
+ * laufende Nummer, Ort und Datum, wer unterschreibt. $vorlage: die Felder eines früheren
+ * Auftrags, die übernommen werden – Nummer, Empfänger und Absendevermerk beginnen neu.
+ * Reine Funktion.
+ */
+function einsatz_auftrag_vorgabe(array $einsatz, array $dateien, array $user, string $ovName = '', ?array $vorlage = null, ?int $jetzt = null): array
+{
+    $jetzt ??= time();
+    $ort = trim((string)($einsatz['ort'] ?? ''));
+    $neu = [
+        'absender'       => $ovName,
+        'einsatz'        => einsatz_bezeichnung($einsatz),
+        'laufendeNummer' => einsatz_auftrag_naechste_nr($dateien),
+        'ortDatum'       => ($ort !== '' ? $ort . ', ' : '') . date('d.m.Y', $jetzt),
+        'unterschrift'   => (string)($user['display_name'] ?? ''),
+    ];
+    if (trim((string)($einsatz['beschreibung'] ?? '')) !== '') {
+        $neu['unterpunkte']['1a'] = (string)$einsatz['beschreibung'];
+    }
+    if ($vorlage) {
+        $alt = einsatz_auftrag_daten($vorlage);
+        unset($alt['laufendeNummer'], $alt['empfaenger'], $alt['ortDatum'], $alt['abgesandtAm'], $alt['abgesandtUm'], $alt['abgesandtVon']);
+        $neu = array_merge($neu, $alt, ['laufendeNummer' => $neu['laufendeNummer'], 'ortDatum' => $neu['ortDatum']]);
+    }
+    return $neu;
 }

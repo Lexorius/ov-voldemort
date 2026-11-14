@@ -206,6 +206,11 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 - **Symbole von GitHub holen**: ein Repository mit Zeichen auf Knopfdruck
   übernehmen, mit Lizenzanzeige und Auswahl der Ordner. Mitgeliefert wird
   kein Zeichen, von selbst geladen wird nichts
+- **Protokoll und Einsatzzeiten**: wann welche Einheit und welches Fahrzeug
+  gesetzt, versetzt oder herausgenommen wurde, von wem – und wie lange jedes
+  im Einsatz ist; als CSV
+- **In den Einsatz speichern**: der Ausschnitt mit Stärke, Einsatzzeiten und
+  Protokoll als PDF am Einsatz
 
 ### Dateiablage
 - **Alle Dokumente in einem Baum**: eigene Kategorien, beliebig tief
@@ -264,11 +269,16 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 - Tagesordnung und Protokoll zum Drucken
 
 ### Einsätze
-- **Einsatz über einen oder mehrere Tage**: je Tag oder Schicht eine Zeile
-  mit Zeit, Stärke (Führer/Unterführer/Helfer) und Tätigkeit; daraus
-  **Einsatztage, Einsatzstunden und Helferstunden**
+- **Einsatz über einen oder mehrere Tage**: je Tag und Einheit eine Zeile
+  mit Zeit, **Fachgruppe**, **Fahrzeugen samt gefahrenen Kilometern und
+  Betriebsstunden**,
+  Stärke (Führer/Unterführer/Helfer) und Tätigkeit – mehrere Fachgruppen am
+  selben Tag mit eigenen Uhrzeiten; daraus **Einsatztage, Einsatzstunden und
+  Helferstunden**, auch je Fachgruppe und je Fahrzeug
+- **Einsatzauftrag (Fb Fü 3)** in einer Maske mit Vorschau, als PDF am
+  Einsatz gespeichert (Dateiablage › Einsätze); Dokumente und Fotos dazu
 - Einsatznummer mit Vorschlag, Art, Stand (läuft, beendet, abgerechnet,
-  abgeschlossen), Anforderer, Ort, eingesetzte Fahrzeuge
+  abgeschlossen), Anforderer, Ort; zugeordnete Karten
 - **Ausgaben und Einnahmen je Einsatz** aus dem Budget, mit Saldo und dem,
   was noch aussteht; im Kalender an jedem Einsatztag
 

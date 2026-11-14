@@ -97,6 +97,7 @@ $routes = [
     'karten_symbol'      => 'karten_symbol',
     'karten_github'      => 'karten_github',
     'karten_api'         => 'karten_api',
+    'karte_protokoll'    => 'karte_protokoll',
 
     // Unterkunft
     'unterkunft'         => 'unterkunft',
@@ -132,6 +133,9 @@ $routes = [
     'einsaetze'          => 'einsaetze',
     'einsatz'            => 'einsatz',
     'einsatz_edit'       => 'einsatz_edit',
+    'einsatz_auftrag'    => 'einsatz_auftrag',
+    'einsatz_action'     => 'einsatz_action',
+    'einsatz_datei'      => 'einsatz_datei',
 
     // Funkgeräte
     'radios'             => 'radios',
@@ -179,6 +183,7 @@ $routes = [
 
     'download'           => 'download',
     'neu'                => 'changelog',
+    'lizenzen'           => 'lizenzen',
 
     // Administration
     'admin'              => 'admin/index',

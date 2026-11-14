@@ -408,6 +408,9 @@ function karten_konfig(array $karte, array $marker, array $symbole, array $darf,
         'quelle'    => (string)setting('karten_kachel_quelle', '© OpenStreetMap-Mitwirkende'),
         'api'       => url('karten_api'),
         'symbolSeite' => url('karten_symbole'),
+        'name'      => (string)($karte['name'] ?? ''),
+        'einsatzId' => (int)($karte['einsatz_id'] ?? 0),
+        'ablage'    => url('einsatz_action'),
         'csrf'      => csrf_token(),
         'setzen'    => !empty($darf['setzen']),
         'verwalten' => !empty($darf['verwalten']),
@@ -498,6 +501,10 @@ function karte_save_from_post(?array $bestehend, array $user): array
         'zoom'         => karten_zoom(post_int('zoom', (int)$start['zoom'])),
         'fahrzeuge'    => post_bool('fahrzeuge'),
     ];
+    // Zuordnung zu einem Einsatz nur, wenn das Feld im Formular war
+    if (post_str('einsatz_feld') === '1') {
+        $data['einsatz_id'] = post_int('einsatz_id') ?: null;
+    }
     if ($bestehend) {
         db_update('karten', $data, 'id = ?', [(int)$bestehend['id']]);
         audit('karten.karte_geaendert', 'karte', (int)$bestehend['id'], $name);
@@ -764,7 +771,11 @@ function karten_marker_neu(array $karte, array $symbol, mixed $lat, mixed $lng, 
         'created_by'   => (int)$user['id'],
     ];
     $id = db_insert('karten_marker', $zeile);
-    return ['id' => $id, 'symbol_name' => (string)$symbol['name']] + $zeile;
+    $marker = ['id' => $id, 'symbol_name' => (string)$symbol['name']] + $zeile;
+    if (function_exists('karten_protokoll_einheit')) {
+        karten_protokoll_einheit($marker, 'gesetzt');
+    }
+    return $marker;
 }
 
 /**
@@ -812,12 +823,22 @@ function karten_marker_aendern(array $marker, array $neu): array|string
     if ($data) {
         db_update('karten_marker', $data, 'id = ?', [(int)$marker['id']]);
     }
+    // Ins Protokoll kommt, was die Stelle ändert – Größe, Drehung und Beschriftung nicht
+    if (array_key_exists('lat', $data) && function_exists('karten_protokoll_einheit')) {
+        $gleich = static fn($a, $b): bool => ($a === null || $a === '') ? ($b === null || $b === '') : ($b !== null && $b !== '' && abs((float)$a - (float)$b) < 0.0000005);
+        if (!$gleich($marker['lat'] ?? null, $data['lat']) || !$gleich($marker['lng'] ?? null, $data['lng'])) {
+            karten_protokoll_einheit($data + $marker, 'versetzt', ['lat' => $marker['lat'] ?? null, 'lng' => $marker['lng'] ?? null]);
+        }
+    }
     return $data;
 }
 
 function karten_marker_delete(array $marker): void
 {
     db_exec('DELETE FROM karten_marker WHERE id = ?', [(int)$marker['id']]);
+    if (function_exists('karten_protokoll_einheit')) {
+        karten_protokoll_einheit($marker, 'entfernt', ['lat' => $marker['lat'] ?? null, 'lng' => $marker['lng'] ?? null]);
+    }
 }
 
 /* ==================================================================== */

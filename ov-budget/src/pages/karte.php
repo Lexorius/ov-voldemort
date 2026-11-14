@@ -25,6 +25,9 @@ $symbole = karten_symbole();
 $darf = ['setzen' => can('mark_karten'), 'verwalten' => can('manage_karten'), 'fahrzeuge' => true,
          'fahrzeugSetzen' => can('view_vehicles') && can('report_vehicle')];
 $GLOBALS['ovb_karte_js'] = true;
+// Die Lage als PDF in einen Einsatz speichern darf, wer Einsätze erfasst
+$speichern = can('manage_einsaetze');
+$GLOBALS['ovb_karte_einsatz_js'] = $speichern;
 
 $marker = karten_marker((int)$karte['id']);
 render('karte', [
@@ -33,6 +36,8 @@ render('karte', [
     'konfig'  => karten_konfig($karte, $marker, $symbole, $darf, karten_abschnitte((int)$karte['id'])),
     'symbole' => $symbole,
     'darf'    => $darf,
+    'einsatz' => !empty($karte['einsatz_id']) && can('view_einsaetze') ? einsatz_find((int)$karte['einsatz_id']) : null,
+    'einsaetze' => $speichern ? einsatz_auswahl(!empty($karte['einsatz_id']) ? (int)$karte['einsatz_id'] : null, 50) : [],
     // für die Seitenleiste, bevor das Skript sie übernimmt
     'staerke' => karten_staerke_summe($marker),
 ]);

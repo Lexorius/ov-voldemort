@@ -958,12 +958,38 @@ pre.raw {
 .symbolraster__bild img { max-width: 100%; max-height: 5rem; }
 .symbolraster__name { font-weight: 600; margin-top: .3rem; overflow-wrap: anywhere; }
 
-/* ---------- Einsätze: Tage und Schichten als Eingabetabelle ---------- */
-table.zeilen td { padding: .3rem .35rem; vertical-align: top; }
-table.zeilen input[type=time] { width: 100%; padding: .65rem .5rem; min-height: 44px; font: inherit; color: var(--ink);
-                                background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; }
-table.zeilen input[type=date] { min-width: 9.5rem; }
-table.zeilen input[type=time] { min-width: 6.5rem; }
-table.zeilen td:nth-child(4) input { min-width: 5.5rem; }
-table.zeilen td:nth-child(5) input { min-width: 14rem; }
-table.zeilen td:last-child { width: 1%; white-space: nowrap; }
+/* ---------- Einsätze: Zeilen (Tag, Fachgruppe, Fahrzeuge) ---------- */
+.ezeile { border: 1px solid var(--border); border-radius: 12px; padding: .7rem .8rem; margin-bottom: .7rem; background: var(--surface); }
+.ezeile .field { margin-bottom: .5rem; }
+.ezeile .field label { font-size: .76rem; }
+.ezeile__kopf { display: grid; gap: .5rem; grid-template-columns: 10rem 7rem 7rem minmax(9rem, 1fr) 7rem auto; align-items: end; }
+.ezeile__kopf input[type=time] { width: 100%; padding: .65rem .5rem; min-height: 44px; font: inherit; color: var(--ink);
+                                 background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; }
+.ezeile__weg { margin-bottom: .5rem; min-height: 44px; }
+.ezeile__fz summary { cursor: pointer; font-weight: 600; font-size: .9rem; padding: .2rem 0; }
+.ezeile__fzliste { display: grid; gap: .3rem .9rem; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); margin-top: .4rem; }
+.ezeile__fahrzeug { display: flex; align-items: center; gap: .5rem; }
+.ezeile__fahrzeug .wahl { flex: 1; min-width: 0; margin: 0; }
+.ezeile__fahrzeug input[type=text] { width: 4.6rem; min-height: 36px; padding: .35rem .5rem; }
+@media (max-width: 760px) { .ezeile__fzliste { grid-template-columns: 1fr; } }
+@media (max-width: 760px) {
+  .ezeile__kopf { grid-template-columns: 1fr 1fr; }
+  .ezeile__kopf .field:first-child { grid-column: 1 / -1; }
+}
+
+/* ---------- Einsatzauftrag: Maske neben der Vorschau ---------- */
+.auftrag { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+.auftrag__vorschau { position: sticky; top: 1rem; }
+.auftrag__vorschau iframe { width: 100%; height: 78vh; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+.auftrag__punkt { display: grid; grid-template-columns: 2.4rem 1fr; gap: .5rem; align-items: start; margin-bottom: .5rem; }
+.auftrag__punkt > span { font-weight: 700; padding-top: .7rem; }
+.auftrag textarea { min-height: 60px; }
+@media (max-width: 1000px) {
+  .auftrag { grid-template-columns: 1fr; }
+  .auftrag__vorschau { position: static; }
+  .auftrag__vorschau iframe { height: 60vh; }
+}
+
+/* ---------- Bibliotheken und Lizenzen ---------- */
+.lizenz__text { max-height: 22rem; overflow: auto; white-space: pre-wrap; font-size: .8rem; background: var(--surface-2);
+                border: 1px solid var(--border); border-radius: 10px; padding: .8rem; }

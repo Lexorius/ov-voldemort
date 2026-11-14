@@ -10,6 +10,32 @@ declare(strict_types=1);
  * vorherigen: journal_verify() rechnet die Kette nach.
  */
 
+/**
+ * Womit ein Fahrzeug betankt wird. Die Schlüssel stehen in vehicles.kraftstoff;
+ * leer heißt: nicht angegeben (Anhänger, Geräte ohne Motor, Elektrofahrzeuge).
+ */
+const FZ_TREIBSTOFFE = [
+    'diesel'     => 'Diesel',
+    'diesel_hvo' => 'Diesel HVO',
+    'benzin'     => 'Benzin',
+    'super'      => 'Super',
+    'super_blei' => 'Super mit Bleizusatz',
+    'e10'        => 'Super E10',
+];
+
+/** Gültiger Schlüssel einer Treibstoffart – sonst leer. Reine Funktion. */
+function vehicle_treibstoff(mixed $key): string
+{
+    $key = trim((string)$key);
+    return isset(FZ_TREIBSTOFFE[$key]) ? $key : '';
+}
+
+/** „Diesel HVO" – leer, wenn nichts angegeben ist. Reine Funktion. */
+function vehicle_treibstoff_text(mixed $key): string
+{
+    return FZ_TREIBSTOFFE[vehicle_treibstoff($key)] ?? '';
+}
+
 /** Felder der Fahrzeugstammdaten, die eine Änderung ins Journal schreiben */
 const FZ_JOURNAL_FELDER = [
     'bezeichnung'       => 'Bezeichnung',
@@ -31,6 +57,7 @@ const FZ_JOURNAL_FELDER = [
     'betriebsstunden'   => 'Betriebsstunden',
     'sitzplaetze'       => 'Sitzplätze',
     'zuladung_kg'       => 'Zuladung (kg)',
+    'kraftstoff'        => 'Treibstoff',
     'traeger_id'        => 'Steht auf / gezogen von',
     'hu_bis'            => 'HU gültig bis',
     'sp_bis'            => 'SP gültig bis',
@@ -587,6 +614,9 @@ function vehicle_field_text(string $feld, mixed $wert): string
     if ($feld === 'is_active') {
         return $wert ? 'ja' : 'nein';
     }
+    if ($feld === 'kraftstoff') {
+        return vehicle_treibstoff_text($wert) ?: trim((string)$wert);
+    }
     if (in_array($feld, ['erstzulassung', 'hu_bis', 'sp_bis', 'uvv_bis'], true)) {
         return de_date((string)$wert);
     }
@@ -696,6 +726,7 @@ function vehicle_save_from_post(?array $existing, array $user): array
         'betriebsstunden'   => post_int('betriebsstunden'),
         'sitzplaetze'       => post_int('sitzplaetze'),
         'zuladung_kg'       => post_int('zuladung_kg'),
+        'kraftstoff'        => vehicle_treibstoff(post_str('kraftstoff')),
         'traeger_id'        => vehicle_traeger_pruefen(post_int('traeger_id'), $existing ? (int)$existing['id'] : 0),
         'hu_bis'            => post_date('hu_bis'),
         'sp_bis'            => post_date('sp_bis'),

@@ -1,13 +1,17 @@
 <?php
-/** @var array $karte @var array $konfig @var array $symbole @var array $darf @var array $staerke */
+/** @var array $karte @var array $konfig @var array $symbole @var array $darf @var array $staerke @var ?array $einsatz @var array $einsaetze */
+$einsatz ??= null;
+$einsaetze ??= [];
 $json = (string)json_encode($konfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 ?>
 <div class="pagehead">
   <div>
     <h1><?= e((string)$karte['name']) ?></h1>
     <?php if ((string)$karte['beschreibung'] !== ''): ?><p><?= e((string)$karte['beschreibung']) ?></p><?php endif; ?>
+    <?php if ($einsatz): ?><p class="small">Gehört zum Einsatz <a href="<?= e(url('einsatz', ['id' => $einsatz['id']])) ?>#karten"><?= e(einsatz_bezeichnung($einsatz)) ?></a></p><?php endif; ?>
   </div>
   <div class="btnrow">
+    <a class="btn btn--sec" href="<?= e(url('karte_protokoll', ['id' => $karte['id']])) ?>" title="Wann was gesetzt und versetzt wurde, und wie lange jede Einheit und jedes Fahrzeug im Einsatz ist">Protokoll</a>
     <a class="btn btn--sec" href="<?= e(url('karten')) ?>">Alle Karten</a>
     <a class="btn btn--sec" href="<?= e(url('karten_symbole')) ?>">Symbole</a>
     <?php if ($darf['verwalten']): ?><a class="btn btn--sec" href="<?= e(url('karte_edit', ['id' => $karte['id']])) ?>">Bearbeiten</a><?php endif; ?>
@@ -47,6 +51,24 @@ $json = (string)json_encode($konfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLA
     </aside>
   </div>
   <p class="lagekarte__meldung" data-karte-meldung role="status" aria-live="polite" hidden></p>
+  <?php if ($einsaetze): ?>
+    <div class="filters" style="margin-top:.6rem">
+      <div class="field">
+        <label for="karte_einsatz">Lage in den Einsatz speichern</label>
+        <select id="karte_einsatz" data-karte-einsatz-wahl>
+          <option value="">– Einsatz wählen –</option>
+          <?php foreach ($einsaetze as $es): ?>
+            <option value="<?= (int)$es['id'] ?>"<?= (int)($karte['einsatz_id'] ?? 0) === (int)$es['id'] ? ' selected' : '' ?>><?= e(de_date(substr((string)$es['beginn'], 0, 10)) . ' · ' . mb_substr(einsatz_bezeichnung($es), 0, 60)) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button class="btn btn--sec" type="button" data-karte-einsatz-speichern title="Legt den jetzigen Ausschnitt mit Stärke, Einsatzzeiten und Protokoll als PDF am Einsatz ab">Als PDF speichern</button>
+      </div>
+    </div>
+    <p class="alert alert--info" data-karte-einsatz-meldung role="status" aria-live="polite" hidden></p>
+  <?php endif; ?>
   <p class="small muted" style="margin:.5rem 0 0">
     <?php if ($darf['setzen']): ?>
       <strong>Rechtsklick</strong> auf die Karte setzt ein Symbol (am Handy lange drücken oder „+ Symbol"). Ein Symbol <strong>ziehen</strong> versetzt es,
@@ -63,5 +85,7 @@ $json = (string)json_encode($konfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLA
     „Vollbild" legt Karte und Stärke auf den ganzen Bildschirm, Esc oder der Knopf ⛶ beendet es.
     Einheiten, die ein anderes Gerät setzt, erscheinen von selbst – mit „🔔 Ton" hörbar; versetzte gleiten an ihre neue Stelle.
     Die Kartenkacheln lädt der Browser direkt vom Kartendienst.
+    Was gesetzt, versetzt und gelöscht wird, steht mit Zeit und Person im <a href="<?= e(url('karte_protokoll', ['id' => $karte['id']])) ?>">Protokoll</a> –
+    dort auch, wie lange jede Einheit und jedes Fahrzeug im Einsatz ist.
   </p>
 </div>

@@ -15,6 +15,7 @@ const SPEICHER_ORDNER = [
     'stan'           => 'STAN (Pakete und Dokumente)',
     'ablage'         => 'Dateiablage (Dokumente der eigenen Kategorien)',
     'budget'         => 'Budget (Belege zu Ausgaben und Einnahmen)',
+    'einsaetze'      => 'Einsätze (Einsatzaufträge, Lagekarten, Dokumente)',
     'karten'         => 'Karten (Symbole)',
     'newsletter'     => 'Newsletter',
     'sicherungen'    => 'Sicherungen',

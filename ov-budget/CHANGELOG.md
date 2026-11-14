@@ -1,5 +1,58 @@
 # Änderungsverlauf
 
+## 2.1.89.0
+
+- **Einsätze – mehrere Fachgruppen und Fahrzeuge je Tag:** Eine Zeile ist
+  jetzt die Einsatzzeit **einer Einheit an einem Tag**. Jede Zeile hat ihre
+  **Fachgruppe**, ihre eigenen Uhrzeiten, ihre Stärke und ihre **Fahrzeuge**
+  – mehrere Fachgruppen am selben Tag sind mehrere Zeilen, „+ Weitere
+  Fachgruppe am selben Tag“ legt die nächste an. An jedem Fahrzeug lassen
+  sich die **gefahrenen Kilometer** und die **Betriebsstunden** eintragen –
+  eines von beiden genügt, ein Aggregat oder eine Pumpe hat nur Stunden. Die
+  Seite des Einsatzes rechnet **je Fachgruppe** Tage, Stunden und
+  Helferstunden und **je Fahrzeug** Tage, Einsatzzeit, Kilometer und
+  Betriebsstunden. Die Fahrzeuge des Einsatzes
+  ergeben sich aus den Zeilen; das frühere Feld dafür entfällt.
+- **Einsatzauftrag (Fb Fü 3) als PDF:** Am Einsatz öffnet „+ Einsatzauftrag“
+  eine Maske mit allen Feldern des Vordrucks (Lage 1a–1c, Auftrag,
+  Durchführung 3a–3c, Logistik 4a–4g, Führung und Verbindung) und einer
+  **Vorschau** daneben. Absender, Einsatz, die nächste laufende Nummer, Ort
+  und Datum stehen schon da. **„Als PDF am Einsatz speichern“** legt den
+  fertigen Auftrag auf dem Server ab – er steht dann am Einsatz und in der
+  Dateiablage; „Nur herunterladen“ geht auch. Ein gespeicherter Auftrag
+  bleibt, wie er ist, und dient dem nächsten als Vorlage. Den Vordruck setzt
+  die Bibliothek *einsatzauftrag* von Johannes Rudolph (EUPL-1.2) mit *jsPDF*
+  (MIT); beide liegen unverändert bei und laufen nur im Browser.
+- **Dokumente am Einsatz:** Lagemeldungen, Anforderungen und Fotos lassen
+  sich am Einsatz hochladen. Die **Dateiablage** bekommt die gesperrte
+  Kategorie **Einsätze** (Jahr › Einsatz); Einsatzaufträge und Lagekarten
+  sind dort gekennzeichnet.
+- **Karten – Protokoll und Einsatzzeiten:** Jede Karte führt ein
+  **Protokoll**: wann welche Einheit gesetzt, versetzt oder gelöscht und
+  welches Fahrzeug von Hand gezogen wurde – mit Uhrzeit, Person, der Stelle
+  davor und danach und der Strecke. Daraus rechnet die Seite *Protokoll*,
+  **wie lange jede Einheit und jedes Fahrzeug im Einsatz ist** (vom Setzen
+  bis zum Herausnehmen, sonst bis jetzt). Fahrzeuge, die ihre Position
+  selbst melden, kommen über „Fahrzeug in den Einsatz nehmen“ hinein und
+  über „Einsatz beendet“ wieder heraus. Das Protokoll gibt es als CSV.
+- **Karten – in den Einsatz speichern:** Eine Karte lässt sich einem Einsatz
+  zuordnen und steht dann auf dessen Seite. **„Als PDF speichern“** auf der
+  Karte legt den Ausschnitt, wie er gerade zu sehen ist, samt Stärke nach
+  Abschnitten, Einsatzzeiten und Protokoll als **Lagekarte** am Einsatz ab.
+- **Bibliotheken und Lizenzen:** Neue Seite (Verweis im Fuß jeder Seite) mit
+  allen mitgelieferten Bibliotheken – *einsatzauftrag*, *jsPDF*,
+  *qrcode-generator* –, ihren Urhebern, Lizenzen, Quellen, dem Stand und den
+  vollständigen Lizenztexten; dazu die genutzten Dienste (OpenStreetMap,
+  OSRM, Ollama) und die Quellen der geholten Kartensymbole. Die Lizenztexte
+  liegen als Dateien neben den Bibliotheken.
+- **Fahrzeuge – Treibstoffart:** In der Fahrzeugakte lässt sich festhalten,
+  womit getankt wird: Diesel, Diesel HVO, Benzin, Super, Super mit
+  Bleizusatz oder Super E10. Die Angabe steht in der Akte, im Journal (wenn
+  sie sich ändert) und als Hinweis beim Erfassen einer Tankung.
+- Neue Tabellen `einsatz_tag_vehicles`, `einsatz_files`, `karten_protokoll`,
+  neue Spalten `einsatz_tage.fachgruppe_id`, `karten.einsatz_id` und
+  `vehicles.kraftstoff` (Wanderungen 109 bis 111).
+
 ## 2.1.88.0
 
 - **Einsätze:** Neues Modul für das, was der Ortsverband gefahren ist. Ein

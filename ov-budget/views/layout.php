@@ -64,6 +64,7 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
   <div class="footer__meta">
     <?= e($ovName) ?>
     <?= $ovName !== '' ? ' · ' : '' ?><a href="<?= e(url('neu')) ?>" title="Was ist neu?">OV-Multitool <?= e(app_version()) ?></a>
+    · <a href="<?= e(url('lizenzen')) ?>" title="Mitgelieferte Bibliotheken, ihre Urheber und Lizenzen">Bibliotheken und Lizenzen</a>
   </div>
 </footer>
 
@@ -77,6 +78,17 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
 <?php endif; ?>
 <?php if (!empty($GLOBALS['ovb_karte_js'])): ?>
   <script src="<?= e(asset('js/karte.js')) ?>" defer></script>
+<?php endif; ?>
+<?php /* Fremde Bibliotheken, unverändert mitgeliefert – siehe Seite „Bibliotheken und Lizenzen" */ ?>
+<?php if (!empty($GLOBALS['ovb_einsatzauftrag_js']) || !empty($GLOBALS['ovb_karte_einsatz_js'])): ?>
+  <script src="<?= e(asset('vendor/jspdf/jspdf.umd.min.js')) ?>" defer></script>
+<?php endif; ?>
+<?php if (!empty($GLOBALS['ovb_einsatzauftrag_js'])): ?>
+  <script src="<?= e(asset('vendor/einsatzauftrag/einsatzauftrag.js')) ?>" defer></script>
+  <script src="<?= e(asset('js/einsatzauftrag-maske.js')) ?>" defer></script>
+<?php endif; ?>
+<?php if (!empty($GLOBALS['ovb_karte_einsatz_js'])): ?>
+  <script src="<?= e(asset('js/karte-einsatz.js')) ?>" defer></script>
 <?php endif; ?>
 <?php if (!empty($GLOBALS['ovb_umfrage_js'])): ?>
   <script src="<?= e(asset('js/umfrage-editor.js')) ?>" defer></script>

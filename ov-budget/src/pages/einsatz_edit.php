@@ -40,14 +40,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'ort' => post_str('ort'), 'fachgruppe_id' => post_int('fachgruppe_id'),
         'beschreibung' => post_str('beschreibung'), 'notiz' => post_str('notiz'),
     ]);
+    $spalte = static fn(string $name): array => array_values((array)($_POST[$name] ?? []));
+    $kennung = $spalte('tag_key');
     $tage = [];
-    foreach (array_values((array)($_POST['tag_datum'] ?? [])) as $i => $datum) {
+    foreach ($spalte('tag_datum') as $i => $datum) {
+        $key = (string)($kennung[$i] ?? '');
         $tage[] = [
             'datum' => trim((string)$datum),
-            'von' => trim((string)(array_values((array)($_POST['tag_von'] ?? []))[$i] ?? '')),
-            'bis' => trim((string)(array_values((array)($_POST['tag_bis'] ?? []))[$i] ?? '')),
-            'staerke_text' => trim((string)(array_values((array)($_POST['tag_staerke'] ?? []))[$i] ?? '')),
-            'taetigkeit' => trim((string)(array_values((array)($_POST['tag_taetigkeit'] ?? []))[$i] ?? '')),
+            'von' => trim((string)($spalte('tag_von')[$i] ?? '')),
+            'bis' => trim((string)($spalte('tag_bis')[$i] ?? '')),
+            'fachgruppe_id' => (int)($spalte('tag_fachgruppe')[$i] ?? 0),
+            'staerke_text' => trim((string)($spalte('tag_staerke')[$i] ?? '')),
+            'taetigkeit' => trim((string)($spalte('tag_taetigkeit')[$i] ?? '')),
+            'vehicles' => array_map('intval', (array)($_POST['tag_fz'][$key] ?? [])),
+            'km' => array_filter(array_map(static fn($v) => trim((string)$v), (array)($_POST['tag_km'][$key] ?? [])), 'strlen'),
+            'bh' => array_filter(array_map(static fn($v) => trim((string)$v), (array)($_POST['tag_bh'][$key] ?? [])), 'strlen'),
         ];
     }
 }
@@ -56,17 +63,6 @@ $istNeu = empty($einsatz['id']);
 if ($tage === null) {
     // Beim Anlegen steht der heutige Tag schon da
     $tage = $istNeu ? [['datum' => date('Y-m-d'), 'von' => '', 'bis' => '', 'taetigkeit' => '']] : einsatz_tage((int)$einsatz['id']);
-}
-
-$fahrzeuge = can('view_vehicles')
-    ? db_all('SELECT v.id, v.bezeichnung, v.funkrufname, v.kennzeichen, t.slug AS typ_slug, t.label AS typ_label
-              FROM vehicles v LEFT JOIN list_items t ON t.id = v.typ_id WHERE v.is_active = 1 ORDER BY v.bezeichnung')
-    : [];
-$fahrzeugeGewaehlt = [];
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $fahrzeugeGewaehlt = wahl_ids('vehicles');
-} elseif (!$istNeu) {
-    $fahrzeugeGewaehlt = array_map('intval', array_column(einsatz_fahrzeuge((int)$einsatz['id']), 'id'));
 }
 
 render('einsatz_edit', [
@@ -78,7 +74,11 @@ render('einsatz_edit', [
     ],
     'tage'    => $tage,
     'errors'  => $errors,
-    'fahrzeuge' => $fahrzeuge,
-    'fahrzeugeGewaehlt' => $fahrzeugeGewaehlt,
+    // Fahrzeuge je Zeile wählbar – auch ausgemusterte, wenn sie in diesem Einsatz schon stehen
+    'fahrzeuge' => can('view_vehicles')
+        ? db_all('SELECT v.id, v.bezeichnung, v.funkrufname, v.kennzeichen FROM vehicles v
+                  WHERE v.is_active = 1 OR v.id IN (SELECT ev.vehicle_id FROM einsatz_vehicles ev WHERE ev.einsatz_id = ?)
+                  ORDER BY v.bezeichnung', [(int)($einsatz['id'] ?? 0)])
+        : [],
     'buchungen' => $istNeu ? 0 : (int)db_val('SELECT COUNT(*) FROM expenses WHERE einsatz_id = ?', [(int)$einsatz['id']], 0),
 ]);

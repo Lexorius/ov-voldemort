@@ -1307,6 +1307,8 @@ CREATE TABLE IF NOT EXISTS vehicles (
   -- Transportkapazitaet: Sitzplaetze samt Fahrer, maximale Zuladung in kg
   sitzplaetze       SMALLINT UNSIGNED NULL,
   zuladung_kg       INT UNSIGNED NULL,
+  -- Treibstoffart: diesel, diesel_hvo, benzin, super, super_blei, e10; leer = nicht angegeben
+  kraftstoff        VARCHAR(20)  NOT NULL DEFAULT '',
   -- Traegerfahrzeug: ein Boot steht auf einem Anhaenger, ein Anhaenger wird von einem Zugfahrzeug gezogen
   traeger_id        INT UNSIGNED NULL,
   hu_bis            DATE         NULL,
@@ -2175,10 +2177,14 @@ CREATE TABLE IF NOT EXISTS karten (
   lng          DECIMAL(9,6) NOT NULL,
   zoom         TINYINT UNSIGNED NOT NULL DEFAULT 14,
   fahrzeuge    TINYINT(1)   NOT NULL DEFAULT 0,
+  -- die Karte gehoert zu einem Einsatz; der Fremdschluessel kommt in der Wanderung,
+  -- weil einsaetze erst weiter unten angelegt wird
+  einsatz_id   INT UNSIGNED NULL,
   created_by   INT UNSIGNED NULL,
   created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
+  KEY idx_karte_einsatz (einsatz_id),
   CONSTRAINT fk_karte_cb FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -2277,6 +2283,8 @@ CREATE TABLE IF NOT EXISTS einsaetze (
   CONSTRAINT fk_einsatz_ub  FOREIGN KEY (updated_by)    REFERENCES users(id)      ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Eine Zeile ist die Einsatzzeit einer Einheit an einem Tag: mehrere Zeilen je Tag sind
+-- mehrere Fachgruppen (oder Schichten) mit eigenen Uhrzeiten, je Zeile die Fahrzeuge dazu.
 -- bis kleiner oder gleich von heisst: die Schicht endet am Folgetag
 CREATE TABLE IF NOT EXISTS einsatz_tage (
   id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -2284,13 +2292,16 @@ CREATE TABLE IF NOT EXISTS einsatz_tage (
   datum       DATE         NOT NULL,
   von         TIME         NULL,
   bis         TIME         NULL,
+  fachgruppe_id INT UNSIGNED NULL,
   staerke_f   SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   staerke_u   SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   staerke_h   SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   taetigkeit  VARCHAR(500) NOT NULL DEFAULT '',
   PRIMARY KEY (id),
   KEY idx_etag_einsatz (einsatz_id, datum),
-  CONSTRAINT fk_etag_einsatz FOREIGN KEY (einsatz_id) REFERENCES einsaetze(id) ON DELETE CASCADE
+  KEY idx_etag_fg (fachgruppe_id),
+  CONSTRAINT fk_etag_einsatz FOREIGN KEY (einsatz_id)    REFERENCES einsaetze(id)  ON DELETE CASCADE,
+  CONSTRAINT fk_etag_fg      FOREIGN KEY (fachgruppe_id) REFERENCES list_items(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS einsatz_vehicles (
@@ -2300,6 +2311,75 @@ CREATE TABLE IF NOT EXISTS einsatz_vehicles (
   KEY idx_efz_vehicle (vehicle_id),
   CONSTRAINT fk_efz_einsatz FOREIGN KEY (einsatz_id) REFERENCES einsaetze(id) ON DELETE CASCADE,
   CONSTRAINT fk_efz_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)  ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Fahrzeuge je Zeile (Tag, Schicht, Fachgruppe) mit den gefahrenen Kilometern und den
+-- Betriebsstunden (Aggregat, Pumpe, Radlader – mit oder ohne Kilometer);
+-- einsatz_vehicles ist die Summe daraus
+CREATE TABLE IF NOT EXISTS einsatz_tag_vehicles (
+  tag_id      INT UNSIGNED NOT NULL,
+  vehicle_id  INT UNSIGNED NOT NULL,
+  km          DECIMAL(7,1) NULL,
+  betriebsstunden DECIMAL(6,1) NULL,
+  PRIMARY KEY (tag_id, vehicle_id),
+  KEY idx_etfz_vehicle (vehicle_id),
+  CONSTRAINT fk_etfz_tag     FOREIGN KEY (tag_id)     REFERENCES einsatz_tage(id) ON DELETE CASCADE,
+  CONSTRAINT fk_etfz_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)     ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dokumente eines Einsatzes. herkunft: upload (hochgeladen), auftrag (Einsatzauftrag Fb Fue 3,
+-- im Browser als PDF erzeugt; daten haelt die Felder des Vordrucks als JSON zum Weiterschreiben),
+-- karte (Lagekarte als PDF aus dem Kartenmodul, karte_id nennt die Karte)
+CREATE TABLE IF NOT EXISTS einsatz_files (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  einsatz_id   INT UNSIGNED NOT NULL,
+  art          VARCHAR(20)  NOT NULL DEFAULT 'dokument',
+  herkunft     VARCHAR(20)  NOT NULL DEFAULT 'upload',
+  titel        VARCHAR(200) NOT NULL DEFAULT '',
+  orig_name    VARCHAR(255) NOT NULL DEFAULT '',
+  stored_name  VARCHAR(120) NOT NULL,
+  thumb_name   VARCHAR(120) NULL,
+  mime         VARCHAR(120) NOT NULL DEFAULT '',
+  size_bytes   INT UNSIGNED NOT NULL DEFAULT 0,
+  daten        MEDIUMTEXT   NULL,
+  karte_id     INT UNSIGNED NULL,
+  uploaded_by  INT UNSIGNED NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_ezf_einsatz (einsatz_id, herkunft),
+  KEY idx_ezf_karte (karte_id),
+  CONSTRAINT fk_ezf_einsatz FOREIGN KEY (einsatz_id)  REFERENCES einsaetze(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ezf_karte   FOREIGN KEY (karte_id)    REFERENCES karten(id)    ON DELETE SET NULL,
+  CONSTRAINT fk_ezf_user    FOREIGN KEY (uploaded_by) REFERENCES users(id)     ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Protokoll einer Karte: wann welche Einheit oder welches Fahrzeug gesetzt, versetzt oder
+-- herausgenommen wurde – von wo nach wo, von wem. Daraus rechnet die Anwendung, wie lange
+-- jedes im Einsatz war. marker_id ist bewusst kein Fremdschluessel: die Zeilen bleiben,
+-- wenn die Einheit von der Karte verschwindet; name haelt fest, wie sie hiess.
+CREATE TABLE IF NOT EXISTS karten_protokoll (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  karte_id     INT UNSIGNED NOT NULL,
+  art          VARCHAR(12)  NOT NULL DEFAULT 'einheit',
+  marker_id    INT UNSIGNED NULL,
+  vehicle_id   INT UNSIGNED NULL,
+  name         VARCHAR(200) NOT NULL DEFAULT '',
+  aktion       VARCHAR(12)  NOT NULL DEFAULT 'gesetzt',
+  von_lat      DECIMAL(9,6) NULL,
+  von_lng      DECIMAL(9,6) NULL,
+  lat          DECIMAL(9,6) NULL,
+  lng          DECIMAL(9,6) NULL,
+  meter        INT UNSIGNED NULL,
+  abschnitt    VARCHAR(100) NOT NULL DEFAULT '',
+  staerke      VARCHAR(24)  NOT NULL DEFAULT '',
+  user_id      INT UNSIGNED NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_kprot_karte (karte_id, created_at),
+  KEY idx_kprot_vehicle (vehicle_id),
+  CONSTRAINT fk_kprot_karte   FOREIGN KEY (karte_id)   REFERENCES karten(id)   ON DELETE CASCADE,
+  CONSTRAINT fk_kprot_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE SET NULL,
+  CONSTRAINT fk_kprot_user    FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS=1;

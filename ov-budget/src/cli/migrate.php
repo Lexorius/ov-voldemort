@@ -87,6 +87,7 @@ function ovb_list_item_refs(): array
         ['events',         'fachgruppe_id',       ''],
         ['einsaetze',      'art_id',              ''],
         ['einsaetze',      'fachgruppe_id',       ''],
+        ['einsatz_tage',   'fachgruppe_id',       ''],
     ];
 }
 
@@ -2718,10 +2719,12 @@ SQL);
   lng          DECIMAL(9,6) NOT NULL,
   zoom         TINYINT UNSIGNED NOT NULL DEFAULT 14,
   fahrzeuge    TINYINT(1)   NOT NULL DEFAULT 0,
+  einsatz_id   INT UNSIGNED NULL,
   created_by   INT UNSIGNED NULL,
   created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
+  KEY idx_karte_einsatz (einsatz_id),
   CONSTRAINT fk_karte_cb FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
         $say('Tabelle karten angelegt.');
@@ -2920,6 +2923,99 @@ SQL);
         $pdo->exec('ALTER TABLE expenses ADD CONSTRAINT fk_exp_einsatz FOREIGN KEY (einsatz_id) REFERENCES einsaetze(id) ON DELETE SET NULL');
     }
     $merken('108_einsaetze');
+
+    /* ---------- 109: Einsätze – Fachgruppe und Fahrzeuge je Zeile, Dokumente am Einsatz ---------- */
+    if (ovb_table_exists($pdo, 'einsatz_tage') && !ovb_column_exists($pdo, 'einsatz_tage', 'fachgruppe_id')) {
+        $pdo->exec('ALTER TABLE einsatz_tage ADD COLUMN fachgruppe_id INT UNSIGNED NULL AFTER bis, ADD KEY idx_etag_fg (fachgruppe_id)');
+        $say('Einsatztage bekommen eine Fachgruppe je Zeile.');
+    }
+    if (ovb_column_exists($pdo, 'einsatz_tage', 'fachgruppe_id') && !ovb_constraint_exists($pdo, 'einsatz_tage', 'fk_etag_fg')) {
+        $pdo->exec('ALTER TABLE einsatz_tage ADD CONSTRAINT fk_etag_fg FOREIGN KEY (fachgruppe_id) REFERENCES list_items(id) ON DELETE SET NULL');
+    }
+    if (ovb_table_exists($pdo, 'einsatz_tage') && ovb_table_exists($pdo, 'vehicles') && !ovb_table_exists($pdo, 'einsatz_tag_vehicles')) {
+        $pdo->exec("CREATE TABLE einsatz_tag_vehicles (
+  tag_id      INT UNSIGNED NOT NULL,
+  vehicle_id  INT UNSIGNED NOT NULL,
+  km          DECIMAL(7,1) NULL,
+  betriebsstunden DECIMAL(6,1) NULL,
+  PRIMARY KEY (tag_id, vehicle_id),
+  KEY idx_etfz_vehicle (vehicle_id),
+  CONSTRAINT fk_etfz_tag     FOREIGN KEY (tag_id)     REFERENCES einsatz_tage(id) ON DELETE CASCADE,
+  CONSTRAINT fk_etfz_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)     ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle einsatz_tag_vehicles angelegt.');
+    }
+    if (ovb_table_exists($pdo, 'einsaetze') && ovb_table_exists($pdo, 'karten') && !ovb_table_exists($pdo, 'einsatz_files')) {
+        $pdo->exec("CREATE TABLE einsatz_files (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  einsatz_id   INT UNSIGNED NOT NULL,
+  art          VARCHAR(20)  NOT NULL DEFAULT 'dokument',
+  herkunft     VARCHAR(20)  NOT NULL DEFAULT 'upload',
+  titel        VARCHAR(200) NOT NULL DEFAULT '',
+  orig_name    VARCHAR(255) NOT NULL DEFAULT '',
+  stored_name  VARCHAR(120) NOT NULL,
+  thumb_name   VARCHAR(120) NULL,
+  mime         VARCHAR(120) NOT NULL DEFAULT '',
+  size_bytes   INT UNSIGNED NOT NULL DEFAULT 0,
+  daten        MEDIUMTEXT   NULL,
+  karte_id     INT UNSIGNED NULL,
+  uploaded_by  INT UNSIGNED NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_ezf_einsatz (einsatz_id, herkunft),
+  KEY idx_ezf_karte (karte_id),
+  CONSTRAINT fk_ezf_einsatz FOREIGN KEY (einsatz_id)  REFERENCES einsaetze(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ezf_karte   FOREIGN KEY (karte_id)    REFERENCES karten(id)    ON DELETE SET NULL,
+  CONSTRAINT fk_ezf_user    FOREIGN KEY (uploaded_by) REFERENCES users(id)     ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle einsatz_files angelegt.');
+    }
+    $merken('109_einsatz_zeilen_dateien');
+
+    /* ---------- 110: Karten – gehören zu einem Einsatz, Protokoll der Bewegungen ---------- */
+    if (ovb_table_exists($pdo, 'karten') && !ovb_column_exists($pdo, 'karten', 'einsatz_id')) {
+        $pdo->exec('ALTER TABLE karten ADD COLUMN einsatz_id INT UNSIGNED NULL AFTER fahrzeuge, ADD KEY idx_karte_einsatz (einsatz_id)');
+        $say('Karten lassen sich einem Einsatz zuordnen.');
+    }
+    if (ovb_table_exists($pdo, 'einsaetze') && ovb_column_exists($pdo, 'karten', 'einsatz_id')
+        && !ovb_constraint_exists($pdo, 'karten', 'fk_karte_einsatz')) {
+        $pdo->exec('ALTER TABLE karten ADD CONSTRAINT fk_karte_einsatz FOREIGN KEY (einsatz_id) REFERENCES einsaetze(id) ON DELETE SET NULL');
+    }
+    if (ovb_table_exists($pdo, 'karten') && ovb_table_exists($pdo, 'vehicles') && !ovb_table_exists($pdo, 'karten_protokoll')) {
+        $pdo->exec("CREATE TABLE karten_protokoll (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  karte_id     INT UNSIGNED NOT NULL,
+  art          VARCHAR(12)  NOT NULL DEFAULT 'einheit',
+  marker_id    INT UNSIGNED NULL,
+  vehicle_id   INT UNSIGNED NULL,
+  name         VARCHAR(200) NOT NULL DEFAULT '',
+  aktion       VARCHAR(12)  NOT NULL DEFAULT 'gesetzt',
+  von_lat      DECIMAL(9,6) NULL,
+  von_lng      DECIMAL(9,6) NULL,
+  lat          DECIMAL(9,6) NULL,
+  lng          DECIMAL(9,6) NULL,
+  meter        INT UNSIGNED NULL,
+  abschnitt    VARCHAR(100) NOT NULL DEFAULT '',
+  staerke      VARCHAR(24)  NOT NULL DEFAULT '',
+  user_id      INT UNSIGNED NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_kprot_karte (karte_id, created_at),
+  KEY idx_kprot_vehicle (vehicle_id),
+  CONSTRAINT fk_kprot_karte   FOREIGN KEY (karte_id)   REFERENCES karten(id)   ON DELETE CASCADE,
+  CONSTRAINT fk_kprot_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE SET NULL,
+  CONSTRAINT fk_kprot_user    FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle karten_protokoll angelegt.');
+    }
+    $merken('110_karten_einsatz_protokoll');
+
+    /* ---------- 111: Treibstoffart am Fahrzeug ---------- */
+    if (ovb_table_exists($pdo, 'vehicles') && !ovb_column_exists($pdo, 'vehicles', 'kraftstoff')) {
+        $pdo->exec("ALTER TABLE vehicles ADD COLUMN kraftstoff VARCHAR(20) NOT NULL DEFAULT '' AFTER zuladung_kg");
+        $say('Fahrzeuge bekommen eine Treibstoffart.');
+    }
+    $merken('111_fahrzeug_treibstoff');
 }
 
 /**

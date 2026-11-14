@@ -54,6 +54,9 @@ $karteId = (int)($tank['tankkarte_id'] ?? 0);
             <option value="<?= e($key) ?>"<?= (string)($tank['art'] ?? 'kraftstoff') === $key ? ' selected' : '' ?>><?= e($label) ?></option>
           <?php endforeach; ?>
         </select>
+        <?php if (function_exists('vehicle_treibstoff_text') && ($treibstoff = vehicle_treibstoff_text($vehicle['kraftstoff'] ?? '')) !== ''): ?>
+          <small>Dieses Fahrzeug tankt <strong><?= e($treibstoff) ?></strong>.</small>
+        <?php endif; ?>
       </div>
       <div class="field field--check" style="align-self:end">
         <input type="checkbox" id="voll" name="voll" value="1" <?= !empty($tank['voll']) ? 'checked' : '' ?>>

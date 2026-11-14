@@ -533,66 +533,111 @@
     });
   }
 
-  /* Eingabetabelle mit Zeilen (Tage eines Einsatzes): „+ Leere Zeile" hängt eine leere an,
-     „+ Folgetag" die letzte ausgefüllte mit dem nächsten Datum, der Mülleimer nimmt eine heraus */
+  /* Zeilen eines Einsatzes (Tag, Fachgruppe, Fahrzeuge): „+ Leere Zeile" hängt eine leere an,
+     „+ Folgetag" die letzte ausgefüllte mit dem nächsten Datum, „+ Weitere Fachgruppe" dieselbe
+     auf denselben Tag, der Mülleimer nimmt eine heraus. Jede Zeile hat eine Kennung
+     (tag_key[]), unter der ihre Fahrzeuge stehen: tag_fz[kennung][], tag_km[kennung][fahrzeug],
+     tag_bh[kennung][fahrzeug]. */
   document.querySelectorAll('[data-zeilen]').forEach(function (block) {
     var rumpf = block.querySelector('[data-zeilen-body]');
     if (!rumpf) { return; }
-    function zeilen() { return Array.prototype.slice.call(rumpf.querySelectorAll('tr')); }
-    function leeren(zeile) {
-      zeile.querySelectorAll('input, textarea').forEach(function (feld) { feld.value = ''; });
-    }
+    function zeilen() { return Array.prototype.slice.call(rumpf.querySelectorAll('[data-zeile]')); }
+    function felder(zeile) { return Array.prototype.slice.call(zeile.querySelectorAll('input:not([type=hidden]), select, textarea')); }
     function datumFeld(zeile) { return zeile.querySelector('input[type=date]'); }
+    function leerFeld(f) { return f.type === 'checkbox' ? !f.checked : f.value === ''; }
+    function istLeer(zeile) { return felder(zeile).every(leerFeld); }
+    function leeren(zeile) {
+      felder(zeile).forEach(function (f) {
+        if (f.type === 'checkbox') { f.checked = false; } else if (f.tagName === 'SELECT') { f.selectedIndex = 0; } else { f.value = ''; }
+      });
+      fahrzeugZahl(zeile);
+    }
+    function fahrzeugZahl(zeile) {
+      var zahl = zeile.querySelector('[data-zeile-fz-zahl]');
+      if (!zahl) { return; }
+      var n = zeile.querySelectorAll('input[type=checkbox]:checked').length;
+      zahl.textContent = n > 0 ? '(' + n + ')' : '';
+    }
+    function naechsteKennung() {
+      var max = -1;
+      rumpf.querySelectorAll('[data-zeile-key]').forEach(function (f) { max = Math.max(max, parseInt(f.value, 10) || 0); });
+      return max + 1;
+    }
+    // Eine neue Zeile aus der letzten: gleiche Felder, eigene Kennung in allen Namen
+    function neueZeile() {
+      var alle = zeilen();
+      var zeile = alle[alle.length - 1].cloneNode(true);
+      var alt = zeile.querySelector('[data-zeile-key]').value;
+      var k = String(naechsteKennung());
+      zeile.querySelector('[data-zeile-key]').value = k;
+      zeile.querySelectorAll('[name]').forEach(function (f) {
+        f.name = f.name.replace('tag_fz[' + alt + ']', 'tag_fz[' + k + ']').replace('tag_km[' + alt + ']', 'tag_km[' + k + ']').replace('tag_bh[' + alt + ']', 'tag_bh[' + k + ']');
+      });
+      leeren(zeile);
+      rumpf.appendChild(zeile);
+      return zeile;
+    }
     function folgetag(datum) {
       var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(datum || '');
       if (!m) { return ''; }
       // in UTC rechnen, damit die Zeitumstellung keinen Tag verschluckt
       return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + 1)).toISOString().slice(0, 10);
     }
-    function anhaengen(vorlage) {
-      var alle = zeilen();
-      // eine noch leere Zeile am Ende wird benutzt, statt eine weitere anzuhängen
+    function letzteMitDatum() {
+      var letzte = null;
+      zeilen().forEach(function (z) { if (datumFeld(z) && datumFeld(z).value !== '') { letzte = z; } });
+      return letzte;
+    }
+    // Die Vorlage in eine freie Zeile übernehmen: alles außer Kilometern und Betriebsstunden, die zählt jede Zeile neu
+    function kopieren(vorlage, tage) {
       var ziel = null;
-      for (var i = 0; i < alle.length; i++) {
-        var leer = Array.prototype.every.call(alle[i].querySelectorAll('input, textarea'), function (f) { return f.value === ''; });
-        if (leer) { ziel = alle[i]; break; }
-      }
-      if (!ziel) {
-        ziel = alle[alle.length - 1].cloneNode(true);
-        leeren(ziel);
-        rumpf.appendChild(ziel);
-      }
+      zeilen().forEach(function (z) { if (!ziel && z !== vorlage && istLeer(z)) { ziel = z; } });
+      if (!ziel) { ziel = neueZeile(); }
       if (vorlage) {
-        var von = vorlage.querySelectorAll('input, textarea');
-        var nach = ziel.querySelectorAll('input, textarea');
-        for (var k = 0; k < nach.length && k < von.length; k++) { nach[k].value = von[k].value; }
-        datumFeld(ziel).value = folgetag(datumFeld(vorlage).value);
+        var von = felder(vorlage);
+        var nach = felder(ziel);
+        for (var i = 0; i < nach.length && i < von.length; i++) {
+          if (nach[i].type === 'checkbox') { nach[i].checked = von[i].checked; }
+          else if (/^tag_(km|bh)\[/.test(nach[i].name)) { nach[i].value = ''; }
+          else { nach[i].value = von[i].value; }
+        }
+        datumFeld(ziel).value = tage > 0 ? folgetag(datumFeld(vorlage).value) : datumFeld(vorlage).value;
+        var fz = ziel.querySelector('details');
+        var fzVon = vorlage.querySelector('details');
+        if (fz && fzVon) { fz.open = fzVon.open; }
+        fahrzeugZahl(ziel);
       }
-      var erstes = ziel.querySelector(vorlage ? 'input[type=time]' : 'input');
+      var erstes = ziel.querySelector(vorlage ? (tage > 0 ? 'input[type=time]' : 'select') : 'input[type=date]');
       if (erstes) { erstes.focus(); }
     }
     block.querySelectorAll('[data-zeile-neu]').forEach(function (knopf) {
       knopf.addEventListener('click', function () {
-        var neu = zeilen()[zeilen().length - 1].cloneNode(true);
-        leeren(neu);
-        rumpf.appendChild(neu);
-        var erstes = neu.querySelector('input');
+        var erstes = neueZeile().querySelector('input[type=date]');
         if (erstes) { erstes.focus(); }
       });
     });
     block.querySelectorAll('[data-zeile-folgetag]').forEach(function (knopf) {
-      knopf.addEventListener('click', function () {
-        var letzte = null;
-        zeilen().forEach(function (z) { if (datumFeld(z) && datumFeld(z).value !== '') { letzte = z; } });
-        anhaengen(letzte);
-      });
+      knopf.addEventListener('click', function () { kopieren(letzteMitDatum(), 1); });
+    });
+    block.querySelectorAll('[data-zeile-kopie]').forEach(function (knopf) {
+      knopf.addEventListener('click', function () { kopieren(letzteMitDatum(), 0); });
     });
     rumpf.addEventListener('click', function (ev) {
       var knopf = ev.target.closest('[data-zeile-weg]');
       if (!knopf) { return; }
-      var zeile = knopf.closest('tr');
+      var zeile = knopf.closest('[data-zeile]');
       // die letzte Zeile bleibt als Vorlage stehen und wird nur geleert
       if (zeilen().length > 1) { zeile.remove(); } else { leeren(zeile); }
+    });
+    rumpf.addEventListener('change', function (ev) {
+      var zeile = ev.target.closest('[data-zeile]');
+      if (zeile && ev.target.type === 'checkbox') { fahrzeugZahl(zeile); }
+    });
+    // Wer Kilometer oder Betriebsstunden einträgt, hat das Fahrzeug gewählt
+    rumpf.addEventListener('input', function (ev) {
+      if (!/^tag_(km|bh)\[/.test(ev.target.name || '') || ev.target.value === '') { return; }
+      var haken = ev.target.parentNode.querySelector('input[type=checkbox]');
+      if (haken && !haken.checked) { haken.checked = true; fahrzeugZahl(ev.target.closest('[data-zeile]')); }
     });
   });
 

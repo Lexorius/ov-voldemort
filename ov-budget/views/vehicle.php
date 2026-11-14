@@ -97,6 +97,7 @@ $tanken ??= ['anzahl' => 0, 'eintraege' => [], 'verbrauch' => null, 'strecke' =>
           'Ladung'            => implode(' · ', array_map(static fn($l) => (string)$l['bezeichnung'], $ladung ?? [])),
           'Sitzplätze'        => ($vehicle['sitzplaetze'] ?? null) !== null ? (int)$vehicle['sitzplaetze'] . ' Personen' : '',
           'Zuladung'          => ($vehicle['zuladung_kg'] ?? null) !== null ? number_format((int)$vehicle['zuladung_kg'], 0, ',', '.') . ' kg' : '',
+          'Treibstoff'        => vehicle_treibstoff_text($vehicle['kraftstoff'] ?? ''),
           'Stellplatz'        => $stellplatzPfad ?? ($vehicle['stellplatz_name'] ?? ''),
           'Standort'          => $vehicle['standort'],
       ];

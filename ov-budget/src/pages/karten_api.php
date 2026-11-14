@@ -5,6 +5,7 @@ declare(strict_types=1);
  * Die Karte im Browser spricht hierüber mit der Anwendung – Antworten als JSON.
  *   GET  action=fahrzeuge                       Fahrzeuge mit gemeldeter Position
  *   GET  action=lage           karte_id         Einheiten und Abschnitte der Karte (Abruf im Takt)
+ *   GET  action=protokoll      karte_id         Einsatzzeiten und Protokoll der Karte, fertig beschriftet
  *   POST action=marker_neu     karte_id, symbol_id, [lat, lng], [beschriftung], [staerke], [abschnitt_id]
  *   POST action=marker_aendern id, [lat, lng], [groesse], [drehung], [beschriftung], [staerke], [abschnitt_id], [symbol_id]
  *   POST action=marker_weg     id
@@ -12,6 +13,7 @@ declare(strict_types=1);
  *   POST action=abschnitt_aendern id, name
  *   POST action=abschnitt_weg     id
  *   POST action=ausschnitt     karte_id, lat, lng, zoom
+ *   POST action=fahrzeug_setzen id, lat, lng, [karte_id]   – mit karte_id kommt die Bewegung ins Protokoll der Karte
  */
 $user = require_login();
 header('Content-Type: application/json; charset=UTF-8');
@@ -31,6 +33,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $antwort(['ok' => false, 'fehler' => 'Diese Karte gibt es nicht (mehr).'], 404);
         }
         $antwort(['ok' => true, 'stand' => date('H:i:s')] + karten_lage((int)$karte['id']));
+    }
+    if (get_str('action') === 'protokoll') {
+        $karte = karte_find(get_int('karte_id'));
+        if (!$karte) {
+            $antwort(['ok' => false, 'fehler' => 'Diese Karte gibt es nicht (mehr).'], 404);
+        }
+        $antwort(['ok' => true, 'stand' => date('d.m.Y H:i'), 'karte' => (string)$karte['name']] + karten_protokoll_daten((int)$karte['id']) + karten_lage((int)$karte['id']));
     }
     if (get_str('action') === 'fahrzeuge') {
         // Die Fahrzeuge auf der Karte sieht jeder, der die Karten sieht – auch ohne Zugang zum Fahrzeugmodul.
@@ -74,6 +83,13 @@ if ($action === 'fahrzeug_setzen') {
     $punkt = karten_fahrzeug_setzen($vehicle, post('lat'), post('lng'), $user);
     if (is_string($punkt)) {
         $antwort(['ok' => false, 'fehler' => $punkt], 409);
+    }
+    // Auf welcher Karte gezogen wurde, sagt der Browser – dort steht die Bewegung dann im Protokoll
+    $aufKarte = karte_find(post_int('karte_id'));
+    if ($aufKarte) {
+        $hatte = $vehicle['geo_lat'] !== null && $vehicle['geo_lat'] !== '' && $vehicle['geo_lng'] !== null && $vehicle['geo_lng'] !== '';
+        karten_protokoll_fahrzeug((int)$aufKarte['id'], $vehicle, $hatte ? 'versetzt' : 'gesetzt', post('lat'), post('lng'),
+            $hatte ? ['lat' => $vehicle['geo_lat'], 'lng' => $vehicle['geo_lng']] : null);
     }
     $antwort(['ok' => true, 'fahrzeug' => $punkt]);
 }

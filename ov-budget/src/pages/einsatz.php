@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/* Ein Einsatz: Tage und Schichten, Fahrzeuge, Ausgaben und Einnahmen */
+/* Ein Einsatz: Tage mit Fachgruppen und Fahrzeugen, Dokumente, Karten, Ausgaben und Einnahmen */
 $user = require_login();
 if (!can('view_einsaetze')) {
     http_response_code(403);
@@ -18,6 +18,10 @@ if (!$einsatz) {
 
 $id = (int)$einsatz['id'];
 $tage = einsatz_tage($id);
+if (!can('view_vehicles')) {
+    // ohne Zugang zum Fahrzeugmodul bleiben die Fahrzeuge je Zeile verborgen
+    $tage = array_map(static fn(array $t): array => ['fahrzeuge' => [], 'vehicles' => [], 'km' => []] + $t, $tage);
+}
 $buchungen = can('view_expenses') ? einsatz_buchungen($id) : [];
 
 render('einsatz', [
@@ -25,8 +29,12 @@ render('einsatz', [
     'einsatz'   => $einsatz,
     'tage'      => $tage,
     'summen'    => einsatz_summen($tage),
-    'fahrzeuge' => can('view_vehicles') ? einsatz_fahrzeuge($id) : [],
+    'jeFachgruppe' => einsatz_summen_je_fachgruppe($tage),
+    'jeFahrzeug'   => einsatz_summen_je_fahrzeug($tage),
+    'dateien'   => einsatz_dateien($id),
+    'karten'    => can('view_karten') && function_exists('karten_fuer_einsatz') ? karten_fuer_einsatz($id) : [],
     'buchungen' => $buchungen,
     'geld'      => einsatz_geld_aus($buchungen),
     'mitGeld'   => can('view_expenses'),
+    'uploadMaxMb' => (int)round(upload_max_bytes() / 1048576),
 ]);

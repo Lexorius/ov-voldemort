@@ -148,6 +148,16 @@ $isNew = empty($vehicle['id']);
         <label for="zuladung_kg">Maximale Zuladung (kg)</label>
         <input type="number" id="zuladung_kg" name="zuladung_kg" min="0" max="99999" value="<?= e((string)($vehicle['zuladung_kg'] ?? '')) ?>" placeholder="z. B. 1200">
       </div>
+      <div class="field">
+        <label for="kraftstoff">Treibstoff</label>
+        <select id="kraftstoff" name="kraftstoff">
+          <option value="">– nicht angegeben –</option>
+          <?php foreach (FZ_TREIBSTOFFE as $key => $label): ?>
+            <option value="<?= e($key) ?>"<?= vehicle_treibstoff($vehicle['kraftstoff'] ?? '') === $key ? ' selected' : '' ?>><?= e($label) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <small>Womit getankt wird – steht in der Akte und beim Erfassen einer Tankung.</small>
+      </div>
       <?php $traeger ??= []; if ($traeger): ?>
       <div class="field">
         <label for="traeger_id">Steht auf / wird gezogen von</label>

@@ -913,7 +913,7 @@
       f.el.classList.remove('is-gezogen');
       try { f.el.releasePointerCapture(ev.pointerId); } catch (e) { /* schon frei */ }
       if (!s.bewegt) { return; }   // nur angeklickt: der Verweis öffnet das Fahrzeug
-      senden({ action: 'fahrzeug_setzen', id: f.d.id, lat: f.d.lat, lng: f.d.lng }, function (d) {
+      senden({ action: 'fahrzeug_setzen', karte_id: K.id, id: f.d.id, lat: f.d.lat, lng: f.d.lng }, function (d) {
         f.zieht = false;
         if (!d) {
           // nicht gespeichert: zurück an die alte Stelle
@@ -1038,7 +1038,7 @@
         knopf.appendChild(neu('span', '', fz.kurz !== fz.name ? fz.kurz + ' – ' + fz.name : fz.name));
         knopf.addEventListener('click', function () {
           menueZu();
-          senden({ action: 'fahrzeug_setzen', id: fz.id, lat: mitte.lat, lng: mitte.lng }, function (d) {
+          senden({ action: 'fahrzeug_setzen', karte_id: K.id, id: fz.id, lat: mitte.lat, lng: mitte.lng }, function (d) {
             if (!d) { return; }
             melden('„' + fz.name + '“ steht jetzt in der Kartenmitte – ziehen versetzt es.');
             if (schalter && !schalter.checked) { schalter.checked = true; fahrzeugeSchalten(); } else { fahrzeugeHolen(); }

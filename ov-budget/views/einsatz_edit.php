@@ -1,30 +1,60 @@
 <?php
-/** @var array $einsatz @var array $tage @var array $errors @var array $fahrzeuge @var array $fahrzeugeGewaehlt @var int $buchungen */
+/** @var array $einsatz @var array $tage @var array $errors @var array $fahrzeuge @var int $buchungen */
 $isNew = empty($einsatz['id']);
 $zurueck = $isNew ? url('einsaetze') : url('einsatz', ['id' => $einsatz['id']]);
+$fahrzeuge ??= [];
 
-// Eine Zeile der Tagestabelle. Die Stärke steht als Text („1/2/9") – aus der Datenbank kommen drei Zahlen.
-$zeile = static function (array $t): string {
+/*
+ * Eine Zeile: die Einsatzzeit einer Einheit an einem Tag. $k ist ihre Kennung im Formular –
+ * unter ihr stehen die Fahrzeuge (tag_fz[k][]), deren Kilometer (tag_km[k][fahrzeug]) und
+ * Betriebsstunden (tag_bh[k][fahrzeug]).
+ * Die Stärke steht als Text („1/2/9"); aus der Datenbank kommen drei Zahlen.
+ */
+$zeile = static function (array $t, int $k) use ($fahrzeuge): string {
     $staerke = array_key_exists('staerke_text', $t)
         ? (string)$t['staerke_text']
         : (((int)($t['staerke_f'] ?? 0) + (int)($t['staerke_u'] ?? 0) + (int)($t['staerke_h'] ?? 0)) > 0
             ? (int)$t['staerke_f'] . '/' . (int)$t['staerke_u'] . '/' . (int)$t['staerke_h'] : '');
     $zeit = static fn($v): string => is_string($z = einsatz_zeit($v)) ? $z : trim((string)$v);
-    return '<tr>'
-        . '<td><input type="date" name="tag_datum[]" value="' . e((string)($t['datum'] ?? '')) . '" aria-label="Datum"></td>'
-        . '<td><input type="time" name="tag_von[]" value="' . e($zeit($t['von'] ?? '')) . '" aria-label="von"></td>'
-        . '<td><input type="time" name="tag_bis[]" value="' . e($zeit($t['bis'] ?? '')) . '" aria-label="bis"></td>'
-        . '<td><input type="text" name="tag_staerke[]" value="' . e($staerke) . '" placeholder="1/2/9" inputmode="numeric" maxlength="24" style="max-width:7rem" aria-label="Stärke: Führer/Unterführer/Helfer"></td>'
-        . '<td><input type="text" name="tag_taetigkeit[]" value="' . e((string)($t['taetigkeit'] ?? '')) . '" maxlength="500" placeholder="z. B. Sandsackverbau Deich Süd" aria-label="Tätigkeit"></td>'
-        . '<td><button type="button" class="btn btn--sec btn--sm" data-zeile-weg title="Zeile entfernen" aria-label="Zeile entfernen">🗑</button></td>'
-        . '</tr>';
+    $gewaehlt = array_map('intval', (array)($t['vehicles'] ?? []));
+    $km = (array)($t['km'] ?? []);
+    $bh = (array)($t['bh'] ?? []);
+    $zahl = static fn(array $werte, int $id): string => isset($werte[$id]) && $werte[$id] !== null && $werte[$id] !== ''
+        ? (is_numeric($werte[$id]) ? num_input((float)$werte[$id], true, 1) : (string)$werte[$id]) : '';
+    $html = '<div class="ezeile" data-zeile>'
+        . '<input type="hidden" name="tag_key[]" value="' . $k . '" data-zeile-key>'
+        . '<div class="ezeile__kopf">'
+        . '<div class="field"><label>Datum</label><input type="date" name="tag_datum[]" value="' . e((string)($t['datum'] ?? '')) . '" aria-label="Datum"></div>'
+        . '<div class="field"><label>von</label><input type="time" name="tag_von[]" value="' . e($zeit($t['von'] ?? '')) . '" aria-label="von"></div>'
+        . '<div class="field"><label>bis</label><input type="time" name="tag_bis[]" value="' . e($zeit($t['bis'] ?? '')) . '" aria-label="bis"></div>'
+        . '<div class="field"><label>Fachgruppe</label><select name="tag_fachgruppe[]" aria-label="Fachgruppe">'
+        . list_options('fachgruppe', (int)($t['fachgruppe_id'] ?? 0), '– keine –') . '</select></div>'
+        . '<div class="field"><label>Stärke</label><input type="text" name="tag_staerke[]" value="' . e($staerke) . '" placeholder="1/2/9" inputmode="numeric" maxlength="24" aria-label="Stärke: Führer/Unterführer/Helfer"></div>'
+        . '<button type="button" class="btn btn--sec btn--sm ezeile__weg" data-zeile-weg title="Zeile entfernen" aria-label="Zeile entfernen">🗑</button>'
+        . '</div>'
+        . '<div class="field"><label>Tätigkeit</label><input type="text" name="tag_taetigkeit[]" value="' . e((string)($t['taetigkeit'] ?? '')) . '" maxlength="500" placeholder="z. B. Sandsackverbau Deich Süd" aria-label="Tätigkeit"></div>';
+    if ($fahrzeuge) {
+        $html .= '<details class="ezeile__fz"' . ($gewaehlt ? ' open' : '') . '><summary>Fahrzeuge <span class="muted" data-zeile-fz-zahl>' . ($gewaehlt ? '(' . count($gewaehlt) . ')' : '') . '</span></summary>'
+            . '<div class="ezeile__fzliste">';
+        foreach ($fahrzeuge as $v) {
+            $id = (int)$v['id'];
+            $an = in_array($id, $gewaehlt, true);
+            $html .= '<div class="ezeile__fahrzeug"><label class="wahl"><input type="checkbox" name="tag_fz[' . $k . '][]" value="' . $id . '"' . ($an ? ' checked' : '') . '> '
+                . e((string)$v['bezeichnung']) . (trim((string)($v['funkrufname'] ?? '')) !== '' ? ' <span class="muted small">' . e((string)$v['funkrufname']) . '</span>' : '') . '</label>'
+                . '<input type="text" name="tag_km[' . $k . '][' . $id . ']" value="' . e($zahl($km, $id)) . '" inputmode="decimal" maxlength="9" placeholder="km" title="gefahrene Kilometer" aria-label="gefahrene Kilometer ' . e((string)$v['bezeichnung']) . '">'
+                . '<input type="text" name="tag_bh[' . $k . '][' . $id . ']" value="' . e($zahl($bh, $id)) . '" inputmode="decimal" maxlength="8" placeholder="Bh" title="Betriebsstunden" aria-label="Betriebsstunden ' . e((string)$v['bezeichnung']) . '"></div>';
+        }
+        $html .= '</div></details>';
+    }
+    return $html . '</div>';
 };
+$k = 0;
 ?>
 <div class="pagehead">
   <div>
     <h1><?= $isNew ? 'Einsatz anlegen' : 'Einsatz bearbeiten' ?></h1>
-    <p class="muted small">Ein Einsatz geht über einen oder mehrere Tage. Je Tag – oder je Schicht – eine Zeile mit Zeit, Stärke und Tätigkeit;
-      daraus rechnet die Seite Einsatztage, Einsatzstunden und Helferstunden.</p>
+    <p class="muted small">Ein Einsatz geht über einen oder mehrere Tage. Je Tag und Einheit eine Zeile mit Zeit, Fachgruppe, Fahrzeugen, Stärke und Tätigkeit;
+      daraus rechnet die Seite Einsatztage, Einsatzstunden, Helferstunden, Kilometer und Betriebsstunden.</p>
   </div>
   <a class="btn btn--sec" href="<?= e($zurueck) ?>">Abbrechen</a>
 </div>
@@ -62,8 +92,9 @@ $zeile = static function (array $t): string {
         </select>
       </div>
       <div class="field">
-        <label for="fachgruppe_id">Fachgruppe</label>
+        <label for="fachgruppe_id">Federführende Fachgruppe</label>
         <select id="fachgruppe_id" name="fachgruppe_id"><?= list_options('fachgruppe', (int)($einsatz['fachgruppe_id'] ?? 0), 'ortsverbandsweit') ?></select>
+        <small class="muted">Wer wann im Einsatz war, steht unten je Zeile.</small>
       </div>
     </div>
     <div class="grid2">
@@ -84,41 +115,23 @@ $zeile = static function (array $t): string {
   </section>
 
   <section class="card" id="tage" data-zeilen>
-    <h2>Tage und Schichten</h2>
-    <p class="small muted">Je Tag eine Zeile; zwei Schichten am selben Tag sind zwei Zeilen. Liegt das Ende nicht nach dem Beginn, endet die Schicht
-      am Folgetag (22:00 bis 06:00). Ohne Uhrzeit zählt der Tag als Einsatztag, aber ohne Stunden; ohne Ende läuft die Schicht noch.
-      Stärke wie gemeldet: Führer/Unterführer/Helfer, etwa „1/2/9" – eine einzelne Zahl zählt als Helfer.</p>
-    <div class="tablewrap">
-      <table class="data zeilen">
-        <thead><tr><th>Datum</th><th>von</th><th>bis</th><th>Stärke</th><th style="width:45%">Tätigkeit</th><th></th></tr></thead>
-        <tbody data-zeilen-body>
-          <?php foreach ($tage as $t): ?><?= $zeile($t) ?><?php endforeach; ?>
-          <?= $zeile([]) ?>
-          <?= $zeile([]) ?>
-        </tbody>
-      </table>
+    <h2>Tage, Fachgruppen und Fahrzeuge</h2>
+    <p class="small muted">Eine Zeile ist die Einsatzzeit einer Einheit an einem Tag. <strong>Mehrere Fachgruppen am selben Tag sind mehrere Zeilen</strong> –
+      jede mit eigenen Uhrzeiten, eigener Stärke und ihren Fahrzeugen; an jedem Fahrzeug lassen sich die gefahrenen Kilometer und die Betriebsstunden eintragen
+      (eines von beiden genügt – ein Aggregat hat nur Stunden).
+      Liegt das Ende nicht nach dem Beginn, endet die Schicht am Folgetag (22:00 bis 06:00). Ohne Uhrzeit zählt der Tag als Einsatztag,
+      aber ohne Stunden; ohne Ende läuft die Schicht noch. Stärke wie gemeldet: Führer/Unterführer/Helfer, etwa „1/2/9" – eine einzelne Zahl zählt als Helfer.</p>
+    <div data-zeilen-body>
+      <?php foreach ($tage as $t): ?><?= $zeile($t, $k++) ?><?php endforeach; ?>
+      <?= $zeile([], $k++) ?>
     </div>
     <div class="btnrow mt">
-      <button type="button" class="btn btn--sec" data-zeile-folgetag title="Kopiert die letzte ausgefüllte Zeile auf den nächsten Tag">+ Folgetag</button>
+      <button type="button" class="btn btn--sec" data-zeile-folgetag title="Kopiert die letzte ausgefüllte Zeile auf den nächsten Tag – mit Fachgruppe und Fahrzeugen, ohne Kilometer und Betriebsstunden">+ Folgetag</button>
+      <button type="button" class="btn btn--sec" data-zeile-kopie title="Kopiert die letzte ausgefüllte Zeile auf denselben Tag – für die nächste Fachgruppe">+ Weitere Fachgruppe am selben Tag</button>
       <button type="button" class="btn btn--sec" data-zeile-neu>+ Leere Zeile</button>
     </div>
-    <small class="muted">Leere Zeilen werden beim Speichern übergangen. Ohne JavaScript: speichern und wieder öffnen bringt zwei neue leere Zeilen.</small>
+    <small class="muted">Leere Zeilen werden beim Speichern übergangen. Ohne JavaScript: speichern und wieder öffnen bringt eine neue leere Zeile.</small>
   </section>
-
-  <?php if ($fahrzeuge): ?>
-  <section class="card">
-    <h2>Fahrzeuge</h2>
-    <?php $fzOptionen = [];
-    $bloecke = function_exists('kalender_fahrzeuge_bloecke') ? kalender_fahrzeuge_bloecke($fahrzeuge) : ['fahrzeuge' => $fahrzeuge];
-    foreach (['fahrzeuge' => 'Autos und LKW', 'anhaenger' => 'Anhänger', 'geraete' => 'Geräte'] as $key => $gruppe) {
-        foreach ($bloecke[$key] ?? [] as $v) {
-            $fzOptionen[] = ['id' => (int)$v['id'], 'text' => (string)$v['bezeichnung'], 'sub' => (string)($v['funkrufname'] ?? ''), 'gruppe' => $gruppe, 'warn' => ''];
-        }
-    } ?>
-    <?= render_partial('partials/wahl_liste', ['name' => 'vehicles', 'feld' => 'fahrzeuge_feld', 'label' => 'Eingesetzte Fahrzeuge', 'optionen' => $fzOptionen,
-        'gewaehlt' => $fahrzeugeGewaehlt, 'leer' => '– Fahrzeug wählen –', 'hinweis' => 'Welche Fahrzeuge im Einsatz waren – über alle Tage.']) ?>
-  </section>
-  <?php endif; ?>
 
   <section class="card">
     <h2>Sonstiges</h2>
@@ -130,7 +143,7 @@ $zeile = static function (array $t): string {
       <button class="btn" type="submit"><?= $isNew ? 'Einsatz anlegen' : 'Speichern' ?></button>
       <a class="btn btn--sec" href="<?= e($zurueck) ?>">Abbrechen</a>
     </div>
-    <?php if ($isNew): ?><p class="small muted" style="margin-bottom:0">Ausgaben und Einnahmen kommen nach dem Anlegen dazu – auf der Seite des Einsatzes oder im Budget.</p><?php endif; ?>
+    <?php if ($isNew): ?><p class="small muted" style="margin-bottom:0">Ausgaben, Einnahmen, Einsatzaufträge und Dokumente kommen nach dem Anlegen dazu – auf der Seite des Einsatzes.</p><?php endif; ?>
   </section>
 </form>
 
@@ -138,9 +151,9 @@ $zeile = static function (array $t): string {
   <form method="post" class="card" action="<?= e(url('einsatz_edit', ['id' => $einsatz['id']])) ?>">
     <?= csrf_field() ?>
     <input type="hidden" name="action" value="loeschen">
-    <button class="btn btn--danger" type="submit" data-confirm="Einsatz „<?= e(einsatz_bezeichnung($einsatz)) ?>“ mit allen Tagen löschen?">Einsatz löschen</button>
-    <span class="small muted" style="margin-left:.6rem"><?= $buchungen > 0
-        ? ($buchungen === 1 ? 'Die eine Buchung bleibt' : 'Die ' . (int)$buchungen . ' Buchungen bleiben') . ' im Budget stehen und verlieren nur den Bezug.'
-        : 'Tage und Fahrzeugzuordnung gehen mit.' ?></span>
+    <button class="btn btn--danger" type="submit" data-confirm="Einsatz „<?= e(einsatz_bezeichnung($einsatz)) ?>“ mit allen Tagen und Dokumenten löschen?">Einsatz löschen</button>
+    <span class="small muted" style="margin-left:.6rem">Tage, Fahrzeugzuordnung und Dokumente gehen mit.<?= $buchungen > 0
+        ? ' ' . ($buchungen === 1 ? 'Die eine Buchung bleibt' : 'Die ' . (int)$buchungen . ' Buchungen bleiben') . ' im Budget stehen und verlieren nur den Bezug.'
+        : '' ?></span>
   </form>
 <?php endif; ?>

@@ -197,7 +197,7 @@ $check('Schlüssel eines Budgetknotens', ablage_schluessel('buchung.j2026.einnah
 $alsLeitung();
 $GLOBALS['val'] = ['FROM newsletter' => 6];
 $ganz = ablage_baum_fuer($leitung);
-$check('erst die eigenen, dann je Modul eine gesperrte Kategorie', $ganz['wurzeln'] === ['k5', 'k1', 'fahrzeug', 'veranstaltung', 'termin', 'standort', 'stan', 'newsletter', 'wunsch', 'buchung', 'karte']);
+$check('erst die eigenen, dann je Modul eine gesperrte Kategorie', $ganz['wurzeln'] === ['k5', 'k1', 'fahrzeug', 'veranstaltung', 'termin', 'standort', 'stan', 'newsletter', 'wunsch', 'buchung', 'einsatz', 'karte']);
 $check('Karten › Gruppe, ohne Gruppe zuletzt', $ganz['knoten']['karte']['name'] === 'Karten' && $ganz['knoten']['karte']['kinder'] === ['karte.g.Fahrzeuge', 'karte.g.Taktische Zeichen', 'karte.ohne']
     && $ganz['knoten']['karte']['gesamt'] === 17 && $ganz['knoten']['karte.ohne']['name'] === 'Ohne Gruppe' && ablage_pfad_text('karte.g.Taktische Zeichen', $ganz) === 'Karten › Taktische Zeichen'
     && str_contains($ganz['knoten']['karte.g.Fahrzeuge']['url'], 'p=karten_symbole'));
@@ -239,7 +239,7 @@ $check('unbekannte Quelle', ablage_quelle_sql('kontakt') === null && ablage_zeil
 $kartenQuelle = ablage_quelle_sql('karte');
 $check('Quelle karte: Symbole, das Symbol ist seine eigene Vorschau', $kartenQuelle['route'] === 'karten_symbol' && str_contains($kartenQuelle['von'], 'karten_symbole f')
     && str_contains($kartenQuelle['spalten'], 'f.stored_name AS thumb_name') && str_contains($kartenQuelle['spalten'], 'f.gruppe AS zusatz') && str_starts_with($kartenQuelle['spalten'], 'f.id'));
-$check('jede Quelle ist eine Kategorie und – bis auf die Symbole der Karten – eine KI-Ablage', array_values(array_diff(array_keys(ABLAGE_QUELLEN), array_keys(KI_TYPEN))) === ['karte']
+$check('jede Quelle ist eine Kategorie und – bis auf die Dokumente der Einsätze und die Symbole der Karten – eine KI-Ablage', array_values(array_diff(array_keys(ABLAGE_QUELLEN), array_keys(KI_TYPEN))) === ['einsatz', 'karte']
     && KI_TYPEN['ablage']['schalter'] === 'ki_ablage' && KI_TYPEN['wunsch']['schalter'] === 'ki_wuensche');
 
 $zeile = ablage_zeile_fertig('fahrzeug', ['id' => '31', 'titel' => ' ', 'orig_name' => 'Schein.pdf', 'thumb_name' => null, 'objekt_id' => '7', 'zusatz' => null], 'vehicle_file');
@@ -328,7 +328,7 @@ $GLOBALS['abfragen'] = [];
 $treffer = ablage_suche(' 100%_miete ', $ganz);
 $erste = $GLOBALS['abfragen'][0];
 $check('Suche maskiert % und _', $erste[1] === ['%100\\%\\_miete%', '%100\\%\\_miete%'] && str_contains($erste[0], 'f.titel LIKE ? OR f.orig_name LIKE ?'));
-$check('Suche läuft durch alle Ablagen der Person', count(array_filter($GLOBALS['abfragen'], static fn($a) => str_starts_with($a[0], 'SELECT f.id'))) === 10);
+$check('Suche läuft durch alle Ablagen der Person', count(array_filter($GLOBALS['abfragen'], static fn($a) => str_starts_with($a[0], 'SELECT f.id'))) === 11);
 $belegSuche = array_values(array_filter($GLOBALS['abfragen'], static fn($a) => str_contains($a[0], 'FROM expense_files f')))[0];
 $check('Belege findet man auch über Buchung, Lieferant und Belegnummer', str_contains($belegSuche[0], 'x.bezeichnung LIKE ? OR x.lieferant LIKE ? OR x.beleg_nr LIKE ?') && count($belegSuche[1]) === 5);
 $check('leere Suche', ablage_suche('  ', $ganz) === []);

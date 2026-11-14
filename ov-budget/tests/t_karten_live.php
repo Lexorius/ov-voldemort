@@ -184,7 +184,7 @@ $check('Schnittstelle: Setzen braucht Fahrzeug- und Melderecht, nicht das Symbol
 $check('Schnittstelle: Liste ohne Position nur für die, die setzen dürfen', str_contains($api, "'ohne' => \$setzen ? karten_fahrzeuge_ohne() : []") && str_contains($api, "karten_fahrzeuge(null, \$setzen)"));
 $check('Schnittstelle: Setzen nur per POST', strpos($api, "\$action === 'fahrzeug_setzen'") > strpos($api, "\$_SERVER['REQUEST_METHOD'] !== 'POST'"));
 $check('Seite und Ansicht', str_contains($lies('src/pages/karte.php'), "'fahrzeugSetzen' => can('view_vehicles') && can('report_vehicle')") && str_contains($lies('views/karte.php'), 'data-karte-fahrzeug-setzen'));
-$check('Karte: ziehen nur, was der Server freigibt; Klick öffnet weiter das Fahrzeug', str_contains($js, '!K.fahrzeugSetzen || !f.d.setzbar') && str_contains($js, "action: 'fahrzeug_setzen', id: f.d.id")
+$check('Karte: ziehen nur, was der Server freigibt; Klick öffnet weiter das Fahrzeug', str_contains($js, '!K.fahrzeugSetzen || !f.d.setzbar') && str_contains($js, "action: 'fahrzeug_setzen', karte_id: K.id, id: f.d.id")
     && str_contains($js, 'if (f.gezogen) { ev.preventDefault();') && str_contains($js, 'if (f.zieht) { fz.lat = f.d.lat;'));
 $check('Karte: nicht gespeichert heißt zurück an die alte Stelle', str_contains($js, 'f.d.lat = s.lat;') && str_contains($js, 'function fahrzeugMenue('));
 $check('Aussehen', str_contains($css, '.lagekarte__fahrzeug.is-setzbar') && str_contains($css, '.lagekarte__fahrzeug.is-gezogen'));
