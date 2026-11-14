@@ -11,6 +11,9 @@
  *   ⛶ / „Vollbild"    Karte und Leiste auf den ganzen Bildschirm (Esc beendet)
  *   Symbol ziehen     versetzen            Symbol anklicken            beschriften, Stärke, Abschnitt, Größe, Drehung, löschen
  *
+ * Einheiten und Abschnitte holt die Karte im Takt neu (K.lageSekunden) und arbeitet die Antwort an
+ * Ort und Stelle ein – so kommt an, was jemand an einem anderen Gerät setzt, auch auf dem Monitor.
+ *
  * Jedes gesetzte Symbol ist eine Einheit mit Stärke (Führer/Unterführer/Helfer). Neben der
  * Karte steht die Gesamtstärke, darunter die Abschnitte mit Teilstärke und ihren Einheiten;
  * dort lassen sich Abschnitte und Einheiten anlegen, ändern und löschen – Einheiten auch ohne
@@ -173,7 +176,7 @@
     bild.draggable = false;
     bild.src = d.src;
     var text = el.appendChild(neu('span', 'lagekarte__beschriftung'));
-    var m = { d: d, el: el, bild: bild, text: text };
+    var m = { d: d, el: el, bild: bild, text: text, seit: Date.now(), zieht: false };
     markerAussehen(m);
     if (K.setzen) {
       el.classList.add('is-beweglich');
@@ -204,6 +207,7 @@
       ev.preventDefault();
       menueZu();
       start = { x: ev.clientX, y: ev.clientY, lat: m.d.lat, lng: m.d.lng, bewegt: false };
+      m.zieht = true;   // der Abruf im Takt lässt die Einheit in Ruhe
       m.el.setPointerCapture(ev.pointerId);
     });
     m.el.addEventListener('pointermove', function (ev) {
@@ -223,8 +227,9 @@
       start = null;
       m.el.classList.remove('is-gezogen');
       try { m.el.releasePointerCapture(ev.pointerId); } catch (e) { /* schon frei */ }
-      if (!s.bewegt) { bearbeiten(m); return; }
+      if (!s.bewegt) { m.zieht = false; bearbeiten(m); return; }
       senden({ action: 'marker_aendern', id: m.d.id, lat: m.d.lat, lng: m.d.lng }, function (d) {
+        m.zieht = false;
         if (!d) { m.d.lat = s.lat; m.d.lng = s.lng; zeichnen(); }   // nicht gespeichert: zurück an die alte Stelle
       });
     }
@@ -410,6 +415,9 @@
     var zahl = kopf.appendChild(neu('div', 'lagekarte__gesamt-zahl', gesamt.text));
     zahl.setAttribute('data-karte-gesamt', '');
     kopf.appendChild(neu('div', 'small muted', 'Führer / Unterführer / Helfer / Gesamt · ' + (marker.length === 1 ? '1 Einheit' : marker.length + ' Einheiten')));
+    var stand = kopf.appendChild(neu('div', 'small muted lagekarte__lage-stand', lageStandText));
+    stand.setAttribute('data-karte-lage-stand', '');
+    stand.classList.toggle('is-schlecht', lageSchlecht);
     abschnitte.forEach(function (a) {
       seite.appendChild(abschnittKasten(a, marker.filter(function (m) { return m.d.abschnitt === a.id; })));
     });
@@ -488,6 +496,7 @@
     senden({ action: 'marker_weg', id: m.d.id }, function (d) {
       if (!d) { return; }
       if (gewaehlt === m) { tafelZu(); }
+      lageGeloescht[m.d.id] = Date.now();
       markerEbene.removeChild(m.el);
       marker.splice(marker.indexOf(m), 1);
       seiteZeichnen();
@@ -1052,11 +1061,88 @@
     });
   }
 
+  /* ---------- Die Lage im Takt holen: was andere Geräte setzen, ändern oder löschen, kommt hier an ---------- */
+  var lageWecker = null;
+  var lageLaeuft = false;
+  var lageSekunden = Math.max(5, parseInt(K.lageSekunden, 10) || 15);
+  var lageStandText = '';
+  var lageSchlecht = false;
+  var lageGeloescht = {};     // id → Zeitpunkt: hier gelöscht – eine ältere Antwort bringt sie nicht zurück
+  function lageMelden(text, schlecht) {
+    lageStandText = text;
+    lageSchlecht = !!schlecht;
+    var el = seite ? seite.querySelector('[data-karte-lage-stand]') : null;
+    if (el) { el.textContent = text; el.classList.toggle('is-schlecht', lageSchlecht); }
+  }
+  function gleich(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+  // Die Antwort über den eigenen Stand legen. Was hier gerade in Arbeit ist – gezogen, in der Tafel,
+  // noch nicht gespeichert, eben erst gesetzt oder gelöscht –, bleibt, wie es ist; der nächste Abruf gleicht an.
+  function lageUebernehmen(d, angefragt) {
+    var geaendert = false;
+    var neueAbschnitte = d.abschnitte || [];
+    if (!gleich(neueAbschnitte, abschnitte)) {
+      abschnitte.length = 0;
+      neueAbschnitte.forEach(function (a) { abschnitte.push(a); });
+      geaendert = true;
+    }
+    var nachId = {};
+    marker.forEach(function (m) { nachId[m.d.id] = m; });
+    (d.marker || []).forEach(function (fremd) {
+      var m = nachId[fremd.id];
+      if (m) {
+        delete nachId[fremd.id];
+        if (m === gewaehlt || m.zieht || (offen && offen.m === m)) { return; }
+        if (!gleich(m.d, fremd)) { m.d = fremd; markerAussehen(m); geaendert = true; }
+      } else if (!lageGeloescht[fremd.id] || lageGeloescht[fremd.id] < angefragt - 60 * 1000) {
+        markerDazu(fremd);
+        geaendert = true;
+      }
+    });
+    Object.keys(nachId).forEach(function (id) {
+      var m = nachId[id];
+      if (m.seit > angefragt) { return; }   // hier eben erst gesetzt, die Antwort ist älter
+      if (m === gewaehlt) { tafelZu(); melden('„' + einheitName(m) + '“ wurde an einem anderen Gerät gelöscht.'); }
+      markerEbene.removeChild(m.el);
+      marker.splice(marker.indexOf(m), 1);
+      geaendert = true;
+    });
+    if (geaendert) {
+      zeichnen();
+      seiteZeichnen();
+    }
+  }
+  function lageHolen() {
+    window.clearTimeout(lageWecker);
+    // Im Hintergrund ruht der Abruf – beim Zurückkommen wird sofort geholt (siehe unten)
+    if (document.hidden || lageLaeuft) { return; }
+    lageLaeuft = true;
+    var angefragt = Date.now();
+    window.fetch(K.api + (K.api.indexOf('?') === -1 ? '?' : '&') + 'action=lage&karte_id=' + encodeURIComponent(K.id), { credentials: 'same-origin', cache: 'no-store', headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.ok) { lageMelden((d && d.fehler) || 'Lage nicht abrufbar.', true); return; }
+        lageUebernehmen(d, angefragt);
+        lageMelden('Stand ' + d.stand + ' · erneuert sich alle ' + lageSekunden + ' s', false);
+      })
+      .catch(function () {
+        // die Einheiten bleiben stehen, wo sie zuletzt waren
+        lageMelden('Lage gerade nicht abrufbar – nächster Versuch in ' + lageSekunden + ' s.', true);
+      })
+      .then(function () {
+        lageLaeuft = false;
+        window.clearTimeout(lageWecker);
+        lageWecker = window.setTimeout(lageHolen, lageSekunden * 1000);
+      });
+  }
+
   // Zurück auf der Seite oder wieder im Netz: nicht auf den Takt warten
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden && schalter && K.fahrzeuge && schalter.checked) { fahrzeugeHolen(); }
+    if (document.hidden) { return; }
+    lageHolen();
+    if (schalter && K.fahrzeuge && schalter.checked) { fahrzeugeHolen(); }
   });
   window.addEventListener('online', function () {
+    lageHolen();
     if (schalter && K.fahrzeuge && schalter.checked) { fahrzeugeHolen(); }
   });
   if (schalter && K.fahrzeuge) {
@@ -1076,6 +1162,7 @@
   /* ---------- Los ---------- */
   K.marker.forEach(markerDazu);
   seiteZeichnen();
+  lageWecker = window.setTimeout(lageHolen, lageSekunden * 1000);
   window.addEventListener('resize', zeichnen);
   wurzel.classList.add('is-bereit');
   jetztZeichnen();

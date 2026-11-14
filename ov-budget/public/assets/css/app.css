@@ -924,6 +924,7 @@ pre.raw {
 .lagekarte__knoepfe button[aria-pressed="true"] { background: var(--accent); color: #fff; }
 .lagekarte__gesamt { padding: .5rem .6rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); }
 .lagekarte__gesamt-kopf { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-mute); }
+.lagekarte__lage-stand.is-schlecht { color: var(--warn); }
 .lagekarte__gesamt-zahl { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
 .lagekarte__abschnitt { border: 1px solid var(--border); border-radius: 8px; padding: .4rem .5rem; display: flex; flex-direction: column; gap: .3rem; }
 .lagekarte__abschnitt-kopf { display: flex; align-items: center; gap: .35rem; font-weight: 700; }

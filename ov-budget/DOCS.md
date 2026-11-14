@@ -1260,6 +1260,15 @@ sich eigene Symbole setzen lassen – das Gelände der Unterkunft, ein
   weiter. Esc oder derselbe Knopf beendet es. Hat der Browser keine
   Vollbild-Schnittstelle (etwa am iPhone), legt sich die Ansicht über die
   Seite.
+* **Änderungen kommen überall an** – eine offene Karte holt Einheiten und
+  Abschnitte **alle 15 Sekunden** neu (einstellbar von 5 bis 600 unter
+  *Einstellungen → Karten*). Was jemand am Laptop setzt, ändert oder
+  löscht, erscheint damit auf dem Monitor im Führungsraum und in dessen
+  Stärke-Leiste, ohne die Seite neu zu laden. Was man gerade selbst zieht
+  oder in der Tafel bearbeitet, bleibt unberührt und wird erst nach dem
+  Loslassen beziehungsweise Schließen angeglichen. Unter der Gesamtstärke
+  steht der Stand mit Uhrzeit; schlägt ein Abruf fehl, bleibt alles stehen
+  und die Karte versucht es weiter. Im Hintergrund ruht der Abruf.
 * **Symbole** – die Bibliothek gilt für alle Karten. Hochladen lassen sich
   **SVG** (bleibt in jeder Größe scharf) und Bilder (PNG, JPG, WebP, GIF;
   sie werden auf 1024 Pixel begrenzt), mehrere auf einmal, mit Gruppe und

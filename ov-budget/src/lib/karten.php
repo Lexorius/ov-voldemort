@@ -47,6 +47,10 @@ const KARTEN_FAHRZEUG_ALT_STD = 24;
 const KARTEN_FAHRZEUG_SEKUNDEN = 30;
 const KARTEN_FAHRZEUG_SEKUNDEN_MIN = 10;
 const KARTEN_FAHRZEUG_SEKUNDEN_MAX = 600;
+/** Takt, in dem eine offene Karte Einheiten und Abschnitte neu holt – so kommen Änderungen anderer Geräte an (Sekunden) */
+const KARTEN_LAGE_SEKUNDEN = 15;
+const KARTEN_LAGE_SEKUNDEN_MIN = 5;
+const KARTEN_LAGE_SEKUNDEN_MAX = 600;
 /** Quellen, die als Meldung per GPS gelten: der Abruf bei Divera und der QR-Code im Fahrzeug */
 const KARTEN_GPS_QUELLEN = ['divera', 'qr'];
 /** Nach so vielen Minuten ohne GPS-Meldung lässt sich ein Fahrzeug auf der Karte von Hand setzen */
@@ -99,6 +103,17 @@ function karten_fahrzeug_sekunden(mixed $wert = null): int
     $wert ??= setting('karten_fahrzeug_sekunden', (string)KARTEN_FAHRZEUG_SEKUNDEN);
     $n = is_numeric($wert) ? (int)round((float)$wert) : KARTEN_FAHRZEUG_SEKUNDEN;
     return max(KARTEN_FAHRZEUG_SEKUNDEN_MIN, min(KARTEN_FAHRZEUG_SEKUNDEN_MAX, $n));
+}
+
+/**
+ * Wie oft eine offene Karte Einheiten und Abschnitte neu holt, in Sekunden – zwischen 5 und 600.
+ * So erscheint, was jemand an einem anderen Gerät setzt, auch auf dem Monitor. Reine Funktion über den Wert.
+ */
+function karten_lage_sekunden(mixed $wert = null): int
+{
+    $wert ??= setting('karten_lage_sekunden', (string)KARTEN_LAGE_SEKUNDEN);
+    $n = is_numeric($wert) ? (int)round((float)$wert) : KARTEN_LAGE_SEKUNDEN;
+    return max(KARTEN_LAGE_SEKUNDEN_MIN, min(KARTEN_LAGE_SEKUNDEN_MAX, $n));
 }
 
 /** Minuten ohne GPS-Meldung, nach denen ein Fahrzeug von Hand gesetzt werden darf – 0 bis 1440. Reine Funktion über den Wert. */
@@ -400,6 +415,7 @@ function karten_konfig(array $karte, array $marker, array $symbole, array $darf,
         'fahrzeuge' => !empty($darf['fahrzeuge']),
         'fahrzeugeAn' => !empty($darf['fahrzeuge']) && (int)($karte['fahrzeuge'] ?? 0) === 1,
         'fahrzeugSekunden' => karten_fahrzeug_sekunden(),
+        'lageSekunden' => karten_lage_sekunden(),
         // Fahrzeuge ohne frische GPS-Meldung von Hand setzen: wer die Fahrzeuge sieht und Standorte melden darf
         'fahrzeugSetzen' => !empty($darf['fahrzeuge']) && !empty($darf['fahrzeugSetzen']),
         'groesse'   => ['min' => KARTEN_GROESSE_MIN, 'max' => KARTEN_GROESSE_MAX, 'vorgabe' => KARTEN_GROESSE_VORGABE],
@@ -411,6 +427,17 @@ function karten_konfig(array $karte, array $marker, array $symbole, array $darf,
             'id' => (int)$s['id'], 'name' => (string)$s['name'], 'gruppe' => (string)$s['gruppe'],
             'src' => url('karten_symbol', ['id' => (int)$s['id']]),
         ], $symbole),
+    ];
+}
+
+/** Einheiten und Abschnitte einer Karte, wie der Abruf im Takt sie liefert – dazu die Gesamtstärke */
+function karten_lage(int $karteId): array
+{
+    $marker = karten_marker($karteId);
+    return [
+        'marker'     => array_map('karten_marker_daten', $marker),
+        'abschnitte' => array_map('karten_abschnitt_daten', karten_abschnitte($karteId)),
+        'staerke'    => karten_staerke_summe($marker),
     ];
 }
 

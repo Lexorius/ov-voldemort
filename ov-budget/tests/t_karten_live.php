@@ -66,6 +66,28 @@ $check('Stand mit Sekunden', str_contains($lies('src/pages/karten_api.php'), "'s
 $check('Einstellung mitgeliefert', str_contains($lies('sql/seed.sql'), "('karten_fahrzeug_sekunden','30',"));
 $check('Doku', str_contains($lies('DOCS.md'), 'erneuert die') && str_contains($lies('CHANGELOG.md'), 'erneuern sich von selbst'));
 
+/* ---------- Einheiten und Abschnitte im Takt ---------- */
+$check('Lage: Vorgabe 15 Sekunden, Grenzen 5 bis 600', karten_lage_sekunden() === 15 && karten_lage_sekunden(1) === 5 && karten_lage_sekunden('45') === 45 && karten_lage_sekunden(99999) === 600
+    && karten_lage_sekunden('x') === 15);
+$GLOBALS['settings']['karten_lage_sekunden'] = '8';
+settings_reset_cache();
+$check('Lage: Takt aus den Einstellungen in das Paket', karten_konfig($karte, [], [], ['fahrzeuge' => false])['lageSekunden'] === 8);
+unset($GLOBALS['settings']['karten_lage_sekunden']);
+settings_reset_cache();
+$lage = karten_lage(3);
+$check('Lage: Einheiten, Abschnitte und Gesamtstärke in einem Paket', $lage['marker'] === [] && $lage['abschnitte'] === [] && $lage['staerke']['text'] === '0/0/0/0');
+$api = $lies('src/pages/karten_api.php');
+$check('Lage: Abruf per GET hinter dem Recht, die Karten zu sehen', str_contains($api, "get_str('action') === 'lage'") && strpos($api, "can('view_karten')") < strpos($api, "get_str('action') === 'lage'")
+    && str_contains($api, 'karten_lage((int)$karte[\'id\'])'));
+$lageJs = substr($js, (int)strpos($js, 'function lageUebernehmen('), (int)strpos($js, '// Zurück auf der Seite') - (int)strpos($js, 'function lageUebernehmen('));
+$check('Skript: Lage im eingestellten Takt, ohne Zwischenspeicher, im Hintergrund Ruhe', str_contains($js, 'parseInt(K.lageSekunden, 10)') && str_contains($lageJs, "action=lage&karte_id=")
+    && str_contains($lageJs, "cache: 'no-store'") && str_contains($lageJs, 'document.hidden || lageLaeuft') && str_contains($lageJs, 'window.setTimeout(lageHolen, lageSekunden * 1000)'));
+$check('Skript: die eigene Hand gewinnt – gezogen, in der Tafel, ungespeichert, eben gesetzt oder gelöscht', str_contains($lageJs, 'm === gewaehlt || m.zieht || (offen && offen.m === m)')
+    && str_contains($lageJs, 'm.seit > angefragt') && str_contains($lageJs, 'lageGeloescht[fremd.id]') && str_contains($js, 'lageGeloescht[m.d.id] = Date.now()') && str_contains($js, 'm.zieht = true;'));
+$check('Skript: Abschnitte werden mitgeführt, Geändertes neu gezeichnet', str_contains($lageJs, 'abschnitte.length = 0') && str_contains($lageJs, 'if (geaendert) {'));
+$check('Skript: zurück auf der Seite wird die Lage sofort geholt', preg_match("/visibilitychange', function \(\) \{\s*if \(document\.hidden\) \{ return; \}\s*lageHolen\(\);/", $js) === 1);
+$check('Lage: Einstellung mitgeliefert, Doku', str_contains($lies('sql/seed.sql'), "('karten_lage_sekunden','15',") && str_contains($lies('DOCS.md'), 'Änderungen kommen überall an'));
+
 /* ==================================================================== */
 /* Fahrzeuge von Hand setzen                                             */
 /* ==================================================================== */

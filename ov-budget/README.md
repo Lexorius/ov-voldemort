@@ -192,7 +192,8 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
   neben der Karte**; **Abschnitte** mit Teilstärke, in denen sich Einheiten
   anlegen, ändern und löschen lassen – auch ohne Stelle auf der Karte
 - **Vollbild** für den Monitor im Führungsraum: Karte und Stärke auf dem
-  ganzen Bildschirm
+  ganzen Bildschirm; Einheiten und Abschnitte erneuern sich dort von selbst
+  (alle 15 Sekunden, einstellbar)
 - **Symbolbibliothek** für SVG und Bilder, nach Gruppen; SVG wird beim
   Hochladen auf Skript und Verweise nach außen geprüft
 - **Fahrzeuge einblendbar** an ihrer zuletzt gemeldeten Position; die

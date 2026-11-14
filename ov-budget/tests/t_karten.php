@@ -381,7 +381,7 @@ $check('Stärke und Abschnitte: Spalten, Einheit ohne Stelle erlaubt, Abschnitt 
     && str_contains($wanderung, "\$merken('107_karten_staerke_abschnitte')") && str_contains($wanderung, 'MODIFY COLUMN lat DECIMAL(9,6) NULL') && str_contains($wanderung, 'ADD COLUMN staerke_f')
     && strpos($wanderung, 'CREATE TABLE karten_abschnitte') < strpos($wanderung, 'CREATE TABLE karten_marker'));
 $seed = $lies('sql/seed.sql');
-foreach (['karten_modul_name', 'karten_intro', 'karten_user_darf_sehen', 'karten_user_darf_setzen', 'karten_kachel_url', 'karten_kachel_quelle'] as $skey) {
+foreach (['karten_modul_name', 'karten_intro', 'karten_user_darf_sehen', 'karten_user_darf_setzen', 'karten_kachel_url', 'karten_kachel_quelle', 'karten_lage_sekunden'] as $skey) {
     $check("Einstellung $skey", str_contains($seed, "('$skey',"));
 }
 $rechte = $lies('src/lib/auth.php');

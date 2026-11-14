@@ -4,6 +4,7 @@ declare(strict_types=1);
 /**
  * Die Karte im Browser spricht hierüber mit der Anwendung – Antworten als JSON.
  *   GET  action=fahrzeuge                       Fahrzeuge mit gemeldeter Position
+ *   GET  action=lage           karte_id         Einheiten und Abschnitte der Karte (Abruf im Takt)
  *   POST action=marker_neu     karte_id, symbol_id, [lat, lng], [beschriftung], [staerke], [abschnitt_id]
  *   POST action=marker_aendern id, [lat, lng], [groesse], [drehung], [beschriftung], [staerke], [abschnitt_id], [symbol_id]
  *   POST action=marker_weg     id
@@ -24,6 +25,13 @@ if (!can('view_karten')) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    if (get_str('action') === 'lage') {
+        $karte = karte_find(get_int('karte_id'));
+        if (!$karte) {
+            $antwort(['ok' => false, 'fehler' => 'Diese Karte gibt es nicht (mehr).'], 404);
+        }
+        $antwort(['ok' => true, 'stand' => date('H:i:s')] + karten_lage((int)$karte['id']));
+    }
     if (get_str('action') === 'fahrzeuge') {
         // Die Fahrzeuge auf der Karte sieht jeder, der die Karten sieht – auch ohne Zugang zum Fahrzeugmodul.
         // Ohne diesen Zugang führt nur kein Verweis zur Fahrzeugakte, und setzen lässt sich nichts.

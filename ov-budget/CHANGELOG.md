@@ -1,5 +1,17 @@
 # Änderungsverlauf
 
+## 2.1.87.1
+
+- **Karten – Änderungen kommen überall an:** Eine offene Karte holt
+  **Einheiten und Abschnitte alle 15 Sekunden neu** (einstellbar von 5 bis
+  600 unter *Einstellungen → Karten*). Was jemand am Laptop setzt, ändert
+  oder löscht, erscheint damit auch auf dem Monitor im Führungsraum und in
+  dessen Stärke-Leiste, ohne die Seite neu zu laden. Bisher kamen nur die
+  Fahrzeuge von selbst. Die Antwort wird an Ort und Stelle eingearbeitet;
+  was man gerade selbst zieht oder in der Tafel bearbeitet, bleibt
+  unberührt. Unter der Gesamtstärke steht der Stand mit Uhrzeit. Im
+  Hintergrund ruht der Abruf, beim Zurückkommen wird sofort geholt.
+
 ## 2.1.87.0
 
 - **Karten – Stärke und Abschnitte:** Jedes gesetzte Symbol ist jetzt eine
