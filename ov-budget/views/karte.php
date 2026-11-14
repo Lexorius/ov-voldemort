@@ -26,6 +26,7 @@ $json = (string)json_encode($konfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLA
       <?php endif; ?>
       <span class="small muted" data-karte-fahrzeuge-stand aria-live="polite"></span>
     <?php endif; ?>
+    <label class="chip" title="Kurzes Plopp, wenn eine Einheit von einem anderen Gerät auf der Karte erscheint. Der Browser gibt Ton erst nach einem Klick auf der Seite frei – dieser Schalter genügt."><input type="checkbox" data-karte-ton> 🔔 Ton</label>
     <button class="btn btn--sec btn--sm lagekarte__rechts" type="button" data-karte-vollbild title="Karte und Stärke auf den ganzen Bildschirm – etwa für den Monitor im Führungsraum; Esc beendet">⛶ Vollbild</button>
     <?php if ($darf['verwalten']): ?>
       <button class="btn btn--sec btn--sm" type="button" data-karte-merken title="Die Karte öffnet künftig mit dem Ausschnitt, der jetzt zu sehen ist">Ausschnitt merken</button>
@@ -60,6 +61,7 @@ $json = (string)json_encode($konfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLA
       die Position wird am Fahrzeug gespeichert. „+ Fahrzeug" setzt eines, das noch gar keine Position hat.
     <?php endif; ?>
     „Vollbild" legt Karte und Stärke auf den ganzen Bildschirm, Esc oder der Knopf ⛶ beendet es.
+    Einheiten, die ein anderes Gerät setzt, erscheinen von selbst – mit „🔔 Ton" hörbar; versetzte gleiten an ihre neue Stelle.
     Die Kartenkacheln lädt der Browser direkt vom Kartendienst.
   </p>
 </div>

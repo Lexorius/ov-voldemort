@@ -86,6 +86,15 @@ $check('Skript: die eigene Hand gewinnt – gezogen, in der Tafel, ungespeichert
     && str_contains($lageJs, 'm.seit > angefragt') && str_contains($lageJs, 'lageGeloescht[fremd.id]') && str_contains($js, 'lageGeloescht[m.d.id] = Date.now()') && str_contains($js, 'm.zieht = true;'));
 $check('Skript: Abschnitte werden mitgeführt, Geändertes neu gezeichnet', str_contains($lageJs, 'abschnitte.length = 0') && str_contains($lageJs, 'if (geaendert) {'));
 $check('Skript: zurück auf der Seite wird die Lage sofort geholt', preg_match("/visibilitychange', function \(\) \{\s*if \(document\.hidden\) \{ return; \}\s*lageHolen\(\);/", $js) === 1);
+$check('Skript: Neues ploppt auf, Versetztes gleitet – Klassen vor dem Zeichnen, danach wieder weg', str_contains($lageJs, 'gleiten.push(m)') && str_contains($lageJs, 'neue.push(')
+    && preg_match("/is-gleitend'\); \}\);\s*neue\.forEach\(function \(m\) \{ m\.el\.classList\.add\('is-neu'\); \}\);\s*zeichnen\(\);/", $lageJs) === 1
+    && str_contains($lageJs, "classList.remove('is-gleitend')") && str_contains($lageJs, "classList.remove('is-neu')") && str_contains($lageJs, 'plopp();'));
+$check('Skript: Ton im Browser erzeugt, nur mit Schalter, nach einer Geste geweckt, Stellung gemerkt', str_contains($js, 'window.AudioContext || window.webkitAudioContext') && str_contains($js, 'createOscillator()')
+    && str_contains($js, "if (!tonAn()) { return; }") && str_contains($js, "['pointerdown', 'keydown'].forEach") && str_contains($js, "'ovb-karte-ton-' + K.id") && !preg_match('/\.(mp3|ogg|wav)\b/i', $js));
+$check('Ansicht: Schalter Ton für alle', str_contains(render_partial('karte', ['title' => 'x', 'karte' => $karte + ['name' => 'K', 'beschreibung' => ''], 'konfig' => [], 'symbole' => [],
+    'darf' => ['setzen' => false, 'verwalten' => false, 'fahrzeuge' => false], 'staerke' => karten_staerke_summe([])]), 'data-karte-ton'));
+$check('Gestaltung: Gleiten und Plopp mit Rücksicht auf reduzierte Bewegung, Drehung bleibt (scale)', str_contains($css, '.lagekarte__marker.is-gleitend { transition: left') && str_contains($css, '@keyframes lagekarte-plopp')
+    && str_contains($css, 'scale: 1.15') && str_contains($css, ".lagekarte__marker.is-neu img { animation: none; }"));
 $check('Lage: Einstellung mitgeliefert, Doku', str_contains($lies('sql/seed.sql'), "('karten_lage_sekunden','15',") && str_contains($lies('DOCS.md'), 'Änderungen kommen überall an'));
 
 /* ==================================================================== */

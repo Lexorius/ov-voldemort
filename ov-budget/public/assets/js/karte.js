@@ -12,7 +12,8 @@
  *   Symbol ziehen     versetzen            Symbol anklicken            beschriften, Stärke, Abschnitt, Größe, Drehung, löschen
  *
  * Einheiten und Abschnitte holt die Karte im Takt neu (K.lageSekunden) und arbeitet die Antwort an
- * Ort und Stelle ein – so kommt an, was jemand an einem anderen Gerät setzt, auch auf dem Monitor.
+ * Ort und Stelle ein – so kommt an, was jemand an einem anderen Gerät setzt, auch auf dem Monitor:
+ * Neues ploppt auf (mit Ton, wenn der Schalter an ist), Versetztes gleitet an die neue Stelle.
  *
  * Jedes gesetzte Symbol ist eine Einheit mit Stärke (Führer/Unterführer/Helfer). Neben der
  * Karte steht die Gesamtstärke, darunter die Abschnitte mit Teilstärke und ihren Einheiten;
@@ -1075,10 +1076,62 @@
     if (el) { el.textContent = text; el.classList.toggle('is-schlecht', lageSchlecht); }
   }
   function gleich(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+
+  /* ---------- Plopp: ein kurzer Ton, wenn eine Einheit von anderswo auf der Karte erscheint ---------- */
+  // Der Ton entsteht im Browser (WebAudio), es gibt keine Tondatei. Browser geben Ton erst nach einer
+  // Geste auf der Seite frei – der Schalter „Ton“ ist eine; danach weckt jede Berührung den Ton neu auf.
+  var tonSchalter = wurzel.querySelector('[data-karte-ton]');
+  var tonMerk = 'ovb-karte-ton-' + K.id;
+  var tonKontext = null;
+  function tonAn() { return !!(tonSchalter && tonSchalter.checked); }
+  function tonWecken() {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) { return null; }
+    if (!tonKontext) {
+      try { tonKontext = new AC(); } catch (e) { return null; }
+    }
+    if (tonKontext.state === 'suspended' && tonKontext.resume) { tonKontext.resume().catch(function () { /* noch keine Geste */ }); }
+    return tonKontext;
+  }
+  function plopp() {
+    if (!tonAn()) { return; }
+    var ac = tonWecken();
+    if (!ac || ac.state !== 'running') { return; }
+    var t = ac.currentTime;
+    var ton = ac.createOscillator();
+    var laut = ac.createGain();
+    ton.type = 'sine';
+    ton.frequency.setValueAtTime(900, t);
+    ton.frequency.exponentialRampToValueAtTime(260, t + 0.12);
+    laut.gain.setValueAtTime(0.0001, t);
+    laut.gain.exponentialRampToValueAtTime(0.3, t + 0.012);
+    laut.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+    ton.connect(laut);
+    laut.connect(ac.destination);
+    ton.start(t);
+    ton.stop(t + 0.22);
+  }
+  ['pointerdown', 'keydown'].forEach(function (art) {
+    document.addEventListener(art, function () { if (tonAn()) { tonWecken(); } }, { passive: true });
+  });
+  if (tonSchalter) {
+    var tonGemerkt = null;
+    try { tonGemerkt = window.localStorage.getItem(tonMerk); } catch (e) { tonGemerkt = null; }
+    tonSchalter.checked = tonGemerkt !== '0';
+    tonSchalter.addEventListener('change', function () {
+      try { window.localStorage.setItem(tonMerk, tonSchalter.checked ? '1' : '0'); } catch (e) { /* dann eben nicht gemerkt */ }
+      if (tonSchalter.checked) {
+        tonWecken();
+        window.setTimeout(plopp, 150);   // Probe – und der Kontext ist nach der Geste wach
+      }
+    });
+  }
   // Die Antwort über den eigenen Stand legen. Was hier gerade in Arbeit ist – gezogen, in der Tafel,
   // noch nicht gespeichert, eben erst gesetzt oder gelöscht –, bleibt, wie es ist; der nächste Abruf gleicht an.
   function lageUebernehmen(d, angefragt) {
     var geaendert = false;
+    var gleiten = [];   // anderswo versetzt: gleitet an die neue Stelle
+    var neue = [];      // neu auf der Karte: ploppt auf
     var neueAbschnitte = d.abschnitte || [];
     if (!gleich(neueAbschnitte, abschnitte)) {
       abschnitte.length = 0;
@@ -1092,9 +1145,18 @@
       if (m) {
         delete nachId[fremd.id];
         if (m === gewaehlt || m.zieht || (offen && offen.m === m)) { return; }
-        if (!gleich(m.d, fremd)) { m.d = fremd; markerAussehen(m); geaendert = true; }
+        if (!gleich(m.d, fremd)) {
+          var warDa = !ohneOrt(m);
+          var istDa = fremd.lat !== null && fremd.lat !== undefined;
+          if (warDa && istDa && (m.d.lat !== fremd.lat || m.d.lng !== fremd.lng)) { gleiten.push(m); }
+          else if (!warDa && istDa) { neue.push(m); }
+          m.d = fremd;
+          markerAussehen(m);
+          geaendert = true;
+        }
       } else if (!lageGeloescht[fremd.id] || lageGeloescht[fremd.id] < angefragt - 60 * 1000) {
-        markerDazu(fremd);
+        var dazu = markerDazu(fremd);
+        if (!ohneOrt(dazu)) { neue.push(dazu); }
         geaendert = true;
       }
     });
@@ -1107,8 +1169,18 @@
       geaendert = true;
     });
     if (geaendert) {
+      // die Klasse vor dem Zeichnen: dann gleitet die Einheit von der alten zur neuen Stelle
+      gleiten.forEach(function (m) { m.el.classList.add('is-gleitend'); });
+      neue.forEach(function (m) { m.el.classList.add('is-neu'); });
       zeichnen();
       seiteZeichnen();
+      if (gleiten.length) {
+        window.setTimeout(function () { gleiten.forEach(function (m) { m.el.classList.remove('is-gleitend'); }); }, 1100);
+      }
+      if (neue.length) {
+        plopp();
+        window.setTimeout(function () { neue.forEach(function (m) { m.el.classList.remove('is-neu'); }); }, 700);
+      }
     }
   }
   function lageHolen() {

@@ -1269,6 +1269,12 @@ sich eigene Symbole setzen lassen – das Gelände der Unterkunft, ein
   Loslassen beziehungsweise Schließen angeglichen. Unter der Gesamtstärke
   steht der Stand mit Uhrzeit; schlägt ein Abruf fehl, bleibt alles stehen
   und die Karte versucht es weiter. Im Hintergrund ruht der Abruf.
+  Eine Einheit, die so neu auf der Karte erscheint, **ploppt auf** – mit
+  kurzem Ton, solange **„🔔 Ton"** über der Karte an ist. Der Browser gibt
+  Ton erst nach einem Klick auf der Seite frei; auf dem Monitor genügt es,
+  den Schalter einmal anzuklicken (die Stellung merkt sich der Browser je
+  Karte). Eine anderswo **versetzte Einheit gleitet** an ihre neue Stelle.
+  Der Ton entsteht im Browser, es wird keine Datei geladen.
 * **Symbole** – die Bibliothek gilt für alle Karten. Hochladen lassen sich
   **SVG** (bleibt in jeder Größe scharf) und Bilder (PNG, JPG, WebP, GIF;
   sie werden auf 1024 Pixel begrenzt), mehrere auf einmal, mit Gruppe und

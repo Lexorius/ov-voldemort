@@ -856,6 +856,12 @@ pre.raw {
 .lagekarte__marker.is-beweglich { cursor: pointer; }
 .lagekarte__marker.is-gezogen { cursor: grabbing; opacity: .8; z-index: 5; }
 .lagekarte__marker.is-gewaehlt img { outline: 2px dashed var(--accent); outline-offset: 3px; }
+/* von einem anderen Gerät versetzt: gleitet kurz an die neue Stelle; neu auf der Karte: ploppt auf
+   („scale“ statt transform, damit die Drehung des Symbols bleibt) */
+.lagekarte__marker.is-gleitend { transition: left .9s ease, top .9s ease; }
+@keyframes lagekarte-plopp { 0% { scale: .2; opacity: 0; } 70% { scale: 1.15; opacity: 1; } 100% { scale: 1; } }
+.lagekarte__marker.is-neu img { animation: lagekarte-plopp .45s ease-out; }
+@media (prefers-reduced-motion: reduce) { .lagekarte__marker.is-gleitend { transition: none; } .lagekarte__marker.is-neu img { animation: none; } }
 .lagekarte__beschriftung { position: absolute; top: 100%; margin-top: 2px; padding: 0 .3rem; border-radius: 4px; white-space: nowrap;
                            background: rgba(255,255,255,.88); color: #0f172a; font-size: .78rem; font-weight: 600; line-height: 1.3; }
 .lagekarte__fahrzeug { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center;

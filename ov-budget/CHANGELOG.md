@@ -1,5 +1,16 @@
 # Änderungsverlauf
 
+## 2.1.87.2
+
+- **Karten – Plopp und Gleiten:** Erscheint eine Einheit, die ein anderes
+  Gerät gesetzt hat, auf der Karte, **ploppt sie auf** – mit einem kurzen
+  Ton, solange der Schalter **„🔔 Ton"** über der Karte an ist (der
+  Browser gibt Ton erst nach einem Klick auf der Seite frei; der Schalter
+  genügt, die Stellung merkt sich der Browser je Karte). Eine anderswo
+  **versetzte Einheit gleitet** in knapp einer Sekunde an ihre neue Stelle,
+  statt zu springen. Der Ton entsteht im Browser, es wird keine Datei
+  geladen; bei „reduzierter Bewegung" im System entfallen die Bewegungen.
+
 ## 2.1.87.1
 
 - **Karten – Änderungen kommen überall an:** Eine offene Karte holt
