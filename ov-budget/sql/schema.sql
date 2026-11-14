@@ -2162,7 +2162,7 @@ CREATE TABLE IF NOT EXISTS expense_files (
 
 -- ------------------------------------------------------------
 -- Karten: Kartenausschnitte (Mittelpunkt, Zoom), die Bibliothek der hochgeladenen
--- Symbole (SVG und Bilder) und die auf einer Karte gesetzten Symbole
+-- Symbole (SVG und Bilder), Abschnitte und die auf einer Karte gesetzten Symbole (Einheiten)
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS karten (
   id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -2198,24 +2198,46 @@ CREATE TABLE IF NOT EXISTS karten_symbole (
   CONSTRAINT fk_ksym_user FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Abschnitte einer Karte (Einsatzabschnitte, Unterabschnitte): fassen Einheiten zusammen,
+-- je Abschnitt steht neben der Karte die Teilstaerke
+CREATE TABLE IF NOT EXISTS karten_abschnitte (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  karte_id     INT UNSIGNED NOT NULL,
+  name         VARCHAR(100) NOT NULL,
+  created_by   INT UNSIGNED NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_kabs_karte (karte_id),
+  CONSTRAINT fk_kabs_karte FOREIGN KEY (karte_id)   REFERENCES karten(id) ON DELETE CASCADE,
+  CONSTRAINT fk_kabs_cb    FOREIGN KEY (created_by) REFERENCES users(id)  ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Ein gesetztes Symbol ist eine Einheit: mit Staerke (Fuehrer / Unterfuehrer / Helfer),
+-- wahlweise in einem Abschnitt; ohne lat/lng steht sie nur in der Liste neben der Karte
 CREATE TABLE IF NOT EXISTS karten_marker (
   id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
   karte_id     INT UNSIGNED NOT NULL,
   symbol_id    INT UNSIGNED NOT NULL,
-  lat          DECIMAL(9,6) NOT NULL,
-  lng          DECIMAL(9,6) NOT NULL,
+  abschnitt_id INT UNSIGNED NULL,
+  lat          DECIMAL(9,6) NULL,
+  lng          DECIMAL(9,6) NULL,
   groesse      SMALLINT UNSIGNED NOT NULL DEFAULT 40,
   drehung      SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   beschriftung VARCHAR(150) NOT NULL DEFAULT '',
+  staerke_f    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  staerke_u    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  staerke_h    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   created_by   INT UNSIGNED NULL,
   created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_kmark_karte (karte_id),
   KEY idx_kmark_symbol (symbol_id),
-  CONSTRAINT fk_kmark_karte  FOREIGN KEY (karte_id)   REFERENCES karten(id)         ON DELETE CASCADE,
-  CONSTRAINT fk_kmark_symbol FOREIGN KEY (symbol_id)  REFERENCES karten_symbole(id) ON DELETE RESTRICT,
-  CONSTRAINT fk_kmark_cb     FOREIGN KEY (created_by) REFERENCES users(id)          ON DELETE SET NULL
+  KEY idx_kmark_abschnitt (abschnitt_id),
+  CONSTRAINT fk_kmark_karte     FOREIGN KEY (karte_id)     REFERENCES karten(id)            ON DELETE CASCADE,
+  CONSTRAINT fk_kmark_symbol    FOREIGN KEY (symbol_id)    REFERENCES karten_symbole(id)    ON DELETE RESTRICT,
+  CONSTRAINT fk_kmark_abschnitt FOREIGN KEY (abschnitt_id) REFERENCES karten_abschnitte(id) ON DELETE SET NULL,
+  CONSTRAINT fk_kmark_cb        FOREIGN KEY (created_by)   REFERENCES users(id)             ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS=1;

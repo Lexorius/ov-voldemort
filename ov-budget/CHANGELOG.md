@@ -1,5 +1,22 @@
 # Änderungsverlauf
 
+## 2.1.87.0
+
+- **Karten – Stärke und Abschnitte:** Jedes gesetzte Symbol ist jetzt eine
+  **Einheit mit Stärke**, geschrieben wie gemeldet: Führer/Unterführer/
+  Helfer, etwa „1/2/9“ (eine einzelne Zahl zählt als Helfer). Die Stärke
+  steht unter dem Symbol auf der Karte. **Neben der Karte** steht die
+  **Gesamtstärke** aller Einheiten, darunter die **Abschnitte**
+  (Einsatzabschnitte, Unterabschnitte) mit ihrer Teilstärke und ihren
+  Einheiten. Dort lassen sich Abschnitte anlegen, umbenennen und löschen
+  (die Einheiten bleiben) sowie Einheiten hinzufügen, ändern und löschen –
+  auch **ohne Stelle auf der Karte**, etwa Kräfte im Anmarsch; „In die
+  Kartenmitte" setzt sie später auf die Karte, „Von der Karte nehmen" holt
+  sie zurück in die Liste. Ein Klick auf ein Symbol öffnet neben
+  Beschriftung, Größe und Drehung jetzt auch Stärke, Abschnitt und das
+  Symbol selbst. Am Handy steht die Leiste unter der Karte. Wer Symbole
+  setzen darf, pflegt auch Stärke und Abschnitte.
+
 ## 2.1.86.1
 
 - **Karten:** Die Fahrzeuge kann jetzt **jeder ein- und ausblenden, der

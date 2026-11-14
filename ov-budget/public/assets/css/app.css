@@ -897,11 +897,43 @@ pre.raw {
                             background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .lagekarte__menue-eintrag:hover, .lagekarte__menue-eintrag:focus { background: var(--surface-2); }
 .lagekarte__menue-eintrag img { width: 1.8rem; height: 1.8rem; object-fit: contain; flex: none; }
-.lagekarte__tafel { right: .5rem; top: .5rem; width: 15rem; max-width: calc(100% - 4rem); display: flex; flex-direction: column; gap: .5rem; }
+.lagekarte__tafel { right: .5rem; top: .5rem; width: 15rem; max-width: calc(100% - 4rem); max-height: calc(100% - 1rem); overflow-y: auto; display: flex; flex-direction: column; gap: .5rem; }
 .lagekarte__regler { display: flex; flex-direction: column; gap: .15rem; font-size: .85rem; font-weight: 600; }
 .lagekarte__regler input { width: 100%; }
 .lagekarte__meldung { margin: .5rem 0 0; padding: .35rem .6rem; border-radius: 6px; background: var(--surface-2); font-size: .88rem; }
 .lagekarte__meldung.is-fehler { background: #fef2f2; color: #991b1b; }
+.lagekarte__marker[hidden] { display: none; }
+.lagekarte__regler select { width: 100%; }
+.lagekarte__menue-haken { display: flex; align-items: center; gap: .3rem; margin-bottom: .3rem; font-weight: 400; }
+/* Neben der Karte: Gesamtstärke, Abschnitte mit Teilstärke, Einheiten – am Handy darunter */
+.lagekarte__koerper { display: grid; grid-template-columns: minmax(0, 1fr) 17rem; gap: .6rem; align-items: start; }
+.lagekarte__seite { max-height: 70vh; min-height: 0; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: .5rem; font-size: .88rem; }
+@media (max-width: 900px) {
+  .lagekarte__koerper { grid-template-columns: 1fr; }
+  .lagekarte__seite { max-height: none; }
+}
+.lagekarte__gesamt { padding: .5rem .6rem; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); }
+.lagekarte__gesamt-kopf { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-mute); }
+.lagekarte__gesamt-zahl { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.lagekarte__abschnitt { border: 1px solid var(--border); border-radius: 8px; padding: .4rem .5rem; display: flex; flex-direction: column; gap: .3rem; }
+.lagekarte__abschnitt-kopf { display: flex; align-items: center; gap: .35rem; font-weight: 700; }
+.lagekarte__abschnitt-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lagekarte__abschnitt-staerke { font-variant-numeric: tabular-nums; color: var(--ink-mute); font-weight: 600; font-size: .82rem; white-space: nowrap; }
+.lagekarte__einheiten { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.lagekarte__einheit { display: flex; align-items: center; gap: .35rem; padding: .15rem .25rem; border-radius: 6px; }
+.lagekarte__einheit.is-gewaehlt { background: var(--surface-2); outline: 1px dashed var(--accent); }
+.lagekarte__einheit img { width: 1.5rem; height: 1.5rem; object-fit: contain; flex: none; }
+.lagekarte__einheit.is-ohne-ort img { opacity: .5; }
+.lagekarte__einheit--leer { display: block; }
+.lagekarte__einheit-name { flex: 1; min-width: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer;
+                           overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lagekarte__einheit-name:hover, .lagekarte__einheit-name:focus { text-decoration: underline; }
+.lagekarte__einheit-staerke { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; }
+.lagekarte__einheit-hinweis { display: block; font-size: .7rem; color: var(--ink-mute); white-space: nowrap; }
+.lagekarte__klein { flex: none; width: 1.5rem; height: 1.5rem; padding: 0; border: 0; border-radius: 4px; background: none; color: var(--ink-mute);
+                    font: inherit; line-height: 1; cursor: pointer; }
+.lagekarte__klein:hover, .lagekarte__klein:focus { background: var(--surface-2); color: var(--ink); }
+.lagekarte__seite-knopf { align-self: flex-start; }
 .symbolraster { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); }
 .symbolraster__eintrag { min-width: 0; }
 .symbolraster__bild { display: grid; place-items: center; height: 6rem; padding: .5rem; border: 1px solid var(--border); border-radius: 8px;

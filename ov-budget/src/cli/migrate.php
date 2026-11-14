@@ -2744,25 +2744,46 @@ SQL);
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
         $say('Tabelle karten_symbole angelegt.');
     }
+    // Abschnitte vor den Markern: die Marker verweisen darauf (für neue Installationen; Bestand: Schritt 107)
+    if (!ovb_table_exists($pdo, 'karten_abschnitte')) {
+        $pdo->exec("CREATE TABLE karten_abschnitte (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  karte_id     INT UNSIGNED NOT NULL,
+  name         VARCHAR(100) NOT NULL,
+  created_by   INT UNSIGNED NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_kabs_karte (karte_id),
+  CONSTRAINT fk_kabs_karte FOREIGN KEY (karte_id)   REFERENCES karten(id) ON DELETE CASCADE,
+  CONSTRAINT fk_kabs_cb    FOREIGN KEY (created_by) REFERENCES users(id)  ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle karten_abschnitte angelegt.');
+    }
     if (!ovb_table_exists($pdo, 'karten_marker')) {
         $pdo->exec("CREATE TABLE karten_marker (
   id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
   karte_id     INT UNSIGNED NOT NULL,
   symbol_id    INT UNSIGNED NOT NULL,
-  lat          DECIMAL(9,6) NOT NULL,
-  lng          DECIMAL(9,6) NOT NULL,
+  abschnitt_id INT UNSIGNED NULL,
+  lat          DECIMAL(9,6) NULL,
+  lng          DECIMAL(9,6) NULL,
   groesse      SMALLINT UNSIGNED NOT NULL DEFAULT 40,
   drehung      SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   beschriftung VARCHAR(150) NOT NULL DEFAULT '',
+  staerke_f    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  staerke_u    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  staerke_h    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   created_by   INT UNSIGNED NULL,
   created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_kmark_karte (karte_id),
   KEY idx_kmark_symbol (symbol_id),
-  CONSTRAINT fk_kmark_karte  FOREIGN KEY (karte_id)   REFERENCES karten(id)         ON DELETE CASCADE,
-  CONSTRAINT fk_kmark_symbol FOREIGN KEY (symbol_id)  REFERENCES karten_symbole(id) ON DELETE RESTRICT,
-  CONSTRAINT fk_kmark_cb     FOREIGN KEY (created_by) REFERENCES users(id)          ON DELETE SET NULL
+  KEY idx_kmark_abschnitt (abschnitt_id),
+  CONSTRAINT fk_kmark_karte     FOREIGN KEY (karte_id)     REFERENCES karten(id)            ON DELETE CASCADE,
+  CONSTRAINT fk_kmark_symbol    FOREIGN KEY (symbol_id)    REFERENCES karten_symbole(id)    ON DELETE RESTRICT,
+  CONSTRAINT fk_kmark_abschnitt FOREIGN KEY (abschnitt_id) REFERENCES karten_abschnitte(id) ON DELETE SET NULL,
+  CONSTRAINT fk_kmark_cb        FOREIGN KEY (created_by)   REFERENCES users(id)             ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
         $say('Tabelle karten_marker angelegt.');
     }
@@ -2796,6 +2817,38 @@ SQL);
         $say('Fahrzeuge merken sich Diveras eigene Position.');
     }
     $merken('106_divera_position');
+
+    /* ---------- 107: Karten – Stärke je Einheit, Abschnitte, Einheiten ohne Position ---------- */
+    if (ovb_table_exists($pdo, 'karten') && !ovb_table_exists($pdo, 'karten_abschnitte')) {
+        $pdo->exec("CREATE TABLE karten_abschnitte (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  karte_id     INT UNSIGNED NOT NULL,
+  name         VARCHAR(100) NOT NULL,
+  created_by   INT UNSIGNED NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_kabs_karte (karte_id),
+  CONSTRAINT fk_kabs_karte FOREIGN KEY (karte_id)   REFERENCES karten(id) ON DELETE CASCADE,
+  CONSTRAINT fk_kabs_cb    FOREIGN KEY (created_by) REFERENCES users(id)  ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle karten_abschnitte angelegt.');
+    }
+    if (ovb_table_exists($pdo, 'karten_marker') && !ovb_column_exists($pdo, 'karten_marker', 'staerke_f')) {
+        $pdo->exec("ALTER TABLE karten_marker
+            ADD COLUMN abschnitt_id INT UNSIGNED NULL AFTER symbol_id,
+            MODIFY COLUMN lat DECIMAL(9,6) NULL,
+            MODIFY COLUMN lng DECIMAL(9,6) NULL,
+            ADD COLUMN staerke_f SMALLINT UNSIGNED NOT NULL DEFAULT 0 AFTER beschriftung,
+            ADD COLUMN staerke_u SMALLINT UNSIGNED NOT NULL DEFAULT 0 AFTER staerke_f,
+            ADD COLUMN staerke_h SMALLINT UNSIGNED NOT NULL DEFAULT 0 AFTER staerke_u,
+            ADD KEY idx_kmark_abschnitt (abschnitt_id)");
+        $say('Gesetzte Symbole sind Einheiten mit Stärke und Abschnitt.');
+    }
+    if (ovb_table_exists($pdo, 'karten_abschnitte') && ovb_column_exists($pdo, 'karten_marker', 'abschnitt_id')
+        && !ovb_constraint_exists($pdo, 'karten_marker', 'fk_kmark_abschnitt')) {
+        $pdo->exec('ALTER TABLE karten_marker ADD CONSTRAINT fk_kmark_abschnitt FOREIGN KEY (abschnitt_id) REFERENCES karten_abschnitte(id) ON DELETE SET NULL');
+    }
+    $merken('107_karten_staerke_abschnitte');
 }
 
 /**

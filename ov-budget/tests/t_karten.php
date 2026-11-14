@@ -210,11 +210,12 @@ $karte = ['id' => 5, 'name' => 'Gelände', 'beschreibung' => 'Hof', 'lat' => 53.
 $symbol = ['id' => 21, 'name' => 'GKW', 'gruppe' => 'Fahrzeuge'];
 $GLOBALS['inserts'] = [];
 $m = karten_marker_neu($karte, $symbol, '53.07951234', '8.80212345', $ich);
-$check('gesetzt: Stelle gerundet, Vorgabegröße', is_array($m) && $GLOBALS['inserts'][0][0] === 'karten_marker' && $GLOBALS['inserts'][0][1] === ['karte_id' => 5, 'symbol_id' => 21, 'lat' => 53.079512,
-    'lng' => 8.802123, 'groesse' => 40, 'drehung' => 0, 'created_by' => 1] && $m['symbol_name'] === 'GKW');
+$check('gesetzt: Stelle gerundet, Vorgabegröße, ohne Stärke und Abschnitt', is_array($m) && $GLOBALS['inserts'][0][0] === 'karten_marker' && $GLOBALS['inserts'][0][1] === ['karte_id' => 5, 'symbol_id' => 21,
+    'abschnitt_id' => null, 'lat' => 53.079512, 'lng' => 8.802123, 'groesse' => 40, 'drehung' => 0, 'beschriftung' => '', 'staerke_f' => 0, 'staerke_u' => 0, 'staerke_h' => 0, 'created_by' => 1] && $m['symbol_name'] === 'GKW');
 $check('neben der Karte wird nichts gesetzt', is_string(karten_marker_neu($karte, $symbol, 95, 8, $ich)) && is_string(karten_marker_neu($karte, $symbol, 'x', '', $ich)) && count($GLOBALS['inserts']) === 1);
 $d = karten_marker_daten($m);
-$check('Daten für den Browser', $d['id'] === 21 && $d['symbol'] === 21 && $d['groesse'] === 40 && $d['drehung'] === 0 && $d['text'] === '' && $d['name'] === 'GKW' && str_contains($d['src'], 'p=karten_symbol&id=21'));
+$check('Daten für den Browser', $d['id'] === 21 && $d['symbol'] === 21 && $d['groesse'] === 40 && $d['drehung'] === 0 && $d['text'] === '' && $d['name'] === 'GKW' && str_contains($d['src'], 'p=karten_symbol&id=21')
+    && $d['staerke'] === ['f' => 0, 'u' => 0, 'h' => 0, 'gesamt' => 0, 'text' => '0/0/0/0'] && $d['abschnitt'] === null);
 $GLOBALS['updates'] = [];
 $geaendert = karten_marker_aendern(['id' => 30], ['groesse' => '5000', 'drehung' => '-45', 'beschriftung' => "  Zug 1 \n Halle "]);
 $check('ändern: nur die genannten Felder, in den Grenzen', $geaendert === ['groesse' => 400, 'drehung' => 315, 'beschriftung' => 'Zug 1 Halle'] && $GLOBALS['updates'][0][1] === $geaendert && $GLOBALS['updates'][0][2] === [30]);
@@ -224,33 +225,86 @@ $check('versetzen: Breite und Länge nur zusammen und nur auf der Karte', karten
 $GLOBALS['updates'] = [];
 $check('nichts zu ändern schreibt nichts', karten_marker_aendern(['id' => 30], ['fremd' => 1]) === [] && $GLOBALS['updates'] === []);
 
+/* ---------- Stärke je Einheit, Einheiten ohne Stelle, Abschnitte ---------- */
+$check('Stärke lesen: Führer/Unterführer/Helfer', karten_staerke_parsen('1/2/9') === [1, 2, 9] && karten_staerke_parsen(' 0 / 1 / 8 ') === [0, 1, 8] && karten_staerke_parsen('1/2/9/12') === [1, 2, 9]
+    && karten_staerke_parsen('1／2／9') === [1, 2, 9] && karten_staerke_parsen('//') === [0, 0, 0]);
+$check('Stärke lesen: eine Zahl zählt als Helfer, leer ist 0/0/0, zu viel wird begrenzt', karten_staerke_parsen('12') === [0, 0, 12] && karten_staerke_parsen('') === [0, 0, 0] && karten_staerke_parsen(null) === [0, 0, 0]
+    && karten_staerke_parsen('1/2/99999') === [1, 2, 9999] && karten_staerke_parsen([1, '2', 9]) === [1, 2, 9]);
+$check('Stärke lesen: Unsinn wird abgelehnt', karten_staerke_parsen('1/2') === null && karten_staerke_parsen('a/b/c') === null && karten_staerke_parsen('1/2/3/4/5') === null
+    && karten_staerke_parsen('-1/2/9') === null && karten_staerke_parsen('1,2,9') === null && karten_staerke_parsen('1/2/9.5') === null);
+$check('Stärke in Worten der Lage', karten_staerke_text(1, 2, 9) === '1/2/9/12' && karten_staerke_text(0, 0, 0) === '0/0/0/0');
+$st = karten_staerke_daten(['staerke_f' => '1', 'staerke_u' => '2', 'staerke_h' => '9']);
+$check('Stärke einer Einheit', $st === ['f' => 1, 'u' => 2, 'h' => 9, 'gesamt' => 12, 'text' => '1/2/9/12'] && karten_staerke_daten([])['gesamt'] === 0);
+$summe = karten_staerke_summe([['staerke_f' => 1, 'staerke_u' => 2, 'staerke_h' => 9], ['staerke_f' => 0, 'staerke_u' => 1, 'staerke_h' => 3, 'lat' => null], ['staerke_h' => -5]]);
+$check('Gesamtstärke über alle Einheiten – auch die ohne Stelle', $summe === ['f' => 1, 'u' => 3, 'h' => 12, 'gesamt' => 16, 'text' => '1/3/12/16', 'einheiten' => 3]
+    && karten_staerke_summe([]) === ['f' => 0, 'u' => 0, 'h' => 0, 'gesamt' => 0, 'text' => '0/0/0/0', 'einheiten' => 0]);
+$check('Abschnittsname geglättet', karten_abschnitt_name("  EA 1 \n Nord ") === 'EA 1 Nord' && karten_abschnitt_name('   ') === '' && mb_strlen(karten_abschnitt_name(str_repeat('x', 200))) === 100);
+
+$GLOBALS['inserts'] = [];
+$abschnitt = ['id' => 7, 'karte_id' => 5, 'name' => 'EA 1 Nord'];
+$m2 = karten_marker_neu($karte, $symbol, '53.1', '8.9', $ich, ['beschriftung' => " Zugtrupp \n 1 ", 'staerke' => '1/1/2', 'abschnitt' => $abschnitt]);
+$check('Einheit mit Beschriftung, Stärke und Abschnitt gesetzt', is_array($m2) && $GLOBALS['inserts'][0][1]['beschriftung'] === 'Zugtrupp 1' && $GLOBALS['inserts'][0][1]['staerke_f'] === 1
+    && $GLOBALS['inserts'][0][1]['staerke_u'] === 1 && $GLOBALS['inserts'][0][1]['staerke_h'] === 2 && $GLOBALS['inserts'][0][1]['abschnitt_id'] === 7 && $m2['beschriftung'] === 'Zugtrupp 1');
+$d2 = karten_marker_daten($m2);
+$check('Einheit für den Browser: Stärke und Abschnitt', $d2['staerke']['text'] === '1/1/2/4' && $d2['abschnitt'] === 7 && $d2['text'] === 'Zugtrupp 1' && $d2['lat'] === 53.1);
+$GLOBALS['inserts'] = [];
+$m3 = karten_marker_neu($karte, $symbol, '', '', $ich, ['staerke' => '9']);
+$check('Einheit ohne Stelle: nur in der Liste, Stärke als Helfer', is_array($m3) && $GLOBALS['inserts'][0][1]['lat'] === null && $GLOBALS['inserts'][0][1]['lng'] === null && $GLOBALS['inserts'][0][1]['staerke_h'] === 9
+    && karten_marker_daten($m3)['lat'] === null && karten_marker_daten($m3)['lng'] === null);
+$check('Einheit mit unlesbarer Stärke wird nicht gesetzt', str_contains((string)karten_marker_neu($karte, $symbol, '53.1', '8.9', $ich, ['staerke' => '1/x/2']), 'Stärke') && count($GLOBALS['inserts']) === 1);
+$GLOBALS['updates'] = [];
+$check('ändern: Stärke, Abschnitt (0 = keiner), Symbol', karten_marker_aendern(['id' => 30], ['staerke' => '0/2/7']) === ['staerke_f' => 0, 'staerke_u' => 2, 'staerke_h' => 7]
+    && karten_marker_aendern(['id' => 30], ['abschnitt_id' => '7']) === ['abschnitt_id' => 7] && karten_marker_aendern(['id' => 30], ['abschnitt_id' => '0']) === ['abschnitt_id' => null]
+    && karten_marker_aendern(['id' => 30], ['symbol_id' => 22]) === ['symbol_id' => 22] && count($GLOBALS['updates']) === 4);
+$check('ändern: unlesbare Stärke schreibt nichts', str_contains((string)karten_marker_aendern(['id' => 30], ['staerke' => 'viele']), 'Stärke') && count($GLOBALS['updates']) === 4);
+$check('von der Karte nehmen: beide Koordinaten leer', karten_marker_aendern(['id' => 30], ['lat' => '', 'lng' => '']) === ['lat' => null, 'lng' => null]);
+
+$GLOBALS['inserts'] = []; $GLOBALS['updates'] = []; $GLOBALS['execs'] = [];
+$a = karten_abschnitt_neu($karte, "  UA   Bergung ", $ich);
+$check('Abschnitt anlegen: Name geglättet, an der Karte', is_array($a) && $GLOBALS['inserts'][0][0] === 'karten_abschnitte' && $GLOBALS['inserts'][0][1] === ['karte_id' => 5, 'name' => 'UA Bergung', 'created_by' => 1] && $a['id'] === 21
+    && karten_abschnitt_daten($a) === ['id' => 21, 'name' => 'UA Bergung']);
+$check('Abschnitt ohne Namen', is_string(karten_abschnitt_neu($karte, '  ', $ich)) && count($GLOBALS['inserts']) === 1);
+$check('Abschnitt umbenennen', karten_abschnitt_aendern($abschnitt, ' EA 1  Süd ') === array_replace($abschnitt, ['name' => 'EA 1 Süd']) && $GLOBALS['updates'][0][1] === ['name' => 'EA 1 Süd'] && $GLOBALS['updates'][0][2] === [7]
+    && is_string(karten_abschnitt_aendern($abschnitt, '')) && karten_abschnitt_aendern($abschnitt, 'EA 1 Nord') === $abschnitt && count($GLOBALS['updates']) === 1);
+karten_abschnitt_delete($abschnitt);
+$check('Abschnitt löschen: Einheiten bleiben und stehen ohne Abschnitt', count($GLOBALS['execs']) === 2 && str_contains($GLOBALS['execs'][0][0], 'UPDATE karten_marker SET abschnitt_id = NULL') && $GLOBALS['execs'][0][1] === [7]
+    && str_contains($GLOBALS['execs'][1][0], 'DELETE FROM karten_abschnitte') && $GLOBALS['execs'][1][1] === [7]);
+
 /* ---------- Was der Browser bekommt ---------- */
 $marker = [['id' => 30, 'symbol_id' => 21, 'lat' => '53.079500', 'lng' => '8.802100', 'groesse' => 64, 'drehung' => 90, 'beschriftung' => 'Zug 1', 'symbol_name' => 'GKW']];
 $symbole = [['id' => 21, 'name' => 'GKW', 'gruppe' => 'Fahrzeuge', 'orig_name' => 'gkw.svg', 'size_bytes' => 900, 'verwendet' => 1],
     ['id' => 22, 'name' => 'Sammelplatz', 'gruppe' => '', 'orig_name' => 's.png', 'size_bytes' => 12000, 'verwendet' => 0]];
-$k = karten_konfig($karte, $marker, $symbole, ['setzen' => true, 'verwalten' => false, 'fahrzeuge' => true]);
+$marker[] = ['id' => 31, 'symbol_id' => 22, 'abschnitt_id' => 7, 'lat' => null, 'lng' => null, 'groesse' => 40, 'drehung' => 0, 'beschriftung' => 'Zugtrupp', 'staerke_f' => 1, 'staerke_u' => 1, 'staerke_h' => 2, 'symbol_name' => 'Sammelplatz'];
+$marker[0] += ['staerke_f' => 0, 'staerke_u' => 2, 'staerke_h' => 7];
+$k = karten_konfig($karte, $marker, $symbole, ['setzen' => true, 'verwalten' => false, 'fahrzeuge' => true], [$abschnitt]);
 $check('Paket: Ausschnitt, Kacheln, Quelle, Schnittstelle, Schutzmarke', $k['id'] === 5 && $k['lat'] === 53.0793 && $k['zoom'] === 16 && $k['kacheln'] === KARTEN_KACHEL_VORGABE
     && $k['quelle'] === '© OpenStreetMap-Mitwirkende' && str_contains($k['api'], 'p=karten_api') && strlen($k['csrf']) >= 32 && $k['zoomMin'] === 2 && $k['zoomMax'] === 19);
 $check('Paket: Rechte, Marker und Symbole', $k['setzen'] === true && $k['verwalten'] === false && $k['fahrzeuge'] === true && $k['fahrzeugeAn'] === true
     && $k['marker'][0]['text'] === 'Zug 1' && $k['marker'][0]['groesse'] === 64 && count($k['symbole']) === 2 && $k['symbole'][0] === ['id' => 21, 'name' => 'GKW', 'gruppe' => 'Fahrzeuge', 'src' => $k['symbole'][0]['src']]);
+$check('Paket: Abschnitte, Gesamtstärke, Einheit ohne Stelle', $k['abschnitte'] === [['id' => 7, 'name' => 'EA 1 Nord']] && $k['staerke']['text'] === '1/3/9/13' && $k['staerke']['einheiten'] === 2
+    && $k['marker'][1]['lat'] === null && $k['marker'][1]['abschnitt'] === 7 && $k['marker'][1]['staerke']['text'] === '1/1/2/4' && $k['marker'][0]['abschnitt'] === null && $k['staerkeMax'] === 9999);
 $ohne = karten_konfig($karte, [], [], ['setzen' => false, 'verwalten' => false, 'fahrzeuge' => false]);
 $check('ohne Blick auf die Fahrzeuge bleiben sie aus – auch wenn die Karte sie vorsieht', $ohne['fahrzeuge'] === false && $ohne['fahrzeugeAn'] === false && $ohne['setzen'] === false);
 
 /* ---------- Ansichten ---------- */
-$seite = static fn(array $darf): string => render_partial('karte', ['title' => 'x', 'karte' => $karte, 'konfig' => karten_konfig($karte, $marker, $symbole, $darf), 'symbole' => $symbole, 'darf' => $darf]);
+$seite = static fn(array $darf): string => render_partial('karte', ['title' => 'x', 'karte' => $karte, 'konfig' => karten_konfig($karte, $marker, $symbole, $darf, [$abschnitt]), 'symbole' => $symbole, 'darf' => $darf,
+    'staerke' => karten_staerke_summe($marker)]);
 $alles = $seite(['setzen' => true, 'verwalten' => true, 'fahrzeuge' => true]);
 preg_match('/data-lagekarte="([^"]*)"/', $alles, $mm);
 $zurueck = json_decode(html_entity_decode($mm[1] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8'), true);
 $check('Karte: das Paket kommt heil im Attribut an', is_array($zurueck) && $zurueck['id'] === 5 && $zurueck['marker'][0]['text'] === 'Zug 1' && $zurueck['quelle'] === '© OpenStreetMap-Mitwirkende');
 $check('Karte: Fläche, Schalter Fahrzeuge, Ausschnitt merken, + Symbol', str_contains($alles, 'data-karte-flaeche') && str_contains($alles, 'data-karte-fahrzeuge') && str_contains($alles, 'data-karte-merken')
     && str_contains($alles, 'data-karte-setzen') && str_contains($alles, 'Rechtsklick') && str_contains($alles, 'p=karte_edit&amp;id=5'));
+$check('Karte: neben der Karte die Gesamtstärke – schon ohne Skript', str_contains($alles, 'data-karte-seite') && str_contains($alles, 'Gesamtstärke') && str_contains($alles, '<div class="lagekarte__gesamt-zahl" data-karte-gesamt>1/3/9/13</div>')
+    && str_contains($alles, '2 Einheiten') && $zurueck['abschnitte'][0]['name'] === 'EA 1 Nord' && $zurueck['marker'][1]['lat'] === null);
 $nurSehen = $seite(['setzen' => false, 'verwalten' => false, 'fahrzeuge' => false]);
-$check('Karte nur ansehen: nichts zum Setzen, Merken oder Fahrzeuge', str_contains($nurSehen, 'data-karte-flaeche') && !str_contains($nurSehen, 'data-karte-fahrzeuge') && !str_contains($nurSehen, 'data-karte-merken')
-    && !str_contains($nurSehen, 'data-karte-setzen') && !str_contains($nurSehen, 'p=karte_edit') && !str_contains($nurSehen, 'Rechtsklick'));
+$check('Karte nur ansehen: nichts zum Setzen, Merken oder Fahrzeuge – die Stärke steht trotzdem', str_contains($nurSehen, 'data-karte-flaeche') && !str_contains($nurSehen, 'data-karte-fahrzeuge') && !str_contains($nurSehen, 'data-karte-merken')
+    && !str_contains($nurSehen, 'data-karte-setzen') && !str_contains($nurSehen, 'p=karte_edit') && !str_contains($nurSehen, 'Rechtsklick') && str_contains($nurSehen, 'Gesamtstärke'));
 $boeseKarte = ['name' => '"><script>alert(1)</script>', 'beschreibung' => '</script>'] + $karte;
-$html = render_partial('karte', ['title' => 'x', 'karte' => $boeseKarte, 'konfig' => karten_konfig($boeseKarte, [['beschriftung' => '"><img src=x onerror=alert(1)>'] + $marker[0]], $symbole, []), 'symbole' => $symbole,
-    'darf' => ['setzen' => false, 'verwalten' => false, 'fahrzeuge' => false]]);
-$check('Karte: Namen und Beschriftungen werden maskiert', !str_contains($html, '<script>alert') && !str_contains($html, '<img src=x'));
+$boeseMarker = [['beschriftung' => '"><img src=x onerror=alert(1)>'] + $marker[0]];
+$html = render_partial('karte', ['title' => 'x', 'karte' => $boeseKarte, 'konfig' => karten_konfig($boeseKarte, $boeseMarker, $symbole, [], [['id' => 1, 'name' => '<script>alert(2)</script>']]), 'symbole' => $symbole,
+    'darf' => ['setzen' => false, 'verwalten' => false, 'fahrzeuge' => false], 'staerke' => karten_staerke_summe($boeseMarker)]);
+$check('Karte: Namen, Beschriftungen und Abschnitte werden maskiert', !str_contains($html, '<script>alert') && !str_contains($html, '<img src=x'));
 
 $liste = render_partial('karten', ['karten' => [['marker' => 1] + $karte, ['id' => 6, 'name' => 'Übungsgebiet', 'beschreibung' => '', 'fahrzeuge' => 0, 'marker' => 0] + $karte], 'symbole' => 2, 'verwalten' => true]);
 $check('Übersicht: Karten mit Symbolzahl, Symbole, + Karte', str_contains($liste, 'p=karte&amp;id=5') && str_contains($liste, '1 Symbol · mit Fahrzeugen') && str_contains($liste, '0 Symbole')
@@ -283,6 +337,11 @@ $check('Symbol-Abruf: Recht, fester Inhaltstyp, kein Skript, kein Nachladen', st
 $api = $lies('src/pages/karten_api.php');
 $check('Schnittstelle: sehen, setzen und Ausschnitt je mit eigenem Recht', str_contains($api, "can('view_karten')") && str_contains($api, "can('mark_karten')")
     && str_contains($api, "can('manage_karten')") && strpos($api, "can('view_karten')") < strpos($api, 'karten_fahrzeuge('));
+foreach (['abschnitt_neu', 'abschnitt_aendern', 'abschnitt_weg'] as $s) {
+    $check("Schnittstelle: $s hinter dem Recht, Symbole zu setzen", strpos($api, "can('mark_karten')") < strpos($api, "case '$s':"));
+}
+$check('Schnittstelle: Abschnitt und Symbol einer Einheit werden geprüft, der Abschnitt muss zur Karte gehören', str_contains($api, "(int)\$a['karte_id'] !== \$karteId") && str_contains($api, "karten_symbol_find(post_int('symbol_id'))")
+    && str_contains($api, "'staerke'") && substr_count($api, '$abschnittPruefen(') === 2);
 // Der Abschnitt, der die Fahrzeuge liefert: von der Abfrage bis zur Antwort
 $fzAbschnitt = substr($api, (int)strpos($api, "get_str('action') === 'fahrzeuge'"), (int)strpos($api, "'Unbekannte Anfrage.'") - (int)strpos($api, "get_str('action') === 'fahrzeuge'"));
 $check('Schnittstelle: Fahrzeuge bekommt jeder, der die Karten sieht – ohne Fahrzeugmodul nur ohne Verweis zur Akte', !str_contains($fzAbschnitt, '403')
@@ -295,6 +354,9 @@ $check('Schnittstelle: Schreiben nur per POST (dort prüft die Anwendung die Sch
 $js = $lies('public/assets/js/karte.js');
 $check('Skript: Rechtsklick, Schutzmarke, Herkunft für die Kacheln, keine fremde Bibliothek', str_contains($js, "addEventListener('contextmenu'") && str_contains($js, "fd.append('_csrf', K.csrf)")
     && str_contains($js, "referrerPolicy = 'strict-origin-when-cross-origin'") && !preg_match('/\b(L\.map|leaflet|ol\.Map)\b/i', $js));
+$check('Skript: Seitenleiste mit Gesamtstärke, Abschnitten und Einheiten; Einheit ohne Stelle bleibt unsichtbar', str_contains($js, 'function seiteZeichnen()') && str_contains($js, "'+ Abschnitt'") && str_contains($js, "'+ Einheit'")
+    && str_contains($js, "action: 'abschnitt_neu'") && str_contains($js, "action: 'abschnitt_aendern'") && str_contains($js, "action: 'abschnitt_weg'") && str_contains($js, 'm.el.hidden = ohneOrt(m)')
+    && str_contains($js, "if (!ohneOrt(m)) { setzen(m.el, m.d, e); }") && str_contains($js, "spaeterSpeichern(m, 'staerke', stEingabe.value)") && str_contains($js, 'window.confirm('));
 $check('Skript: Texte nur als Text, nie als HTML', !str_contains($js, 'innerHTML') && !str_contains($js, 'insertAdjacentHTML') && !str_contains($js, 'document.write'));
 $check('Skript wird nur auf der Kartenseite geladen', str_contains($lies('views/layout.php'), "\$GLOBALS['ovb_karte_js']") && str_contains($lies('src/pages/karte.php'), "\$GLOBALS['ovb_karte_js'] = true"));
 $routen = $lies('public/index.php');
@@ -304,13 +366,17 @@ foreach (['karten', 'karte', 'karte_edit', 'karten_symbole', 'karten_symbol', 'k
 $schema = $lies('sql/schema.sql');
 $wanderung = $lies('src/cli/migrate.php');
 $spalten = static fn(string $s): array => array_values(array_filter(array_map(static fn($z) => preg_match('/^\s+([a-z_]+)\s+[A-Z]/', $z, $m) ? $m[1] : '', explode("\n", $s))));
-foreach (['karten', 'karten_symbole', 'karten_marker'] as $t) {
+foreach (['karten', 'karten_symbole', 'karten_abschnitte', 'karten_marker'] as $t) {
     preg_match('/CREATE TABLE IF NOT EXISTS ' . $t . ' \((.*?)\) ENGINE/s', $schema, $ms);
     preg_match('/CREATE TABLE ' . $t . ' \((.*?)\) ENGINE/s', $wanderung, $mw);
     $check("Tabelle $t in Schema und Wanderung mit denselben Spalten", $spalten($ms[1] ?? '') !== [] && $spalten($ms[1] ?? '') === $spalten($mw[1] ?? 'x'));
 }
-$check('gesetzte Symbole gehen mit der Karte, ein benutztes Symbol bleibt', str_contains($schema, 'REFERENCES karten(id)         ON DELETE CASCADE') && str_contains($schema, 'REFERENCES karten_symbole(id) ON DELETE RESTRICT')
+$check('gesetzte Symbole gehen mit der Karte, ein benutztes Symbol bleibt', str_contains($schema, 'REFERENCES karten(id)            ON DELETE CASCADE') && str_contains($schema, 'REFERENCES karten_symbole(id)    ON DELETE RESTRICT')
     && str_contains($wanderung, "\$merken('104_karten')"));
+$check('Stärke und Abschnitte: Spalten, Einheit ohne Stelle erlaubt, Abschnitt weg lässt die Einheit stehen, Wanderung für den Bestand',
+    str_contains($schema, 'REFERENCES karten_abschnitte(id) ON DELETE SET NULL') && preg_match('/karten_marker \(.*?\n  lat          DECIMAL\(9,6\) NULL,/s', $schema) === 1
+    && str_contains($wanderung, "\$merken('107_karten_staerke_abschnitte')") && str_contains($wanderung, 'MODIFY COLUMN lat DECIMAL(9,6) NULL') && str_contains($wanderung, 'ADD COLUMN staerke_f')
+    && strpos($wanderung, 'CREATE TABLE karten_abschnitte') < strpos($wanderung, 'CREATE TABLE karten_marker'));
 $seed = $lies('sql/seed.sql');
 foreach (['karten_modul_name', 'karten_intro', 'karten_user_darf_sehen', 'karten_user_darf_setzen', 'karten_kachel_url', 'karten_kachel_quelle'] as $skey) {
     $check("Einstellung $skey", str_contains($seed, "('$skey',"));

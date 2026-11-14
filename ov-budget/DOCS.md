@@ -1232,8 +1232,28 @@ sich eigene Symbole setzen lassen – das Gelände der Unterkunft, ein
   aus der Bibliothek, nach Gruppen geordnet und ab neun Symbolen mit
   Suchfeld. Am Handy lange auf die Stelle drücken; „+ Symbol" über der
   Karte öffnet die Auswahl für die Kartenmitte. Ein gesetztes Symbol lässt
-  sich **ziehen**; ein **Klick** darauf öffnet Beschriftung, Größe (12 bis
-  400 Pixel) und Drehung, dort auch „Entfernen". Gespeichert wird sofort.
+  sich **ziehen**; ein **Klick** darauf öffnet Beschriftung, Stärke,
+  Abschnitt, Symbol, Größe (12 bis 400 Pixel) und Drehung, dort auch
+  „Löschen". Gespeichert wird sofort.
+* **Stärke je Einheit** – jedes gesetzte Symbol ist eine Einheit. Ihre
+  Stärke wird eingetragen, wie sie gemeldet wird: **Führer/Unterführer/
+  Helfer**, etwa „1/2/9“; eine einzelne Zahl zählt als Helfer, die Summe
+  rechnet die Anwendung („1/2/9/12“). Sie steht unter dem Symbol auf der
+  Karte.
+* **Neben der Karte** – oben die **Gesamtstärke** aller Einheiten der
+  Karte, darunter die **Abschnitte** (Einsatzabschnitte, Unterabschnitte)
+  mit Teilstärke und ihren Einheiten; was keinem Abschnitt zugeordnet ist,
+  steht unter „Ohne Abschnitt". „+ Abschnitt" legt einen an, ✎ benennt ihn
+  um, × löscht ihn – seine Einheiten bleiben und stehen dann ohne
+  Abschnitt. „+ Einheit" in einem Abschnitt öffnet die Symbolauswahl für
+  die Kartenmitte und danach gleich die Bearbeitung; mit dem Haken *nur in
+  die Liste* entsteht die Einheit **ohne Stelle auf der Karte** – für
+  Kräfte im Anmarsch oder in Bereitstellung. Sie zählt zur Stärke, „In die
+  Kartenmitte" setzt sie später auf die Karte, „Von der Karte nehmen" holt
+  eine gesetzte Einheit zurück in die Liste. Ein Klick auf den Namen
+  springt zur Einheit auf der Karte. Am Handy steht die Leiste unter der
+  Karte. Die Fahrzeuge zählen nicht zur Stärke – sie sind Fahrzeuge, keine
+  Einheiten.
 * **Symbole** – die Bibliothek gilt für alle Karten. Hochladen lassen sich
   **SVG** (bleibt in jeder Größe scharf) und Bilder (PNG, JPG, WebP, GIF;
   sie werden auf 1024 Pixel begrenzt), mehrere auf einmal, mit Gruppe und
@@ -1298,8 +1318,9 @@ sich eigene Symbole setzen lassen – das Gelände der Unterkunft, ein
 **Wer darf was:** Sehen dürfen die Karten alle Mitglieder (abschaltbar) –
 samt den Fahrzeugen, die sich dort jeder selbst ein- und ausblendet.
 Karten anlegen, den Ausschnitt merken und die Symbolbibliothek pflegen
-kann die Leitung. Symbole setzen, versetzen und entfernen darf die Leitung;
-mit *Alle Mitglieder dürfen Symbole setzen* auch alle anderen.
+kann die Leitung. Symbole setzen, versetzen und löschen sowie Stärke und
+Abschnitte pflegen darf die Leitung; mit *Alle Mitglieder dürfen Symbole
+setzen* auch alle anderen.
 
 **SVG und Sicherheit:** Eine SVG kann Skript enthalten. Deshalb wird jede
 beim Hochladen geprüft und abgelehnt, sobald sie Skript, Ereignis-Attribute

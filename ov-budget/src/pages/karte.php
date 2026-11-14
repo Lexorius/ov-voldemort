@@ -2,8 +2,9 @@
 declare(strict_types=1);
 
 /*
- * Ein Kartenausschnitt: die Karte mit ihren gesetzten Symbolen. Gezeichnet wird im
- * Browser (karte.js); Rechtsklick setzt ein Symbol, gespeichert wird über karten_api.
+ * Ein Kartenausschnitt: die Karte mit ihren Einheiten (gesetzten Symbolen), daneben die
+ * Gesamtstärke und die Abschnitte. Gezeichnet wird im Browser (karte.js); Rechtsklick setzt
+ * ein Symbol, gespeichert wird über karten_api.
  */
 $user = require_login();
 if (!can('view_karten')) {
@@ -25,10 +26,13 @@ $darf = ['setzen' => can('mark_karten'), 'verwalten' => can('manage_karten'), 'f
          'fahrzeugSetzen' => can('view_vehicles') && can('report_vehicle')];
 $GLOBALS['ovb_karte_js'] = true;
 
+$marker = karten_marker((int)$karte['id']);
 render('karte', [
     'title'   => (string)$karte['name'],
     'karte'   => $karte,
-    'konfig'  => karten_konfig($karte, karten_marker((int)$karte['id']), $symbole, $darf),
+    'konfig'  => karten_konfig($karte, $marker, $symbole, $darf, karten_abschnitte((int)$karte['id'])),
     'symbole' => $symbole,
     'darf'    => $darf,
+    // für die Seitenleiste, bevor das Skript sie übernimmt
+    'staerke' => karten_staerke_summe($marker),
 ]);

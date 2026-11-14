@@ -8,7 +8,12 @@
  *
  *   ziehen            verschieben          Mausrad, +/−, Doppelklick   zoomen
  *   Rechtsklick       Symbol setzen        (am Handy: lange drücken)
- *   Symbol ziehen     versetzen            Symbol anklicken            beschriften, Größe, Drehung, entfernen
+ *   Symbol ziehen     versetzen            Symbol anklicken            beschriften, Stärke, Abschnitt, Größe, Drehung, löschen
+ *
+ * Jedes gesetzte Symbol ist eine Einheit mit Stärke (Führer/Unterführer/Helfer). Neben der
+ * Karte steht die Gesamtstärke, darunter die Abschnitte mit Teilstärke und ihren Einheiten;
+ * dort lassen sich Abschnitte und Einheiten anlegen, ändern und löschen – Einheiten auch ohne
+ * Stelle auf der Karte (lat/lng null: sie stehen dann nur in der Liste).
  *
  * Alles, was die Seite weiß, steckt als JSON im Attribut data-lagekarte;
  * gespeichert wird über die Adresse in K.api (karten_api.php).
@@ -27,6 +32,7 @@
   var marker = [];           // { d: Daten, el: Element, bild: <img>, text: <span> }
   var fahrzeuge = [];        // { d: Daten, el: Element }
   var gewaehlt = null;       // der Eintrag aus marker, der gerade bearbeitet wird
+  var abschnitte = K.abschnitte || [];   // { id, name } – Abschnitte dieser Karte
 
   function neu(tag, klasse, text) {
     var el = document.createElement(tag);
@@ -37,6 +43,8 @@
   var kachelEbene = flaeche.appendChild(neu('div', 'lagekarte__kacheln'));
   var markerEbene = flaeche.appendChild(neu('div', 'lagekarte__marker-ebene'));
   var meldung = wurzel.querySelector('[data-karte-meldung]');
+  var seite = wurzel.querySelector('[data-karte-seite]');
+  function ohneOrt(m) { return m.d.lat === null || m.d.lat === undefined; }
 
   /* ---------- Rechnen: Grad ↔ Pixel der Weltkarte in einer Zoomstufe ---------- */
   function weltX(lng, z) { return (lng + 180) / 360 * KACHEL * Math.pow(2, z); }
@@ -112,7 +120,7 @@
     Object.keys(kacheln).forEach(function (key) {
       if (!gebraucht[key]) { kachelEbene.removeChild(kacheln[key]); delete kacheln[key]; }
     });
-    marker.forEach(function (m) { setzen(m.el, m.d, e); });
+    marker.forEach(function (m) { if (!ohneOrt(m)) { setzen(m.el, m.d, e); } });
     fahrzeuge.forEach(function (f) { setzen(f.el, f.d, e); });
   }
   function setzen(el, d, e) {
@@ -174,12 +182,18 @@
     markerEbene.appendChild(el);
     return m;
   }
+  function staerkeText(st) { return st && st.gesamt > 0 ? st.text : ''; }
   function markerAussehen(m) {
+    m.el.hidden = ohneOrt(m);   // ohne Stelle steht die Einheit nur in der Liste
+    if (m.bild.getAttribute('src') !== m.d.src) { m.bild.src = m.d.src; }
+    m.bild.alt = m.d.name || 'Symbol';
     m.bild.style.width = m.d.groesse + 'px';
     m.bild.style.transform = m.d.drehung ? 'rotate(' + m.d.drehung + 'deg)' : '';
-    m.text.textContent = m.d.text || '';
-    m.text.hidden = !m.d.text;
-    m.el.title = (m.d.name || '') + (m.d.text ? ' – ' + m.d.text : '');
+    // unter dem Symbol: Beschriftung und Stärke, wie auf der Lagekarte üblich
+    var zeile = (m.d.text || '') + (staerkeText(m.d.staerke) ? (m.d.text ? ' ' : '') + staerkeText(m.d.staerke) : '');
+    m.text.textContent = zeile;
+    m.text.hidden = !zeile;
+    m.el.title = (m.d.name || '') + (m.d.text ? ' – ' + m.d.text : '') + (staerkeText(m.d.staerke) ? ' · Stärke ' + staerkeText(m.d.staerke) : '');
   }
   function markerZiehbar(m) {
     var start = null;
@@ -224,23 +238,40 @@
   function tafelZu() {
     jetztSpeichern();
     if (tafel) { tafel.parentNode.removeChild(tafel); tafel = null; }
-    if (gewaehlt) { gewaehlt.el.classList.remove('is-gewaehlt'); gewaehlt = null; }
+    if (gewaehlt) {
+      gewaehlt.el.classList.remove('is-gewaehlt');
+      if (gewaehlt.li) { gewaehlt.li.classList.remove('is-gewaehlt'); }
+      gewaehlt = null;
+    }
   }
   /** Änderungen sammeln und kurz nach der letzten in einem Rutsch speichern – so geht keine verloren */
-  function spaeterSpeichern(m, feld) {
+  function spaeterSpeichern(m, feld, wert) {
     if (offen && offen.m !== m) { jetztSpeichern(); }
     offen = offen || { m: m, felder: {} };
-    offen.felder[feld] = feld === 'beschriftung' ? m.d.text : m.d[feld];
+    offen.felder[feld] = wert;
     window.clearTimeout(tafelUhr);
     tafelUhr = window.setTimeout(jetztSpeichern, 400);
   }
   function jetztSpeichern() {
     window.clearTimeout(tafelUhr);
     if (!offen) { return; }
-    var daten = { action: 'marker_aendern', id: offen.m.d.id };
+    var m = offen.m;
+    var daten = { action: 'marker_aendern', id: m.d.id };
     Object.keys(offen.felder).forEach(function (k) { daten[k] = offen.felder[k]; });
     offen = null;
-    senden(daten);
+    senden(daten, function (d) { if (d) { uebernehmen(m, d.marker); } });
+  }
+  /** Was der Server zurückgibt, gilt: Stärke (gelesen und begrenzt), Abschnitt, Symbol. Stelle, Größe,
+   *  Drehung und Beschriftung bleiben, wie sie hier gerade sind – daran kann die Hand noch sein. */
+  function uebernehmen(m, d) {
+    if (!d) { return; }
+    m.d.staerke = d.staerke;
+    m.d.abschnitt = d.abschnitt;
+    m.d.symbol = d.symbol;
+    m.d.src = d.src;
+    m.d.name = d.name;
+    markerAussehen(m);
+    seiteZeichnen();
   }
   function regler(m, beschriftung, feld, min, max, einheit) {
     var zeile = neu('label', 'lagekarte__regler');
@@ -256,15 +287,21 @@
       m.d[feld] = parseInt(r.value, 10);
       wert.textContent = m.d[feld] + einheit;
       markerAussehen(m);
-      spaeterSpeichern(m, feld);
+      spaeterSpeichern(m, feld, m.d[feld]);
     });
     return zeile;
+  }
+  function auswahl(elternteil, beschriftung) {
+    var feld = elternteil.appendChild(neu('label', 'lagekarte__regler'));
+    feld.appendChild(neu('span', '', beschriftung));
+    return feld.appendChild(neu('select'));
   }
   function bearbeiten(m) {
     tafelZu();
     menueZu();
     gewaehlt = m;
     m.el.classList.add('is-gewaehlt');
+    if (m.li) { m.li.classList.add('is-gewaehlt'); }
     tafel = neu('div', 'lagekarte__tafel');
     tafel.addEventListener('pointerdown', function (ev) { ev.stopPropagation(); });
     tafel.addEventListener('wheel', function (ev) { ev.stopPropagation(); });
@@ -278,29 +315,231 @@
     eingabe.addEventListener('input', function () {
       m.d.text = eingabe.value;
       markerAussehen(m);
-      spaeterSpeichern(m, 'beschriftung');
+      if (m.li) { m.li.querySelector('.lagekarte__einheit-name').firstChild.nodeValue = einheitName(m); }
+      spaeterSpeichern(m, 'beschriftung', eingabe.value);
     });
+    // Stärke, wie sie gemeldet wird: Führer/Unterführer/Helfer – der Server liest und begrenzt sie
+    var stFeld = tafel.appendChild(neu('label', 'lagekarte__regler'));
+    stFeld.appendChild(neu('span', '', 'Stärke (Führer/Unterführer/Helfer)'));
+    var stEingabe = stFeld.appendChild(neu('input'));
+    stEingabe.type = 'text';
+    stEingabe.inputMode = 'numeric';
+    stEingabe.maxLength = 20;
+    stEingabe.placeholder = 'z. B. 1/2/9 oder 12';
+    stEingabe.value = m.d.staerke && m.d.staerke.gesamt > 0 ? m.d.staerke.f + '/' + m.d.staerke.u + '/' + m.d.staerke.h : '';
+    stEingabe.addEventListener('input', function () { spaeterSpeichern(m, 'staerke', stEingabe.value); });
+    if (abschnitte.length) {
+      var abWahl = auswahl(tafel, 'Abschnitt');
+      var keiner = abWahl.appendChild(neu('option', '', '– kein Abschnitt –'));
+      keiner.value = '0';
+      abschnitte.forEach(function (a) {
+        var o = abWahl.appendChild(neu('option', '', a.name));
+        o.value = String(a.id);
+        o.selected = m.d.abschnitt === a.id;
+      });
+      abWahl.addEventListener('change', function () {
+        senden({ action: 'marker_aendern', id: m.d.id, abschnitt_id: parseInt(abWahl.value, 10) || 0 }, function (d) { if (d) { uebernehmen(m, d.marker); } });
+      });
+    }
+    if (K.symbole.length > 1) {
+      var syWahl = auswahl(tafel, 'Symbol');
+      var gruppe = null;
+      var og = null;
+      K.symbole.forEach(function (s) {
+        if (s.gruppe !== gruppe || !og) {
+          gruppe = s.gruppe;
+          og = syWahl.appendChild(neu('optgroup'));
+          og.label = gruppe || 'Ohne Gruppe';
+        }
+        var o = og.appendChild(neu('option', '', s.name));
+        o.value = String(s.id);
+        o.selected = s.id === m.d.symbol;
+      });
+      syWahl.addEventListener('change', function () {
+        senden({ action: 'marker_aendern', id: m.d.id, symbol_id: parseInt(syWahl.value, 10) || 0 }, function (d) { if (d) { uebernehmen(m, d.marker); } });
+      });
+    }
     tafel.appendChild(regler(m, 'Größe', 'groesse', K.groesse.min, K.groesse.max, ' px'));
     tafel.appendChild(regler(m, 'Drehung', 'drehung', 0, 359, '°'));
     var knoepfe = tafel.appendChild(neu('div', 'btnrow'));
-    var weg = knoepfe.appendChild(neu('button', 'btn btn--sec btn--sm', 'Entfernen'));
+    var stelle = knoepfe.appendChild(neu('button', 'btn btn--sec btn--sm', ohneOrt(m) ? 'In die Kartenmitte' : 'Von der Karte nehmen'));
+    stelle.type = 'button';
+    stelle.title = ohneOrt(m) ? 'Die Einheit in der Kartenmitte auf die Karte setzen'
+                              : 'Die Einheit bleibt mit ihrer Stärke in der Liste, verschwindet aber von der Karte';
+    stelle.addEventListener('click', function () { jetztSpeichern(); einheitStelle(m, ohneOrt(m)); });
+    var weg = knoepfe.appendChild(neu('button', 'btn btn--sec btn--sm', 'Löschen'));
     weg.type = 'button';
-    weg.addEventListener('click', function () {
-      // was noch nicht gespeichert ist, braucht es nicht mehr
-      window.clearTimeout(tafelUhr);
-      offen = null;
-      senden({ action: 'marker_weg', id: m.d.id }, function (d) {
-        if (!d) { return; }
-        markerEbene.removeChild(m.el);
-        marker.splice(marker.indexOf(m), 1);
-        tafelZu();
-        melden('Symbol entfernt.');
-      });
-    });
+    weg.addEventListener('click', function () { einheitWeg(m); });
     var zu = knoepfe.appendChild(neu('button', 'btn btn--sm', 'Fertig'));
     zu.type = 'button';
     zu.addEventListener('click', tafelZu);
     flaeche.appendChild(tafel);
+  }
+
+  /* ---------- Neben der Karte: Gesamtstärke, Abschnitte mit Teilstärke, Einheiten ---------- */
+  function staerkeSumme(liste) {
+    var s = { f: 0, u: 0, h: 0 };
+    liste.forEach(function (m) {
+      var st = m.d.staerke || {};
+      s.f += st.f || 0; s.u += st.u || 0; s.h += st.h || 0;
+    });
+    s.gesamt = s.f + s.u + s.h;
+    s.text = s.f + '/' + s.u + '/' + s.h + '/' + s.gesamt;
+    return s;
+  }
+  function einheitName(m) { return m.d.text || m.d.name || 'Einheit'; }
+  function abschnittVon(id) {
+    for (var i = 0; i < abschnitte.length; i++) { if (abschnitte[i].id === id) { return abschnitte[i]; } }
+    return null;
+  }
+  function kleinKnopf(zeichen, titel, tun) {
+    var b = neu('button', 'lagekarte__klein', zeichen);
+    b.type = 'button';
+    b.title = titel;
+    b.setAttribute('aria-label', titel);
+    b.addEventListener('click', function (ev) { ev.stopPropagation(); tun(); });
+    return b;
+  }
+  function seiteZeichnen() {
+    if (!seite) { return; }
+    seite.textContent = '';
+    var gesamt = staerkeSumme(marker);
+    var kopf = seite.appendChild(neu('div', 'lagekarte__gesamt'));
+    kopf.appendChild(neu('div', 'lagekarte__gesamt-kopf', 'Gesamtstärke'));
+    var zahl = kopf.appendChild(neu('div', 'lagekarte__gesamt-zahl', gesamt.text));
+    zahl.setAttribute('data-karte-gesamt', '');
+    kopf.appendChild(neu('div', 'small muted', 'Führer / Unterführer / Helfer / Gesamt · ' + (marker.length === 1 ? '1 Einheit' : marker.length + ' Einheiten')));
+    abschnitte.forEach(function (a) {
+      seite.appendChild(abschnittKasten(a, marker.filter(function (m) { return m.d.abschnitt === a.id; })));
+    });
+    seite.appendChild(abschnittKasten(null, marker.filter(function (m) { return !m.d.abschnitt || !abschnittVon(m.d.abschnitt); })));
+    if (K.setzen) {
+      var dazu = seite.appendChild(neu('button', 'btn btn--sec btn--sm lagekarte__seite-knopf', '+ Abschnitt'));
+      dazu.type = 'button';
+      dazu.title = 'Einen Abschnitt anlegen – etwa einen Einsatzabschnitt oder Unterabschnitt';
+      dazu.addEventListener('click', abschnittNeu);
+    }
+  }
+  function abschnittKasten(a, liste) {
+    var kasten = neu('section', 'lagekarte__abschnitt');
+    var st = staerkeSumme(liste);
+    var kopf = kasten.appendChild(neu('div', 'lagekarte__abschnitt-kopf'));
+    kopf.appendChild(neu('span', 'lagekarte__abschnitt-name', a ? a.name : (abschnitte.length ? 'Ohne Abschnitt' : 'Einheiten')));
+    kopf.appendChild(neu('span', 'lagekarte__abschnitt-staerke', st.text));
+    kopf.title = (liste.length === 1 ? '1 Einheit' : liste.length + ' Einheiten') + ' · Stärke ' + st.text;
+    if (a && K.setzen) {
+      kopf.appendChild(kleinKnopf('✎', 'Abschnitt umbenennen', function () { abschnittUmbenennen(a); }));
+      kopf.appendChild(kleinKnopf('×', 'Abschnitt löschen', function () { abschnittWeg(a); }));
+    }
+    var ul = kasten.appendChild(neu('ul', 'lagekarte__einheiten'));
+    if (!liste.length) {
+      ul.appendChild(neu('li', 'lagekarte__einheit lagekarte__einheit--leer small muted',
+        a ? 'Noch keine Einheit in diesem Abschnitt.' : (abschnitte.length ? 'Jede Einheit steht in einem Abschnitt.' : 'Noch keine Einheit auf dieser Karte.')));
+    }
+    liste.forEach(function (m) { ul.appendChild(einheitZeile(m)); });
+    if (K.setzen) {
+      var dazu = kasten.appendChild(neu('button', 'btn btn--sec btn--sm lagekarte__seite-knopf', '+ Einheit'));
+      dazu.type = 'button';
+      dazu.title = 'Ein Symbol aus der Bibliothek als Einheit hinzufügen' + (a ? ' – in „' + a.name + '“' : '');
+      dazu.addEventListener('click', function () {
+        flaeche.scrollIntoView({ block: 'nearest' });
+        menueAuf(flaeche.clientWidth / 2, flaeche.clientHeight / 2, { abschnitt: a ? a.id : 0, abschnittName: a ? a.name : '', ausListe: true });
+      });
+    }
+    return kasten;
+  }
+  function einheitZeile(m) {
+    var li = neu('li', 'lagekarte__einheit');
+    m.li = li;
+    li.classList.toggle('is-ohne-ort', ohneOrt(m));
+    li.classList.toggle('is-gewaehlt', gewaehlt === m);
+    var bild = li.appendChild(neu('img'));
+    bild.alt = '';
+    bild.src = m.d.src;
+    var name = li.appendChild(neu('button', 'lagekarte__einheit-name', einheitName(m)));
+    name.type = 'button';
+    name.title = (ohneOrt(m) ? 'Steht nicht auf der Karte' : 'Auf der Karte zeigen') + (K.setzen ? ' – öffnet die Bearbeitung' : '')
+      + (m.d.text && m.d.name && m.d.text !== m.d.name ? ' · Symbol: ' + m.d.name : '');
+    name.addEventListener('click', function () { einheitZeigen(m); });
+    if (ohneOrt(m)) { name.appendChild(neu('small', 'lagekarte__einheit-hinweis', 'nicht auf der Karte')); }
+    li.appendChild(neu('span', 'lagekarte__einheit-staerke', staerkeText(m.d.staerke) || '–'));
+    if (K.setzen) {
+      li.appendChild(kleinKnopf('✎', 'Einheit bearbeiten', function () { einheitZeigen(m); }));
+      li.appendChild(kleinKnopf('×', 'Einheit löschen', function () { einheitWeg(m); }));
+    }
+    return li;
+  }
+  function einheitZeigen(m) {
+    if (!ohneOrt(m)) {
+      zustand.lat = m.d.lat;
+      zustand.lng = m.d.lng;
+      zeichnen();
+      flaeche.scrollIntoView({ block: 'nearest' });
+    }
+    if (K.setzen) { bearbeiten(m); }
+  }
+  function einheitWeg(m) {
+    var frage = '„' + einheitName(m) + '“' + (staerkeText(m.d.staerke) ? ' (Stärke ' + staerkeText(m.d.staerke) + ')' : '') + ' löschen?';
+    if (!window.confirm(frage)) { return; }
+    // was noch nicht gespeichert ist, braucht es nicht mehr
+    window.clearTimeout(tafelUhr);
+    if (offen && offen.m === m) { offen = null; }
+    senden({ action: 'marker_weg', id: m.d.id }, function (d) {
+      if (!d) { return; }
+      if (gewaehlt === m) { tafelZu(); }
+      markerEbene.removeChild(m.el);
+      marker.splice(marker.indexOf(m), 1);
+      seiteZeichnen();
+      melden('„' + einheitName(m) + '“ gelöscht.');
+    });
+  }
+  /** Eine Einheit in die Kartenmitte setzen – oder von der Karte nehmen; in der Liste bleibt sie */
+  function einheitStelle(m, aufKarte) {
+    var mitte = gradBei(flaeche.clientWidth / 2, flaeche.clientHeight / 2);
+    senden({ action: 'marker_aendern', id: m.d.id, lat: aufKarte ? mitte.lat : '', lng: aufKarte ? mitte.lng : '' }, function (d) {
+      if (!d) { return; }
+      m.d.lat = d.marker.lat;
+      m.d.lng = d.marker.lng;
+      markerAussehen(m);
+      zeichnen();
+      seiteZeichnen();
+      if (gewaehlt === m) { bearbeiten(m); }   // die Tafel neu, der Knopf wechselt
+      melden(aufKarte ? '„' + einheitName(m) + '“ steht in der Kartenmitte – ziehen versetzt sie.' : '„' + einheitName(m) + '“ steht jetzt nur in der Liste.');
+    });
+  }
+  function abschnittNeu() {
+    var name = window.prompt('Name des neuen Abschnitts – etwa „EA 1 Nord“ oder „UA Bergung“:', '');
+    if (name === null || name.trim() === '') { return; }
+    senden({ action: 'abschnitt_neu', karte_id: K.id, name: name }, function (d) {
+      if (!d) { return; }
+      abschnitte.push(d.abschnitt);
+      seiteZeichnen();
+      if (gewaehlt) { bearbeiten(gewaehlt); }
+      melden('Abschnitt „' + d.abschnitt.name + '“ angelegt – „+ Einheit“ darunter fügt Einheiten hinzu.');
+    });
+  }
+  function abschnittUmbenennen(a) {
+    var name = window.prompt('Neuer Name für den Abschnitt:', a.name);
+    if (name === null || name.trim() === '' || name.trim() === a.name) { return; }
+    senden({ action: 'abschnitt_aendern', id: a.id, name: name }, function (d) {
+      if (!d) { return; }
+      a.name = d.abschnitt.name;
+      seiteZeichnen();
+      if (gewaehlt) { bearbeiten(gewaehlt); }
+    });
+  }
+  function abschnittWeg(a) {
+    var drin = marker.filter(function (m) { return m.d.abschnitt === a.id; }).length;
+    var frage = 'Abschnitt „' + a.name + '“ löschen?' + (drin ? ' ' + (drin === 1 ? 'Seine Einheit bleibt' : 'Seine ' + drin + ' Einheiten bleiben') + ' erhalten und ' + (drin === 1 ? 'steht' : 'stehen') + ' dann ohne Abschnitt.' : '');
+    if (!window.confirm(frage)) { return; }
+    senden({ action: 'abschnitt_weg', id: a.id }, function (d) {
+      if (!d) { return; }
+      abschnitte.splice(abschnitte.indexOf(a), 1);
+      marker.forEach(function (m) { if (m.d.abschnitt === a.id) { m.d.abschnitt = null; } });
+      seiteZeichnen();
+      if (gewaehlt) { bearbeiten(gewaehlt); }
+      melden('Abschnitt „' + a.name + '“ gelöscht.');
+    });
   }
 
   /* ---------- Rechtsklick: Symbol aus der Bibliothek setzen ---------- */
@@ -308,16 +547,25 @@
   function menueZu() {
     if (menue) { menue.parentNode.removeChild(menue); menue = null; }
   }
-  function menueAuf(px, py) {
+  /** $ziel (wahlweise): { abschnitt, abschnittName, ausListe } – „+ Einheit“ neben der Karte */
+  function menueAuf(px, py, ziel) {
     menueZu();
     tafelZu();
+    ziel = ziel || {};
     var ort = gradBei(px, py);
     menue = neu('div', 'lagekarte__menue');
     menue.setAttribute('role', 'menu');
     menue.addEventListener('pointerdown', function (ev) { ev.stopPropagation(); });
     menue.addEventListener('wheel', function (ev) { ev.stopPropagation(); });
     menue.addEventListener('contextmenu', function (ev) { ev.preventDefault(); ev.stopPropagation(); });
-    menue.appendChild(neu('div', 'lagekarte__menue-kopf', 'Symbol hier setzen'));
+    menue.appendChild(neu('div', 'lagekarte__menue-kopf', ziel.ausListe ? 'Einheit hinzufügen' + (ziel.abschnittName ? ' – ' + ziel.abschnittName : '') : 'Symbol hier setzen'));
+    var nurListe = null;
+    if (ziel.ausListe && K.symbole.length) {
+      var zeile = menue.appendChild(neu('label', 'lagekarte__menue-haken small'));
+      nurListe = zeile.appendChild(neu('input'));
+      nurListe.type = 'checkbox';
+      zeile.appendChild(neu('span', '', ' nur in die Liste, nicht auf die Karte'));
+    }
     if (!K.symbole.length) {
       menue.appendChild(neu('p', 'small muted', 'Noch kein Symbol in der Bibliothek.'));
       if (K.symbolSeite) {
@@ -352,12 +600,20 @@
           bild.src = s.src;
           knopf.appendChild(neu('span', '', s.name));
           knopf.addEventListener('click', function () {
+            var daten = { action: 'marker_neu', karte_id: K.id, symbol_id: s.id, lat: ort.lat, lng: ort.lng };
+            if (ziel.abschnitt) { daten.abschnitt_id = ziel.abschnitt; }
+            if (nurListe && nurListe.checked) { daten.lat = ''; daten.lng = ''; }
             menueZu();
-            senden({ action: 'marker_neu', karte_id: K.id, symbol_id: s.id, lat: ort.lat, lng: ort.lng }, function (d) {
+            senden(daten, function (d) {
               if (!d) { return; }
-              markerDazu(d.marker);
+              var m = markerDazu(d.marker);
               zeichnen();
-              melden('„' + s.name + '“ gesetzt – anklicken zum Beschriften, ziehen zum Versetzen.');
+              seiteZeichnen();
+              if (ziel.ausListe) {
+                bearbeiten(m);   // gleich Stärke und Beschriftung eintragen
+              } else {
+                melden('„' + s.name + '“ gesetzt – anklicken für Beschriftung und Stärke, ziehen zum Versetzen.');
+              }
             });
           });
         });
@@ -767,6 +1023,7 @@
 
   /* ---------- Los ---------- */
   K.marker.forEach(markerDazu);
+  seiteZeichnen();
   window.addEventListener('resize', zeichnen);
   wurzel.classList.add('is-bereit');
   jetztZeichnen();

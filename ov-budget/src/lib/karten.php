@@ -4,9 +4,14 @@ declare(strict_types=1);
 /*
  * Karten: Kartenausschnitte auf OpenStreetMap mit eigenen Symbolen.
  *
- *   karten          ein Ausschnitt: Name, Mittelpunkt, Zoom
- *   karten_symbole  die Bibliothek: hochgeladene SVG und Bilder, nach Gruppen
- *   karten_marker   ein Symbol auf einer Karte: wo, wie groß, wie gedreht, Beschriftung
+ *   karten            ein Ausschnitt: Name, Mittelpunkt, Zoom
+ *   karten_symbole    die Bibliothek: hochgeladene SVG und Bilder, nach Gruppen
+ *   karten_abschnitte Abschnitte einer Karte (Einsatzabschnitte, Unterabschnitte) – fassen Einheiten zusammen
+ *   karten_marker     eine Einheit: ein Symbol auf einer Karte – wo, wie groß, wie gedreht, Beschriftung,
+ *                     Stärke (Führer / Unterführer / Helfer) und Abschnitt; ohne Position steht sie nur
+ *                     in der Liste neben der Karte
+ *
+ * Neben der Karte steht die Gesamtstärke aller Einheiten und je Abschnitt die Teilstärke.
  *
  * Die Karte selbst zeichnet der Browser (assets/js/karte.js) ohne fremde
  * Bibliothek; die Kacheln lädt er direkt vom eingestellten Kachelserver.
@@ -31,6 +36,8 @@ const KARTEN_ZOOM_MAX = 19;
 const KARTEN_GROESSE_MIN = 12;
 const KARTEN_GROESSE_MAX = 400;
 const KARTEN_GROESSE_VORGABE = 40;
+/** Je Glied der Stärke (Führer, Unterführer, Helfer) höchstens so viele */
+const KARTEN_STAERKE_MAX = 9999;
 const KARTEN_KACHEL_VORGABE = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 /** Mitte Deutschlands – Start, solange es keinen besseren Punkt gibt */
 const KARTEN_START = ['lat' => 51.1634, 'lng' => 10.4477, 'zoom' => 6];
@@ -118,6 +125,77 @@ function karten_fahrzeug_setzbar(array $r, int $jetzt, int $minuten): bool
     }
     $zeit = !empty($r['geo_at']) ? strtotime((string)$r['geo_at']) : false;
     return $zeit === false || $jetzt - $zeit > $minuten * 60;
+}
+
+/**
+ * Stärke lesen, wie sie im THW geschrieben wird: „Führer/Unterführer/Helfer“, etwa „1/2/9“ oder mit
+ * Summe „1/2/9/12“ (die Summe wird neu gerechnet). Eine einzelne Zahl zählt als Helfer. Leer = 0/0/0.
+ * Gibt [f, u, h] zurück – oder null, wenn es keine Stärke ist. Reine Funktion.
+ */
+function karten_staerke_parsen(mixed $text): ?array
+{
+    if (is_array($text)) {
+        $teile = array_values($text);
+    } else {
+        $text = trim(str_replace(['／', '\\', ' '], ['/', '/', ''], (string)$text));
+        if ($text === '') {
+            return [0, 0, 0];
+        }
+        $teile = explode('/', $text);
+    }
+    if (count($teile) === 1) {
+        $teile = [0, 0, $teile[0]];
+    } elseif (count($teile) === 4) {
+        array_pop($teile);   // die Summe rechnet die Anwendung selbst
+    }
+    if (count($teile) !== 3) {
+        return null;
+    }
+    $out = [];
+    foreach ($teile as $t) {
+        $t = trim((string)$t);
+        if ($t === '') {
+            $t = '0';
+        }
+        if (!preg_match('/^\d{1,5}$/', $t)) {
+            return null;
+        }
+        $out[] = min(KARTEN_STAERKE_MAX, (int)$t);
+    }
+    return $out;
+}
+
+/** Stärke in Worten der Lage: „1/2/9/12“ (Führer/Unterführer/Helfer/Gesamt). Reine Funktion. */
+function karten_staerke_text(int $f, int $u, int $h): string
+{
+    return $f . '/' . $u . '/' . $h . '/' . ($f + $u + $h);
+}
+
+/** Stärke einer Einheit, wie der Browser sie braucht: f, u, h, gesamt, text. Reine Funktion über eine Zeile aus karten_marker. */
+function karten_staerke_daten(array $m): array
+{
+    $f = max(0, (int)($m['staerke_f'] ?? 0));
+    $u = max(0, (int)($m['staerke_u'] ?? 0));
+    $h = max(0, (int)($m['staerke_h'] ?? 0));
+    return ['f' => $f, 'u' => $u, 'h' => $h, 'gesamt' => $f + $u + $h, 'text' => karten_staerke_text($f, $u, $h)];
+}
+
+/** Gesamtstärke über Zeilen aus karten_marker – alle Einheiten der Karte, auch die ohne Position. Reine Funktion. */
+function karten_staerke_summe(array $marker): array
+{
+    $f = $u = $h = 0;
+    foreach ($marker as $m) {
+        $f += max(0, (int)($m['staerke_f'] ?? 0));
+        $u += max(0, (int)($m['staerke_u'] ?? 0));
+        $h += max(0, (int)($m['staerke_h'] ?? 0));
+    }
+    return ['f' => $f, 'u' => $u, 'h' => $h, 'gesamt' => $f + $u + $h, 'text' => karten_staerke_text($f, $u, $h), 'einheiten' => count($marker)];
+}
+
+/** Name eines Abschnitts glätten: Leerraum zusammen, höchstens 100 Zeichen. Reine Funktion. */
+function karten_abschnitt_name(string $name): string
+{
+    return mb_substr(trim((string)preg_replace('/\s+/u', ' ', $name)), 0, 100);
 }
 
 function karten_kachel_url(): string
@@ -272,27 +350,37 @@ function karten_fahrzeug_punkte(array $rows, ?int $jetzt = null, ?int $handMinut
     return $out;
 }
 
-/** Ein gesetztes Symbol, wie es der Browser braucht. Reine Funktion. */
+/** Eine Einheit (gesetztes Symbol), wie der Browser sie braucht. Ohne Position sind lat und lng null. Reine Funktion. */
 function karten_marker_daten(array $m): array
 {
+    $hatOrt = karten_koordinate_ok($m['lat'] ?? null, $m['lng'] ?? null);
     return [
-        'id'      => (int)$m['id'],
-        'symbol'  => (int)$m['symbol_id'],
-        'lat'     => round((float)$m['lat'], 6),
-        'lng'     => round((float)$m['lng'], 6),
-        'groesse' => karten_groesse($m['groesse'] ?? KARTEN_GROESSE_VORGABE),
-        'drehung' => karten_drehung($m['drehung'] ?? 0),
-        'text'    => (string)($m['beschriftung'] ?? ''),
-        'name'    => (string)($m['symbol_name'] ?? ''),
-        'src'     => url('karten_symbol', ['id' => (int)$m['symbol_id']]),
+        'id'        => (int)$m['id'],
+        'symbol'    => (int)$m['symbol_id'],
+        'lat'       => $hatOrt ? round((float)$m['lat'], 6) : null,
+        'lng'       => $hatOrt ? round((float)$m['lng'], 6) : null,
+        'groesse'   => karten_groesse($m['groesse'] ?? KARTEN_GROESSE_VORGABE),
+        'drehung'   => karten_drehung($m['drehung'] ?? 0),
+        'text'      => (string)($m['beschriftung'] ?? ''),
+        'name'      => (string)($m['symbol_name'] ?? ''),
+        'src'       => url('karten_symbol', ['id' => (int)$m['symbol_id']]),
+        'staerke'   => karten_staerke_daten($m),
+        'abschnitt' => (int)($m['abschnitt_id'] ?? 0) > 0 ? (int)$m['abschnitt_id'] : null,
     ];
+}
+
+/** Ein Abschnitt, wie der Browser ihn braucht. Reine Funktion. */
+function karten_abschnitt_daten(array $a): array
+{
+    return ['id' => (int)$a['id'], 'name' => (string)$a['name']];
 }
 
 /**
  * Alles, was karte.js zum Zeichnen braucht – als ein Paket für das data-Attribut.
  * $darf: ['setzen' => bool, 'verwalten' => bool, 'fahrzeuge' => bool]
+ * $abschnitte: Zeilen aus karten_abschnitte dieser Karte
  */
-function karten_konfig(array $karte, array $marker, array $symbole, array $darf): array
+function karten_konfig(array $karte, array $marker, array $symbole, array $darf, array $abschnitte = []): array
 {
     return [
         'id'        => (int)$karte['id'],
@@ -316,6 +404,9 @@ function karten_konfig(array $karte, array $marker, array $symbole, array $darf)
         'fahrzeugSetzen' => !empty($darf['fahrzeuge']) && !empty($darf['fahrzeugSetzen']),
         'groesse'   => ['min' => KARTEN_GROESSE_MIN, 'max' => KARTEN_GROESSE_MAX, 'vorgabe' => KARTEN_GROESSE_VORGABE],
         'marker'    => array_map('karten_marker_daten', $marker),
+        'abschnitte' => array_map('karten_abschnitt_daten', $abschnitte),
+        'staerke'   => karten_staerke_summe($marker),
+        'staerkeMax' => KARTEN_STAERKE_MAX,
         'symbole'   => array_map(static fn(array $s): array => [
             'id' => (int)$s['id'], 'name' => (string)$s['name'], 'gruppe' => (string)$s['gruppe'],
             'src' => url('karten_symbol', ['id' => (int)$s['id']]),
@@ -615,38 +706,72 @@ function karten_marker_find(?int $id): ?array
     return $id ? db_row('SELECT m.*, s.name AS symbol_name FROM karten_marker m JOIN karten_symbole s ON s.id = m.symbol_id WHERE m.id = ?', [$id]) : null;
 }
 
-/** Symbol auf die Karte setzen. Gibt das gesetzte Symbol zurück – oder einen Fehlertext. */
-function karten_marker_neu(array $karte, array $symbol, mixed $lat, mixed $lng, array $user): array|string
+/**
+ * Eine Einheit auf die Karte setzen – oder, ohne Stelle (lat und lng leer), nur in die Liste neben
+ * der Karte. $extra: wahlweise beschriftung, staerke („1/2/9“) und abschnitt (geprüfte Zeile aus
+ * karten_abschnitte oder null). Gibt die Einheit zurück – oder einen Fehlertext.
+ */
+function karten_marker_neu(array $karte, array $symbol, mixed $lat, mixed $lng, array $user, array $extra = []): array|string
 {
-    if (!karten_koordinate_ok($lat, $lng)) {
+    $ohneOrt = trim((string)$lat) === '' && trim((string)$lng) === '';
+    if (!$ohneOrt && !karten_koordinate_ok($lat, $lng)) {
         return 'Diese Stelle liegt nicht auf der Karte.';
     }
-    $id = db_insert('karten_marker', [
-        'karte_id'   => (int)$karte['id'],
-        'symbol_id'  => (int)$symbol['id'],
-        'lat'        => round((float)$lat, 6),
-        'lng'        => round((float)$lng, 6),
-        'groesse'    => KARTEN_GROESSE_VORGABE,
-        'drehung'    => 0,
-        'created_by' => (int)$user['id'],
-    ]);
-    return ['id' => $id, 'symbol_id' => (int)$symbol['id'], 'lat' => (float)$lat, 'lng' => (float)$lng,
-            'groesse' => KARTEN_GROESSE_VORGABE, 'drehung' => 0, 'beschriftung' => '', 'symbol_name' => (string)$symbol['name']];
+    $staerke = karten_staerke_parsen($extra['staerke'] ?? '');
+    if ($staerke === null) {
+        return 'Die Stärke ist nicht lesbar – erwartet wird Führer/Unterführer/Helfer, etwa „1/2/9“.';
+    }
+    $abschnitt = $extra['abschnitt'] ?? null;
+    $zeile = [
+        'karte_id'     => (int)$karte['id'],
+        'symbol_id'    => (int)$symbol['id'],
+        'abschnitt_id' => is_array($abschnitt) ? (int)$abschnitt['id'] : null,
+        'lat'          => $ohneOrt ? null : round((float)$lat, 6),
+        'lng'          => $ohneOrt ? null : round((float)$lng, 6),
+        'groesse'      => KARTEN_GROESSE_VORGABE,
+        'drehung'      => 0,
+        'beschriftung' => mb_substr(trim((string)preg_replace('/\s+/u', ' ', (string)($extra['beschriftung'] ?? ''))), 0, 150),
+        'staerke_f'    => $staerke[0],
+        'staerke_u'    => $staerke[1],
+        'staerke_h'    => $staerke[2],
+        'created_by'   => (int)$user['id'],
+    ];
+    $id = db_insert('karten_marker', $zeile);
+    return ['id' => $id, 'symbol_name' => (string)$symbol['name']] + $zeile;
 }
 
 /**
- * Ein gesetztes Symbol ändern – nur die Felder, die in $neu vorkommen:
- * lat und lng (zusammen), groesse, drehung, beschriftung. Gibt die geänderten Felder zurück – oder einen Fehlertext.
+ * Eine Einheit ändern – nur die Felder, die in $neu vorkommen:
+ * lat und lng (zusammen; beide leer nimmt die Einheit von der Karte), groesse, drehung, beschriftung,
+ * staerke („1/2/9“), abschnitt_id (0 = keiner; die Kennung muss der Aufrufer geprüft haben),
+ * symbol_id (geprüft). Gibt die geänderten Felder zurück – oder einen Fehlertext.
  */
 function karten_marker_aendern(array $marker, array $neu): array|string
 {
     $data = [];
     if (array_key_exists('lat', $neu) || array_key_exists('lng', $neu)) {
-        if (!karten_koordinate_ok($neu['lat'] ?? null, $neu['lng'] ?? null)) {
+        if (trim((string)($neu['lat'] ?? '')) === '' && trim((string)($neu['lng'] ?? '')) === '') {
+            $data['lat'] = null;
+            $data['lng'] = null;
+        } elseif (!karten_koordinate_ok($neu['lat'] ?? null, $neu['lng'] ?? null)) {
             return 'Diese Stelle liegt nicht auf der Karte.';
+        } else {
+            $data['lat'] = round((float)$neu['lat'], 6);
+            $data['lng'] = round((float)$neu['lng'], 6);
         }
-        $data['lat'] = round((float)$neu['lat'], 6);
-        $data['lng'] = round((float)$neu['lng'], 6);
+    }
+    if (array_key_exists('staerke', $neu)) {
+        $staerke = karten_staerke_parsen($neu['staerke']);
+        if ($staerke === null) {
+            return 'Die Stärke ist nicht lesbar – erwartet wird Führer/Unterführer/Helfer, etwa „1/2/9“.';
+        }
+        [$data['staerke_f'], $data['staerke_u'], $data['staerke_h']] = $staerke;
+    }
+    if (array_key_exists('abschnitt_id', $neu)) {
+        $data['abschnitt_id'] = (int)$neu['abschnitt_id'] > 0 ? (int)$neu['abschnitt_id'] : null;
+    }
+    if (array_key_exists('symbol_id', $neu) && (int)$neu['symbol_id'] > 0) {
+        $data['symbol_id'] = (int)$neu['symbol_id'];
     }
     if (array_key_exists('groesse', $neu)) {
         $data['groesse'] = karten_groesse($neu['groesse']);
@@ -666,6 +791,55 @@ function karten_marker_aendern(array $marker, array $neu): array|string
 function karten_marker_delete(array $marker): void
 {
     db_exec('DELETE FROM karten_marker WHERE id = ?', [(int)$marker['id']]);
+}
+
+/* ==================================================================== */
+/* Abschnitte                                                            */
+/* ==================================================================== */
+
+/** Die Abschnitte einer Karte in der Reihenfolge, in der sie angelegt wurden */
+function karten_abschnitte(int $karteId): array
+{
+    return db_all('SELECT * FROM karten_abschnitte WHERE karte_id = ? ORDER BY id', [$karteId]);
+}
+
+function karten_abschnitt_find(?int $id): ?array
+{
+    return $id ? db_row('SELECT * FROM karten_abschnitte WHERE id = ?', [$id]) : null;
+}
+
+/** Abschnitt anlegen. Gibt die Zeile zurück – oder einen Fehlertext. */
+function karten_abschnitt_neu(array $karte, string $name, array $user): array|string
+{
+    $name = karten_abschnitt_name($name);
+    if ($name === '') {
+        return 'Bitte dem Abschnitt einen Namen geben.';
+    }
+    $zeile = ['karte_id' => (int)$karte['id'], 'name' => $name, 'created_by' => (int)$user['id']];
+    $id = db_insert('karten_abschnitte', $zeile);
+    audit('karten.abschnitt_angelegt', 'karte', (int)$karte['id'], $name);
+    return ['id' => $id] + $zeile;
+}
+
+/** Abschnitt umbenennen. Gibt die geänderte Zeile zurück – oder einen Fehlertext. */
+function karten_abschnitt_aendern(array $abschnitt, string $name): array|string
+{
+    $name = karten_abschnitt_name($name);
+    if ($name === '') {
+        return 'Bitte dem Abschnitt einen Namen geben.';
+    }
+    if ($name !== (string)$abschnitt['name']) {
+        db_update('karten_abschnitte', ['name' => $name], 'id = ?', [(int)$abschnitt['id']]);
+    }
+    return array_replace($abschnitt, ['name' => $name]);
+}
+
+/** Abschnitt löschen; seine Einheiten bleiben auf der Karte und stehen dann ohne Abschnitt */
+function karten_abschnitt_delete(array $abschnitt): void
+{
+    db_exec('UPDATE karten_marker SET abschnitt_id = NULL WHERE abschnitt_id = ?', [(int)$abschnitt['id']]);
+    db_exec('DELETE FROM karten_abschnitte WHERE id = ?', [(int)$abschnitt['id']]);
+    audit('karten.abschnitt_geloescht', 'karte', (int)$abschnitt['karte_id'], (string)$abschnitt['name']);
 }
 
 /* ==================================================================== */

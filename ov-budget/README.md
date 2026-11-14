@@ -188,6 +188,9 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 ### Karten
 - **Kartenausschnitte auf OpenStreetMap** mit eigenen Symbolen: per
   Rechtsklick setzen, ziehen, beschriften, in Größe und Drehung anpassen
+- **Stärke je Einheit** (Führer/Unterführer/Helfer) und **Gesamtstärke
+  neben der Karte**; **Abschnitte** mit Teilstärke, in denen sich Einheiten
+  anlegen, ändern und löschen lassen – auch ohne Stelle auf der Karte
 - **Symbolbibliothek** für SVG und Bilder, nach Gruppen; SVG wird beim
   Hochladen auf Skript und Verweise nach außen geprüft
 - **Fahrzeuge einblendbar** an ihrer zuletzt gemeldeten Position; die

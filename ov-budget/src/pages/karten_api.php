@@ -4,9 +4,12 @@ declare(strict_types=1);
 /**
  * Die Karte im Browser spricht hierüber mit der Anwendung – Antworten als JSON.
  *   GET  action=fahrzeuge                       Fahrzeuge mit gemeldeter Position
- *   POST action=marker_neu     karte_id, symbol_id, lat, lng
- *   POST action=marker_aendern id, [lat, lng], [groesse], [drehung], [beschriftung]
+ *   POST action=marker_neu     karte_id, symbol_id, [lat, lng], [beschriftung], [staerke], [abschnitt_id]
+ *   POST action=marker_aendern id, [lat, lng], [groesse], [drehung], [beschriftung], [staerke], [abschnitt_id], [symbol_id]
  *   POST action=marker_weg     id
+ *   POST action=abschnitt_neu     karte_id, name
+ *   POST action=abschnitt_aendern id, name
+ *   POST action=abschnitt_weg     id
  *   POST action=ausschnitt     karte_id, lat, lng, zoom
  */
 $user = require_login();
@@ -68,8 +71,22 @@ if ($action === 'fahrzeug_setzen') {
 }
 
 if (!can('mark_karten')) {
-    $antwort(['ok' => false, 'fehler' => 'Symbole setzen und ändern darfst du nicht.'], 403);
+    $antwort(['ok' => false, 'fehler' => 'Einheiten und Abschnitte ändern darfst du nicht.'], 403);
 }
+
+/** Den Abschnitt aus dem Formular holen und prüfen, dass er zu dieser Karte gehört. null = keiner. */
+$abschnittPruefen = static function (int $karteId) use ($antwort): ?array {
+    $id = (int)post_int('abschnitt_id', 0);
+    if ($id <= 0) {
+        return null;
+    }
+    $a = karten_abschnitt_find($id);
+    if (!$a || (int)$a['karte_id'] !== $karteId) {
+        $antwort(['ok' => false, 'fehler' => 'Diesen Abschnitt gibt es auf dieser Karte nicht (mehr).'], 404);
+    }
+    return $a;
+};
+
 switch ($action) {
     case 'marker_neu':
         $karte = karte_find(post_int('karte_id'));
@@ -77,7 +94,11 @@ switch ($action) {
         if (!$karte || !$symbol) {
             $antwort(['ok' => false, 'fehler' => 'Die Karte oder das Symbol gibt es nicht (mehr).'], 404);
         }
-        $marker = karten_marker_neu($karte, $symbol, post('lat'), post('lng'), $user);
+        $marker = karten_marker_neu($karte, $symbol, post('lat'), post('lng'), $user, [
+            'beschriftung' => post_str('beschriftung'),
+            'staerke'      => post_str('staerke'),
+            'abschnitt'    => $abschnittPruefen((int)$karte['id']),
+        ]);
         if (is_string($marker)) {
             $antwort(['ok' => false, 'fehler' => $marker], 422);
         }
@@ -87,9 +108,21 @@ switch ($action) {
     case 'marker_aendern':
         $marker = karten_marker_find(post_int('id'));
         if (!$marker) {
-            $antwort(['ok' => false, 'fehler' => 'Dieses Symbol sitzt nicht mehr auf der Karte.'], 404);
+            $antwort(['ok' => false, 'fehler' => 'Diese Einheit steht nicht mehr auf der Karte.'], 404);
         }
-        $neu = array_intersect_key($_POST, array_flip(['lat', 'lng', 'groesse', 'drehung', 'beschriftung']));
+        $neu = array_intersect_key($_POST, array_flip(['lat', 'lng', 'groesse', 'drehung', 'beschriftung', 'staerke']));
+        if (array_key_exists('abschnitt_id', $_POST)) {
+            $a = $abschnittPruefen((int)$marker['karte_id']);
+            $neu['abschnitt_id'] = $a ? (int)$a['id'] : 0;
+        }
+        if (array_key_exists('symbol_id', $_POST)) {
+            $symbol = karten_symbol_find(post_int('symbol_id'));
+            if (!$symbol) {
+                $antwort(['ok' => false, 'fehler' => 'Dieses Symbol gibt es nicht (mehr).'], 404);
+            }
+            $neu['symbol_id'] = (int)$symbol['id'];
+            $marker['symbol_name'] = (string)$symbol['name'];
+        }
         $geaendert = karten_marker_aendern($marker, $neu);
         if (is_string($geaendert)) {
             $antwort(['ok' => false, 'fehler' => $geaendert], 422);
@@ -100,6 +133,35 @@ switch ($action) {
         $marker = karten_marker_find(post_int('id'));
         if ($marker) {
             karten_marker_delete($marker);
+        }
+        $antwort(['ok' => true]);
+
+    case 'abschnitt_neu':
+        $karte = karte_find(post_int('karte_id'));
+        if (!$karte) {
+            $antwort(['ok' => false, 'fehler' => 'Diese Karte gibt es nicht (mehr).'], 404);
+        }
+        $a = karten_abschnitt_neu($karte, post_str('name'), $user);
+        if (is_string($a)) {
+            $antwort(['ok' => false, 'fehler' => $a], 422);
+        }
+        $antwort(['ok' => true, 'abschnitt' => karten_abschnitt_daten($a)]);
+
+    case 'abschnitt_aendern':
+        $a = karten_abschnitt_find(post_int('id'));
+        if (!$a) {
+            $antwort(['ok' => false, 'fehler' => 'Diesen Abschnitt gibt es nicht (mehr).'], 404);
+        }
+        $a = karten_abschnitt_aendern($a, post_str('name'));
+        if (is_string($a)) {
+            $antwort(['ok' => false, 'fehler' => $a], 422);
+        }
+        $antwort(['ok' => true, 'abschnitt' => karten_abschnitt_daten($a)]);
+
+    case 'abschnitt_weg':
+        $a = karten_abschnitt_find(post_int('id'));
+        if ($a) {
+            karten_abschnitt_delete($a);
         }
         $antwort(['ok' => true]);
 }
