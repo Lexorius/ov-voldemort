@@ -35,6 +35,10 @@ $auftraege = array_values(array_filter($dateien, static fn($d) => (string)$d['he
   </div>
 </div>
 
+<?php if (!empty($einsatz['event_id']) && !empty($einsatz['event_titel']) && can('view_events')): ?>
+  <p class="alert alert--info">Entstanden aus der Veranstaltung
+    <a href="<?= e(url('event', ['id' => (int)$einsatz['event_id']])) ?>"><?= e((string)$einsatz['event_titel']) ?></a> – Gästeliste und Dateien stehen dort.</p>
+<?php endif; ?>
 <?php if (trim((string)($einsatz['beschreibung'] ?? '')) !== ''): ?>
   <div class="card"><?= nl2br(e((string)$einsatz['beschreibung'])) ?></div>
 <?php endif; ?>

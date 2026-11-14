@@ -305,6 +305,10 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 - Je Veranstaltung einstellbar: wie viele Begleiter erlaubt sind, ob
   Kommentare und Vertretungen erlaubt sind, bis wann zurückgemeldet wird und
   wie lang der Einladungscode ist
+- **Einsatzauftrag (Fb Fü 3)** auch zu einer Veranstaltung, etwa für eine
+  Übung – als PDF bei den Dateien; **„In Einsatz umwandeln"** legt aus der
+  Veranstaltung einen Einsatz an (Tage, Fahrzeuge, Teilnehmerzahl,
+  Buchungen), die Veranstaltung bleibt bestehen
 - **Verpflegung kalkulieren** für Ausbildung, Übung und Einsatz: **Tagessatz**
   je Person mit Gültigkeit von–bis, prozentual auf Frühstück, Mittag- und
   Abendessen verteilt; Dauer und Mahlzeiten je Kalendertag aus dem Zeitraum

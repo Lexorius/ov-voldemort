@@ -1,5 +1,30 @@
 # Änderungsverlauf
 
+## 2.1.90.0
+
+- **Veranstaltungen – Einsatzauftrag (Fb Fü 3):** Auch zu einer Veranstaltung
+  lässt sich ein Einsatzauftrag schreiben, etwa für eine Übung. „+
+  Einsatzauftrag“ öffnet dieselbe Maske mit Vorschau wie am Einsatz; Titel,
+  Ort, Absender, die nächste laufende Nummer und das Datum stehen schon da,
+  bei der Art **Übung** ist das Wasserzeichen „ÜBUNG“ vorgewählt. **„Als PDF
+  an der Veranstaltung speichern“** legt den Auftrag auf dem Server bei den
+  Dateien der Veranstaltung ab (Dateiablage › Veranstaltungen, dort als
+  Einsatzauftrag gekennzeichnet); ein gespeicherter dient dem nächsten als
+  Vorlage.
+- **Veranstaltung in einen Einsatz umwandeln:** „In Einsatz umwandeln“ auf
+  der Seite der Veranstaltung legt einen Einsatz an – mit Titel, Ort,
+  Beschreibung und Fachgruppe, je Kalendertag einer Zeile, den Fahrzeugen
+  der Veranstaltung und der Teilnehmerzahl als Stärke. Bei einem einzelnen
+  Tag kommen Beginn und Ende mit; über mehrere Tage bleiben die Uhrzeiten
+  leer und werden im Einsatz nachgetragen. Die **Buchungen** der
+  Veranstaltung hängen danach auch am Einsatz, ihre **Einsatzaufträge**
+  werden als Kopie mitgenommen. Die Veranstaltung bleibt mit Gästeliste und
+  Dateien bestehen; beide Seiten verweisen aufeinander, ein zweites Mal
+  umwandeln geht nicht. Nötig ist das Recht, Veranstaltungen zu pflegen und
+  Einsätze zu erfassen.
+- Neue Spalten `event_files.herkunft`, `event_files.daten` und
+  `einsaetze.event_id` (Wanderung 112).
+
 ## 2.1.89.0
 
 - **Einsätze – mehrere Fachgruppen und Fahrzeuge je Tag:** Eine Zeile ist

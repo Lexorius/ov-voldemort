@@ -449,11 +449,12 @@ function einsatz_find(?int $id): ?array
     }
     return db_row(
         'SELECT e.*, a.label AS art_label, a.color AS art_color, fg.label AS fachgruppe_label,
-                u.display_name AS ersteller, ' . einsatz_fahrzeuge_sub('e') . ' AS fahrzeuge_namen
+                u.display_name AS ersteller, ev.titel AS event_titel, ' . einsatz_fahrzeuge_sub('e') . ' AS fahrzeuge_namen
          FROM einsaetze e
          LEFT JOIN list_items a  ON a.id  = e.art_id
          LEFT JOIN list_items fg ON fg.id = e.fachgruppe_id
          LEFT JOIN users      u  ON u.id  = e.created_by
+         LEFT JOIN events     ev ON ev.id = e.event_id
          WHERE e.id = ?',
         [$id]
     );
@@ -903,4 +904,158 @@ function einsatz_auftrag_vorgabe(array $einsatz, array $dateien, array $user, st
         $neu = array_merge($neu, $alt, ['laufendeNummer' => $neu['laufendeNummer'], 'ortDatum' => $neu['ortDatum']]);
     }
     return $neu;
+}
+
+/* ==================================================================== */
+/* Veranstaltungen: Einsatzauftrag ablegen, in einen Einsatz umwandeln    */
+/* ==================================================================== */
+
+/**
+ * Einen im Browser gesetzten Einsatzauftrag (PDF) bei den Dateien einer Veranstaltung
+ * ablegen – etwa für eine Übung. Die Felder des Vordrucks werden als JSON mitgespeichert,
+ * damit der nächste Auftrag damit beginnen kann. Gibt [anzahl, fehler[], ids[]] zurück.
+ */
+function event_auftrag_ablegen(int $eventId, string $feld, array $daten, array $user): array
+{
+    [$dateien, $fehler] = upload_dokumente_ablegen($feld, efile_dir());
+    $ids = [];
+    foreach ($dateien as $d) {
+        if (!einsatz_ist_pdf(efile_dir() . DIRECTORY_SEPARATOR . basename((string)$d['stored_name']), (string)$d['orig_name'])) {
+            foreach ([$d['stored_name'], $d['thumb_name']] as $name) {
+                if ($name) {
+                    @unlink(efile_dir() . DIRECTORY_SEPARATOR . basename((string)$name));
+                }
+            }
+            $fehler[] = sprintf('Erwartet wurde ein PDF – „%s" ist keines.', $d['orig_name']);
+            continue;
+        }
+        $ids[] = db_insert('event_files', [
+            'event_id'    => $eventId,
+            'art'         => 'dokument',
+            'herkunft'    => 'auftrag',
+            'titel'       => einsatz_auftrag_titel($daten),
+            'orig_name'   => $d['orig_name'],
+            'stored_name' => $d['stored_name'],
+            'thumb_name'  => null,
+            'mime'        => 'application/pdf',
+            'size_bytes'  => $d['size_bytes'],
+            'daten'       => (string)json_encode($daten, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'uploaded_by' => (int)$user['id'],
+        ]);
+        audit('veranstaltung.einsatzauftrag', 'event', $eventId, einsatz_auftrag_titel($daten));
+    }
+    return [count($ids), $fehler, $ids];
+}
+
+/** Der Einsatz, der aus dieser Veranstaltung entstanden ist – oder null */
+function einsatz_zu_veranstaltung(int $eventId): ?array
+{
+    return $eventId > 0 ? db_row('SELECT * FROM einsaetze WHERE event_id = ? ORDER BY id LIMIT 1', [$eventId]) : null;
+}
+
+/**
+ * Die Zeilen eines Einsatzes aus dem Zeitraum einer Veranstaltung: je Kalendertag eine, mit
+ * der Fachgruppe und den Fahrzeugen der Veranstaltung und der Teilnehmerzahl als Helfer.
+ * Ein einzelner Tag übernimmt Beginn und Ende; über mehrere Tage bleiben die Uhrzeiten leer –
+ * wann an welchem Tag gearbeitet wurde, weiß die Veranstaltung nicht. Höchstens 60 Tage.
+ * Reine Funktion.
+ */
+function einsatz_tage_aus_veranstaltung(array $event, array $vehicleIds = [], int $helfer = 0): array
+{
+    $beginn = (string)($event['beginn'] ?? '');
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}/', $beginn)) {
+        return [];
+    }
+    $ende = (string)(($event['ende'] ?? '') ?: $beginn);
+    $ersterTag = substr($beginn, 0, 10);
+    $letzterTag = max($ersterTag, substr($ende, 0, 10));
+    $zeit = static fn(string $zeitpunkt): ?string => strlen($zeitpunkt) >= 16 && substr($zeitpunkt, 11, 5) !== '00:00' ? substr($zeitpunkt, 11, 5) : null;
+    $zeile = static fn(string $datum, ?string $von, ?string $bis): array => [
+        'datum' => $datum, 'von' => $von, 'bis' => $bis,
+        'fachgruppe_id' => !empty($event['fachgruppe_id']) ? (int)$event['fachgruppe_id'] : null,
+        'staerke_f' => 0, 'staerke_u' => 0, 'staerke_h' => max(0, min(9999, $helfer)),
+        'taetigkeit' => '',
+        'vehicles' => array_values(array_unique(array_filter(array_map('intval', $vehicleIds), static fn($i) => $i > 0))),
+        'km' => [], 'bh' => [],
+    ];
+    if ($letzterTag === $ersterTag) {
+        $von = $zeit($beginn);
+        // ein Ende gibt es nur mit Beginn – und nur, wenn die Veranstaltung eines hat
+        $bis = $von !== null && !empty($event['ende']) ? substr($ende, 11, 5) : null;
+        return [$zeile($ersterTag, $von, $bis)];
+    }
+    $tage = [];
+    for ($tag = strtotime($ersterTag . ' 12:00:00'), $n = 0; date('Y-m-d', $tag) <= $letzterTag && $n < 60; $tag += 86400, $n++) {
+        $tage[] = $zeile(date('Y-m-d', $tag), null, null);
+    }
+    return $tage;
+}
+
+/**
+ * Der Kopf des neuen Einsatzes aus einer Veranstaltung. $ort: Plätze und freier Ort als Text.
+ * Was vorbei oder abgeschlossen ist, beginnt als „beendet". Reine Funktion.
+ */
+function einsatz_kopf_aus_veranstaltung(array $event, string $ort, string $nummer, ?int $artId, ?int $jetzt = null): array
+{
+    $jetzt ??= time();
+    $ende = (string)(($event['ende'] ?? '') ?: ($event['beginn'] ?? ''));
+    $vorbei = (string)($event['status'] ?? '') === 'abgeschlossen' || ($ende !== '' && strtotime($ende) < $jetzt);
+    return [
+        'nummer'        => mb_substr($nummer, 0, 40),
+        'titel'         => mb_substr((string)($event['titel'] ?? ''), 0, 200),
+        'art_id'        => $artId,
+        'status'        => $vorbei ? 'beendet' : 'laufend',
+        'anforderer'    => '',
+        'ort'           => mb_substr($ort, 0, 200),
+        'fachgruppe_id' => !empty($event['fachgruppe_id']) ? (int)$event['fachgruppe_id'] : null,
+        'event_id'      => (int)$event['id'],
+        'beschreibung'  => (string)($event['beschreibung'] ?? ''),
+        'notiz'         => 'Aus der Veranstaltung „' . (string)($event['titel'] ?? '') . '" umgewandelt am ' . date('d.m.Y', $jetzt) . '.',
+    ];
+}
+
+/**
+ * Aus einer Veranstaltung einen Einsatz machen. Die Veranstaltung bleibt, wie sie ist, mit
+ * Gästeliste und Dateien; der Einsatz übernimmt Titel, Ort, Beschreibung, Fachgruppe, die
+ * Tage, die Fahrzeuge und die Teilnehmerzahl als Stärke. Die Buchungen der Veranstaltung
+ * hängen danach auch am Einsatz, ihre Einsatzaufträge werden mitgenommen.
+ * $helfer: wie viele Personen dabei waren. Gibt die Kennung des Einsatzes zurück.
+ */
+function einsatz_aus_veranstaltung(array $event, array $user, int $helfer = 0): int
+{
+    $eventId = (int)$event['id'];
+    $fahrzeuge = function_exists('event_fahrzeuge') ? array_map('intval', array_column(event_fahrzeuge($eventId), 'id')) : [];
+    $tage = einsatz_tage_aus_veranstaltung($event, $fahrzeuge, $helfer);
+    $summen = einsatz_summen($tage);
+    $jahr = (int)substr((string)$summen['beginn'], 0, 4);
+    $ort = function_exists('event_ort_text') ? event_ort_text($event) : (string)($event['ort'] ?? '');
+    $daten = einsatz_kopf_aus_veranstaltung($event, $ort, einsatz_nummer_vorschlag($jahr), list_default_id('einsatz_art')) + [
+        'beginn'     => $summen['beginn'],
+        'ende'       => $summen['ende'],
+        'jahr'       => $jahr,
+        'created_by' => (int)$user['id'],
+        'updated_by' => (int)$user['id'],
+    ];
+    $id = db_insert('einsaetze', $daten);
+    einsatz_tage_setzen($id, $tage);
+    // Was für die Veranstaltung gebucht ist, gehört auch zum Einsatz – der Bezug zur Veranstaltung bleibt
+    db_exec('UPDATE expenses SET einsatz_id = ? WHERE event_id = ? AND einsatz_id IS NULL', [$id, $eventId]);
+    // Einsatzaufträge mitnehmen: als eigene Kopie, damit jede Seite ihre Dateien für sich löschen kann
+    foreach (function_exists('efile_list') ? efile_list($eventId) : [] as $f) {
+        if ((string)($f['herkunft'] ?? '') !== 'auftrag') {
+            continue;
+        }
+        $quelle = efile_path($f);
+        $name = date('Ymd_His') . '_' . bin2hex(random_bytes(8)) . '.pdf';
+        if ($quelle === null || !@copy($quelle, einsatz_datei_dir() . DIRECTORY_SEPARATOR . $name)) {
+            continue;
+        }
+        db_insert('einsatz_files', [
+            'einsatz_id' => $id, 'art' => 'dokument', 'herkunft' => 'auftrag', 'titel' => (string)$f['titel'], 'orig_name' => (string)$f['orig_name'],
+            'stored_name' => $name, 'thumb_name' => null, 'mime' => 'application/pdf', 'size_bytes' => (int)$f['size_bytes'],
+            'daten' => $f['daten'] ?? null, 'karte_id' => null, 'uploaded_by' => $f['uploaded_by'] ?? null,
+        ]);
+    }
+    audit('einsatz.aus_veranstaltung', 'einsatz', $id, einsatz_bezeichnung($daten) . ' / Veranstaltung #' . $eventId);
+    return $id;
 }

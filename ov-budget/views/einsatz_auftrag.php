@@ -1,6 +1,6 @@
 <?php
-/** @var array $einsatz @var array $daten @var ?array $vorlage @var array $konfig */
-$id = (int)$einsatz['id'];
+/** @var array $ziel @var array $daten @var ?array $vorlage @var array $konfig
+ *  $ziel: wozu der Auftrag gehört – name, url, zurueck, wo („am Einsatz" / „an der Veranstaltung"), art */
 $u = (array)($daten['unterpunkte'] ?? []);
 $feld = static fn(string $name, string $label, string $platz = '', int $max = 200): string =>
     '<div class="field"><label for="ea_' . $name . '">' . e($label) . '</label>'
@@ -14,10 +14,10 @@ $json = (string)json_encode($konfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLA
 <div class="pagehead">
   <div>
     <h1>Einsatzauftrag <span class="muted">Fb Fü 3</span></h1>
-    <p>zu <a href="<?= e(url('einsatz', ['id' => $id])) ?>"><?= e(einsatz_bezeichnung($einsatz)) ?></a>
+    <p>zu <?= e((string)$ziel['art']) ?> <a href="<?= e((string)$ziel['url']) ?>"><?= e((string)$ziel['name']) ?></a>
       <?php if ($vorlage): ?> · Texte übernommen aus „<?= e((string)($vorlage['titel'] ?: $vorlage['orig_name'])) ?>"<?php endif; ?></p>
   </div>
-  <a class="btn btn--sec" href="<?= e(url('einsatz', ['id' => $id])) ?>#dateien">Abbrechen</a>
+  <a class="btn btn--sec" href="<?= e((string)$ziel['zurueck']) ?>">Abbrechen</a>
 </div>
 
 <noscript><div class="alert alert--error">Der Einsatzauftrag wird im Browser als PDF gesetzt – dafür braucht die Seite JavaScript.</div></noscript>
@@ -72,11 +72,11 @@ $json = (string)json_encode($konfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLA
       <p class="small muted">In den Textfeldern gilt: <code>**fett**</code>, <code>*kursiv*</code>; Zeilen, die mit <code>|</code> beginnen, werden zur Tabelle.
         Die Schrift wählt der Satz selbst (10 bis 8 pt), damit der Auftrag möglichst auf eine Seite passt – was nicht passt, läuft auf eine Fortsetzungsseite.</p>
       <div class="btnrow">
-        <button class="btn" type="button" data-ea-speichern title="Legt das PDF am Einsatz ab – auf dem Server, in der Dateiablage">Als PDF am Einsatz speichern</button>
+        <button class="btn" type="button" data-ea-speichern title="Legt das PDF <?= e((string)$ziel['wo']) ?> ab – auf dem Server, in der Dateiablage">Als PDF <?= e((string)$ziel['wo']) ?> speichern</button>
         <button class="btn btn--sec" type="button" data-ea-laden title="Nur herunterladen, nichts ablegen">Nur herunterladen</button>
-        <a class="btn btn--sec" href="<?= e(url('einsatz', ['id' => $id])) ?>#dateien">Abbrechen</a>
+        <a class="btn btn--sec" href="<?= e((string)$ziel['zurueck']) ?>">Abbrechen</a>
       </div>
-      <p class="small muted" style="margin-bottom:0">Ein gespeicherter Einsatzauftrag bleibt, wie er ist. Für den nächsten dient er am Einsatz als Vorlage.
+      <p class="small muted" style="margin-bottom:0">Ein gespeicherter Einsatzauftrag bleibt, wie er ist. Für den nächsten dient er <?= e((string)$ziel['wo']) ?> als Vorlage.
         Den Vordruck setzt die Bibliothek <em>einsatzauftrag</em> von Johannes Rudolph (EUPL-1.2) mit <em>jsPDF</em> (MIT) –
         siehe <a href="<?= e(url('lizenzen')) ?>">Bibliotheken und Lizenzen</a>.</p>
     </section>

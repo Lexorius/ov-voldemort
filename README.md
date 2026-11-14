@@ -109,7 +109,9 @@ unter „Sicherheitslücke PHP2Shell".
   Dateien, Gästeliste aus den Kontakten oder nur eine Teilnehmerzahl,
   **Einladung per kurzer Adresse** mit Zu-/Absage, Begleitern und Vertretung
   (verschlüsselt über den Connector), Einlassliste zum Drucken, Serienbrief-CSV
-  mit QR-Code, **Verpflegungskalkulation** nach Tagessatz.
+  mit QR-Code, **Verpflegungskalkulation** nach Tagessatz. Auch hier gibt es
+  den **Einsatzauftrag (Fb Fü 3)** als PDF, etwa für eine Übung, und eine
+  Veranstaltung lässt sich **in einen Einsatz umwandeln**.
 * **Abstimmungen** – Umfragen mit einer oder mehreren Seiten (Auswahl,
   Ankreuzen, Ja/Nein, Skala, Freitext), in der Oberfläche zusammengeklickt
   und über den Connector im Netz: QR-Code zum Scannen, Link zum Weitergeben,

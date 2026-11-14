@@ -3,7 +3,7 @@
  * Liest die Felder, setzt den Vordruck mit der Bibliothek einsatzauftrag (EUPL-1.2,
  * assets/vendor/einsatzauftrag) über jsPDF (MIT, assets/vendor/jspdf) und zeigt ihn als
  * Vorschau. „Speichern" schickt das PDF samt den Feldern an die Anwendung, die es am
- * Einsatz ablegt. Beide Bibliotheken werden nur über ihre öffentliche Schnittstelle benutzt.
+ * Einsatz oder an der Veranstaltung ablegt. Beide Bibliotheken werden nur über ihre öffentliche Schnittstelle benutzt.
  */
 (function () {
   'use strict';
@@ -104,9 +104,8 @@
       }
       var fd = new FormData();
       fd.append('_csrf', K.csrf);
-      fd.append('action', 'pdf');
-      fd.append('herkunft', 'auftrag');
-      fd.append('einsatz_id', K.einsatzId);
+      // Wohin gespeichert wird (Einsatz oder Veranstaltung), sagt die Seite: action, Kennung, Herkunft
+      Object.keys(K.felder || {}).forEach(function (name) { fd.append(name, K.felder[name]); });
       fd.append('daten', JSON.stringify(daten));
       fd.append('pdf[]', setzen(daten).pdf.output('blob'), dateiname(daten));
       speichern.disabled = true;
@@ -120,7 +119,7 @@
             melden(d.fehler);
             return;
           }
-          melden('„' + d.titel + '" ist am Einsatz gespeichert.', true);
+          melden('„' + d.titel + '" ist gespeichert.', true);
           window.location.href = K.zurueck;
         });
     });

@@ -282,6 +282,84 @@ $check('fremde Bibliotheken werden nur dort geladen, wo sie gebraucht werden', s
     && str_contains($lies('src/pages/einsatz_auftrag.php'), "\$GLOBALS['ovb_einsatzauftrag_js'] = true") && str_contains($lies('src/pages/karte.php'), "\$GLOBALS['ovb_karte_einsatz_js'] = \$speichern"));
 $check('Skript zum Aktualisieren liegt bei', is_file(dirname($app) . '/scripts/einsatzauftrag-aktualisieren.sh'));
 
+/* ================= Veranstaltung: Einsatzauftrag ablegen, in einen Einsatz umwandeln ================= */
+require_once $app . '/src/lib/events.php';
+$ev = ['id' => 40, 'titel' => 'Übung Deichverteidigung', 'beginn' => '2026-11-14 09:00:00', 'ende' => '2026-11-14 16:30:00', 'ort' => 'Deich Süd', 'standorte_namen' => 'Halle 1',
+    'status' => 'geplant', 'fachgruppe_id' => 21, 'beschreibung' => 'Verbau üben', 'typ_slug' => 'uebung'];
+$t1 = einsatz_tage_aus_veranstaltung($ev, [3, 8, 3, 0], 14);
+$check('ein Tag: Beginn und Ende, Fachgruppe, Fahrzeuge, Teilnehmer als Helfer', count($t1) === 1 && $t1[0]['datum'] === '2026-11-14' && $t1[0]['von'] === '09:00' && $t1[0]['bis'] === '16:30'
+    && $t1[0]['fachgruppe_id'] === 21 && $t1[0]['vehicles'] === [3, 8] && $t1[0]['staerke_h'] === 14 && $t1[0]['staerke_f'] === 0 && einsatz_tag_minuten($t1[0]) === 450);
+$t2 = einsatz_tage_aus_veranstaltung(['beginn' => '2026-11-14 00:00:00', 'ende' => null, 'fachgruppe_id' => null] + $ev);
+$check('ein Tag ohne Uhrzeit und ohne Ende: ganztägig', count($t2) === 1 && $t2[0]['von'] === null && $t2[0]['bis'] === null && $t2[0]['fachgruppe_id'] === null && $t2[0]['vehicles'] === []);
+$t3 = einsatz_tage_aus_veranstaltung(['beginn' => '2026-11-14 18:00:00', 'ende' => null] + $ev);
+$check('ein Tag mit Beginn, aber ohne Ende: läuft offen', $t3[0]['von'] === '18:00' && $t3[0]['bis'] === null);
+$t4 = einsatz_tage_aus_veranstaltung(['beginn' => '2026-12-30 18:00:00', 'ende' => '2027-01-02 12:00:00'] + $ev, [3], 9);
+$check('mehrere Tage: je Kalendertag eine Zeile ohne Uhrzeit, über den Jahreswechsel', array_column($t4, 'datum') === ['2026-12-30', '2026-12-31', '2027-01-01', '2027-01-02']
+    && array_filter(array_column($t4, 'von')) === [] && $t4[3]['vehicles'] === [3] && $t4[2]['staerke_h'] === 9);
+$check('höchstens 60 Tage, ohne Beginn nichts', count(einsatz_tage_aus_veranstaltung(['beginn' => '2026-01-01 08:00:00', 'ende' => '2026-12-31 18:00:00'] + $ev)) === 60
+    && einsatz_tage_aus_veranstaltung(['beginn' => ''] + $ev) === []);
+$kopf = einsatz_kopf_aus_veranstaltung($ev, 'Halle 1 · Deich Süd', '2026-015', 11, strtotime('2026-11-10 12:00:00'));
+$check('Kopf: Titel, Ort, Fachgruppe, Beschreibung, Bezug zur Veranstaltung; noch nicht vorbei = läuft', $kopf['titel'] === 'Übung Deichverteidigung' && $kopf['ort'] === 'Halle 1 · Deich Süd'
+    && $kopf['event_id'] === 40 && $kopf['fachgruppe_id'] === 21 && $kopf['beschreibung'] === 'Verbau üben' && $kopf['status'] === 'laufend' && $kopf['nummer'] === '2026-015'
+    && $kopf['art_id'] === 11 && str_contains($kopf['notiz'], 'umgewandelt am 10.11.2026'));
+$check('was vorbei oder abgeschlossen ist, beginnt als beendet', einsatz_kopf_aus_veranstaltung($ev, '', '', null, strtotime('2026-11-20 12:00:00'))['status'] === 'beendet'
+    && einsatz_kopf_aus_veranstaltung(['status' => 'abgeschlossen'] + $ev, '', '', null, strtotime('2026-11-10 12:00:00'))['status'] === 'beendet');
+
+// Einsatzauftrag bei den Dateien der Veranstaltung ablegen
+$GLOBALS['inserts'] = [];
+$hochladen('Einsatzauftrag-1.pdf', $pdf);
+[$n, $f, $evIds] = event_auftrag_ablegen(40, 'pdf', ['laufendeNummer' => '1', 'empfaenger' => 'B1', 'uebung' => true], current_user());
+$evZeile = $nur('event_files')[0][1] ?? [];
+$check('Einsatzauftrag an der Veranstaltung abgelegt' . ($f ? ' – ' . implode(' ', $f) : ''), $n === 1 && $f === [] && ($evZeile['herkunft'] ?? '') === 'auftrag' && $evZeile['event_id'] === 40
+    && $evZeile['titel'] === 'Einsatzauftrag Nr. 1 an B1 (Übung)' && $evZeile['mime'] === 'application/pdf' && json_decode((string)$evZeile['daten'], true)['empfaenger'] === 'B1'
+    && is_file($tmp . '/veranstaltungen/' . $evZeile['stored_name']));
+$hochladen('Einsatzauftrag-2.pdf', 'kein pdf');
+[$n2, $f2] = event_auftrag_ablegen(40, 'pdf', [], current_user());
+$check('was kein PDF ist, wird auch dort abgewiesen', $n2 === 0 && count($f2) === 1 && count($nur('event_files')) === 1 && count(glob($tmp . '/veranstaltungen/*') ?: []) === 1);
+
+// Umwandeln: Einsatz mit Zeilen und Fahrzeugen, Buchungen bekommen den Bezug, Einsatzaufträge kommen mit
+$GLOBALS['inserts'] = [];
+$GLOBALS['execs'] = [];
+$GLOBALS['rows'] = [
+    'FROM event_vehicles ev' => [['id' => 3, 'bezeichnung' => 'GKW 1', 'funkrufname' => '', 'kennzeichen' => '', 'is_active' => 1]],
+    'FROM event_files f' => [['id' => 90, 'event_id' => 40, 'herkunft' => 'auftrag', 'titel' => 'Einsatzauftrag Nr. 1 an B1 (Übung)', 'orig_name' => 'Einsatzauftrag-1.pdf',
+        'stored_name' => $evZeile['stored_name'], 'thumb_name' => null, 'size_bytes' => strlen($pdf), 'daten' => $evZeile['daten'], 'uploaded_by' => 7],
+        ['id' => 91, 'event_id' => 40, 'herkunft' => 'upload', 'titel' => 'Rechnung', 'orig_name' => 'r.pdf', 'stored_name' => 'gibtsnicht.pdf', 'thumb_name' => null, 'size_bytes' => 1, 'daten' => null, 'uploaded_by' => 7]],
+];
+$neuerEinsatz = einsatz_aus_veranstaltung($ev, current_user(), 14);
+$e1 = $nur('einsaetze')[0][1] ?? [];
+$check('Einsatz aus der Veranstaltung: Kopf mit Bezug, Zeitraum aus dem Tag', $neuerEinsatz > 0 && ($e1['event_id'] ?? 0) === 40 && $e1['titel'] === 'Übung Deichverteidigung'
+    && $e1['beginn'] === '2026-11-14 09:00:00' && $e1['ende'] === '2026-11-14 16:30:00' && $e1['jahr'] === 2026 && $e1['ort'] === 'Halle 1 · Deich Süd' && $e1['created_by'] === 7);
+$check('Zeile mit Fachgruppe, Stärke und Fahrzeug übernommen', count($nur('einsatz_tage')) === 1 && $nur('einsatz_tage')[0][1]['fachgruppe_id'] === 21 && $nur('einsatz_tage')[0][1]['staerke_h'] === 14
+    && $nur('einsatz_tag_vehicles')[0][1]['vehicle_id'] === 3 && $nur('einsatz_vehicles')[0][1]['vehicle_id'] === 3);
+$bezug = array_values(array_filter($GLOBALS['execs'], static fn($x) => str_contains($x[0], 'UPDATE expenses SET einsatz_id = ? WHERE event_id = ? AND einsatz_id IS NULL')));
+$check('Buchungen der Veranstaltung hängen danach auch am Einsatz', count($bezug) === 1 && $bezug[0][1] === [$neuerEinsatz, 40]);
+$kopie = $nur('einsatz_files');
+$check('nur die Einsatzaufträge kommen mit – als eigene Kopie mit ihren Feldern', count($kopie) === 1 && $kopie[0][1]['herkunft'] === 'auftrag' && $kopie[0][1]['einsatz_id'] === $neuerEinsatz
+    && $kopie[0][1]['stored_name'] !== $evZeile['stored_name'] && is_file($tmp . '/einsaetze/' . $kopie[0][1]['stored_name']) && is_file($tmp . '/veranstaltungen/' . $evZeile['stored_name'])
+    && json_decode((string)$kopie[0][1]['daten'], true)['empfaenger'] === 'B1');
+$GLOBALS['rows'] = [];
+
+$aktionV = $lies('src/pages/event_action.php');
+$check('Veranstaltung: PDF-Ablage und Umwandeln nur mit Recht', str_contains($aktionV, "post_str('action') === 'auftrag_pdf'") && str_contains($aktionV, "case 'zu_einsatz':")
+    && str_contains($aktionV, "can('manage_einsaetze')") && str_contains($aktionV, 'einsatz_zu_veranstaltung(') && strpos($aktionV, "can('manage_events')") < strpos($aktionV, 'event_auftrag_ablegen('));
+$ansichtV = $lies('views/event.php');
+$check('Seite der Veranstaltung: Einsatzauftrag schreiben, umwandeln oder zum Einsatz', str_contains($ansichtV, "url('einsatz_auftrag', ['event_id' => \$id])") && str_contains($ansichtV, 'value="zu_einsatz"')
+    && str_contains($ansichtV, 'In Einsatz umwandeln') && str_contains($ansichtV, 'Zum Einsatz') && str_contains($ansichtV, "'vorlage' => \$f['id']"));
+$maskeV = render_partial('einsatz_auftrag', ['daten' => ['einsatz' => 'Übung Deichverteidigung', 'uebung' => true, 'laufendeNummer' => '2'], 'vorlage' => null,
+    'ziel' => ['name' => 'Übung Deichverteidigung', 'url' => '/index.php?p=event&id=40', 'zurueck' => '/index.php?p=event&id=40#dateien', 'wo' => 'an der Veranstaltung', 'art' => 'Veranstaltung'],
+    'konfig' => ['ablage' => '/index.php?p=event_action', 'csrf' => 'abc', 'felder' => ['action' => 'auftrag_pdf', 'event_id' => 40], 'zurueck' => '/index.php?p=event&id=40#dateien', 'fusszeile' => 'OV']]);
+$check('Maske zur Veranstaltung: speichert dorthin, Übung ist angehakt', str_contains($maskeV, 'Als PDF an der Veranstaltung speichern') && str_contains($maskeV, 'p=event&amp;id=40#dateien')
+    && (bool)preg_match('/data-ea-uebung value="1" checked/', $maskeV) && str_contains($maskeV, '&quot;action&quot;:&quot;auftrag_pdf&quot;') && str_contains($maskeV, '&quot;event_id&quot;:40'));
+$seiteA = $lies('src/pages/einsatz_auftrag.php');
+$check('Seite: Veranstaltung braucht das Recht der Veranstaltungen, Übungen bekommen das Wasserzeichen', str_contains($seiteA, "can('manage_events')") && str_contains($seiteA, "can('manage_einsaetze')")
+    && str_contains($seiteA, "=== 'uebung'") && str_contains($seiteA, "'felder' => ['action' => 'auftrag_pdf', 'event_id' => \$id]"));
+$check('Maske schickt die Felder, die die Seite vorgibt', str_contains($lies('public/assets/js/einsatzauftrag-maske.js'), 'Object.keys(K.felder || {})'));
+$check('Wanderung 112: Herkunft und Felder an den Dateien, Bezug am Einsatz', str_contains($lies('src/cli/migrate.php'), "\$merken('112_veranstaltung_auftrag_einsatz')")
+    && str_contains($lies('src/cli/migrate.php'), "ADD COLUMN herkunft VARCHAR(20) NOT NULL DEFAULT 'upload' AFTER art") && str_contains($lies('src/cli/migrate.php'), 'fk_einsatz_event')
+    && (bool)preg_match('/CREATE TABLE IF NOT EXISTS event_files \(.*?herkunft\s+VARCHAR\(20\).*?daten\s+MEDIUMTEXT.*?\) ENGINE/s', $lies('sql/schema.sql'))
+    && (bool)preg_match('/CREATE TABLE IF NOT EXISTS einsaetze \(.*?event_id\s+INT UNSIGNED NULL.*?fk_einsatz_event.*?\) ENGINE/s', $lies('sql/schema.sql')));
+
 /* ================= Treibstoffart am Fahrzeug ================= */
 require_once $app . '/src/lib/vehicles.php';
 $check('sechs Treibstoffarten', array_values(FZ_TREIBSTOFFE) === ['Diesel', 'Diesel HVO', 'Benzin', 'Super', 'Super mit Bleizusatz', 'Super E10']);
@@ -295,8 +373,10 @@ $check('Formular, Akte, Tankmaske, Schema und Wanderung kennen die Treibstoffart
     && str_contains($lies('src/cli/migrate.php'), "\$merken('111_fahrzeug_treibstoff')"));
 
 /* ================= Maske und Verdrahtung ================= */
-$maske = render_partial('einsatz_auftrag', ['einsatz' => $einsatz, 'daten' => $v, 'vorlage' => null,
-    'konfig' => ['ablage' => '/index.php?p=einsatz_action', 'csrf' => 'abc', 'einsatzId' => 5, 'zurueck' => '/index.php?p=einsatz&id=5#dateien', 'fusszeile' => 'OV']]);
+$maske = render_partial('einsatz_auftrag', ['daten' => $v, 'vorlage' => null,
+    'ziel' => ['name' => '2026-014 · Hochwasser Hunte', 'url' => '/index.php?p=einsatz&id=5', 'zurueck' => '/index.php?p=einsatz&id=5#dateien', 'wo' => 'am Einsatz', 'art' => 'Einsatz'],
+    'konfig' => ['ablage' => '/index.php?p=einsatz_action', 'csrf' => 'abc', 'felder' => ['action' => 'pdf', 'herkunft' => 'auftrag', 'einsatz_id' => 5],
+        'zurueck' => '/index.php?p=einsatz&id=5#dateien', 'fusszeile' => 'OV']]);
 $check('Maske: alle Felder des Vordrucks, vorbelegt', substr_count($maske, 'data-ea-punkt=') === 13 && str_contains($maske, 'data-ea="auftrag"') && str_contains($maske, 'data-ea="fuehrung"')
     && str_contains($maske, 'value="THW OV Musterstadt"') && str_contains($maske, 'value="13"') && str_contains($maske, '>Pegel 5,80 m</textarea>') && str_contains($maske, 'data-ea-uebung'));
 $check('Maske: speichern am Einsatz, nur herunterladen, Vorschau – ohne Skript im HTML', str_contains($maske, 'data-ea-speichern') && str_contains($maske, 'data-ea-laden')
@@ -331,8 +411,9 @@ $sicher = $lies('public/assets/js/karte-einsatz.js') . $lies('public/assets/js/e
 $check('Skripte: Texte nur als Text, nie als HTML', !str_contains($sicher, 'innerHTML') && !str_contains($sicher, 'insertAdjacentHTML') && !str_contains($sicher, 'document.write') && !str_contains($sicher, 'eval('));
 
 // aufräumen
-foreach (glob($tmp . '/einsaetze/*') ?: [] as $f) { @unlink($f); }
+foreach (array_merge(glob($tmp . '/einsaetze/*') ?: [], glob($tmp . '/veranstaltungen/*') ?: []) as $f) { @unlink($f); }
 @rmdir($tmp . '/einsaetze');
+@rmdir($tmp . '/veranstaltungen');
 @rmdir($tmp);
 
 echo "$ok bestanden, $fail fehlgeschlagen\n";

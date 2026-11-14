@@ -2869,6 +2869,7 @@ SQL);
   ende          DATETIME     NULL,
   jahr          SMALLINT     NOT NULL,
   fachgruppe_id INT UNSIGNED NULL,
+  event_id      INT UNSIGNED NULL,
   beschreibung  TEXT         NULL,
   notiz         TEXT         NULL,
   created_by    INT UNSIGNED NULL,
@@ -2879,6 +2880,7 @@ SQL);
   KEY idx_einsatz_beginn (beginn),
   KEY idx_einsatz_jahr (jahr, status),
   KEY idx_einsatz_nummer (nummer),
+  KEY idx_einsatz_event (event_id),
   CONSTRAINT fk_einsatz_art FOREIGN KEY (art_id)        REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_einsatz_fg  FOREIGN KEY (fachgruppe_id) REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_einsatz_cb  FOREIGN KEY (created_by)    REFERENCES users(id)      ON DELETE SET NULL,
@@ -3016,6 +3018,23 @@ SQL);
         $say('Fahrzeuge bekommen eine Treibstoffart.');
     }
     $merken('111_fahrzeug_treibstoff');
+
+    /* ---------- 112: Einsatzaufträge an Veranstaltungen, Veranstaltung wird Einsatz ---------- */
+    if (ovb_table_exists($pdo, 'event_files') && !ovb_column_exists($pdo, 'event_files', 'herkunft')) {
+        $pdo->exec("ALTER TABLE event_files
+            ADD COLUMN herkunft VARCHAR(20) NOT NULL DEFAULT 'upload' AFTER art,
+            ADD COLUMN daten MEDIUMTEXT NULL AFTER betrag");
+        $say('Dateien der Veranstaltungen merken sich Herkunft und Felder eines Einsatzauftrags.');
+    }
+    if (ovb_table_exists($pdo, 'einsaetze') && !ovb_column_exists($pdo, 'einsaetze', 'event_id')) {
+        $pdo->exec('ALTER TABLE einsaetze ADD COLUMN event_id INT UNSIGNED NULL AFTER fachgruppe_id, ADD KEY idx_einsatz_event (event_id)');
+        $say('Einsätze merken sich die Veranstaltung, aus der sie entstanden sind.');
+    }
+    if (ovb_table_exists($pdo, 'events') && ovb_column_exists($pdo, 'einsaetze', 'event_id')
+        && !ovb_constraint_exists($pdo, 'einsaetze', 'fk_einsatz_event')) {
+        $pdo->exec('ALTER TABLE einsaetze ADD CONSTRAINT fk_einsatz_event FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE SET NULL');
+    }
+    $merken('112_veranstaltung_auftrag_einsatz');
 }
 
 /**

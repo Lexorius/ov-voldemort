@@ -1071,6 +1071,9 @@ CREATE TABLE IF NOT EXISTS event_files (
   id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
   event_id     INT UNSIGNED NOT NULL,
   art          VARCHAR(20)  NOT NULL DEFAULT 'dokument',
+  -- upload (hochgeladen) oder auftrag (Einsatzauftrag Fb Fue 3, im Browser als PDF erzeugt;
+  -- daten haelt die Felder des Vordrucks als JSON zum Weiterschreiben)
+  herkunft     VARCHAR(20)  NOT NULL DEFAULT 'upload',
   titel        VARCHAR(200) NOT NULL DEFAULT '',
   orig_name    VARCHAR(255) NOT NULL DEFAULT '',
   stored_name  VARCHAR(255) NOT NULL,
@@ -1078,6 +1081,7 @@ CREATE TABLE IF NOT EXISTS event_files (
   mime         VARCHAR(120) NOT NULL DEFAULT '',
   size_bytes   INT UNSIGNED NOT NULL DEFAULT 0,
   betrag       DECIMAL(12,2) NULL,
+  daten        MEDIUMTEXT   NULL,
   uploaded_by  INT UNSIGNED NULL,
   created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
@@ -2253,6 +2257,7 @@ CREATE TABLE IF NOT EXISTS karten_marker (
 -- Einsaetze: ein Einsatz geht ueber einen oder mehrere Tage. Jeder Tag (oder jede
 -- Schicht) hat Datum, Zeit, Staerke (Fuehrer / Unterfuehrer / Helfer) und Taetigkeit.
 -- beginn und ende am Einsatz sind daraus abgeleitet (fuer Liste und Kalender).
+-- event_id: die Veranstaltung, aus der der Einsatz entstanden ist (umgewandelt).
 -- Ausgaben und Einnahmen haengen ueber expenses.einsatz_id am Einsatz.
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS einsaetze (
@@ -2267,6 +2272,7 @@ CREATE TABLE IF NOT EXISTS einsaetze (
   ende          DATETIME     NULL,
   jahr          SMALLINT     NOT NULL,
   fachgruppe_id INT UNSIGNED NULL,
+  event_id      INT UNSIGNED NULL,
   beschreibung  TEXT         NULL,
   notiz         TEXT         NULL,
   created_by    INT UNSIGNED NULL,
@@ -2277,8 +2283,10 @@ CREATE TABLE IF NOT EXISTS einsaetze (
   KEY idx_einsatz_beginn (beginn),
   KEY idx_einsatz_jahr (jahr, status),
   KEY idx_einsatz_nummer (nummer),
+  KEY idx_einsatz_event (event_id),
   CONSTRAINT fk_einsatz_art FOREIGN KEY (art_id)        REFERENCES list_items(id) ON DELETE SET NULL,
   CONSTRAINT fk_einsatz_fg  FOREIGN KEY (fachgruppe_id) REFERENCES list_items(id) ON DELETE SET NULL,
+  CONSTRAINT fk_einsatz_event FOREIGN KEY (event_id)    REFERENCES events(id)     ON DELETE SET NULL,
   CONSTRAINT fk_einsatz_cb  FOREIGN KEY (created_by)    REFERENCES users(id)      ON DELETE SET NULL,
   CONSTRAINT fk_einsatz_ub  FOREIGN KEY (updated_by)    REFERENCES users(id)      ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

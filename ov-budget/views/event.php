@@ -5,6 +5,7 @@
 
 $id = (int)$event['id'];
 $darf = can('manage_events');
+$einsatz ??= null;
 $beginn = (string)$event['beginn'];
 $ende = (string)($event['ende'] ?? '');
 $zeit = substr($beginn, 11, 5);
@@ -29,10 +30,26 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
   <div class="btnrow">
     <?php if ($darf): ?>
       <a class="btn" href="<?= e(url('event_edit', ['id' => $id])) ?>">Bearbeiten</a>
+      <a class="btn btn--sec" href="<?= e(url('einsatz_auftrag', ['event_id' => $id])) ?>" title="Einsatzauftrag (Fb Fü 3) schreiben – etwa für eine Übung">+ Einsatzauftrag</a>
+    <?php endif; ?>
+    <?php if ($einsatz): ?>
+      <a class="btn btn--sec" href="<?= e(url('einsatz', ['id' => $einsatz['id']])) ?>">Zum Einsatz</a>
+    <?php elseif ($darf && can('manage_einsaetze')): ?>
+      <form method="post" action="<?= e(url('event_action')) ?>" class="inline-form">
+        <?= csrf_field() ?>
+        <input type="hidden" name="action" value="zu_einsatz">
+        <input type="hidden" name="event_id" value="<?= $id ?>">
+        <button class="btn btn--sec" type="submit" title="Legt einen Einsatz mit Titel, Ort, Tagen, Fahrzeugen und Teilnehmerzahl an – die Veranstaltung bleibt bestehen"
+                data-confirm="Aus dieser Veranstaltung einen Einsatz machen? Die Veranstaltung bleibt bestehen; der Einsatz übernimmt Titel, Ort, Tage, Fahrzeuge, Teilnehmerzahl, Buchungen und Einsatzaufträge.">In Einsatz umwandeln</button>
+      </form>
     <?php endif; ?>
     <a class="btn btn--sec" href="<?= e(url('events')) ?>">Alle Veranstaltungen</a>
   </div>
 </div>
+<?php if ($einsatz): ?>
+  <p class="alert alert--info">Aus dieser Veranstaltung ist der Einsatz
+    <a href="<?= e(url('einsatz', ['id' => $einsatz['id']])) ?>"><?= e(einsatz_bezeichnung($einsatz)) ?></a> entstanden.</p>
+<?php endif; ?>
 
 <?php if (trim((string)($event['beschreibung'] ?? '')) !== ''): ?>
   <div class="card"><?= nl2br(e((string)$event['beschreibung'])) ?></div>
@@ -536,7 +553,8 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
 <div class="card" id="dateien">
   <div class="card__head">
     <h2>Dateien</h2>
-    <span class="muted small"><?= count($dateien) ?></span>
+    <?php if ($darf): ?><a class="btn btn--sec btn--sm" href="<?= e(url('einsatz_auftrag', ['event_id' => $id])) ?>">+ Einsatzauftrag (Fb Fü 3)</a>
+    <?php else: ?><span class="muted small"><?= count($dateien) ?></span><?php endif; ?>
   </div>
   <?php if (!$dateien): ?>
     <div class="empty">Noch nichts abgelegt – hier gehören Rechnungen, Angebote und das Programm hin.</div>
@@ -551,6 +569,7 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
           <tr>
             <td>
               <a href="<?= e(url('event_file', ['id' => $f['id']])) ?>"><?= e((string)($f['titel'] ?: $f['orig_name'])) ?></a>
+              <?php if ((string)($f['herkunft'] ?? '') === 'auftrag'): ?><span class="badge badge--outline">Einsatzauftrag</span><?php endif; ?>
               <div class="small muted"><?= e((string)$f['orig_name']) ?>
                 · <?= e(de_datetime((string)$f['created_at'])) ?>
                 <?= $f['hochgeladen_von'] ? '· ' . e((string)$f['hochgeladen_von']) : '' ?></div>
@@ -561,6 +580,9 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
                 ? e(money((float)$f['betrag'])) : '<span class="muted">–</span>' ?></td>
             <?php if ($darf): ?>
               <td style="text-align:right">
+                <?php if ((string)($f['herkunft'] ?? '') === 'auftrag'): ?>
+                  <a class="btn btn--sec btn--sm" href="<?= e(url('einsatz_auftrag', ['event_id' => $id, 'vorlage' => $f['id']])) ?>" title="Neuer Einsatzauftrag mit den Texten von diesem">Als Vorlage</a>
+                <?php endif; ?>
                 <form method="post" action="<?= e(url('event_action')) ?>" class="inline-form">
                   <?= csrf_field() ?>
                   <input type="hidden" name="action" value="datei_weg">

@@ -1,13 +1,40 @@
 <?php
 declare(strict_types=1);
 
-/** Alles, was an einer Veranstaltung geändert wird: Gäste, Dateien, Einladungen */
+/**
+ * Alles, was an einer Veranstaltung geändert wird: Gäste, Dateien, Einladungen –
+ * dazu der Einsatzauftrag als PDF (Antwort als JSON) und das Umwandeln in einen Einsatz.
+ */
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirect_route('events');
 }
 
 $user = require_login();
+
+// Ein im Browser gesetzter Einsatzauftrag: action=auftrag_pdf, event_id, daten, pdf[]
+if (post_str('action') === 'auftrag_pdf') {
+    header('Content-Type: application/json; charset=UTF-8');
+    $antwort = static function (array $d, int $code = 200): never {
+        http_response_code($code);
+        echo json_encode($d, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    };
+    if (!can('manage_events')) {
+        $antwort(['ok' => false, 'fehler' => 'Einsatzaufträge an einer Veranstaltung ablegen darfst du nicht.'], 403);
+    }
+    $ziel = event_find(post_int('event_id', 0));
+    if (!$ziel) {
+        $antwort(['ok' => false, 'fehler' => 'Diese Veranstaltung gibt es nicht (mehr).'], 404);
+    }
+    $daten = einsatz_auftrag_daten(post_str('daten'));
+    [$anzahl, $fehler, $ids] = event_auftrag_ablegen((int)$ziel['id'], 'pdf', $daten, $user);
+    if ($anzahl < 1) {
+        $antwort(['ok' => false, 'fehler' => $fehler ? implode(' ', $fehler) : 'Es kam kein PDF an.'], 422);
+    }
+    $antwort(['ok' => true, 'titel' => einsatz_auftrag_titel($daten), 'datei' => url('event_file', ['id' => $ids[0]]),
+              'einsatz' => url('event', ['id' => (int)$ziel['id']]) . '#dateien']);
+}
 $event = event_find(post_int('event_id', 0));
 if (!$event) {
     flash('error', 'Diese Veranstaltung gibt es nicht (mehr).');
@@ -119,6 +146,23 @@ switch (post_str('action')) {
         }
         $zurueck .= '#dateien';
         break;
+
+    /* ---------------- Aus der Veranstaltung wird ein Einsatz ---------------- */
+
+    case 'zu_einsatz':
+        if (!can('manage_einsaetze')) {
+            flash('error', 'Einsätze anlegen darfst du nicht.');
+            break;
+        }
+        $schon = einsatz_zu_veranstaltung((int)$event['id']);
+        if ($schon) {
+            flash('info', 'Aus dieser Veranstaltung ist schon ein Einsatz entstanden.');
+            redirect_route('einsatz', ['id' => (int)$schon['id']]);
+        }
+        $einsatzId = einsatz_aus_veranstaltung($event, $user, event_personen($event, event_stats(event_guests((int)$event['id']))));
+        flash('success', 'Einsatz angelegt. Die Veranstaltung bleibt bestehen; ihre Buchungen hängen jetzt auch am Einsatz.');
+        flash('info', 'Bitte Uhrzeiten, Stärke, Fachgruppen und Fahrzeuge je Tag prüfen und ergänzen.');
+        redirect(url('einsatz_edit', ['id' => $einsatzId]) . '#tage');
 
     /* ---------------- Einladungen über den Connector ---------------- */
 

@@ -1576,6 +1576,17 @@ mit denselben Texten, neuer Nummer und leerem Empfänger. Gesetzt wird der
 Vordruck im Browser von der Bibliothek *einsatzauftrag* (siehe
 *Bibliotheken und Lizenzen*); das THW-Zeichen ist nicht enthalten.
 
+**Aus einer Veranstaltung.** Wird aus einer Übung oder Bereitstellung ein
+Einsatz, legt **„In Einsatz umwandeln"** auf der Seite der Veranstaltung ihn
+an: Titel, Ort, Beschreibung und Fachgruppe, je Kalendertag eine Zeile, die
+Fahrzeuge der Veranstaltung und die Teilnehmerzahl als Stärke. Bei einem
+einzelnen Tag kommen Beginn und Ende mit; über mehrere Tage bleiben die
+Uhrzeiten leer – wann an welchem Tag gearbeitet wurde, weiß die
+Veranstaltung nicht. Danach öffnet sich der Einsatz zum Nachtragen. Die
+Buchungen der Veranstaltung hängen dann auch am Einsatz, ihre
+Einsatzaufträge kommen als Kopie mit. Die Veranstaltung bleibt bestehen;
+beide Seiten verweisen aufeinander.
+
 **Dokumente.** Lagemeldungen, Anforderungen und Fotos lassen sich am Einsatz
 hochladen. Sie liegen in derselben Ablage wie die Einsatzaufträge und die
 Lagekarten aus dem Kartenmodul.
@@ -1610,6 +1621,21 @@ bestehen – beide verlieren nur den Bezug.
 
 Anlegen und ändern darf die **OV-Leitung**; ob alle Mitglieder Veranstaltungen
 sehen, steht unter *Einstellungen → Veranstaltungen*.
+
+### Einsatzauftrag und Umwandeln in einen Einsatz
+
+Zu einer Veranstaltung lässt sich ein **Einsatzauftrag (Fb Fü 3)** schreiben
+– etwa für eine Übung: „+ Einsatzauftrag" öffnet die Maske mit Vorschau,
+vorbelegt mit Titel, Ort, Absender, der nächsten laufenden Nummer und dem
+Datum; bei der Art *Übung* ist das Wasserzeichen „ÜBUNG" vorgewählt.
+**„Als PDF an der Veranstaltung speichern"** legt ihn bei den Dateien ab,
+gekennzeichnet als Einsatzauftrag; „Als Vorlage" beginnt den nächsten mit
+denselben Texten. Mehr zur Maske im Abschnitt *Einsätze*.
+
+**„In Einsatz umwandeln"** macht aus der Veranstaltung einen Einsatz, ohne
+sie zu verändern – siehe *Einsätze › Aus einer Veranstaltung*. Den Knopf
+sieht, wer Veranstaltungen pflegen und Einsätze erfassen darf; danach steht
+dort „Zum Einsatz".
 
 ### Fahrzeuge
 

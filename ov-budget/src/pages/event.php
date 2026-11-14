@@ -35,6 +35,8 @@ render('event', [
     'gaeste'    => $gaeste,
     'stats'     => event_stats($gaeste),
     'dateien'   => efile_list($id),
+    // der Einsatz, der aus der Veranstaltung entstanden ist
+    'einsatz'   => can('view_einsaetze') ? einsatz_zu_veranstaltung($id) : null,
     'fahrzeuge' => can('view_vehicles') ? event_fahrzeuge($id) : [],
     'entfernung' => trim((string)$event['ort']) !== '' && function_exists('geo_entfernung') ? geo_entfernung(['ziel' => (string)$event['ort'], 'koordinaten' => false]) : null,
     'buchungen' => can('view_expenses') ? event_expenses($id) : [],
