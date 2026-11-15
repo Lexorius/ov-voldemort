@@ -71,10 +71,9 @@ $aktive = array_values(array_filter($getraenke, fn($g) => $g['is_active'] === 1)
 /* ---------- Gruppierung ---------- */
 $gruppen = getraenke_nach_lieferant($getraenke);
 $check('nach Lieferant gruppiert', array_keys($gruppen) === [1, 2] && count($gruppen[2]) === 3);
-$check('Getränketext', getraenk_text($getraenke[0]) === 'Wasser still (Kasten 12 × 0,7 l)' && getraenk_text(['name' => 'X', 'gebinde' => '']) === 'X');
 $check('Gebinde mit Flaschen', getraenk_gebinde_text(['gebinde' => 'Kasten', 'flaschen' => 12, 'flasche' => 'PET 0,5 l']) === 'Kasten · 12 × PET 0,5 l'
     && getraenk_gebinde_text(['gebinde' => 'Kasten', 'flaschen' => 20]) === 'Kasten · 20 Flaschen' && getraenk_gebinde_text(['gebinde' => '', 'flasche' => 'Glas 0,7 l']) === 'Glas 0,7 l'
-    && getraenk_gebinde_text(['gebinde' => 'Kasten']) === 'Kasten' && getraenk_text(['name' => 'Spezi', 'gebinde' => 'Kasten', 'flaschen' => 24, 'flasche' => 'Glas 0,33 l']) === 'Spezi (Kasten · 24 × Glas 0,33 l)');
+    && getraenk_gebinde_text(['gebinde' => 'Kasten']) === 'Kasten');
 
 /* ---------- Lager ---------- */
 $bestand = [

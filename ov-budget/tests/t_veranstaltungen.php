@@ -74,9 +74,6 @@ $GLOBALS['codes'] = [];
 for ($i = 0; $i < 40; $i++) { $GLOBALS['codes'][] = event_code_neu(4); }
 $check('Codes sind eindeutig', count(array_unique($GLOBALS['codes'])) === 40);
 
-$check('Code erkannt', event_code_gueltig('AB23CD') && event_code_gueltig('ab23cd'));
-$check('Unsinn abgewiesen', !event_code_gueltig('AB1') && !event_code_gueltig('../etc')
-    && !event_code_gueltig('AB0OIL') && !event_code_gueltig(''));
 $check('Prüfsumme unabhängig von Groß- und Kleinschreibung',
     event_code_kennung('ab23cd') === event_code_kennung('AB23CD'));
 $check('Prüfsumme ist eine Prüfsumme',
@@ -248,12 +245,6 @@ event_save_from_post(null, ['id' => 1]);
 $check('unbekannter Status wird geplant', $GLOBALS['inserts'][0][1]['status'] === 'geplant');
 
 /* ================= Verpflegung ================= */
-$v = verpflegung_vorschlag('2026-10-10 09:00:00', '2026-10-10 17:00:00');
-$check('Tagesveranstaltung: nur Mittag', $v === ['fruehstueck' => 0, 'mittag' => 1, 'abend' => 0]);
-$v = verpflegung_vorschlag('2026-10-10 07:30:00', '2026-10-11 16:00:00');
-$check('Wochenende ab 7:30: 2 Frühstück, 2 Mittag, 1 Abend', $v === ['fruehstueck' => 2, 'mittag' => 2, 'abend' => 1]);
-$v = verpflegung_vorschlag('2026-10-10 19:00:00', null);
-$check('Abendtermin ohne Ende: nichts', $v === ['fruehstueck' => 0, 'mittag' => 0, 'abend' => 0]);
 $tagessaetze = [
     ['id' => 1, 'gueltig_von' => '2025-01-01', 'gueltig_bis' => '2025-12-31', 'tagessatz' => 15.00, 'anteil_fruehstueck' => 20, 'anteil_mittag' => 40, 'anteil_abend' => 40],
     ['id' => 2, 'gueltig_von' => '2026-01-01', 'gueltig_bis' => null, 'tagessatz' => 16.50, 'anteil_fruehstueck' => 20, 'anteil_mittag' => 40, 'anteil_abend' => 40],

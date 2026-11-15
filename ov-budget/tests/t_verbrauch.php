@@ -251,7 +251,6 @@ $check('Profil sagt, wenn es nur mittelt', str_contains($html, 'gleichmäßig ve
 /* ---------- Rollen: Unterzähler und Solar ---------- */
 $check('Tarifart je Rolle', meter_tarif_art(['rolle' => 'bezug', 'art' => 'gas']) === 'gas' && meter_tarif_art(['rolle' => 'unter', 'art' => 'strom']) === null
     && meter_tarif_art(['rolle' => 'erzeugung']) === null && meter_tarif_art(['rolle' => 'einspeisung']) === 'einspeisung');
-$check('nur Hauptzähler zählen', meter_zaehlt(['rolle' => 'bezug']) && !meter_zaehlt(['rolle' => 'unter']) && !meter_zaehlt(['rolle' => 'erzeugung']));
 $check('Einspeisung ist eine Tarifart', tarif_art('einspeisung') === 'einspeisung' && tarif_art('unsinn') === 'strom' && meter_art('einspeisung') === 'strom');
 
 $so = verbrauch_solar_bilanz(['erzeugung' => 5000.0, 'einspeisung' => 3000.0, 'erloes' => 240.0], 4000.0);

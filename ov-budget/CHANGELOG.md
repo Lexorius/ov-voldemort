@@ -1,5 +1,20 @@
 # Änderungsverlauf
 
+## 2.1.92.3
+
+- **Hochrechnung – fester Monatsbetrag mit Punkt:** Ein Betrag wie `45.90`
+  wurde als 4590 € gelesen und blähte die Hochrechnung auf das Hundertfache
+  auf. Ein Punkt vor zwei Stellen ist jetzt ein Dezimalpunkt, vor drei
+  Stellen weiter ein Tausenderpunkt.
+- **Bestellberechtigungen – unlesbare Grenze ist nicht mehr „unbegrenzt":**
+  Eine Freigabegrenze, die sich nicht als Zahl lesen ließ, wurde als „keine
+  Grenze" gespeichert. Jetzt wird sie 0 – das fällt in der Liste auf, statt
+  still jede Summe freizugeben. `500,-` wird als 500 gelesen. Ein leeres
+  Feld heißt weiterhin unbegrenzt.
+- **Aufgeräumt:** 15 Funktionen ohne Aufrufer entfernt; Veranstaltungen und
+  Kalender legen Dateien jetzt über denselben Baustein ab wie Ablage,
+  Belege und Einsätze. Am Verhalten ändert sich nichts.
+
 ## 2.1.92.2
 
 - **Hochrechnung – Zählerkosten waren zu niedrig:** Monate nach der letzten

@@ -142,7 +142,6 @@ $con = ['id' => 1, 'name' => 'Test', 'url' => 'https://ov.example.de/connector',
 $check('Connector taugt für Fahrzeuge', connector_taugt($con, 'fahrzeuge'));
 $check('aber nicht für Veranstaltungen', !connector_taugt($con, 'veranstaltungen'));
 $check('ohne Kopplung taugt er nicht', !connector_taugt(array_merge($con, ['server_pub' => '']), 'fahrzeuge'));
-$check('kurze Adresse fällt auf die normale zurück', connector_kurz_url($con) === $con['url']);
 $adresse = connector_qr_url($con, $token, 'GKW 1 · THW 99020');
 [$vorAnker, $anker] = explode('#', $adresse, 2);
 $check('Zugang im Adressteil', str_contains($vorAnker, rawurlencode($token)));

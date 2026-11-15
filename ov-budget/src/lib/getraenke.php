@@ -271,13 +271,6 @@ function getraenk_gebinde_text(array $g): string
     return implode(' · ', array_filter([$gebinde, $inhalt], static fn($t) => $t !== ''));
 }
 
-/** "Wasser still (Kasten · 12 × PET 0,5 l)" oder "Wasser still". Reine Funktion. */
-function getraenk_text(array $g): string
-{
-    $gebinde = getraenk_gebinde_text($g);
-    return (string)$g['name'] . ($gebinde !== '' ? ' (' . $gebinde . ')' : '');
-}
-
 /* ==================================================================== */
 /* Lager                                                                 */
 /* ==================================================================== */

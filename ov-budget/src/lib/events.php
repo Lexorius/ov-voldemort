@@ -444,12 +444,6 @@ function event_code_neu(int $laenge): string
         . 'Bitte die Länge des Codes erhöhen.');
 }
 
-/** Sieht die Zeichenfolge wie ein Code aus? Reine Funktion. */
-function event_code_gueltig(string $code): bool
-{
-    return (bool)preg_match('/^[' . EVENT_CODE_ZEICHEN . ']{4,16}$/', strtoupper(trim($code)));
-}
-
 /**
  * So steht eine Veranstaltung beim Connector: als Prüfsumme ihrer Nummer.
  * Reine Funktion.
@@ -508,11 +502,6 @@ function event_guest_find(?int $id): ?array
          WHERE g.id = ?',
         [$id]
     );
-}
-
-function event_guest_by_code(string $code): ?array
-{
-    return db_row('SELECT * FROM event_guests WHERE code = ?', [strtoupper(trim($code))]);
 }
 
 /** Wie die eingeladene Person heißt. Reine Funktion. */
@@ -734,82 +723,25 @@ function efile_betrag(array $dateien): float
  */
 function efile_store_uploads(int $eventId, string $feld, string $titel, ?float $betrag, array $user): array
 {
-    $fehler = [];
-    $anzahl = 0;
-    if (empty($_FILES[$feld]) || !is_array($_FILES[$feld]['name'])) {
-        return [0, ['Es kam keine Datei an. Bei sehr großen Dateien bricht der Browser '
-            . 'den Upload ab, bevor die Anwendung ihn sieht.']];
-    }
-
-    $erlaubt = array_values(array_unique(array_merge(vfile_document_types(), VFILE_BILD_TYPEN)));
-    $max = upload_max_bytes();
-    $dir = efile_dir();
-    if (!is_dir($dir) || !is_writable($dir)) {
-        return [0, [sprintf('Der Ordner %s ist nicht beschreibbar.', $dir)]];
-    }
-
-    foreach ($_FILES[$feld]['name'] as $i => $name) {
-        $name = (string)$name;
-        $err = (int)$_FILES[$feld]['error'][$i];
-        if ($err === UPLOAD_ERR_NO_FILE || $name === '') {
-            continue;
-        }
-        if ($err !== UPLOAD_ERR_OK) {
-            $fehler[] = sprintf('„%s" konnte nicht hochgeladen werden (Fehlercode %d).', $name, $err);
-            continue;
-        }
-        $tmp = (string)$_FILES[$feld]['tmp_name'][$i];
-        $groesse = (int)$_FILES[$feld]['size'][$i];
-        if (!is_uploaded_file($tmp) && !defined('OVB_TEST_UPLOADS')) {
-            $fehler[] = sprintf('„%s" wurde nicht über das Formular hochgeladen.', $name);
-            continue;
-        }
-
-        $mime = class_exists('finfo') ? (string)(new finfo(FILEINFO_MIME_TYPE))->file($tmp) : '';
-        $grund = vfile_check($name, $groesse, $mime, 'dokument', $erlaubt, $max);
-        if ($grund !== null) {
-            $fehler[] = $grund;
-            continue;
-        }
-
-        $endung = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-        $basis = date('Ymd_His') . '_' . bin2hex(random_bytes(8));
-        $gespeichert = $basis . '.' . $endung;
-        $ziel = $dir . DIRECTORY_SEPARATOR . $gespeichert;
-        $vorschau = null;
-
-        $istBild = in_array($endung, VFILE_BILD_TYPEN, true) && str_starts_with($mime, 'image/');
-        $verarbeitet = $istBild && vfile_process_image($tmp, $ziel, $mime, VFILE_BILD_MAX) !== null;
-        if ($verarbeitet) {
-            @unlink($tmp);
-            $groesse = (int)filesize($ziel);
-            $vorschau = $basis . '_vorschau.' . $endung;
-            if (vfile_process_image($ziel, $dir . DIRECTORY_SEPARATOR . $vorschau, $mime, VFILE_VORSCHAU_MAX) === null) {
-                $vorschau = null;
-            }
-        } elseif (!(defined('OVB_TEST_UPLOADS') ? rename($tmp, $ziel) : move_uploaded_file($tmp, $ziel))) {
-            $fehler[] = sprintf('„%s" konnte nicht gespeichert werden.', $name);
-            continue;
-        }
-
+    [$dateien, $fehler] = upload_dokumente_ablegen($feld, efile_dir(), VFILE_BILD_MAX, 82);
+    foreach ($dateien as $d) {
         $id = db_insert('event_files', [
             'event_id'    => $eventId,
-            'art'         => $istBild ? 'bild' : 'dokument',
-            'titel'       => mb_substr(trim($titel) !== '' ? trim($titel) : pathinfo($name, PATHINFO_FILENAME), 0, 200),
-            'orig_name'   => mb_substr($name, 0, 255),
-            'stored_name' => $gespeichert,
-            'thumb_name'  => $vorschau,
-            'mime'        => $mime,
-            'size_bytes'  => $groesse,
+            'art'         => $d['art'],
+            'titel'       => trim($titel) !== '' ? mb_substr(trim($titel), 0, 200) : $d['titel'],
+            'orig_name'   => $d['orig_name'],
+            'stored_name' => $d['stored_name'],
+            'thumb_name'  => $d['thumb_name'],
+            'mime'        => $d['mime'],
+            'size_bytes'  => $d['size_bytes'],
             'betrag'      => $betrag !== null && $betrag > 0 ? $betrag : null,
             'uploaded_by' => (int)$user['id'],
         ]);
         if (function_exists('ki_einreihen')) {
-            ki_einreihen('veranstaltung', $id, $istBild ? 'bild' : 'dokument');
+            ki_einreihen('veranstaltung', $id, $d['art']);
         }
-        $anzahl++;
     }
-    return [$anzahl, $fehler];
+    return [count($dateien), $fehler];
 }
 
 function efile_delete(array $datei): void
@@ -946,42 +878,6 @@ function tagessatz_delete(array $satz): void
 function verpflegung_typen(): array
 {
     return event_typen_ohne_liste((string)setting('veranstaltung_verpflegung', 'ausbildung,uebung,einsatz'));
-}
-
-function event_typ_verpflegung(?int $typId): bool
-{
-    if (!$typId) {
-        return false;
-    }
-    $slug = (string)(list_item($typId)['slug'] ?? '');
-    return $slug !== '' && in_array($slug, verpflegung_typen(), true);
-}
-
-/**
- * Wie viele Mahlzeiten je Person der Zeitraum nahelegt: je Kalendertag ein
- * Frühstück, wenn die Veranstaltung um 8 Uhr schon läuft, ein Mittagessen,
- * wenn sie 12:30 Uhr umfasst, ein Abendessen bei 18:30 Uhr. Reine Funktion.
- */
-function verpflegung_vorschlag(string $beginn, ?string $ende): array
-{
-    $a = strtotime($beginn);
-    $b = $ende ? strtotime($ende) : false;
-    if ($a === false) {
-        return ['fruehstueck' => 0, 'mittag' => 0, 'abend' => 0];
-    }
-    if ($b === false || $b < $a) {
-        $b = strtotime(date('Y-m-d', $a) . ' 23:59:00');
-    }
-    $out = ['fruehstueck' => 0, 'mittag' => 0, 'abend' => 0];
-    for ($tag = strtotime(date('Y-m-d', $a)); $tag <= $b; $tag += 86400) {
-        foreach (['fruehstueck' => '08:00', 'mittag' => '12:30', 'abend' => '18:30'] as $key => $uhr) {
-            $t = strtotime(date('Y-m-d', $tag) . ' ' . $uhr);
-            if ($t >= $a && $t <= $b) {
-                $out[$key]++;
-            }
-        }
-    }
-    return $out;
 }
 
 /**

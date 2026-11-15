@@ -382,11 +382,6 @@ $check('Termin: Dateien mit Link, Mülleimer und Upload im Formular', str_contai
 $htmlNeu = render_partial('kalender_edit', ['termin' => ['id' => null, 'titel' => '', 'beschreibung' => '', 'ort' => '', 'datum' => '2026-10-15', 'zeit' => '', 'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'user', 'ziel_id' => 3, 'farbe' => ''],
     'errors' => [], 'nurLesen' => false, 'user' => $u, 'leitung' => false, 'users' => [], 'fahrzeuge' => [], 'standorte' => []]);
 $check('neuer Termin: Dateien gleich mitgeben', str_contains($htmlNeu, 'id="dateien"') && str_contains($htmlNeu, 'name="dateien[]"') && str_contains($htmlNeu, 'beim Eintragen') && !str_contains($htmlNeu, 'name="datei_weg"'));
-$_FILES = ['dateien' => ['name' => ['']]];
-$check('mitgeschickt? leer erkannt', !kalender_dateien_mitgeschickt('dateien') && !kalender_dateien_mitgeschickt('x'));
-$_FILES = ['dateien' => ['name' => ['', 'Einladung.pdf']]];
-$check('mitgeschickt? Datei erkannt', kalender_dateien_mitgeschickt('dateien'));
-$_FILES = [];
 $htmlN = render_partial('kalender_edit', ['termin' => ['id' => 5, 'titel' => 'x', 'beschreibung' => '', 'ort' => '', 'datum' => '2026-10-15', 'zeit' => '19:00', 'ende_datum' => '', 'ende_zeit' => '', 'ganztag' => 0, 'ziel' => 'ov', 'ziel_id' => null, 'farbe' => ''],
     'errors' => [], 'nurLesen' => true, 'user' => $u, 'leitung' => false, 'users' => [], 'fahrzeuge' => [], 'standorte' => [], 'dateien' => []]);
 $check('Termin nur lesen: Dateien sichtbar, kein Upload', str_contains($htmlN, 'Keine Dateien an diesem Termin') && !str_contains($htmlN, 'name="dateien[]"') && !str_contains($htmlN, 'name="datei_weg"'));

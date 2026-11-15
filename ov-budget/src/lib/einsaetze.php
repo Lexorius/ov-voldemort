@@ -626,12 +626,6 @@ function einsatz_tage(int $einsatzId): array
     return $tage;
 }
 
-function einsatz_fahrzeuge(int $einsatzId): array
-{
-    return db_all('SELECT v.id, v.bezeichnung, v.funkrufname, v.kennzeichen, v.is_active FROM einsatz_vehicles ev
-                   JOIN vehicles v ON v.id = ev.vehicle_id WHERE ev.einsatz_id = ? ORDER BY v.bezeichnung', [$einsatzId]);
-}
-
 /** Buchungen eines Einsatzes, jüngste zuerst */
 function einsatz_buchungen(int $einsatzId): array
 {

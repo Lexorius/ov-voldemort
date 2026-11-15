@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$nurLesen) {
             flash('info', sprintf('%s mit eingeplant – trägt %s.', $te['bezeichnung'], $te['wegen']));
         }
         // Mitgeschickte Dateien gleich anhängen – auch beim Anlegen
-        if (kalender_dateien_mitgeschickt('dateien')) {
+        if (upload_mitgeschickt('dateien')) {
             [$anzahl, $dateiFehler] = kfile_store_uploads($neu, 'dateien', post_str('datei_titel'), $user);
             if ($anzahl > 0) {
                 flash('success', sprintf('%d Datei(en) angehängt.', $anzahl));

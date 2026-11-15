@@ -52,7 +52,9 @@ function prognose_aus_post(array $post): array
         $betrag = (string)(($post['betrag'] ?? [])[$id] ?? '');
         $out[$id] = [
             'art'    => prognose_art((string)$art),
-            'betrag' => $betrag === '' ? 0.0 : (float)str_replace(['.', ','], ['', '.'], preg_replace('/\.(?=\d{3}(\D|$))/', '', $betrag) ?? $betrag),
+            // Tausenderpunkte weg, Komma wird Punkt. Ein Punkt vor zwei Stellen bleibt Dezimalpunkt:
+            // „45.90" sind 45,90 € – nicht 4590
+            'betrag' => $betrag === '' ? 0.0 : (float)str_replace(',', '.', preg_replace('/\.(?=\d{3}(\D|$))/', '', $betrag) ?? $betrag),
             'notiz'  => (string)(($post['notiz'] ?? [])[$id] ?? ''),
         ];
     }
@@ -447,12 +449,13 @@ function prognose_jahr(int $jahr, ?string $heute = null): array
     $zahlen = budget_jahr_zahlen($jahr);
     $laufend = $kat['summe']['hochrechnung'] + $serien['summe']['hochrechnung'] + ($zaehler['aktiv'] ? $zaehler['summe'] - $zaehler['erloes'] : 0.0);
     $geplant = (float)$zahlen['geplant'];   // geplante Buchungen und Veranstaltungen – gehören mit aufs Jahresende
+    $frei = round($zahlen['verfuegbar'] - $laufend - $geplant, 2);
     return [
         'jahr' => $jahr, 'heute' => $heute, 'kategorien' => $kat, 'serien' => $serien, 'zaehler' => $zaehler, 'zahlen' => $zahlen,
         'laufend' => round($laufend, 2),
         'geplant' => round($geplant, 2),
         'hochrechnung' => round($laufend + $geplant, 2),
-        'frei' => round($zahlen['verfuegbar'] - $laufend - $geplant, 2),
-        'frei_mit_planung' => round($zahlen['verfuegbar'] - $laufend - $geplant, 2),
+        'frei' => $frei,
+        'frei_mit_planung' => $frei,   // derselbe Wert unter dem Namen, den die Budgetseite liest
     ];
 }

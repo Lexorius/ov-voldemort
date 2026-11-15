@@ -163,7 +163,7 @@ $check('Ansprechpartner ohne Antragsteller', order_release_people(5000, 3) === [
 // Speichern aus der Verwaltung
 $_POST = [
     'freigeben' => ['rolle_admin' => '1', 'funktion_10' => '1', 'funktion_12' => '1'],
-    'grenze'    => ['funktion_12' => '1.500,50', 'funktion_10' => '', 'rolle_user' => 'abc'],
+    'grenze'    => ['funktion_12' => '1.500,50', 'funktion_10' => '', 'rolle_user' => 'abc', 'funktion_13' => '500,- €'],
     'bestellen' => ['funktion_13' => '1'],
 ];
 order_rights_save_from_post();
@@ -176,8 +176,8 @@ $check('Speichern: upsert', str_contains($GLOBALS['execs'][0][0], 'ON DUPLICATE 
 $check('Speichern: admin', $nach['admin'] === [1, null, 1 - 1]);
 $check('Speichern: OB unbegrenzt', $nach['f10'] === [1, null, 0]);
 $check('Speichern: deutscher Betrag', $nach['f12'] === [1, 1500.5, 0]);
-$check('Speichern: Unsinn = unbegrenzt', $nach['user'] === [0, null, 0]);
-$check('Speichern: Verwaltung bestellt', $nach['f13'] === [0, null, 1]);
+$check('Speichern: Unsinn ist nicht unbegrenzt, sondern 0', $nach['user'] === [0, 0.0, 0]);
+$check('Speichern: Verwaltung bestellt, „500,-" wird als 500 gelesen', $nach['f13'] === [0, 500.0, 1]);
 $check('Speichern: nicht angekreuzt = 0', $nach['leitung'] === [0, null, 0] && $nach['f14'] === [0, null, 0]);
 
 echo "$ok bestanden, $fail fehlgeschlagen\n";

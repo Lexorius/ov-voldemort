@@ -1153,89 +1153,24 @@ function kfile_find(?int $id): ?array
 /** Hochgeladene Dateien an einen Termin hängen – Bilder verkleinert und ohne Aufnahmeort. Gibt [anzahl, fehler[]] zurück. */
 function kfile_store_uploads(int $entryId, string $feld, string $titel, array $user): array
 {
-    $fehler = [];
-    $anzahl = 0;
-    if (empty($_FILES[$feld]) || !is_array($_FILES[$feld]['name'])) {
-        return [0, ['Es kam keine Datei an. Bei sehr großen Dateien bricht der Browser den Upload ab, bevor die Anwendung ihn sieht.']];
-    }
-    $erlaubt = array_values(array_unique(array_merge(vfile_document_types(), VFILE_BILD_TYPEN)));
-    $max = upload_max_bytes();
-    $dir = kfile_dir();
-    if (!is_dir($dir) || !is_writable($dir)) {
-        return [0, [sprintf('Der Ordner %s ist nicht beschreibbar.', $dir)]];
-    }
-    foreach ($_FILES[$feld]['name'] as $i => $name) {
-        $name = (string)$name;
-        $err = (int)$_FILES[$feld]['error'][$i];
-        if ($err === UPLOAD_ERR_NO_FILE || $name === '') {
-            continue;
-        }
-        if ($err !== UPLOAD_ERR_OK) {
-            $fehler[] = sprintf('„%s" konnte nicht hochgeladen werden (Fehlercode %d).', $name, $err);
-            continue;
-        }
-        $tmp = (string)$_FILES[$feld]['tmp_name'][$i];
-        $groesse = (int)$_FILES[$feld]['size'][$i];
-        if (!is_uploaded_file($tmp) && !defined('OVB_TEST_UPLOADS')) {
-            $fehler[] = sprintf('„%s" wurde nicht über das Formular hochgeladen.', $name);
-            continue;
-        }
-        $mime = class_exists('finfo') ? (string)(new finfo(FILEINFO_MIME_TYPE))->file($tmp) : '';
-        $grund = vfile_check($name, $groesse, $mime, 'dokument', $erlaubt, $max);
-        if ($grund !== null) {
-            $fehler[] = $grund;
-            continue;
-        }
-        $endung = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-        $basis = date('Ymd_His') . '_' . bin2hex(random_bytes(8));
-        $gespeichert = $basis . '.' . $endung;
-        $ziel = $dir . DIRECTORY_SEPARATOR . $gespeichert;
-        $vorschau = null;
-        $istBild = in_array($endung, VFILE_BILD_TYPEN, true) && str_starts_with($mime, 'image/');
-        $verarbeitet = $istBild && vfile_process_image($tmp, $ziel, $mime, VFILE_BILD_MAX) !== null;
-        if ($verarbeitet) {
-            @unlink($tmp);
-            $groesse = (int)filesize($ziel);
-            $vorschau = $basis . '_vorschau.' . $endung;
-            if (vfile_process_image($ziel, $dir . DIRECTORY_SEPARATOR . $vorschau, $mime, VFILE_VORSCHAU_MAX) === null) {
-                $vorschau = null;
-            }
-        } elseif (!(defined('OVB_TEST_UPLOADS') ? rename($tmp, $ziel) : move_uploaded_file($tmp, $ziel))) {
-            $fehler[] = sprintf('„%s" konnte nicht gespeichert werden.', $name);
-            continue;
-        }
+    [$dateien, $fehler] = upload_dokumente_ablegen($feld, kfile_dir(), VFILE_BILD_MAX, 82);
+    foreach ($dateien as $d) {
         $id = db_insert('calendar_files', [
             'entry_id'    => $entryId,
-            'art'         => $istBild ? 'bild' : 'dokument',
-            'titel'       => mb_substr(trim($titel) !== '' ? trim($titel) : pathinfo($name, PATHINFO_FILENAME), 0, 200),
-            'orig_name'   => mb_substr($name, 0, 255),
-            'stored_name' => $gespeichert,
-            'thumb_name'  => $vorschau,
-            'mime'        => $mime,
-            'size_bytes'  => $groesse,
+            'art'         => $d['art'],
+            'titel'       => trim($titel) !== '' ? mb_substr(trim($titel), 0, 200) : $d['titel'],
+            'orig_name'   => $d['orig_name'],
+            'stored_name' => $d['stored_name'],
+            'thumb_name'  => $d['thumb_name'],
+            'mime'        => $d['mime'],
+            'size_bytes'  => $d['size_bytes'],
             'uploaded_by' => (int)$user['id'],
         ]);
         if (function_exists('ki_einreihen')) {
-            ki_einreihen('termin', $id, $istBild ? 'bild' : 'dokument');
-        }
-        $anzahl++;
-    }
-    return [$anzahl, $fehler];
-}
-
-/** Wurde im Formular mindestens eine Datei ausgewählt? Reine Funktion über $_FILES. */
-function kalender_dateien_mitgeschickt(string $feld): bool
-{
-    $namen = $_FILES[$feld]['name'] ?? null;
-    if (!is_array($namen)) {
-        return false;
-    }
-    foreach ($namen as $n) {
-        if ((string)$n !== '') {
-            return true;
+            ki_einreihen('termin', $id, $d['art']);
         }
     }
-    return false;
+    return [count($dateien), $fehler];
 }
 
 function kfile_delete(array $datei): void

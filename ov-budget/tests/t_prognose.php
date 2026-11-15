@@ -135,6 +135,8 @@ $check('Zähler im vergangenen Jahr: nichts dazu', prognose_zaehler_rechnen($kos
 /* ---------- Formular ---------- */
 $e = prognose_aus_post(['art' => ['1' => 'fest', '2' => 'quatsch', '3' => 'aus'], 'betrag' => ['1' => '49,90', '2' => '1.250,50', '3' => ''], 'notiz' => ['1' => ' neuer Vertrag ']]);
 $check('Formularwerte: Art geprüft, deutsche Beträge gelesen, leer = 0', $e[1] === ['art' => 'fest', 'betrag' => 49.9, 'notiz' => ' neuer Vertrag '] && $e[2]['art'] === 'auto' && $e[2]['betrag'] === 1250.5 && $e[3]['betrag'] === 0.0);
+$p = prognose_aus_post(['art' => ['1' => 'fest', '2' => 'fest', '3' => 'fest', '4' => 'fest'], 'betrag' => ['1' => '45.90', '2' => '1.250', '3' => '12.345,67', '4' => '7.5']]);
+$check('Punkt vor zwei Stellen ist ein Dezimalpunkt, vor drei ein Tausenderpunkt', $p[1]['betrag'] === 45.9 && $p[2]['betrag'] === 1250.0 && $p[3]['betrag'] === 12345.67 && $p[4]['betrag'] === 7.5);
 $GLOBALS['execs'] = [];
 prognose_einstellung_speichern(2026, 1, 'fest', 49.9, ' neuer Vertrag ');
 $check('speichern: eine Abfrage mit geprüften Werten', count($GLOBALS['execs']) === 1 && str_contains($GLOBALS['execs'][0][0], 'INSERT INTO budget_prognosen') && $GLOBALS['execs'][0][1] === [2026, 1, 'fest', 49.9, 'neuer Vertrag']);

@@ -261,12 +261,6 @@ function umfrage_kennung(string $code): string
     return hash('sha256', 'ovb-umfrage:' . strtoupper(trim($code)));
 }
 
-/** Sieht die Zeichenfolge wie ein Code aus? Reine Funktion. */
-function umfrage_code_gueltig(string $code): bool
-{
-    return (bool)preg_match('/^[' . EVENT_CODE_ZEICHEN . ']{4,16}$/', strtoupper(trim($code)));
-}
-
 /**
  * Neuer Code. Abstimmungen und Einladungen teilen sich die kurze Adresse,
  * darum darf er in keiner der beiden Listen schon vorkommen.
@@ -339,18 +333,6 @@ function umfrage_zustand_badge(string $zustand): string
         default      => '#64748b',
     };
     return '<span class="badge" style="background:' . $farbe . '">' . e(umfrage_zustand_text($zustand)) . '</span>';
-}
-
-/** Nimmt der Connector gerade Antworten an? Reine Funktion. */
-function umfrage_laeuft(array $u, ?int $jetzt = null): bool
-{
-    return umfrage_zustand($u, $jetzt) === 'laeuft';
-}
-
-/** "So., 5. Dezember 2026, 18:00" aus einem DATETIME. */
-function umfrage_zeit_text(?string $wert): string
-{
-    return trim((string)$wert) === '' ? '' : de_datetime($wert);
 }
 
 /* ==================================================================== */

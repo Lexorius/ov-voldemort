@@ -71,12 +71,6 @@ function meter_tarif_art(array $meter): ?string
     };
 }
 
-/** Zählt der Zähler zum Verbrauch der Art? Unterzähler und Solar nicht – sonst wäre es doppelt. Reine Funktion. */
-function meter_zaehlt(array $meter): bool
-{
-    return (string)($meter['rolle'] ?? 'bezug') === 'bezug';
-}
-
 /** Zählt ein Impulszähler aus Home Assistant zwischen den Ablesungen mit? Reine Funktion. */
 function meter_impuls_aktiv(array $meter): bool
 {
@@ -324,13 +318,6 @@ function readings_query(int $meterId, ?int $jahr = null, int $limit = 0, int $of
                    LEFT JOIN users u ON u.id = r.created_by
                    WHERE ' . implode(' AND ', $w) . ' ORDER BY gelesen_am DESC, id DESC'
         . ($limit > 0 ? ' LIMIT ' . (int)$limit . ($offset > 0 ? ' OFFSET ' . (int)$offset : '') : ''), $p);
-}
-
-/** Alle Stände eines Zählers, älteste zuerst – die Reihenfolge für die Rechnung */
-function readings_alle(int $meterId): array
-{
-    return db_all('SELECT stand, gelesen_am, quelle FROM meter_readings WHERE meter_id = ?
-                   ORDER BY gelesen_am ASC, id ASC', [$meterId]);
 }
 
 /**

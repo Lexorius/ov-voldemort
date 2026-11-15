@@ -65,10 +65,6 @@ $technik = $sicht[4];
 $check('Gruppe: Kennung, erstes Modul als Ziel, aktiv mit der aufgerufenen Seite', $technik['id'] === 'g5' && $technik['route'] === 'vehicles' && $technik['aktiv'] === true
     && array_column($technik['module'], 'key') === ['vehicles', 'stan'] && $technik['module'][0]['aktiv'] === true && $technik['module'][1]['aktiv'] === false);
 $check('andere Knoten sind nicht aktiv', $sicht[0]['aktiv'] === false && $sicht[1]['aktiv'] === false);
-$leiste = nav_leiste();
-$check('Leiste nur mit Rechten: keine Kontakte, aber Fahrzeuge und Verwaltung, in der Reihenfolge des Baums',
-    isset($leiste['vehicles'], $leiste['admin'], $leiste['dashboard']) && !isset($leiste['contacts']) && !isset($leiste['radios'])
-    && array_keys($leiste) === ['dashboard', 'wishes', 'budget', 'todos', 'kalender', 'thw', 'vehicles', 'stan', 'standorte', 'admin']);
 
 /* ---------- Umbauen ---------- */
 $b = [['modul' => 'a'], ['gruppe' => 'G1', 'icon' => '▸', 'module' => ['b', 'c', 'd']], ['modul' => 'e'], ['gruppe' => 'G2', 'icon' => '▸', 'module' => []], ['modul' => 'admin']];

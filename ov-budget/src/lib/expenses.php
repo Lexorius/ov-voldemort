@@ -433,13 +433,6 @@ function auslage_stufe(array $e): string
     return !empty($e['weitergegeben_am']) ? 'weitergegeben' : 'ausgelegt';
 }
 
-/** Wartet der Helfer noch auf sein Geld? Reine Funktion. */
-function auslage_offen(array $e): bool
-{
-    $s = auslage_stufe($e);
-    return $s === 'ausgelegt' || $s === 'weitergegeben';
-}
-
 /** Plakette für die Liste: leer ohne Auslage, orange solange nur ausgelegt, blau bei der Regionalstelle, still wenn erstattet. Reine Funktion. */
 function auslage_badge(array $e): string
 {
@@ -901,6 +894,7 @@ function budget_jahr_zahlen(int $jahr): array
     $geplantBuchungen = expense_total_status($jahr, 'ausgabe', 'geplant');
     $veranstaltungen = function_exists('events_geplante_kosten') ? events_geplante_kosten($jahr) : ['gesamt' => 0.0, 'verpflegung' => 0.0, 'anzahl' => 0];
     $geplant = $geplantBuchungen + (float)$veranstaltungen['gesamt'];
+    $forderungen = expense_total_status($jahr, 'einnahme', 'abgerechnet') + expense_total_status($jahr, 'einnahme', 'gestellt');
     return [
         'budget'     => $budget,
         'einnahmen'  => $einnahmen,
@@ -912,9 +906,9 @@ function budget_jahr_zahlen(int $jahr): array
         'einnahmen_zugesagt'    => $zugesagt,
         'verfuegbar_mit_zusagen' => $verfuegbar + $zugesagt,
         'frei_mit_zusagen'       => $verfuegbar + $zugesagt - $ausgaben,
-        'einnahmen_forderungen' => expense_total_status($jahr, 'einnahme', 'abgerechnet') + expense_total_status($jahr, 'einnahme', 'gestellt'),
+        'einnahmen_forderungen' => $forderungen,
         'abrechnungen_wartend'  => einnahmen_wartend($jahr),
-        'einnahmen_offen'       => expense_total_status($jahr, 'einnahme', 'abgerechnet') + expense_total_status($jahr, 'einnahme', 'gestellt'),
+        'einnahmen_offen'       => $forderungen,   // derselbe Wert unter dem Namen, den Übersicht und Einsatz lesen
         // Ausgaben: Rechnung erhalten, noch nicht bezahlt – steckt schon in ausgaben
         'ausgaben_offen'  => expense_total_status($jahr, 'ausgabe', 'offen'),
         // Stichtag: ab dann keine Ausgaben mehr auf das Jahresbudget

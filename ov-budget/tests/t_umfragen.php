@@ -113,7 +113,7 @@ $check('CSV: Zeilenumbruch im Text bleibt in Anführungszeichen', str_contains($
 /* ---------- Zustand und Zeitfenster ---------- */
 $jetzt = (int)strtotime('2026-10-24 12:00:00');
 $u = ['status' => 'offen', 'beginn' => '2026-10-24 10:00:00', 'ende' => '2026-10-31 20:00:00'];
-$check('läuft', umfrage_zustand($u, $jetzt) === 'laeuft' && umfrage_laeuft($u, $jetzt));
+$check('läuft', umfrage_zustand($u, $jetzt) === 'laeuft');
 $check('wartet vor dem Beginn', umfrage_zustand(['status' => 'offen', 'beginn' => '2026-10-25 10:00:00', 'ende' => '2026-10-31 20:00:00'], $jetzt) === 'wartet');
 $check('ohne Beginn sofort', umfrage_zustand(['status' => 'offen', 'beginn' => null, 'ende' => '2026-10-31 20:00:00'], $jetzt) === 'laeuft');
 $check('abgelaufen nach dem Ende', umfrage_zustand(['status' => 'offen', 'beginn' => '', 'ende' => '2026-10-24 11:59:00'], $jetzt) === 'abgelaufen');
@@ -123,9 +123,8 @@ $check('Texte und Marken', umfrage_zustand_text('laeuft') === 'läuft' && str_co
 
 /* ---------- Code und Adresse ---------- */
 $check('Kennung ist Prüfsumme, nicht der Code', umfrage_kennung('ab23cd') === umfrage_kennung('AB23CD') && strlen(umfrage_kennung('AB23CD')) === 64 && !str_contains(umfrage_kennung('AB23CD'), 'AB23CD'));
-$check('Code-Form', umfrage_code_gueltig('AB23CD') && !umfrage_code_gueltig('ab-23') && !umfrage_code_gueltig('AB1'));
 $code = umfrage_code_neu(6);
-$check('neuer Code aus dem Einladungsalphabet', strlen($code) === 6 && umfrage_code_gueltig($code) && !str_contains($code, '0') && !str_contains($code, 'O'));
+$check('neuer Code aus dem Einladungsalphabet', strlen($code) === 6 && !str_contains($code, '0') && !str_contains($code, 'O'));
 $con = ['url' => 'https://ov.example.de/connector', 'kurz_url' => 'https://i.example.de'];
 $check('kurze Adresse', umfrage_url($con, 'AB23CD') === 'https://i.example.de/AB23CD');
 $check('ohne kurze Adresse der lange Weg', umfrage_url(['url' => 'https://ov.example.de/connector/', 'kurz_url' => ''], 'AB23CD') === 'https://ov.example.de/connector/index.php?u=AB23CD');

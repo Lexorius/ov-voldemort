@@ -55,7 +55,6 @@ $keine = ['ausgelegt_von' => null, 'ausgelegt_display' => null, 'ausgelegt_name'
 $check('Stufen', auslage_stufe($offen) === 'ausgelegt' && auslage_stufe($weiter) === 'weitergegeben' && auslage_stufe($erstattet) === 'erstattet' && auslage_stufe($keine) === '');
 $check('nach Stufe gezählt', auslagen_nach_stufe([$offen, $weiter, $erstattet, $keine, $offen]) === ['ausgelegt' => ['anzahl' => 2, 'summe' => 97.8], 'weitergegeben' => ['anzahl' => 1, 'summe' => 30.0]]);
 $check('wer ausgelegt hat', auslage_von($offen) === 'Max Muster' && auslage_von($erstattet) === 'Nachbar-OV Müller' && auslage_von($keine) === '' && auslage_von(['ausgelegt_von' => 9]) === 'Helfer #9');
-$check('offen oder erstattet', auslage_offen($offen) && auslage_offen($weiter) && !auslage_offen($erstattet) && !auslage_offen($keine));
 $check('Plakette je Stufe', str_contains(auslage_badge($offen), 'noch nicht weitergegeben') && str_contains(auslage_badge($offen), 'Max Muster') && str_contains(auslage_badge($weiter), 'bei der Regionalstelle seit 05.10.2026')
     && str_contains(auslage_badge($weiter), '#0369a1') && str_contains(auslage_badge($erstattet), 'Geld erhalten 08.10.2026') && auslage_badge($keine) === '');
 $check('Summe je Helfer, größte zuerst', auslagen_je_helfer([$offen, $erstattet, $keine, $offen]) === ['Max Muster' => 97.8, 'Nachbar-OV Müller' => 12.0]);

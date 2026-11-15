@@ -117,16 +117,6 @@ function connector_url(array $c): string
     return rtrim(trim((string)($c['url'] ?? '')), '/');
 }
 
-/**
- * Adresse für kurze Einladungslinks – z. B. https://i.example.de
- * Ist keine eingetragen, dient die normale Adresse des Connectors.
- */
-function connector_kurz_url(array $c): string
-{
-    $kurz = rtrim(trim((string)($c['kurz_url'] ?? '')), '/');
-    return $kurz !== '' ? $kurz : connector_url($c);
-}
-
 /** Eigenes Schlüsselpaar für diesen Connector, einmalig erzeugt */
 function connector_keys_ensure(array $c): array
 {
@@ -768,16 +758,6 @@ function connector_push_vehicles(array $c): int
     $antwort = connector_call($c, 'fahrzeuge', ['fahrzeuge' => $liste]);
     db_update('connectors', ['angemeldet_am' => date('Y-m-d H:i:s')], 'id = ?', [(int)$c['id']]);
     return (int)($antwort['fahrzeuge'] ?? count($liste));
-}
-
-/** Zugänge an alle zuständigen Connectoren melden */
-function connector_push_vehicles_all(): int
-{
-    $n = 0;
-    foreach (connector_liste('fahrzeuge') as $c) {
-        $n += connector_push_vehicles($c);
-    }
-    return $n;
 }
 
 /* ==================================================================== */

@@ -236,18 +236,6 @@ function nav_baum_fuer(): array
     return nav_baum_sichtbar(nav_baum(), nav_module(), (string)($_GET['p'] ?? 'dashboard'));
 }
 
-/** Alle Module, die die angemeldete Person sieht, in der Reihenfolge des Baums: [key => Definition] */
-function nav_leiste(): array
-{
-    $out = [];
-    foreach (nav_baum_fuer() as $knoten) {
-        foreach ($knoten['typ'] === 'gruppe' ? $knoten['module'] : [$knoten] as $m) {
-            $out[$m['key']] = $m['m'];
-        }
-    }
-    return $out;
-}
-
 /* ---------------- Den Baum umbauen – reine Funktionen für die Verwaltung ---------------- */
 
 /** Einen Eintrag einer Liste um eine Stelle verschieben (-1 hoch, +1 runter). Reine Funktion. */

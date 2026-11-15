@@ -227,12 +227,15 @@ function order_rights_save_from_post(): void
 
     foreach ($zeilen as $z) {
         $k = $z['key'];
-        $roh = trim(str_replace([' ', '€'], '', (string)($grenzen[$k] ?? '')));
+        // „500,-" ist eine übliche Schreibweise für glatte Beträge
+        $roh = (string)preg_replace('/,-+$/', '', trim(str_replace([' ', '€'], '', (string)($grenzen[$k] ?? ''))));
         // Deutsche Schreibweise: 1.500,50
         if (str_contains($roh, ',')) {
             $roh = str_replace(['.', ','], ['', '.'], $roh);
         }
-        $grenze = ($roh === '' || !is_numeric($roh)) ? null : max(0.0, round((float)$roh, 2));
+        // Leer heißt unbegrenzt. Unlesbares nicht: sonst machte ein Tippfehler aus einer Grenze keine Grenze –
+        // dann lieber 0, das fällt beim nächsten Blick in die Liste auf
+        $grenze = $roh === '' ? null : (is_numeric($roh) ? max(0.0, round((float)$roh, 2)) : 0.0);
 
         $werte = [
             isset($freigeben[$k]) ? 1 : 0,
