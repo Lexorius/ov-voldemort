@@ -35,7 +35,8 @@ render('bestellung', [
     'title'     => 'Bestellung ' . $b['nummer'],
     'b'         => $b,
     'wuensche'  => $wuensche,
-    'buchungen' => $buchungen,
+    // die einzelnen Buchungen nur mit dem Recht dazu – die Summe sieht, wer die Bestellung sieht
+    'buchungen' => can('view_expenses') ? $buchungen : [],
     'gebucht'   => expenses_summe($buchungen),
     'darf'      => can('order_wish'),
     'buchen'    => can('manage_budget'),

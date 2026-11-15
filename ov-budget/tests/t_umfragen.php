@@ -22,7 +22,7 @@ function db_all(string $sql, array $p = []): array {
     return [];
 }
 function db_row(string $sql, array $p = []): ?array { return str_contains($sql, 'FROM contacts') ? ($GLOBALS['kontakt'] ?? null) : null; }
-function db_val(string $sql, array $p = [], mixed $d = null) { return $d; }
+function db_val(string $sql, array $p = [], mixed $d = null) { return str_contains($sql, 'FROM settings WHERE skey') ? ($GLOBALS['merker'][$p[0] ?? ''] ?? $d) : $d; }
 function db_exec(string $sql, array $p = []): int { $GLOBALS['execs'][] = [$sql, $p]; return 3; }
 function db_insert(string $t, array $d): int { $GLOBALS['inserts'][] = [$t, $d]; return 7; }
 function db_update(string $t, array $d, string $w, array $p): int { $GLOBALS['updates'][] = [$t, $d, $p]; return 1; }
@@ -290,6 +290,21 @@ $GLOBALS['updates'] = [];
 $GLOBALS['mail_attrappe'] = static function (string $an, string $betreff, string $text, string $name) use (&$post): void { $post[] = $betreff; };
 $r = umfrage_berichte_senden($t('2026-10-24 07:30:00'));
 $check('fällige Berichte: täglich ja an beide Empfänger, nur am Ende nein', $r['geprueft'] === 2 && $r['gesendet'] === 1 && $r['fehler'] === [] && count($post) === 2 && str_contains($post[0], 'Zwischenstand'));
+// Scheitert der Versand, wird die Fehlerzeit gemerkt – der letzte Bericht bleibt, wie er war
+$GLOBALS['mail_attrappe'] = static function (): void { throw new MailException('Postfach nicht erreichbar'); };
+$GLOBALS['updates'] = []; $GLOBALS['execs'] = [];
+$r = umfrage_berichte_senden($t('2026-10-24 07:31:00'));
+$gemerkt = array_values(array_filter($GLOBALS['execs'], static fn($x) => ($x[1][0] ?? '') === 'umfrage_bericht_fehler_' . (int)$ub['id']));
+$check('Fehlschlag: gemeldet, Fehlerzeit gemerkt, bericht_zuletzt nicht verstellt', $r['gesendet'] === 0 && count($r['fehler']) === 1 && count($gemerkt) === 1
+    && $gemerkt[0][1][1] === (string)$t('2026-10-24 07:31:00') && array_filter($GLOBALS['updates'], static fn($x) => isset($x[1]['bericht_zuletzt'])) === []);
+$GLOBALS['merker'] = ['umfrage_bericht_fehler_' . (int)$ub['id'] => (string)$t('2026-10-24 07:31:00')];
+$versuche = 0;
+$GLOBALS['mail_attrappe'] = static function () use (&$versuche): void { $versuche++; throw new MailException('Postfach nicht erreichbar'); };
+umfrage_berichte_senden($t('2026-10-24 08:30:00'));
+$check('eine Stunde lang kein neuer Versuch', $versuche === 0);
+umfrage_berichte_senden($t('2026-10-24 08:31:00'));
+$check('nach einer Stunde wieder', $versuche === 2);
+$GLOBALS['merker'] = [];
 $GLOBALS['settings']['mail_aktiv'] = '0';
 settings_reset_cache();
 $check('Versand aus: nichts geprüft', umfrage_berichte_senden($t('2026-10-24 07:30:00')) === ['geprueft' => 0, 'gesendet' => 0, 'fehler' => []]);

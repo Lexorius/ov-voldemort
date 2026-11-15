@@ -129,6 +129,13 @@ $check('Bestellung rendert mit Wünschen, Summe, Rechnung erfassen und Stand', s
 $html = render_partial('bestellung', ['b' => $bs + ['gebucht' => 500], 'wuensche' => $ws, 'buchungen' => [['id' => 7, 'datum' => '2026-10-07', 'bezeichnung' => 'Teilrechnung', 'status' => 'bezahlt', 'beleg_nr' => 'R1', 'betrag_brutto' => 500, 'art' => 'ausgabe']],
     'gebucht' => 500.0, 'darf' => false, 'buchen' => false]);
 $check('Bestellung ohne Rechte: keine Formulare, offener Rest', !str_contains($html, 'value="geliefert"') && str_contains($html, 'noch 460,00 € ohne Rechnung') && str_contains($html, 'Teilrechnung'));
+$GLOBALS['rechte']['view_expenses'] = false;
+$html = render_partial('bestellung', ['b' => $bs + ['gebucht' => 500], 'wuensche' => $ws, 'buchungen' => [], 'gebucht' => 500.0, 'darf' => false, 'buchen' => false]);
+$check('ohne Blick auf die Buchungen: Summe ja, einzelne Buchungen nein – und kein „noch keine Buchung"', str_contains($html, 'noch 460,00 € ohne Rechnung')
+    && str_contains($html, 'sieht nur die Leitung') && !str_contains($html, 'Noch keine Buchung'));
+unset($GLOBALS['rechte']['view_expenses']);
+$check('Seiten geben einzelne Buchungen nur mit dem Recht heraus', str_contains((string)file_get_contents(dirname(__DIR__) . '/src/pages/bestellung.php'), "can('view_expenses') ? \$buchungen : []")
+    && str_contains((string)file_get_contents(dirname(__DIR__) . '/src/pages/budget.php'), "can('view_expenses') ? expense_query("));
 $html = render_partial('bestellungen', ['liste' => [$bs], 'filters' => ['status' => '', 'q' => '', 'jahr' => null, 'offen' => 1], 'summe' => 960.0, 'zuBestellen' => []]);
 $check('Liste rendert', str_contains($html, 'B-2026-002') && str_contains($html, 'Baumarkt Müller') && str_contains($html, '>bestellt<'));
 $html = render_partial('bestellung_edit', ['b' => ['id' => null, 'lieferant' => 'Baumarkt', 'bestellt_am' => '2026-10-04', 'bestell_nr' => '', 'notiz' => ''], 'frei' => array_values(array_filter($GLOBALS['wuensche'], static fn($w) => $w['status_slug'] === 'freigegeben')),

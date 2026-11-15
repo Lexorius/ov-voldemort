@@ -36,10 +36,36 @@ function tp_links(int $tpId): array
     return $out;
 }
 
+/**
+ * Von diesen Terminen die, die diese Person im Kalender sehen darf – Zeilen nach id.
+ * Sonst ließe sich über die Kennung der Titel eines fremden privaten Termins lesen.
+ */
+function tp_termine_sichtbar(array $ids, array $u): array
+{
+    $ids = tp_link_ids($ids);
+    if (!$ids) {
+        return [];
+    }
+    $in = implode(',', array_fill(0, count($ids), '?'));
+    $out = [];
+    foreach (db_all('SELECT k.*, u.display_name AS ziel_name, ' . kalender_fachgruppen_sub() . "
+                     FROM calendar_entries k LEFT JOIN users u ON u.id = k.ziel_id AND k.ziel = 'user' WHERE k.id IN ($in)", $ids) as $t) {
+        if (kalender_sichtbar($t, $u)) {
+            $out[(int)$t['id']] = $t;
+        }
+    }
+    return $out;
+}
+
 /** Verknüpfungen neu setzen. $post: ['termine' => ids, 'vehicles' => ids, 'radios' => ids] */
 function tp_links_speichern(int $tpId, array $post): void
 {
     $felder = ['termin' => 'termine', 'event' => 'events', 'vehicle' => 'vehicles', 'radio' => 'radios', 'budget' => 'budgets'];
+    // Einen Termin, den diese Person nicht sehen darf, kann sie weder anhängen noch entfernen
+    $alt = tp_links($tpId)['termin'] ?? [];
+    $gewollt = tp_link_ids($post['termine'] ?? []);
+    $sichtbar = array_keys(tp_termine_sichtbar(array_merge($alt, $gewollt), current_user() ?? ['id' => 0]));
+    $post['termine'] = array_merge(array_intersect($gewollt, $sichtbar), array_diff($alt, $sichtbar));
     db_exec('DELETE FROM tp_links WHERE tp_id = ?', [$tpId]);
     foreach ($felder as $typ => $feld) {
         foreach (tp_link_ids($post[$feld] ?? []) as $id) {
@@ -344,11 +370,9 @@ function tp_links_auswahl(array $links, array $u): array
     foreach (kalender_termine($von, $bis, $u) as $t) {
         $termine[(int)$t['id']] = $t;
     }
-    if ($links['termin']) {
-        $in = implode(',', array_fill(0, count($links['termin']), '?'));
-        foreach (db_all("SELECT k.*, u.display_name AS ziel_name FROM calendar_entries k LEFT JOIN users u ON u.id = k.ziel_id AND k.ziel = 'user' WHERE k.id IN ($in)", $links['termin']) as $t) {
-            $termine[(int)$t['id']] = $t;
-        }
+    // schon Verknüpftes und der Termin aus der Adresse – aber nur, was diese Person sehen darf
+    foreach (tp_termine_sichtbar($links['termin'], $u) as $id => $t) {
+        $termine[$id] = $t;
     }
     uasort($termine, static fn($a, $b) => strcmp((string)$a['beginn'], (string)$b['beginn']));
     $events = can('view_events') ? db_all(

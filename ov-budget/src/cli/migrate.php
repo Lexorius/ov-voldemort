@@ -3058,6 +3058,15 @@ SQL);
         $say('Tabelle einsatz_fremde angelegt.');
     }
     $merken('113_einsatz_fremde');
+
+    /* ---------- 114: Fahrzeugjournal behält die Kennung des Verfassers ---------- */
+    // Die Kennung geht in die Prüfsumme der Zeile ein. Mit dem Fremdschlüssel setzte die Datenbank sie
+    // beim Löschen eines Kontos auf NULL – danach galt jede Zeile dieser Person als verändert.
+    if (ovb_table_exists($pdo, 'vehicle_journal') && ovb_constraint_exists($pdo, 'vehicle_journal', 'fk_vj_user')) {
+        $pdo->exec('ALTER TABLE vehicle_journal DROP FOREIGN KEY fk_vj_user');
+        $say('Fahrzeugjournal: die Kennung des Verfassers bleibt, auch wenn sein Konto gelöscht wird.');
+    }
+    $merken('114_journal_verfasser_bleibt');
 }
 
 /**

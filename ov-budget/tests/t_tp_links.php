@@ -27,7 +27,10 @@ function db_exec(string $sql, array $p = []): int { $GLOBALS['execs'][] = [$sql,
 function db_insert(string $t, array $d): int { $GLOBALS['inserts'][] = [$t, $d]; return count($GLOBALS['inserts']); }
 function db_update(string $t, array $d, string $w, array $p): int { return 1; }
 function can(string $was, mixed $ctx = null): bool { return $GLOBALS['rechte'][$was] ?? false; }
-function current_user(): ?array { return ['id' => 1, 'role' => 'leitung', 'functions' => []]; }
+function current_user(): ?array { return $GLOBALS['ich'] ?? ['id' => 1, 'role' => 'leitung', 'functions' => []]; }
+// wie im Kalender, verkürzt: Leitung sieht alles, sonst der eigene und der für den ganzen Ortsverband
+function kalender_sichtbar(array $t, array $u): bool { return ($u['role'] ?? '') === 'leitung' || (int)($t['created_by'] ?? 0) === (int)$u['id'] || ($t['ziel'] ?? '') === 'ov'; }
+function kalender_fachgruppen_sub(): string { return "'' AS fachgruppen_ids"; }
 function tp_select(): string { return 'SELECT tp.* FROM talking_points tp LEFT JOIN meetings m ON m.id = tp.meeting_id'; }
 function kalender_termine(string $von, string $bis, array $u): array { return $GLOBALS['termine'] ?? []; }
 function event_find(?int $id): ?array { return $GLOBALS['events'][$id] ?? null; }
@@ -55,10 +58,26 @@ $check = function (string $n, bool $c) use (&$ok, &$fail) { if ($c) { $ok++; } e
 
 /* ---------- Speichern ---------- */
 $check('ids bereinigt', tp_link_ids(['3', '0', 'x', '3', 5]) === [3, 5] && tp_link_ids(null) === []);
+$GLOBALS['tabellen']['FROM calendar_entries k'] = [['id' => 4, 'titel' => 'Übung', 'beginn' => '2026-10-17 08:00:00', 'ziel' => 'ov', 'created_by' => 9],
+    ['id' => 8, 'titel' => 'Arzttermin', 'beginn' => '2026-10-18 08:00:00', 'ziel' => 'user', 'ziel_id' => 9, 'created_by' => 9]];
 tp_links_speichern(7, ['termine' => ['4'], 'events' => ['6'], 'vehicles' => ['2', '2', '9'], 'radios' => []]);
 $check('alte Bezüge gelöscht, neue eingetragen', count(array_filter($GLOBALS['execs'], static fn($x) => str_contains($x[0], 'DELETE FROM tp_links'))) === 1
     && count($GLOBALS['inserts']) === 4 && $GLOBALS['inserts'][0][1] === ['tp_id' => 7, 'typ' => 'termin', 'ziel_id' => 4]
     && $GLOBALS['inserts'][1][1] === ['tp_id' => 7, 'typ' => 'event', 'ziel_id' => 6] && $GLOBALS['inserts'][3][1] === ['tp_id' => 7, 'typ' => 'vehicle', 'ziel_id' => 9]);
+// Ein Mitglied darf einen fremden privaten Termin (8) weder anhängen noch lesen – und einen, den die Leitung angehängt hat, nicht entfernen
+$GLOBALS['ich'] = ['id' => 5, 'role' => 'user', 'functions' => []];
+$GLOBALS['inserts'] = [];
+tp_links_speichern(7, ['termine' => ['4', '8']]);
+$check('fremder privater Termin lässt sich nicht anhängen', array_column(array_column($GLOBALS['inserts'], 1), 'ziel_id') === [4]);
+$GLOBALS['tabellen']['FROM tp_links WHERE tp_id'] = [['typ' => 'termin', 'ziel_id' => 8]];
+$GLOBALS['inserts'] = [];
+tp_links_speichern(7, ['termine' => ['4']]);
+$check('ein angehängter Termin, den man nicht sieht, bleibt beim Speichern erhalten', array_column(array_column($GLOBALS['inserts'], 1), 'ziel_id') === [4, 8]);
+$GLOBALS['termine'] = [];
+$a = tp_links_auswahl(['termin' => [4, 8], 'event' => [], 'vehicle' => [], 'radio' => []], current_user());
+$check('Auswahl: der fremde private Termin erscheint nicht – auch nicht über die Adresse', array_column($a['termine'], 'id') === [4]);
+unset($GLOBALS['ich'], $GLOBALS['termine']);
+$GLOBALS['inserts'] = [];
 $GLOBALS['tabellen']['FROM tp_links WHERE tp_id'] = [['typ' => 'termin', 'ziel_id' => 4], ['typ' => 'vehicle', 'ziel_id' => 2]];
 $check('lesen', tp_links(7) === ['termin' => [4], 'event' => [], 'vehicle' => [2], 'radio' => [], 'budget' => []]);
 

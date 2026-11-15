@@ -929,7 +929,9 @@ function umfrage_berichte_senden(?int $jetzt = null): array
                      FROM umfragen u WHERE u.status = 'offen' AND u.bericht_rhythmus <> ''") as $u) {
         $res['geprueft']++;
         $art = umfrage_bericht_faellig($u, $jetzt, $stunde, $karenz);
-        if ($art === null) {
+        // Nach einem Fehlschlag eine Stunde Pause – für jede Art von Bericht
+        $merker = 'umfrage_bericht_fehler_' . (int)$u['id'];
+        if ($art === null || $jetzt - (int)state_get($merker, '0') < 3600) {
             continue;
         }
         $r = umfrage_bericht_senden($u, $art, $jetzt);
@@ -937,8 +939,9 @@ function umfrage_berichte_senden(?int $jetzt = null): array
             $res['gesendet']++;
         } else {
             $res['fehler'][] = (string)$u['titel'] . ': ' . $r['text'];
-            // Nicht jede Minute neu scheitern: erst wieder nach einer Stunde
-            db_update('umfragen', ['bericht_zuletzt' => date('Y-m-d H:i:s', $jetzt - 86400 + 3600)], 'id = ?', [(int)$u['id']]);
+            // Die Fehlerzeit getrennt merken: bericht_zuletzt zu verstellen, verschob den Wochenbericht
+            // um Tage und bremste den Tages- und den Abschlussbericht gar nicht
+            state_save($merker, (string)$jetzt);
         }
     }
     return $res;

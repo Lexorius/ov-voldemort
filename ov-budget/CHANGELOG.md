@@ -1,5 +1,25 @@
 # Änderungsverlauf
 
+## 2.1.92.1
+
+- **Budget – einzelne Buchungen nur mit dem Recht dazu:** Die Übersicht
+  zeigte die letzten Buchungen und die Seite einer Bestellung ihre
+  Rechnungen auch denen, die Buchungen sonst nicht sehen dürfen. Die Summen
+  bleiben für alle sichtbar, die einzelnen Buchungen nicht mehr.
+- **Tagesordnung – fremde private Termine bleiben privat:** Über einen
+  Tagesordnungspunkt ließ sich der Titel eines Kalendertermins lesen, den
+  man nicht sehen darf. Anhängen und auswählen lässt sich jetzt nur, was man
+  auch im Kalender sieht; ein Termin, den die Leitung angehängt hat, bleibt
+  beim Speichern durch andere erhalten.
+- **Fahrzeugjournal – kein falscher Alarm nach dem Löschen eines Kontos:**
+  Die Prüfung meldete danach jeden Eintrag dieser Person als verändert. Das
+  Journal behält die Kennung des Verfassers jetzt. Einträge von Konten, die
+  vor diesem Update gelöscht wurden, lassen sich nicht mehr heilen.
+- **Abstimmungen – Bericht nach einem Fehlschlag:** Ließ sich ein Bericht
+  nicht verschicken, versuchte es der Tages- und der Abschlussbericht jede
+  Minute neu, der Wochenbericht erst nach sechs Tagen. Jetzt gilt für alle:
+  eine Stunde Pause, dann der nächste Versuch.
+
 ## 2.1.92.0
 
 - **Einsätze – fremde Kräfte:** Einheiten anderer Organisationen lassen sich

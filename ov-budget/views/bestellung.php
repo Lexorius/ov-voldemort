@@ -48,7 +48,9 @@ $offen = $summe - $gebucht;
 
   <section class="card">
     <h2>Rechnungen und Buchungen</h2>
-    <?php if (!$buchungen): ?>
+    <?php if (!can('view_expenses')): ?>
+      <div class="empty">Die einzelnen Buchungen sieht nur die Leitung.</div>
+    <?php elseif (!$buchungen): ?>
       <div class="empty">Noch keine Buchung zu dieser Bestellung.<?= $buchen ? ' „Rechnung erfassen" legt sie mit allen Wünschen an.' : '' ?></div>
     <?php else: ?>
       <div class="tablewrap">

@@ -1394,8 +1394,9 @@ CREATE TABLE IF NOT EXISTS vehicle_journal (
   hash        CHAR(64)     NOT NULL DEFAULT '',
   PRIMARY KEY (id),
   KEY idx_vj (vehicle_id, id),
-  CONSTRAINT fk_vj_fz   FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE,
-  CONSTRAINT fk_vj_user FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE SET NULL
+  -- user_id bewusst ohne Fremdschluessel: die Kennung geht in den Hash ein. Setzte die Datenbank
+  -- sie beim Loeschen eines Kontos auf NULL, meldete die Pruefung jede Zeile dieser Person als veraendert.
+  CONSTRAINT fk_vj_fz   FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Instandsetzungsauftraege und Schadensmeldungen
