@@ -379,6 +379,10 @@ function newsletter_save_from_post(?array $n, array $user): array
         db_update('newsletter', $daten, 'id = ?', [(int)$n['id']]);
         $id = (int)$n['id'];
         audit('newsletter.bearbeitet', 'newsletter', $id, $titel);
+        if ((string)$n['status'] === 'geplant') {
+            // Die Versandzeilen gelten für die alten Empfänger: Planung zurück, neu einplanen
+            newsletter_abbrechen($n);
+        }
     } else {
         $daten['status'] = 'entwurf';
         $daten['created_by'] = (int)($user['id'] ?? 0) ?: null;
@@ -549,6 +553,10 @@ function newsletter_versand_abarbeiten(int $max = 50, ?int $jetzt = null): array
         $pdf = $pfad !== null ? (string)file_get_contents($pfad) : '';
         $offen = db_all("SELECT * FROM newsletter_versand WHERE newsletter_id = ? AND gesendet_am IS NULL AND fehler = '' ORDER BY id LIMIT " . (int)$uebrig, [(int)$n['id']]);
         foreach ($offen as $v) {
+            // Inzwischen abgebrochen: die Zeile ist weg – den Rest der Portion nicht mehr verschicken
+            if (db_val('SELECT 1 FROM newsletter_versand WHERE id = ? AND gesendet_am IS NULL', [(int)$v['id']]) === null) {
+                break;
+            }
             $uebrig--;
             if ($connector === null || $pdf === '') {
                 db_update('newsletter_versand', ['fehler' => $connector === null ? 'kein Connector' : 'PDF fehlt'], 'id = ?', [(int)$v['id']]);
@@ -569,8 +577,9 @@ function newsletter_versand_abarbeiten(int $max = 50, ?int $jetzt = null): array
             }
         }
         $stand = newsletter_versandstand((int)$n['id']);
-        if ($stand['offen'] === 0) {
-            db_update('newsletter', ['status' => 'gesendet', 'gesendet_am' => date('Y-m-d H:i:s', $jetzt)], 'id = ?', [(int)$n['id']]);
+        // Nur was noch läuft, wird fertig – ein abgebrochener Newsletter bleibt Entwurf
+        if ($stand['offen'] === 0
+            && db_update('newsletter', ['status' => 'gesendet', 'gesendet_am' => date('Y-m-d H:i:s', $jetzt)], "id = ? AND status = 'laeuft'", [(int)$n['id']]) > 0) {
             audit('newsletter.verschickt', 'newsletter', (int)$n['id'], sprintf('%d verschickt, %d Fehler', $stand['fertig'], $stand['fehler']));
             $res['fertig']++;
         }

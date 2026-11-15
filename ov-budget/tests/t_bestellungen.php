@@ -27,7 +27,7 @@ function db_row(string $sql, array $p = []): ?array {
     foreach ($GLOBALS['zeilen'] as $marke => $row) { if (str_contains($sql, $marke)) { return is_callable($row) ? $row($p) : $row; } }
     return null;
 }
-function db_val(string $sql, array $p = [], mixed $d = null) { return str_contains($sql, 'COUNT(*) FROM bestellungen') ? $GLOBALS['anzahl'] : $d; }
+function db_val(string $sql, array $p = [], mixed $d = null) { return str_contains($sql, 'MAX(') && str_contains($sql, 'FROM bestellungen') ? $GLOBALS['anzahl'] : $d; }   // höchste Nummer, nicht die Anzahl
 function db_exec(string $sql, array $p = []): int { $GLOBALS['execs'][] = [$sql, $p]; return 1; }
 function db_insert(string $t, array $d): int { $GLOBALS['inserts'][] = [$t, $d]; return count($GLOBALS['inserts']); }
 function db_update(string $t, array $d, string $w, array $p): int { $GLOBALS['updates'][] = [$t, $d, $p]; return 1; }

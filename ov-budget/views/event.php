@@ -302,7 +302,7 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
     <div class="tablewrap">
       <table class="data">
         <thead><tr>
-          <th>Name</th><th>Rückmeldung</th><th>Einladung</th><?php if ($darf): ?><th></th><?php endif; ?>
+          <th>Name</th><th>Rückmeldung</th><?php if ($darf): ?><th>Einladung</th><th></th><?php endif; ?>
         </tr></thead>
         <tbody>
         <?php foreach ($gaeste as $g): ?>
@@ -342,13 +342,13 @@ $rest = (float)$event['kosten_geplant'] - (float)$kosten['ausgaben'];
                   <?= (string)$g['quelle'] === 'einladung' ? '· über die Einladung' : '· von Hand' ?></div>
               <?php endif; ?>
             </td>
+            <?php if ($darf): /* der Code ist der Schlüssel zur Antwort des Gastes – nur für die Leitung */ ?>
             <td class="small mono" style="word-break:break-all">
               <?= e((string)$g['code']) ?>
               <?php if ($adresse !== ''): ?>
                 <div class="muted"><?= e($adresse) ?></div>
               <?php endif; ?>
             </td>
-            <?php if ($darf): ?>
             <td>
               <details>
                 <summary class="small">Ändern</summary>

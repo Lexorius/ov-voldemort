@@ -133,16 +133,19 @@ function wish_release_denied(array $wish, ?array $u = null, ?bool $eigeneErlaubt
  * Statuswechsel über das Formular oder die Statusauswahl prüfen, damit
  * niemand die Freigabe am Knopf vorbei setzt. null = in Ordnung.
  *
- * Geprüft wird, wenn der Wunsch neu auf „freigegeben“ gesetzt wird, und
- * wenn ein freigegebener Wunsch nachträglich teurer wird.
+ * Geprüft wird, wenn der Wunsch neu auf „freigegeben“ gesetzt wird – oder
+ * ohne Freigabe gleich auf „bestellt“ oder „beschafft“ –, und wenn ein
+ * freigegebener Wunsch dabei teurer wird.
  */
 function wish_status_change_denied(?array $existing, ?int $neuerStatus, float $gesamt, array $user): ?string
 {
     $frei = list_id_by_slug('wunsch_status', 'freigegeben');
-    if (!$frei || $neuerStatus !== $frei) {
+    $stufen = wish_freigabe_status();
+    if (!$frei || !in_array($neuerStatus, $stufen, true)) {
         return null;
     }
-    $warFrei = $existing && (int)$existing['status_id'] === $frei;
+    $alt = (int)($existing['status_id'] ?? 0);
+    $warFrei = in_array($alt, $stufen, true);
     $pruefling = [
         'netto_gesamt' => $gesamt,
         'created_by'   => $existing['created_by'] ?? $user['id'],
@@ -152,13 +155,21 @@ function wish_status_change_denied(?array $existing, ?int $neuerStatus, float $g
     if (!$warFrei) {
         return wish_release_denied($pruefling, $user);
     }
-    if ($gesamt > (float)$existing['netto_gesamt'] + 0.004) {
+    // Nach der Bestellung zählt der Rechnungsbetrag – geprüft wird nur, solange der Wunsch noch freigegeben war
+    if ($alt === $frei && $gesamt > (float)$existing['netto_gesamt'] + 0.004) {
         $grund = wish_release_denied($pruefling, $user);
         if ($grund !== null) {
             return 'Der Betrag liegt über dem freigegebenen Betrag. ' . $grund;
         }
     }
     return null;
+}
+
+/** Status, die eine Freigabe voraussetzen: freigegeben, bestellt, beschafft. Rückgabe: IDs */
+function wish_freigabe_status(): array
+{
+    return array_values(array_filter(array_map(
+        static fn(string $slug): ?int => list_id_by_slug('wunsch_status', $slug), ['freigegeben', 'bestellt', 'beschafft'])));
 }
 
 /** Aktive Benutzer mit Rolle und Funktions-IDs */

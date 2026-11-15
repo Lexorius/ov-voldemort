@@ -1,5 +1,44 @@
 # Änderungsverlauf
 
+## 2.1.91.3
+
+- **Veranstaltungen – Einladungscodes nur noch für die Leitung:** Die
+  Gästeliste zeigte Code und Link jedes Gastes allen, die Veranstaltungen
+  sehen dürfen – damit ließ sich im Namen eines Gastes zu- oder absagen.
+  Die Spalte *Einladung* sieht jetzt nur, wer die Veranstaltung bearbeiten
+  darf.
+- **Wünsche – Freigabe ließ sich über die Statusauswahl umgehen:** Wer einen
+  Wunsch ohne Freigabe gleich auf *Bestellt* oder *Beschafft* setzte, kam an
+  Freigaberecht, Betragsgrenze und Vier-Augen-Regel vorbei. Jetzt gilt dafür
+  dieselbe Prüfung wie beim Freigeben, und die Freigabe wird mit Name und
+  Zeit festgehalten. Wird ein freigegebener Wunsch beim Bestellen teurer,
+  wird der neue Betrag geprüft.
+- **Newsletter – geplanter Versand ging nach dem Ändern an die alten
+  Empfänger:** Speichern setzt die Planung jetzt wirklich zurück, wie es auf
+  der Seite steht – danach neu einplanen.
+- **Newsletter – „Versand abbrechen" bricht ab:** Lief gerade eine Portion,
+  ging sie trotzdem ganz hinaus, und der Newsletter galt danach als
+  verschickt. Jetzt hört der Versand nach der laufenden Mail auf, und der
+  Newsletter bleibt Entwurf.
+- **Bestellungen – nach einem Löschen ging keine neue mehr:** Die laufende
+  Nummer kam aus der Anzahl der Bestellungen; nach dem Löschen einer älteren
+  wurde eine vergebene Nummer noch einmal vergeben und das Anlegen scheiterte
+  bis zum Jahreswechsel. Sie folgt jetzt auf die höchste vergebene Nummer –
+  auch bei den Getränkebestellungen.
+
+## 2.1.91.2
+
+- **Einsätze – Speichern ganz oder gar nicht:** Kopf und Zeilen eines
+  Einsatzes werden jetzt in einem Zug gespeichert. Scheiterte bisher eine
+  Zeile mittendrin – etwa weil ein Fahrzeug inzwischen gelöscht war –,
+  waren die alten Zeilen schon weg; jetzt bleibt alles, wie es war.
+- **Einsätze – Fahrzeuge gingen beim Speichern verloren:** Wer Einsätze
+  bearbeiten, aber das Fahrzeugmodul nicht sehen durfte, bekam im Formular
+  keine Fahrzeugfelder – und löschte beim Speichern Fahrzeuge, Kilometer und
+  Betriebsstunden aller Zeilen. Die Fahrzeuge eines Einsatzes sieht jetzt,
+  wer den Einsatz sieht; in die Fahrzeugakte führt weiterhin nur ein Verweis
+  für die, die sie sehen dürfen.
+
 ## 2.1.91.1
 
 - **Anleitung und Beschreibungen nachgezogen:** README, Anleitung und die

@@ -143,6 +143,16 @@ $grund = wish_status_change_denied($bleibt, 55, 450, $u(77, 'user'));
 $check('Formular: teurer ohne Recht', $grund !== null && str_contains($grund, 'über dem freigegebenen'));
 $check('Formular: teurer innerhalb Grenze', wish_status_change_denied($bleibt, 55, 450, $u(4, 'user')) === null);
 $check('Formular: teurer über Grenze', wish_status_change_denied($bleibt, 55, 600, $u(4, 'user')) !== null);
+// Gleich „bestellt“ (6) oder „beschafft“ (7) ohne Freigabe: dieselbe Prüfung wie beim Freigeben
+$neu = ['status_id' => 1, 'netto_gesamt' => 900, 'created_by' => 9];
+$check('Formular: gleich bestellt ohne Freigaberecht', wish_status_change_denied($neu, 6, 900, $u(5, 'user')) !== null);
+$check('Formular: gleich beschafft über Grenze', wish_status_change_denied($neu, 7, 900, $u(4, 'user')) !== null);
+$check('Formular: gleich bestellt mit Recht', wish_status_change_denied($neu, 6, 900, $u(3, 'user')) === null);
+$check('Formular: neuer Wunsch gleich bestellt ohne Recht', wish_status_change_denied(null, 6, 10, $u(77, 'user')) !== null);
+$check('Formular: freigegeben → bestellt, Betrag gleich – jeder', wish_status_change_denied($bleibt, 6, 400, $u(77, 'user')) === null);
+$check('Formular: freigegeben → bestellt und dabei teurer', wish_status_change_denied($bleibt, 6, 5000, $u(77, 'user')) !== null);
+$check('Formular: bestellt bleibt bestellt, Rechnung teurer – jeder', wish_status_change_denied(['status_id' => 6] + $bleibt, 6, 450, $u(77, 'user')) === null);
+$check('Stufen mit Freigabe', wish_freigabe_status() === [55, 6, 7]);
 
 // Wer darf?
 $check('Ansprechpartner 300', order_release_people(300) === ['Admin', 'Olga OB', 'Zora Zugführerin', 'Stella Stellv']);

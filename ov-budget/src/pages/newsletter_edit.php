@@ -26,7 +26,8 @@ $verteilerGewaehlt = $n ? newsletter_verteiler_ids((int)$n['id']) : [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     [$neu, $errors] = newsletter_save_from_post($n, $user);
     if ($neu) {
-        flash('success', $n ? 'Newsletter gespeichert.' : 'Newsletter angelegt – jetzt prüfen und planen.');
+        flash('success', !$n ? 'Newsletter angelegt – jetzt prüfen und planen.'
+            : ((string)$n['status'] === 'geplant' ? 'Newsletter gespeichert. Die Planung ist zurückgesetzt – bitte neu einplanen.' : 'Newsletter gespeichert.'));
         redirect_route('newsletter_detail', ['id' => $neu]);
     }
     $n = array_merge($n ?? [], $_POST, ['id' => $n['id'] ?? null, 'status' => $n['status'] ?? 'entwurf', 'stored_name' => $n['stored_name'] ?? '', 'orig_name' => $n['orig_name'] ?? '']);

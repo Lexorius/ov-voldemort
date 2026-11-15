@@ -54,13 +54,16 @@ switch (post_str('action')) {
         }
         $data = ['status_id' => post_int('status_id'), 'updated_by' => (int)$user['id']];
         $frei = list_id_by_slug('wunsch_status', 'freigegeben');
-        if ($frei && $data['status_id'] === $frei && (int)$wish['status_id'] !== $frei) {
-            // Freigabe über die Statusauswahl: dieselben Regeln wie am Knopf
+        $stufen = wish_freigabe_status();
+        if ($frei && in_array($data['status_id'], $stufen, true) && !in_array((int)$wish['status_id'], $stufen, true)) {
+            // Freigabe über die Statusauswahl – auch gleich „bestellt“ oder „beschafft“: dieselben Regeln wie am Knopf
             $voll = wish_find_full($id) ?? $wish;
             $fehler = wish_release_denied($voll, $user) ?? wish_release($voll, $user);
-            flash($fehler === null ? 'success' : 'error',
-                $fehler === null ? 'Zur Bestellung freigegeben.' : $fehler);
-            break;
+            if ($fehler !== null || $data['status_id'] === $frei) {
+                flash($fehler === null ? 'success' : 'error',
+                    $fehler === null ? 'Zur Bestellung freigegeben.' : $fehler);
+                break;
+            }
         }
         if (can('manage_wishes') && isset($_POST['prioritaet'])) {
             $data['prioritaet'] = post_int('prioritaet', 0);

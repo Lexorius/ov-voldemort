@@ -52,6 +52,7 @@ function db_val(string $sql, array $p = [], mixed $d = null) {
     if (str_contains($sql, 'FROM settings')) { return $GLOBALS['merker'][$p[0] ?? ''] ?? $d; }
     if (str_contains($sql, 'FROM newsletter_sperre WHERE token')) { foreach ($GLOBALS['sperre'] as $s) { if ($s['token'] === $p[0]) { return $s['id']; } } return $d; }
     if (str_contains($sql, 'COUNT(*) FROM newsletter')) { return 3; }
+    if (str_contains($sql, 'SELECT 1 FROM newsletter_versand')) { foreach ($GLOBALS['versand'] as $v) { if ($v['id'] === (int)$p[0] && $v['gesendet_am'] === null) { return 1; } } return $d; }
     return $d;
 }
 function db_exec(string $sql, array $p = []): int { if (str_contains($sql, 'INTO settings')) { $GLOBALS['merker'][$p[0]] = (string)$p[1]; } $GLOBALS['execs'][] = [$sql, $p]; return 1; }
@@ -64,6 +65,7 @@ function db_insert(string $t, array $d): int {
 function db_update(string $t, array $d, string $w, array $p): int {
     $GLOBALS['updates'][] = [$t, $d, $p];
     if ($t === 'newsletter_versand') { foreach ($GLOBALS['versand'] as &$v) { if ($v['id'] === (int)$p[0]) { $v = $d + $v; } } unset($v); }
+    if ($t === 'newsletter' && str_contains($w, "status = 'laeuft'")) { return $GLOBALS['laeuft_noch'] ?? 1; }   // 0 = inzwischen abgebrochen
     return 1;
 }
 function can(string $was, mixed $ctx = null): bool { return true; }
@@ -135,6 +137,14 @@ $check('angelegt: Entwurf, Betreff aus Titel, Zeitpunkt, Datei abgelegt, KI eing
 $stored = basename(glob($tmp . '/newsletter/nl_101_*.pdf')[0]);
 [$id, $f] = newsletter_save_from_post(['id' => 7, 'status' => 'gesendet'], $user);
 $check('Verschicktes lässt sich nicht ändern', $id === null && str_contains($f[0], 'nicht mehr ändern'));
+$_FILES = []; $GLOBALS['updates'] = []; $GLOBALS['execs'] = [];
+[$id, $f] = newsletter_save_from_post(['id' => 7, 'status' => 'geplant', 'titel' => 'OV-Nachrichten'], $user);
+$check('Geplantes geändert: Versandzeilen der alten Empfänger weg, zurück in den Entwurf', $id === 7 && $f === []
+    && count(array_filter($GLOBALS['execs'], fn($x) => str_contains($x[0], 'DELETE FROM newsletter_versand') && str_contains($x[0], 'gesendet_am IS NULL'))) === 1
+    && in_array('entwurf', array_map(fn($x) => $x[1]['status'] ?? '', $GLOBALS['updates']), true));
+$GLOBALS['execs'] = [];
+[$id, $f] = newsletter_save_from_post(['id' => 7, 'status' => 'entwurf', 'titel' => 'OV-Nachrichten'], $user);
+$check('Entwurf geändert: keine Planung anzufassen', $id === 7 && !array_filter($GLOBALS['execs'], fn($x) => str_contains($x[0], 'gesendet_am IS NULL')));
 $_POST = []; $_FILES = [];
 
 /* ---------- Planen ---------- */
@@ -172,6 +182,20 @@ $check('Portion 2: Fehler vermerkt, Newsletter fertig', $r['gesendet'] === 0 && 
     && end($GLOBALS['updates'])[1]['status'] === 'gesendet');
 $stand = newsletter_versandstand(7);
 $check('Versandstand', $stand === ['gesamt' => 2, 'fertig' => 1, 'fehler' => 1, 'offen' => 0]);
+// Abbruch mitten in der Portion: nach der ersten Mail sind die offenen Zeilen weg und der Newsletter wieder Entwurf
+$zeile = fn(int $id, string $mail) => ['id' => $id, 'newsletter_id' => 7, 'email' => $mail, 'name' => '', 'token' => newsletter_kennung($mail), 'gesendet_am' => null, 'fehler' => ''];
+$GLOBALS['versand'] = [$zeile(400, 'anna@example.de'), $zeile(401, 'emil@example.de'), $zeile(402, 'frida@example.de')];
+$attrappe = $GLOBALS['mail_attrappe'];
+$post = [];
+$GLOBALS['mail_attrappe'] = static function (string $an) use (&$post): void {
+    $post[] = [$an];
+    $GLOBALS['versand'] = array_values(array_filter($GLOBALS['versand'], fn($v) => $v['email'] === $an));
+    $GLOBALS['laeuft_noch'] = 0;
+};
+$r = newsletter_versand_abarbeiten(10, $jetzt);
+$check('abgebrochen in der Portion: Rest nicht verschickt, nicht als fertig gemeldet', count($post) === 1 && $r['gesendet'] === 1 && $r['fertig'] === 0);
+$GLOBALS['mail_attrappe'] = $attrappe;
+unset($GLOBALS['laeuft_noch']);
 $GLOBALS['sperre'][] = ['id' => 150, 'token' => newsletter_kennung('anna@example.de'), 'grund' => '', 'gesperrt_am' => '2026-11-02 08:00:00'];
 $GLOBALS['versand'] = [['id' => 300, 'newsletter_id' => 7, 'email' => 'anna@example.de', 'name' => '', 'token' => newsletter_kennung('anna@example.de'), 'gesendet_am' => null, 'fehler' => '']];
 $post = [];

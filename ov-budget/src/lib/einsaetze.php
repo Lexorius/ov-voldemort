@@ -621,16 +621,24 @@ function einsatz_save_from_post(?array $e, array $user): array
         'updated_by'    => (int)$user['id'],
     ];
     $detail = einsatz_bezeichnung($daten) . ' / ' . ($summen['tage'] === 1 ? '1 Tag' : $summen['tage'] . ' Tage');
-    if ($e) {
-        $id = (int)$e['id'];
-        db_update('einsaetze', $daten, 'id = ?', [$id]);
-        audit('einsatz.bearbeitet', 'einsatz', $id, $detail);
-    } else {
-        $daten['created_by'] = (int)$user['id'];
-        $id = db_insert('einsaetze', $daten);
-        audit('einsatz.angelegt', 'einsatz', $id, $detail);
+    // Kopf und Zeilen ganz oder gar nicht: scheitert eine Zeile, bleiben die alten stehen
+    db()->beginTransaction();
+    try {
+        if ($e) {
+            $id = (int)$e['id'];
+            db_update('einsaetze', $daten, 'id = ?', [$id]);
+            audit('einsatz.bearbeitet', 'einsatz', $id, $detail);
+        } else {
+            $daten['created_by'] = (int)$user['id'];
+            $id = db_insert('einsaetze', $daten);
+            audit('einsatz.angelegt', 'einsatz', $id, $detail);
+        }
+        einsatz_tage_setzen($id, $tage);
+        db()->commit();
+    } catch (Throwable $ex) {
+        db()->rollBack();
+        throw $ex;
     }
-    einsatz_tage_setzen($id, $tage);
     return [$id, []];
 }
 

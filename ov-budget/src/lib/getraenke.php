@@ -520,7 +520,8 @@ function getraenke_positionen(int $bestellungId): array
 function getraenke_bestellnummer(?int $jetzt = null): string
 {
     $jahr = date('Y', $jetzt ?? time());
-    $n = (int)db_val("SELECT COUNT(*) FROM getraenke_bestellungen WHERE nummer LIKE ?", ['G-' . $jahr . '-%'], 0) + 1;
+    // Höchste Nummer statt Anzahl: nach einem Löschen gäbe die Anzahl eine vergebene Nummer noch einmal aus
+    $n = (int)db_val("SELECT MAX(CAST(SUBSTRING(nummer, 8) AS UNSIGNED)) FROM getraenke_bestellungen WHERE nummer LIKE ?", ['G-' . $jahr . '-%'], 0) + 1;
     return sprintf('G-%s-%03d', $jahr, $n);
 }
 

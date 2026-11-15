@@ -30,10 +30,18 @@ function db_all(string $sql, array $p = []): array {
 function db_row(string $sql, array $p = []): ?array { return null; }
 function db_val(string $sql, array $p = [], mixed $d = null) { return $d; }
 function db_exec(string $sql, array $p = []): int { $GLOBALS['execs'][] = [$sql, $p]; return 1; }
-function db_insert(string $t, array $d): int { $GLOBALS['inserts'][] = [$t, $d]; return 40 + count($GLOBALS['inserts']); }
+function db_insert(string $t, array $d): int {
+    if (($GLOBALS['insert_scheitert'] ?? '') === $t) { throw new RuntimeException('Fremdschlüssel verletzt'); }
+    $GLOBALS['inserts'][] = [$t, $d]; return 40 + count($GLOBALS['inserts']);
+}
 function db_update(string $t, array $d, string $w, array $p): int { $GLOBALS['updates'][] = [$t, $d, $p]; return 1; }
 final class StubStmtE { public function execute(array $p): bool { $GLOBALS['audit'][] = $p; return true; } }
-final class StubPdoE { public function prepare(string $s): StubStmtE { return new StubStmtE(); } }
+final class StubPdoE {
+    public function prepare(string $s): StubStmtE { return new StubStmtE(); }
+    public function beginTransaction(): bool { $GLOBALS['tx'][] = 'begin'; return true; }
+    public function commit(): bool { $GLOBALS['tx'][] = 'commit'; return true; }
+    public function rollBack(): bool { $GLOBALS['tx'][] = 'rollback'; return true; }
+}
 function db(): StubPdoE { return new StubPdoE(); }
 function can(string $was, mixed $ctx = null): bool { return $GLOBALS['rechte'][$was] ?? true; }
 function current_user(): ?array { return ['id' => 7, 'role' => 'leitung', 'display_name' => 'Tester']; }
@@ -183,6 +191,18 @@ $check('Bearbeiten: Update statt Insert, ganztägiger Tag', $id2 === 5 && $err2 
     && $aend[1]['beginn'] === '2026-11-14 00:00:00' && $aend[1]['ende'] === '2026-11-14 23:59:59' && $aend[1]['status'] === 'abgerechnet' && !isset($aend[1]['created_by']));
 $check('Zeile ohne Fahrzeuge: der Einsatz hat keine mehr', $nur('einsatz_vehicles') === [] && $nur('einsatz_tag_vehicles') === []);
 
+// Scheitert eine Zeile (etwa: das Fahrzeug wurde inzwischen gelöscht), wird alles zurückgenommen
+$GLOBALS['tx'] = [];
+$GLOBALS['insert_scheitert'] = 'einsatz_tag_vehicles';
+$_POST = ['titel' => 'Hochwasser Hunte', 'tag_key' => ['0'], 'tag_datum' => ['2026-11-14'], 'tag_fz' => ['0' => ['999']]];
+$geworfen = false;
+try { einsatz_save_from_post(['id' => 5, 'status' => 'beendet'], current_user()); } catch (RuntimeException $ex) { $geworfen = true; }
+$GLOBALS['insert_scheitert'] = '';
+$check('Speichern scheitert: zurückgenommen statt halb geschrieben, der Fehler geht weiter', $geworfen && $GLOBALS['tx'] === ['begin', 'rollback']);
+$GLOBALS['tx'] = [];
+einsatz_save_from_post(['id' => 5, 'status' => 'beendet'], current_user());
+$check('Speichern gelingt: in einer Transaktion abgeschlossen', $GLOBALS['tx'] === ['begin', 'commit']);
+
 $GLOBALS['execs'] = [];
 einsatz_delete(['id' => 5, 'nummer' => '2026-014', 'titel' => 'Hochwasser Hunte']);
 $check('Löschen: Buchungen verlieren nur den Bezug', str_contains($GLOBALS['execs'][0][0], 'UPDATE expenses SET einsatz_id = NULL') && str_contains($GLOBALS['execs'][1][0], 'DELETE FROM einsaetze'));
@@ -282,6 +302,8 @@ $check('Routen', str_contains($index, "'einsaetze'          => 'einsaetze'") && 
     && is_file($app . '/src/pages/einsaetze.php') && is_file($app . '/src/pages/einsatz.php') && is_file($app . '/src/pages/einsatz_edit.php'));
 $check('Auswahlliste und Rechte bekannt', isset(LIST_KEYS['einsatz_art'])
     && substr_count((string)file_get_contents($app . '/src/lib/auth.php'), "_einsaetze'") === 3);
+$check('Fahrzeuge im Formular und auf der Seite hängen nicht am Recht des Fahrzeugmoduls', !str_contains((string)file_get_contents($app . '/src/pages/einsatz_edit.php'), "can('view_vehicles')")
+    && !str_contains((string)file_get_contents($app . '/src/pages/einsatz.php'), "can('view_vehicles')"));
 $check('Bibliothek wird geladen', str_contains((string)file_get_contents($app . '/src/bootstrap.php'), "/lib/einsaetze.php'"));
 $schema = (string)file_get_contents($app . '/sql/schema.sql');
 $wanderung = (string)file_get_contents($app . '/src/cli/migrate.php');

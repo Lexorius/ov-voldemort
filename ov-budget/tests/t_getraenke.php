@@ -50,7 +50,7 @@ function db_row(string $sql, array $p = []): ?array {
 function db_val(string $sql, array $p = [], mixed $d = null) {
     if (str_contains($sql, 'FROM settings')) { return $GLOBALS['merker'][$p[0] ?? ''] ?? $d; }
     if (str_contains($sql, 'FROM getraenke_bestand')) { return $GLOBALS['bestand_wert']; }
-    if (str_contains($sql, 'COUNT(*) FROM getraenke_bestellungen')) { return 6; }
+    if (str_contains($sql, 'MAX(') && str_contains($sql, 'FROM getraenke_bestellungen')) { return 6; }   // höchste Nummer, nicht die Anzahl
     if (str_contains($sql, 'COUNT(*) FROM getraenke_positionen')) { return $GLOBALS['pos_count'] ?? 0; }
     return $d;
 }

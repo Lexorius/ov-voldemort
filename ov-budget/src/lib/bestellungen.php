@@ -24,7 +24,8 @@ function bestellung_status(string $s): string
 function bestellung_nummer_neu(?int $jahr = null): string
 {
     $jahr ??= (int)date('Y');
-    $n = (int)db_val('SELECT COUNT(*) FROM bestellungen WHERE nummer LIKE ?', ['B-' . $jahr . '-%'], 0) + 1;
+    // Höchste Nummer statt Anzahl: nach einem Löschen gäbe die Anzahl eine vergebene Nummer noch einmal aus
+    $n = (int)db_val('SELECT MAX(CAST(SUBSTRING(nummer, 8) AS UNSIGNED)) FROM bestellungen WHERE nummer LIKE ?', ['B-' . $jahr . '-%'], 0) + 1;
     return sprintf('B-%d-%03d', $jahr, $n);
 }
 

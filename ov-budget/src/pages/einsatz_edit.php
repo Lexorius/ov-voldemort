@@ -74,11 +74,10 @@ render('einsatz_edit', [
     ],
     'tage'    => $tage,
     'errors'  => $errors,
-    // Fahrzeuge je Zeile wählbar – auch ausgemusterte, wenn sie in diesem Einsatz schon stehen
-    'fahrzeuge' => can('view_vehicles')
-        ? db_all('SELECT v.id, v.bezeichnung, v.funkrufname, v.kennzeichen FROM vehicles v
+    // Fahrzeuge je Zeile wählbar – auch ausgemusterte, wenn sie in diesem Einsatz schon stehen.
+    // Für alle, die bearbeiten dürfen: ohne die Felder gingen beim Speichern Fahrzeuge und Kilometer verloren
+    'fahrzeuge' => db_all('SELECT v.id, v.bezeichnung, v.funkrufname, v.kennzeichen FROM vehicles v
                   WHERE v.is_active = 1 OR v.id IN (SELECT ev.vehicle_id FROM einsatz_vehicles ev WHERE ev.einsatz_id = ?)
-                  ORDER BY v.bezeichnung', [(int)($einsatz['id'] ?? 0)])
-        : [],
+                  ORDER BY v.bezeichnung', [(int)($einsatz['id'] ?? 0)]),
     'buchungen' => $istNeu ? 0 : (int)db_val('SELECT COUNT(*) FROM expenses WHERE einsatz_id = ?', [(int)$einsatz['id']], 0),
 ]);

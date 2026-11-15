@@ -291,8 +291,8 @@ function wish_save_from_post(?array $existing, array $user): array
         $grund = wish_status_change_denied($existing, $pruefStatus, $gesamt, $user);
         if ($grund !== null) {
             $errors[] = $grund;
-        } elseif ($pruefStatus === list_id_by_slug('wunsch_status', 'freigegeben')
-            && (int)($existing['status_id'] ?? 0) !== $pruefStatus) {
+        } elseif (in_array($pruefStatus, wish_freigabe_status(), true)
+            && !in_array((int)($existing['status_id'] ?? 0), wish_freigabe_status(), true)) {
             $data['freigegeben_von'] = (int)$user['id'];
             $data['freigegeben_am'] = date('Y-m-d H:i:s');
         }

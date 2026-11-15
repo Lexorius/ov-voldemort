@@ -149,7 +149,7 @@ $auftraege = array_values(array_filter($dateien, static fn($d) => (string)$d['he
         <thead><tr><th>Fahrzeug</th><th class="num">Tage</th><th class="num">Einsatzzeit</th><th class="num">Kilometer</th><th class="num">Betriebsstunden</th></tr></thead>
         <tbody>
         <?php foreach ($jeFahrzeug as $vid => $fz): ?>
-          <tr><td><a href="<?= e(url('vehicle', ['id' => (int)$vid])) ?>"><?= e((string)$fz['bezeichnung']) ?></a></td><td class="num"><?= (int)$fz['tage'] ?></td>
+          <tr><td><?php if (can('view_vehicles')): ?><a href="<?= e(url('vehicle', ['id' => (int)$vid])) ?>"><?= e((string)$fz['bezeichnung']) ?></a><?php else: ?><?= e((string)$fz['bezeichnung']) ?><?php endif; ?></td><td class="num"><?= (int)$fz['tage'] ?></td>
             <td class="num"><?= (int)$fz['minuten'] > 0 ? e(einsatz_stunden_text((int)$fz['minuten'])) : '–' ?></td>
             <td class="num"><?= (float)$fz['km'] > 0 ? e(einsatz_km_text((float)$fz['km'])) : '–' ?></td>
             <td class="num"><?= (float)($fz['bh'] ?? 0) > 0 ? e(einsatz_bh_text((float)$fz['bh'])) : '–' ?></td></tr>

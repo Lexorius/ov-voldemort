@@ -18,10 +18,6 @@ if (!$einsatz) {
 
 $id = (int)$einsatz['id'];
 $tage = einsatz_tage($id);
-if (!can('view_vehicles')) {
-    // ohne Zugang zum Fahrzeugmodul bleiben die Fahrzeuge je Zeile verborgen
-    $tage = array_map(static fn(array $t): array => ['fahrzeuge' => [], 'vehicles' => [], 'km' => []] + $t, $tage);
-}
 $buchungen = can('view_expenses') ? einsatz_buchungen($id) : [];
 
 render('einsatz', [

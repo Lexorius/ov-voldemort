@@ -64,6 +64,7 @@ $_GET = ['p' => 'event', 'id' => '12'];
 /* ================= Veranstaltungsseite ================= */
 $html = render_partial('event', $daten());
 $check('Einladen ist eingeklappt', str_contains($html, '<summary>Gäste einladen</summary>'));
+$check('mit Rechten steht der Einladungscode da', str_contains($html, 'AB23CD'));
 $check('mit Gästen bleibt es zu',
     !str_contains($html, '<details class="mt" open>' . "\n" . '    <summary>Gäste einladen'));
 $check('Datei-Formular ist eingeklappt', str_contains($html, '<summary>Datei hinzufügen</summary>'));
@@ -90,6 +91,7 @@ $GLOBALS['rechte'] = false;
 $html = render_partial('event', $daten());
 $check('ohne Rechte kein Einladen', !str_contains($html, 'Gäste einladen')
     && !str_contains($html, 'Datei hinzufügen'));
+$check('ohne Rechte kein Einladungscode, der Gast steht trotzdem da', !str_contains($html, 'AB23CD') && str_contains($html, 'Beispiel'));
 $GLOBALS['rechte'] = true;
 
 /* ================= Bearbeiten-Formular ================= */
