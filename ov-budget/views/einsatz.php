@@ -123,6 +123,34 @@ $auftraege = array_values(array_filter($dateien, static fn($d) => (string)$d['he
   <?php endif; ?>
 </div>
 
+<?php if (!empty($fremde)): ?>
+<div class="card" id="fremde">
+  <div class="card__head">
+    <h2>Fremde Kräfte</h2>
+    <?php if ($darf): ?><a class="btn btn--sec btn--sm" href="<?= e(url('einsatz_edit', ['id' => $id])) ?>#fremde">Zeilen bearbeiten</a><?php endif; ?>
+  </div>
+  <div class="tablewrap">
+    <table class="data">
+      <thead><tr><th>Tag</th><th>Zeit</th><th class="num">Dauer</th><th>Einheit</th><th>Stärke</th></tr></thead>
+      <tbody>
+      <?php $letzterTag = ''; foreach ($fremde as $f): $min = einsatz_tag_minuten($f); $st = einsatz_tag_staerke($f);
+            $von = einsatz_zeit($f['von'] ?? ''); $bis = einsatz_zeit($f['bis'] ?? ''); $gleicherTag = (string)$f['datum'] === $letzterTag; $letzterTag = (string)$f['datum']; ?>
+        <tr>
+          <td class="nowrap"><?= $gleicherTag ? '<span class="muted" title="' . e(einsatz_tag_text((string)$f['datum'])) . '">″</span>' : e(einsatz_tag_text((string)$f['datum'])) ?></td>
+          <td class="nowrap small"><?php if (is_string($von)): ?><?= e($von) ?> – <?= is_string($bis) ? e($bis) . ($bis <= $von ? ' <span class="muted" title="endet am Folgetag">+1</span>' : '') : '<span class="muted">offen</span>' ?><?php else: ?><span class="muted">ganztägig</span><?php endif; ?></td>
+          <td class="num"><?= $min !== null ? e(einsatz_stunden_text($min)) : '–' ?></td>
+          <td><?= e((string)$f['einheit']) ?><?= !empty($f['symbol_name']) ? ' <span class="muted small">· ' . e((string)$f['symbol_name']) . '</span>' : '' ?></td>
+          <td class="nowrap"><?= $st['gesamt'] > 0 ? '<span class="mono">' . e($st['text']) . '</span>' : '–' ?></td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
+  <p class="small muted" style="margin-bottom:0">Einheiten anderer Organisationen. Sie zählen nicht in die Helferstunden des Ortsverbands;
+    auf einer Karte dieses Einsatzes stehen sie neben der Karte zur Auswahl.</p>
+</div>
+<?php endif; ?>
+
 <?php if ($mitFachgruppen || $mitFahrzeugen): ?>
 <div class="grid2">
   <?php if ($mitFachgruppen): ?>

@@ -57,6 +57,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'bh' => array_filter(array_map(static fn($v) => trim((string)$v), (array)($_POST['tag_bh'][$key] ?? [])), 'strlen'),
         ];
     }
+    // die fremden Kräfte ebenso, wie sie eingetippt wurden – ohne die ganz leeren Zeilen
+    $fremde = [];
+    foreach ($spalte('fremd_einheit') as $i => $einheit) {
+        $f = [
+            'einheit' => trim((string)$einheit),
+            'datum' => trim((string)($spalte('fremd_datum')[$i] ?? '')),
+            'von' => trim((string)($spalte('fremd_von')[$i] ?? '')),
+            'bis' => trim((string)($spalte('fremd_bis')[$i] ?? '')),
+            'staerke_text' => trim((string)($spalte('fremd_staerke')[$i] ?? '')),
+        ];
+        if (implode('', $f) !== '') {
+            $fremde[] = $f + ['symbol_id' => (int)($spalte('fremd_symbol')[$i] ?? 0)];
+        }
+    }
 }
 
 $istNeu = empty($einsatz['id']);
@@ -64,6 +78,7 @@ if ($tage === null) {
     // Beim Anlegen steht der heutige Tag schon da
     $tage = $istNeu ? [['datum' => date('Y-m-d'), 'von' => '', 'bis' => '', 'taetigkeit' => '']] : einsatz_tage((int)$einsatz['id']);
 }
+$fremde ??= $istNeu ? [] : einsatz_fremde((int)$einsatz['id']);
 
 render('einsatz_edit', [
     'title'   => $istNeu ? 'Einsatz anlegen' : 'Einsatz bearbeiten',
@@ -73,6 +88,9 @@ render('einsatz_edit', [
         'fachgruppe_id' => null, 'beschreibung' => '', 'notiz' => '',
     ],
     'tage'    => $tage,
+    'fremde'  => $fremde,
+    // taktische Zeichen aus der Kartenbibliothek – damit steht eine fremde Einheit auf der Karte zur Auswahl
+    'symbole' => karten_symbole_kurz(),
     'errors'  => $errors,
     // Fahrzeuge je Zeile wählbar – auch ausgemusterte, wenn sie in diesem Einsatz schon stehen.
     // Für alle, die bearbeiten dürfen: ohne die Felder gingen beim Speichern Fahrzeuge und Kilometer verloren

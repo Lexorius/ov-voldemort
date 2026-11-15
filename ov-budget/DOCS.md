@@ -1555,6 +1555,18 @@ denselben Tag, **„+ Folgetag"** auf den nächsten – bei einem Einsatz über
 eine Woche bleibt so nur, die Abweichungen zu ändern; Kilometer und
 Betriebsstunden beginnen je Zeile neu. Leere Zeilen werden beim Speichern übergangen.
 
+**Fremde Kräfte.** Einheiten anderer Organisationen – Feuerwehr,
+Rettungsdienst, ein anderer Ortsverband – stehen in einem eigenen Block
+darunter: je Tag und Einheit eine Zeile mit **Datum**, **von**, **bis**, der
+**Einheit** als Freitext und ihrer **Stärke**. Sie zählen nicht in die
+Helferstunden des Ortsverbands. Wer der Zeile ein **Zeichen** aus der
+Symbolbibliothek der Karten gibt, findet die Einheit auf jeder Karte dieses
+Einsatzes rechts neben der Karte unter *Fremde Kräfte aus dem Einsatz*: **ein
+Klick setzt sie** mit Namen und Stärke in die Kartenmitte, von dort lässt sie
+sich an ihre Stelle ziehen. Ohne Zeichen fragt die Karte beim Klick nach
+einem. Steht eine Einheit mit diesem Namen schon auf der Karte, verschwindet
+sie aus der Auswahl.
+
 Aus den Zeilen rechnet die Seite:
 
 * **Einsatztage** – die verschiedenen Kalendertage,

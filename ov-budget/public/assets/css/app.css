@@ -1056,6 +1056,8 @@ pre.raw {
 .ezeile .field { margin-bottom: .5rem; }
 .ezeile .field label { font-size: .76rem; }
 .ezeile__kopf { display: grid; gap: .5rem; grid-template-columns: 10rem 7rem 7rem minmax(9rem, 1fr) 7rem auto; align-items: end; }
+/* fremde Kräfte: dazu die Auswahl des Zeichens, sonst rutscht der Knopf in die nächste Reihe */
+.ezeile__kopf--zeichen { grid-template-columns: 10rem 7rem 7rem minmax(9rem, 1fr) 7rem minmax(8rem, 12rem) auto; }
 .ezeile__kopf input[type=time] { width: 100%; padding: .65rem .5rem; min-height: 44px; font: inherit; color: var(--ink);
                                  background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; }
 .ezeile__weg { margin-bottom: .5rem; min-height: 44px; }

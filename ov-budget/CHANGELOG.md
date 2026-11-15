@@ -1,5 +1,20 @@
 # Änderungsverlauf
 
+## 2.1.92.0
+
+- **Einsätze – fremde Kräfte:** Einheiten anderer Organisationen lassen sich
+  jetzt am Einsatz festhalten – in einem eigenen Block unter den eigenen
+  Zeilen, je Tag und Einheit mit Datum, Uhrzeit, Einheit als Freitext und
+  Stärke. *+ Folgetag* kopiert die letzte Zeile auf den nächsten Tag. Sie
+  stehen auf der Seite des Einsatzes in einer eigenen Tabelle und zählen
+  nicht in die Helferstunden des Ortsverbands.
+- **Karten – fremde Kräfte mit einem Klick setzen:** Auf einer Karte, die zu
+  einem Einsatz gehört, stehen seine fremden Kräfte rechts neben der Karte
+  zur Auswahl. Ein Klick setzt die Einheit mit Namen und Stärke in die
+  Kartenmitte – mit dem Zeichen, das am Einsatz für sie gewählt ist; ohne
+  Zeichen fragt die Karte nach einem. Was schon auf der Karte steht, fällt
+  aus der Auswahl.
+
 ## 2.1.91.4
 
 Mit dieser Fassung gehört **Connector 1.9.0** – bitte die Dateien des

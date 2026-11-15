@@ -116,26 +116,12 @@ function einsatz_tage_aus_post(array $post): array
             continue;
         }
         $nr = 'Zeile ' . (count($tage) + count($fehler) + 1);
-        if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $d, $m) || !checkdate((int)$m[2], (int)$m[3], (int)$m[1])) {
-            $fehler[] = $d === '' ? $nr . ': Bitte ein Datum angeben.' : $nr . ': „' . $d . '" ist kein gültiges Datum.';
+        $geprueft = einsatz_zeile_pruefen($nr, $d, $v, $b, $s);
+        if (is_string($geprueft)) {
+            $fehler[] = $geprueft;
             continue;
         }
-        $zv = einsatz_zeit($v);
-        $zb = einsatz_zeit($b);
-        if ($zv === false || $zb === false) {
-            $fehler[] = sprintf('%s (%s): Uhrzeiten bitte als hh:mm angeben.', $nr, de_date($d));
-            continue;
-        }
-        if ($zv === null && $zb !== null) {
-            $fehler[] = sprintf('%s (%s): Zum Ende fehlt der Beginn.', $nr, de_date($d));
-            continue;
-        }
-        // dieselbe Schreibweise wie auf den Karten: „1/2/9", „1/2/9/12" oder eine einzelne Zahl
-        $st = karten_staerke_parsen($s);
-        if ($st === null) {
-            $fehler[] = sprintf('%s (%s): Stärke bitte als Führer/Unterführer/Helfer angeben, etwa 1/2/9 – oder als einzelne Zahl.', $nr, de_date($d));
-            continue;
-        }
+        [$zv, $zb, $st] = $geprueft;
         $tage[] = [
             'datum' => $d, 'von' => $zv, 'bis' => $zb,
             'fachgruppe_id' => $fg > 0 ? $fg : null,
@@ -151,6 +137,99 @@ function einsatz_tage_aus_post(array $post): array
     }
     usort($tage, static fn($x, $y) => [$x['datum'], (string)$x['von']] <=> [$y['datum'], (string)$y['von']]);
     return [$tage, $fehler];
+}
+
+/**
+ * Datum, Uhrzeiten und Stärke einer Formularzeile prüfen – für eigene wie für fremde Kräfte.
+ * Gibt [von, bis, [f, u, h]] zurück oder den Fehlertext. Reine Funktion.
+ */
+function einsatz_zeile_pruefen(string $nr, string $d, string $v, string $b, string $s): array|string
+{
+    if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $d, $m) || !checkdate((int)$m[2], (int)$m[3], (int)$m[1])) {
+        return $d === '' ? $nr . ': Bitte ein Datum angeben.' : $nr . ': „' . $d . '" ist kein gültiges Datum.';
+    }
+    $zv = einsatz_zeit($v);
+    $zb = einsatz_zeit($b);
+    if ($zv === false || $zb === false) {
+        return sprintf('%s (%s): Uhrzeiten bitte als hh:mm angeben.', $nr, de_date($d));
+    }
+    if ($zv === null && $zb !== null) {
+        return sprintf('%s (%s): Zum Ende fehlt der Beginn.', $nr, de_date($d));
+    }
+    // dieselbe Schreibweise wie auf den Karten: „1/2/9", „1/2/9/12" oder eine einzelne Zahl
+    $st = karten_staerke_parsen($s);
+    if ($st === null) {
+        return sprintf('%s (%s): Stärke bitte als Führer/Unterführer/Helfer angeben, etwa 1/2/9 – oder als einzelne Zahl.', $nr, de_date($d));
+    }
+    return [$zv, $zb, $st];
+}
+
+/**
+ * Die fremden Kräfte aus dem Formular: fremd_datum[], fremd_von[], fremd_bis[],
+ * fremd_einheit[] (Freitext), fremd_staerke[] und fremd_symbol[] (taktisches Zeichen
+ * für die Karte). Ganz leere Zeilen fallen weg. Gibt [zeilen, fehler] zurück.
+ * Reine Funktion über das übergebene Feld.
+ */
+function einsatz_fremde_aus_post(array $post): array
+{
+    $zeilen = [];
+    $fehler = [];
+    $spalte = static fn(string $name): array => array_values((array)($post[$name] ?? []));
+    $einheit = $spalte('fremd_einheit');
+    $datum = $spalte('fremd_datum');
+    $von = $spalte('fremd_von');
+    $bis = $spalte('fremd_bis');
+    $staerke = $spalte('fremd_staerke');
+    $symbol = $spalte('fremd_symbol');
+    for ($i = 0, $n = max(count($einheit), count($datum), count($von), count($bis), count($staerke)); $i < $n; $i++) {
+        $name = mb_substr(trim((string)preg_replace('/\s+/u', ' ', (string)($einheit[$i] ?? ''))), 0, 150);
+        $d = trim((string)($datum[$i] ?? ''));
+        $v = trim((string)($von[$i] ?? ''));
+        $b = trim((string)($bis[$i] ?? ''));
+        $s = trim((string)($staerke[$i] ?? ''));
+        if ($name === '' && $d === '' && $v === '' && $b === '' && $s === '') {
+            continue;
+        }
+        $nr = 'Fremde Kräfte, Zeile ' . (count($zeilen) + count($fehler) + 1);
+        if ($name === '') {
+            $fehler[] = $nr . ': Bitte die Einheit nennen.';
+            continue;
+        }
+        $geprueft = einsatz_zeile_pruefen($nr, $d, $v, $b, $s);
+        if (is_string($geprueft)) {
+            $fehler[] = $geprueft;
+            continue;
+        }
+        [$zv, $zb, $st] = $geprueft;
+        $zeilen[] = ['datum' => $d, 'von' => $zv, 'bis' => $zb, 'einheit' => $name,
+            'symbol_id' => (int)($symbol[$i] ?? 0) > 0 ? (int)$symbol[$i] : null,
+            'staerke_f' => (int)$st[0], 'staerke_u' => (int)$st[1], 'staerke_h' => (int)$st[2]];
+    }
+    if (count($zeilen) > EINSATZ_TAGE_MAX) {
+        $fehler[] = sprintf('Ein Einsatz nimmt höchstens %d Zeilen mit fremden Kräften an.', EINSATZ_TAGE_MAX);
+    }
+    usort($zeilen, static fn($x, $y) => [$x['datum'], (string)$x['von']] <=> [$y['datum'], (string)$y['von']]);
+    return [$zeilen, $fehler];
+}
+
+/**
+ * Die fremden Einheiten eines Einsatzes zur Auswahl auf der Karte: jede Einheit einmal,
+ * mit Stärke und Zeichen ihrer jüngsten Zeile. Erwartet die Zeilen in zeitlicher
+ * Reihenfolge (einsatz_fremde). Reine Funktion.
+ */
+function einsatz_fremde_vorauswahl(array $zeilen): array
+{
+    $out = [];
+    foreach ($zeilen as $z) {
+        $name = trim((string)($z['einheit'] ?? ''));
+        if ($name === '') {
+            continue;
+        }
+        $st = einsatz_tag_staerke($z);
+        $out[mb_strtolower($name)] = ['name' => $name, 'staerke' => $st['gesamt'] > 0 ? $st['f'] . '/' . $st['u'] . '/' . $st['h'] : '',
+            'symbol' => (int)($z['symbol_id'] ?? 0)];
+    }
+    return array_values($out);
 }
 
 /**
@@ -600,6 +679,8 @@ function einsatz_save_from_post(?array $e, array $user): array
     if (!$tage && !$tagFehler) {
         $fehler[] = 'Bitte mindestens einen Einsatztag eintragen.';
     }
+    [$fremde, $fremdFehler] = einsatz_fremde_aus_post($_POST);
+    $fehler = array_merge($fehler, $fremdFehler);
     if ($fehler) {
         return [null, $fehler];
     }
@@ -634,6 +715,10 @@ function einsatz_save_from_post(?array $e, array $user): array
             audit('einsatz.angelegt', 'einsatz', $id, $detail);
         }
         einsatz_tage_setzen($id, $tage);
+        // Ohne die Felder im Formular (ältere Seite, anderer Aufrufer) bleiben die fremden Kräfte, wie sie sind
+        if (array_key_exists('fremd_einheit', $_POST)) {
+            einsatz_fremde_setzen($id, $fremde);
+        }
         db()->commit();
     } catch (Throwable $ex) {
         db()->rollBack();
@@ -668,6 +753,33 @@ function einsatz_tage_setzen(int $einsatzId, array $tage): void
         }
     }
     einsatz_fahrzeuge_setzen($einsatzId, $alle);
+}
+
+/** Die fremden Kräfte eines Einsatzes in zeitlicher Reihenfolge – mit dem Namen ihres Zeichens (symbol_name) */
+function einsatz_fremde(int $einsatzId): array
+{
+    return db_all('SELECT f.*, s.name AS symbol_name FROM einsatz_fremde f LEFT JOIN karten_symbole s ON s.id = f.symbol_id
+                   WHERE f.einsatz_id = ? ORDER BY f.datum, f.von, f.id', [$einsatzId]);
+}
+
+/** Genau diese fremden Kräfte gehören zum Einsatz – Zeilen aus einsatz_fremde_aus_post() */
+function einsatz_fremde_setzen(int $einsatzId, array $zeilen): void
+{
+    db_exec('DELETE FROM einsatz_fremde WHERE einsatz_id = ?', [$einsatzId]);
+    foreach ($zeilen as $z) {
+        db_insert('einsatz_fremde', [
+            'einsatz_id' => $einsatzId,
+            'datum'      => (string)$z['datum'],
+            'von'        => $z['von'] !== null ? $z['von'] . ':00' : null,
+            'bis'        => $z['bis'] !== null ? $z['bis'] . ':00' : null,
+            'einheit'    => (string)$z['einheit'],
+            // ein inzwischen gelöschtes Zeichen soll das Speichern nicht scheitern lassen
+            'symbol_id'  => !empty($z['symbol_id']) && karten_symbol_find((int)$z['symbol_id']) ? (int)$z['symbol_id'] : null,
+            'staerke_f'  => (int)$z['staerke_f'],
+            'staerke_u'  => (int)$z['staerke_u'],
+            'staerke_h'  => (int)$z['staerke_h'],
+        ]);
+    }
 }
 
 /** Genau diese Fahrzeuge waren im Einsatz – gerechnet aus den Zeilen, siehe einsatz_tage_setzen() */

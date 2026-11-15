@@ -27,7 +27,10 @@ function db_all(string $sql, array $p = []): array {
     }
     return [];
 }
-function db_row(string $sql, array $p = []): ?array { return null; }
+function db_row(string $sql, array $p = []): ?array {
+    // das Zeichen 6 gibt es in der Kartenbibliothek, alle anderen nicht (mehr)
+    return str_contains($sql, 'FROM karten_symbole') && (int)($p[0] ?? 0) === 6 ? ['id' => 6, 'name' => 'Feuerwehr'] : null;
+}
 function db_val(string $sql, array $p = [], mixed $d = null) { return $d; }
 function db_exec(string $sql, array $p = []): int { $GLOBALS['execs'][] = [$sql, $p]; return 1; }
 function db_insert(string $t, array $d): int {
@@ -207,6 +210,44 @@ $GLOBALS['execs'] = [];
 einsatz_delete(['id' => 5, 'nummer' => '2026-014', 'titel' => 'Hochwasser Hunte']);
 $check('Löschen: Buchungen verlieren nur den Bezug', str_contains($GLOBALS['execs'][0][0], 'UPDATE expenses SET einsatz_id = NULL') && str_contains($GLOBALS['execs'][1][0], 'DELETE FROM einsaetze'));
 
+/* ================= Fremde Kräfte ================= */
+[$fremde, $ff] = einsatz_fremde_aus_post([
+    'fremd_einheit' => ['  FF   Musterstadt ', '', 'DRK Bereitschaft', 'FF Musterstadt', '', 'THW OV Nachbar', 'ASB'],
+    'fremd_datum'   => ['2026-11-15', '', '2026-11-14', '2026-11-14', '2026-11-14', '2026-11-14', '2026-11-14'],
+    'fremd_von'     => ['08:00', '', '', '18:00', '09:00', '25:00', ''],
+    'fremd_bis'     => ['16:00', '', '', '', '', '', ''],
+    'fremd_staerke' => ['1/3/12', '', '6', '1/2/9/12', '', '', 'viele'],
+    'fremd_symbol'  => ['6', '', '', '4', '', '', ''],
+]);
+$check('fremde Kräfte: drei Zeilen, die leere fällt weg, sortiert nach Datum und Beginn', array_column($fremde, 'einheit') === ['DRK Bereitschaft', 'FF Musterstadt', 'FF Musterstadt']
+    && array_column($fremde, 'von') === [null, '18:00', '08:00']);
+$check('fremde Kräfte: Name gesäubert, Stärke wie bei den eigenen Zeilen, Zeichen', [$fremde[2]['staerke_f'], $fremde[2]['staerke_u'], $fremde[2]['staerke_h']] === [1, 3, 12]
+    && $fremde[2]['symbol_id'] === 6 && $fremde[0]['symbol_id'] === null && $fremde[0]['staerke_h'] === 6 && $fremde[1]['staerke_h'] === 9);
+$check('fremde Kräfte: ohne Einheit, mit falscher Uhrzeit, mit unlesbarer Stärke – je ein Fehler mit Ort', count($ff) === 3
+    && str_starts_with($ff[0], 'Fremde Kräfte, Zeile') && str_contains($ff[0], 'Einheit nennen') && str_contains($ff[1], 'hh:mm') && str_contains($ff[2], 'Stärke'));
+$check('Vorauswahl für die Karte: jede Einheit einmal, mit Stärke und Zeichen der jüngsten Zeile', einsatz_fremde_vorauswahl($fremde) === [
+    ['name' => 'DRK Bereitschaft', 'staerke' => '0/0/6', 'symbol' => 0], ['name' => 'FF Musterstadt', 'staerke' => '1/3/12', 'symbol' => 6]]);
+$check('Vorauswahl: ohne Stärke bleibt sie leer', einsatz_fremde_vorauswahl([['einheit' => 'Polizei', 'staerke_f' => 0, 'staerke_u' => 0, 'staerke_h' => 0]]) === [['name' => 'Polizei', 'staerke' => '', 'symbol' => 0]]);
+
+$GLOBALS['inserts'] = []; $GLOBALS['execs'] = [];
+$_POST = ['titel' => 'Hochwasser Hunte', 'tag_datum' => ['2026-11-14'],
+    'fremd_einheit' => ['FF Musterstadt', 'DRK', ''], 'fremd_datum' => ['2026-11-14', '2026-11-14', ''], 'fremd_von' => ['08:00', '', ''], 'fremd_bis' => ['16:00', '', ''],
+    'fremd_staerke' => ['1/3/12', '', ''], 'fremd_symbol' => ['6', '4', '']];
+[$id3, $err3] = einsatz_save_from_post(['id' => 5, 'status' => 'beendet'], current_user());
+$gespeichert = array_column($nur('einsatz_fremde'), 1);
+$check('fremde Kräfte gespeichert: zwei Zeilen am Einsatz, alte vorher weg', $id3 === 5 && $err3 === [] && count($gespeichert) === 2 && $gespeichert[1]['einsatz_id'] === 5
+    && $gespeichert[1]['einheit'] === 'FF Musterstadt' && $gespeichert[1]['von'] === '08:00:00' && $gespeichert[1]['staerke_h'] === 12
+    && count(array_filter($GLOBALS['execs'], static fn($x) => str_contains($x[0], 'DELETE FROM einsatz_fremde'))) === 1);
+$check('ein Zeichen, das es nicht mehr gibt, lässt das Speichern nicht scheitern', $gespeichert[1]['symbol_id'] === 6 && $gespeichert[0]['symbol_id'] === null);
+$GLOBALS['execs'] = [];
+$_POST = ['titel' => 'Hochwasser Hunte', 'tag_datum' => ['2026-11-14']];
+einsatz_save_from_post(['id' => 5, 'status' => 'beendet'], current_user());
+$check('ohne die Felder im Formular bleiben die fremden Kräfte stehen', array_filter($GLOBALS['execs'], static fn($x) => str_contains($x[0], 'einsatz_fremde')) === []);
+$GLOBALS['inserts'] = [];
+$_POST = ['titel' => 'Hochwasser Hunte', 'tag_datum' => ['2026-11-14'], 'fremd_einheit' => ['FF Musterstadt'], 'fremd_datum' => ['']];
+[$id4, $err4] = einsatz_save_from_post(['id' => 5, 'status' => 'beendet'], current_user());
+$check('fremde Kraft ohne Datum: Fehler, nichts gespeichert', $id4 === null && count($err4) === 1 && str_contains($err4[0], 'Datum') && $GLOBALS['inserts'] === []);
+
 /* ================= Budget: Buchung trägt den Bezug ================= */
 $GLOBALS['inserts'] = [];
 $_POST = ['art' => 'einnahme', 'bezeichnung' => 'Kostenerstattung', 'datum' => '2026-12-01', 'betrag' => '1.250,00', 'status' => 'geplant', 'einsatz_id' => '5'];
@@ -269,6 +310,11 @@ $check('Seite: Buchungen mit Stand, Knöpfe für Ausgabe und Einnahme mit Bezug'
     && str_contains($seite, 'art=ausgabe&amp;einsatz_id=5') && str_contains($seite, 'art=einnahme&amp;einsatz_id=5') && str_contains($seite, 'noch unterwegs'));
 $stumm = render_partial('einsatz', ['einsatz' => $zeile, 'tage' => $tageDb, 'summen' => einsatz_summen($tageDb), 'buchungen' => [], 'geld' => einsatz_geld_aus([]), 'mitGeld' => false]);
 $check('Seite ohne Budgetrecht: kein Geld', !str_contains($stumm, 'id="geld"') && !str_contains($stumm, 'art=ausgabe') && !str_contains($stumm, 'art=einnahme'));
+$fremdDb = [['datum' => '2026-11-14', 'von' => '08:00:00', 'bis' => '16:00:00', 'einheit' => 'FF <Musterstadt>', 'symbol_id' => 6, 'symbol_name' => 'Feuerwehr', 'staerke_f' => 1, 'staerke_u' => 3, 'staerke_h' => 12]];
+$mitFremden = render_partial('einsatz', ['einsatz' => $zeile, 'tage' => $tageDb, 'fremde' => $fremdDb, 'summen' => einsatz_summen($tageDb), 'buchungen' => [], 'geld' => einsatz_geld_aus([]), 'mitGeld' => false]);
+$check('Seite: fremde Kräfte mit Zeit, Dauer, Stärke und Zeichen – maskiert, und nur wenn es welche gibt', str_contains($mitFremden, 'id="fremde"') && str_contains($mitFremden, 'FF &lt;Musterstadt&gt;')
+    && !str_contains($mitFremden, '<Musterstadt>') && str_contains($mitFremden, '1/3/12/16') && str_contains($mitFremden, '· Feuerwehr') && !str_contains($stumm, 'id="fremde"'));
+$check('fremde Kräfte zählen nicht in die Helferstunden', str_contains($mitFremden, '168 h') && einsatz_summen($tageDb)['helferminuten'] === 168 * 60);
 
 $tageMaske = $tageDb;
 $tageMaske[0] += ['fachgruppe_id' => 21, 'vehicles' => [3], 'km' => [3 => 12.5]];
@@ -281,6 +327,13 @@ $check('Maske: Fahrzeuge je Zeile mit Kilometern, Löschen nennt die Buchungen',
     && str_contains($maske, 'name="tag_fz[1][]" value="8">') && str_contains($maske, 'name="tag_km[1][8]" value=""') && !str_contains($maske, 'fahrzeuge_feld')
     && str_contains($maske, 'name="tag_bh[0][3]" value=""') && substr_count($maske, 'placeholder="Bh"') === 6
     && str_contains($maske, 'Die 2 Buchungen bleiben'));
+$check('Maske ohne fremde Kräfte: eine leere Zeile, ohne Zeichen-Auswahl solange die Bibliothek leer ist', substr_count($maske, 'name="fremd_einheit[]"') === 1
+    && !str_contains($maske, 'fremd_symbol') && str_contains($maske, 'name="fremd_key[]" value="0" data-zeile-key'));
+$maskeFremd = render_partial('einsatz_edit', ['einsatz' => $zeile, 'tage' => $tageMaske, 'errors' => [], 'buchungen' => 0, 'fahrzeuge' => [],
+    'fremde' => $fremdDb, 'symbole' => [['id' => 6, 'name' => 'Feuerwehr', 'gruppe' => 'Einheiten'], ['id' => 9, 'name' => 'Rettungsdienst', 'gruppe' => 'Einheiten']]]);
+$check('Maske: fremde Kräfte je Zeile mit Einheit, Zeit, Stärke und gewähltem Zeichen, dazu eine leere', substr_count($maskeFremd, 'name="fremd_einheit[]"') === 2
+    && str_contains($maskeFremd, 'value="FF &lt;Musterstadt&gt;"') && str_contains($maskeFremd, 'name="fremd_von[]" value="08:00"') && str_contains($maskeFremd, 'name="fremd_staerke[]" value="1/3/12"')
+    && substr_count($maskeFremd, 'name="fremd_symbol[]"') === 2 && substr_count($maskeFremd, 'value="6"') >= 2 && (bool)preg_match('/<option value="6"[^>]* selected>Feuerwehr/', $maskeFremd));
 $falsch = render_partial('einsatz_edit', ['einsatz' => ['id' => null, 'titel' => 'x', 'status' => 'laufend'], 'tage' => [['datum' => '2026-11-14', 'von' => '25:99', 'bis' => '', 'staerke_text' => 'viele', 'taetigkeit' => '']],
     'errors' => ['Zeile 1: …'], 'fahrzeuge' => [], 'buchungen' => 0]);
 $check('Maske nach Fehler: die Eingaben stehen noch da', str_contains($falsch, 'value="25:99"') && str_contains($falsch, 'value="viele"') && str_contains($falsch, 'alert--error')
@@ -307,9 +360,12 @@ $check('Fahrzeuge im Formular und auf der Seite hängen nicht am Recht des Fahrz
 $check('Bibliothek wird geladen', str_contains((string)file_get_contents($app . '/src/bootstrap.php'), "/lib/einsaetze.php'"));
 $schema = (string)file_get_contents($app . '/sql/schema.sql');
 $wanderung = (string)file_get_contents($app . '/src/cli/migrate.php');
-foreach (['einsaetze', 'einsatz_tage', 'einsatz_vehicles'] as $tabelle) {
+foreach (['einsaetze', 'einsatz_tage', 'einsatz_vehicles', 'einsatz_fremde'] as $tabelle) {
     $check("Tabelle $tabelle in Schema und Wanderung", str_contains($schema, "CREATE TABLE IF NOT EXISTS $tabelle (") && str_contains($wanderung, "CREATE TABLE $tabelle ("));
 }
+$check('Wanderung 113 gemerkt, Karte bekommt die Vorauswahl', str_contains($wanderung, "\$merken('113_einsatz_fremde')")
+    && str_contains((string)file_get_contents($app . '/src/pages/karte.php'), 'einsatz_fremde_vorauswahl(')
+    && str_contains((string)file_get_contents($app . '/public/assets/js/karte.js'), 'K.fremde'));
 $check('Buchungen: Spalte im Schema, Spalte und Fremdschlüssel in der Wanderung', (bool)preg_match('/CREATE TABLE IF NOT EXISTS expenses \(.*?einsatz_id\s+INT UNSIGNED\s+NULL.*?\) ENGINE/s', $schema)
     && str_contains($wanderung, 'ADD COLUMN einsatz_id INT UNSIGNED NULL AFTER event_id') && str_contains($wanderung, 'fk_exp_einsatz') && str_contains($wanderung, "\$merken('108_einsaetze')"));
 $check('Wanderung räumt Dubletten auch in Einsätzen auf', in_array(['einsaetze', 'art_id', ''], array_map(static fn($r) => [trim($r[0]), trim($r[1]), $r[2]], (static function () use ($wanderung) {

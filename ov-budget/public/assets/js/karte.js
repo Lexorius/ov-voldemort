@@ -423,12 +423,63 @@
       seite.appendChild(abschnittKasten(a, marker.filter(function (m) { return m.d.abschnitt === a.id; })));
     });
     seite.appendChild(abschnittKasten(null, marker.filter(function (m) { return !m.d.abschnitt || !abschnittVon(m.d.abschnitt); })));
+    var fremde = fremdeOffen();
+    if (K.setzen && fremde.length) { seite.appendChild(fremdeKasten(fremde)); }
     if (K.setzen) {
       var dazu = seite.appendChild(neu('button', 'btn btn--sec btn--sm lagekarte__seite-knopf', '+ Abschnitt'));
       dazu.type = 'button';
       dazu.title = 'Einen Abschnitt anlegen – etwa einen Einsatzabschnitt oder Unterabschnitt';
       dazu.addEventListener('click', abschnittNeu);
     }
+  }
+  /* Fremde Kräfte aus dem Einsatz dieser Karte: zur Auswahl, solange keine Einheit ihren Namen trägt */
+  function fremdeOffen() {
+    return (K.fremde || []).filter(function (f) {
+      var name = f.name.toLowerCase();
+      return !marker.some(function (m) { return (m.d.text || '').trim().toLowerCase() === name; });
+    });
+  }
+  function symbolVon(id) {
+    for (var i = 0; i < K.symbole.length; i++) { if (K.symbole[i].id === id) { return K.symbole[i]; } }
+    return null;
+  }
+  function fremdeKasten(liste) {
+    var kasten = neu('section', 'lagekarte__abschnitt');
+    var kopf = kasten.appendChild(neu('div', 'lagekarte__abschnitt-kopf'));
+    kopf.appendChild(neu('span', 'lagekarte__abschnitt-name', 'Fremde Kräfte aus dem Einsatz'));
+    kopf.title = 'Im Einsatz eingetragen und noch nicht auf dieser Karte – ein Klick setzt die Einheit in die Kartenmitte';
+    var ul = kasten.appendChild(neu('ul', 'lagekarte__einheiten'));
+    liste.forEach(function (f) {
+      var symbol = symbolVon(f.symbol);
+      var li = ul.appendChild(neu('li', 'lagekarte__einheit'));
+      if (symbol) {
+        var bild = li.appendChild(neu('img'));
+        bild.alt = '';
+        bild.src = symbol.src;
+      }
+      var name = li.appendChild(neu('button', 'lagekarte__einheit-name', f.name));
+      name.type = 'button';
+      name.title = symbol ? 'In die Kartenmitte setzen – als „' + symbol.name + '“' : 'Zeichen wählen und in die Kartenmitte setzen';
+      name.appendChild(neu('small', 'lagekarte__einheit-hinweis', symbol ? 'klicken setzt sie auf die Karte' : 'klicken, dann Zeichen wählen'));
+      name.addEventListener('click', function () { fremdeSetzen(f, symbol); });
+      li.appendChild(neu('span', 'lagekarte__einheit-staerke', f.staerke || '–'));
+    });
+    return kasten;
+  }
+  function fremdeSetzen(f, symbol) {
+    flaeche.scrollIntoView({ block: 'nearest' });
+    var px = flaeche.clientWidth / 2;
+    var py = flaeche.clientHeight / 2;
+    // ohne Zeichen: erst eines aus der Bibliothek wählen – Name und Stärke gehen mit
+    if (!symbol) { menueAuf(px, py, { ausListe: true, text: f.name, staerke: f.staerke }); return; }
+    var mitte = gradBei(px, py);
+    senden({ action: 'marker_neu', karte_id: K.id, symbol_id: symbol.id, lat: mitte.lat, lng: mitte.lng, beschriftung: f.name, staerke: f.staerke }, function (d) {
+      if (!d) { return; }
+      markerDazu(d.marker);
+      zeichnen();
+      seiteZeichnen();
+      melden('„' + f.name + '“ steht in der Kartenmitte – ziehen versetzt sie.');
+    });
   }
   function abschnittKasten(a, liste) {
     var kasten = neu('section', 'lagekarte__abschnitt');
@@ -558,7 +609,7 @@
   function menueZu() {
     if (menue) { menue.parentNode.removeChild(menue); menue = null; }
   }
-  /** $ziel (wahlweise): { abschnitt, abschnittName, ausListe } – „+ Einheit“ neben der Karte */
+  /** $ziel (wahlweise): { abschnitt, abschnittName, ausListe, text, staerke } – „+ Einheit“ neben der Karte */
   function menueAuf(px, py, ziel) {
     menueZu();
     tafelZu();
@@ -569,7 +620,8 @@
     menue.addEventListener('pointerdown', function (ev) { ev.stopPropagation(); });
     menue.addEventListener('wheel', function (ev) { ev.stopPropagation(); });
     menue.addEventListener('contextmenu', function (ev) { ev.preventDefault(); ev.stopPropagation(); });
-    menue.appendChild(neu('div', 'lagekarte__menue-kopf', ziel.ausListe ? 'Einheit hinzufügen' + (ziel.abschnittName ? ' – ' + ziel.abschnittName : '') : 'Symbol hier setzen'));
+    menue.appendChild(neu('div', 'lagekarte__menue-kopf', ziel.text ? 'Zeichen für „' + ziel.text + '“'
+      : (ziel.ausListe ? 'Einheit hinzufügen' + (ziel.abschnittName ? ' – ' + ziel.abschnittName : '') : 'Symbol hier setzen')));
     var nurListe = null;
     if (ziel.ausListe && K.symbole.length) {
       var zeile = menue.appendChild(neu('label', 'lagekarte__menue-haken small'));
@@ -613,6 +665,7 @@
           knopf.addEventListener('click', function () {
             var daten = { action: 'marker_neu', karte_id: K.id, symbol_id: s.id, lat: ort.lat, lng: ort.lng };
             if (ziel.abschnitt) { daten.abschnitt_id = ziel.abschnitt; }
+            if (ziel.text) { daten.beschriftung = ziel.text; daten.staerke = ziel.staerke || ''; }   // fremde Kraft aus dem Einsatz
             if (nurListe && nurListe.checked) { daten.lat = ''; daten.lng = ''; }
             menueZu();
             senden(daten, function (d) {

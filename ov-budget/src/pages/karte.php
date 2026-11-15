@@ -30,10 +30,14 @@ $speichern = can('manage_einsaetze');
 $GLOBALS['ovb_karte_einsatz_js'] = $speichern;
 
 $marker = karten_marker((int)$karte['id']);
+$konfig = karten_konfig($karte, $marker, $symbole, $darf, karten_abschnitte((int)$karte['id']));
+// Die fremden Kräfte des Einsatzes stehen neben der Karte zur Auswahl – ein Klick setzt sie
+$konfig['fremde'] = !empty($karte['einsatz_id']) && can('view_einsaetze')
+    ? einsatz_fremde_vorauswahl(einsatz_fremde((int)$karte['einsatz_id'])) : [];
 render('karte', [
     'title'   => (string)$karte['name'],
     'karte'   => $karte,
-    'konfig'  => karten_konfig($karte, $marker, $symbole, $darf, karten_abschnitte((int)$karte['id'])),
+    'konfig'  => $konfig,
     'symbole' => $symbole,
     'darf'    => $darf,
     'einsatz' => !empty($karte['einsatz_id']) && can('view_einsaetze') ? einsatz_find((int)$karte['einsatz_id']) : null,

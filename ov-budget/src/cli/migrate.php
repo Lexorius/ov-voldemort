@@ -3035,6 +3035,29 @@ SQL);
         $pdo->exec('ALTER TABLE einsaetze ADD CONSTRAINT fk_einsatz_event FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE SET NULL');
     }
     $merken('112_veranstaltung_auftrag_einsatz');
+
+    /* ---------- 113: fremde Kräfte im Einsatz ---------- */
+    if (ovb_table_exists($pdo, 'einsaetze') && ovb_table_exists($pdo, 'karten_symbole') && !ovb_table_exists($pdo, 'einsatz_fremde')) {
+        $pdo->exec("CREATE TABLE einsatz_fremde (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  einsatz_id  INT UNSIGNED NOT NULL,
+  datum       DATE         NOT NULL,
+  von         TIME         NULL,
+  bis         TIME         NULL,
+  einheit     VARCHAR(150) NOT NULL DEFAULT '',
+  symbol_id   INT UNSIGNED NULL,
+  staerke_f   SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  staerke_u   SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  staerke_h   SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  KEY idx_efremd_einsatz (einsatz_id, datum),
+  KEY idx_efremd_symbol (symbol_id),
+  CONSTRAINT fk_efremd_einsatz FOREIGN KEY (einsatz_id) REFERENCES einsaetze(id)      ON DELETE CASCADE,
+  CONSTRAINT fk_efremd_symbol  FOREIGN KEY (symbol_id)  REFERENCES karten_symbole(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle einsatz_fremde angelegt.');
+    }
+    $merken('113_einsatz_fremde');
 }
 
 /**

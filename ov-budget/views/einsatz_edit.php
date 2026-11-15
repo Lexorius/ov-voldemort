@@ -49,6 +49,29 @@ $zeile = static function (array $t, int $k) use ($fahrzeuge): string {
     return $html . '</div>';
 };
 $k = 0;
+
+/* Eine Zeile fremder Kräfte: Einheit als Freitext, Zeit, Stärke – und wahlweise ihr Zeichen für die Karte */
+$fremde ??= [];
+$symbole ??= [];
+$fremdZeile = static function (array $f, int $k) use ($symbole): string {
+    $staerke = array_key_exists('staerke_text', $f)
+        ? (string)$f['staerke_text']
+        : (((int)($f['staerke_f'] ?? 0) + (int)($f['staerke_u'] ?? 0) + (int)($f['staerke_h'] ?? 0)) > 0
+            ? (int)$f['staerke_f'] . '/' . (int)$f['staerke_u'] . '/' . (int)$f['staerke_h'] : '');
+    $zeit = static fn($v): string => is_string($z = einsatz_zeit($v)) ? $z : trim((string)$v);
+    return '<div class="ezeile" data-zeile>'
+        . '<input type="hidden" name="fremd_key[]" value="' . $k . '" data-zeile-key>'
+        . '<div class="ezeile__kopf' . ($symbole ? ' ezeile__kopf--zeichen' : '') . '">'
+        . '<div class="field"><label>Datum</label><input type="date" name="fremd_datum[]" value="' . e((string)($f['datum'] ?? '')) . '" aria-label="Datum"></div>'
+        . '<div class="field"><label>von</label><input type="time" name="fremd_von[]" value="' . e($zeit($f['von'] ?? '')) . '" aria-label="von"></div>'
+        . '<div class="field"><label>bis</label><input type="time" name="fremd_bis[]" value="' . e($zeit($f['bis'] ?? '')) . '" aria-label="bis"></div>'
+        . '<div class="field"><label>Einheit</label><input type="text" name="fremd_einheit[]" value="' . e((string)($f['einheit'] ?? '')) . '" maxlength="150" placeholder="z. B. FF Musterstadt, LZ 2" aria-label="Einheit"></div>'
+        . '<div class="field"><label>Stärke</label><input type="text" name="fremd_staerke[]" value="' . e($staerke) . '" placeholder="1/2/9" inputmode="numeric" maxlength="24" aria-label="Stärke: Führer/Unterführer/Helfer"></div>'
+        . ($symbole ? '<div class="field"><label>Zeichen</label><select name="fremd_symbol[]" aria-label="Taktisches Zeichen für die Karte">'
+            . karten_symbol_optionen($symbole, (int)($f['symbol_id'] ?? 0)) . '</select></div>' : '')
+        . '<button type="button" class="btn btn--sec btn--sm ezeile__weg" data-zeile-weg title="Zeile entfernen" aria-label="Zeile entfernen">🗑</button>'
+        . '</div></div>';
+};
 ?>
 <div class="pagehead">
   <div>
@@ -131,6 +154,20 @@ $k = 0;
       <button type="button" class="btn btn--sec" data-zeile-neu>+ Leere Zeile</button>
     </div>
     <small class="muted">Leere Zeilen werden beim Speichern übergangen. Ohne JavaScript: speichern und wieder öffnen bringt eine neue leere Zeile.</small>
+  </section>
+
+  <section class="card" id="fremde" data-zeilen>
+    <h2>Fremde Kräfte</h2>
+    <p class="small muted">Einheiten anderer Organisationen – Feuerwehr, Rettungsdienst, ein anderer Ortsverband. Je Tag und Einheit eine Zeile mit Zeit und Stärke.
+      Sie zählen nicht in die Helferstunden<?= $symbole ? '; mit einem Zeichen steht die Einheit auf einer Karte dieses Einsatzes neben der Karte zur Auswahl und ist mit einem Klick gesetzt' : '' ?>.</p>
+    <div data-zeilen-body>
+      <?php $fk = 0; foreach ($fremde as $f): ?><?= $fremdZeile($f, $fk++) ?><?php endforeach; ?>
+      <?= $fremdZeile([], $fk++) ?>
+    </div>
+    <div class="btnrow mt">
+      <button type="button" class="btn btn--sec" data-zeile-folgetag title="Kopiert die letzte ausgefüllte Zeile auf den nächsten Tag">+ Folgetag</button>
+      <button type="button" class="btn btn--sec" data-zeile-neu>+ Leere Zeile</button>
+    </div>
   </section>
 
   <section class="card">

@@ -24,6 +24,7 @@ render('einsatz', [
     'title'     => einsatz_bezeichnung($einsatz),
     'einsatz'   => $einsatz,
     'tage'      => $tage,
+    'fremde'    => einsatz_fremde($id),
     'summen'    => einsatz_summen($tage),
     'jeFachgruppe' => einsatz_summen_je_fachgruppe($tage),
     'jeFahrzeug'   => einsatz_summen_je_fahrzeug($tage),
