@@ -103,6 +103,13 @@ $check('kleines Bild wird nicht vergrößert', vfile_process_image($klein, $tmp 
 file_put_contents($tmp . '/kaputt.jpg', 'kein Bild');
 $check('kaputte Datei: kein Absturz', vfile_process_image($tmp . '/kaputt.jpg', $tmp . '/x.jpg', 'image/jpeg', 1600) === null);
 
+// Riesige Fläche in kleiner Datei: nur der PNG-Kopf wird gelesen, geöffnet wird das Bild nie
+$kopf = 'IHDR' . pack('NN', 30000, 30000) . "\x08\x02\x00\x00\x00";
+file_put_contents($tmp . '/bombe.png', "\x89PNG\r\n\x1a\n" . pack('N', 13) . $kopf . pack('N', crc32($kopf)));
+$check('Testbild meldet 30000 × 30000', (getimagesize($tmp . '/bombe.png') ?: [0, 0])[0] === 30000);
+$check('zu große Fläche: nicht geöffnet', vfile_process_image($tmp . '/bombe.png', $tmp . '/bombe2.png', 'image/png', 1600) === null
+    && !is_file($tmp . '/bombe2.png'));
+
 /* ---------- Hochladen von Anfang bis Ende ---------- */
 foreach (glob(vfile_dir() . '/*') ?: [] as $alt) {
     @unlink($alt);

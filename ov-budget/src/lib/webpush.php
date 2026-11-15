@@ -138,6 +138,36 @@ function ecdsa_der_to_raw(string $der): string
     return str_pad($r, 32, "\x00", STR_PAD_LEFT) . str_pad($s, 32, "\x00", STR_PAD_LEFT);
 }
 
+/**
+ * Die Push-Dienste der Browser: Chrome/Edge/Android, Firefox, Safari,
+ * Windows, Samsung. Ein Eintrag mit Punkt vorn gilt für alle Rechner darunter.
+ */
+const WEBPUSH_DIENSTE = ['fcm.googleapis.com', 'android.googleapis.com', 'updates.push.services.mozilla.com',
+    '.push.apple.com', '.notify.windows.com', '.push.samsungosp.com'];
+
+/**
+ * Gehört die Adresse zu einem bekannten Push-Dienst? Die Adresse kommt aus
+ * dem Browser – ohne diese Prüfung ließe sich der Server mit einem erfundenen
+ * Abo auf beliebige Rechner im eigenen Netz schicken. Reine Funktion.
+ */
+function webpush_endpoint_erlaubt(string $endpoint): bool
+{
+    $t = parse_url($endpoint);
+    if (!is_array($t) || ($t['scheme'] ?? '') !== 'https' || isset($t['port']) || isset($t['user'])) {
+        return false;
+    }
+    $host = strtolower((string)($t['host'] ?? ''));
+    if (!preg_match('/^[a-z0-9.-]+$/', $host)) {
+        return false;
+    }
+    foreach (WEBPUSH_DIENSTE as $dienst) {
+        if ($host === $dienst || ($dienst[0] === '.' && str_ends_with($host, $dienst))) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /** Herkunft (scheme://host) einer Adresse. Reine Funktion. */
 function webpush_audience(string $endpoint): string
 {
@@ -240,6 +270,9 @@ function webpush_encrypt(string $klartext, string $p256dh, string $auth, array $
 function webpush_send(array $abo, array $nutzlast, int $ttl = 86400): int
 {
     $endpoint = (string)$abo['endpoint'];
+    if (!webpush_endpoint_erlaubt($endpoint)) {   // auch für Abos, die schon vor der Prüfung gespeichert wurden
+        throw new WebPushException('Unbekannter Push-Dienst – das Abo bitte am Gerät neu einrichten.');
+    }
     $koerper = webpush_encrypt(
         (string)json_encode($nutzlast, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         b64u_decode((string)$abo['p256dh']),
@@ -296,8 +329,11 @@ function push_subscribe(int $userId, array $abo, string $geraet = ''): int
     $endpoint = trim((string)($abo['endpoint'] ?? ''));
     $p256dh = trim((string)($abo['keys']['p256dh'] ?? ''));
     $auth = trim((string)($abo['keys']['auth'] ?? ''));
-    if ($endpoint === '' || !str_starts_with($endpoint, 'https://') || $p256dh === '' || $auth === '') {
+    if ($endpoint === '' || $p256dh === '' || $auth === '') {
         throw new WebPushException('Das Abo aus dem Browser ist unvollständig.');
+    }
+    if (!webpush_endpoint_erlaubt($endpoint)) {
+        throw new WebPushException('Den Push-Dienst dieses Browsers kennt OV-Multitool nicht.');
     }
     if (strlen(b64u_decode($p256dh)) !== 65 || strlen(b64u_decode($auth)) !== 16) {
         throw new WebPushException('Die Schlüssel des Abos haben die falsche Länge.');

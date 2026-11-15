@@ -159,7 +159,15 @@ server {
 * **Zählerstände:** 30 je Zugang und Stunde.
 * **Durchprobieren:** 60 Fehlgriffe je Anschluss und Stunde, danach 429. Wer
   die richtige Adresse hat, darf sie beliebig oft öffnen — gezählt wird nur,
-  was ins Leere greift.
+  was ins Leere greift, beim Öffnen wie beim Absenden. Wer seine Fehlgriffe
+  aufgebraucht hat, bekommt bei Einladungen und Abstimmungen eine Stunde lang
+  auch auf einen richtigen Code keine Antwort — sonst verriete die Antwort,
+  welcher Code stimmt. Bei IPv6 zählt das Netz (/64), nicht die einzelne
+  Adresse.
+* **Abholen mit Quittung:** Was OV-Multitool abholt, bleibt liegen, bis es
+  beim nächsten Abholen den Empfang bestätigt — erst dann wird gelöscht. Geht
+  eine Antwort unterwegs verloren, kommt dasselbe noch einmal. Ein älteres
+  OV-Multitool ohne Quittung wird wie bisher bedient: gelöscht beim Abholen.
 * **Die beiden offenen Seiten** laufen mit `Content-Security-Policy`
   (nur eigenes Skript, keine fremden Quellen), `frame-ancestors 'none'` gegen
   Einbetten und `Cache-Control: no-store`.

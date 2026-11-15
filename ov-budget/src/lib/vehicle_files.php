@@ -20,6 +20,8 @@ const VFILE_BILD_TYPEN = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
 /** Bilder werden auf diese Kantenlänge begrenzt, Vorschauen auf diese */
 const VFILE_BILD_MAX = 1600;
 const VFILE_VORSCHAU_MAX = 480;
+/** Größte Bildfläche, die geöffnet wird (64 Megapixel, rund 256 MB im Speicher) – Größeres bleibt, wie es kam */
+const VFILE_PIXEL_MAX = 64000000;
 
 /** Fotos als Dokument (Fahrzeugschein, Prüfbericht) bleiben groß und scharf */
 const VFILE_DOKUMENT_MAX = 6000;
@@ -145,6 +147,12 @@ function vfile_gd_available(): bool
 function vfile_process_image(string $quelle, string $ziel, string $mime, int $max, int $qualitaet = 82): ?array
 {
     if (!vfile_gd_available()) {
+        return null;
+    }
+    // Erst die Maße lesen: Ein kleines, stark gepacktes Bild mit riesiger Fläche
+    // belegte beim Öffnen sonst mehrere Gigabyte und legte den Rechner lahm
+    $masse = @getimagesize($quelle);
+    if (!$masse || $masse[0] * $masse[1] > VFILE_PIXEL_MAX) {
         return null;
     }
     $bild = match ($mime) {

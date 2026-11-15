@@ -21,7 +21,7 @@ declare(strict_types=1);
  *
  * 1. Er kann die Meldungen nicht lesen. Das Handy verschlüsselt sie im Browser
  *    für den öffentlichen Schlüssel von OV-Multitool; hier liegt nur Geheimtext,
- *    und der wird nach dem Abholen gelöscht.
+ *    und der wird gelöscht, sobald OV-Multitool den Empfang bestätigt hat.
  * 1a. Er kennt die Fahrzeuge nicht. Gespeichert werden nur Prüfsummen der
  *    Zugänge; Bezeichnung und Kennzeichen stehen im Anker der Adresse
  *    (hinter dem #) und erreichen den Server nie.
@@ -38,7 +38,7 @@ declare(strict_types=1);
  * Gespeichert wird in Dateien unterhalb von daten/ – keine Datenbank nötig.
  */
 
-const CON_VERSION = '1.8.0';
+const CON_VERSION = '1.9.0';
 
 /** Höchstalter einer signierten Anfrage in Sekunden (gegen Wiedereinspielen) */
 const CON_ZEITFENSTER = 300;
@@ -349,8 +349,34 @@ function con_nonce_neu(string $nonce, int $ts): bool
  */
 function con_fehlgriff(): bool
 {
-    return con_limit_frei('f:' . substr(sha1((string)($_SERVER['REMOTE_ADDR'] ?? '')), 0, 16),
-        CON_LIMIT_FEHLGRIFF);
+    return con_limit_frei('f:' . con_anschluss(), CON_LIMIT_FEHLGRIFF);
+}
+
+/**
+ * Hat dieser Anschluss seine Fehlgriffe aufgebraucht? Dann bekommt er eine
+ * Stunde lang auch auf einen richtigen Code keine Antwort mehr – sonst
+ * verriete gerade die Antwort, welcher der durchprobierten Codes stimmt.
+ */
+function con_gesperrt(): bool
+{
+    $e = con_lesen('limit.json')['f:' . con_anschluss()] ?? null;
+    return is_array($e) && time() - (int)($e['start'] ?? 0) < 3600 && (int)($e['anzahl'] ?? 0) >= CON_LIMIT_FEHLGRIFF;
+}
+
+/**
+ * Kennung des Anschlusses für die Begrenzungen. Bei IPv6 zählt das Netz
+ * (/64): Ein Anschluss hat dort Milliarden Adressen und könnte sonst mit
+ * jeder Anfrage als neuer Absender auftreten.
+ */
+function con_anschluss(): string
+{
+    $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+    $roh = @inet_pton($ip);
+    // ::ffff:1.2.3.4 ist eine IPv4-Adresse in IPv6-Schreibweise – die bleibt ganz
+    if (is_string($roh) && strlen($roh) === 16 && !str_starts_with($roh, str_repeat("\0", 10) . "\xff\xff")) {
+        $ip = bin2hex(substr($roh, 0, 8));
+    }
+    return substr(sha1($ip), 0, 16);
 }
 
 /* ==================================================================== */
@@ -444,8 +470,8 @@ function con_meldung_ablegen(string $token, string $inhalt): void
     ], JSON_UNESCAPED_SLASHES));
 }
 
-/** Meldungen abholen und dabei löschen */
-function con_meldungen_abholen(int $max = 200): array
+/** Meldungen abholen – gelöscht wird nach con_abgeholt() */
+function con_meldungen_abholen(int $max = 200, ?array &$behalten = null): array
 {
     $out = [];
     foreach (glob(con_dir('meldungen') . '/*') ?: [] as $ordner) {
@@ -455,7 +481,7 @@ function con_meldungen_abholen(int $max = 200): array
                 break 2;
             }
             $roh = json_decode((string)@file_get_contents($datei), true);
-            @unlink($datei);
+            con_abgeholt($datei, $behalten);
             if (is_array($roh) && isset($roh['daten'])) {
                 $out[] = ['fz' => $kennung, 'ts' => (int)($roh['ts'] ?? 0), 'daten' => (string)$roh['daten']];
             }
@@ -476,6 +502,48 @@ function con_alte_wegwerfen(string $unter): void
             @unlink($datei);
         }
     }
+}
+
+/** Eine abgeholte Datei: gleich löschen – oder nur merken, bis der Empfang bestätigt ist */
+function con_abgeholt(string $datei, ?array &$behalten): void
+{
+    if ($behalten === null) {
+        @unlink($datei);
+        return;
+    }
+    $behalten[] = substr($datei, strlen(con_dir()) + 1);
+}
+
+/**
+ * Abholen mit Empfangsbestätigung. Ginge die Antwort unterwegs verloren,
+ * wäre das Abgeholte sonst auf beiden Seiten weg. Deshalb bleibt es liegen,
+ * bis OV-Multitool beim nächsten Abholen die Quittung dieser Lieferung
+ * mitschickt – erst dann wird gelöscht. Kommt die Quittung nicht, wird
+ * dasselbe noch einmal geliefert.
+ *
+ * Ein älteres OV-Multitool schickt keine Quittung; dann wird wie früher
+ * beim Abholen gelöscht. Rückgabe: [Liste, Zusatz für die Antwort]
+ */
+function con_abholen(string $zweck, array $daten, callable $holen): array
+{
+    $max = (int)($daten['max'] ?? 200);
+    if (!array_key_exists('quittung', $daten)) {
+        return [$holen($max), []];
+    }
+    $offen = con_lesen('abholung.json')[$zweck] ?? null;
+    if (is_array($offen) && hash_equals((string)($offen['quittung'] ?? ''), (string)$daten['quittung'])) {
+        foreach ((array)($offen['dateien'] ?? []) as $datei) {
+            @unlink(con_dir() . '/' . $datei);
+        }
+    }
+    $behalten = [];
+    $liste = $holen($max, $behalten);
+    $quittung = bin2hex(random_bytes(8));
+    con_aendern('abholung.json', static function (array &$alle) use ($zweck, $quittung, $behalten): bool {
+        $alle[$zweck] = ['quittung' => $quittung, 'dateien' => $behalten];
+        return true;
+    });
+    return [$liste, ['quittung' => $quittung]];
 }
 
 /** Wie viele Meldungen kamen in der letzten Stunde? Begrenzt Missbrauch. */
@@ -621,6 +689,7 @@ function con_rueckmeldung_ablegen(string $code, string $inhalt): void
 {
     $einladung = con_einladung($code);
     if ($einladung === null) {
+        con_fehlgriff();   // auch beim Absenden zählen, nicht nur beim Öffnen der Seite
         throw new ConException('Diese Einladung gilt nicht (mehr).');
     }
     if (con_frist_vorbei($einladung['veranstaltung'])) {
@@ -646,8 +715,8 @@ function con_rueckmeldung_ablegen(string $code, string $inhalt): void
     ], JSON_UNESCAPED_SLASHES));
 }
 
-/** Rückmeldungen abholen und dabei löschen */
-function con_rueckmeldungen_abholen(int $max = 200): array
+/** Rückmeldungen abholen – gelöscht wird nach con_abgeholt() */
+function con_rueckmeldungen_abholen(int $max = 200, ?array &$behalten = null): array
 {
     $out = [];
     foreach (glob(con_dir('rueckmeldungen') . '/*') ?: [] as $ordner) {
@@ -657,7 +726,7 @@ function con_rueckmeldungen_abholen(int $max = 200): array
                 break 2;
             }
             $roh = json_decode((string)@file_get_contents($datei), true);
-            @unlink($datei);
+            con_abgeholt($datei, $behalten);
             if (is_array($roh) && isset($roh['daten'])) {
                 $out[] = ['code' => $kennung, 'ts' => (int)($roh['ts'] ?? 0), 'daten' => (string)$roh['daten']];
             }
@@ -749,8 +818,8 @@ function con_bestandsmeldung_ablegen(string $token, string $inhalt): void
         json_encode(['ts' => time(), 'daten' => $inhalt], JSON_UNESCAPED_SLASHES));
 }
 
-/** Bestandsmeldungen abholen und dabei löschen */
-function con_bestandsmeldungen_abholen(int $max = 200): array
+/** Bestandsmeldungen abholen – gelöscht wird nach con_abgeholt() */
+function con_bestandsmeldungen_abholen(int $max = 200, ?array &$behalten = null): array
 {
     $out = [];
     foreach (glob(con_dir('bestandsmeldungen') . '/*') ?: [] as $ordner) {
@@ -760,7 +829,7 @@ function con_bestandsmeldungen_abholen(int $max = 200): array
                 break 2;
             }
             $roh = json_decode((string)@file_get_contents($datei), true);
-            @unlink($datei);
+            con_abgeholt($datei, $behalten);
             if (is_array($roh) && isset($roh['daten'])) {
                 $out[] = ['zugang' => $kennung, 'ts' => (int)($roh['ts'] ?? 0), 'daten' => (string)$roh['daten']];
             }
@@ -843,8 +912,8 @@ function con_zaehlerstand_ablegen(string $token, string $inhalt): void
         json_encode(['ts' => time(), 'daten' => $inhalt], JSON_UNESCAPED_SLASHES));
 }
 
-/** Zählerstände abholen und dabei löschen */
-function con_zaehlerstaende_abholen(int $max = 200): array
+/** Zählerstände abholen – gelöscht wird nach con_abgeholt() */
+function con_zaehlerstaende_abholen(int $max = 200, ?array &$behalten = null): array
 {
     $out = [];
     foreach (glob(con_dir('zaehlerstaende') . '/*') ?: [] as $ordner) {
@@ -854,7 +923,7 @@ function con_zaehlerstaende_abholen(int $max = 200): array
                 break 2;
             }
             $roh = json_decode((string)@file_get_contents($datei), true);
-            @unlink($datei);
+            con_abgeholt($datei, $behalten);
             if (is_array($roh) && isset($roh['daten'])) {
                 $out[] = ['zugang' => $kennung, 'ts' => (int)($roh['ts'] ?? 0), 'daten' => (string)$roh['daten']];
             }
@@ -1017,6 +1086,7 @@ function con_umfrage_antwort_ablegen(string $code, string $inhalt): void
 {
     $u = con_umfrage($code);
     if ($u === null) {
+        con_fehlgriff();   // auch beim Absenden zählen, nicht nur beim Öffnen der Seite
         throw new ConException('Diese Abstimmung gibt es nicht (mehr).');
     }
     $zustand = con_umfrage_zustand($u);
@@ -1042,8 +1112,8 @@ function con_umfrage_antwort_ablegen(string $code, string $inhalt): void
         json_encode(['ts' => time(), 'daten' => $inhalt], JSON_UNESCAPED_SLASHES));
 }
 
-/** Antworten abholen und dabei löschen – danach liegt hier nichts mehr */
-function con_umfrage_antworten_abholen(int $max = 200): array
+/** Antworten abholen – gelöscht wird nach con_abgeholt() */
+function con_umfrage_antworten_abholen(int $max = 200, ?array &$behalten = null): array
 {
     $out = [];
     foreach (glob(con_dir('umfrageantworten') . '/*') ?: [] as $ordner) {
@@ -1055,7 +1125,7 @@ function con_umfrage_antworten_abholen(int $max = 200): array
                 break 2;
             }
             $roh = json_decode((string)@file_get_contents($datei), true);
-            @unlink($datei);
+            con_abgeholt($datei, $behalten);
             if (is_array($roh) && isset($roh['daten'])) {
                 $out[] = ['umfrage' => $kennung, 'ts' => (int)($roh['ts'] ?? 0), 'daten' => (string)$roh['daten']];
             }
@@ -1150,8 +1220,8 @@ function con_getraenkemeldung_ablegen(string $token, string $inhalt): void
         json_encode(['ts' => time(), 'daten' => $inhalt], JSON_UNESCAPED_SLASHES));
 }
 
-/** Getränkemeldungen abholen und dabei löschen */
-function con_getraenkemeldungen_abholen(int $max = 200): array
+/** Getränkemeldungen abholen – gelöscht wird nach con_abgeholt() */
+function con_getraenkemeldungen_abholen(int $max = 200, ?array &$behalten = null): array
 {
     $out = [];
     foreach (glob(con_dir('getraenkemeldungen') . '/*') ?: [] as $ordner) {
@@ -1163,7 +1233,7 @@ function con_getraenkemeldungen_abholen(int $max = 200): array
                 break 2;
             }
             $roh = json_decode((string)@file_get_contents($datei), true);
-            @unlink($datei);
+            con_abgeholt($datei, $behalten);
             if (is_array($roh) && isset($roh['daten'])) {
                 $out[] = ['zugang' => $kennung, 'ts' => (int)($roh['ts'] ?? 0), 'daten' => (string)$roh['daten']];
             }
@@ -1194,7 +1264,7 @@ function con_abmeldung_ablegen(string $kennung): void
     if (!con_abmeldung_gueltig($kennung)) {
         throw new ConException('Dieser Abmeldelink ist nicht vollständig.');
     }
-    if (!con_limit_frei('ab:' . substr(sha1((string)($_SERVER['REMOTE_ADDR'] ?? '')), 0, 16), CON_LIMIT_ABMELDUNG)) {
+    if (!con_limit_frei('ab:' . con_anschluss(), CON_LIMIT_ABMELDUNG)) {
         throw new ConException('Zu viele Abmeldungen von diesem Anschluss. Bitte später erneut.');
     }
     $pfad = con_dir('abmeldungen') . '/' . $kennung . '.json';
@@ -1203,8 +1273,8 @@ function con_abmeldung_ablegen(string $kennung): void
     }
 }
 
-/** Abmeldungen abholen und dabei löschen */
-function con_abmeldungen_abholen(int $max = 500): array
+/** Abmeldungen abholen – gelöscht wird nach con_abgeholt() */
+function con_abmeldungen_abholen(int $max = 500, ?array &$behalten = null): array
 {
     $out = [];
     $dateien = glob(con_dir('abmeldungen') . '/*.json') ?: [];
@@ -1215,7 +1285,7 @@ function con_abmeldungen_abholen(int $max = 500): array
         }
         $kennung = basename($datei, '.json');
         $roh = json_decode((string)@file_get_contents($datei), true);
-        @unlink($datei);
+        con_abgeholt($datei, $behalten);
         if (con_abmeldung_gueltig($kennung)) {
             $out[] = ['kennung' => $kennung, 'ts' => (int)($roh['ts'] ?? 0)];
         }
@@ -1304,7 +1374,7 @@ function con_daten_erwartet(string $name, bool $istOrdner): bool
     }
     if (in_array($name, ['.htaccess', 'index.html', 'kopplung.json', 'kopplungscode.txt', 'fahrzeuge.json', 'einstellungen.json',
                          'veranstaltungen.json', 'einladungen.json', 'bestand.json', 'zaehler.json', 'umfragen.json', 'getraenke.json',
-                         'nonces.json', 'limit.json', 'protokoll.log'], true)) {
+                         'nonces.json', 'limit.json', 'abholung.json', 'protokoll.log'], true)) {
         return true;
     }
     return (bool)preg_match('/^[a-z]+\.json\.(lock|tmp[0-9a-f]{8})$/', $name);

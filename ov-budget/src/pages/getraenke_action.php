@@ -118,14 +118,15 @@ switch (post_str('action')) {
             foreach ((array)($_POST['geliefert'] ?? []) as $gid => $n) {
                 $geliefert[(int)$gid] = (int)$n;
             }
-            $r = getraenke_bestellung_liefern($b, $geliefert, post_int('standort_id'), $user);
+            $r = getraenke_bestellung_liefern($b, $geliefert, (int)post_int('standort_id'), $user);
             flash($r['ok'] ? 'success' : 'error', $r['text']);
         } elseif ($aktion === 'abrechnen') {
             if (!can('manage_budget')) {
                 flash('error', 'Ausgaben im Budget legt nur die Leitung an.');
                 break;
             }
-            $r = getraenke_bestellung_abrechnen($b, post_dec('betrag'), post_str('datum'), post_int('kategorie_id'),
+            // (int): ohne gewählte Kategorie kommt null – die Funktion kennt „keine Kategorie“ als 0
+            $r = getraenke_bestellung_abrechnen($b, post_dec('betrag'), post_str('datum'), (int)post_int('kategorie_id'),
                 post_str('beleg_nr'), post_date('bezahlt_am'), $user);
             flash($r['ok'] ? 'success' : 'error', $r['text']);
         } else {

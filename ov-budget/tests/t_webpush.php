@@ -107,6 +107,15 @@ $check('auch bei kurzen Zahlen 64 Byte', true);
 /* ---------- VAPID ---------- */
 $ist('Herkunft ohne Pfad', webpush_audience('https://fcm.googleapis.com/fcm/send/abc123'), 'https://fcm.googleapis.com');
 $ist('Herkunft mit Port', webpush_audience('https://push.example.de:8443/x'), 'https://push.example.de:8443');
+foreach (['https://fcm.googleapis.com/fcm/send/abc', 'https://updates.push.services.mozilla.com/wpush/v2/x', 'https://web.push.apple.com/Q', 'https://wns2-par02p.notify.windows.com/w/?token=x'] as $gut) {
+    $check('Push-Dienst erlaubt: ' . $gut, webpush_endpoint_erlaubt($gut));
+}
+foreach (['http://fcm.googleapis.com/x', 'https://192.168.1.1/x', 'https://homeassistant.local:8123/api', 'https://fcm.googleapis.com.evil.de/x', 'https://evilpush.apple.com/x',
+          'https://fcm.googleapis.com:8443/x', 'https://fcm.googleapis.com@evil.de/x', 'https://evil.de\\.push.apple.com/x', 'kein-url', ''] as $boese) {
+    $check('Push-Dienst abgewiesen: ' . $boese, !webpush_endpoint_erlaubt($boese));
+}
+try { webpush_send(['endpoint' => 'https://10.0.0.5/x', 'p256dh' => '', 'auth' => ''], []); $check('altes Abo an fremde Adresse: nicht verschickt', false); }
+catch (WebPushException $e) { $check('altes Abo an fremde Adresse: nicht verschickt', true); }
 try { webpush_audience('kein-url'); $check('kaputte Adresse abgewiesen', false); }
 catch (WebPushException $e) { $check('kaputte Adresse abgewiesen', true); }
 
@@ -197,9 +206,10 @@ $GLOBALS['vorhanden'] = null;
 
 foreach ([
     ['endpoint' => 'http://unsicher/x', 'keys' => ['p256dh' => b64u_encode($browserPunkt), 'auth' => b64u_encode($browserAuth)]],
-    ['endpoint' => 'https://x/y', 'keys' => ['p256dh' => 'zu-kurz', 'auth' => b64u_encode($browserAuth)]],
-    ['endpoint' => 'https://x/y', 'keys' => ['p256dh' => b64u_encode($browserPunkt), 'auth' => 'kurz']],
+    ['endpoint' => $abo['endpoint'], 'keys' => ['p256dh' => 'zu-kurz', 'auth' => b64u_encode($browserAuth)]],
+    ['endpoint' => $abo['endpoint'], 'keys' => ['p256dh' => b64u_encode($browserPunkt), 'auth' => 'kurz']],
     ['keys' => []],
+    ['endpoint' => 'https://192.168.1.1/x'] + $abo,   // fremder Rechner im eigenen Netz
 ] as $nr => $boese) {
     try { push_subscribe(7, $boese); $check('schlechtes Abo abgewiesen (' . $nr . ')', false); }
     catch (WebPushException $e) { $check('schlechtes Abo abgewiesen (' . $nr . ')', true); }

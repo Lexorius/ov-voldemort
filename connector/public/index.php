@@ -146,6 +146,17 @@ function koerper_lesen(int $hoechstens = 65536): string
 }
 
 try {
+    // Kurze Codes (Einladung, Abstimmung) ließen sich durchprobieren. Wer zu oft
+    // danebengreift, bekommt deshalb eine Stunde lang gar keine Antwort mehr –
+    // auch keinen Treffer. Die langen Zugänge der QR-Codes sind nicht zu erraten.
+    if (in_array($p, ['einladung', 'rueckmeldung', 'umfrage', 'umfrage_antwort'], true) && con_gesperrt()) {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            fehler('Zu viele Versuche von diesem Anschluss. Bitte später erneut.', 429);
+        }
+        seiten_kopf();
+        http_response_code(429);
+        exit("Zu viele Versuche von diesem Anschluss. Bitte später erneut.\n");
+    }
     switch ($p) {
         /* ---------------- Kopplung ---------------- */
         case 'koppeln':
@@ -171,7 +182,7 @@ try {
                 fehler('Kein gültiges JSON.');
             }
             // Zusätzlich je Absender bremsen, damit niemand fremde Zugänge durchprobiert
-            if (!con_limit_frei('ip:' . substr(sha1((string)($_SERVER['REMOTE_ADDR'] ?? '')), 0, 16), 300)) {
+            if (!con_limit_frei('ip:' . con_anschluss(), 300)) {
                 fehler('Zu viele Meldungen von diesem Anschluss. Bitte später erneut.', 429);
             }
             con_meldung_ablegen(nur_text($daten['fz'] ?? ''), nur_text($daten['daten'] ?? ''));
@@ -187,8 +198,8 @@ try {
         case 'abholen':
             $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'abholen');
             con_alte_wegwerfen('meldungen');
-            $meldungen = con_meldungen_abholen((int)($daten['max'] ?? 200));
-            antwort(['ok' => true, 'meldungen' => $meldungen]);
+            [$liste, $quittung] = con_abholen('abholen', $daten, 'con_meldungen_abholen');
+            antwort(['ok' => true, 'meldungen' => $liste] + $quittung);
 
         /* ---------------- Rückmeldung auf eine Einladung ---------------- */
         case 'rueckmeldung':
@@ -200,7 +211,7 @@ try {
                 fehler('Kein gültiges JSON.');
             }
             // Auch hier je Absender bremsen, damit niemand Codes durchprobiert
-            if (!con_limit_frei('ip:' . substr(sha1((string)($_SERVER['REMOTE_ADDR'] ?? '')), 0, 16), 300)) {
+            if (!con_limit_frei('ip:' . con_anschluss(), 300)) {
                 fehler('Zu viele Anfragen von diesem Anschluss. Bitte später erneut.', 429);
             }
             con_rueckmeldung_ablegen(nur_text($daten['code'] ?? ''), nur_text($daten['daten'] ?? ''));
@@ -220,7 +231,8 @@ try {
         case 'rueckmeldungen':
             $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'rueckmeldungen');
             con_alte_wegwerfen('rueckmeldungen');
-            antwort(['ok' => true, 'rueckmeldungen' => con_rueckmeldungen_abholen((int)($daten['max'] ?? 200))]);
+            [$liste, $quittung] = con_abholen('rueckmeldungen', $daten, 'con_rueckmeldungen_abholen');
+            antwort(['ok' => true, 'rueckmeldungen' => $liste] + $quittung);
 
         /* ---------------- Bestand: Meldung vom Handy ---------------- */
         case 'bestandsmeldung':
@@ -231,7 +243,7 @@ try {
             if (!is_array($daten)) {
                 fehler('Kein gültiges JSON.');
             }
-            if (!con_limit_frei('ip:' . substr(sha1((string)($_SERVER['REMOTE_ADDR'] ?? '')), 0, 16), 300)) {
+            if (!con_limit_frei('ip:' . con_anschluss(), 300)) {
                 fehler('Zu viele Meldungen von diesem Anschluss. Bitte später erneut.', 429);
             }
             con_bestandsmeldung_ablegen(nur_text($daten['g'] ?? ''), nur_text($daten['daten'] ?? ''));
@@ -248,7 +260,8 @@ try {
         case 'bestand_abholen':
             $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'bestand_abholen');
             con_alte_wegwerfen('bestandsmeldungen');
-            antwort(['ok' => true, 'meldungen' => con_bestandsmeldungen_abholen((int)($daten['max'] ?? 200))]);
+            [$liste, $quittung] = con_abholen('bestand_abholen', $daten, 'con_bestandsmeldungen_abholen');
+            antwort(['ok' => true, 'meldungen' => $liste] + $quittung);
 
         /* ---------------- Zähler: Meldung vom Handy ---------------- */
         case 'zaehlerstand':
@@ -259,7 +272,7 @@ try {
             if (!is_array($daten)) {
                 fehler('Kein gültiges JSON.');
             }
-            if (!con_limit_frei('ip:' . substr(sha1((string)($_SERVER['REMOTE_ADDR'] ?? '')), 0, 16), 300)) {
+            if (!con_limit_frei('ip:' . con_anschluss(), 300)) {
                 fehler('Zu viele Meldungen von diesem Anschluss. Bitte später erneut.', 429);
             }
             con_zaehlerstand_ablegen(nur_text($daten['z'] ?? ''), nur_text($daten['daten'] ?? ''));
@@ -276,7 +289,8 @@ try {
         case 'zaehler_abholen':
             $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'zaehler_abholen');
             con_alte_wegwerfen('zaehlerstaende');
-            antwort(['ok' => true, 'meldungen' => con_zaehlerstaende_abholen((int)($daten['max'] ?? 200))]);
+            [$liste, $quittung] = con_abholen('zaehler_abholen', $daten, 'con_zaehlerstaende_abholen');
+            antwort(['ok' => true, 'meldungen' => $liste] + $quittung);
 
         /* ---------------- Abstimmung: Antwort aus dem Browser ---------------- */
         case 'umfrage_antwort':
@@ -287,7 +301,7 @@ try {
             if (!is_array($daten)) {
                 fehler('Kein gültiges JSON.');
             }
-            if (!con_limit_frei('ip:' . substr(sha1((string)($_SERVER['REMOTE_ADDR'] ?? '')), 0, 16), 300)) {
+            if (!con_limit_frei('ip:' . con_anschluss(), 300)) {
                 fehler('Zu viele Anfragen von diesem Anschluss. Bitte später erneut.', 429);
             }
             con_umfrage_antwort_ablegen(nur_text($daten['u'] ?? ''), nur_text($daten['daten'] ?? ''));
@@ -304,7 +318,8 @@ try {
         case 'umfrage_abholen':
             $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'umfrage_abholen');
             con_alte_wegwerfen('umfrageantworten');
-            antwort(['ok' => true, 'antworten' => con_umfrage_antworten_abholen((int)($daten['max'] ?? 200))]);
+            [$liste, $quittung] = con_abholen('umfrage_abholen', $daten, 'con_umfrage_antworten_abholen');
+            antwort(['ok' => true, 'antworten' => $liste] + $quittung);
 
         /* ---------------- Getränke: Meldung vom Handy ---------------- */
         case 'getraenkemeldung':
@@ -315,7 +330,7 @@ try {
             if (!is_array($daten)) {
                 fehler('Kein gültiges JSON.');
             }
-            if (!con_limit_frei('ip:' . substr(sha1((string)($_SERVER['REMOTE_ADDR'] ?? '')), 0, 16), 300)) {
+            if (!con_limit_frei('ip:' . con_anschluss(), 300)) {
                 fehler('Zu viele Meldungen von diesem Anschluss. Bitte später erneut.', 429);
             }
             con_getraenkemeldung_ablegen(nur_text($daten['t'] ?? ''), nur_text($daten['daten'] ?? ''));
@@ -332,7 +347,8 @@ try {
         case 'getraenke_abholen':
             $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'getraenke_abholen');
             con_alte_wegwerfen('getraenkemeldungen');
-            antwort(['ok' => true, 'meldungen' => con_getraenkemeldungen_abholen((int)($daten['max'] ?? 200))]);
+            [$liste, $quittung] = con_abholen('getraenke_abholen', $daten, 'con_getraenkemeldungen_abholen');
+            antwort(['ok' => true, 'meldungen' => $liste] + $quittung);
 
         /* ---------------- Getränke: Seite am Lagerplatz ---------------- */
         case 'getraenke':
@@ -366,7 +382,8 @@ try {
 
         case 'abmeldungen_abholen':
             $daten = con_pruefe_anfrage(koerper_lesen(), (string)($_SERVER['HTTP_X_SIGNATUR'] ?? ''), 'abmeldungen_abholen');
-            antwort(['ok' => true, 'abmeldungen' => con_abmeldungen_abholen((int)($daten['max'] ?? 500))]);
+            [$liste, $quittung] = con_abholen('abmeldungen_abholen', $daten, 'con_abmeldungen_abholen');
+            antwort(['ok' => true, 'abmeldungen' => $liste] + $quittung);
 
         /* ---------------- Abstimmung: die Umfrageseite ---------------- */
         case 'umfrage':

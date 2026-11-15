@@ -44,6 +44,13 @@ const CONNECTOR_ZWECKE = [
     'newsletter'      => 'Newsletter: Abmeldelink und Sperrliste',
 ];
 
+/**
+ * Anfragen, mit denen etwas abgeholt wird. Dort schickt OV-Multitool die
+ * Quittung der letzten Lieferung mit – erst dann löscht der Connector sie.
+ */
+const CONNECTOR_ABHOLEN = ['abholen', 'rueckmeldungen', 'bestand_abholen', 'zaehler_abholen',
+    'umfrage_abholen', 'getraenke_abholen', 'abmeldungen_abholen'];
+
 /* ==================================================================== */
 /* Die Connectoren                                                       */
 /* ==================================================================== */
@@ -311,6 +318,16 @@ function connector_call(array $c, string $pfad, array $daten = []): array
     if (!connector_gekoppelt($c)) {
         throw new ConnectorException(sprintf('Der Connector „%s" ist nicht gekoppelt.', (string)$c['name']));
     }
+    $merker = 'connector_quittung_' . (int)$c['id'] . '_' . $pfad;
+    $holt = in_array($pfad, CONNECTOR_ABHOLEN, true);
+    if ($holt) {
+        // Nie zwei Abholungen zugleich (Abruf und Knopf) – sonst käme dieselbe Lieferung doppelt an.
+        // Die Sperre endet mit der Anfrage.
+        if (!db_lock('ovb_con_' . (int)$c['id'] . '_' . $pfad)) {
+            return ['ok' => true];
+        }
+        $daten['quittung'] = state_get($merker, '');
+    }
     $daten['zweck'] = $pfad;
     $daten['ts'] = time();
     $daten['nonce'] = bin2hex(random_bytes(12));
@@ -321,6 +338,11 @@ function connector_call(array $c, string $pfad, array $daten = []): array
         throw $ex;
     }
     connector_stoerung_beendet($c);
+    // Angekommen: gleich merken, vor dem Verarbeiten. Eine einzelne Meldung, an der das
+    // Verarbeiten scheitert, käme sonst bei jedem Abruf wieder und hielte alle anderen auf.
+    if ($holt && isset($antwort['quittung'])) {
+        state_save($merker, (string)$antwort['quittung']);
+    }
     return $antwort;
 }
 

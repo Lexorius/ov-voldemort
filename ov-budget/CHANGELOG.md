@@ -1,5 +1,36 @@
 # Änderungsverlauf
 
+## 2.1.91.4
+
+Mit dieser Fassung gehört **Connector 1.9.0** – bitte die Dateien des
+Connectors neu hochladen. Ein älterer Connector arbeitet weiter wie bisher,
+nur ohne die beiden Verbesserungen unten.
+
+- **Connector – nichts geht mehr beim Abholen verloren:** Bisher löschte der
+  Connector Meldungen, Rückmeldungen und Antworten, während er sie
+  herausgab. Brach die Verbindung in dem Moment ab, waren sie auf beiden
+  Seiten weg. Jetzt bleiben sie liegen, bis OV-Multitool beim nächsten
+  Abholen den Empfang bestätigt; sonst kommen sie noch einmal. Abruf und
+  Knopf *Abholen* laufen nie gleichzeitig.
+- **Connector – Codes lassen sich nicht mehr durchprobieren:** Die Bremse
+  zählte falsche Codes nur beim Öffnen der Seite, nicht beim Absenden – und
+  wer gesperrt war, bekam auf einen richtigen Code trotzdem die Seite. Jetzt
+  zählt auch das Absenden, und nach 60 Fehlgriffen gibt es für Einladungen
+  und Abstimmungen eine Stunde lang gar keine Antwort. Bei IPv6 zählt das
+  Netz statt der einzelnen Adresse.
+- **Benachrichtigungen – nur an bekannte Push-Dienste:** Die Adresse, an die
+  eine Benachrichtigung geht, nennt der Browser. Angenommen werden jetzt nur
+  die Dienste von Chrome/Edge/Android, Firefox, Safari, Windows und Samsung –
+  ein erfundenes Abo kann den Server nicht mehr auf Rechner im eigenen Netz
+  schicken. Meldet ein Gerät danach *unbekannter Push-Dienst*, bitte Bescheid
+  geben.
+- **Bilder – sehr große Flächen werden nicht mehr geöffnet:** Ein Bild mit
+  mehr als 64 Megapixeln bleibt, wie es hochgeladen wurde, statt beim
+  Verkleinern den ganzen Arbeitsspeicher zu belegen.
+- **Getränke – Rechnung ohne Kategorie:** Das Buchen einer Getränkerechnung
+  ohne gewählte Kategorie endete in einer Fehlerseite, ebenso das Liefern
+  ohne Lagerort. Beides geht jetzt.
+
 ## 2.1.91.3
 
 - **Veranstaltungen – Einladungscodes nur noch für die Leitung:** Die
