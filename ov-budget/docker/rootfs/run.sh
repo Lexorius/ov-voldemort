@@ -205,10 +205,20 @@ FPM_PID=$!
 
 # Regelmaessige Abrufe (Stein.APP, Divera). Der Aufruf kommt jede Minute,
 # ob wirklich abgerufen wird, entscheidet das jeweils eingestellte Intervall.
+#
+# Als nginx, wie die Weboberflaeche: Legt der Abruf als root einen Ordner an
+# (etwa fuer Sicherungen), kann die Weboberflaeche bis zum naechsten Start
+# nicht hineinschreiben. Fehlt su-exec, bleibt es beim alten Verhalten.
+if command -v su-exec >/dev/null 2>&1; then
+    ABRUF_ALS="su-exec nginx"
+else
+    ABRUF_ALS=""
+    log "su-exec fehlt – der Minutenabruf läuft als root."
+fi
 (
     while true; do
         sleep 60
-        php /app/public/cron.php >/dev/null 2>&1 || true
+        $ABRUF_ALS php /app/public/cron.php >/dev/null 2>&1 || true
     done
 ) &
 CRON_PID=$!

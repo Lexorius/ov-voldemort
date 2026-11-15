@@ -138,6 +138,9 @@ $start = (string)file_get_contents(dirname(__DIR__) . '/docker/rootfs/run.sh');
 $check('Start liest die Container-Umgebung von s6', str_contains($start, 'container_environment'));
 $check('Start legt das Token ab', str_contains($start, '/data/ha_token'));
 $check('ohne Token wird die Datei entfernt', str_contains($start, 'rm -f /data/ha_token'));
+$check('der Minutenabruf läuft als nginx wie die Weboberfläche – su-exec ist im Abbild, ohne es bleibt root', str_contains($start, 'ABRUF_ALS="su-exec nginx"')
+    && str_contains($start, '$ABRUF_ALS php /app/public/cron.php') && str_contains($start, 'command -v su-exec')
+    && str_contains((string)file_get_contents(dirname(__DIR__) . '/Dockerfile'), ' su-exec;'));
 
 /* ---------- Ziel prüfen ---------- */
 foreach (['', 'Mobile_App', 'notify.mobile_app', 'mobile app', '../../hack'] as $boese) {

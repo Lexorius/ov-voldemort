@@ -2019,7 +2019,9 @@ Gerät „OV-Multitool" zusammen.
   * Diagnose: gekoppelte Connectoren, letzte Abrufe (Connector, Stein.APP,
     Divera), letzte Sicherung und Anzahl der Sicherungen
 * **Je Fahrzeug** (abschaltbar) ein eigenes Gerät mit Status, Funkstatus, HU,
-  SP, UVV, Kilometerstand und offenen Aufträgen; mit der Option
+  SP, UVV, Kilometerstand und offenen Aufträgen – dazu als Attribute
+  **Kennzeichen, Funkrufname, Fachgruppe** und der **Hinweis zum Funkstatus**
+  (Freitext, wie er am Fahrzeug steht); mit der Option
   *Fahrzeugstandort* zusätzlich ein `device_tracker` mit der Position aus
   Divera oder aus den QR-Standortmeldungen.
 * **Takt:** Standardmäßig alle 5 Minuten; die Anmeldung der Entitäten wird
@@ -2034,6 +2036,12 @@ Zugangsdaten, keine QR-Zugänge – und nicht, welches Funkgerät oder welcher
 Koffer gerade am Lagerort ist oder fehlt. Von den Funkgeräten gehen nur
 Summen hinaus. Einzig der Fahrzeugstandort ist ein Standort, deshalb ist er
 eine eigene Einstellung und in der Vorgabe aus.
+
+**Die Ausnahme sind die Fahrzeuge:** Mit dem Gerät je Fahrzeug gehen
+Kennzeichen, Funkrufname und der Hinweis zum Funkstatus an den Broker – ohne
+sie ließe sich das Fahrzeug in Home Assistant nicht erkennen. Wer das nicht
+möchte, schaltet *Je Fahrzeug* ab; dann gehen von den Fahrzeugen nur Summen
+hinaus. In den Hinweis zum Funkstatus gehört deshalb kein Name.
 
 ## Benachrichtigungen aufs Handy
 

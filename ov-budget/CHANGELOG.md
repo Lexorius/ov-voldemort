@@ -1,5 +1,22 @@
 # Änderungsverlauf
 
+## 2.1.92.2
+
+- **Hochrechnung – Zählerkosten waren zu niedrig:** Monate nach der letzten
+  Ablesung galten als „nichts verbraucht" und damit als bekannt. Wer im
+  August zuletzt abgelesen hatte, bekam im November drei Monate zu wenig –
+  und entsprechend zu viel freies Budget. Diese Monate gelten jetzt als
+  unbekannt und werden wie die künftigen aus dem Vorjahr oder dem
+  Durchschnitt geschätzt.
+- **Minutenabruf läuft als Webserver-Benutzer:** Bisher lief er als root.
+  Legte er einen Ordner an – etwa für Sicherungen –, konnte die Weboberfläche
+  bis zum nächsten Neustart nicht hineinschreiben.
+- **Home Assistant – die Anleitung sagt, was je Fahrzeug hinausgeht:** Mit
+  dem Gerät je Fahrzeug gehen Kennzeichen, Funkrufname, Fachgruppe und der
+  Hinweis zum Funkstatus an den Broker. Das stand bisher nicht da, und das
+  README versprach „keine Kennungen". Am Verhalten ändert sich nichts; wer
+  es nicht möchte, schaltet *Je Fahrzeug* ab.
+
 ## 2.1.92.1
 
 - **Budget – einzelne Buchungen nur mit dem Recht dazu:** Die Übersicht

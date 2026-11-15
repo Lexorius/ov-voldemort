@@ -777,7 +777,8 @@ anpassen, neu anstoßen oder entfernen.
 * Connector-Meldungen Ende-zu-Ende verschlüsselt, signierte Kopplung,
   Begrenzung je Fahrzeug und Anschluss – Einzelheiten in
   [connector/README.md](connector/README.md)
-* Nach außen gehen nur Kennzahlen (MQTT) – keine Namen, Kennungen oder Rufnummern;
+* Nach außen gehen nur Kennzahlen (MQTT) – keine Namen, Funkkennungen oder Rufnummern;
+  je Fahrzeug, wenn eingeschaltet, zusätzlich Kennzeichen, Funkrufname und der Hinweis zum Funkstatus;
   die KI-Auswertung spricht nur mit Rechnern im eigenen Netz
 
 ## Bibliotheken anderer

@@ -20,7 +20,7 @@ ENV OVB_UPLOAD_DIR=/data/uploads
 # führt (php84, php83 ...) und je Alpine-Fassung wechselt.
 RUN set -eux; \
     apk upgrade --no-cache; \
-    apk add --no-cache nginx tzdata mariadb mariadb-client poppler-utils; \
+    apk add --no-cache nginx tzdata mariadb mariadb-client poppler-utils su-exec; \
     PHPV=""; \
     for v in 85 84 83 82; do \
         set -- "php$v" "php$v-fpm" "php$v-pdo" "php$v-pdo_mysql" "php$v-mbstring" \

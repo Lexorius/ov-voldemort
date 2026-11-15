@@ -116,6 +116,17 @@ $zv = prognose_zaehler_rechnen($kosten, 2026, '2026-10-18', $vorjahr);
 $check('Zähler mit Vorjahr: Oktober und November aus dem Vorjahr (Heizung!), Dezember aus dem Durchschnitt', $zv['aus_vorjahr'] === 2 && $zv['aus_schnitt'] === 1 && abs($zv['rest'] - (95 + 118 + 82.22)) < 0.01 && abs($zv['hochrechnung'] - (740 + 95 + 118 + 82.22)) < 0.01
     && $zv['vorjahr']['summe'] === 978.0 && $zv['vorjahr']['monate_mit'] === 11 && abs($zv['vorjahr']['durchschnitt'] - 88.91) < 0.01);
 $check('Zähler im Vorjahr-Modus: vergangenes Jahr kein Rest', prognose_zaehler_rechnen($kosten, 2025, '2026-10-18', $vorjahr)['rest'] === 0.0);
+// Zuletzt im August abgelesen, heute ist November: September bis November kämen als „nur Grundpreis" an und gälten als bekannt
+$nurGrund = [1 => 120.0, 2 => 110.0, 3 => 100.0, 4 => 80.0, 5 => 70.0, 6 => 60.0, 7 => 60.0, 8 => 65.0, 9 => 9.0, 10 => 9.0, 11 => 9.0, 12 => null];
+$bisAugust = [['stand' => 100, 'gelesen_am' => '2026-01-01 08:00:00'], ['stand' => 4100, 'gelesen_am' => '2026-08-31 18:00:00']];
+$bereinigt = prognose_monate_ohne_ablesung($nurGrund, 2026, $bisAugust);
+$check('Monate nach der letzten Ablesung sind unbekannt, der Monat der Ablesung bleibt', $bereinigt[8] === 65.0 && $bereinigt[9] === null && $bereinigt[10] === null && $bereinigt[11] === null && $bereinigt[7] === 60.0);
+$zu = prognose_zaehler_rechnen($bereinigt, 2026, '2026-11-15', $vorjahr);
+$check('Hochrechnung füllt sie aus dem Vorjahr statt sie mit null Verbrauch zu zählen', $zu['bisher'] === 665.0 && $zu['aus_vorjahr'] === 3 && abs($zu['rest'] - (78 + 95 + 118 + 665 / 8)) < 0.01
+    && $zu['hochrechnung'] > prognose_zaehler_rechnen($nurGrund, 2026, '2026-11-15', $vorjahr)['hochrechnung'] + 250);
+$check('Ablesung im Folgejahr oder heute: nichts wird verworfen; ohne jede Ablesung ist alles unbekannt',
+    prognose_monate_ohne_ablesung($nurGrund, 2026, [['stand' => 1, 'gelesen_am' => '2027-01-03 08:00:00']]) === $nurGrund
+    && array_filter(prognose_monate_ohne_ablesung($nurGrund, 2026, []), static fn($v) => $v !== null) === []);
 $GLOBALS['execs'] = [];
 prognose_zaehler_schalten(2026, false);
 $check('Schalter: Vorgabe an, abschalten merkt sich je Jahr', prognose_zaehler_aktiv(2026) && count($GLOBALS['execs']) === 1 && $GLOBALS['execs'][0][1][0] === 'prognose_zaehler_an_2026' && $GLOBALS['execs'][0][1][1] === '0');

@@ -368,6 +368,23 @@ function prognose_zaehler_rechnen(array $kostenMonate, int $jahr, string $heute,
         'vorjahr' => $vorjahr, 'aus_vorjahr' => $ausVorjahr, 'aus_schnitt' => $ausSchnitt];
 }
 
+/**
+ * Monate, die ganz nach der letzten Ablesung liegen, sind unbekannt (null) – nicht „nichts
+ * verbraucht". Sonst gälten sie als bekannt, und die Hochrechnung füllte sie nicht aus dem
+ * Vorjahr: Wer im August zuletzt abgelesen hat, bekäme im November drei Monate zu wenig.
+ * $staende älteste zuerst (readings_bereich). Reine Funktion.
+ */
+function prognose_monate_ohne_ablesung(array $kostenMonate, int $jahr, array $staende): array
+{
+    $letzte = $staende ? substr((string)end($staende)['gelesen_am'], 0, 7) : '';
+    foreach ($kostenMonate as $m => $wert) {
+        if (sprintf('%04d-%02d', $jahr, $m) > $letzte) {
+            $kostenMonate[$m] = null;
+        }
+    }
+    return $kostenMonate;
+}
+
 /** Zählen die Nebenkosten aus den Zählern in der Hochrechnung dieses Jahres mit? Schalter auf der Seite, Vorgabe an. */
 function prognose_zaehler_aktiv(int $jahr): bool
 {
@@ -398,9 +415,12 @@ function prognose_zaehler(int $jahr, string $heute): array
             continue;   // Unterzähler und Erzeugung tragen keine eigenen Kosten
         }
         $tarife = tarif_query($tarifArt);
-        $kosten = verbrauch_kosten_jahr(readings_bereich((int)$m['id'], $von, $bis), $tarife, $m, $jahr);
-        $vorjahr = verbrauch_kosten_jahr(readings_bereich((int)$m['id'], $vjVon, $vjBis), $tarife, $m, $jahr - 1);
-        $r = prognose_zaehler_rechnen($kosten['monate'], $jahr, $heute, $vorjahr['monate']);
+        $staende = readings_bereich((int)$m['id'], $von, $bis);
+        $vjStaende = readings_bereich((int)$m['id'], $vjVon, $vjBis);
+        $kosten = verbrauch_kosten_jahr($staende, $tarife, $m, $jahr);
+        $vorjahr = verbrauch_kosten_jahr($vjStaende, $tarife, $m, $jahr - 1);
+        $r = prognose_zaehler_rechnen(prognose_monate_ohne_ablesung($kosten['monate'], $jahr, $staende), $jahr, $heute,
+            prognose_monate_ohne_ablesung($vorjahr['monate'], $jahr - 1, $vjStaende));
         $r += ['id' => (int)$m['id'], 'name' => (string)$m['name'], 'art' => (string)$m['art'], 'erloes' => (bool)$kosten['erloes'], 'ohne_tarif' => (int)$kosten['ohne_tarif']];
         $zeilen[] = $r;
         if ($r['erloes']) {

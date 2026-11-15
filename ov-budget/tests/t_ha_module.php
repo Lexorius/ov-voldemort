@@ -67,6 +67,8 @@ $check('UVV je Fahrzeug', $fz['uvv_bis'] === '2026-11-11');
 $check('ISSI und OPTA nicht mehr im Export', !isset($fz['info']['issi']) && !isset($fz['info']['opta'])
     && !str_contains(json_encode($fz), '2621234') && !str_contains(json_encode($fz), 'NW HEROS'));
 $check('Kennzeichen und Funkrufname bleiben', $fz['info']['kennzeichen'] === 'THW 99020');
+$doku = (string)file_get_contents(dirname(__DIR__) . '/DOCS.md');
+$check('die Anleitung nennt, was je Fahrzeug an den Broker geht', str_contains($doku, 'Kennzeichen, Funkrufname, Fachgruppe') && str_contains($doku, 'Die Ausnahme sind die Fahrzeuge'));
 
 /* ---------- Anmeldung ---------- */
 $d = ha_discovery_messages('ovbudget', 'OV', '1.45.0', [], false);
