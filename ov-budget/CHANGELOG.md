@@ -1,5 +1,17 @@
 # Änderungsverlauf
 
+## 2.1.93.0
+
+- **Einsatzauftrag – Vorlagen mit Namen:** Unter der Maske stehen zwei neue
+  Knöpfe. *Als Vorlage für diesen Einsatz speichern* merkt sich die Texte
+  für weitere Aufträge desselben Einsatzes, *Als globale Vorlage speichern*
+  für jeden Einsatz und jede Veranstaltung. Gespeichert werden nur die
+  Texte – kein PDF, keine laufende Nummer, kein Datum, kein Absendevermerk;
+  die globale Vorlage merkt sich auch keinen Einsatz und keine Unterschrift.
+  Die Vorlagen stehen oben auf der Seite zum Übernehmen und Löschen. Wie
+  bisher lässt sich auch ein gespeicherter Auftrag als Vorlage für den
+  nächsten nehmen.
+
 ## 2.1.92.3
 
 - **Hochrechnung – fester Monatsbetrag mit Punkt:** Ein Betrag wie `45.90`

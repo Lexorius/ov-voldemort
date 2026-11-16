@@ -1597,6 +1597,18 @@ mit denselben Texten, neuer Nummer und leerem Empfänger. Gesetzt wird der
 Vordruck im Browser von der Bibliothek *einsatzauftrag* (siehe
 *Bibliotheken und Lizenzen*); das THW-Zeichen ist nicht enthalten.
 
+**Vorlagen mit Namen.** Unter der Maske stehen zwei weitere Knöpfe:
+**„Als Vorlage für diesen Einsatz speichern"** und **„Als globale Vorlage
+speichern"**. Beide merken sich die Texte der Maske unter einem Namen – ohne
+PDF, ohne laufende Nummer, ohne Ort und Datum und ohne Absendevermerk. Die
+Vorlage für den Einsatz steht bei jedem weiteren Auftrag dieses Einsatzes
+zur Auswahl, die globale bei jedem Einsatz und jeder Veranstaltung; sie
+merkt sich deshalb auch keinen Einsatz und keine Unterschrift. Gespeicherte
+Vorlagen stehen oben auf der Seite: *Übernehmen* beginnt den Auftrag mit
+ihren Texten, der Papierkorb löscht sie. Ein Name, den es an derselben
+Stelle schon gibt, wird überschrieben. An einer Veranstaltung heißen die
+Knöpfe entsprechend „für diese Veranstaltung".
+
 **Aus einer Veranstaltung.** Wird aus einer Übung oder Bereitstellung ein
 Einsatz, legt **„In Einsatz umwandeln"** auf der Seite der Veranstaltung ihn
 an: Titel, Ort, Beschreibung und Fachgruppe, je Kalendertag eine Zeile, die

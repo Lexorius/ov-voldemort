@@ -2382,6 +2382,25 @@ CREATE TABLE IF NOT EXISTS einsatz_fremde (
   CONSTRAINT fk_efremd_symbol  FOREIGN KEY (symbol_id)  REFERENCES karten_symbole(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Vorlagen fuer den Einsatzauftrag (Fb Fue 3): die Felder des Vordrucks als JSON, unter einem Namen.
+-- einsatz_id oder event_id gesetzt: nur an diesem Einsatz bzw. dieser Veranstaltung; beide leer: ueberall.
+CREATE TABLE IF NOT EXISTS einsatz_auftrag_vorlagen (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  einsatz_id  INT UNSIGNED NULL,
+  event_id    INT UNSIGNED NULL,
+  name        VARCHAR(150) NOT NULL,
+  daten       MEDIUMTEXT   NOT NULL,
+  created_by  INT UNSIGNED NULL,
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_eav_einsatz (einsatz_id),
+  KEY idx_eav_event (event_id),
+  CONSTRAINT fk_eav_einsatz FOREIGN KEY (einsatz_id) REFERENCES einsaetze(id) ON DELETE CASCADE,
+  CONSTRAINT fk_eav_event   FOREIGN KEY (event_id)   REFERENCES events(id)    ON DELETE CASCADE,
+  CONSTRAINT fk_eav_user    FOREIGN KEY (created_by) REFERENCES users(id)     ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Protokoll einer Karte: wann welche Einheit oder welches Fahrzeug gesetzt, versetzt oder
 -- herausgenommen wurde – von wo nach wo, von wem. Daraus rechnet die Anwendung, wie lange
 -- jedes im Einsatz war. marker_id ist bewusst kein Fremdschluessel: die Zeilen bleiben,

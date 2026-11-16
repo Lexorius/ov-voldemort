@@ -92,6 +92,34 @@
     });
   }
 
+  /* Die Texte der Maske als Vorlage merken – für diesen Einsatz oder global. Kein PDF, die Maske bleibt stehen. */
+  wurzel.querySelectorAll('[data-ea-vorlage]').forEach(function (knopf) {
+    knopf.addEventListener('click', function () {
+      var global = knopf.getAttribute('data-ea-vorlage') === 'global';
+      var daten = lesen();
+      var name = window.prompt(global ? 'Name der globalen Vorlage – sie steht bei jedem Einsatz zur Auswahl:' : 'Name der Vorlage:', daten.empfaenger ? 'Auftrag an ' + daten.empfaenger : '');
+      if (name === null || name.trim() === '') { return; }
+      var fd = new FormData();
+      fd.append('_csrf', K.csrf);
+      fd.append('action', 'vorlage_speichern');
+      fd.append('name', name);
+      fd.append('global', global ? '1' : '0');
+      fd.append('daten', JSON.stringify(daten));
+      knopf.disabled = true;
+      melden('');
+      window.fetch(K.vorlagen, { method: 'POST', body: fd, credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json().then(function (d) { return r.ok && d && d.ok ? d : { fehler: (d && d.fehler) || 'Das hat nicht geklappt.' }; }); })
+        .catch(function () { return { fehler: 'Keine Verbindung – nicht gespeichert.' }; })
+        .then(function (d) {
+          knopf.disabled = false;
+          if (d.fehler) { melden(d.fehler); return; }
+          melden((d.global ? 'Globale Vorlage „' : 'Vorlage „') + d.name + (d.ersetzt ? '“ überschrieben' : '“ gespeichert')
+            + ' – sie steht beim nächsten Einsatzauftrag oben zur Auswahl.', true);
+          if (meldung) { meldung.scrollIntoView({ block: 'nearest' }); }
+        });
+    });
+  });
+
   var speichern = wurzel.querySelector('[data-ea-speichern]');
   if (speichern) {
     speichern.addEventListener('click', function () {

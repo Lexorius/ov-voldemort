@@ -33,7 +33,7 @@ function db_all(string $sql, array $p = []): array {
     return [];
 }
 function db_row(string $sql, array $p = []): ?array { return null; }
-function db_val(string $sql, array $p = [], mixed $d = null) { return $d; }
+function db_val(string $sql, array $p = [], mixed $d = null) { return str_contains($sql, 'FROM einsatz_auftrag_vorlagen') ? ($GLOBALS['vorlage_vorhanden'] ?? $d) : $d; }
 function db_exec(string $sql, array $p = []): int { $GLOBALS['execs'][] = [$sql, $p]; return 1; }
 function db_insert(string $t, array $d): int { $GLOBALS['inserts'][] = [$t, $d]; return 100 + count($GLOBALS['inserts']); }
 function db_update(string $t, array $d, string $w, array $p): int { $GLOBALS['updates'][] = [$t, $d, $p]; return 1; }
@@ -152,6 +152,55 @@ $v2 = einsatz_auftrag_vorgabe($einsatz, $vorhanden, current_user(), 'OV', ['empf
     'unterpunkte' => ['3b' => 'Verbau']], strtotime('2026-11-15 10:00:00'));
 $check('Vorlage: Texte bleiben, Nummer, Empfänger und Absendevermerk beginnen neu', $v2['auftrag'] === 'Deich sichern' && $v2['unterpunkte'] === ['3b' => 'Verbau']
     && $v2['laufendeNummer'] === '13' && !isset($v2['empfaenger']) && !isset($v2['abgesandtUm']) && $v2['ortDatum'] === 'Deich Süd, 15.11.2026');
+
+/* ================= Vorlagen: für den Einsatz und global ================= */
+$voll = ['absender' => 'OV', 'empfaenger' => 'B1', 'einsatz' => '2026-014 · Hochwasser', 'laufendeNummer' => '3', 'ortDatum' => 'Deich, 14.11.2026', 'unterschrift' => 'Tina',
+    'dienststelle' => 'ZFü', 'auftrag' => 'Deich sichern', 'abgesandtAm' => '14.11.2026', 'abgesandtUm' => '09:00', 'abgesandtVon' => 'Tina', 'unterpunkte' => ['3b' => 'Verbau'], 'uebung' => true];
+$fz = einsatz_auftrag_vorlage_felder(json_encode($voll), false);
+$check('Vorlage für den Einsatz: Texte bleiben, was zum einzelnen Auftrag gehört, nicht', array_keys($fz) === ['absender', 'einsatz', 'empfaenger', 'auftrag', 'unterschrift', 'dienststelle', 'unterpunkte', 'uebung']
+    && $fz['unterpunkte'] === ['3b' => 'Verbau'] && $fz['uebung'] === true);
+$fg = einsatz_auftrag_vorlage_felder($voll, true);
+$check('globale Vorlage: zusätzlich ohne Einsatz und Unterschrift', !isset($fg['einsatz'], $fg['unterschrift']) && $fg['absender'] === 'OV' && $fg['dienststelle'] === 'ZFü' && !isset($fg['laufendeNummer']));
+$GLOBALS['inserts'] = []; $GLOBALS['updates'] = [];
+$r = einsatz_auftrag_vorlage_speichern("  Deich \n Standard ", json_encode($voll), false, 5, null, current_user());
+$zeileV = $nur('einsatz_auftrag_vorlagen')[0][1] ?? [];
+$check('Vorlage gespeichert: am Einsatz, Name gesäubert, Felder als JSON ohne laufende Nummer', is_array($r) && $r['name'] === 'Deich Standard' && $r['global'] === false && $r['ersetzt'] === false
+    && $zeileV['einsatz_id'] === 5 && $zeileV['event_id'] === null && $zeileV['created_by'] === 7 && json_decode($zeileV['daten'], true) === $fz);
+$GLOBALS['inserts'] = [];
+$r = einsatz_auftrag_vorlage_speichern('Übungsauftrag', $voll, true, 5, 40, current_user());
+$zeileG = $nur('einsatz_auftrag_vorlagen')[0][1] ?? [];
+$check('globale Vorlage: hängt an keinem Einsatz und keiner Veranstaltung', is_array($r) && $r['global'] === true && $zeileG['einsatz_id'] === null && $zeileG['event_id'] === null
+    && json_decode($zeileG['daten'], true) === $fg);
+$check('ohne Namen oder mit leerer Maske: Fehlertext, nichts gespeichert', is_string(einsatz_auftrag_vorlage_speichern('  ', $voll, false, 5, null, current_user()))
+    && is_string(einsatz_auftrag_vorlage_speichern('Leer', ['laufendeNummer' => '3'], false, 5, null, current_user())) && count($nur('einsatz_auftrag_vorlagen')) === 1);
+$GLOBALS['inserts'] = []; $GLOBALS['updates'] = [];
+$GLOBALS['vorlage_vorhanden'] = 44;
+$r = einsatz_auftrag_vorlage_speichern('Deich Standard', $voll, false, 5, null, current_user());
+$check('gleicher Name an derselben Stelle: überschrieben statt doppelt', is_array($r) && $r['id'] === 44 && $r['ersetzt'] === true && $GLOBALS['inserts'] === []
+    && $GLOBALS['updates'][0][0] === 'einsatz_auftrag_vorlagen' && $GLOBALS['updates'][0][2] === [44]);
+unset($GLOBALS['vorlage_vorhanden']);
+$GLOBALS['rows']['FROM einsatz_auftrag_vorlagen'] = [
+    ['id' => 3, 'einsatz_id' => 5, 'event_id' => null, 'name' => 'Deich <Standard>', 'daten' => json_encode($fz), 'global' => 0, 'von' => 'Tina Tester', 'created_at' => '2026-11-14 10:00:00', 'updated_at' => '2026-11-15 09:00:00'],
+    ['id' => 4, 'einsatz_id' => null, 'event_id' => null, 'name' => 'Übungsauftrag', 'daten' => json_encode($fg), 'global' => 1, 'von' => null, 'created_at' => '2026-11-14 10:00:00', 'updated_at' => '2026-11-14 10:00:00']];
+$check('Vorlage suchen: nur unter denen, die hier zur Auswahl stehen', einsatz_auftrag_vorlage_find(4, 5, null)['name'] === 'Übungsauftrag' && einsatz_auftrag_vorlage_find(99, 5, null) === null
+    && einsatz_auftrag_vorlage_find(null, 5, null) === null);
+$ausMuster = einsatz_auftrag_vorgabe($einsatz, $vorhanden, current_user(), 'THW OV Musterstadt', json_decode((string)einsatz_auftrag_vorlage_find(4, 5, null)['daten'], true), strtotime('2026-11-15 10:00:00'));
+$check('globale Vorlage übernommen: Texte aus der Vorlage, Einsatz, Nummer, Datum und Unterschrift von hier', $ausMuster['auftrag'] === 'Deich sichern' && $ausMuster['einsatz'] === '2026-014 · Hochwasser Hunte'
+    && $ausMuster['laufendeNummer'] === '13' && $ausMuster['unterschrift'] === 'Tina Tester' && $ausMuster['ortDatum'] === 'Deich Süd, 15.11.2026' && $ausMuster['absender'] === 'OV');
+$zielE = ['name' => '2026-014 · Hochwasser Hunte', 'url' => '/index.php?p=einsatz&id=5', 'zurueck' => '/index.php?p=einsatz&id=5#dateien', 'wo' => 'am Einsatz', 'art' => 'Einsatz'];
+$mitVorlagen = render_partial('einsatz_auftrag', ['daten' => $v, 'vorlage' => null, 'ziel' => $zielE, 'vorlagen' => $GLOBALS['rows']['FROM einsatz_auftrag_vorlagen'], 'selbst' => '/index.php?p=einsatz_auftrag&einsatz_id=5',
+    'konfig' => ['ablage' => '/x', 'csrf' => 'abc', 'felder' => [], 'zurueck' => '/y', 'fusszeile' => 'OV', 'vorlagen' => '/index.php?p=einsatz_auftrag&einsatz_id=5']]);
+$check('Maske: Vorlagen zur Auswahl – übernehmen und löschen, Name maskiert, global gekennzeichnet', str_contains($mitVorlagen, 'id="vorlagen"') && str_contains($mitVorlagen, 'Deich &lt;Standard&gt;')
+    && !str_contains($mitVorlagen, '<Standard>') && str_contains($mitVorlagen, 'einsatz_id=5&amp;muster=3') && str_contains($mitVorlagen, 'name="vorlage_id" value="4"')
+    && str_contains($mitVorlagen, 'value="vorlage_weg"') && str_contains($mitVorlagen, '>global<') && str_contains($mitVorlagen, 'nur diesen Einsatz'));
+$check('Maske: zwei Knöpfe zum Speichern als Vorlage', str_contains($mitVorlagen, 'data-ea-vorlage="ziel"') && str_contains($mitVorlagen, 'Als Vorlage für diesen Einsatz speichern')
+    && str_contains($mitVorlagen, 'data-ea-vorlage="global"') && str_contains($mitVorlagen, 'Als globale Vorlage speichern'));
+unset($GLOBALS['rows']['FROM einsatz_auftrag_vorlagen']);
+$schemaV = $lies('sql/schema.sql');
+$check('Vorlagen: Tabelle in Schema und Wanderung, Seite prüft die Stelle vor dem Löschen', str_contains($schemaV, 'CREATE TABLE IF NOT EXISTS einsatz_auftrag_vorlagen (')
+    && str_contains($lies('src/cli/migrate.php'), 'CREATE TABLE einsatz_auftrag_vorlagen (') && str_contains($lies('src/cli/migrate.php'), "\$merken('115_einsatzauftrag_vorlagen')")
+    && str_contains($lies('src/pages/einsatz_auftrag.php'), "einsatz_auftrag_vorlage_find(post_int('vorlage_id'), \$einsatzZiel, \$eventZiel)")
+    && str_contains($lies('public/assets/js/einsatzauftrag-maske.js'), "'vorlage_speichern'"));
 
 /* ================= PDF auf dem Server ablegen ================= */
 $hochladen = static function (string $name, string $inhalt): void {

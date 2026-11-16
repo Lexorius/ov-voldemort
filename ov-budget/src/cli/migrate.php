@@ -3067,6 +3067,28 @@ SQL);
         $say('Fahrzeugjournal: die Kennung des Verfassers bleibt, auch wenn sein Konto gelöscht wird.');
     }
     $merken('114_journal_verfasser_bleibt');
+
+    /* ---------- 115: Vorlagen für den Einsatzauftrag ---------- */
+    if (ovb_table_exists($pdo, 'einsaetze') && ovb_table_exists($pdo, 'events') && !ovb_table_exists($pdo, 'einsatz_auftrag_vorlagen')) {
+        $pdo->exec("CREATE TABLE einsatz_auftrag_vorlagen (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  einsatz_id  INT UNSIGNED NULL,
+  event_id    INT UNSIGNED NULL,
+  name        VARCHAR(150) NOT NULL,
+  daten       MEDIUMTEXT   NOT NULL,
+  created_by  INT UNSIGNED NULL,
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_eav_einsatz (einsatz_id),
+  KEY idx_eav_event (event_id),
+  CONSTRAINT fk_eav_einsatz FOREIGN KEY (einsatz_id) REFERENCES einsaetze(id) ON DELETE CASCADE,
+  CONSTRAINT fk_eav_event   FOREIGN KEY (event_id)   REFERENCES events(id)    ON DELETE CASCADE,
+  CONSTRAINT fk_eav_user    FOREIGN KEY (created_by) REFERENCES users(id)     ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $say('Tabelle einsatz_auftrag_vorlagen angelegt.');
+    }
+    $merken('115_einsatzauftrag_vorlagen');
 }
 
 /**

@@ -10,6 +10,9 @@ $punkt = static fn(string $kennung, string $bedeutung): string =>
     . '<textarea data-ea-punkt="' . e($kennung) . '" rows="2" placeholder="' . e($bedeutung) . '" aria-label="' . e($kennung . ' ' . $bedeutung) . '">'
     . e((string)($u[$kennung] ?? '')) . '</textarea></div></div>';
 $json = (string)json_encode($konfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+$vorlagen ??= [];
+$selbst ??= '';
+$dies = (string)$ziel['art'] === 'Veranstaltung' ? 'diese Veranstaltung' : 'diesen Einsatz';
 ?>
 <div class="pagehead">
   <div>
@@ -22,6 +25,35 @@ $json = (string)json_encode($konfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLA
 
 <noscript><div class="alert alert--error">Der Einsatzauftrag wird im Browser als PDF gesetzt – dafür braucht die Seite JavaScript.</div></noscript>
 <p class="alert alert--error" data-ea-meldung role="status" aria-live="polite" hidden></p>
+
+<?php if ($vorlagen): ?>
+<section class="card" id="vorlagen">
+  <h2>Vorlagen</h2>
+  <p class="small muted">„Übernehmen" beginnt den Auftrag mit den Texten der Vorlage – was unten schon eingetragen ist, wird dabei ersetzt.</p>
+  <div class="tablewrap">
+    <table class="data">
+      <tbody>
+      <?php foreach ($vorlagen as $v): ?>
+        <tr>
+          <td><strong><?= e((string)$v['name']) ?></strong>
+            <?= (int)$v['global'] === 1 ? '<span class="badge badge--outline">global</span>' : '<span class="badge badge--outline">nur ' . e($dies) . '</span>' ?>
+            <?php if (!empty($v['von'])): ?><div class="small muted">von <?= e((string)$v['von']) ?>, <?= e(de_date(substr((string)($v['updated_at'] ?? $v['created_at'] ?? ''), 0, 10))) ?></div><?php endif; ?></td>
+          <td class="nowrap" style="text-align:right">
+            <a class="btn btn--sec btn--sm" href="<?= e($selbst . '&muster=' . (int)$v['id']) ?>">Übernehmen</a>
+            <form method="post" action="<?= e($selbst) ?>" style="display:inline">
+              <?= csrf_field() ?>
+              <input type="hidden" name="action" value="vorlage_weg">
+              <input type="hidden" name="vorlage_id" value="<?= (int)$v['id'] ?>">
+              <button class="btn btn--sec btn--sm" type="submit" data-confirm="Vorlage „<?= e((string)$v['name']) ?>“ löschen?<?= (int)$v['global'] === 1 ? ' Sie steht dann bei keinem Einsatz mehr zur Auswahl.' : '' ?>" title="Vorlage löschen" aria-label="Vorlage <?= e((string)$v['name']) ?> löschen">🗑</button>
+            </form>
+          </td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
+</section>
+<?php endif; ?>
 
 <div class="auftrag" data-einsatzauftrag="<?= e($json) ?>">
   <form class="form" data-ea-form>
@@ -76,6 +108,12 @@ $json = (string)json_encode($konfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLA
         <button class="btn btn--sec" type="button" data-ea-laden title="Nur herunterladen, nichts ablegen">Nur herunterladen</button>
         <a class="btn btn--sec" href="<?= e((string)$ziel['zurueck']) ?>">Abbrechen</a>
       </div>
+      <div class="btnrow">
+        <button class="btn btn--sec" type="button" data-ea-vorlage="ziel" title="Merkt die Texte unter einem Namen – zur Auswahl bei jedem weiteren Auftrag für <?= e($dies) ?>">Als Vorlage für <?= e($dies) ?> speichern</button>
+        <button class="btn btn--sec" type="button" data-ea-vorlage="global" title="Merkt die Texte unter einem Namen – zur Auswahl bei jedem Einsatz und jeder Veranstaltung">Als globale Vorlage speichern</button>
+      </div>
+      <p class="small muted">Eine Vorlage merkt sich die Texte, kein PDF – ohne laufende Nummer, Ort und Datum und Absendevermerk; eine globale auch ohne Einsatz und Unterschrift.
+        Vorlagen stehen oben auf dieser Seite zur Auswahl.</p>
       <p class="small muted" style="margin-bottom:0">Ein gespeicherter Einsatzauftrag bleibt, wie er ist. Für den nächsten dient er <?= e((string)$ziel['wo']) ?> als Vorlage.
         Den Vordruck setzt die Bibliothek <em>einsatzauftrag</em> von Johannes Rudolph (EUPL-1.2) mit <em>jsPDF</em> (MIT) –
         siehe <a href="<?= e(url('lizenzen')) ?>">Bibliotheken und Lizenzen</a>.</p>

@@ -993,6 +993,77 @@ function einsatz_auftrag_titel(array $daten): string
 }
 
 /**
+ * Was von einem Einsatzauftrag in eine Vorlage gehört: die Texte – nicht, was zu einem
+ * einzelnen Auftrag gehört (laufende Nummer, Ort und Datum, Absendevermerk). Eine globale
+ * Vorlage gilt für jeden Einsatz und jede Person, deshalb ohne Einsatz und Unterschrift.
+ * Reine Funktion.
+ */
+function einsatz_auftrag_vorlage_felder(mixed $daten, bool $global): array
+{
+    $felder = einsatz_auftrag_daten($daten);
+    unset($felder['laufendeNummer'], $felder['ortDatum'], $felder['abgesandtAm'], $felder['abgesandtUm'], $felder['abgesandtVon']);
+    if ($global) {
+        unset($felder['einsatz'], $felder['unterschrift']);
+    }
+    return $felder;
+}
+
+/** Vorlagen zur Auswahl: die dieses Einsatzes bzw. dieser Veranstaltung zuerst, dann die globalen (global = 1) */
+function einsatz_auftrag_vorlagen(?int $einsatzId, ?int $eventId): array
+{
+    return db_all('SELECT v.*, (v.einsatz_id IS NULL AND v.event_id IS NULL) AS global, u.display_name AS von
+                   FROM einsatz_auftrag_vorlagen v LEFT JOIN users u ON u.id = v.created_by
+                   WHERE (v.einsatz_id IS NULL AND v.event_id IS NULL) OR v.einsatz_id <=> ? AND v.event_id <=> ?
+                   ORDER BY global, v.name, v.id', [$einsatzId ?: null, $eventId ?: null]);
+}
+
+/** Eine Vorlage – aber nur, wenn sie global ist oder zu diesem Einsatz bzw. dieser Veranstaltung gehört */
+function einsatz_auftrag_vorlage_find(?int $id, ?int $einsatzId, ?int $eventId): ?array
+{
+    foreach ($id ? einsatz_auftrag_vorlagen($einsatzId, $eventId) : [] as $v) {
+        if ((int)$v['id'] === $id) {
+            return $v;
+        }
+    }
+    return null;
+}
+
+/**
+ * Die Felder der Maske als Vorlage speichern – global oder für diesen Einsatz bzw. diese
+ * Veranstaltung. Ein Name, den es dort schon gibt, wird überschrieben.
+ * Gibt die Vorlage zurück (id, name, global) oder einen Fehlertext.
+ */
+function einsatz_auftrag_vorlage_speichern(string $name, mixed $daten, bool $global, ?int $einsatzId, ?int $eventId, array $user): array|string
+{
+    $name = mb_substr(trim((string)preg_replace('/\s+/u', ' ', $name)), 0, 150);
+    if ($name === '') {
+        return 'Bitte einen Namen für die Vorlage angeben.';
+    }
+    $felder = einsatz_auftrag_vorlage_felder($daten, $global);
+    if (!$felder) {
+        return 'Die Maske ist leer – es gibt nichts zu speichern.';
+    }
+    $einsatzId = $global ? null : ($einsatzId ?: null);
+    $eventId = $global ? null : ($eventId ?: null);
+    $json = (string)json_encode($felder, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $vorhanden = db_val('SELECT id FROM einsatz_auftrag_vorlagen WHERE name = ? AND einsatz_id <=> ? AND event_id <=> ?', [$name, $einsatzId, $eventId]);
+    if ($vorhanden) {
+        $id = (int)$vorhanden;
+        db_update('einsatz_auftrag_vorlagen', ['daten' => $json, 'created_by' => (int)$user['id']], 'id = ?', [$id]);
+    } else {
+        $id = db_insert('einsatz_auftrag_vorlagen', ['einsatz_id' => $einsatzId, 'event_id' => $eventId, 'name' => $name, 'daten' => $json, 'created_by' => (int)$user['id']]);
+    }
+    audit('einsatzauftrag.vorlage', 'einsatz_auftrag_vorlage', $id, ($global ? 'global: ' : '') . $name);
+    return ['id' => $id, 'name' => $name, 'global' => $global, 'ersetzt' => (bool)$vorhanden];
+}
+
+function einsatz_auftrag_vorlage_delete(array $vorlage): void
+{
+    db_exec('DELETE FROM einsatz_auftrag_vorlagen WHERE id = ?', [(int)$vorlage['id']]);
+    audit('einsatzauftrag.vorlage_geloescht', 'einsatz_auftrag_vorlage', (int)$vorlage['id'], (string)$vorlage['name']);
+}
+
+/**
  * Womit ein neuer Einsatzauftrag beginnt: Absender (der Ortsverband), Einsatz, die nächste
  * laufende Nummer, Ort und Datum, wer unterschreibt. $vorlage: die Felder eines früheren
  * Auftrags, die übernommen werden – Nummer, Empfänger und Absendevermerk beginnen neu.
