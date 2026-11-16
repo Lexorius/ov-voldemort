@@ -334,6 +334,9 @@ $maskeFremd = render_partial('einsatz_edit', ['einsatz' => $zeile, 'tage' => $ta
 $check('Maske: fremde Kräfte je Zeile mit Einheit, Zeit, Stärke und gewähltem Zeichen, dazu eine leere', substr_count($maskeFremd, 'name="fremd_einheit[]"') === 2
     && str_contains($maskeFremd, 'value="FF &lt;Musterstadt&gt;"') && str_contains($maskeFremd, 'name="fremd_von[]" value="08:00"') && str_contains($maskeFremd, 'name="fremd_staerke[]" value="1/3/12"')
     && substr_count($maskeFremd, 'name="fremd_symbol[]"') === 2 && substr_count($maskeFremd, 'value="6"') >= 2 && (bool)preg_match('/<option value="6"[^>]* selected>Feuerwehr/', $maskeFremd));
+$check('Maske: die Liste der Zeichen steht einmal auf der Seite, nicht in jeder Zeile', substr_count($maskeFremd, '<template id="fremd-zeichen">') === 1
+    && substr_count($maskeFremd, '>Rettungsdienst<') === 1 && substr_count($maskeFremd, 'data-optionen="fremd-zeichen"') === 2 && substr_count($maskeFremd, '<optgroup label="Einheiten">') === 1
+    && str_contains((string)file_get_contents($app . '/public/assets/js/app.js'), "select[data-optionen]"));
 $falsch = render_partial('einsatz_edit', ['einsatz' => ['id' => null, 'titel' => 'x', 'status' => 'laufend'], 'tage' => [['datum' => '2026-11-14', 'von' => '25:99', 'bis' => '', 'staerke_text' => 'viele', 'taetigkeit' => '']],
     'errors' => ['Zeile 1: …'], 'fahrzeuge' => [], 'buchungen' => 0]);
 $check('Maske nach Fehler: die Eingaben stehen noch da', str_contains($falsch, 'value="25:99"') && str_contains($falsch, 'value="viele"') && str_contains($falsch, 'alert--error')

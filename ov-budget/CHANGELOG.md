@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.93.1
+
+- **Einsätze – das Formular wird nicht mehr riesig:** Bei den fremden Kräften
+  brachte jede Zeile die ganze Liste der taktischen Zeichen mit. Mit einer
+  großen Symbolbibliothek (im Test knapp 900 Zeichen) waren das rund 140 kB
+  je Zeile. Die Liste steht jetzt einmal auf der Seite und kommt erst beim
+  Öffnen in die Auswahl; je Zeile steht nur das gewählte Zeichen.
+
 ## 2.1.93.0
 
 - **Einsatzauftrag – Vorlagen mit Namen:** Unter der Maske stehen zwei neue

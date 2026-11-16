@@ -584,6 +584,22 @@
     });
   }
 
+  /* Auswahl mit sehr vielen Einträgen (taktische Zeichen): Die Liste steht einmal auf der Seite, in
+     <template id="…">, und kommt erst in die Auswahl, wenn jemand sie öffnet (select[data-optionen="…"]).
+     Sonst trüge jede Zeile eines Formulars Hunderte Einträge mit sich. */
+  function optionenFuellen(ev) {
+    var s = ev.target && ev.target.closest ? ev.target.closest('select[data-optionen]') : null;
+    if (!s || s.getAttribute('data-gefuellt')) { return; }
+    var vorlage = document.getElementById(s.getAttribute('data-optionen'));
+    if (!vorlage) { return; }
+    var wert = s.value;
+    s.innerHTML = vorlage.innerHTML;
+    s.value = wert;
+    s.setAttribute('data-gefuellt', '1');
+  }
+  document.addEventListener('focusin', optionenFuellen);
+  document.addEventListener('pointerdown', optionenFuellen);
+
   /* Zeilen eines Einsatzes (Tag, Fachgruppe, Fahrzeuge): „+ Leere Zeile" hängt eine leere an,
      „+ Folgetag" die letzte ausgefüllte mit dem nächsten Datum, „+ Weitere Fachgruppe" dieselbe
      auf denselben Tag, der Mülleimer nimmt eine heraus. Jede Zeile hat eine Kennung
@@ -650,7 +666,14 @@
         for (var i = 0; i < nach.length && i < von.length; i++) {
           if (nach[i].type === 'checkbox') { nach[i].checked = von[i].checked; }
           else if (/^tag_(km|bh)\[/.test(nach[i].name)) { nach[i].value = ''; }
-          else { nach[i].value = von[i].value; }
+          else {
+            // Eine Auswahl, die ihre Liste erst beim Öffnen lädt (data-optionen), kennt den Wert vielleicht noch nicht
+            var gewaehlt = von[i].tagName === 'SELECT' ? von[i].options[von[i].selectedIndex] : null;
+            if (gewaehlt && gewaehlt.value !== '' && !Array.prototype.some.call(nach[i].options, function (o) { return o.value === gewaehlt.value; })) {
+              nach[i].appendChild(gewaehlt.cloneNode(true));
+            }
+            nach[i].value = von[i].value;
+          }
         }
         datumFeld(ziel).value = tage > 0 ? folgetag(datumFeld(vorlage).value) : datumFeld(vorlage).value;
         var fz = ziel.querySelector('details');
