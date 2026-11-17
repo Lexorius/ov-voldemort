@@ -30,6 +30,7 @@ require __DIR__ . '/lib/lists.php';
 require __DIR__ . '/lib/auth.php';
 require __DIR__ . '/lib/totp.php';
 require __DIR__ . '/lib/view.php';
+require __DIR__ . '/lib/manifest.php';
 require __DIR__ . '/lib/wishes.php';
 require __DIR__ . '/lib/order_rights.php';
 require __DIR__ . '/lib/todos.php';

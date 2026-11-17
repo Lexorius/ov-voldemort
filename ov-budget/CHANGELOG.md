@@ -1,5 +1,18 @@
 # Änderungsverlauf
 
+## 2.1.94.0
+
+- **Als App auf Handy und Rechner:** Das Multitool bringt ein eigenes
+  Symbol und ein Web-App-Manifest mit. Am Handy *Zum Home-Bildschirm*
+  (Android: Menü von Chrome; iPhone: Teilen-Knopf in Safari), am Rechner
+  in Chrome oder Edge *App installieren* in der Adressleiste – danach
+  startet die Anwendung in einem eigenen Fenster ohne Browserleisten, mit
+  eigenem Symbol in Taskleiste und Startbildschirm. Name, Kurzname und
+  Akzentfarbe kommen aus den Einstellungen. Das Symbol erscheint auch im
+  Browser-Reiter und als Symbol des Add-ons. Die Einzelheiten – vor allem,
+  warum dafür der direkte Port mit HTTPS besser ist als der Ingress – stehen
+  in der Anleitung unter *Als App auf Handy und Rechner*.
+
 ## 2.1.93.1
 
 - **Einsätze – das Formular wird nicht mehr riesig:** Bei den fremden Kräften

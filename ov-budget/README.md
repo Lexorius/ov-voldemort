@@ -23,6 +23,12 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 
 ## Funktionen
 
+### Als App
+- **Auf Handy und Rechner installierbar** (Web-App-Manifest mit eigenem
+  Symbol): *Zum Home-Bildschirm* am Handy, *App installieren* in Chrome
+  und Edge – eigenes Fenster, eigenes Symbol, Name und Farbe aus den
+  Einstellungen. Am besten über den direkten Port mit HTTPS, siehe DOCS.md.
+
 ### Wünsch dir was
 - Bedarfe mit Bezeichnung, Anzahl, Betrag, Dringlichkeit, Fachgruppe,
   Kategorie, Status, „nice to have", „ist STAN" (Soll-Ausstattung), Frist

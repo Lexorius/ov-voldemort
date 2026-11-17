@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- OV-Multitool: App-Symbol. Blau ist das THW-Blau (#003399), der Inhalt
+       bleibt in der mittleren Sicherheitszone, damit Android ihn frei
+       zuschneiden darf (Kreis, Tropfen, abgerundetes Quadrat). -->
+  <rect width="512" height="512" rx="104" fill="#003399"/>
+  <rect x="112" y="112" width="288" height="288" rx="40" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="12"/>
+  <text x="256" y="258" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"
+        font-weight="800" font-size="124" letter-spacing="6" fill="#fff">THW</text>
+  <rect x="176" y="292" width="160" height="10" rx="5" fill="#fff"/>
+  <text x="256" y="356" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"
+        font-weight="600" font-size="46" letter-spacing="3" fill="#fff" fill-opacity=".92">Multitool</text>
+</svg>

@@ -235,6 +235,9 @@ unter „Sicherheitslücke PHP2Shell".
   Speicherplatz von Datenbank und Dateiablage, Änderungsprotokoll. Jede
   Veröffentlichung hat eine vierstellige Fassungsnummer; unten auf jeder Seite
   steht sie, ein Klick zeigt, was neu ist.
+* **Als App** – Web-App-Manifest mit eigenem Symbol: *Zum Home-Bildschirm*
+  am Handy, *App installieren* in Chrome und Edge; eigenes Fenster, Name und
+  Farbe aus den Einstellungen (am besten über den direkten Port mit HTTPS).
 
 Die ausführliche Anleitung steht in [ov-budget/DOCS.md](ov-budget/DOCS.md)
 (im Add-on als Reiter *Dokumentation*), der Änderungsverlauf in

@@ -64,6 +64,51 @@ Normalerweise läuft alles über die Seitenleiste, es muss kein Port geöffnet
 werden. Für den direkten Aufruf im Heimnetz unter *Konfiguration → Netzwerk*
 einen Port für `8099/tcp` vergeben, dann `http://homeassistant.local:8099`.
 
+## Als App auf Handy und Rechner
+
+Das Multitool lässt sich wie eine App installieren: eigenes Symbol auf dem
+Startbildschirm oder in der Taskleiste, eigenes Fenster ohne Browserleisten.
+Technisch ist das eine *Progressive Web App*: Die Seite bringt ein Manifest
+(`manifest.php`) und Symbole mit, der Browser erledigt den Rest – es gibt
+nichts aus einem App-Store zu laden.
+
+So geht es:
+
+* **Android (Chrome, Edge, Samsung Internet):** Seite öffnen, Menü (⋮) →
+  *App installieren* beziehungsweise *Zum Startbildschirm hinzufügen*.
+* **iPhone und iPad (Safari):** Teilen-Knopf → *Zum Home-Bildschirm*.
+* **Windows, Mac, Linux (Chrome, Edge):** In der Adressleiste erscheint ein
+  kleines Symbol *App installieren*; alternativ Menü → *Speichern und
+  teilen* → *App installieren*. Firefox am Rechner installiert keine
+  Web-Apps.
+
+Name und Farbe kommen aus den Einstellungen: *Name der Anwendung* steht
+in der Titelleiste, der *Kurzname* unter dem Symbol auf dem Startbildschirm
+(dort passen etwa zwölf Zeichen), die *Akzentfarbe* färbt die Titelleiste
+der App. Die Startseite der App ist das Dashboard.
+
+**Welche Adresse nehmen?** Die App merkt sich die Adresse, von der aus sie
+installiert wurde.
+
+* Über den **direkten Port** (siehe *Zugriff ohne Ingress*) läuft die App
+  unabhängig von Home Assistant – das ist die verlässliche Wahl. Damit der
+  Browser die Installation anbietet, muss die Adresse per **HTTPS**
+  erreichbar sein (ein Reverse-Proxy wie das Add-on *NGINX Proxy Manager*
+  oder *Caddy* mit einem eigenen Hostnamen). Über schlichtes `http://` im
+  Heimnetz legt das Handy nur eine Verknüpfung mit Symbol an, die im
+  Browser öffnet – auch brauchbar, nur ohne eigenes Fenster.
+* Über den **Ingress** von Home Assistant geht die Installation ebenfalls,
+  wenn Home Assistant selbst per HTTPS läuft. Die App hängt dann aber an der
+  Ingress-Sitzung: Die läuft nach einigen Minuten ohne die geöffnete
+  Home-Assistant-Oberfläche ab, und die App zeigt *401 Unauthorized*. Dann
+  hilft nur, Home Assistant einmal zu öffnen. Für den Dauerbetrieb – etwa den
+  Monitor im Führungsraum mit der Lagekarte – ist der direkte Port die
+  bessere Wahl.
+
+Die Anmeldung in der App ist dieselbe wie im Browser; die Sitzung hält so
+lange wie dort. Benachrichtigungen im Browser (Web Push) laufen in der App
+genauso.
+
 ## Daten und Sicherung
 
 Alles Dauerhafte liegt unter `/data`:

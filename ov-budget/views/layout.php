@@ -15,6 +15,13 @@ $pageTitle = ($title ?? '') !== '' ? $title . ' · ' . $appName : $appName;
 <meta name="theme-color" content="<?= e($accent) ?>">
 <meta name="robots" content="noindex, nofollow">
 <title><?= e($pageTitle) ?></title>
+<?php /* Als App: Manifest (mit Sitzung, wegen des Ingress), Symbole für Reiter, Startbildschirm und iPhone */ ?>
+<link rel="manifest" href="<?= e(base_path()) ?>/manifest.php" crossorigin="use-credentials">
+<link rel="icon" href="<?= e(asset('icon/app.svg')) ?>" type="image/svg+xml">
+<link rel="icon" href="<?= e(asset('icon/app-192.png')) ?>" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="<?= e(asset('icon/apple-touch-icon.png')) ?>">
+<meta name="apple-mobile-web-app-title" content="<?= e((string)setting('ov_kurz', $appName)) ?>">
+<meta name="mobile-web-app-capable" content="yes">
 <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
 <style>:root{--accent: <?= e($accent) ?>;}</style>
 </head>

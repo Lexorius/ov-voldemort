@@ -972,6 +972,14 @@
     });
   });
 
+  /* Als App: Der Service Worker (sw.js, neben index.php) gehört zur
+     Installierbarkeit und nimmt Web-Push an. Ohne HTTPS (außer localhost)
+     gibt es keinen – dann still bleiben, die Seite läuft auch so. */
+  if ('serviceWorker' in navigator && window.isSecureContext) {
+    var swPfad = new URL('sw.js', window.location.href.split('?')[0]).pathname;
+    navigator.serviceWorker.register(swPfad).catch(function () { /* z. B. kein HTTPS */ });
+  }
+
   // Statusauswahl der Anwesenheit sofort sichtbar machen
   document.querySelectorAll('.chips').forEach(function (gruppe) {
     gruppe.addEventListener('change', function (ev) {
