@@ -1,5 +1,23 @@
 # Änderungsverlauf
 
+## 2.1.95.0
+
+- **Einsätze – Ergebnis je Einsatz:** Neben Ausgaben und Einnahmen steht
+  jetzt das **Ergebnis**: Gewinn grün, Verlust rot, mit Vorzeichen; daneben,
+  was es wird, wenn geplante Ausgaben und erwartete Einnahmen eingehen. Die
+  Summenzeile der Buchungen nennt es ebenso, und in der Einsatzliste trägt
+  jeder Einsatz mit Buchungen sein Ergebnis als Abzeichen.
+- **Einsätze – Kuchendiagramme:** Unter den Buchungen zeigen Kuchen die
+  Anteile: Ausgaben und Einnahmen zueinander (mit dem, was noch aussteht,
+  in hellerer Farbe), dazu Ausgaben und Einnahmen nach Kategorie, sobald es
+  mehr als eine gibt. Die Kategorien kommen in ihrer Budgetfarbe.
+- **Einsätze – fremde Kräfte werden nicht mehr grundlos angemeckert:** Eine
+  Zeile, in der nur ein Datum oder nur ein Zeichen stand, galt als
+  ausgefüllt und verlangte eine Einheit – nach dem Fehler stand sie wieder
+  da. Jetzt zählt eine Zeile erst mit Einheit, Zeit oder Stärke. Fehlt zu
+  einer Einheit das Datum, gilt der erste Einsatztag. Nach einem Fehler
+  bleibt ein gewähltes Zeichen erhalten.
+
 ## 2.1.94.0
 
 - **Als App auf Handy und Rechner:** Das Multitool bringt ein eigenes

@@ -1604,7 +1604,9 @@ Betriebsstunden beginnen je Zeile neu. Leere Zeilen werden beim Speichern überg
 Rettungsdienst, ein anderer Ortsverband – stehen in einem eigenen Block
 darunter: je Tag und Einheit eine Zeile mit **Datum**, **von**, **bis**, der
 **Einheit** als Freitext und ihrer **Stärke**. Sie zählen nicht in die
-Helferstunden des Ortsverbands. Wer der Zeile ein **Zeichen** aus der
+Helferstunden des Ortsverbands. Eine Zeile zählt erst, wenn Einheit, Zeit
+oder Stärke drinstehen – ein Datum oder ein Zeichen allein wird übergangen;
+fehlt zu einer Einheit das Datum, gilt der erste Einsatztag. Wer der Zeile ein **Zeichen** aus der
 Symbolbibliothek der Karten gibt, findet die Einheit auf jeder Karte dieses
 Einsatzes rechts neben der Karte unter *Fremde Kräfte aus dem Einsatz*: **ein
 Klick setzt sie** mit Namen und Stärke in die Kartenmitte, von dort lässt sie
@@ -1684,10 +1686,15 @@ stehen außerdem der Anforderer als Auftraggeber, die Kategorie
 Speichern geht es zurück zum Einsatz.
 
 Der Einsatz listet seine Buchungen mit Stand und zeigt **Ausgaben, Einnahmen
-und Saldo**. Gezählt wird wie im Budget: bezahlt und gebucht. Darunter
-steht, was noch aussteht – geplante Ausgaben und Einnahmen, die erwartet,
-abgerechnet, gestellt oder zugesagt sind – und der Saldo, wenn alles
-eingeht. Das gilt auch über den Jahreswechsel: Die Erstattung, die erst im
+und das Ergebnis**: Einnahmen minus Ausgaben, als **Gewinn** grün, als
+**Verlust** rot, mit Vorzeichen. Gezählt wird wie im Budget: bezahlt und
+gebucht. Daneben steht, was noch aussteht – geplante Ausgaben und Einnahmen,
+die erwartet, abgerechnet, gestellt oder zugesagt sind – und das Ergebnis,
+wenn alles eingeht. Unter der Buchungsliste zeigen **Kuchendiagramme** die
+Anteile: Ausgaben und Einnahmen zueinander (Ausstehendes in hellerer Farbe)
+sowie Ausgaben und Einnahmen **nach Kategorie**, sobald es mehr als eine
+gibt – in den Farben der Budgetkategorien. In der Einsatzliste trägt jeder
+Einsatz mit Buchungen sein Ergebnis als Abzeichen. Das gilt auch über den Jahreswechsel: Die Erstattung, die erst im
 Folgejahr kommt, hängt am selben Einsatz. Wer die Buchungen im Budget nicht
 sehen darf, sieht auch am Einsatz kein Geld.
 

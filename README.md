@@ -103,7 +103,8 @@ unter „Sicherheitslücke PHP2Shell".
   auch je Fachgruppe und Fahrzeug. **Einsatzauftrag (Fb Fü 3)** in einer
   Maske mit Vorschau, als PDF am Einsatz und in der Dateiablage gespeichert.
   **Ausgaben und Einnahmen** hängen im Budget am Einsatz, die Seite zeigt
-  Saldo und was noch aussteht.
+  das Ergebnis (Gewinn oder Verlust), was noch aussteht, und Kuchendiagramme
+  für Ausgaben zu Einnahmen und je Kategorie.
 * **Veranstaltungen** – Termin, Ort, Art (Ausbildung, Übung, Helferversammlung,
   Feier …), Budgettopf und geplante gegen tatsächliche Kosten, mehrere Plätze,
   Dateien, Gästeliste aus den Kontakten oder nur eine Teilnehmerzahl,

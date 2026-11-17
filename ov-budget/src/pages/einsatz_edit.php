@@ -67,8 +67,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'bis' => trim((string)($spalte('fremd_bis')[$i] ?? '')),
             'staerke_text' => trim((string)($spalte('fremd_staerke')[$i] ?? '')),
         ];
-        if (implode('', $f) !== '') {
-            $fremde[] = $f + ['symbol_id' => (int)($spalte('fremd_symbol')[$i] ?? 0)];
+        $f['symbol_id'] = (int)($spalte('fremd_symbol')[$i] ?? 0);
+        if (implode('', $f) !== '' && implode('', $f) !== '0') {
+            $fremde[] = $f;
         }
     }
 }

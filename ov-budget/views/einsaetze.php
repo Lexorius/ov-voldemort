@@ -26,7 +26,9 @@ $karte = static function (array $e) use ($mitGeld): string {
         $html .= '<span class="badge badge--outline">' . e((string)$e['fahrzeuge_namen']) . '</span>';
     }
     if ($mitGeld && ((float)$e['ausgaben'] > 0 || (float)$e['einnahmen'] > 0)) {
-        $html .= '<span class="badge badge--outline">Ausgaben ' . e(money((float)$e['ausgaben'])) . ' · Einnahmen ' . e(money((float)$e['einnahmen'])) . '</span>';
+        $erg = einsatz_ergebnis(['saldo' => (float)$e['einnahmen'] - (float)$e['ausgaben']]);
+        $html .= '<span class="badge badge--outline">Ausgaben ' . e(money((float)$e['ausgaben'])) . ' · Einnahmen ' . e(money((float)$e['einnahmen'])) . '</span>'
+            . '<span class="badge badge--outline' . ($erg['klasse'] !== '' ? ' badge--' . $erg['klasse'] : '') . '" title="Einnahmen minus Ausgaben">' . e($erg['wort']) . ' ' . e($erg['text']) . '</span>';
     }
     return $html . '</div></a>';
 };

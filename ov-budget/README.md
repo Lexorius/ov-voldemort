@@ -286,8 +286,10 @@ Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
   Einsatz gespeichert (Dateiablage › Einsätze); Dokumente und Fotos dazu
 - Einsatznummer mit Vorschlag, Art, Stand (läuft, beendet, abgerechnet,
   abgeschlossen), Anforderer, Ort; zugeordnete Karten
-- **Ausgaben und Einnahmen je Einsatz** aus dem Budget, mit Saldo und dem,
-  was noch aussteht; im Kalender an jedem Einsatztag
+- **Ausgaben und Einnahmen je Einsatz** aus dem Budget, mit dem, was noch
+  aussteht; **Ergebnis** (Gewinn grün, Verlust rot) auch in der Liste,
+  **Kuchendiagramme** für Ausgaben zu Einnahmen und je Kategorie; im
+  Kalender an jedem Einsatztag
 
 ### Veranstaltungen
 - Termin, Ort, Status und Beschreibung; Budgettopf und geplante Kosten

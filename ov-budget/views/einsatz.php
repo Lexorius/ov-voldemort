@@ -16,6 +16,19 @@ $leistung = implode(' · ', array_filter([$kmGesamt > 0 ? einsatz_km_text($kmGes
 $mitFahrzeugen = (bool)$jeFahrzeug;
 $mitFachgruppen = count(array_filter(array_keys($jeFachgruppe))) > 0;
 $auftraege = array_values(array_filter($dateien, static fn($d) => (string)$d['herkunft'] === 'auftrag'));
+$ergebnis = $mitGeld ? einsatz_ergebnis($geld) : null;
+// Kuchen: das Verhältnis von Ausgaben und Einnahmen, dazu die Ausgaben und Einnahmen je Kategorie, wo es mehr als eine gibt
+$kuchen = [];
+if ($mitGeld && $buchungen) {
+    $kuchen[] = ['titel' => 'Ausgaben und Einnahmen', 'teile' => einsatz_geld_verhaeltnis($geld)];
+    foreach (['ausgabe' => 'Ausgaben nach Kategorie', 'einnahme' => 'Einnahmen nach Kategorie'] as $art => $titel) {
+        $teile = einsatz_geld_je_kategorie($buchungen, $art);
+        if (count($teile) > 1) {
+            $kuchen[] = ['titel' => $titel, 'teile' => $teile];
+        }
+    }
+    $kuchen = array_values(array_filter($kuchen, static fn($k) => $k['teile'] !== []));
+}
 ?>
 <div class="pagehead">
   <div>
@@ -78,6 +91,11 @@ $auftraege = array_values(array_filter($dateien, static fn($d) => (string)$d['he
       <div class="stat__label">Einnahmen</div>
       <div class="stat__value"><?= e(money((float)$geld['einnahmen'])) ?></div>
       <div class="stat__hint"><?= (float)$geld['einnahmen_offen'] > 0 ? 'noch unterwegs ' . e(money((float)$geld['einnahmen_offen'])) : 'eingegangen' ?></div>
+    </div>
+    <div class="stat<?= $ergebnis['klasse'] !== '' ? ' stat--' . $ergebnis['klasse'] : '' ?>" id="ergebnis">
+      <div class="stat__label">Ergebnis</div>
+      <div class="stat__value"><?= e($ergebnis['text']) ?></div>
+      <div class="stat__hint"><?= e($ergebnis['wort']) ?><?= $ergebnis['erwartet'] !== '' ? ' · ' . e($ergebnis['erwartet']) : ($buchungen ? ' – Einnahmen minus Ausgaben' : ' – noch nichts gebucht') ?></div>
     </div>
   <?php endif; ?>
 </div>
@@ -335,8 +353,8 @@ $auftraege = array_values(array_filter($dateien, static fn($d) => (string)$d['he
         </tbody>
         <tfoot>
           <tr>
-            <th colspan="3">Ausgaben <?= e(money((float)$geld['ausgaben'])) ?>, Einnahmen <?= e(money((float)$geld['einnahmen'])) ?></th>
-            <th class="num"><?= e(money((float)$geld['saldo'])) ?></th>
+            <th colspan="3">Ausgaben <?= e(money((float)$geld['ausgaben'])) ?>, Einnahmen <?= e(money((float)$geld['einnahmen'])) ?> – <?= e($ergebnis['wort']) ?></th>
+            <th class="num<?= $ergebnis['klasse'] !== '' ? ' is-' . $ergebnis['klasse'] : '' ?>"><?= e($ergebnis['text']) ?></th>
           </tr>
           <?php if ((float)$geld['ausgaben_geplant'] > 0 || (float)$geld['einnahmen_offen'] > 0): ?>
           <tr>
@@ -348,8 +366,18 @@ $auftraege = array_values(array_filter($dateien, static fn($d) => (string)$d['he
         </tfoot>
       </table>
     </div>
+    <?php if ($kuchen): ?>
+      <div class="kuchen-reihe">
+        <?php foreach ($kuchen as $k): ?>
+          <div class="kuchen">
+            <h3 class="kuchen__titel"><?= e($k['titel']) ?></h3>
+            <div class="kuchen__inhalt"><?= kuchen_svg($k['teile']) ?><?= kuchen_legende($k['teile']) ?></div>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
     <p class="small muted" style="margin-bottom:0">In der Summe zählt wie im Budget, was bezahlt oder gebucht ist –
-      auch über den Jahreswechsel, wenn die Erstattung erst im Folgejahr kommt.</p>
+      auch über den Jahreswechsel, wenn die Erstattung erst im Folgejahr kommt. Die Kuchen zeigen die Anteile; nach Kategorie nur, wo es mehr als eine gibt.</p>
   <?php endif; ?>
 </div>
 <?php endif; ?>

@@ -167,10 +167,15 @@ function einsatz_zeile_pruefen(string $nr, string $d, string $v, string $b, stri
 /**
  * Die fremden Kräfte aus dem Formular: fremd_datum[], fremd_von[], fremd_bis[],
  * fremd_einheit[] (Freitext), fremd_staerke[] und fremd_symbol[] (taktisches Zeichen
- * für die Karte). Ganz leere Zeilen fallen weg. Gibt [zeilen, fehler] zurück.
- * Reine Funktion über das übergebene Feld.
+ * für die Karte). Gibt [zeilen, fehler] zurück. Reine Funktion über das übergebene Feld.
+ *
+ * Leer ist eine Zeile, solange weder Einheit noch Zeit noch Stärke drinstehen – ein
+ * Datum oder ein Zeichen allein sagt nichts und wird übergangen, statt eine Einheit
+ * zu verlangen (das Datum setzt „+ Folgetag", das Zeichen eine schnelle Auswahl).
+ * Fehlt zu einer Einheit das Datum, gilt der erste Einsatztag ($standardDatum),
+ * wenn der Aufrufer einen kennt.
  */
-function einsatz_fremde_aus_post(array $post): array
+function einsatz_fremde_aus_post(array $post, ?string $standardDatum = null): array
 {
     $zeilen = [];
     $fehler = [];
@@ -187,13 +192,16 @@ function einsatz_fremde_aus_post(array $post): array
         $v = trim((string)($von[$i] ?? ''));
         $b = trim((string)($bis[$i] ?? ''));
         $s = trim((string)($staerke[$i] ?? ''));
-        if ($name === '' && $d === '' && $v === '' && $b === '' && $s === '') {
+        if ($name === '' && $v === '' && $b === '' && $s === '') {
             continue;
         }
         $nr = 'Fremde Kräfte, Zeile ' . (count($zeilen) + count($fehler) + 1);
         if ($name === '') {
-            $fehler[] = $nr . ': Bitte die Einheit nennen.';
+            $fehler[] = $nr . ': Bitte die Einheit nennen – oder die Zeile leeren.';
             continue;
+        }
+        if ($d === '' && $standardDatum !== null && $standardDatum !== '') {
+            $d = $standardDatum;
         }
         $geprueft = einsatz_zeile_pruefen($nr, $d, $v, $b, $s);
         if (is_string($geprueft)) {
@@ -488,6 +496,75 @@ function einsatz_geld_aus(array $buchungen): array
 }
 
 /**
+ * Das Ergebnis eines Einsatzes in Worten: Gewinn, Verlust oder ausgeglichen –
+ * aus dem Saldo (Ist) und dem erwarteten Saldo, wenn alles eingeht.
+ * ['wort', 'klasse' (ok|bad|''), 'text' (mit Vorzeichen), 'erwartet' (Text oder '')].
+ * Reine Funktion über einsatz_geld_aus().
+ */
+function einsatz_ergebnis(array $geld): array
+{
+    $saldo = round((float)($geld['saldo'] ?? 0), 2);
+    $erwartet = round((float)($geld['saldo_erwartet'] ?? $saldo), 2);
+    $vorzeichen = static fn(float $v): string => ($v > 0 ? '+' : ($v < 0 ? '−' : '')) . money(abs($v));
+    $wort = static fn(float $v): string => $v > 0 ? 'Gewinn' : ($v < 0 ? 'Verlust' : 'ausgeglichen');
+    return [
+        'wort'     => $wort($saldo),
+        'klasse'   => $saldo > 0 ? 'ok' : ($saldo < 0 ? 'bad' : ''),
+        'text'     => $vorzeichen($saldo),
+        'erwartet' => abs($erwartet - $saldo) >= 0.01 ? $vorzeichen($erwartet) . ' (' . $wort($erwartet) . '), wenn alles eingeht' : '',
+    ];
+}
+
+/** Farben für Kuchenstücke ohne eigene Farbe – nacheinander vergeben */
+const EINSATZ_KUCHEN_FARBEN = ['#2563eb', '#d97706', '#7c3aed', '#0891b2', '#db2777', '#65a30d', '#9333ea', '#ea580c', '#0d9488', '#4b5563'];
+
+/**
+ * Stücke für den Kuchen „Ausgaben und Einnahmen": Ist und Ausstehendes je Art,
+ * nur was größer als null ist. [['label', 'wert', 'farbe'], …]. Reine Funktion.
+ */
+function einsatz_geld_verhaeltnis(array $geld): array
+{
+    $teile = [
+        ['label' => 'Ausgaben',           'wert' => (float)($geld['ausgaben'] ?? 0),         'farbe' => '#b91c1c'],
+        ['label' => 'geplante Ausgaben',  'wert' => (float)($geld['ausgaben_geplant'] ?? 0), 'farbe' => '#f0a3a3'],
+        ['label' => 'Einnahmen',          'wert' => (float)($geld['einnahmen'] ?? 0),        'farbe' => '#15803d'],
+        ['label' => 'Einnahmen unterwegs', 'wert' => (float)($geld['einnahmen_offen'] ?? 0), 'farbe' => '#9fd6ae'],
+    ];
+    return array_values(array_filter($teile, static fn($t) => $t['wert'] > 0));
+}
+
+/**
+ * Buchungen einer Art (ausgabe|einnahme) nach Kategorie zusammengefasst – Ist wie im
+ * Saldo (bezahlt, gebucht), größte zuerst, Kategoriefarbe oder eine aus der Reihe.
+ * [['label', 'wert', 'farbe'], …]. Reine Funktion über Zeilen mit kategorie_label/-color.
+ */
+function einsatz_geld_je_kategorie(array $buchungen, string $art): array
+{
+    $summen = [];
+    $farben = [];
+    foreach ($buchungen as $b) {
+        $ist = in_array((string)($b['status'] ?? 'bezahlt'), ['bezahlt', 'offen'], true);
+        if ((string)($b['art'] ?? 'ausgabe') !== $art || !$ist || (float)($b['betrag_brutto'] ?? 0) <= 0) {
+            continue;
+        }
+        $label = trim((string)($b['kategorie_label'] ?? '')) !== '' ? trim((string)$b['kategorie_label']) : 'ohne Kategorie';
+        $summen[$label] = round(($summen[$label] ?? 0) + (float)$b['betrag_brutto'], 2);
+        if (!isset($farben[$label]) && preg_match('/^#[0-9A-Fa-f]{6}$/', (string)($b['kategorie_color'] ?? ''))) {
+            $farben[$label] = strtolower((string)$b['kategorie_color']);
+        }
+    }
+    arsort($summen);
+    // Ersatzfarben der Reihe nach, aber keine, die eine Kategorie schon selbst mitbringt
+    $frei = array_values(array_diff(EINSATZ_KUCHEN_FARBEN, array_map('strtolower', $farben)));
+    $teile = [];
+    $n = 0;
+    foreach ($summen as $label => $wert) {
+        $teile[] = ['label' => (string)$label, 'wert' => $wert, 'farbe' => $farben[$label] ?? $frei[$n++ % max(1, count($frei))] ?? EINSATZ_KUCHEN_FARBEN[0]];
+    }
+    return $teile;
+}
+
+/**
  * Vorbelegung einer Buchung, die vom Einsatz aus angelegt wird: Bezug,
  * Einsatznummer als Referenz, Fachgruppe; bei Einnahmen dazu Bezeichnung,
  * Kostenträger, die Kategorie „Einsatzkostenerstattung" und der Stand
@@ -673,13 +750,14 @@ function einsatz_save_from_post(?array $e, array $user): array
     if (!$tage && !$tagFehler) {
         $fehler[] = 'Bitte mindestens einen Einsatztag eintragen.';
     }
-    [$fremde, $fremdFehler] = einsatz_fremde_aus_post($_POST);
+    // fremde Kräfte ohne Datum bekommen den ersten Einsatztag
+    $summen = $tage ? einsatz_summen($tage) : null;
+    [$fremde, $fremdFehler] = einsatz_fremde_aus_post($_POST, $summen ? substr((string)$summen['beginn'], 0, 10) : null);
     $fehler = array_merge($fehler, $fremdFehler);
     if ($fehler) {
         return [null, $fehler];
     }
 
-    $summen = einsatz_summen($tage);
     $daten = [
         'nummer'        => mb_substr(post_str('nummer'), 0, 40),
         'titel'         => $titel,

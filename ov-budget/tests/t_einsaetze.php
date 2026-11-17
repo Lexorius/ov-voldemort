@@ -246,7 +246,16 @@ $check('ohne die Felder im Formular bleiben die fremden Kräfte stehen', array_f
 $GLOBALS['inserts'] = [];
 $_POST = ['titel' => 'Hochwasser Hunte', 'tag_datum' => ['2026-11-14'], 'fremd_einheit' => ['FF Musterstadt'], 'fremd_datum' => ['']];
 [$id4, $err4] = einsatz_save_from_post(['id' => 5, 'status' => 'beendet'], current_user());
-$check('fremde Kraft ohne Datum: Fehler, nichts gespeichert', $id4 === null && count($err4) === 1 && str_contains($err4[0], 'Datum') && $GLOBALS['inserts'] === []);
+$fremdOhneDatum = array_column($nur('einsatz_fremde'), 1);
+$check('fremde Kraft ohne Datum bekommt den ersten Einsatztag', $id4 === 5 && $err4 === [] && count($fremdOhneDatum) === 1 && $fremdOhneDatum[0]['datum'] === '2026-11-14');
+[, $f5] = einsatz_fremde_aus_post(['fremd_einheit' => ['FF Musterstadt'], 'fremd_datum' => ['']]);
+$check('… ohne bekannten Einsatztag bleibt es ein Fehler', count($f5) === 1 && str_contains($f5[0], 'Datum'));
+// Leer heißt: keine Einheit, keine Zeit, keine Stärke – ein Datum oder ein Zeichen allein zählt nicht
+[$nurDatum, $fd] = einsatz_fremde_aus_post(['fremd_einheit' => ['', ''], 'fremd_datum' => ['2026-11-15', ''], 'fremd_von' => ['', ''], 'fremd_bis' => ['', ''], 'fremd_staerke' => ['', ''], 'fremd_symbol' => ['', '6']]);
+$check('Zeile nur mit Datum oder nur mit Zeichen gilt als leer', $nurDatum === [] && $fd === []);
+[, $fz] = einsatz_fremde_aus_post(['fremd_einheit' => [''], 'fremd_datum' => ['2026-11-15'], 'fremd_von' => ['08:00']]);
+$check('Zeit ohne Einheit wird weiter gemeldet – mit dem Rat, die Zeile zu leeren', count($fz) === 1 && str_contains($fz[0], 'Einheit') && str_contains($fz[0], 'leeren'));
+$check('Seite behält nach einem Fehler auch ein gewähltes Zeichen', str_contains((string)file_get_contents($app . '/src/pages/einsatz_edit.php'), "\$f['symbol_id'] = (int)(\$spalte('fremd_symbol')[\$i] ?? 0);"));
 
 /* ================= Budget: Buchung trägt den Bezug ================= */
 $GLOBALS['inserts'] = [];
@@ -379,5 +388,57 @@ $seed = (string)file_get_contents($app . '/sql/seed.sql');
 $check('Grunddaten: Einsatzarten mit einer Vorgabe, vier Einstellungen', substr_count($seed, "('einsatz_art',") === 6 && (bool)preg_match("/\('einsatz_art','Einsatz',\s+'einsatz',\s+'#b91c1c',10,1\)/", $seed)
     && substr_count($seed, "'Einsätze',") === 4 + 1);
 $check('Skript für die Zeilen ist da', str_contains((string)file_get_contents($app . '/public/assets/js/app.js'), '[data-zeilen]'));
+
+/* ================= Ergebnis und Kuchen ================= */
+$buch = [
+    ['art' => 'ausgabe', 'status' => 'bezahlt', 'betrag_brutto' => '300.00', 'kategorie_label' => 'Verpflegung', 'kategorie_color' => '#D97706'],
+    ['art' => 'ausgabe', 'status' => 'bezahlt', 'betrag_brutto' => '100.00', 'kategorie_label' => 'Kraftstoff', 'kategorie_color' => 'rot'],
+    ['art' => 'ausgabe', 'status' => 'geplant', 'betrag_brutto' => '50.00', 'kategorie_label' => 'Verpflegung', 'kategorie_color' => '#d97706'],
+    ['art' => 'ausgabe', 'status' => 'offen', 'betrag_brutto' => '20.00', 'kategorie_label' => '', 'kategorie_color' => ''],
+    ['art' => 'einnahme', 'status' => 'bezahlt', 'betrag_brutto' => '1000.00', 'kategorie_label' => 'Einsatzkostenerstattung', 'kategorie_color' => '#15803d'],
+    ['art' => 'einnahme', 'status' => 'erwartet', 'betrag_brutto' => '500.00', 'kategorie_label' => 'Einsatzkostenerstattung', 'kategorie_color' => '#15803d'],
+];
+$g = einsatz_geld_aus($buch);
+$erg = einsatz_ergebnis($g);
+$check('Ergebnis: Gewinn mit Vorzeichen, erwartet getrennt', $erg['wort'] === 'Gewinn' && $erg['klasse'] === 'ok' && $erg['text'] === '+580,00 €'
+    && str_contains($erg['erwartet'], '+1.030,00 €') && str_contains($erg['erwartet'], 'Gewinn'));
+$erg2 = einsatz_ergebnis(['saldo' => -120.5, 'saldo_erwartet' => -120.5]);
+$check('Ergebnis: Verlust rot, ohne Erwartungszeile wenn gleich', $erg2['wort'] === 'Verlust' && $erg2['klasse'] === 'bad' && $erg2['text'] === '−120,50 €' && $erg2['erwartet'] === '');
+$erg3 = einsatz_ergebnis(['saldo' => 0.0]);
+$check('Ergebnis: ausgeglichen ohne Farbe', $erg3['wort'] === 'ausgeglichen' && $erg3['klasse'] === '' && $erg3['text'] === '0,00 €');
+$check('Ergebnis aus der Liste: nur der Saldo reicht', einsatz_ergebnis(['saldo' => 12.0])['text'] === '+12,00 €');
+
+$verh = einsatz_geld_verhaeltnis($g);
+$check('Verhältnis: vier Stücke mit Ist und Ausstehendem', array_column($verh, 'label') === ['Ausgaben', 'geplante Ausgaben', 'Einnahmen', 'Einnahmen unterwegs']
+    && array_column($verh, 'wert') === [420.0, 50.0, 1000.0, 500.0]);
+$check('Verhältnis: Nullen fallen weg', array_column(einsatz_geld_verhaeltnis(['ausgaben' => 10, 'einnahmen' => 0]), 'label') === ['Ausgaben']);
+$kat = einsatz_geld_je_kategorie($buch, 'ausgabe');
+$check('Ausgaben je Kategorie: nur Ist, größte zuerst, Farbe der Kategorie oder aus der Reihe, ohne Kategorie benannt',
+    array_column($kat, 'label') === ['Verpflegung', 'Kraftstoff', 'ohne Kategorie'] && array_column($kat, 'wert') === [300.0, 100.0, 20.0]
+    && $kat[0]['farbe'] === '#d97706' && $kat[1]['farbe'] === EINSATZ_KUCHEN_FARBEN[0] && $kat[2]['farbe'] === EINSATZ_KUCHEN_FARBEN[2]
+    && !in_array('#d97706', [$kat[1]['farbe'], $kat[2]['farbe']], true));
+$check('Einnahmen je Kategorie: eine Kategorie, nur die eingegangene', einsatz_geld_je_kategorie($buch, 'einnahme') === [['label' => 'Einsatzkostenerstattung', 'wert' => 1000.0, 'farbe' => '#15803d']]);
+
+$svg = kuchen_svg($verh);
+$check('Kuchen: ein Pfad je Stück, Anteile im Titel, Farben drin', substr_count($svg, '<path ') === 4 && str_contains($svg, 'Einnahmen: 50,8 %') && str_contains($svg, 'fill="#b91c1c"')
+    && str_starts_with($svg, '<svg ') && str_ends_with($svg, '</svg>'));
+$check('Kuchen: Stück über die Hälfte nimmt den großen Bogen', (bool)preg_match('/A50 50 0 1 1 [^"]*" fill="#15803d"/', $svg) && (bool)preg_match('/A50 50 0 0 1 [^"]*" fill="#b91c1c"/', $svg));
+$check('Kuchen: ein Stück wird ein voller Kreis, nichts bleibt leer', str_contains(kuchen_svg([['label' => 'x', 'wert' => 5, 'farbe' => '#000']]), '<circle r="50"') && kuchen_svg([]) === '' && kuchen_svg([['label' => 'x', 'wert' => 0, 'farbe' => '#000']]) === '');
+$check('Kuchen maskiert Namen', str_contains(kuchen_svg([['label' => '<b>', 'wert' => 1, 'farbe' => '#000'], ['label' => 'y', 'wert' => 1, 'farbe' => '#111']]), '&lt;b&gt;'));
+$leg = kuchen_legende($kat);
+$check('Legende: Punkt, Name, Betrag und Anteil', substr_count($leg, '<li>') === 3 && str_contains($leg, 'Verpflegung') && str_contains($leg, '300,00 € · 71,4 %') && str_contains($leg, 'background:#d97706'));
+
+$mitGeld = render_partial('einsatz', ['einsatz' => $zeile, 'tage' => $tageDb, 'summen' => einsatz_summen($tageDb),
+    'buchungen' => array_map(static fn($b, $i) => $b + ['id' => $i + 1, 'datum' => '2026-11-20', 'bezeichnung' => 'B' . $i, 'lieferant' => ''], $buch, array_keys($buch)),
+    'geld' => $g, 'mitGeld' => true]);
+$check('Seite: Ergebnis-Kachel mit Gewinn und Erwartung, Summenzeile nennt das Ergebnis', str_contains($mitGeld, 'id="ergebnis"') && str_contains($mitGeld, 'stat--ok')
+    && str_contains($mitGeld, '+580,00 €') && str_contains($mitGeld, 'wenn alles eingeht') && str_contains($mitGeld, '– Gewinn</th>'));
+$check('Seite: drei Kuchen – Verhältnis, Ausgaben nach Kategorie; Einnahmen mit einer Kategorie ohne Kuchen', substr_count($mitGeld, 'class="kuchen"') === 2
+    && str_contains($mitGeld, 'Ausgaben und Einnahmen</h3>') && str_contains($mitGeld, 'Ausgaben nach Kategorie') && !str_contains($mitGeld, 'Einnahmen nach Kategorie')
+    && substr_count($mitGeld, '<svg class="kuchen__bild"') === 2);
+$check('Seite ohne Buchungen: Ergebnis 0, kein Kuchen', str_contains($stumm, 'kuchen') === false && str_contains(render_partial('einsatz', ['einsatz' => $zeile, 'tage' => $tageDb, 'summen' => einsatz_summen($tageDb), 'buchungen' => [], 'geld' => einsatz_geld_aus([]), 'mitGeld' => true]), 'noch nichts gebucht'));
+$liste = render_partial('einsaetze', ['laufend' => [], 'uebrige' => [array_merge($zeile, ['ausgaben' => '420.00', 'einnahmen' => '1000.00', 'tage' => 2, 'staerke_max' => 12, 'fahrzeuge_namen' => ''])], 'blatt' => seiten_blaettern(0, 1, 50), 'blattParams' => [],
+    'jahre' => [2026], 'jahr' => null, 'status' => '', 'art' => null, 'q' => '', 'mitGeld' => true]);
+$check('Liste: Ergebnis je Einsatz als Abzeichen', str_contains($liste, 'badge--ok') && str_contains($liste, 'Gewinn +580,00 €'));
 
 echo "$ok bestanden, $fail fehlgeschlagen\n";

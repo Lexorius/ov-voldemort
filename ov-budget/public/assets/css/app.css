@@ -419,6 +419,22 @@ details > summary { cursor: pointer; font-weight: 600; padding: .3rem 0; }
 .stat__label { font-size: .74rem; color: var(--ink-mute); text-transform: uppercase; letter-spacing: .04em; }
 .stat__value { font-size: 1.35rem; font-weight: 700; margin-top: .2rem; }
 .stat__hint { font-size: .78rem; color: var(--ink-soft); margin-top: .15rem; }
+.stat--ok .stat__value { color: var(--ok); }
+.stat--bad .stat__value { color: var(--bad); }
+th.is-ok, td.is-ok { color: var(--ok); }
+th.is-bad, td.is-bad { color: var(--bad); }
+
+/* Kuchendiagramme: Bild links, Legende rechts; am Handy untereinander */
+.kuchen-reihe { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); margin: 1rem 0; }
+.kuchen { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: .8rem; }
+.kuchen__titel { font-size: .9rem; margin: 0 0 .5rem; color: var(--ink-soft); }
+.kuchen__inhalt { display: flex; gap: .9rem; align-items: center; flex-wrap: wrap; }
+.kuchen__bild { flex: 0 0 auto; }
+.kuchen__legende { list-style: none; margin: 0; padding: 0; font-size: .86rem; flex: 1 1 10rem; min-width: 0; }
+.kuchen__legende li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .15rem .45rem; align-items: baseline; padding: .15rem 0; }
+.kuchen__punkt { display: inline-block; width: .7rem; height: .7rem; border-radius: 50%; }
+.kuchen__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kuchen__zahl { grid-column: 2; color: var(--ink-soft); font-variant-numeric: tabular-nums; font-size: .8rem; }
 
 /* ---------- Buttons ---------- */
 .btn {
@@ -499,6 +515,8 @@ legend { font-size: .85rem; font-weight: 700; color: var(--ink-soft); padding: 0
 }
 .badge--muted { background: var(--border); color: var(--ink-soft); }
 .badge--outline { background: transparent; border: 1px solid var(--border); color: var(--ink-soft); }
+.badge--outline.badge--ok { color: var(--ok); border-color: var(--ok); }
+.badge--outline.badge--bad { color: var(--bad); border-color: var(--bad); }
 .badge--nice { background: #7c3aed; }
 .badge--stan { background: #003399; }
 /* Geplantes und Erwartetes: gestreift wie im Verlauf, damit es in Listen auffällt */
