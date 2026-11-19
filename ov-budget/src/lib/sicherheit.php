@@ -10,11 +10,31 @@ declare(strict_types=1);
  * den Sitzungs-Upload-Fortschritt – vor jedem Skript, unabhängig von der
  * Anwendung. Behoben ab 8.5.12, 8.4.27, 8.3.36, 8.2.35; 8.1 und älter
  * bekommen keine Releases mehr.
+ *
+ * Sicherheitsrelease vom 19.11.2026 (8.5.13, 8.4.28, 8.3.37, 8.2.36): 18
+ * Meldungen, vom PHP-Projekt bis „kritisch" eingestuft – darunter
+ * Codeausführung über den Zeitzonen-Zwischenspeicher (CVE-2026-129496) und
+ * über Sitzungsdateien (CVE-2026-126714, CVE-2026-115560) sowie
+ * eingeschleuste Anfragen in PHP-FPM (CVE-2026-129289).
  */
 
-/** Ab welcher Fassung je Zweig die Lücke geschlossen ist */
-const PHP_SICHER_AB = ['8.5' => '8.5.12', '8.4' => '8.4.27', '8.3' => '8.3.36', '8.2' => '8.2.35'];
+/** Ab welcher Fassung je Zweig PHP2Shell geschlossen ist */
+const PHP2SHELL_AB = ['8.5' => '8.5.12', '8.4' => '8.4.27', '8.3' => '8.3.36', '8.2' => '8.2.35'];
+/** Ab welcher Fassung je Zweig alle hier bekannten Lücken geschlossen sind – zuletzt die vom 19.11.2026 */
+const PHP_SICHER_AB = ['8.5' => '8.5.13', '8.4' => '8.4.28', '8.3' => '8.3.37', '8.2' => '8.2.36'];
 const PHP_LUECKE = 'PHP2Shell (CVE-2026-109618, CVE-2026-109619)';
+const PHP_LUECKEN_NOVEMBER = 'die Sicherheitsfassungen vom 19.11.2026 (u. a. CVE-2026-129496, CVE-2026-126714, CVE-2026-129289)';
+
+/** Ist PHP2Shell in dieser Fassung noch offen? Unbekannte Angaben und neuere Zweige: nein. Reine Funktion. */
+function php2shell_offen(string $version): bool
+{
+    $v = php_version_kern($version);
+    if (!preg_match('/^(\d+)\.(\d+)\.\d+$/', $v, $m)) {
+        return false;
+    }
+    $ab = PHP2SHELL_AB[$m[1] . '.' . $m[2]] ?? null;
+    return version_compare($v, '8.2.0', '<') || ($ab !== null && version_compare($v, $ab, '<'));
+}
 
 /** Nur „8.4.21" aus Angaben wie „8.4.21-r0" oder „8.4.21 (fpm-fcgi)". Reine Funktion. */
 function php_version_kern(string $version): string
@@ -42,7 +62,9 @@ function php_verwundbar(string $version): ?string
         return null;   // neuerer Zweig als bekannt – gilt als gepatcht
     }
     if (version_compare($v, $ab, '<')) {
-        return sprintf('PHP %s ist verwundbar für %s – behoben ab %s.', $v, PHP_LUECKE, $ab);
+        return php2shell_offen($v)
+            ? sprintf('PHP %s ist verwundbar für %s, und es fehlen %s – behoben ab %s.', $v, PHP_LUECKE, PHP_LUECKEN_NOVEMBER, $ab)
+            : sprintf('PHP %s fehlen %s – behoben ab %s.', $v, PHP_LUECKEN_NOVEMBER, $ab);
     }
     return null;
 }
@@ -65,6 +87,8 @@ function php_lage(): array
         'version' => $version,
         'sapi'    => PHP_SAPI,
         'verwundbar' => $grund !== null,
+        // die Schutzmaßnahmen unten gelten PHP2Shell – nur dann sagt die Verwaltung etwas zu ihnen
+        'php2shell' => php2shell_offen($version),
         'grund'   => $grund,
         'sicher_ab' => PHP_SICHER_AB[preg_replace('/^(\d+\.\d+).*/', '$1', $version)] ?? null,
         'schutz'  => $schutz,

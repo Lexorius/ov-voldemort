@@ -97,7 +97,10 @@ if (!function_exists('php_verwundbar')) { require $app . '/src/lib/sicherheit.ph
 $ePhp = connector_pruefung_auswerten(array_merge($gut, ['php' => '8.4.21']), $soll, $netzGut);
 $check('verwundbares PHP auf dem Connector ist ein Alarm', $ePhp['stufe'] === 'alarm' && count(array_filter($ePhp['befunde'], static fn($b) => str_contains($b['text'], 'PHP2Shell') && $b['stufe'] === 'alarm')) === 1);
 $ePhp = connector_pruefung_auswerten(array_merge($gut, ['php' => '8.4.27']), $soll, $netzGut);
-$check('gepatchtes PHP auf dem Connector: kein PHP-Befund', array_filter($ePhp['befunde'], static fn($b) => str_contains($b['text'], 'PHP2Shell')) === []);
+$check('Connector ohne die Sicherheitsfassung vom 19.11.2026: Alarm, aber nicht wegen PHP2Shell', $ePhp['stufe'] === 'alarm'
+    && count(array_filter($ePhp['befunde'], static fn($b) => str_contains($b['text'], '19.11.2026') && !str_contains($b['text'], 'PHP2Shell') && $b['stufe'] === 'alarm')) === 1);
+$ePhp = connector_pruefung_auswerten(array_merge($gut, ['php' => '8.4.28']), $soll, $netzGut);
+$check('gepatchtes PHP auf dem Connector: kein PHP-Befund', array_filter($ePhp['befunde'], static fn($b) => str_contains($b['text'], 'Webserver des Connectors')) === []);
 $e = connector_pruefung_auswerten($gut, $soll, $netzGut);
 $check('alles gut: sauber', $e['stufe'] === 'sauber' && $e['befunde'] === [] && $e['js_geprueft'] === 1);
 

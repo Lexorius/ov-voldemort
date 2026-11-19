@@ -1,5 +1,29 @@
 # Änderungsverlauf
 
+## 2.1.95.1
+
+- **Sicherheitsfassungen von PHP vom 19.11.2026 – das Add-on baut jetzt auf
+  Alpine edge:** PHP hat mit 8.5.13, 8.4.28, 8.3.37 und 8.2.36 achtzehn
+  Lücken geschlossen, darunter Codeausführung über den
+  Zeitzonen-Zwischenspeicher (CVE-2026-129496) und über Sitzungsdateien
+  (CVE-2026-126714) sowie eingeschleuste Anfragen in PHP-FPM
+  (CVE-2026-129289). Die stabile Alpine-Fassung des Basisimages lieferte
+  noch 8.5.12; der Bau stellt die Paketquellen deshalb auf Alpine edge um
+  und zieht alle Pakete nach. Greift die Umstellung nicht, bricht der Bau
+  ab.
+- **Prüfung, Verwaltung und Connector-Alarm auf dem neuen Stand:** Die
+  Verwaltung nennt jetzt, ob nur die Fassung vom 19.11. fehlt oder auch
+  PHP2Shell offen ist. Ein Connector braucht beim Hoster 8.4.28 oder neuer –
+  bis dahin meldet „Ist der Connector sauber?" einen Alarm.
+- **PHP 8.5 statt 8.4:** Der Bau nahm bisher immer PHP 8.4, obwohl 8.5 da
+  war – er verlangte ein OPcache-Paket, das es seit 8.5 nicht mehr gibt, weil
+  OPcache dort fest eingebaut ist. Jetzt läuft das Add-on auf PHP 8.5.13. Die
+  Prüfungen laufen zusätzlich auf 8.5.
+- **Vor dem Update eine Sicherung anlegen.** Edge ist der Entwicklungszweig
+  von Alpine: jeder Bau holt den Stand des Tages, auch von nginx und
+  MariaDB. Einzelheiten in der Dokumentation unter „Sicherheitslücke
+  PHP2Shell › Nachtrag".
+
 ## 2.1.95.0
 
 - **Einsätze – Ergebnis je Einsatz:** Neben Ausgaben und Einnahmen steht

@@ -45,6 +45,16 @@ Sobald Alpine die gepatchte Fassung liefert, baut die nächste Add-on-Fassung
 sie automatisch ein. Einzelheiten in [ov-budget/DOCS.md](ov-budget/DOCS.md)
 unter „Sicherheitslücke PHP2Shell".
 
+**Nachtrag 19.11.2026:** PHP hat mit 8.5.13, 8.4.28, 8.3.37 und 8.2.36 weitere
+[Sicherheitsfassungen](https://www.php.net/ChangeLog-8.php#8.5.13)
+veröffentlicht – 18 Meldungen, bis „kritisch" eingestuft, darunter
+Codeausführung über den Zeitzonen-Zwischenspeicher (CVE-2026-129496) und über
+Sitzungsdateien (CVE-2026-126714) sowie eingeschleuste Anfragen in PHP-FPM
+(CVE-2026-129289). Ab Fassung 2.1.95.1 baut das Add-on auf **Alpine edge**
+statt auf der stabilen Fassung: dort lag 8.5.13 schon, als Alpine 3.24 noch
+8.5.12 lieferte. Prüfung und Alarm gelten jetzt für diese Fassungen; der
+Connector braucht beim Hoster 8.4.28 oder neuer.
+
 ## Was drin ist
 
 ### Planen und Geld

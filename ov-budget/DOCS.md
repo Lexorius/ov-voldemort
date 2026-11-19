@@ -2667,6 +2667,42 @@ Anwendung. Behoben ab PHP 8.5.12, 8.4.27, 8.3.36 und 8.2.35; PHP 8.1 und
 einspielen (jede Fassung baut das Image neu), dann in der Verwaltung prüfen,
 dass die Meldung grün ist. Die php.ini-Maßnahmen können danach bleiben.
 
+### Nachtrag: Sicherheitsfassungen vom 19.11.2026, Alpine edge
+
+Am 19.11.2026 hat das PHP-Projekt mit 8.5.13, 8.4.28, 8.3.37 und 8.2.36
+weitere Sicherheitsfassungen veröffentlicht: 18 Meldungen, die schwersten als
+„kritisch" eingestuft (nach Angabe des Projekts nur bei ungewöhnlicher
+Einrichtung). Für OV-Multitool zählen vor allem:
+
+* Codeausführung über den Zeitzonen-Zwischenspeicher (CVE-2026-129496),
+* Codeausführung über teilweise überschriebene Sitzungsdateien und über
+  abweichende Sitzungs-Serialisierer (CVE-2026-126714, CVE-2026-115560),
+* eingeschleuste Anfragen in PHP-FPM über einen ungelesenen Anfragerumpf
+  (CVE-2026-129289) und eine Rechteausweitung im FPM (CVE-2026-129291),
+* Daten im Klartext bei Adressen mit `HTTPS://` in gemischter Schreibweise
+  (CVE-2026-128064).
+
+**Was sich am Add-on ändert (ab 2.1.95.1):**
+
+* Der Bau stellt die Paketquellen des Basisimages von der stabilen
+  Alpine-Fassung auf **Alpine edge** um und zieht alle Pakete nach. Dort lag
+  PHP 8.5.13 schon, als Alpine 3.24 noch 8.5.12 lieferte. Greift die
+  Umstellung nicht, bricht der Bau ab – das Add-on bleibt dann auf der
+  bisherigen Fassung, statt unbemerkt auf dem alten Stand weiterzulaufen.
+* Die Prüfung beim Bauen, die Meldung in der Verwaltung und der Alarm in
+  „Ist der Connector sauber?" gelten jetzt für die Fassungen vom 19.11.2026.
+  Ein Connector braucht beim Hoster **8.4.28 oder neuer** (bzw. 8.5.13,
+  8.3.37, 8.2.36).
+
+**Was edge bedeutet:** Alpine edge ist der Entwicklungszweig – immer die
+neuesten Pakete, aber ohne feste Fassung. Jeder Bau (also jedes Update des
+Add-ons) holt den Stand dieses Tages; ein Paket kann dort auch einmal
+kaputt sein. Scheitert ein Update am Bau, läuft die bisherige Fassung
+weiter. Auch MariaDB kommt aus edge: Springt sie dort auf eine neue
+Hauptfassung, stellt sie das Datenverzeichnis beim ersten Start um – zurück
+auf eine ältere Fassung geht es danach nur über eine Sicherung. Vor jedem
+Update deshalb eine Sicherung anlegen (*Verwaltung → Sicherung*).
+
 ## Menü
 
 Das Menü ist ein Baum mit zwei Ebenen: oben stehen einzelne Module und

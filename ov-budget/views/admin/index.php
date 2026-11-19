@@ -15,14 +15,14 @@ $speicher ??= null; $php ??= null; ?>
 </div>
 
 <?php if ($php): ?>
-  <div class="alert <?= $php['verwundbar'] ? ($php['geschuetzt'] ? 'alert--warn' : 'alert--error') : 'alert--info' ?>">
+  <div class="alert <?= $php['verwundbar'] ? (!$php['php2shell'] || $php['geschuetzt'] ? 'alert--warn' : 'alert--error') : 'alert--info' ?>">
     <strong>PHP <?= e($php['version']) ?> (<?= e($php['sapi']) ?>):</strong>
     <?php if ($php['verwundbar']): ?>
       <?= e($php['grund']) ?>
-      <?= $php['geschuetzt'] ? 'Die Schutzmaßnahmen aus dem PHP-Advisory sind aktiv (kein Sitzungs-Upload-Fortschritt, keine Backtraces, ein Worker je Anfrage, kleine Anfragen) – das mindert, ersetzt aber kein Update.' : '<strong>Schutzmaßnahmen fehlen</strong> – bitte das Add-on auf die aktuelle Fassung bringen.' ?>
+      <?= !$php['php2shell'] ? '' : ($php['geschuetzt'] ? 'Die Schutzmaßnahmen aus dem PHP-Advisory sind aktiv (kein Sitzungs-Upload-Fortschritt, keine Backtraces, ein Worker je Anfrage, kleine Anfragen) – das mindert, ersetzt aber kein Update.' : '<strong>Schutzmaßnahmen fehlen</strong> – bitte das Add-on auf die aktuelle Fassung bringen.') ?>
       Das Add-on holt beim Bauen die gepatchte Fassung, sobald Alpine sie liefert: dann einfach die nächste Fassung einspielen und hier nachsehen.
     <?php else: ?>
-      gegen PHP2Shell (CVE-2026-109618/-109619) gepatcht<?= $php['sicher_ab'] ? ', mindestens ' . e($php['sicher_ab']) : '' ?>.
+      auf dem Stand der Sicherheitsfassungen vom 19.11.2026, PHP2Shell (CVE-2026-109618/-109619) eingeschlossen<?= $php['sicher_ab'] ? ' – mindestens ' . e($php['sicher_ab']) : '' ?>.
     <?php endif; ?>
     <span class="small muted">Verwaltung → Connectoren prüft die PHP-Fassung der Connectoren mit.</span>
   </div>

@@ -21,6 +21,10 @@ PHP-Fassung des Hosters. Bis die Meldung in der Verwaltung grün ist, keinen
 Port des Add-ons aus dem Internet erreichbar machen. Einzelheiten im Reiter
 **Dokumentation** unter „Sicherheitslücke PHP2Shell".
 
+**Nachtrag 19.11.2026:** PHP hat weitere Sicherheitsfassungen veröffentlicht
+(8.5.13 / 8.4.28 / 8.3.37 / 8.2.36). Ab 2.1.95.1 baut das Add-on auf Alpine
+edge, das sie schon liefert; Prüfung und Alarm gelten für diese Fassungen.
+
 ## Funktionen
 
 ### Als App
