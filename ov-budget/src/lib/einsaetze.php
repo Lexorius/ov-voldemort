@@ -593,9 +593,15 @@ function einsatz_buchung_vorgabe(array $einsatz, string $art, ?int $kategorieId 
 /* ==================================================================== */
 
 /** Unterabfrage „GKW 1 · MTW" für Liste, Seite und Kalender. Reine Funktion. */
-function einsatz_fahrzeuge_sub(string $alias = 'e'): string
+/**
+ * Die Fahrzeuge eines Einsatzes als eine Zeichenkette – mit „ · " für Fließtext;
+ * wer die Fahrzeuge einzeln braucht, nimmt den Zeilenumbruch als Trenner, denn
+ * eine Fahrzeugbezeichnung kann selbst „ · " enthalten („GKW · 22/51 · THW 99029").
+ */
+function einsatz_fahrzeuge_sub(string $alias = 'e', string $trenner = ' · '): string
 {
-    return "(SELECT GROUP_CONCAT(v.bezeichnung ORDER BY v.bezeichnung SEPARATOR ' · ') FROM einsatz_vehicles ev JOIN vehicles v ON v.id = ev.vehicle_id WHERE ev.einsatz_id = $alias.id)";
+    $sep = $trenner === "\n" ? "'\\n'" : "'" . str_replace("'", "''", $trenner) . "'";
+    return "(SELECT GROUP_CONCAT(v.bezeichnung ORDER BY v.bezeichnung SEPARATOR $sep) FROM einsatz_vehicles ev JOIN vehicles v ON v.id = ev.vehicle_id WHERE ev.einsatz_id = $alias.id)";
 }
 
 function einsatz_find(?int $id): ?array
@@ -647,6 +653,7 @@ function einsatz_query(array $f = []): array
     $ist = defined('BUCHUNG_IST') ? BUCHUNG_IST : "status IN ('bezahlt','offen')";
     $sql = 'SELECT e.*, a.label AS art_label, a.color AS art_color, fg.label AS fachgruppe_label,
                    ' . einsatz_fahrzeuge_sub('e') . ' AS fahrzeuge_namen,
+                   ' . einsatz_fahrzeuge_sub('e', "\n") . ' AS fahrzeuge_liste,
                    (SELECT COUNT(DISTINCT t.datum) FROM einsatz_tage t WHERE t.einsatz_id = e.id) AS tage,
                    (SELECT COALESCE(MAX(t.staerke_f + t.staerke_u + t.staerke_h), 0) FROM einsatz_tage t WHERE t.einsatz_id = e.id) AS staerke_max,
                    (SELECT COALESCE(SUM(x.betrag_brutto), 0) FROM expenses x WHERE x.einsatz_id = e.id AND x.art = \'ausgabe\' AND x.' . $ist . ') AS ausgaben,

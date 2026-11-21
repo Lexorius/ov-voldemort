@@ -1,5 +1,13 @@
 # Änderungsverlauf
 
+## 2.1.95.4
+
+- **Einsätze – Fahrzeuge in der Liste wieder ganz:** Seit 2.1.95.3 zerfiel
+  eine Fahrzeugbezeichnung wie „GKW · 22/51 · THW 99029" in drei Abzeichen,
+  weil das Trennzeichen der Liste dasselbe war wie das in der Bezeichnung.
+  Die Liste trennt die Fahrzeuge jetzt eindeutig; jedes Fahrzeug steht
+  wieder in einem Abzeichen.
+
 ## 2.1.95.3
 
 - **Einsätze – Fahrzeuge in der Liste brechen um:** Alle Fahrzeuge eines

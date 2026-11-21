@@ -22,8 +22,10 @@ $karte = static function (array $e) use ($mitGeld): string {
     if (!empty($e['fachgruppe_label'])) {
         $html .= '<span class="badge badge--outline">' . e((string)$e['fachgruppe_label']) . '</span>';
     }
-    // je Fahrzeug ein Abzeichen – eines für alle brach nicht um und sprengte die Zeile
-    foreach (array_filter(array_map('trim', explode(' · ', (string)($e['fahrzeuge_namen'] ?? ''))), 'strlen') as $fz) {
+    // je Fahrzeug ein Abzeichen – eines für alle brach nicht um und sprengte die Zeile. Getrennt
+    // wird am Zeilenumbruch (fahrzeuge_liste): „ · " kann in der Bezeichnung selbst vorkommen.
+    $fahrzeuge = array_key_exists('fahrzeuge_liste', $e) ? explode("\n", (string)$e['fahrzeuge_liste']) : [(string)($e['fahrzeuge_namen'] ?? '')];
+    foreach (array_filter(array_map('trim', $fahrzeuge), 'strlen') as $fz) {
         $html .= '<span class="badge badge--outline badge--fahrzeug">' . e($fz) . '</span>';
     }
     if ($mitGeld && ((float)$e['ausgaben'] > 0 || (float)$e['einnahmen'] > 0)) {

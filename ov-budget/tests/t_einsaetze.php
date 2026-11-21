@@ -440,9 +440,15 @@ $check('Seite ohne Buchungen: Ergebnis 0, kein Kuchen', str_contains($stumm, 'ku
 $liste = render_partial('einsaetze', ['laufend' => [], 'uebrige' => [array_merge($zeile, ['ausgaben' => '420.00', 'einnahmen' => '1000.00', 'tage' => 2, 'staerke_max' => 12, 'fahrzeuge_namen' => ''])], 'blatt' => seiten_blaettern(0, 1, 50), 'blattParams' => [],
     'jahre' => [2026], 'jahr' => null, 'status' => '', 'art' => null, 'q' => '', 'mitGeld' => true]);
 $check('Liste: Ergebnis je Einsatz als Abzeichen', str_contains($liste, 'badge--ok') && str_contains($liste, 'Gewinn +580,00 €'));
-$vieleFz = render_partial('einsaetze', ['laufend' => [array_merge($zeile, ['fahrzeuge_namen' => 'GKW 1 · MTW <FGr Sp> · Anh. SEA (60kVA)'])], 'uebrige' => [], 'blatt' => seiten_blaettern(0, 1, 50), 'blattParams' => [],
+$fzNamen = ['GKW · 22/51 · THW 99029', 'MTW <FGr Sp> · 35/25', 'Anh. SEA (60kVA)'];
+$vieleFz = render_partial('einsaetze', ['laufend' => [array_merge($zeile, ['fahrzeuge_namen' => implode(' · ', $fzNamen), 'fahrzeuge_liste' => implode("\n", $fzNamen)])], 'uebrige' => [], 'blatt' => seiten_blaettern(0, 1, 50), 'blattParams' => [],
     'jahre' => [2026], 'jahr' => null, 'status' => '', 'art' => null, 'q' => '', 'mitGeld' => false]);
-$check('Liste: je Fahrzeug ein eigenes Abzeichen, maskiert', substr_count($vieleFz, 'badge--fahrzeug') === 3 && str_contains($vieleFz, '>MTW &lt;FGr Sp&gt;</span>')
-    && str_contains($vieleFz, '>Anh. SEA (60kVA)</span>') && !str_contains($vieleFz, 'GKW 1 · MTW'));
+$check('Liste: je Fahrzeug ein eigenes Abzeichen – auch wenn „ · " in der Bezeichnung steckt – maskiert', substr_count($vieleFz, 'badge--fahrzeug') === 3
+    && str_contains($vieleFz, '>GKW · 22/51 · THW 99029</span>') && str_contains($vieleFz, '>MTW &lt;FGr Sp&gt; · 35/25</span>') && str_contains($vieleFz, '>Anh. SEA (60kVA)</span>'));
+$ohneListe = render_partial('einsaetze', ['laufend' => [array_merge($zeile, ['fahrzeuge_namen' => 'GKW · 22/51'])], 'uebrige' => [], 'blatt' => seiten_blaettern(0, 1, 50), 'blattParams' => [],
+    'jahre' => [2026], 'jahr' => null, 'status' => '', 'art' => null, 'q' => '', 'mitGeld' => false]);
+$check('Liste ohne fahrzeuge_liste: ein Abzeichen, nichts zerteilt', substr_count($ohneListe, 'badge--fahrzeug') === 1 && str_contains($ohneListe, '>GKW · 22/51</span>'));
+$check('Abfrage liefert die Fahrzeuge einzeln mit Zeilenumbruch', str_contains(einsatz_fahrzeuge_sub('e', "\n"), "SEPARATOR '\\n'") && str_contains(einsatz_fahrzeuge_sub('e'), "SEPARATOR ' · '")
+    && (static function () { $GLOBALS['sql'] = []; einsatz_query(['jahr' => 2026]); return str_contains(implode(' ', $GLOBALS['sql']), 'AS fahrzeuge_liste'); })());
 
 echo "$ok bestanden, $fail fehlgeschlagen\n";
