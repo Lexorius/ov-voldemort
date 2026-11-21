@@ -650,6 +650,19 @@ function seiten_blaettern(int $gesamt, int $seite, int $proSeite = 50): array
 /** So viele Einträge je Seite, wenn eine Liste nichts anderes sagt */
 const LISTE_JE_SEITE = 50;
 
+/** Was eine Liste mit Auswahl „je Seite" anbietet */
+const LISTE_JE_SEITE_WAHL = [25, 50, 100, 200];
+
+/**
+ * Die gewünschte Zahl je Seite aus der Adresse (?je=…): nur eine der
+ * angebotenen, sonst die Vorgabe der Liste. Reine Funktion.
+ */
+function seiten_je(mixed $wert, int $standard = LISTE_JE_SEITE): int
+{
+    $n = (int)$wert;
+    return in_array($n, LISTE_JE_SEITE_WAHL, true) ? $n : $standard;
+}
+
 /**
  * Die Parameter der aktuellen Adresse für die Links des Blätterers: alles
  * außer der Route und den Seitenparametern, nur einfache Werte, nichts Leeres.

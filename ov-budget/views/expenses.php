@@ -153,6 +153,14 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
       <input type="date" id="bis" name="bis" value="<?= e((string)$filters['bis']) ?>">
     </div>
     <div class="field">
+      <label for="je">Je Seite</label>
+      <select id="je" name="je">
+        <?php foreach (LISTE_JE_SEITE_WAHL as $n): ?>
+          <option value="<?= (int)$n ?>"<?= (int)$n === (int)($jeSeite ?? 25) ? ' selected' : '' ?>><?= (int)$n ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+    <div class="field">
       <label>&nbsp;</label>
       <button class="btn btn--sec" type="submit">Filtern</button>
     </div>
@@ -170,7 +178,10 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
     <?php endif; ?>
   </div></div>
 <?php else: ?>
+  <?php $blatt ??= seiten_blaettern(count($rows), 1, max(1, count($rows))); $blattParams ??= [];
+        $blaetterer = render_partial('partials/seiten', ['blatt' => $blatt, 'route' => 'expenses', 'params' => $blattParams, 'zurueck' => '‹ Zurück', 'weiter' => 'Weiter ›']); ?>
   <div class="card only-mobile">
+    <?php if ($blaetterer !== ''): ?><div class="seiten--oben"><?= $blaetterer ?></div><?php endif; ?>
     <div class="itemlist">
       <?php foreach ($rows as $r): ?>
         <a class="item<?= buchung_status((string)($r['status'] ?? 'bezahlt')) === 'geplant' ? ' item--geplant' : '' ?>" style="border-left-color:<?= e($r['kategorie_color'] ?: ($istEinnahme ? '#15803d' : '#94a3b8')) ?>"
@@ -197,19 +208,25 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
         </a>
       <?php endforeach; ?>
     </div>
+    <?= $blaetterer ?>
   </div>
 
+  <?php $bearbeiten = can('manage_budget'); ?>
   <div class="card hide-mobile">
+    <?php if ($blaetterer !== ''): ?><div class="seiten--oben"><?= $blaetterer ?></div><?php endif; ?>
     <div class="tablewrap">
       <table class="data">
         <thead>
-          <tr><th>Datum</th><th>Bezeichnung</th><th>Kategorie</th><th>Fachgruppe</th>
-              <th><?= $istEinnahme ? 'Einsatz-Nr.' : 'Topf' ?></th><th>Beleg</th>
-              <th class="num">Betrag</th><th></th></tr>
+          <tr><?php if ($bearbeiten): ?><th><span class="sr-only">Bearbeiten</span></th><?php endif; ?>
+              <th>Datum</th><th>Bezeichnung</th><th>Kategorie</th><th class="num">Betrag</th><th>Beleg</th>
+              <th>Fachgruppe</th><th><?= $istEinnahme ? 'Einsatz-Nr.' : 'Topf' ?></th></tr>
         </thead>
         <tbody>
         <?php foreach ($rows as $r): ?>
           <tr<?= buchung_zeile_klasse((string)($r['status'] ?? 'bezahlt')) ?>>
+            <?php if ($bearbeiten): ?>
+              <td class="nowrap"><a class="btn btn--sec btn--sm btn--icon" href="<?= e(url('expense_edit', ['id' => $r['id']])) ?>" title="Bearbeiten" aria-label="Bearbeiten: <?= e($r['bezeichnung']) ?>">✎</a></td>
+            <?php endif; ?>
             <td class="nowrap small"><?= e(de_date($r['datum'])) ?></td>
             <td>
               <strong><?= e($r['bezeichnung']) ?></strong> <?= buchung_status_badge((string)($r['status'] ?? 'bezahlt'), $istEinnahme ? 'einnahme' : 'ausgabe') ?><?= $istEinnahme ? ' ' . einnahme_alter_badge(einnahme_alter($r)) : '' ?><?= ($wb = wiederkehrend_badge($r)) !== '' ? ' ' . $wb : '' ?>
@@ -231,30 +248,26 @@ $linkArgs = ['jahr' => $jahr, 'art' => $art];
               <?php endif; ?>
             </td>
             <td><?= badge($r['kategorie_label'] ? ['label' => $r['kategorie_label'], 'color' => $r['kategorie_color']] : null, '–') ?></td>
-            <td class="small"><?= e($r['fachgruppe_label'] ?: '–') ?></td>
-            <td class="small"><?= e(($istEinnahme ? $r['referenz'] : $r['budget_name']) ?: '–') ?></td>
+            <td class="num" style="<?= $istEinnahme ? 'color:var(--ok)' : '' ?>">
+              <strong><?= e(money((float)$r['betrag_brutto'], false)) ?></strong></td>
             <td class="small"><span class="mono"><?= e($r['beleg_nr'] ?: (empty($belege[(int)$r['id']]) ? '–' : '')) ?></span>
               <?php foreach ($belege[(int)$r['id']] ?? [] as $bf): ?>
                 <a class="nowrap" href="<?= e(url('expense_file', ['id' => $bf['id']])) ?>" target="_blank" rel="noopener" title="<?= e((string)($bf['titel'] ?: $bf['orig_name'])) ?>">📎<span class="sr-only"> Beleg <?= e((string)($bf['titel'] ?: $bf['orig_name'])) ?></span></a>
               <?php endforeach; ?></td>
-            <td class="num" style="<?= $istEinnahme ? 'color:var(--ok)' : '' ?>">
-              <strong><?= e(money((float)$r['betrag_brutto'], false)) ?></strong></td>
-            <td><?php if (can('manage_budget')): ?>
-              <a class="btn btn--sec btn--sm" href="<?= e(url('expense_edit', ['id' => $r['id']])) ?>">Bearbeiten</a>
-            <?php endif; ?></td>
+            <td class="small"><?= e($r['fachgruppe_label'] ?: '–') ?></td>
+            <td class="small"><?= e(($istEinnahme ? $r['referenz'] : $r['budget_name']) ?: '–') ?></td>
           </tr>
         <?php endforeach; ?>
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="6"><strong>Summe (<?= (int)$stats['anzahl'] ?>)</strong></td>
+            <td colspan="<?= $bearbeiten ? 4 : 3 ?>"><strong>Summe (<?= (int)$stats['anzahl'] ?>)</strong></td>
             <td class="num"><strong><?= e(money($stats['summe'], false)) ?></strong></td>
-            <td></td>
+            <td colspan="3"></td>
           </tr>
         </tfoot>
       </table>
     </div>
-    <?php $blatt ??= seiten_blaettern(count($rows), 1, max(1, count($rows))); $blattParams ??= []; ?>
-    <?= render_partial('partials/seiten', ['blatt' => $blatt, 'route' => 'expenses', 'params' => $blattParams, 'zurueck' => '‹ Zurück', 'weiter' => 'Weiter ›']) ?>
+    <?= $blaetterer ?>
   </div>
 <?php endif; ?>

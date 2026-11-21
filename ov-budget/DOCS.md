@@ -229,7 +229,10 @@ sie enthalten.
   bezahlt. Geplantes ist in allen Listen gestreift gekennzeichnet und die
   Zeile hinterlegt, bei Einnahmen heißt es *erwartet*. Übersicht,
   Mittel-Balken und Verlauf zeigen gebucht und geplant
-  getrennt. Das Jahresbudget kann einen **Stichtag** haben: Bis
+  getrennt. Die Listen der Ausgaben und Einnahmen blättern, 25 je Seite
+  (im Filter auf 50, 100 oder 200 umstellbar), oben und unten; die Spalten
+  stehen so, dass der Betrag ohne Scrollen zu sehen ist: Bearbeiten-Symbol
+  (✎), Datum, Bezeichnung, Kategorie, Betrag, Beleg, Fachgruppe, Topf. Das Jahresbudget kann einen **Stichtag** haben: Bis
   einschließlich diesem Tag darf Geld auf das Jahresbudget ausgegeben
   werden, spätere Ausgaben lehnt die Anwendung ab – nur geplante lassen sich
   noch vormerken. Übersicht und Startseite zählen die Tage herunter, die

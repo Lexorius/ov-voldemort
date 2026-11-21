@@ -450,6 +450,7 @@ th.is-bad, td.is-bad { color: var(--bad); }
 .btn--danger { background: var(--bad); }
 .btn--ok { background: var(--ok); }
 .btn--sm { min-height: 36px; padding: .35rem .7rem; font-size: .85rem; }
+.btn--icon { min-width: 36px; padding-left: .45rem; padding-right: .45rem; font-size: 1.05rem; line-height: 1; }
 .btn--block { width: 100%; }
 .btn[disabled] { opacity: .5; cursor: not-allowed; }
 
@@ -861,6 +862,7 @@ pre.raw {
 .seiten__zahlen a, .seiten__aktiv { min-width: 1.8rem; text-align: center; padding: .15rem .35rem; border-radius: 6px; }
 .seiten__aktiv { background: var(--accent); color: #fff; }
 .seiten .is-disabled { opacity: .45; pointer-events: none; }
+.seiten--oben .seiten { margin: 0 0 .7rem; }
 
 /* Fortschritt beim stückweisen Upload (STAN) */
 .stan__fortschritt { margin-top: .5rem; }

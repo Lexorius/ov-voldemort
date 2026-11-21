@@ -1,5 +1,15 @@
 # Änderungsverlauf
 
+## 2.1.95.2
+
+- **Budget – Ausgaben und Einnahmen blättern und zeigen den Betrag ohne
+  Scrollen:** Die Listen blättern jetzt mit 25 je Seite (im Filter auf 50,
+  100 oder 200 umstellbar), der Blätterer steht oben und unten – auch am
+  Handy. Die Spalten stehen neu: Bearbeiten-Symbol (✎), Datum, Bezeichnung,
+  Kategorie, Betrag, Beleg, Fachgruppe, Topf. Bisher lag der Betrag ganz
+  rechts und war auf schmaleren Bildschirmen erst nach seitlichem Scrollen
+  zu sehen; der Knopf *Bearbeiten* ist nur noch ein Symbol.
+
 ## 2.1.95.1
 
 - **Sicherheitsfassungen von PHP vom 19.11.2026 – das Add-on baut jetzt auf

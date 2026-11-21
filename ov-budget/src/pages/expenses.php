@@ -26,7 +26,9 @@ $filters = [
 ];
 
 $alle = expense_query($filters);
-$blatt = seiten_blaettern(count($alle), get_int('seite') ?: 1, LISTE_JE_SEITE);
+// 25 je Seite, damit der Blätterer früh greift; die Wahl (?je=…) bleibt in den Links
+$jeSeite = seiten_je(get_int('je'), 25);
+$blatt = seiten_blaettern(count($alle), get_int('seite') ?: 1, $jeSeite);
 
 $seite = array_slice($alle, $blatt['offset'], $blatt['pro_seite']);
 
@@ -37,6 +39,7 @@ render('expenses', [
     'belege'       => function_exists('xfile_fuer_buchungen') ? xfile_fuer_buchungen(array_column($seite, 'id')) : [],
     'blatt'        => $blatt,
     'blattParams'  => seiten_params(),
+    'jeSeite'      => $jeSeite,
     'stats'        => expense_stats($alle),
     'filters'      => $filters,
     'jahr'         => $jahr,
