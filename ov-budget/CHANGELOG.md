@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## 2.1.95.3
+
+- **Einsätze – Fahrzeuge in der Liste brechen um:** Alle Fahrzeuge eines
+  Einsatzes standen in einem einzigen Abzeichen, das nicht umbrach und bei
+  vielen Fahrzeugen über den Seitenrand lief. Jetzt bekommt jedes Fahrzeug
+  sein eigenes Abzeichen, die Reihe bricht wie die anderen um.
+
 ## 2.1.95.2
 
 - **Budget – Ausgaben und Einnahmen blättern und zeigen den Betrag ohne

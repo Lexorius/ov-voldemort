@@ -440,5 +440,9 @@ $check('Seite ohne Buchungen: Ergebnis 0, kein Kuchen', str_contains($stumm, 'ku
 $liste = render_partial('einsaetze', ['laufend' => [], 'uebrige' => [array_merge($zeile, ['ausgaben' => '420.00', 'einnahmen' => '1000.00', 'tage' => 2, 'staerke_max' => 12, 'fahrzeuge_namen' => ''])], 'blatt' => seiten_blaettern(0, 1, 50), 'blattParams' => [],
     'jahre' => [2026], 'jahr' => null, 'status' => '', 'art' => null, 'q' => '', 'mitGeld' => true]);
 $check('Liste: Ergebnis je Einsatz als Abzeichen', str_contains($liste, 'badge--ok') && str_contains($liste, 'Gewinn +580,00 €'));
+$vieleFz = render_partial('einsaetze', ['laufend' => [array_merge($zeile, ['fahrzeuge_namen' => 'GKW 1 · MTW <FGr Sp> · Anh. SEA (60kVA)'])], 'uebrige' => [], 'blatt' => seiten_blaettern(0, 1, 50), 'blattParams' => [],
+    'jahre' => [2026], 'jahr' => null, 'status' => '', 'art' => null, 'q' => '', 'mitGeld' => false]);
+$check('Liste: je Fahrzeug ein eigenes Abzeichen, maskiert', substr_count($vieleFz, 'badge--fahrzeug') === 3 && str_contains($vieleFz, '>MTW &lt;FGr Sp&gt;</span>')
+    && str_contains($vieleFz, '>Anh. SEA (60kVA)</span>') && !str_contains($vieleFz, 'GKW 1 · MTW'));
 
 echo "$ok bestanden, $fail fehlgeschlagen\n";

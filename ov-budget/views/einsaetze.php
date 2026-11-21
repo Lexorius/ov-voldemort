@@ -22,8 +22,9 @@ $karte = static function (array $e) use ($mitGeld): string {
     if (!empty($e['fachgruppe_label'])) {
         $html .= '<span class="badge badge--outline">' . e((string)$e['fachgruppe_label']) . '</span>';
     }
-    if (trim((string)($e['fahrzeuge_namen'] ?? '')) !== '') {
-        $html .= '<span class="badge badge--outline">' . e((string)$e['fahrzeuge_namen']) . '</span>';
+    // je Fahrzeug ein Abzeichen – eines für alle brach nicht um und sprengte die Zeile
+    foreach (array_filter(array_map('trim', explode(' · ', (string)($e['fahrzeuge_namen'] ?? ''))), 'strlen') as $fz) {
+        $html .= '<span class="badge badge--outline badge--fahrzeug">' . e($fz) . '</span>';
     }
     if ($mitGeld && ((float)$e['ausgaben'] > 0 || (float)$e['einnahmen'] > 0)) {
         $erg = einsatz_ergebnis(['saldo' => (float)$e['einnahmen'] - (float)$e['ausgaben']]);

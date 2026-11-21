@@ -517,6 +517,7 @@ legend { font-size: .85rem; font-weight: 700; color: var(--ink-soft); padding: 0
 .badge--muted { background: var(--border); color: var(--ink-soft); }
 .badge--outline { background: transparent; border: 1px solid var(--border); color: var(--ink-soft); }
 .badge--outline.badge--ok { color: var(--ok); border-color: var(--ok); }
+.badge--fahrzeug { font-weight: 600; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .badge--outline.badge--bad { color: var(--bad); border-color: var(--bad); }
 .badge--nice { background: #7c3aed; }
 .badge--stan { background: #003399; }
